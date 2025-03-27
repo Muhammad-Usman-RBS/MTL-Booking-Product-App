@@ -1,1 +1,91 @@
 @import "tailwindcss";
+
+/* Default (fallback) */
+:root {
+    --bg: #ffffff;
+    --text: #111111;
+    --primary: #4f46e5;
+    --hover: #e5e7eb;
+    --active: #d1d5db;
+}
+
+/* Light Themes */
+.theme-light-1 {
+    --bg: #f3f4f6;
+    --text: #1f2937;
+    --primary: #10b981;
+    --hover: #e0f2f1;
+    --active: #b2dfdb;
+}
+
+.theme-light-2 {
+    --bg: #fefce8;
+    --text: #78350f;
+    --primary: #f59e0b;
+    --hover: #fef3c7;
+    --active: #fde68a;
+}
+
+/* Dark Themes */
+.theme-dark-1 {
+    --bg: #1f2937;
+    --text: #f9fafb;
+    --primary: #3b82f6;
+    --hover: #374151;
+    --active: #4b5563;
+}
+
+.theme-dark-2 {
+    --bg: #111827;
+    --text: #e5e7eb;
+    --primary: #8b5cf6;
+    --hover: #1f2937;
+    --active: #374151;
+}
+
+.theme-dark-3 {
+    --bg: #FF7D00;
+    --text: #ffffff;
+    --primary: #000000;
+    --hover: #ffa74d;
+    --active: #ff8f1f;
+}
+
+.theme-dark-4 {
+    --bg: yellow;
+    --text: black;
+    --primary: #000000;
+    --hover: #fef08a;
+    --active: #fde047;
+}
+
+
+/* Utility classes */
+.bg-theme {
+    background-color: var(--bg);
+}
+
+.text-theme {
+    color: var(--text);
+}
+
+.text-primary {
+    color: var(--primary);
+}
+
+.bg-primary {
+    background-color: var(--primary);
+}
+
+.hover-theme:hover {
+    background-color: var(--hover);
+}
+
+.active-theme {
+    background-color: var(--active);
+}
+
+/* Optional: smooth transitions */
+.bg-theme, .text-theme, .hover-theme, .active-theme {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}

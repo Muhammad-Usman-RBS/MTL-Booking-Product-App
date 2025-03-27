@@ -1,37 +1,54 @@
-import React from "react"; // <-- Add this line
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import AuthLayout from "./layouts/AuthLayout";
+import Login from "./pages/auth/Login";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import NewPassword from "./pages/auth/NewPassword";
+import DashboardLayout from "./layouts/DashboardLayout";
+import NotFound from "./pages/emptypages/NotFound";
 
-const App = () => {
-  const [count, setCount] = useState(0);
+import Dashboard from "./components/dashbaord/Dashboard";
+import SubTab1 from "./components/dashbaord/SubTab1";
+import SubTab2 from "./components/dashbaord/SubTab2";
+import GeneralSettings from "./components/dashbaord/settings/GeneralSettings";
+import SecuritySettings from "./components/dashbaord/settings/SecuritySettings";
+import EditProfile from "./components/dashbaord/profile/EditProfile";
+import AccountSettings from "./components/dashbaord/profile/AccountSettings";
+import Logout from "./components/dashbaord/Logout";
 
+// React Toastify
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+function App() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-6">
-      <div className="flex gap-6">
-        <a href="https://vite.dev" target="_blank" rel="noopener noreferrer">
-          <img src={viteLogo} className="w-20 h-20 transition-transform duration-300 hover:scale-110" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
-          <img src={reactLogo} className="w-20 h-20 transition-transform duration-300 hover:scale-110" alt="React logo" />
-        </a>
-      </div>
-      <h1 className="text-4xl font-bold mt-6">Vite + React</h1>
-      <div className="bg-gray-800 p-6 mt-6 rounded-lg shadow-lg text-center">
-        <button 
-          onClick={() => setCount((count) => count + 1)} 
-          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 transition rounded-lg text-lg font-semibold">
-          Count is {count}
-        </button>
-        <p className="mt-4 text-5xl text-gray-400">
-         MTL BOOKING PRODUCT APP
-        </p>
-      </div>
-      <p className="mt-6 text-gray-500 text-sm">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
+    <>
+    <Routes>
+      {/* All Auth pages nested under AuthLayout */}
+      <Route path="/" element={<AuthLayout />}>
+        <Route index element={<Login />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
+        <Route path="new-password" element={<NewPassword />} />
+      </Route>
+
+      {/* Dashboard */}
+      <Route path="/dashboard" element={<DashboardLayout />}>
+        <Route index element={<Dashboard />} />
+        <Route path="sub1" element={<SubTab1 />} />
+        <Route path="sub2" element={<SubTab2 />} />
+        <Route path="settings/general" element={<GeneralSettings />} />
+        <Route path="settings/security" element={<SecuritySettings />} />
+        <Route path="profile/edit" element={<EditProfile />} />
+        <Route path="profile/account" element={<AccountSettings />} />
+        <Route path="logout" element={<Logout />} />
+      </Route>
+
+      {/* Fallback */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+
+     <ToastContainer position="top-center" autoClose={2000} />
+     </>
   );
 }
 
