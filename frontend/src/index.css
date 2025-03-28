@@ -89,3 +89,128 @@
 .bg-theme, .text-theme, .hover-theme, .active-theme {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+
+/* ----------------- */
+/* BUTTON STYLES     */
+/* ----------------- */
+.btn {
+    border-radius: 6px !important;
+    cursor: pointer;
+    display: inline-block;
+    font-family: CerebriSans-Regular, -apple-system, system-ui, Roboto, sans-serif;
+    padding: 7px 20px;
+    text-align: center;
+    text-decoration: none;
+    transition: all 250ms;
+    border: 0;
+    font-size: 16px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    box-shadow: var(--shadow);
+}
+
+.btn:hover {
+    transform: scale(1.05) rotate(-1deg);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Primary Button */
+.btn-primary {
+    background-color: var(--primary);
+    color: var(--bg);
+    --shadow: rgba(79, 70, 229, 0.2) 0 -25px 18px -14px inset,
+        rgba(79, 70, 229, 0.15) 0 1px 2px,
+        rgba(79, 70, 229, 0.15) 0 2px 4px,
+        rgba(79, 70, 229, 0.15) 0 4px 8px,
+        rgba(79, 70, 229, 0.15) 0 8px 16px,
+        rgba(79, 70, 229, 0.15) 0 16px 32px;
+    --shadow-hover: rgba(79, 70, 229, 0.35) 0 -25px 18px -14px inset,
+        rgba(79, 70, 229, 0.25) 0 1px 2px,
+        rgba(79, 70, 229, 0.25) 0 2px 4px,
+        rgba(79, 70, 229, 0.25) 0 4px 8px,
+        rgba(79, 70, 229, 0.25) 0 8px 16px,
+        rgba(79, 70, 229, 0.25) 0 16px 32px;
+}
+
+/* Success Button */
+.btn-success {
+    background-color: #16a34a;
+    color: white;
+    --shadow: rgba(44, 187, 99, .2) 0 -25px 18px -14px inset,
+        rgba(44, 187, 99, .15) 0 1px 2px,
+        rgba(44, 187, 99, .15) 0 2px 4px,
+        rgba(44, 187, 99, .15) 0 4px 8px,
+        rgba(44, 187, 99, .15) 0 8px 16px,
+        rgba(44, 187, 99, .15) 0 16px 32px;
+    --shadow-hover: rgba(44, 187, 99, .35) 0 -25px 18px -14px inset,
+        rgba(44, 187, 99, .25) 0 1px 2px,
+        rgba(44, 187, 99, .25) 0 2px 4px,
+        rgba(44, 187, 99, .25) 0 4px 8px,
+        rgba(44, 187, 99, .25) 0 8px 16px,
+        rgba(44, 187, 99, .25) 0 16px 32px;
+}
+
+/* Cancel Button */
+.btn-cancel {
+    background-color: #dc2626;
+    color: white;
+    --shadow: rgba(220, 38, 38, .2) 0 -25px 18px -14px inset,
+        rgba(220, 38, 38, .15) 0 1px 2px,
+        rgba(220, 38, 38, .15) 0 2px 4px,
+        rgba(220, 38, 38, .15) 0 4px 8px,
+        rgba(220, 38, 38, .15) 0 8px 16px,
+        rgba(220, 38, 38, .15) 0 16px 32px;
+    --shadow-hover: rgba(220, 38, 38, .35) 0 -25px 18px -14px inset,
+        rgba(220, 38, 38, .25) 0 1px 2px,
+        rgba(220, 38, 38, .25) 0 2px 4px,
+        rgba(220, 38, 38, .25) 0 4px 8px,
+        rgba(220, 38, 38, .25) 0 8px 16px,
+        rgba(220, 38, 38, .25) 0 16px 32px;
+}
+
+/* Edit Button */
+.btn-edit {
+    background-color: #f59e0b;
+    color: white;
+    --shadow: rgba(245, 158, 11, .2) 0 -25px 18px -14px inset,
+        rgba(245, 158, 11, .15) 0 1px 2px,
+        rgba(245, 158, 11, .15) 0 2px 4px,
+        rgba(245, 158, 11, .15) 0 4px 8px,
+        rgba(245, 158, 11, .15) 0 8px 16px,
+        rgba(245, 158, 11, .15) 0 16px 32px;
+    --shadow-hover: rgba(245, 158, 11, .35) 0 -25px 18px -14px inset,
+        rgba(245, 158, 11, .25) 0 1px 2px,
+        rgba(245, 158, 11, .25) 0 2px 4px,
+        rgba(245, 158, 11, .25) 0 4px 8px,
+        rgba(245, 158, 11, .25) 0 8px 16px,
+        rgba(245, 158, 11, .25) 0 16px 32px;
+}
+
+/* Reset Button */
+.btn-reset {
+    background-color: #00aeff;
+    color: white;
+    --shadow: rgba(0, 174, 255, 0.2) 0 -25px 18px -14px inset,
+        rgba(0, 174, 255, 0.15) 0 1px 2px,
+        rgba(0, 174, 255, 0.15) 0 2px 4px,
+        rgba(0, 174, 255, 0.15) 0 4px 8px,
+        rgba(0, 174, 255, 0.15) 0 8px 16px,
+        rgba(0, 174, 255, 0.15) 0 16px 32px;
+    --shadow-hover: rgba(0, 174, 255, 0.35) 0 -25px 18px -14px inset,
+        rgba(0, 174, 255, 0.25) 0 1px 2px,
+        rgba(0, 174, 255, 0.25) 0 2px 4px,
+        rgba(0, 174, 255, 0.25) 0 4px 8px,
+        rgba(0, 174, 255, 0.25) 0 8px 16px,
+        rgba(0, 174, 255, 0.25) 0 16px 32px;
+}
+
+/* Outline Button */
+.btn-outline {
+    background-color: transparent;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    --shadow: rgba(79, 70, 229, 0.1) 0 0 10px;
+    --shadow-hover: rgba(79, 70, 229, 0.3) 0 0 20px;
+}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import Icons from "../../../assets/icons"; // ✅ dropdown icon
 import sidebarItems from "../../../constants/sidebarItems";
 import IMAGES from "../../../assets/images";
 import useUIStore from "../../../store/useUIStore";
@@ -9,7 +10,6 @@ function Sidebar() {
   const isOpen = useUIStore((state) => state.isSidebarOpen);
   const [activeMain, setActiveMain] = useState(null);
 
-  // Auto-set activeMain based on URL (on refresh or route change)
   useEffect(() => {
     const activeIndex = sidebarItems.findIndex((item) =>
       item.subTabs?.some((sub) => location.pathname === sub.route)
@@ -35,6 +35,17 @@ function Sidebar() {
         />
       </div>
 
+      {isOpen && (
+        <div className="ps-7 pt-2 mt-[-8px] border-b pb-2 w-full bg-gray-300">
+          <p className="text-sm text-[#1f2937] uppercase tracking-widest font-semibold">
+            Welcome!
+          </p>
+          <p className="font-semibold text-[#1f2937] truncate">
+            Muhammad Usman
+          </p>
+        </div>
+      )}
+
       <ul className="flex flex-col mt-4">
         {sidebarItems.map((item, index) => {
           const isMainActive =
@@ -48,12 +59,21 @@ function Sidebar() {
                 <>
                   <li
                     onClick={() => handleToggle(index)}
-                    className={`p-4 hover-theme flex items-center cursor-pointer ${
-                      isOpen ? "justify-start pl-4" : "justify-center"
-                    } ${isMainActive ? "active-theme" : ""}`}
+                    className={`p-4 hover-theme flex items-center justify-between cursor-pointer ${
+                      isMainActive ? "active-theme" : ""
+                    } ${isOpen ? "pl-4 pr-3" : "justify-center"}`}
                   >
-                    <item.icon className="w-5 h-5" />
-                    {isOpen && <span className="ml-3">{item.title}</span>}
+                    <div className="flex items-center gap-3">
+                      <item.icon className="w-5 h-5" />
+                      {isOpen && <span>{item.title}</span>}
+                    </div>
+                    {isOpen && (
+                      <Icons.ChevronDown
+                        className={`w-4 h-4 transition-transform ${
+                          activeMain === index ? "rotate-180" : ""
+                        }`}
+                      />
+                    )}
                   </li>
 
                   {/* Sub Tabs */}
@@ -78,7 +98,6 @@ function Sidebar() {
                   )}
                 </>
               ) : (
-                // No sub-tabs (e.g. Logout)
                 <Link
                   to={item.route}
                   className={`p-4 hover-theme flex items-center cursor-pointer ${

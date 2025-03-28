@@ -12,6 +12,19 @@ import {
   LogOut,
   ChevronDown,
   LayoutDashboard,
+  Home,
+  CalendarDays,
+  ScrollText,
+  Users,
+  Map,
+  RefreshCcw,
+  Plus,
+  Filter,
+  Download,
+  LayoutGrid,
+  LayoutList,
+  SkipBack,
+  SkipForward,
 } from "lucide-react";
 
 const Icons = {
@@ -28,6 +41,19 @@ const Icons = {
   LogOut,
   ChevronDown,
   LayoutDashboard,
+  Home,
+  CalendarDays,
+  ScrollText,
+  Users,
+  Map,
+  RefreshCcw,
+  Plus,
+  Filter,
+  Download,
+  LayoutGrid,
+  LayoutList,
+  SkipBack,
+  SkipForward,
 };
 
 export default Icons;

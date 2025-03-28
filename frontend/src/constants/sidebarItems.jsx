@@ -2,13 +2,18 @@ import Icons from "../assets/icons";
 
 const sidebarItems = [
   {
-    title: "Dashboard",
-    icon: Icons.LayoutDashboard,
+    title: "Home",
+    icon: Icons.Home,
     route: "/dashboard",
-    subTabs: [
-      { title: "Sub Tab 1", route: "/dashboard/sub1", icon: Icons.Wrench },
-      { title: "Sub Tab 2", route: "/dashboard/sub2", icon: Icons.Shield },
-    ],
+    // subTabs: [
+    //   { title: "Sub Tab 1", route: "/dashboard/sub1", icon: Icons.Wrench },
+    //   { title: "Sub Tab 2", route: "/dashboard/sub2", icon: Icons.Shield },
+    // ],
+  },
+  {
+    title: "Bookings",
+    icon: Icons.ScrollText,
+    route: "/dashboard/bookings-list",
   },
   {
     title: "Settings",
@@ -31,18 +36,6 @@ const sidebarItems = [
     title: "Profile",
     icon: Icons.User,
     route: "/dashboard/profile",
-    subTabs: [
-      {
-        title: "Edit Profile",
-        route: "/dashboard/profile/edit",
-        icon: Icons.Edit,
-      },
-      {
-        title: "Account Settings",
-        route: "/dashboard/profile/account",
-        icon: Icons.UserCog,
-      },
-    ],
   },
   {
     title: "Logout",

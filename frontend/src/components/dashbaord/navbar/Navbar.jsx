@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Icons from "../../../assets/icons";
 import useUIStore from "../../../store/useUIStore";
+import Images from "../../../assets/images";
 
 const themes = [
   { value: "theme-light-1", bg: "#f3f4f6", text: "#1f2937" },
@@ -18,13 +19,26 @@ function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
 
+  const name = "Muhammad Usman Aziz";
+  const email = "john@example.com";
+  const profileImg = Images.profileImg; // or Images.profileimg if available
+
+  // Extract first two words
+  const [firstName, lastName] = name.split(" ");
+  const displayName = `${firstName || ""} ${lastName || ""}`.trim();
+
+  // Get initials
+  const initials = `${firstName?.[0] || ""}${
+    lastName?.[0] || ""
+  }`.toUpperCase();
+
   return (
     <nav className="bg-theme text-theme p-4 flex flex-wrap justify-between items-center gap-2 sm:gap-4">
       <button onClick={toggleSidebar} className="p-2">
         <Icons.Menu className="w-6 h-6 text-theme" />
       </button>
 
-      <h1 className="text-xl sm:absolute sm:left-1/2 sm:transform sm:-translate-x-1/2">
+      <h1 className="text-xl font-bold uppercase sm:absolute sm:left-1/2 sm:transform sm:-translate-x-1/2">
         Admin Panel
       </h1>
 
@@ -82,16 +96,31 @@ function Navbar() {
 
           {isDropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-lg z-50">
-              <div className="p-4 border-b">
-                <p className="font-semibold">John Doe</p>
-                <p className="text-sm text-gray-600">john@example.com</p>
+              <div className="border-b">
+                <div className="ps-4 pt-4 flex items-center space-x-3">
+                  {profileImg ? (
+                    <img
+                      src={profileImg}
+                      alt="ProfileImg"
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-15 h-12 rounded-full bg-theme flex items-center justify-center text-theme font-semibold text-sm uppercase">
+                      {initials}
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-semibold">{displayName}</p>
+                  </div>
+                </div>
+                <div className="ps-4 pb-2 pt-2">
+                  <p className="text-sm text-gray-600">{email}</p>
+                </div>
               </div>
+
               <ul className="py-2">
                 <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  <Link to="/dashboard/profile/edit">Profile</Link>
-                </li>
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  <Link to="/dashboard/settings/general">Settings</Link>
+                  <Link to="/dashboard/profile">Profile</Link>
                 </li>
                 <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
                   <Link to="/dashboard/logout">Logout</Link>
