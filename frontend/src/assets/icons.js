@@ -25,6 +25,11 @@ import {
   LayoutList,
   SkipBack,
   SkipForward,
+  PlusCircle,
+  ListChecks,
+  Baby,
+  Briefcase,
+  Luggage,
 } from "lucide-react";
 
 const Icons = {
@@ -54,6 +59,11 @@ const Icons = {
   LayoutList,
   SkipBack,
   SkipForward,
+  PlusCircle,
+  ListChecks,
+  Baby,
+  Briefcase,
+  Luggage,
 };
 
 export default Icons;

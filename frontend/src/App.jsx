@@ -19,6 +19,7 @@ import Logout from "./components/dashbaord/Logout";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import BookingsList from "./components/dashbaord/bookings/BookingsList";
+import NewBookings from "./components/dashbaord/bookings/NewBookings";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
           <Route index element={<Dashboard />} />
 
           <Route path="bookings-list" element={<BookingsList />} />
+          <Route path="new-booking" element={<NewBookings />} />
           <Route path="settings/general" element={<GeneralSettings />} />
           <Route path="settings/security" element={<SecuritySettings />} />
           <Route path="profile" element={<EditProfile />} />

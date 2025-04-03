@@ -14,6 +14,10 @@ const sidebarItems = [
     title: "Bookings",
     icon: Icons.ScrollText,
     route: "/dashboard/bookings-list",
+    subTabs: [
+      { title: "Bookings List", route: "/dashboard/bookings-list", icon: Icons.ListChecks },
+      { title: "New Booking", route: "/dashboard/new-booking", icon: Icons.PlusCircle },
+    ],
   },
   {
     title: "Settings",
