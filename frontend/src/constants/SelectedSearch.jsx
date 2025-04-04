@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 
-const SelectedSearch = ({ selected, setSelected, statusList }) => {
+const SelectedSearch = ({
+  selected,
+  setSelected,
+  statusList,
+  placeholder,
+  showCount = true,
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -23,7 +29,7 @@ const SelectedSearch = ({ selected, setSelected, statusList }) => {
         className="border px-3 py-1 rounded bg-white cursor-pointer border-gray-300 w-44 text-left"
       >
         {selected.length === 0
-          ? "Select Status"
+          ? placeholder || "Select"
           : `${selected.length} Selected`}
       </button>
 
@@ -52,7 +58,11 @@ const SelectedSearch = ({ selected, setSelected, statusList }) => {
                   />
                   <span>{item.label}</span>
                 </div>
-                <span className="text-gray-500 text-xs">({item.count})</span>
+                {showCount && (
+                  <span className="text-gray-500 text-xs">
+                    ({item.count || 0})
+                  </span>
+                )}
               </label>
             ))}
           </div>

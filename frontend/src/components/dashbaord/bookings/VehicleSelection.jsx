@@ -98,11 +98,11 @@ const VehicleSelection = () => {
                     <Baby className="w-4 h-4" /> {selectedVehicle.childSeats}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Briefcase className="w-4 h-4" />{" "}
+                    <Briefcase className="w-4 h-4" />
                     {selectedVehicle.handLuggage}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Luggage className="w-4 h-4" />{" "}
+                    <Luggage className="w-4 h-4" />
                     {selectedVehicle.checkinLuggage}
                   </span>
                 </div>

@@ -15,8 +15,33 @@ const sidebarItems = [
     icon: Icons.ScrollText,
     route: "/dashboard/bookings-list",
     subTabs: [
-      { title: "Bookings List", route: "/dashboard/bookings-list", icon: Icons.ListChecks },
-      { title: "New Booking", route: "/dashboard/new-booking", icon: Icons.PlusCircle },
+      {
+        title: "Bookings List",
+        route: "/dashboard/bookings-list",
+        icon: Icons.ListChecks,
+      },
+      {
+        title: "New Booking",
+        route: "/dashboard/new-booking",
+        icon: Icons.PlusCircle,
+      },
+    ],
+  },
+  {
+    title: "Invoices",
+    icon: Icons.FileText,
+    route: "/dashboard/invoices-list",
+    subTabs: [
+      {
+        title: "Invoices List",
+        route: "/dashboard/invoices-list",
+        icon: Icons.List,
+      },
+      {
+        title: "New Invoice",
+        route: "/dashboard/new-invoice",
+        icon: Icons.FilePlus,
+      },
     ],
   },
   {

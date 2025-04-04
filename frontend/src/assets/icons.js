@@ -30,6 +30,9 @@ import {
   Baby,
   Briefcase,
   Luggage,
+  FileText,
+  List,
+  FilePlus,
 } from "lucide-react";
 
 const Icons = {
@@ -64,6 +67,9 @@ const Icons = {
   Baby,
   Briefcase,
   Luggage,
+  FileText,
+  List,
+  FilePlus,
 };
 
 export default Icons;

@@ -7,9 +7,7 @@ import NewPassword from "./pages/auth/NewPassword";
 import DashboardLayout from "./layouts/DashboardLayout";
 import NotFound from "./pages/emptypages/NotFound";
 
-import Dashboard from "./components/dashbaord/Dashboard";
-import SubTab1 from "./components/dashbaord/SubTab1";
-import SubTab2 from "./components/dashbaord/SubTab2";
+import Dashboard from "./components/dashbaord/home/Dashboard";
 import GeneralSettings from "./components/dashbaord/settings/GeneralSettings";
 import SecuritySettings from "./components/dashbaord/settings/SecuritySettings";
 import EditProfile from "./components/dashbaord/profile/EditProfile";
@@ -19,7 +17,9 @@ import Logout from "./components/dashbaord/Logout";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import BookingsList from "./components/dashbaord/bookings/BookingsList";
-import NewBookings from "./components/dashbaord/bookings/NewBookings";
+import NewBooking from "./components/dashbaord/bookings/NewBooking";
+import InvoicesList from "./components/dashbaord/invoices/InvoicesList";
+import NewInvoice from "./components/dashbaord/invoices/NewInvoice";
 
 function App() {
   return (
@@ -38,7 +38,11 @@ function App() {
           <Route index element={<Dashboard />} />
 
           <Route path="bookings-list" element={<BookingsList />} />
-          <Route path="new-booking" element={<NewBookings />} />
+          <Route path="new-booking" element={<NewBooking />} />
+
+          <Route path="invoices-list" element={<InvoicesList />} />
+          <Route path="new-invoice" element={<NewInvoice />} />
+
           <Route path="settings/general" element={<GeneralSettings />} />
           <Route path="settings/security" element={<SecuritySettings />} />
           <Route path="profile" element={<EditProfile />} />

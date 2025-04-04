@@ -81,10 +81,7 @@ const PassengerDetails = () => {
           >
             <option value="">None</option>
             {passengers.map((p, idx) => (
-              <option
-                key={idx}
-                value={`${p.name} (${p.email})[br]${p.phone}`}
-              >
+              <option key={idx} value={`${p.name} (${p.email})[br]${p.phone}`}>
                 {`${p.name} (${p.email}) [br] ${p.phone}`}
               </option>
             ))}
@@ -107,7 +104,9 @@ const PassengerDetails = () => {
 
         {/* Email */}
         <div>
-          <label className="block text-sm font-medium mb-1">Email Address</label>
+          <label className="block text-sm font-medium mb-1">
+            Email Address
+          </label>
           <input
             type="email"
             value={details.email}
@@ -118,7 +117,9 @@ const PassengerDetails = () => {
 
         {/* Phone with Flag */}
         <div className="col-span-1 sm:col-span-2 lg:col-span-2">
-          <label className="block text-sm font-medium mb-1">Contact Number</label>
+          <label className="block text-sm font-medium mb-1">
+            Contact Number
+          </label>
           <PhoneInput
             country={"gb"}
             value={details.phone}

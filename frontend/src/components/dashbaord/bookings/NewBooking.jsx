@@ -4,8 +4,16 @@ import "react-toastify/dist/ReactToastify.css";
 import VehicleSelection from "./VehicleSelection";
 import PassengerDetails from "./PassengerDetails";
 import FareSection from "./FareSection";
+import SelectOption from "../../../constants/SelectOption";
+import Icons from "../../../assets/icons";
 
 const MAX_DROPOFFS = 3;
+
+const hourlyOptions = [
+  "🚗 40 miles • ⏱ 4 Hours",
+  "🚗 60 miles • ⏱ 6 Hours",
+  "🚗 80 miles • ⏱ 8 Hours",
+];
 
 const JourneyCard = ({ title }) => {
   const [dropOffs, setDropOffs] = useState([""]);
@@ -32,10 +40,9 @@ const JourneyCard = ({ title }) => {
 
   return (
     <div className="bg-white shadow-lg rounded-xl w-full max-w-4xl mx-auto p-6 border border-gray-300 mt-6">
-
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
-      <h3 className="text-lg font-bold mb-4">{title}</h3>
-      <hr/>
+        <h3 className="text-lg font-bold mb-4">{title}</h3>
+        <hr />
         <div className="text-sm font-bold text-white btn-reset btn px-4 py-1 rounded">
           Fare: £0
         </div>
@@ -51,18 +58,41 @@ const JourneyCard = ({ title }) => {
             type="date"
             className="border border-gray-300 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:outline-none rounded px-3 py-2 w-full sm:w-1/2"
           />
-          <select className="border border-gray-300 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:outline-none rounded px-2 py-2 w-full sm:w-1/4">
-            <option>HH</option>
-            {[...Array(24).keys()].map((h) => (
-              <option key={h}>{h.toString().padStart(2, "0")}</option>
-            ))}
-          </select>
-          <select className="border border-gray-300 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:outline-none rounded px-2 py-2 w-full sm:w-1/4">
-            <option>MM</option>
-            {[...Array(60).keys()].map((m) => (
-              <option key={m}>{m.toString().padStart(2, "0")}</option>
-            ))}
-          </select>
+          <div className="flex gap-4 w-full sm:w-1/2">
+            {/* Hours Dropdown */}
+            <div className="relative w-full">
+              <select
+                className="block w-full appearance-none border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm text-gray-700 bg-white transition"
+                defaultValue="HH"
+              >
+                <option disabled>HH</option>
+                {[...Array(24).keys()].map((h) => (
+                  <option key={h} className=" h-24">
+                    {h.toString().padStart(2, "0")}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
+                <Icons.ChevronDown className="w-4 h-4" />
+              </div>
+            </div>
+
+            {/* Minutes Dropdown */}
+            <div className="relative w-full">
+              <select
+                className="block w-full appearance-none border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm text-gray-700 bg-white transition"
+                defaultValue="MM"
+              >
+                <option disabled>MM</option>
+                {[...Array(60).keys()].map((m) => (
+                  <option key={m}>{m.toString().padStart(2, "0")}</option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
+                <Icons.ChevronDown className="w-4 h-4" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -119,9 +149,10 @@ const JourneyCard = ({ title }) => {
   );
 };
 
-const NewBookings = () => {
+const NewBooking = () => {
   const [mode, setMode] = useState("Transfer");
   const [returnJourney, setReturnJourney] = useState(false);
+  const [selectedHourly, setSelectedHourly] = useState(hourlyOptions[0]);
 
   return (
     <>
@@ -149,11 +180,14 @@ const NewBookings = () => {
 
         {/* Hourly Info */}
         {mode === "Hourly" && (
-         <div className="flex justify-center">
-         <div className="text-center px-3 py-2.5 text-sm border border-orange-400 rounded-lg text-orange-400 inline-flex  font-medium">
-            🚗 40 miles &nbsp;&bull;&nbsp; ⏱ 4 Hours
+          <div className="flex justify-center">
+            <SelectOption
+              options={hourlyOptions}
+              value={selectedHourly}
+              onChange={(e) => setSelectedHourly(e.target.value)}
+              width="64"
+            />
           </div>
-         </div>
         )}
 
         {/* Journey 1 */}
@@ -176,18 +210,15 @@ const NewBookings = () => {
           </label>
         </div>
 
-
         {/* Journey 2 (Return) */}
         {returnJourney && <JourneyCard title="Journey 2" />}
-      
 
-
-        <VehicleSelection/>
-        <PassengerDetails/>
-        <FareSection/>
+        <VehicleSelection />
+        <PassengerDetails />
+        <FareSection />
       </div>
     </>
   );
 };
 
-export default NewBookings;
+export default NewBooking;
