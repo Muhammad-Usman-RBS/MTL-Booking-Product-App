@@ -77,7 +77,7 @@ const PassengerDetails = () => {
           <select
             value={selectedPassenger}
             onChange={(e) => handleSelect(e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-500"
+            className="custom_input"
           >
             <option value="">None</option>
             {passengers.map((p, idx) => (
@@ -98,7 +98,7 @@ const PassengerDetails = () => {
             type="text"
             value={details.name}
             onChange={(e) => setDetails({ ...details, name: e.target.value })}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-500"
+            className="custom_input"
           />
         </div>
 
@@ -111,7 +111,7 @@ const PassengerDetails = () => {
             type="email"
             value={details.email}
             onChange={(e) => setDetails({ ...details, email: e.target.value })}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-500"
+            className="custom_input"
           />
         </div>
 

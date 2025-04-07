@@ -5,11 +5,11 @@ const CustomModal = ({ isOpen, onClose, heading, children }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={onClose}
     >
       <div
-        className="p-6 max-w-5xl mx-auto bg-white border rounded shadow relative w-auto"
+        className="p-6 w-auto bg-white border rounded shadow relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

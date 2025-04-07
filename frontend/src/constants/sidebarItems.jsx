@@ -42,6 +42,33 @@ const sidebarItems = [
         route: "/dashboard/new-invoice",
         icon: Icons.FilePlus,
       },
+      {
+        title: "Edit Invoice",
+        route: "/dashboard/edit-invoice",
+        icon: Icons.SquarePen,
+      },
+    ],
+  },
+  {
+    title: "Drivers",
+    icon: Icons.Users,
+    route: "/dashboard/driver-list",
+    subTabs: [
+      {
+        title: "Driver List",
+        route: "/dashboard/driver-list",
+        icon: Icons.List,
+      },
+      {
+        title: "New Driver",
+        route: "/dashboard/new-driver",
+        icon: Icons.UserPlus,
+      },
+      {
+        title: "Registration Config",
+        route: "/dashboard/driver-registration-config",
+        icon: Icons.Settings2,
+      },
     ],
   },
   {

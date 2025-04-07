@@ -101,7 +101,7 @@ const JourneyCard = ({ title }) => {
         <input
           type="text"
           placeholder="Pick Up"
-          className="w-full border border-gray-300 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:outline-none  rounded px-3 py-2"
+          className="custom_input"
         />
 
         {dropOffs.map((val, idx) => (
@@ -111,7 +111,7 @@ const JourneyCard = ({ title }) => {
               value={val}
               placeholder={`Drop Off${idx === 0 ? "" : ` ${idx + 1}`}`}
               onChange={(e) => updateDropOff(idx, e.target.value)}
-              className="w-full border border-gray-300 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:outline-none rounded px-3 py-2"
+              className="custom_input"
             />
             {idx > 0 && (
               <button
@@ -136,13 +136,13 @@ const JourneyCard = ({ title }) => {
         <textarea
           placeholder="Notes"
           rows="3"
-          className="w-full border border-gray-300 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:outline-none rounded px-3 py-2 transition-all duration-300"
+          className="custom_input transition-all duration-300"
         />
 
         <textarea
           placeholder="Internal Notes"
           rows="3"
-          className="w-full border border-gray-300 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:outline-none rounded px-3 py-2 transition-all duration-300"
+          className="custom_input transition-all duration-300"
         ></textarea>
       </div>
     </div>

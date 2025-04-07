@@ -12,14 +12,18 @@ import GeneralSettings from "./components/dashbaord/settings/GeneralSettings";
 import SecuritySettings from "./components/dashbaord/settings/SecuritySettings";
 import EditProfile from "./components/dashbaord/profile/EditProfile";
 import Logout from "./components/dashbaord/Logout";
-
-// React Toastify
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import BookingsList from "./components/dashbaord/bookings/BookingsList";
 import NewBooking from "./components/dashbaord/bookings/NewBooking";
 import InvoicesList from "./components/dashbaord/invoices/InvoicesList";
 import NewInvoice from "./components/dashbaord/invoices/NewInvoice";
+import EditInvoice from "./components/dashbaord/invoices/EditInvoice";
+import NewDriver from "./components/dashbaord/drivers/NewDriver";
+import DriverRegistrationConfig from "./components/dashbaord/drivers/DriverRegistrationConfig";
+import DriverList from "./components/dashbaord/drivers/DriverList";
+
+// React Toastify
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   return (
@@ -42,6 +46,14 @@ function App() {
 
           <Route path="invoices-list" element={<InvoicesList />} />
           <Route path="new-invoice" element={<NewInvoice />} />
+          <Route path="edit-invoice" element={<EditInvoice />} />
+
+          <Route path="driver-list" element={<DriverList />} />
+          <Route path="new-driver" element={<NewDriver />} />
+          <Route
+            path="driver-registration-config"
+            element={<DriverRegistrationConfig />}
+          />
 
           <Route path="settings/general" element={<GeneralSettings />} />
           <Route path="settings/security" element={<SecuritySettings />} />

@@ -2,14 +2,41 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { invoicesData } from "../../../constants/invoicestab/invoicesData";
 import Icons from "../../../assets/icons";
+import InvoiceDetails from "./InvoiceDetails";
 
 const InvoicesList = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
-  const [totalRecords, setTotalRecords] = useState(invoicesData.length);
+  const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
+  const [expandedInvoice, setExpandedInvoice] = useState(null);
+
+  const handleInvoiceClick = (invoiceNo) => {
+    setExpandedInvoice((prev) => (prev === invoiceNo ? null : invoiceNo));
+  };
 
   const itemsPerPageOptions = [5, 10, 20, "All"];
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return (
+        <Icons.ArrowDownUp className="inline w-4 h-4 ml-1 text-gray-400" />
+      );
+    }
+    return sortConfig.direction === "asc" ? (
+      <Icons.ArrowDownUp className="inline w-4 h-4 ml-1 text-gray-600" />
+    ) : (
+      <Icons.ArrowDownUp className="inline w-4 h-4 ml-1 text-gray-600" />
+    );
+  };
 
   const filteredData = invoicesData.filter((item) => {
     const query = search.toLowerCase();
@@ -20,30 +47,46 @@ const InvoicesList = () => {
     );
   });
 
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    const valA = a[sortConfig.key];
+    const valB = b[sortConfig.key];
+    if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
+    if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
+    return 0;
+  });
+
   const totalPages =
-    perPage === "All" ? 1 : Math.ceil(filteredData.length / perPage);
+    perPage === "All" ? 1 : Math.ceil(sortedData.length / perPage);
 
   const paginatedData =
     perPage === "All"
-      ? filteredData
-      : filteredData.slice((page - 1) * perPage, page * perPage);
+      ? sortedData
+      : sortedData.slice((page - 1) * perPage, page * perPage);
 
   useEffect(() => {
-    setTotalRecords(filteredData.length);
     if (page > totalPages) setPage(1);
   }, [filteredData, perPage]);
 
-  return (
-    <>
-      <div className="ps-2 pe-2 md:ps-6 md:pe-6">
-        <h2 className="text-2xl font-bold mb-4">Invoices List</h2>
-        <hr className="mb-6" />
-      </div>
+  const tableHeaders = [
+    { label: "Invoice", key: "invoiceNo" },
+    { label: "Customer", key: "customer" },
+    { label: "Account", key: "account" },
+    { label: "Date", key: "date" },
+    { label: "Due Date", key: "dueDate" },
+    { label: "Amount", key: "amount" },
+    { label: "Status", key: "status" },
+  ];
 
-      <div className="flex flex-col sm:flex-row justify-between gap-4 px-4 sm:px-6">
+  return (
+    <div className="ps-2 pe-2 md:ps-6 md:pe-6">
+      <h2 className="text-2xl font-bold mb-4">Invoices List</h2>
+      <hr className="mb-6" />
+
+      <div className="flex flex-col sm:flex-row justify-between gap-4 px-4 sm:px-6 mb-4">
         <Link to="/dashboard/new-invoice" className="w-full sm:w-auto">
           <button className="btn btn-reset flex items-center gap-2 w-full sm:w-auto justify-center">
-       Create New Invoice
+            Create New Invoice
           </button>
         </Link>
 
@@ -61,23 +104,29 @@ const InvoicesList = () => {
           <table className="min-w-[900px] md:min-w-full table-fixed border border-gray-200 text-xs sm:text-sm">
             <thead>
               <tr className="bg-gray-100 text-gray-700">
-                <th className="border px-2 py-2 text-left">Invoice</th>
-                <th className="border px-2 py-2 text-left">Customer</th>
-                <th className="border px-2 py-2 text-left">Account</th>
-                <th className="border px-2 py-2 text-left">Date</th>
-                <th className="border px-2 py-2 text-left">Due Date</th>
-                <th className="border px-2 py-2 text-left">Amount</th>
-                <th className="border px-2 py-2 text-left">Status</th>
+                {tableHeaders.map((col) => (
+                  <th
+                    key={col.key}
+                    className="border px-2 py-2 text-left cursor-pointer select-none"
+                    onClick={() => handleSort(col.key)}
+                  >
+                    {col.label}
+                    {getSortIcon(col.key)}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {paginatedData.map((item, index) => (
                 <tr key={index} className="border hover:bg-gray-50 transition">
-                  <td className="px-2 py-2 text-blue-600 font-medium hover:underline cursor-pointer">
+                  <td
+                    className="px-2 py-2 text-blue-600 font-medium hover:underline cursor-pointer"
+                    onClick={() => handleInvoiceClick(item.invoiceNo)}
+                  >
                     {item.invoiceNo}
                   </td>
-                  <td className="border px-2 py-2 whitespace-nowrap flex items-center gap-2">
-                    <span>{item.customer}</span>
+                  <td className="border px-2 py-2 whitespace-nowrap">
+                    {item.customer}
                   </td>
                   <td className="border px-2 py-2 whitespace-nowrap">
                     {item.account}
@@ -113,7 +162,7 @@ const InvoicesList = () => {
         {/* Pagination Controls */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 gap-4 text-sm w-full">
           <div className="btn btn-outline w-full sm:w-auto text-center">
-            Total Records: {totalRecords}
+            Total Records: {filteredData.length}
           </div>
 
           <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full sm:w-auto">
@@ -161,8 +210,14 @@ const InvoicesList = () => {
             </select>
           </div>
         </div>
+
+        {expandedInvoice && (
+          <InvoiceDetails
+            item={invoicesData.find((i) => i.invoiceNo === expandedInvoice)}
+          />
+        )}
       </div>
-    </>
+    </div>
   );
 };
 

@@ -31,7 +31,6 @@ const TableComponent = () => {
   const [viewData, setViewData] = useState([]);
   const [perPage, setPerPage] = useState(5);
   const [page, setPage] = useState(1);
-  const [selectedRows, setSelectedRows] = useState([]);
   const [totalRecords, setTotalRecords] = useState(sampleData.length);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [selectedDrivers, setSelectedDrivers] = useState([]);
@@ -215,22 +214,6 @@ const TableComponent = () => {
             >
               <Icons.RefreshCcw size={16} />
             </button>
-
-            <select
-              className="border py-1 px-3 rounded border-gray-300"
-              value={perPage}
-              onChange={(e) => {
-                const value =
-                  e.target.value === "All" ? "All" : Number(e.target.value);
-                setPerPage(value);
-              }}
-            >
-              {itemsPerPageOptions.map((item, i) => (
-                <option key={i} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
 
@@ -409,6 +392,22 @@ const TableComponent = () => {
             >
               <Icons.SkipForward size={16} />
             </button>
+
+            <select
+              className="border py-1 px-3 rounded border-gray-300"
+              value={perPage}
+              onChange={(e) => {
+                const value =
+                  e.target.value === "All" ? "All" : Number(e.target.value);
+                setPerPage(value);
+              }}
+            >
+              {itemsPerPageOptions.map((item, i) => (
+                <option key={i} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>

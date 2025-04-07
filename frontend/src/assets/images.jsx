@@ -2,6 +2,7 @@ const IMAGES = {
   dashboardLargeLogo: "/assets/images/largeLogo.webp",
   dashboardSmallLogo: "/assets/images/smallLogo.webp",
   profileimg: "/assets/images/profileimg.jpg",
+  dummyImg: "/assets/images/dummyImg.webp",
 
   mercedesSClass: "/assets/images/Mercedes S Class.webp",
   mercedesVClass: "/assets/images/Mercedes V Class.webp",

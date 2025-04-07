@@ -1,14 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Icons from "../assets/icons";
 import classNames from "classnames";
 
 const SelectOption = ({ options, label, width = "full", value, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleFocus = () => setIsOpen(true);
-  const handleBlur = () => setIsOpen(false);
-
-  // Class for dynamic width
   const selectClass = classNames(
     `w-${width}`,
     "appearance-none px-3 py-2 text-sm border border-gray-300 rounded-lg shadow-sm",
@@ -25,10 +21,10 @@ const SelectOption = ({ options, label, width = "full", value, onChange }) => {
       )}
       <div className="relative">
         <select
-          value={value} // controlled input
+          value={value}
           onChange={onChange}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
+          onFocus={() => setIsOpen(true)}
+          onBlur={() => setIsOpen(false)}
           className={selectClass}
         >
           {options.map((option, idx) => (

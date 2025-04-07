@@ -33,6 +33,15 @@ import {
   FileText,
   List,
   FilePlus,
+  ArrowDownUp,
+  Mail,
+  Trash,
+  FolderDown,
+  Check,
+  SquarePen,
+  IndianRupee,
+  Settings2,
+  UserPlus
 } from "lucide-react";
 
 const Icons = {
@@ -70,6 +79,16 @@ const Icons = {
   FileText,
   List,
   FilePlus,
+  ArrowDownUp,
+  SkipBack,
+  Mail,
+  Trash,
+  FolderDown,
+  Check,
+  SquarePen,
+  IndianRupee,
+  Settings2,
+  UserPlus,
 };
 
 export default Icons;
