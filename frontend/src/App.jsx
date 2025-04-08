@@ -24,6 +24,7 @@ import DriverList from "./components/dashbaord/drivers/DriverList";
 // React Toastify
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import CustomersList from "./components/dashbaord/customers/CustomersList";
 
 function App() {
   return (
@@ -54,6 +55,8 @@ function App() {
             path="driver-registration-config"
             element={<DriverRegistrationConfig />}
           />
+
+          <Route path="customers-list" element={<CustomersList />} />
 
           <Route path="settings/general" element={<GeneralSettings />} />
           <Route path="settings/security" element={<SecuritySettings />} />

@@ -41,7 +41,11 @@ import {
   SquarePen,
   IndianRupee,
   Settings2,
-  UserPlus
+  UserPlus,
+  Pencil,
+  Send,
+  X,
+  UsersRound,
 } from "lucide-react";
 
 const Icons = {
@@ -89,6 +93,10 @@ const Icons = {
   IndianRupee,
   Settings2,
   UserPlus,
+  Pencil,
+  Send,
+  X,
+  UsersRound,
 };
 
 export default Icons;

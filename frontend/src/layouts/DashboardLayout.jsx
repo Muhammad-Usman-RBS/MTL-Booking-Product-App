@@ -14,7 +14,7 @@ function DashboardLayout() {
             <Outlet />
           </main>
           <footer className="bg-theme text-theme text-sm p-4 border-t border-gray-300 text-center">
-            © {new Date().getFullYear()} Your Company. All rights reserved.
+            © {new Date().getFullYear()} MTL Booking App. All rights reserved.
           </footer>
         </div>
       </div>

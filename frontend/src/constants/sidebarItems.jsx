@@ -72,6 +72,18 @@ const sidebarItems = [
     ],
   },
   {
+    title: "Customers",
+    icon: Icons.UsersRound,
+    route: "/dashboard/customers-list",
+    subTabs: [
+      {
+        title: "Customers List",
+        route: "/dashboard/customers-list",
+        icon: Icons.List,
+      },
+    ],
+  },
+  {
     title: "Settings",
     icon: Icons.Settings,
     route: "/dashboard/settings",
