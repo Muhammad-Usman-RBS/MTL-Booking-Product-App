@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import SelectOption from "../../../constants/SelectOption";
+import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import PDFContent from "./PDFContent";

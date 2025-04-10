@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import SelectDateRange from "../../../constants/SelectDateRange";
+import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
 const Dashboard = () => {
   const [startDate, setStartDate] = useState(
@@ -11,10 +12,8 @@ const Dashboard = () => {
 
   return (
     <>
-      <div className="ps-2 pe-2 md:ps-6 md:pe-6">
-        <h2 className="text-2xl font-bold mb-4">Stats</h2>
-        <hr className="mb-6" />
-      </div>
+      <OutletHeading name="Stats" />
+
       <div className="ps-4 pe-4 space-y-6 max-w-full overflow-x-auto">
         {/* Filter Box */}
         <div className="bg-cyan-400 rounded p-4">

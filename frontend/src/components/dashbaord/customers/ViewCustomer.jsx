@@ -1,5 +1,5 @@
 import React from "react";
-import CustomModal from "../../../constants/CustomModal";
+import CustomModal from "../../../constants/constantscomponents/CustomModal";
 
 const ViewCustomer = ({ customer, onClose }) => {
   return (

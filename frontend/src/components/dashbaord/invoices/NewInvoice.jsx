@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import SelectedSearch from "../../../constants/SelectedSearch";
-import SelectDateRange from "../../../constants/SelectDateRange";
+import SelectedSearch from "../../../constants/constantscomponents/SelectedSearch";
+import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
 const getFirstAndLastDay = (offset = 0) => {
   const now = new Date();
@@ -45,48 +46,39 @@ const NewInvoice = () => {
 
   return (
     <div>
-      <div className="ps-2 pe-2 md:ps-6 md:pe-6">
-        <h2 className="text-2xl font-bold mb-4">Create New Invoice</h2>
-        <hr className="mb-6" />
-      </div>
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-wrap gap-4 items-center justify-start">
-          <div className="min-w-[220px]">
-            <SelectDateRange
-              startDate={startDate}
-              endDate={endDate}
-              setStartDate={setStartDate}
-              setEndDate={setEndDate}
-            />
-          </div>
-          <div className="min-w-[200px]">
-            <SelectedSearch
-              selected={selectedCustomers}
-              setSelected={setSelectedCustomers}
-              statusList={customerList}
-              placeholder="Select Customer"
-              showCount={false}
-            />
-          </div>
-          <div className="min-w-[200px]">
-            <SelectedSearch
-              selected={selectedAccounts}
-              setSelected={setSelectedAccounts}
-              statusList={accountList}
-              placeholder="Select Accounts"
-              showCount={false}
-            />
-          </div>
-          <div className="flex gap-2 mt-1">
-            <button className="btn btn-reset">Search</button>
-            <button
-              onClick={resetHandler}
-              className="btn btn-outline"
-              title="Reset Filters"
-            >
-              ↻
-            </button>
-          </div>
+      <OutletHeading name="Create New Invoice" />
+      <div className="flex flex-wrap items-center justify-between">
+        <div className="flex gap-2">
+          <SelectDateRange
+            startDate={startDate}
+            endDate={endDate}
+            setStartDate={setStartDate}
+            setEndDate={setEndDate}
+          />
+          <SelectedSearch
+            selected={selectedCustomers}
+            setSelected={setSelectedCustomers}
+            statusList={customerList}
+            placeholder="Select Customer"
+            showCount={false}
+          />
+          <SelectedSearch
+            selected={selectedAccounts}
+            setSelected={setSelectedAccounts}
+            statusList={accountList}
+            placeholder="Select Accounts"
+            showCount={false}
+          />
+        </div>
+        <div className="flex gap-2">
+          <button className="btn btn-reset">Search</button>
+          <button
+            onClick={resetHandler}
+            className="btn btn-outline"
+            title="Reset Filters"
+          >
+            ↻
+          </button>
         </div>
       </div>
     </div>

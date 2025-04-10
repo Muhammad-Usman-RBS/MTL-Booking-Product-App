@@ -46,6 +46,8 @@ import {
   Send,
   X,
   UsersRound,
+  Truck,
+  CreditCard,
 } from "lucide-react";
 
 const Icons = {
@@ -97,6 +99,8 @@ const Icons = {
   Send,
   X,
   UsersRound,
+  Truck,
+  CreditCard,
 };
 
 export default Icons;

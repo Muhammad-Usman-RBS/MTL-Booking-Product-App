@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import IMAGES from "../../../assets/images";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
 const NewDriver = () => {
   const [driverImage, setDriverImage] = useState(null);
@@ -20,8 +21,9 @@ const NewDriver = () => {
   };
 
   return (
-    <div className="px-6 py-4">
-      <h2 className="text-2xl font-bold mb-4">Add Driver</h2>
+    <div>
+      <OutletHeading name="Add Driver" />
+
       <form className="space-y-4">
         {/* PROFILE PICTURE */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Icons from "../../../assets/icons"; // ✅ dropdown icon
-import sidebarItems from "../../../constants/sidebarItems";
+import sidebarItems from "../../../constants/constantscomponents/sidebarItems";
 import IMAGES from "../../../assets/images";
 import useUIStore from "../../../store/useUIStore";
 

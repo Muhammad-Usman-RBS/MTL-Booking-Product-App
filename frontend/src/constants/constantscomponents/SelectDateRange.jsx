@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Icons from "../assets/icons";
+import Icons from "../../assets/icons";
 
 const formatDate = (dateStr) => {
   const date = new Date(dateStr);

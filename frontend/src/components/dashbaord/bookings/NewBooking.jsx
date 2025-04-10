@@ -4,8 +4,9 @@ import "react-toastify/dist/ReactToastify.css";
 import VehicleSelection from "./VehicleSelection";
 import PassengerDetails from "./PassengerDetails";
 import FareSection from "./FareSection";
-import SelectOption from "../../../constants/SelectOption";
+import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import Icons from "../../../assets/icons";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
 const MAX_DROPOFFS = 3;
 
@@ -98,11 +99,7 @@ const JourneyCard = ({ title }) => {
 
       {/* Pick Up & Drop Offs */}
       <div className="space-y-4">
-        <input
-          type="text"
-          placeholder="Pick Up"
-          className="custom_input"
-        />
+        <input type="text" placeholder="Pick Up" className="custom_input" />
 
         {dropOffs.map((val, idx) => (
           <div key={idx} className="flex gap-2">
@@ -157,9 +154,8 @@ const NewBooking = () => {
   return (
     <>
       <ToastContainer />
-      <div className="px-4 sm:px-6 lg:px-8 py-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">New Booking</h2>
-        <hr className="mb-6 border-gray-300" />
+      <div>
+        <OutletHeading name="New Booking" />
 
         {/* Tabs */}
         <div className="flex justify-center mb-4">

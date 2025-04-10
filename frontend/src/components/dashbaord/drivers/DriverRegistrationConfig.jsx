@@ -1,5 +1,6 @@
 import React from "react";
-import SelectOption from "../../../constants/SelectOption";
+import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
 const DriverRegistrationConfig = () => {
   const options = ["Optional", "Required", "Hide"];
@@ -43,11 +44,8 @@ const DriverRegistrationConfig = () => {
   ];
 
   return (
-    <div className="px-4 md:px-10">
-      <h2 className="text-2xl font-bold mb-4">
-        Driver Registration Configuration
-      </h2>
-      <hr className="mb-6" />
+    <div>
+      <OutletHeading name="    Driver Registration Configuration" />
 
       <div className="space-y-4">
         {fields.map((label, index) => (

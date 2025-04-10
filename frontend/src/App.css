@@ -1,8 +1,7 @@
 .custom_input {
-    border: 1px solid #d1d5db; 
-    border-radius: 0.25rem;     
-    padding: 0.25rem 0.5rem;   
-    width: 100%;               
-    box-sizing: border-box;    
-  }
-  
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}

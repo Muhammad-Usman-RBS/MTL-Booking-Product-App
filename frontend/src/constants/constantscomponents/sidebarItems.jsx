@@ -1,4 +1,4 @@
-import Icons from "../assets/icons";
+import Icons from "../../assets/icons";
 
 const sidebarItems = [
   {
@@ -80,6 +80,23 @@ const sidebarItems = [
         title: "Customers List",
         route: "/dashboard/customers-list",
         icon: Icons.List,
+      },
+    ],
+  },
+  {
+    title: "Statements",
+    icon: Icons.FileText, 
+    route: "/dashboard/driver-statements",
+    subTabs: [
+      {
+        title: "Driver",
+        route: "/dashboard/driver-statements",
+        icon: Icons.Truck, 
+      },
+      {
+        title: "Driver Payments",
+        route: "/dashboard/driver-payments",
+        icon: Icons.CreditCard, 
       },
     ],
   },

@@ -1,7 +1,6 @@
-// EditCustomer.jsx
 import React, { useState } from "react";
-import CustomModal from "../../../constants/CustomModal";
-import SelectOption from "../../../constants/SelectOption";
+import CustomModal from "../../../constants/constantscomponents/CustomModal";
+import SelectOption from "../../../constants/constantscomponents/SelectOption";
 
 const options = ["Active", "Suspended", "Pending", "Deleted", "Delete Pending"];
 

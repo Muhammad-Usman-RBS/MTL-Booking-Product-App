@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Icons from "../assets/icons";
+import Icons from "../../assets/icons";
 import classNames from "classnames";
 
 const SelectOption = ({ options, label, width = "full", value, onChange }) => {

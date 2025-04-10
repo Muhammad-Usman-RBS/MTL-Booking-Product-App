@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Icons from "../../../assets/icons";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
 const InvoicePage = () => {
   const [selectAll, setSelectAll] = useState(false);
@@ -36,21 +37,22 @@ const InvoicePage = () => {
 
   return (
     <>
-      <div className="ps-2 pe-2 md:ps-6 md:pe-6">
-        <h2 className="text-2xl font-bold mb-4">Edit Invoice</h2>
-        <hr className="mb-6" />
-      </div>
+      <OutletHeading name="Edit Invoice" />
 
       <div className="p-6 max-w-6xl mx-auto bg-gradient-to-b from-gray-50 to-white shadow-2xl rounded-3xl">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4">
-          <h1 className="text-xl font-extrabold text-theme">Invoice #INV-000001</h1>
+          <h1 className="text-xl font-extrabold text-theme">
+            Invoice #INV-000001
+          </h1>
           <Link to="/dashboard/invoices-list">
             <button className="btn btn-reset">Back to Invoices</button>
           </Link>
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow mb-6 border">
-          <label className="block font-bold text-gray-700 mb-2 text-lg">Bill To</label>
+          <label className="block font-bold text-gray-700 mb-2 text-lg">
+            Bill To
+          </label>
           <textarea
             className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
             rows={3}
@@ -60,7 +62,9 @@ const InvoicePage = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
-            <label className="block font-semibold text-gray-700 mb-1">Invoice Date</label>
+            <label className="block font-semibold text-gray-700 mb-1">
+              Invoice Date
+            </label>
             <input
               type="date"
               className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -68,7 +72,9 @@ const InvoicePage = () => {
             />
           </div>
           <div>
-            <label className="block font-semibold text-gray-700 mb-1">Due Date</label>
+            <label className="block font-semibold text-gray-700 mb-1">
+              Due Date
+            </label>
             <input
               type="date"
               className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -152,7 +158,9 @@ const InvoicePage = () => {
         </div>
 
         <div className="text-right mb-6 text-gray-800">
-          <p>Sub Total: <strong className="text-blue-800">£92.00</strong></p>
+          <p>
+            Sub Total: <strong className="text-blue-800">£92.00</strong>
+          </p>
 
           <p className="mt-4 flex justify-end items-center gap-2">
             <span className="text-gray-700">Discount:</span>
@@ -178,7 +186,9 @@ const InvoicePage = () => {
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow mb-6 border">
-          <label className="block font-bold text-gray-700 mb-2 text-lg">Notes</label>
+          <label className="block font-bold text-gray-700 mb-2 text-lg">
+            Notes
+          </label>
           <textarea
             className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
             rows={3}

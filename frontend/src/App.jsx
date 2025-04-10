@@ -20,6 +20,8 @@ import EditInvoice from "./components/dashbaord/invoices/EditInvoice";
 import NewDriver from "./components/dashbaord/drivers/NewDriver";
 import DriverRegistrationConfig from "./components/dashbaord/drivers/DriverRegistrationConfig";
 import DriverList from "./components/dashbaord/drivers/DriverList";
+import DriverStatements from "./components/dashbaord/statements/DriverStatements";
+import DriverPayments from "./components/dashbaord/statements/DriverPayments";
 
 // React Toastify
 import { ToastContainer } from "react-toastify";
@@ -57,6 +59,9 @@ function App() {
           />
 
           <Route path="customers-list" element={<CustomersList />} />
+
+          <Route path="driver-statements" element={<DriverStatements />} />
+          <Route path="driver-payments" element={<DriverPayments />} />
 
           <Route path="settings/general" element={<GeneralSettings />} />
           <Route path="settings/security" element={<SecuritySettings />} />

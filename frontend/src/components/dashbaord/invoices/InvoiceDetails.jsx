@@ -4,9 +4,9 @@ import html2canvas from "html2canvas";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import IMAGES from "../../../assets/images";
-import CustomModal from "../../../constants/CustomModal";
+import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import InvoiceEmailModal from "./InvoiceEmailModal";
-import SelectOption from "../../../constants/SelectOption";
+import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import Icons from "../../../assets/icons";
 import { Link } from "react-router-dom";
 
