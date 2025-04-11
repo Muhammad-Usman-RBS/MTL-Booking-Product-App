@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { invoicesData } from "../../../constants/invoicestab/invoicesData";
+import { invoicesData } from "../../../constants/dashboardTabsData/data";
 import InvoiceDetails from "./InvoiceDetails";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
@@ -75,7 +75,7 @@ const InvoicesList = () => {
     <div>
       <OutletHeading name="Invoices List" />
 
-      <Link to="/dashboard/new-invoice" className="w-full sm:w-auto">
+      <Link to="/dashboard/invoices/new" className="w-full sm:w-auto">
         <button className="btn btn-reset flex items-center gap-2 w-full mb-3 sm:w-auto justify-center">
           Create New Invoice
         </button>

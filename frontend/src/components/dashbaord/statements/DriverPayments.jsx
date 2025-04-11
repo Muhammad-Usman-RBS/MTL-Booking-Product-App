@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Icons from "../../../assets/icons";
-import { statementsPayment } from "../../../constants/statementstab/statementsPayment";
+import { statementsPayment } from "../../../constants/dashboardTabsData/data";
 import SelectedSearch from "../../../constants/constantscomponents/SelectedSearch";
 import AddDriverPayment from "./AddDriverPayment";
 import ViewPaymentModal from "./ViewPaymentModal";

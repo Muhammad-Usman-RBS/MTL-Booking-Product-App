@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Icons from "../../../assets/icons";
-import { statementsData } from "../../../constants/statementstab/statementsData";
+import { statementsData } from "../../../constants/dashboardTabsData/data";
 import SelectedSearch from "../../../constants/constantscomponents/SelectedSearch";
 import ViewModal from "../../../components/dashbaord/statements/ViewModal";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";

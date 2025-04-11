@@ -44,7 +44,7 @@ const InvoicePage = () => {
           <h1 className="text-xl font-extrabold text-theme">
             Invoice #INV-000001
           </h1>
-          <Link to="/dashboard/invoices-list">
+          <Link to="/dashboard/invoices/list">
             <button className="btn btn-reset">Back to Invoices</button>
           </Link>
         </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { driversData } from "../../../constants/driverstab/driversData";
+import { driversData } from "../../../constants/dashboardTabsData/data";
 import Icons from "../../../assets/icons";
 import ViewDriver from "./ViewDriver";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
@@ -98,7 +98,7 @@ const DriverList = () => {
           className="w-8 h-8 rounded-md hover:bg-blue-600 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
           onClick={() => setSelectedDriver(item)}
         />
-        <Link to="/dashboard/new-driver">
+        <Link to="/dashboard/drivers/new">
           <Icons.Pencil className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2" />
         </Link>
         <Icons.Send
@@ -115,7 +115,7 @@ const DriverList = () => {
       <OutletHeading name="Driver List" />
 
       <div className="flex flex-col sm:flex-row justify-between gap-4 px-4 sm:px-0 mb-4">
-        <Link to="/dashboard/new-driver" className="w-full sm:w-auto">
+        <Link to="/dashboard/drivers/new" className="w-full sm:w-auto">
           <button className="btn btn-reset flex items-center gap-2 w-full sm:w-auto justify-center">
             Create New Driver
           </button>

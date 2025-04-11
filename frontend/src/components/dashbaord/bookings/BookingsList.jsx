@@ -16,7 +16,7 @@ import {
   statusList,
   options,
   actionMenuItems,
-} from "../../../constants/bookingstab/bookingData";
+} from "../../../constants/dashboardTabsData/data";
 import AuditModal from "./AuditModal";
 import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
@@ -183,7 +183,7 @@ const BookingsList = () => {
       <div className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between w-full mb-4">
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full">
           <div className="flex gap-2">
-            <Link to="/dashboard/new-booking">
+            <Link to="/dashboard/bookings/new">
               <button className="btn btn-reset">
                 <Icons.Plus size={20} />
               </button>

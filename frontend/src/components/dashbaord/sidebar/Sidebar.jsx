@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import Icons from "../../../assets/icons"; // ✅ dropdown icon
+import Icons from "../../../assets/icons";
 import sidebarItems from "../../../constants/constantscomponents/sidebarItems";
 import IMAGES from "../../../assets/images";
 import useUIStore from "../../../store/useUIStore";
 
-function Sidebar() {
+const Sidebar = () => {
   const location = useLocation();
   const isOpen = useUIStore((state) => state.isSidebarOpen);
   const [activeMain, setActiveMain] = useState(null);

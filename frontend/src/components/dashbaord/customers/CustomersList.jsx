@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { customersData } from "../../../constants/customerstab/customersData";
+import { customersData } from "../../../constants/dashboardTabsData/data";
 import Icons from "../../../assets/icons";
 import ViewCustomer from "./ViewCustomer";
 import EditCustomer from "./EditCustomer";

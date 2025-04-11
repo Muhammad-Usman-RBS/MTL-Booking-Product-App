@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import StatementPreview from "./StatementPreview";
-import { statementsData } from "../../../constants/statementstab/statementsData";
+import { statementsData } from "../../../constants/dashboardTabsData/data";
 
 const DriverGeneration = ({ setShowGeneration }) => {
   const [previewData, setPreviewData] = useState([]);

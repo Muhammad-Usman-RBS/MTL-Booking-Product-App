@@ -27,7 +27,7 @@ const EditCustomer = ({ customer, onClose }) => {
       onClose={onClose}
       heading={`Edit ${formData.name}`}
     >
-      <div className="text-sm px-4 pb-4 w-[500px]">
+      <div className="text-sm px-4 pb-4">
         <div className="flex flex-col items-center mb-4">
           <img
             src={formData?.profile || "/default-user.png"}
@@ -113,10 +113,7 @@ const EditCustomer = ({ customer, onClose }) => {
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button
-              onClick={handleSubmit}
-              className="btn btn-reset"
-            >
+            <button onClick={handleSubmit} className="btn btn-reset">
               Update
             </button>
           </div>
