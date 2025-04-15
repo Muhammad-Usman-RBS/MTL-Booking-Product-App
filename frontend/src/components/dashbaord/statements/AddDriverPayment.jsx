@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { toast } from "react-toastify";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
 const options = ["Debit", "Credit"];
 
@@ -38,9 +39,8 @@ const AddDriverPayment = ({ setShowGeneration }) => {
 
   return (
     <>
-      <div className="p-6">
-        <h2 className="text-2xl font-bold mb-4">Add Driver Payment</h2>
-        <hr className="mb-4" />
+      <div>
+        <OutletHeading name="Add Driver Payment" />
         <div className="mb-6 relative">
           <label className="block mb-2 font-medium">Select Drivers</label>
           <button

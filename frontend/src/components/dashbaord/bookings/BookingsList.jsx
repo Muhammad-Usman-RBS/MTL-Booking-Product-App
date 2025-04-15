@@ -204,13 +204,14 @@ const BookingsList = () => {
               showCount={true}
             />
           </div>
-
-          <SelectDateRange
-            startDate={startDate}
-            endDate={endDate}
-            setStartDate={setStartDate}
-            setEndDate={setEndDate}
-          />
+          <div className="w-64">
+            <SelectDateRange
+              startDate={startDate}
+              endDate={endDate}
+              setStartDate={setStartDate}
+              setEndDate={setEndDate}
+            />
+          </div>
         </div>
       </div>
 

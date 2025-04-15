@@ -114,11 +114,11 @@ const CustomersList = () => {
       <CustomTable
         tableHeaders={tableHeaders}
         tableData={tableData}
-        showSearch={true}
-        showRefresh={true}
-        showDownload={true}
         showPagination={true}
-        showSorting={false}
+        showSorting={true}
+        currentPage={page}
+        setCurrentPage={setPage}
+        perPage={perPage}
       />
 
       {selectedCustomer && (

@@ -26,6 +26,9 @@ const Sidebar = () => {
       className={`${
         isOpen ? "w-64" : "w-16"
       } min-w-[64px] bg-theme text-theme h-screen flex flex-col duration-300 overflow-y-auto`}
+      style={{
+        transition: "0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      }}
     >
       <div className="p-4 flex justify-center">
         <img

@@ -12,13 +12,13 @@ const CustomModal = ({ isOpen, onClose, heading, children }) => {
         className="w-full max-w-xl max-h-[90vh] bg-white rounded-2xl border border-gray-300 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center border-b border-gray-200 p-3">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 ps-3">
+        <div className="flex justify-between items-center bg-theme border-b border-gray-200 p-3">
+          <h2 className="text-xl sm:text-2xl font-bold text-theme ps-3">
             {heading}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-red-500 transition text-xl pe-3"
+            className="text-theme cursor-pointer transition text-xl pe-3"
           >
             ✕
           </button>

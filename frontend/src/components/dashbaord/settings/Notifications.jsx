@@ -1,11 +1,73 @@
-import React from 'react'
+import React, { useState } from "react";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
 const Notifications = () => {
+  const [notificationsEnabled, setNotificationsEnabled] = useState("Yes");
+  const [serverKey, setServerKey] = useState("");
+  const [firebaseConfig, setFirebaseConfig] =
+    useState(`apiKey: "AIzaSyBE4ABe_UjVlLk6z3Zim7z3rRTZ8zTmtB4",
+authDomain: "mega-transfers-e0fcb.firebaseapp.com",
+projectId: "mega-transfers-e0fcb",
+storageBucket: "mega-transfers-e0fcb.appspot.com",
+messagingSenderId: "982942342067",
+appId: "1:982942342067:web:41df8887e87c0ee0df49c6"`);
+
+  const handleSubmit = () => {
+    // Add your update logic here
+    console.log("Updated Notification Settings");
+  };
+
   return (
     <div>
-      Notifications
-    </div>
-  )
-}
+      <OutletHeading name="Notifications Settings" />
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Enable Notifications
+        </label>
+        <select
+          className="w-full border border-gray-300 rounded px-3 py-2"
+          value={notificationsEnabled}
+          onChange={(e) => setNotificationsEnabled(e.target.value)}
+        >
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select>
+      </div>
 
-export default Notifications
+      <div className="border rounded p-4 mb-6">
+        <h3 className="text-lg font-semibold mb-4">Firebase</h3>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Server Key
+          </label>
+          <input
+            type="text"
+            value={serverKey}
+            onChange={(e) => setServerKey(e.target.value)}
+            className="w-full border border-gray-300 rounded px-3 py-2"
+            placeholder="Enter Server Key"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Config
+          </label>
+          <textarea
+            value={firebaseConfig}
+            onChange={(e) => setFirebaseConfig(e.target.value)}
+            rows={8}
+            className="w-full border border-gray-300 rounded px-3 py-2 font-mono text-sm"
+          />
+        </div>
+      </div>
+
+      <button onClick={handleSubmit} className="btn btn-reset">
+        UPDATE
+      </button>
+    </div>
+  );
+};
+
+export default Notifications;

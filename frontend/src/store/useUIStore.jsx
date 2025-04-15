@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-const defaultTheme = "theme-light-1";
+const defaultTheme = "theme-dark-1";
 
 // Apply default theme when app loads (just once)
 if (typeof window !== "undefined") {

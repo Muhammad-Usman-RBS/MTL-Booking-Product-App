@@ -30,7 +30,7 @@ const CustomTable = ({
   const getSortIcon = (key) => (
     <Icons.ArrowDownUp
       className={`inline w-4 h-4 ml-4 ${
-        sortConfig.key === key ? "text-gray-600" : "text-gray-400"
+        sortConfig.key === key ? "text-gray-600" : "text-theme"
       }`}
     />
   );
@@ -103,9 +103,9 @@ const CustomTable = ({
                 <th
                   key={i}
                   onClick={() => showSorting && col.key && requestSort(col.key)}
-                  className={`border px-2 py-3 text-left ${
+                  className={`border-gray-300 border px-2 py-3 text-left ${
                     showSorting && col.key
-                      ? "cursor-pointer hover:bg-gray-200 transition"
+                      ? "cursor-pointer bg-theme text-theme transition"
                       : ""
                   }`}
                 >
@@ -121,12 +121,12 @@ const CustomTable = ({
             {paginatedData.map((item, rowIdx) => (
               <tr
                 key={rowIdx}
-                className="border border-gray-100 hover:bg-gray-50 transition"
+                className="border border-gray-300 hover:bg-red-50 transition"
               >
                 {tableHeaders.map((col, colIdx) => (
                   <td
                     key={colIdx}
-                    className="border px-2 py-2 text-sm text-gray-700 align-top break-words"
+                    className="border border-gray-300 px-2 py-2 text-sm text-gray-700 align-top break-words"
                   >
                     {item[col.key] ?? "-"}
                   </td>

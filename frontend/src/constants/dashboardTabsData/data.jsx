@@ -1217,3 +1217,114 @@ export const fixedPricingData = [
     price: 90.0,
   },
 ];
+
+export const locationCategoryData = [
+  {
+    category: "Airport",
+    locations: 16,
+  },
+  {
+    category: "Airport",
+    locations: 16,
+  },
+  {
+    category: "Airport",
+    locations: 16,
+  },
+];
+
+export const locationsData = [
+  {
+    category: "Airport",
+    name: "Birmingham International Airport (BHX)",
+    latLng: "52.45389938,-1.748029947",
+  },
+  {
+    category: "Airport",
+    name: "Bristol Airport (BRS)",
+    latLng: "51.382702,-2.71909",
+  },
+  {
+    category: "Airport",
+    name: "London City Airport (LCY)",
+    latLng: "51.505299,0.055278",
+  },
+  {
+    category: "Airport",
+    name: "London Gatwick Airport (LGW), North Terminal",
+    latLng: "51.16027,-0.175015",
+  },
+  {
+    category: "Airport",
+    name: "London Gatwick Airport (LGW), South Terminal",
+    latLng: "51.156669,-0.159695",
+  },
+  {
+    category: "Airport",
+    name: "London Heathrow Airport (LHR), Terminal 1",
+    latLng: "51.472324,-0.452892",
+  },
+  {
+    category: "Airport",
+    name: "London Heathrow Airport (LHR), Terminal 2",
+    latLng: "51.46978,-0.45333",
+  },
+  {
+    category: "Airport",
+    name: "London Heathrow Airport (LHR), Terminal 3",
+    latLng: "51.471497,-0.456631",
+  },
+  {
+    category: "Airport",
+    name: "London Heathrow Airport (LHR), Terminal 4",
+    latLng: "51.459183,-0.4462",
+  },
+  {
+    category: "Airport",
+    name: "London Heathrow Airport (LHR), Terminal 5",
+    latLng: "51.471555,-0.489575",
+  },
+];
+
+export const zonesData = [
+  { name: "Bath, Bristol" },
+  { name: "Birmingham" },
+  { name: "Brighton" },
+  { name: "Cambridge" },
+  { name: "Central London CC Zone" },
+  { name: "Dover" },
+  { name: "Enfield and Ilford" },
+  { name: "Exeter" },
+  { name: "Heathrow" },
+  { name: "HP Area" },
+];
+
+export const coverageData = [
+  { type: "Both", coverage: "Allow", category: "Postcode", value: "E16" },
+  { type: "Both", coverage: "Allow", category: "Zone", value: "LCY" },
+  { type: "Both", coverage: "Allow", category: "Postcode", value: "CT21" },
+  { type: "Both", coverage: "Allow", category: "Postcode", value: "CT20" },
+  { type: "Both", coverage: "Allow", category: "Postcode", value: "CT19" },
+  { type: "Both", coverage: "Allow", category: "Postcode", value: "CT18" },
+  { type: "Both", coverage: "Allow", category: "Postcode", value: "CT17" },
+  { type: "Both", coverage: "Allow", category: "Postcode", value: "CT16" },
+  { type: "Both", coverage: "Allow", category: "Postcode", value: "CT15" },
+  { type: "Both", coverage: "Allow", category: "Postcode", value: "CT14" },
+];
+
+export const bookingRestrictionData = [
+  {
+    caption: "Holiday",
+    recurring: "Yearly",
+    from: "01-Jan 00:00",
+    to: "02-Jan 23:55",
+    status: "Active",
+  },
+  {
+    caption: "Holidays",
+    recurring: "Yearly",
+    from: "31-Dec 00:00",
+    to: "01-Jan 23:55",
+    status: "Active",
+  },
+];

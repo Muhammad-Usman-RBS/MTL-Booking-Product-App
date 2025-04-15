@@ -5,9 +5,9 @@ import useUIStore from "../../../store/useUIStore";
 import Images from "../../../assets/images";
 
 const themes = [
+  { value: "theme-dark-1", bg: "#1f2937", text: "#f9fafb" },
   { value: "theme-light-1", bg: "#f3f4f6", text: "#1f2937" },
   { value: "theme-light-2", bg: "#fefce8", text: "#78350f" },
-  { value: "theme-dark-1", bg: "#1f2937", text: "#f9fafb" },
   { value: "theme-dark-2", bg: "#111827", text: "#e5e7eb" },
   { value: "theme-dark-3", bg: "#FF7D00", text: "#f1f5f9" },
   { value: "theme-dark-4", bg: "yellow", text: "black" },
@@ -34,7 +34,7 @@ function Navbar() {
 
   return (
     <nav className="bg-theme text-theme p-4 flex flex-wrap justify-between items-center gap-2 sm:gap-4">
-      <button onClick={toggleSidebar} className="p-2">
+      <button onClick={toggleSidebar} className="p-2 cursor-pointer">
         <Icons.Menu className="w-6 h-6 text-theme" />
       </button>
 
