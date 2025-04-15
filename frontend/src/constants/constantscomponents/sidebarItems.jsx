@@ -155,7 +155,7 @@ const sidebarItems = [
       },
       {
         title: "Driver",
-        route: "/dashboard/pricing/driver",
+        route: "/dashboard/pricing/driver-fare",
         icon: Icons.User,
       },
       {

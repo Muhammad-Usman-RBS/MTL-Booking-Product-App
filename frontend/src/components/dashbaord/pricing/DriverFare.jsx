@@ -1,42 +1,41 @@
 import React, { useState } from "react";
 import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import { hourlyData } from "../../../constants/dashboardTabsData/data";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
+import { driverfarebData } from "../../../constants/dashboardTabsData/data";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const HourlyPackages = () => {
-  const [data, setData] = useState(hourlyData);
-  const [selectedPackage, setSelectedPackage] = useState(null);
+const DriverFare = () => {
+  const [data, setData] = useState(driverfarebData);
+  const [selectedSlab, setSelectedSlab] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  const handleEdit = (pkg) => {
-    setSelectedPackage(pkg);
+  const handleEdit = (item) => {
+    setSelectedSlab(item);
     setShowModal(true);
   };
 
   const handleUpdate = () => {
     const updated = data.map((item) =>
-      item.distance === selectedPackage.distance &&
-      item.hours === selectedPackage.hours
-        ? selectedPackage
+      item.start === selectedSlab.start && item.end === selectedSlab.end
+        ? selectedSlab
         : item
     );
     setData(updated);
-    toast.success("Package Updated!");
+    toast.success("Slab Updated!");
     setShowModal(false);
   };
 
   const tableHeaders = [
-    { label: "Distance", key: "distance" },
-    { label: "Hours", key: "hours" },
-    { label: "Standard Saloon", key: "standardSaloon" },
-    { label: "Executive Saloon", key: "executiveSaloon" },
-    { label: "VIP Saloon", key: "vipSaloon" },
-    { label: "Luxury MPV", key: "luxuryMpv" },
-    { label: "8 Passenger MPV", key: "passengerMpv" },
+    { label: "Start Distance", key: "start" },
+    { label: "End Distance", key: "end" },
+    { label: "Standard Saloon", key: "standard" },
+    { label: "Executive Saloon", key: "executive" },
+    { label: "VIP Saloon", key: "vip" },
+    { label: "Luxury MPV", key: "luxury" },
+    { label: "8 Passenger MPV", key: "passenger" },
     { label: "Action", key: "actions" },
   ];
 
@@ -60,8 +59,9 @@ const HourlyPackages = () => {
   return (
     <>
       <div>
-        <OutletHeading name="Hourly Package" />
+        <OutletHeading name="Driver Fare" />
         <button className="btn btn-edit mb-4">Add New</button>
+
         <CustomTable
           tableHeaders={tableHeaders}
           tableData={tableData}
@@ -73,17 +73,17 @@ const HourlyPackages = () => {
       <CustomModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        heading={`Edit ${selectedPackage?.distance} miles ${selectedPackage?.hours} Hours`}
+        heading={`Edit ${selectedSlab?.start} to ${selectedSlab?.end} Slab`}
       >
         <div className="w-80 mx-auto p-4 font-sans space-y-4">
           {[
-            { label: "Distance", key: "distance" },
-            { label: "Hours", key: "hours" },
-            { label: "Standard Saloon", key: "standardSaloon" },
-            { label: "Executive Saloon", key: "executiveSaloon" },
-            { label: "VIP Saloon", key: "vipSaloon" },
-            { label: "Luxury MPV", key: "luxuryMpv" },
-            { label: "8 Passenger MPV", key: "passengerMpv" },
+            { label: "Start Distance", key: "start" },
+            { label: "End Distance", key: "end" },
+            { label: "Standard Saloon", key: "standard" },
+            { label: "Executive Saloon", key: "executive" },
+            { label: "VIP Saloon", key: "vip" },
+            { label: "Luxury MPV", key: "luxury" },
+            { label: "8 Passenger MPV", key: "passenger" },
           ].map(({ label, key }) => (
             <div key={key}>
               <label className="block text-sm font-medium text-gray-700">
@@ -92,10 +92,10 @@ const HourlyPackages = () => {
               <input
                 type="number"
                 className="custom_input"
-                value={selectedPackage?.[key] || ""}
+                value={selectedSlab?.[key] || ""}
                 onChange={(e) =>
-                  setSelectedPackage({
-                    ...selectedPackage,
+                  setSelectedSlab({
+                    ...selectedSlab,
                     [key]: parseFloat(e.target.value),
                   })
                 }
@@ -120,4 +120,4 @@ const HourlyPackages = () => {
   );
 };
 
-export default HourlyPackages;
+export default DriverFare;

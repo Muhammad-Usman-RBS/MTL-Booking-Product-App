@@ -49,26 +49,32 @@ const NewInvoice = () => {
       <OutletHeading name="Create New Invoice" />
       <div className="flex flex-wrap items-center justify-between">
         <div className="flex gap-2">
-          <SelectDateRange
-            startDate={startDate}
-            endDate={endDate}
-            setStartDate={setStartDate}
-            setEndDate={setEndDate}
-          />
-          <SelectedSearch
-            selected={selectedCustomers}
-            setSelected={setSelectedCustomers}
-            statusList={customerList}
-            placeholder="Select Customer"
-            showCount={false}
-          />
-          <SelectedSearch
-            selected={selectedAccounts}
-            setSelected={setSelectedAccounts}
-            statusList={accountList}
-            placeholder="Select Accounts"
-            showCount={false}
-          />
+          <div>
+            <SelectDateRange
+              startDate={startDate}
+              endDate={endDate}
+              setStartDate={setStartDate}
+              setEndDate={setEndDate}
+            />
+          </div>
+          <div className="w-64">
+            <SelectedSearch
+              selected={selectedCustomers}
+              setSelected={setSelectedCustomers}
+              statusList={customerList}
+              placeholder="Select Customer"
+              showCount={false}
+            />
+          </div>
+          <div className="w-64">
+            <SelectedSearch
+              selected={selectedAccounts}
+              setSelected={setSelectedAccounts}
+              statusList={accountList}
+              placeholder="Select Accounts"
+              showCount={false}
+            />
+          </div>
         </div>
         <div className="flex gap-2">
           <button className="btn btn-reset">Search</button>

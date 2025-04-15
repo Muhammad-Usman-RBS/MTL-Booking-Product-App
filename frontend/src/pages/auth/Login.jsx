@@ -34,7 +34,7 @@ const Login = () => {
           />
         </div>
         <div className="text-center">
-          <Link to="/dashboard" className="decoration-none">
+          <Link to="/dashboard/home" className="decoration-none">
             <button
               type="submit"
               className="w-full cursor-pointer text-white px-4 py-2 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all duration-200"

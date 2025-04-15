@@ -59,6 +59,7 @@ import CronJob from "./components/dashbaord/settings/CronJob";
 // React Toastify
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import DriverFare from "./components/dashbaord/pricing/DriverFare";
 
 function App() {
   return (
@@ -107,7 +108,7 @@ function App() {
           <Route path="pricing/location-category" element={<LocationPricingCategory />} />
           <Route path="pricing/fixed" element={<FixedPricing />} />
           <Route path="pricing/distance-slab" element={<DistanceSlab />} />
-          <Route path="pricing/driver" element={<DriverPricing />} />
+          <Route path="pricing/driver-fare" element={<DriverFare />} />
           <Route path="pricing/congestion" element={<CongestionCharges />} />
           <Route path="pricing/discounts-date" element={<DiscountsByDate />} />
           <Route path="pricing/discounts-location" element={<DiscountsByLocation />} />

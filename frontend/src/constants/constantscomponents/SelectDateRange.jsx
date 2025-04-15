@@ -73,7 +73,7 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
   };
 
   return (
-    <div className="relative inline-block w-full md:w-[300px]">
+    <div className="relative inline-block w-full">
       <div
         className="flex items-center gap-2 border border-gray-300 px-2 py-[6px] bg-white rounded cursor-pointer"
         onClick={() => setDropdownOpen(!dropdownOpen)}

@@ -196,13 +196,14 @@ const BookingsList = () => {
               <Icons.Filter size={16} />
             </button>
           </div>
-
-          <SelectedSearch
-            selected={selectedStatus}
-            setSelected={setSelectedStatus}
-            statusList={statusList}
-            showCount={true}
-          />
+          <div className="w-64">
+            <SelectedSearch
+              selected={selectedStatus}
+              setSelected={setSelectedStatus}
+              statusList={statusList}
+              showCount={true}
+            />
+          </div>
 
           <SelectDateRange
             startDate={startDate}
@@ -215,34 +216,42 @@ const BookingsList = () => {
 
       {showDiv && (
         <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-4">
-          <SelectedSearch
-            selected={selectedDrivers}
-            setSelected={setSelectedDrivers}
-            statusList={driverList}
-            placeholder="Select Driver"
-            showCount={false}
-          />
-          <SelectedSearch
-            selected={selectedPassengers}
-            setSelected={setSelectedPassengers}
-            statusList={passengerList}
-            placeholder="Select Passenger"
-            showCount={false}
-          />
-          <SelectedSearch
-            selected={selectedVehicleTypes}
-            setSelected={setSelectedVehicleTypes}
-            statusList={vehicleList}
-            placeholder="Select Vehicle"
-            showCount={false}
-          />
-          <SelectedSearch
-            selected={selectedAccounts}
-            setSelected={setSelectedAccounts}
-            statusList={accountList}
-            placeholder="Select Account"
-            showCount={false}
-          />
+          <div className="w-64">
+            <SelectedSearch
+              selected={selectedDrivers}
+              setSelected={setSelectedDrivers}
+              statusList={driverList}
+              placeholder="Select Driver"
+              showCount={false}
+            />
+          </div>
+          <div className="w-64">
+            <SelectedSearch
+              selected={selectedPassengers}
+              setSelected={setSelectedPassengers}
+              statusList={passengerList}
+              placeholder="Select Passenger"
+              showCount={false}
+            />
+          </div>
+          <div className="w-64">
+            <SelectedSearch
+              selected={selectedVehicleTypes}
+              setSelected={setSelectedVehicleTypes}
+              statusList={vehicleList}
+              placeholder="Select Vehicle"
+              showCount={false}
+            />
+          </div>
+          <div className="w-64">
+            <SelectedSearch
+              selected={selectedAccounts}
+              setSelected={setSelectedAccounts}
+              statusList={accountList}
+              placeholder="Select Account"
+              showCount={false}
+            />
+          </div>
         </div>
       )}
 

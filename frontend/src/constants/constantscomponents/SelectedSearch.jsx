@@ -23,7 +23,7 @@ const SelectedSearch = ({
   );
 
   return (
-    <div className="relative inline-block text-left">
+    <div className="relative inline-block text-left w-full">
       <button
         onClick={() => setDropdownOpen(!dropdownOpen)}
         className="border px-3 py-1 rounded bg-white cursor-pointer border-gray-300 w-full text-left"
