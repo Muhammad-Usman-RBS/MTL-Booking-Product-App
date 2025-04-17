@@ -1328,3 +1328,43 @@ export const bookingRestrictionData = [
     status: "Active",
   },
 ];
+
+export const receiptData = [
+  {
+    invoiceNo: "INV-00001",
+    customer: "Erin Leahy",
+    account: "Account 1",
+    date: "04-01-2023",
+    dueDate: "11-01-2023",
+    amount: "92.00",
+    email: "erin.leahy@example.com",
+    phone: "+447930844247",
+    rides: [
+      {
+        number: "2212323",
+        passenger: "Erin Leahy",
+        pickup: "London Stansted Airport (STN)",
+        drop: "32 The Bishops Ave, London N2 0BA, UK",
+        datetime: "23-12-2022 14:05",
+        amount: "92.00",
+        tax: "0%",
+      },
+      {
+        number: "2212323",
+        passenger: "Erin Leahy",
+        pickup: "London Stansted Airport (STN)",
+        drop: "32 The Bishops Ave, London N2 0BA, UK",
+        datetime: "23-12-2022 14:05",
+        amount: "32.00",
+        tax: "0%",
+      },
+    ],
+    company: {
+      name: "Mega Transfers Limited",
+      address: "29 Minerva Road, London, NW10 6HJ",
+      vat: "442612419",
+      phone: "+442089611818",
+      email: "bookings@megatransfers.co.uk",
+    },
+  },
+];

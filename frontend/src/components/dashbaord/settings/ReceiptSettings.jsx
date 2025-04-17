@@ -1,174 +1,470 @@
+// import React, { useState } from "react";
+// import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+// import IMAGES from "../../../assets/images";
+// import ReceiptFirstTemplate from "./ReceiptFirstTemplate";
+// import ReceiptSecondTemplate from "./ReceiptSecondTemplate";
+// import { receiptData } from '../../../constants/dashboardTabsData/data';
+
+// const ReceiptSettings = () => {
+//   const [selectedTemplate, setSelectedTemplate] = useState(null);
+
+//   return (
+//     <>
+//       <OutletHeading name="Receipt Template" />
+
+//       {/* Only show template options if nothing is selected yet */}
+//       {!selectedTemplate && (
+//         <>
+//           <h3 className="text-2xl font-bold text-gray-600 mb-6 text-center underline">
+//             Choose the template design
+//           </h3>
+
+//           <div className="flex justify-center gap-6 mb-8">
+//             <div className="w-[520px] h-[450px] flex flex-col items-center justify-between text-center p-2 rounded-lg shadow bg-white">
+//               <img
+//                 src={IMAGES.receiptFirstTemplate}
+//                 alt="Template One"
+//                 className="w-full h-[380px] object-cover rounded-lg"
+//               />
+//               <button
+//                 onClick={() => setSelectedTemplate("one")}
+//                 className="btn btn-reset mt-2"
+//               >
+//                 Use This
+//               </button>
+//             </div>
+
+//             <div className="w-[520px] h-[450px] flex flex-col items-center justify-between text-center p-2 rounded-lg shadow bg-white">
+//               <img
+//                 src={IMAGES.receiptSecondTemplate}
+//                 alt="Template Two"
+//                 className="w-full h-[380px] object-cover rounded-lg"
+//               />
+//               <button
+//                 onClick={() => setSelectedTemplate("two")}
+//                 className="btn btn-edit mt-2"
+//               >
+//                 Use This
+//               </button>
+//             </div>
+//           </div>
+//         </>
+//       )}
+
+//       {/* Render selected template only */}
+//       {selectedTemplate === "one" && <ReceiptFirstTemplate item={receiptData[0]} />}
+//       {selectedTemplate === "two" && <ReceiptSecondTemplate />}
+//     </>
+//   );
+// };
+
+// export default ReceiptSettings;
+
 import React, { useState } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import IMAGES from "../../../assets/images";
+import { receiptData } from "../../../constants/dashboardTabsData/data";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
-const ClientProposal = () => {
-  const [clientName, setClientName] = useState("John Doe");
-  const [companyName, setCompanyName] = useState("Mega Transfers Limited");
-  const [companyAddress, setCompanyAddress] = useState("123 Main Street, City");
-  const [contactNumber, setContactNumber] = useState("+123456789");
-  const [companyEmail, setCompanyEmail] = useState("info@mega.com");
-  const [passengerName, setPassengerName] = useState("John Doe");
-  const [totalAmount, setTotalAmount] = useState("$90");
-  const [logoFile, setLogoFile] = useState(null);
+const ReceiptSettings = () => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState({ ...receiptData[0] });
+  const [logo, setLogo] = useState(IMAGES.dashboardLargeLogo);
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  const handleLogoUpload = (e) => {
+  const status = form.status;
+
+  const subtotal = form.rides.reduce(
+    (acc, ride) => acc + parseFloat(ride.amount),
+    0
+  );
+  const discount = 0;
+  const deposit = 0;
+  const balanceDue = subtotal - discount - deposit;
+
+  const handleEditToggle = () => setIsEditing(!isEditing);
+
+  const handleChange = (field, value) => {
+    setForm({ ...form, [field]: value });
+  };
+
+  const handleCompanyChange = (field, value) => {
+    setForm({ ...form, company: { ...form.company, [field]: value } });
+  };
+
+  const handleLogoChange = (e) => {
     const file = e.target.files[0];
-    if (file) setLogoFile(URL.createObjectURL(file));
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setLogo(imageUrl);
+    }
+  };
+
+  const downloadPDF = () => {
+    setIsDownloading(true); // Apply A4 styles
+
+    setTimeout(() => {
+      const input = document.getElementById("invoiceToDownload");
+
+      html2canvas(input, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        windowWidth: document.body.scrollWidth,
+        windowHeight: input.scrollHeight,
+      }).then((canvas) => {
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF("p", "mm", "a4");
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, imgHeight);
+        pdf.save(`Invoice-${form.invoiceNo}.pdf`);
+
+        setIsDownloading(false); // Revert style
+      });
+    }, 100); // delay to apply new style before rendering
+  };
+
+  const handleRideChange = (index, field, value) => {
+    const updatedRides = [...form.rides];
+    updatedRides[index][field] = value;
+    setForm({ ...form, rides: updatedRides });
+  };
+
+  const thStyle = {
+    padding: "8px",
+    border: "1px solid #ccc",
+    textAlign: "left",
+  };
+
+  const tdStyle = {
+    padding: "8px",
+    border: "1px solid #ccc",
+    verticalAlign: "top",
+  };
+
+  const subInfoStyle = {
+    color: "#6B7280",
+    margin: "4px 0",
+    fontSize: "13px",
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 flex flex-col lg:flex-row gap-6 justify-center items-start">
-      {/* Left Panel: Input Form */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-8 w-full lg:max-w-md">
-        <h1 className="text-3xl font-bold mb-6 text-blue-600 text-center">
-          Edit Proposal
-        </h1>
-        <div className="space-y-4">
+    <>
+      <OutletHeading name="Receipt Template" />
+      <div
+        id="invoiceToDownload"
+        style={{
+          ...(isDownloading
+            ? {
+                width: "794px",
+                minHeight: "1123px",
+                padding: "32px",
+                backgroundColor: "white",
+                fontSize: "14px",
+                border: "none",
+                boxShadow: "0 0 0 white",
+                margin: "auto",
+              }
+            : {
+                padding: "16px",
+                border: "1px solid #ccc",
+                borderRadius: "8px",
+                backgroundColor: "white",
+                fontSize: "14px",
+                marginTop: "16px",
+              }),
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: "20px",
+          }}
+        >
           <div>
-            <label className="block text-sm font-semibold text-gray-700">
-              Company Name
-            </label>
-            <input
-              type="text"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">
-              Company Address
-            </label>
-            <input
-              type="text"
-              value={companyAddress}
-              onChange={(e) => setCompanyAddress(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">
-              Contact Number
-            </label>
-            <input
-              type="text"
-              value={contactNumber}
-              onChange={(e) => setContactNumber(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">
-              Company Email
-            </label>
-            <input
-              type="email"
-              value={companyEmail}
-              onChange={(e) => setCompanyEmail(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">
-              Passenger Name
-            </label>
-            <input
-              type="text"
-              value={passengerName}
-              onChange={(e) => setPassengerName(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">
-              Total Amount
-            </label>
-            <input
-              type="text"
-              value={totalAmount}
-              onChange={(e) => setTotalAmount(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">
-              Upload Logo
-            </label>
-            <label
-              htmlFor="profile-upload"
-              className="inline-block bg-blue-600 text-white px-4 py-2 mt-1 rounded-md cursor-pointer hover:bg-blue-700 transition"
-            >
-              Choose File
-            </label>
-            <input
-              id="profile-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleLogoUpload}
-              className="hidden"
-            />
-          </div>
-        </div>
-      </div>
+            {isEditing ? (
+              <>
+                <div style={{ marginBottom: "12px" }}>
+                  <label
+                    htmlFor="logo-upload"
+                    style={{
+                      padding: "8px 16px",
+                      backgroundColor: "#2563EB",
+                      color: "white",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      display: "inline-block",
+                    }}
+                  >
+                    Change Logo
+                  </label>
+                  <input
+                    id="logo-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    style={{ display: "none" }}
+                  />
+                </div>
 
-      {/* Right Panel: Preview Certificate Style */}
-      <div className="relative bg-[#003366] text-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden">
-        <div className="p-8 border-b border-white">
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="text-2xl font-bold mb-2">{companyName}</div>
-              <div className="text-sm">{companyAddress}</div>
-              <div className="text-sm">{contactNumber}</div>
-              <div className="text-sm">{companyEmail}</div>
-            </div>
-            {logoFile && (
+                <br />
+                <img
+                  src={logo}
+                  alt="Uploaded Logo"
+                  style={{ height: "40px", margin: "10px 0" }}
+                />
+              </>
+            ) : (
               <img
-                src={logoFile}
+                src={logo}
                 alt="Logo"
-                className="w-20 h-20 object-contain rounded-md bg-white p-1"
+                style={{ height: "40px", marginBottom: "8px" }}
               />
+            )}
+
+            {isEditing ? (
+              <>
+                <input
+                  value={form.company.name}
+                  onChange={(e) => handleCompanyChange("name", e.target.value)}
+                />
+                <br />
+                <input
+                  value={form.company.address}
+                  onChange={(e) =>
+                    handleCompanyChange("address", e.target.value)
+                  }
+                />
+                <br />
+                <input
+                  value={form.company.vat}
+                  onChange={(e) => handleCompanyChange("vat", e.target.value)}
+                />
+                <br />
+                <input
+                  value={form.company.email}
+                  onChange={(e) => handleCompanyChange("email", e.target.value)}
+                />
+                <br />
+                <input
+                  value={form.company.phone}
+                  onChange={(e) => handleCompanyChange("phone", e.target.value)}
+                />
+              </>
+            ) : (
+              <>
+                <h2
+                  style={{
+                    fontWeight: "700",
+                    fontSize: "20px",
+                    marginTop: "40px",
+                    color: "#4A5565",
+                  }}
+                >
+                  {form.company.name}
+                </h2>
+                <p>{form.company.address}</p>
+                <p>VAT: {form.company.vat}</p>
+                <a href={`mailto:${form.company.email}`}>
+                  {form.company.email}
+                </a>
+                <p>{form.company.phone}</p>
+              </>
+            )}
+          </div>
+
+          <div>
+            <h2
+              style={{ fontSize: "20px", color: "#4A5565", fontWeight: "bold" }}
+            >
+              INVOICE
+            </h2>
+            <p style={{ color: "#6B7280" }}>#{form.invoiceNo}</p>
+
+            {isEditing ? (
+              <>
+                <p>
+                  Invoice Date:
+                  <input
+                    type="date"
+                    value={form.date}
+                    onChange={(e) => handleChange("date", e.target.value)}
+                  />
+                </p>
+                <p>
+                  Due Date:
+                  <input
+                    type="date"
+                    value={form.dueDate}
+                    onChange={(e) => handleChange("dueDate", e.target.value)}
+                  />
+                </p>
+                <p style={{ fontWeight: "bold", marginTop: "10px" }}>Bill To</p>
+                <input
+                  value={form.customer}
+                  onChange={(e) => handleChange("customer", e.target.value)}
+                />
+                <br />
+                <input
+                  value={form.email}
+                  onChange={(e) => handleChange("email", e.target.value)}
+                />
+                <br />
+                <input
+                  value={form.phone}
+                  onChange={(e) => handleChange("phone", e.target.value)}
+                />
+              </>
+            ) : (
+              <>
+                <p>Invoice Date: {form.date}</p>
+                <p>Due Date: {form.dueDate}</p>
+                <p style={{ fontWeight: "bold", marginTop: "10px" }}>Bill To</p>
+                <p>{form.customer}</p>
+                <a href={`mailto:${form.email}`}>{form.email}</a>
+                <p>{form.phone}</p>
+              </>
             )}
           </div>
         </div>
 
-        <div className="p-8 border-b border-white">
-          <p className="text-lg">
-            Thank you for travelling with {companyName}, {passengerName}!
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead style={{ backgroundColor: "#4A5565", color: "white" }}>
+            <tr>
+              <th style={thStyle}>#</th>
+              <th style={thStyle}>Item</th>
+              <th style={thStyle}>Tax</th>
+              <th style={thStyle}>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {form.rides.map((ride, index) => (
+              <tr key={index}>
+                <td style={tdStyle}>{index + 1}</td>
+                <td style={tdStyle}>
+                  <strong>
+                    {isEditing ? (
+                      <>
+                        <input
+                          value={ride.number}
+                          onChange={(e) =>
+                            handleRideChange(index, "number", e.target.value)
+                          }
+                        />
+                        -
+                        <input
+                          value={ride.passenger}
+                          onChange={(e) =>
+                            handleRideChange(index, "passenger", e.target.value)
+                          }
+                        />
+                        <p style={subInfoStyle}>
+                          Pickup:
+                          <input
+                            value={ride.pickup}
+                            onChange={(e) =>
+                              handleRideChange(index, "pickup", e.target.value)
+                            }
+                          />
+                        </p>
+                        <p style={subInfoStyle}>
+                          Drop off:
+                          <input
+                            value={ride.drop}
+                            onChange={(e) =>
+                              handleRideChange(index, "drop", e.target.value)
+                            }
+                          />
+                        </p>
+                        <p style={subInfoStyle}>
+                          Date & Time:
+                          <input
+                            value={ride.datetime}
+                            onChange={(e) =>
+                              handleRideChange(
+                                index,
+                                "datetime",
+                                e.target.value
+                              )
+                            }
+                          />
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        {ride.number} - {ride.passenger}
+                        <p style={subInfoStyle}>Pickup: {ride.pickup}</p>
+                        <p style={subInfoStyle}>Drop off: {ride.drop}</p>
+                        <p style={subInfoStyle}>Date & Time: {ride.datetime}</p>
+                      </>
+                    )}
+                  </strong>
+                </td>
+                <td style={tdStyle}>
+                  {isEditing ? (
+                    <input
+                      value={ride.tax}
+                      onChange={(e) =>
+                        handleRideChange(index, "tax", e.target.value)
+                      }
+                    />
+                  ) : (
+                    ride.tax
+                  )}
+                </td>
+                <td style={tdStyle}>
+                  {isEditing ? (
+                    <input
+                      value={ride.amount}
+                      onChange={(e) =>
+                        handleRideChange(index, "amount", e.target.value)
+                      }
+                    />
+                  ) : (
+                    `£${ride.amount}`
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div style={{ textAlign: "right", marginTop: "16px" }}>
+          <p>Sub Total: £{subtotal.toFixed(2)}</p>
+          <p>Discount: £{discount.toFixed(2)}</p>
+          <p>Deposit: £{deposit.toFixed(2)}</p>
+          <p style={{ fontWeight: "bold" }}>
+            Balance Due: £{balanceDue.toFixed(2)}
           </p>
-          <p className="text-sm mt-1">We hope you enjoyed your trip.</p>
         </div>
 
-        <div className="p-8 bg-white text-black">
-          <div className="flex justify-between items-center text-xl font-bold border-b pb-2 mb-4">
-            <span>Total</span>
-            <span>{totalAmount}</span>
-          </div>
-          <p className="text-sm mb-1 font-semibold text-gray-800">
-            JOURNEY SUMMARY
-          </p>
-          <p className="text-sm text-gray-600 mb-4">
-            Thank you for riding with us! Feel free to reach back to pre-book
-            your next ride. If you have any issues with the service you
-            received, please let us know via contact us.
-          </p>
-          <p className="text-xs text-gray-500 italic">
-            This is not a tax invoice.
-          </p>
-          <a
-            href="#"
-            className="text-blue-600 underline text-sm mt-2 inline-block"
-          >
-            Download Receipt
-          </a>
-        </div>
-
-        <div className="w-full h-24 bg-[#003366] flex items-center justify-center">
-          <p className="text-white font-semibold text-lg tracking-wide">
-            Thank you for choosing {companyName}!
+        <div
+          style={{
+            marginTop: "16px",
+            borderTop: "1px solid #ccc",
+            paddingTop: "8px",
+          }}
+        >
+          <p style={{ fontWeight: "600" }}>Notes</p>
+          <p style={{ color: "#4B5563", fontSize: "13px" }}>
+            T&Cs apply. Please call for detail.
           </p>
         </div>
       </div>
-    </div>
+      <div className="flex justify-between mt-3">
+        <button className="btn btn-primary" onClick={downloadPDF}>
+          Donwload
+        </button>
+        <button onClick={handleEditToggle} className="btn btn-edit">
+          {isEditing ? "Save" : "Edit"}
+        </button>
+      </div>
+    </>
   );
 };
 
-export default ClientProposal;
+export default ReceiptSettings;

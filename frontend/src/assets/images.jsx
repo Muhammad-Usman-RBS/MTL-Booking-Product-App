@@ -8,6 +8,9 @@ const IMAGES = {
   mercedesVClass: "/assets/images/Mercedes V Class.webp",
   mercedesVito: "/assets/images/Mercedes Vito.webp",
   bmwI7: "/assets/images/BMW I7.webp",
+
+  receiptFirstTemplate: "/assets/images/ReceiptFirstTemplate.png",
+  receiptSecondTemplate: "/assets/images/ReceiptSecondTemplate.png",
 };
 
 export default IMAGES;

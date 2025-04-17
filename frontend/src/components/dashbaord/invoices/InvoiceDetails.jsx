@@ -60,7 +60,7 @@ const InvoiceDetails = ({ item }) => {
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div>
-        <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
+        <div style={{ display: "flex", gap: "10px", marginBottom: "12px", marginTop: "30px" }}>
           <Link to="/dashboard/edit-invoice">
             <button
               style={{
