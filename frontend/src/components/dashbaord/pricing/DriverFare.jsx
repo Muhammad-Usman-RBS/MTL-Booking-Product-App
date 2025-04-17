@@ -75,7 +75,7 @@ const DriverFare = () => {
         onClose={() => setShowModal(false)}
         heading={`Edit ${selectedSlab?.start} to ${selectedSlab?.end} Slab`}
       >
-        <div className="w-80 mx-auto p-4 font-sans space-y-4">
+        <div className="mx-auto p-4 font-sans space-y-4">
           {[
             { label: "Start Distance", key: "start" },
             { label: "End Distance", key: "end" },

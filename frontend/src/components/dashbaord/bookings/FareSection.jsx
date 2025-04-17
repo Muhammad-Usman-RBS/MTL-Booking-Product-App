@@ -16,12 +16,12 @@ const FareSection = () => {
           <input
             type="text"
             placeholder="Card Payment Reference"
-            className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring focus:ring-blue-500"
+            className="custom_input"
           />
           <input
             type="text"
             placeholder="Payment Gateway"
-            className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring focus:ring-blue-500"
+            className="custom_input"
           />
         </div>
       )}
@@ -49,25 +49,21 @@ const FareSection = () => {
       {/* Fare Inputs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Journey Fare", bg: "from-pink-100 to-pink-200" },
-          { label: "Driver Fare", bg: "from-yellow-100 to-yellow-200" },
-          { label: "Return Journey Fare", bg: "from-green-100 to-green-200" },
-          { label: "Return Driver Fare", bg: "from-blue-100 to-blue-200" },
+          { label: "Journey Fare" },
+          { label: "Driver Fare" },
+          { label: "Return Journey Fare" },
+          { label: "Return Driver Fare" },
         ].map((item, index) => (
           <div
             key={index}
-            className={`bg-gradient-to-br ${item.bg} border rounded px-4 py-3`}
+            className={`bg-gray-100 border border-gray-300 rounded px-4 py-3`}
           >
             <label className="block text-sm font-semibold text-gray-800 mb-1">
               {item.label}
             </label>
             <div className="flex items-center">
-              <input
-                type="number"
-                defaultValue={0}
-                className="w-full px-3 py-2 border border-gray-800 rounded-l focus:outline-none focus:ring focus:ring-blue-500"
-              />
-              <span className="bg-gray-200 border border-gray-800 px-3 py-2 rounded-r text-gray-700 font-medium">
+              <input type="number" defaultValue={0} className="custom_input" />
+              <span className="bg-gray-200 border border-gray-300 px-3 py-1 rounded-r text-gray-700 font-medium">
                 GBP
               </span>
             </div>
@@ -80,15 +76,15 @@ const FareSection = () => {
       {/* Notifications */}
       <div className="flex flex-wrap justify-center gap-6">
         {/* Email Section */}
-        <div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl px-6 py-5 shadow-md w-[250px]">
-          <h4 className="text-lg font-semibold text-purple-800 mb-3 border-b pb-1">
+        <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl px-6 py-5 shadow-md w-[250px]">
+          <h4 className="text-lg font-semibold text-blue-800 mb-3 border-b pb-1">
             Email
           </h4>
           <div className="space-y-3 text-sm text-gray-700">
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
-                className="accent-purple-600"
+                className="accent-blue-600"
                 checked={emailNotify.admin}
                 onChange={() =>
                   setEmailNotify((prev) => ({ ...prev, admin: !prev.admin }))
@@ -99,7 +95,7 @@ const FareSection = () => {
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
-                className="accent-purple-600"
+                className="accent-blue-600"
                 checked={emailNotify.customer}
                 onChange={() =>
                   setEmailNotify((prev) => ({

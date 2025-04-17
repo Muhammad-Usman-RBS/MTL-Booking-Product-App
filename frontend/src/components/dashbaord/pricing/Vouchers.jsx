@@ -138,7 +138,7 @@ const Vouchers = () => {
         onClose={() => setShowModal(false)}
         heading={`Edit ${selectedItem?.voucher || "New Voucher"}`}
       >
-        <div className="w-96 mx-auto p-4 font-sans space-y-4">
+        <div className="mx-auto p-4 font-sans space-y-4">
           <div>
             <label className="block text-sm font-medium">Voucher</label>
             <input

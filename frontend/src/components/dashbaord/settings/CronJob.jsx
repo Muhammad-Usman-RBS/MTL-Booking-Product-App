@@ -11,7 +11,7 @@ const CronJob = () => {
   return (
     <div>
       <OutletHeading name="Cron Job (Scheduled Tasks)" />
-      <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded shadow">
+      <div className="max-w-4xl mx-auto mt-10 p-2 md:p-6 bg-white rounded shadow">
         <div className="mb-4">
           <label className="text-sm font-medium text-gray-700">
             Cron Command:
@@ -54,7 +54,7 @@ const CronJob = () => {
           </div>
           {autoAllocChecked && (
             <div className="p-4 space-y-4">
-              <div className="flex space-x-2">
+              <div className="flex flex-col md:flex-row gap-3 space-x-2">
                 <SelectOption
                   options={["0 hours", "1 hour", "2 hours"]}
                   value="0 hours"
@@ -64,11 +64,11 @@ const CronJob = () => {
                   value="before pickup time"
                 />
               </div>
-              <div className="flex space-x-4">
-                <label>
+              <div className="flex flex-col md:flex-row gap-3 space-x-4">
+                <label className="text-xs md:text-lg">
                   <input type="checkbox" className="mr-1" /> SMS
                 </label>
-                <label>
+                <label className="text-xs md:text-lg">
                   <input type="checkbox" defaultChecked className="mr-1" />
                   bookingRestrictionData Email
                 </label>
@@ -95,15 +95,12 @@ const CronJob = () => {
                   options={["1 hours", "2 hours"]}
                   value="1 hours"
                 />
-                <p className="text-sm text-gray-700 mt-2">
-                  after pickup time &amp; "Completed" status
-                </p>
               </div>
-              <div className="flex space-x-4">
-                <label>
+              <div className="flex flex-col md:flex-row gap-3 space-x-4">
+                <label className="text-xs md:text-lg">
                   <input type="checkbox" className="mr-1" /> SMS
                 </label>
-                <label>
+                <label className="text-xs md:text-lg">
                   <input type="checkbox" defaultChecked className="mr-1" />
                   bookingRestrictionData Email
                 </label>
@@ -132,11 +129,11 @@ const CronJob = () => {
                   value="16:00 - 17:00"
                 />
               </div>
-              <div className="flex space-x-4">
-                <label>
+              <div className="flex flex-col md:flex-row gap-3 space-x-4">
+                <label className="text-xs md:text-lg">
                   <input type="checkbox" className="mr-1" /> SMS
                 </label>
-                <label>
+                <label className="text-xs md:text-lg">
                   <input type="checkbox" className="mr-1" /> Email
                 </label>
               </div>
@@ -157,7 +154,7 @@ const CronJob = () => {
           </div>
           {statementChecked && (
             <div className="p-4 space-y-4">
-              <div className="flex space-x-2">
+              <div className="flex flex-col md:flex-row gap-3 space-x-2">
                 <SelectOption options={["Weekly", "Monthly"]} value="Weekly" />
                 <SelectOption options={["Monday", "Tuesday"]} value="Monday" />
                 <SelectOption
@@ -165,11 +162,11 @@ const CronJob = () => {
                   value="01:00 - 02:00"
                 />
               </div>
-              <div className="flex space-x-4">
-                <label>
+              <div className="flex flex-col md:flex-row gap-3 space-x-4">
+                <label className="text-xs md:text-lg">
                   <input type="checkbox" className="mr-1" /> SMS
                 </label>
-                <label>
+                <label className="text-xs md:text-lg">
                   <input type="checkbox" className="mr-1" /> Email
                 </label>
               </div>

@@ -75,7 +75,7 @@ const HourlyPackages = () => {
         onClose={() => setShowModal(false)}
         heading={`Edit ${selectedPackage?.distance} miles ${selectedPackage?.hours} Hours`}
       >
-        <div className="w-80 mx-auto p-4 font-sans space-y-4">
+        <div className="mx-auto p-4 font-sans space-y-4">
           {[
             { label: "Distance", key: "distance" },
             { label: "Hours", key: "hours" },

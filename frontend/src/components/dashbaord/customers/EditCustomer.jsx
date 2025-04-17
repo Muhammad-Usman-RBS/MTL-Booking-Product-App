@@ -27,7 +27,7 @@ const EditCustomer = ({ customer, onClose }) => {
       onClose={onClose}
       heading={`Edit ${formData.name}`}
     >
-      <div className="text-sm px-4 pb-4">
+      <div className="text-sm px-4 pb-4 pt-4">
         <div className="flex flex-col items-center mb-4">
           <img
             src={formData?.profile || "/default-user.png"}

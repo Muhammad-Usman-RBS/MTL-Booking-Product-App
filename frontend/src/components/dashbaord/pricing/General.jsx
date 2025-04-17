@@ -25,7 +25,7 @@ const General = () => {
     <div>
       <OutletHeading name="General Pricing" />
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div>
             <label className="block font-medium mb-1">Price Decimals</label>
             <input
@@ -49,7 +49,7 @@ const General = () => {
                 onChange={handleChange}
                 className="custom_input"
               />
-              <span className="px-4 py-1.5 border border-gray-300 rounded-r-md bg-gray-100">
+              <span className="px-4 py-1 border border-gray-300 rounded-r-md bg-gray-100">
                 GBP
               </span>
             </div>
@@ -65,19 +65,10 @@ const General = () => {
                 onChange={handleChange}
                 className="custom_input"
               />
-              <span className="px-4 py-1.5 border border-gray-300 rounded-r-md bg-gray-100">
+              <span className="px-4 py-1 border border-gray-300 rounded-r-md bg-gray-100">
                 GBP
               </span>
             </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block font-medium mb-1">
-              Card payment price type
-            </label>
-            <SelectOption width="full" options={["Percentage", "Amount"]} />
           </div>
 
           <div>
@@ -92,16 +83,27 @@ const General = () => {
                 onChange={handleChange}
                 className="custom_input"
               />
-              <span className="px-4 py-1.5 border border-gray-300 rounded-r-md bg-gray-100">
+              <span className="px-4 py-1 border border-gray-300 rounded-r-md bg-gray-100">
                 GBP
               </span>
             </div>
           </div>
         </div>
 
-        <button type="submit" className="btn btn-reset">
-          UPDATE
-        </button>
+        <label className="block font-medium mb-1">
+          Card payment price type
+        </label>
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="w-full md:w-64">
+            <SelectOption width="full" options={["Percentage", "Amount"]} />
+          </div>
+
+          <div>
+            <button type="submit" className="btn btn-reset">
+              UPDATE
+            </button>
+          </div>
+        </div>
       </form>
     </div>
   );

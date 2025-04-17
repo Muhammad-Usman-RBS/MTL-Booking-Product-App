@@ -1,18 +1,17 @@
 import React from "react";
 import IMAGES from "../../../assets/images";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
 const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
   return (
     <>
-      <div className="p-6">
+      <div>
         <div className="md:flex justify-between">
-          <div>
-            <h2 className="text-2xl font-bold mb-4">View Driver</h2>
-          </div>
+          <OutletHeading name="View Driver" />
           <div className="mb-3 md:mb-0">
             <button
               onClick={() => setSelectedDriver(null)}
-              className="btn btn-primary"
+              className="btn btn-primary mb-2"
             >
               ← Back to Driver List
             </button>

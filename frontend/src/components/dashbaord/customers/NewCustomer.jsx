@@ -3,7 +3,7 @@ import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 
 const options = ["Active", "Suspended", "Pending", "Deleted", "Delete Pending"];
- 
+
 const getInitials = (name) => {
   if (!name) return "N/A";
   const initials = name
@@ -47,7 +47,7 @@ const NewCustomer = ({ isOpen, onClose }) => {
 
   return (
     <CustomModal isOpen={isOpen} onClose={onClose} heading="Add New Customer">
-      <div className="text-sm px-4 pb-4 w-[500px]">
+      <div className="text-sm px-4 pb-4 pt-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
           {preview ? (
             <img

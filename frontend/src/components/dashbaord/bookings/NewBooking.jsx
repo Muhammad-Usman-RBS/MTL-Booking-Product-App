@@ -42,11 +42,9 @@ const JourneyCard = ({ title }) => {
   return (
     <div className="bg-white shadow-lg rounded-xl w-full max-w-4xl mx-auto p-6 border border-gray-300 mt-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
-        <h3 className="text-lg font-bold mb-4">{title}</h3>
+        <h3 className="text-xl font-semibold mb-4">{title}:-</h3>
         <hr />
-        <div className="text-sm font-bold text-white btn-reset btn px-4 py-1 rounded">
-          Fare: £0
-        </div>
+        <div className="btn-reset btn">Fare: $0</div>
       </div>
 
       {/* Pick Up Date & Time */}
@@ -55,17 +53,11 @@ const JourneyCard = ({ title }) => {
           Pick Up Date & Time
         </label>
         <div className="flex flex-col sm:flex-row gap-3">
-          <input
-            type="date"
-            className="border border-gray-300 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:outline-none rounded px-3 py-2 w-full sm:w-1/2"
-          />
+          <input type="date" className="custom_input" />
           <div className="flex gap-4 w-full sm:w-1/2">
             {/* Hours Dropdown */}
             <div className="relative w-full">
-              <select
-                className="block w-full appearance-none border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm text-gray-700 bg-white transition"
-                defaultValue="HH"
-              >
+              <select className="custom_input" defaultValue="HH">
                 <option disabled>HH</option>
                 {[...Array(24).keys()].map((h) => (
                   <option key={h} className=" h-24">
@@ -73,25 +65,16 @@ const JourneyCard = ({ title }) => {
                   </option>
                 ))}
               </select>
-              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
-                <Icons.ChevronDown className="w-4 h-4" />
-              </div>
             </div>
 
             {/* Minutes Dropdown */}
             <div className="relative w-full">
-              <select
-                className="block w-full appearance-none border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm text-gray-700 bg-white transition"
-                defaultValue="MM"
-              >
+              <select className="custom_input" defaultValue="MM">
                 <option disabled>MM</option>
                 {[...Array(60).keys()].map((m) => (
                   <option key={m}>{m.toString().padStart(2, "0")}</option>
                 ))}
               </select>
-              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
-                <Icons.ChevronDown className="w-4 h-4" />
-              </div>
             </div>
           </div>
         </div>
@@ -122,11 +105,7 @@ const JourneyCard = ({ title }) => {
           </div>
         ))}
 
-        <button
-          type="button"
-          onClick={addDropOff}
-          className="border border-gray-300 px-4 py-2 rounded btn btn-edit text-white transition"
-        >
+        <button type="button" onClick={addDropOff} className="btn btn-edit">
           + Additional Drop Off
         </button>
 
@@ -181,7 +160,7 @@ const NewBooking = () => {
               options={hourlyOptions}
               value={selectedHourly}
               onChange={(e) => setSelectedHourly(e.target.value)}
-              width="64"
+              width="w-full md:w-64"
             />
           </div>
         )}

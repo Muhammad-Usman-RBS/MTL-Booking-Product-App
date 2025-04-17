@@ -105,7 +105,7 @@ const VehiclePricing = () => {
         onClose={() => setShowModal(false)}
         heading={`Edit ${selectedAccount?.vehicleName || "Vehicle"}`}
       >
-        <div className="w-96 mx-auto p-4 font-sans space-y-4">
+        <div className="mx-auto p-4 font-sans space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Priority

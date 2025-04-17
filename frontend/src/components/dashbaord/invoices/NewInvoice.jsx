@@ -47,9 +47,11 @@ const NewInvoice = () => {
   return (
     <div>
       <OutletHeading name="Create New Invoice" />
-      <div className="flex flex-wrap items-center justify-between">
-        <div className="flex gap-2">
-          <div>
+
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        {/* Filter Section */}
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full">
+          <div className="w-full sm:w-64">
             <SelectDateRange
               startDate={startDate}
               endDate={endDate}
@@ -57,7 +59,8 @@ const NewInvoice = () => {
               setEndDate={setEndDate}
             />
           </div>
-          <div className="w-64">
+
+          <div className="w-full sm:w-64">
             <SelectedSearch
               selected={selectedCustomers}
               setSelected={setSelectedCustomers}
@@ -66,7 +69,8 @@ const NewInvoice = () => {
               showCount={false}
             />
           </div>
-          <div className="w-64">
+
+          <div className="w-full sm:w-64">
             <SelectedSearch
               selected={selectedAccounts}
               setSelected={setSelectedAccounts}
@@ -76,11 +80,13 @@ const NewInvoice = () => {
             />
           </div>
         </div>
-        <div className="flex gap-2">
-          <button className="btn btn-reset">Search</button>
+
+        {/* Button Section */}
+        <div className="flex gap-2 w-full sm:w-auto justify-end">
+          <button className="btn btn-reset w-full sm:w-auto">Search</button>
           <button
             onClick={resetHandler}
-            className="btn btn-outline"
+            className="btn btn-outline w-full sm:w-auto"
             title="Reset Filters"
           >
             ↻

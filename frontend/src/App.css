@@ -31,3 +31,117 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
 }
+
+/* Invoice CSS PDF Design */
+.invoice-container {
+  padding: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  margin-top: 16px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.invoice-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 24px;
+}
+
+.company-logo {
+  height: 40px;
+  margin-bottom: 8px;
+}
+
+.company-name {
+  font-weight: 600;
+}
+
+.invoice-title {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.invoice-no {
+  color: #6b7280;
+}
+
+.status {
+  font-weight: 600;
+}
+
+.status.paid {
+  color: #16a34a;
+}
+
+.status.unpaid {
+  color: #dc2626;
+}
+
+.bill-to {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.email-link {
+  color: #2563eb;
+  text-decoration: none;
+  word-break: break-word;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.invoice-table thead {
+  background: black;
+  color: white;
+}
+
+.invoice-table th,
+.invoice-table td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  vertical-align: top;
+  text-align: left;
+}
+
+.sub-info {
+  color: #6b7280;
+  font-size: 12px;
+  margin: 0;
+}
+
+.totals {
+  text-align: right;
+  margin-top: 16px;
+}
+
+.totals .balance {
+  font-weight: bold;
+}
+
+.invoice-notes {
+  margin-top: 16px;
+  border-top: 1px solid #ccc;
+  padding-top: 8px;
+}
+
+.notes-title {
+  font-weight: 600;
+}
+
+.notes-text {
+  color: #4b5563;
+  font-size: 13px;
+}

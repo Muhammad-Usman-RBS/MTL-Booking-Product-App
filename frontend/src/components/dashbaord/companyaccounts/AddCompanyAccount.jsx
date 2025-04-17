@@ -122,30 +122,30 @@ const AddCompanyAccount = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         <div className="grid grid-cols-1 gap-4">
-          <div>
+          <div className="w-full md:w-64">
             <label className="block font-medium mb-1">Country *</label>
-            <SelectOption options={countryOptions} width="64" />
+            <SelectOption options={countryOptions} />
           </div>
 
-          <div>
+          <div className="w-full md:w-64">
             <label className="block font-medium mb-1">
               Payment Options (Bookings) *
             </label>
-            <SelectOption options={bookingPaymentOptions} width="64" />
+            <SelectOption options={bookingPaymentOptions} />
           </div>
 
-          <div>
+          <div className="w-full md:w-64">
             <label className="block font-medium mb-1">
               Payment Options (Invoice Payment) *
             </label>
-            <SelectOption options={invoicePaymentOptions} width="64" />
+            <SelectOption options={invoicePaymentOptions} />
           </div>
 
-          <div>
+          <div className="w-full md:w-64">
             <label className="block font-medium mb-1">
               Locations Display (Invoice) *
             </label>
-            <SelectOption options={yesNoOptions} width="64" />
+            <SelectOption options={yesNoOptions} />
           </div>
         </div>
 

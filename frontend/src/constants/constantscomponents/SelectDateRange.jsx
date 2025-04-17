@@ -79,7 +79,7 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
         onClick={() => setDropdownOpen(!dropdownOpen)}
       >
         <Icons.CalendarDays className="w-4 h-4 text-black" />
-        <span className="flex-1 text-sm">
+        <span className="flex-1 text-xs md:text-sm">
           {formatDate(startDate)} - {formatDate(endDate)}
         </span>
         <Icons.ChevronDown

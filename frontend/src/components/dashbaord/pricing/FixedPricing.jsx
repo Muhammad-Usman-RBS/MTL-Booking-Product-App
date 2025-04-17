@@ -75,34 +75,41 @@ const FixedPricing = () => {
     <>
       <div>
         <OutletHeading name="Fixed Pricing" />
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <div>
-              <label className="block mb-1">
-                Increase/Decrease All Fixed Prices
-              </label>
-              <div className="flex gap-2 items-center">
-                <div className="flex">
-                  <input
-                    type="number"
-                    name="minAdditionalDropOff"
-                    className="custom_input"
-                  />
-                  <span className="px-4 py-1.5 border border-gray-300 rounded-r-md bg-gray-100">
-                    GBP
-                  </span>
-                </div>
-                <button className="btn btn-reset" onClick={handleAddNew}>
-                  Update
-                </button>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+          {/* Fixed Price Adjustment Section */}
+          <div className="w-full md:w-auto">
+            <label className="block mb-1 text-sm font-medium">
+              Increase/Decrease All Fixed Prices
+            </label>
+            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+              <div className="flex w-full sm:w-auto">
+                <input
+                  type="number"
+                  name="minAdditionalDropOff"
+                  className="custom_input rounded-l-md"
+                />
+                <span className="px-4 py-1 border border-l-0 border-gray-300 rounded-r-md bg-gray-100 text-sm">
+                  GBP
+                </span>
               </div>
+              <button
+                className="btn btn-reset w-full sm:w-auto"
+                onClick={handleAddNew}
+              >
+                Update
+              </button>
             </div>
-            <div></div>
           </div>
 
-          <button className="btn btn-edit" onClick={handleAddNew}>
-            Add New
-          </button>
+          {/* Add New Button */}
+          <div className="w-full md:w-auto">
+            <button
+              className="btn btn-edit w-full md:w-auto"
+              onClick={handleAddNew}
+            >
+              Add New
+            </button>
+          </div>
         </div>
 
         <CustomTable
@@ -118,7 +125,7 @@ const FixedPricing = () => {
         onClose={() => setShowModal(false)}
         heading={`Edit ${selectedItem?.pickup || "New Entry"}`}
       >
-        <div className="w-96 mx-auto p-4 font-sans space-y-4">
+        <div className="mx-auto p-4 font-sans space-y-4">
           <SelectOption
             label="Direction"
             width="full"

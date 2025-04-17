@@ -24,7 +24,7 @@ const LocationCategory = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Pickup Section */}
           <div className="flex-1">
-            <h2 className="text-2xl font-bold">Pickup:</h2>
+            <h2 className="text-2xl font-bold text-gray-600">Pickup:</h2>
             <label className="block font-medium mb-1 mt-4">Airport</label>
             <input
               type="number"
@@ -40,7 +40,7 @@ const LocationCategory = () => {
 
           {/* Drop Off Section */}
           <div className="flex-1">
-            <h2 className="text-2xl font-bold">Drop Off:</h2>
+            <h2 className="text-2xl font-bold text-gray-600">Drop Off:</h2>
             <label className="block font-medium mb-1 mt-4">Airport</label>
             <div className="flex">
               <input
@@ -50,7 +50,7 @@ const LocationCategory = () => {
                 onChange={handleChange}
                 className="custom_input"
               />
-              <span className="px-4 py-1.5 border border-gray-300 rounded-r-md bg-gray-100">
+              <span className="px-4 py-1 border border-gray-300 rounded-r-md bg-gray-100">
                 GBP
               </span>
             </div>

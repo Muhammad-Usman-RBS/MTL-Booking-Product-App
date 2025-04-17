@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import StatementPreview from "./StatementPreview";
 import { statementsData } from "../../../constants/dashboardTabsData/data";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
 const DriverGeneration = ({ setShowGeneration }) => {
   const [previewData, setPreviewData] = useState([]);
@@ -91,17 +92,13 @@ const DriverGeneration = ({ setShowGeneration }) => {
 
   return (
     <>
-      <div className="p-6">
+      <div>
         <div className="md:flex justify-between">
-          <div>
-            <h2 className="text-2xl font-bold mb-4">
-              Driver Statement Generation
-            </h2>
-          </div>
+          <OutletHeading name="Driver Statement Generation" />
           <div className="mb-3 md:mb-0">
             <button
               onClick={() => setShowGeneration(false)}
-              className="btn btn-primary"
+              className="btn btn-primary mb-2"
             >
               ← Back to Driver List
             </button>
@@ -188,7 +185,7 @@ const DriverGeneration = ({ setShowGeneration }) => {
         />
       ) : (
         <>
-          <div className="flex justify-center">
+          <div className="flex justify-center mt-4">
             <p className="text-center py-2 border border-gray-300 w-64">
               No Statements
             </p>

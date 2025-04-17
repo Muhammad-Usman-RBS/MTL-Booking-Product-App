@@ -84,15 +84,17 @@ const Dashboard = () => {
   return (
     <>
       <OutletHeading name="Stats" />
-      <div className="ps-4 pe-4 space-y-6 max-w-full">
+      <div className="space-y-6 max-w-full">
         {/* Filter Box */}
         <div className="bg-gray-100 rounded p-4">
-          <SelectDateRange
-            startDate={startDate}
-            endDate={endDate}
-            setStartDate={setStartDate}
-            setEndDate={setEndDate}
-          />
+          <div className="w-full md:w-80">
+            <SelectDateRange
+              startDate={startDate}
+              endDate={endDate}
+              setStartDate={setStartDate}
+              setEndDate={setEndDate}
+            />
+          </div>
         </div>
 
         {/* Sections */}
@@ -102,7 +104,9 @@ const Dashboard = () => {
               key={i}
               className={`border ${section.borderColor} rounded overflow-x-auto`}
             >
-              <h3 className={`font-bold text-lg text-white ${section.bg} p-2`}>
+              <h3
+                className={`font-bold text-md md:text-lg text-white ${section.bg} p-2`}
+              >
                 {section.title}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 p-4 text-sm">

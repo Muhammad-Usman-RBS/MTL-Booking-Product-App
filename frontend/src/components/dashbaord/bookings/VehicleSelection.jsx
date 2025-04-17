@@ -67,8 +67,7 @@ const VehicleSelection = () => {
 
   return (
     <div className="bg-gray-50 border border-gray-200 rounded p-4 w-full max-w-4xl mx-auto mt-6">
-      <h3 className="text-lg font-bold mb-4">Vehicle:</h3>
-
+      <h3 className="text-xl font-semibold mb-4">Vehicle:-</h3>
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Left Panel: Image + Dropdown */}
         <div className="flex flex-col items-center w-full lg:w-1/3">

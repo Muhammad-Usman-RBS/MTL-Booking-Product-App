@@ -110,7 +110,7 @@ const CompanyAccountsList = () => {
       {!selectedAccount ? (
         <div>
           <OutletHeading name="Company Accounts" />
-          <div className="flex flex-col sm:flex-row justify-between gap-4 px-4 sm:px-0 mb-4">
+          <div className="flex flex-col sm:flex-row justify-between gap-4 px-0 mb-4">
             <Link to="/dashboard/company-accounts/new">
               <button className="btn btn-edit">Add New</button>
             </Link>
@@ -148,75 +148,48 @@ const CompanyAccountsList = () => {
           />
         </div>
       ) : (
-        <div>
-          <div className="flex justify-between items-center mb-6">
+        <div className="w-full">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-0 md:gap-4">
             <OutletHeading name="Account Details" />
-            <div className="flex gap-2">
+            <div className="flex flex-col md:flex-row gap-2">
               <button
                 onClick={() => downloadPDF(selectedAccount)}
-                className="btn btn-reset"
+                className="btn btn-reset w-full md:w-auto"
               >
                 Download PDF
               </button>
               <button
-                className="btn btn-success"
+                className="btn btn-success w-full md:w-auto"
                 onClick={() => handleSendEmail(selectedAccount)}
               >
                 Resend Welcome Email
               </button>
-
               <button
                 onClick={() => setSelectedAccount(null)}
-                className="btn btn-cancel"
+                className="btn btn-cancel w-full md:w-auto"
               >
                 Close
               </button>
             </div>
           </div>
 
-          <hr className="border-gray-300 mt-[-10px]" />
+          <hr className="border-gray-300 -mt-2" />
 
           <div
             id="invoiceToDownload"
-            style={{
-              width: "800px",
-              margin: "0 auto",
-              padding: "2rem",
-              fontFamily: "Arial, sans-serif",
-              color: "#374151",
-              fontSize: "14px",
-              boxSizing: "border-box",
-            }}
+            className="w-full max-w-5xl mx-auto px-4 py-6 text-[#374151] text-sm font-sans"
           >
-            <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+            <div className="flex justify-center mb-6">
               <img
                 src={IMAGES.profileimg}
                 alt="Profile"
-                style={{
-                  width: "100px",
-                  height: "100px",
-                  borderRadius: "9999px",
-                  objectFit: "cover",
-                  border: "2px solid #D1D5DB",
-                }}
+                className="w-24 h-24 rounded-full object-cover border-2 border-gray-300"
               />
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: "2rem",
-              }}
-            >
-              <div
-                style={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.5rem",
-                }}
-              >
+            <div className="flex flex-col lg:flex-row gap-8">
+              {/* Left Column */}
+              <div className="flex-1 flex flex-col gap-2">
                 <p>
                   <strong>Company Name:</strong> {selectedAccount.company}
                 </p>
@@ -227,12 +200,12 @@ const CompanyAccountsList = () => {
                   <strong>Contact:</strong> {selectedAccount.phone}
                 </p>
                 <p>
-                  <strong>Website:</strong>
+                  <strong>Website:</strong>{" "}
                   <a
                     href={selectedAccount.website}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ color: "#2563EB", textDecoration: "underline" }}
+                    className="text-blue-600 underline break-words"
                   >
                     {selectedAccount.website}
                   </a>
@@ -254,47 +227,41 @@ const CompanyAccountsList = () => {
                 </p>
               </div>
 
-              <div
-                style={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.5rem",
-                }}
-              >
+              {/* Right Column */}
+              <div className="flex-1 flex flex-col gap-2">
                 <p>
-                  <strong>Primary Contact Name:</strong>
+                  <strong>Primary Contact Name:</strong>{" "}
                   {selectedAccount.primaryContact}
                 </p>
                 <p>
-                  <strong>Primary Contact Designation:</strong>
+                  <strong>Primary Contact Designation:</strong>{" "}
                   {selectedAccount.designation}
                 </p>
                 <p>
                   <strong>Tax:</strong> {selectedAccount.tax || "None"}
                 </p>
                 <p>
-                  <strong>Locations Display (Invoice):</strong>
+                  <strong>Locations Display (Invoice):</strong>{" "}
                   {selectedAccount.locationsDisplay}
                 </p>
                 <p>
-                  <strong>Payment Options (Bookings):</strong>
+                  <strong>Payment Options (Bookings):</strong>{" "}
                   {selectedAccount.paymentOptionsBooking}
                 </p>
                 <p>
-                  <strong>Payment Options (Invoice Payment):</strong>
+                  <strong>Payment Options (Invoice Payment):</strong>{" "}
                   {selectedAccount.paymentOptionsInvoice}
                 </p>
                 <p>
-                  <strong>Invoice Due Days:</strong>
+                  <strong>Invoice Due Days:</strong>{" "}
                   {selectedAccount.invoiceDueDays}
                 </p>
                 <p>
-                  <strong>Invoice Terms:</strong>
+                  <strong>Invoice Terms:</strong>{" "}
                   {selectedAccount.invoiceTerms || "-"}
                 </p>
                 <p>
-                  <strong>Passphrase:</strong>
+                  <strong>Passphrase:</strong>{" "}
                   {selectedAccount.passphrase || "-"}
                 </p>
                 <p>

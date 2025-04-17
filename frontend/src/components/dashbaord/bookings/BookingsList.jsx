@@ -196,7 +196,7 @@ const BookingsList = () => {
               <Icons.Filter size={16} />
             </button>
           </div>
-          <div className="w-64">
+          <div className="w-full sm:w-64">
             <SelectedSearch
               selected={selectedStatus}
               setSelected={setSelectedStatus}
@@ -204,7 +204,7 @@ const BookingsList = () => {
               showCount={true}
             />
           </div>
-          <div className="w-64">
+          <div className="w-full sm:w-64">
             <SelectDateRange
               startDate={startDate}
               endDate={endDate}
@@ -217,7 +217,7 @@ const BookingsList = () => {
 
       {showDiv && (
         <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-4">
-          <div className="w-64">
+          <div className="w-full sm:w-64">
             <SelectedSearch
               selected={selectedDrivers}
               setSelected={setSelectedDrivers}
@@ -226,7 +226,7 @@ const BookingsList = () => {
               showCount={false}
             />
           </div>
-          <div className="w-64">
+          <div className="w-full sm:w-64">
             <SelectedSearch
               selected={selectedPassengers}
               setSelected={setSelectedPassengers}
@@ -235,7 +235,7 @@ const BookingsList = () => {
               showCount={false}
             />
           </div>
-          <div className="w-64">
+          <div className="w-full sm:w-64">
             <SelectedSearch
               selected={selectedVehicleTypes}
               setSelected={setSelectedVehicleTypes}
@@ -244,7 +244,7 @@ const BookingsList = () => {
               showCount={false}
             />
           </div>
-          <div className="w-64">
+          <div className="w-full sm:w-64">
             <SelectedSearch
               selected={selectedAccounts}
               setSelected={setSelectedAccounts}

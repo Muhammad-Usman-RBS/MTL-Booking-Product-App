@@ -78,7 +78,7 @@ const CongestionCharges = () => {
         onClose={() => setShowModal(false)}
         heading={`Edit ${selectedItem?.caption}`}
       >
-        <div className="w-96 mx-auto p-4 font-sans space-y-4">
+        <div className="mx-auto p-4 font-sans space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Caption

@@ -64,7 +64,6 @@ const SettingsGeneral = () => {
 
       {/* Branding Section */}
       <div className="space-y-6 mt-4">
-
         <div className="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0">
           <div className="w-full md:w-1/2">
             <label className="block font-semibold mb-2">Company name</label>
@@ -140,7 +139,10 @@ const SettingsGeneral = () => {
         <h2 className="text-xl font-bold text-gray-800">Theme Colors</h2>
 
         {colorFields.map(({ key, label }) => (
-          <div key={key} className="flex items-center justify-between">
+          <div
+            key={key}
+            className="flex flex-col md:flex-row  items-center justify-between"
+          >
             <label className="font-medium">{label}</label>
             <input
               type="color"
@@ -180,7 +182,7 @@ const SettingsGeneral = () => {
         ))}
       </div>
 
-      <div className="text-right">
+      <div className="text-right mt-4">
         <button className="btn btn-reset">UPDATE</button>
       </div>
     </div>
@@ -188,4 +190,3 @@ const SettingsGeneral = () => {
 };
 
 export default SettingsGeneral;
-

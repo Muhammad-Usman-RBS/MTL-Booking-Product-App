@@ -134,7 +134,7 @@ const AdminList = () => {
         onClose={() => setShowModal(false)}
         heading="Edit Admin"
       >
-        <div className="w-96 mx-auto p-4 font-sans space-y-4">
+        <div className="mx-auto p-4 font-sans space-y-4">
           <SelectOption
             label="Type"
             width="full"

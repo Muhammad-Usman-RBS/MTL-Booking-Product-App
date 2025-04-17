@@ -45,18 +45,18 @@ const DriverRegistrationConfig = () => {
 
   return (
     <div>
-      <OutletHeading name="    Driver Registration Configuration" />
+      <OutletHeading name="Driver Registration Configuration" />
 
       <div className="space-y-4">
         {fields.map((label, index) => (
           <div key={index} className="flex justify-between items-center">
-            <p className="w-1/2">{label}</p>
-            <SelectOption width="32" options={options} className="w-1/2" />
+            <p className="text-sm md:text-lg w-1/2">{label}</p>
+            <SelectOption width="32" options={options} className="text-sm md:text-lg w-1/2" />
           </div>
         ))}
 
         <div className="flex justify-between items-center">
-          <p className="w-1/2">Profile picture file types</p>
+          <p className="text-sm md:text-lg w-1/2">Profile picture file types</p>
           <input
             type="text"
             defaultValue="jpeg,jpg,png,pdf"
@@ -65,7 +65,7 @@ const DriverRegistrationConfig = () => {
         </div>
 
         <div className="flex justify-between items-center">
-          <p className="w-1/2">Attachment file types</p>
+          <p className="text-sm md:text-lg w-1/2">Attachment file types</p>
           <input
             type="text"
             defaultValue="jpeg,jpg,png,pdf"
@@ -74,7 +74,7 @@ const DriverRegistrationConfig = () => {
         </div>
 
         <div className="flex justify-between items-center">
-          <p className="w-1/2">Max. attachment file size</p>
+          <p className="text-sm md:text-lg w-1/2">Max. attachment file size</p>
           <div className="flex items-center w-1/2">
             <input
               type="number"

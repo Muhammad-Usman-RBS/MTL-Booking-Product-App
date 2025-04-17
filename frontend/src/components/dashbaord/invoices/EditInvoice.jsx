@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import SelectOption from "../../../constants/constantscomponents/SelectOption";
 
 const InvoicePage = () => {
   const [selectAll, setSelectAll] = useState(false);
@@ -39,9 +40,9 @@ const InvoicePage = () => {
     <>
       <OutletHeading name="Edit Invoice" />
 
-      <div className="p-6 max-w-6xl mx-auto bg-gradient-to-b from-gray-50 to-white shadow-2xl rounded-3xl">
+      <div className="p-2 md:p-6 max-w-6xl mx-auto bg-gradient-to-b from-gray-50 to-white shadow-md rounded-3xl">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4">
-          <h1 className="text-xl font-extrabold text-theme">
+          <h1 className="text-xl font-extrabold text-gray-600 pt-3 pb-3">
             Invoice #INV-000001
           </h1>
           <Link to="/dashboard/invoices/list">
@@ -49,12 +50,12 @@ const InvoicePage = () => {
           </Link>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow mb-6 border">
+        <div className="bg-white p-2 md:p-6 rounded-2xl shadow mb-6 border">
           <label className="block font-bold text-gray-700 mb-2 text-lg">
             Bill To
           </label>
           <textarea
-            className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="custom_input"
             rows={3}
             defaultValue={`Cabhit\nranaw43500@khaxan.com\n+447930844247`}
           />
@@ -67,7 +68,7 @@ const InvoicePage = () => {
             </label>
             <input
               type="date"
-              className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="custom_input"
               defaultValue="2023-01-04"
             />
           </div>
@@ -77,14 +78,15 @@ const InvoicePage = () => {
             </label>
             <input
               type="date"
-              className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="custom_input"
               defaultValue="2023-01-11"
             />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow mb-6 border">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+        <div className="bg-white p-2 md:p-6 rounded-2xl shadow mb-6 border">
+          {/* Top Row: Select All & Global Apply */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div className="flex items-center gap-3 text-blue-800 font-semibold">
               <input
                 type="checkbox"
@@ -94,67 +96,61 @@ const InvoicePage = () => {
               />
               <span>Select All</span>
             </div>
-            <div className="flex items-center gap-3">
-              <select className="border border-gray-300 rounded-lg p-2 text-gray-700">
-                <option>No Tax</option>
-              </select>
-              <button className="btn btn-reset">Apply</button>
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              <SelectOption
+                width="w-full md:w-32"
+                options={["No Tax", "Tax"]}
+              />
+              <button className="btn btn-reset w-full sm:w-auto">Apply</button>
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center border-t pt-4">
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={checkedItems.item1}
-                onChange={() => handleCheckboxChange("item1")}
-                className="accent-blue-600"
-              />
-            </div>
-            <div className="flex-1 text-sm text-gray-700">
-              <textarea
-                rows={3}
-                className="w-full border border-gray-300 rounded-lg p-2"
-                value={item1Details}
-                onChange={(e) => setItem1Details(e.target.value)}
-              />
-            </div>
-            <select className="border border-gray-300 rounded-lg p-2">
-              <option>No Tax</option>
-            </select>
-            <input
-              type="text"
-              className="border border-gray-300 rounded-lg p-2 w-24 text-right"
-              defaultValue="92.00"
-            />
-          </div>
+          {/* Each Item Block */}
+          {[1, 2].map((i) => (
+            <div
+              key={i}
+              className="flex flex-col md:flex-row gap-4 items-start md:items-center border-t pt-4 mt-4"
+            >
+              {/* Checkbox */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={checkedItems[`item${i}`]}
+                  onChange={() => handleCheckboxChange(`item${i}`)}
+                  className="accent-blue-600"
+                />
+              </div>
 
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center border-t pt-4 mt-4">
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={checkedItems.item2}
-                onChange={() => handleCheckboxChange("item2")}
-                className="accent-blue-600"
+              {/* Textarea */}
+              <div className="flex-1 w-full text-sm text-gray-700">
+                <textarea
+                  rows={3}
+                  className="w-full border border-gray-300 rounded-lg p-2"
+                  value={i === 1 ? item1Details : item2Details}
+                  onChange={(e) =>
+                    i === 1
+                      ? setItem1Details(e.target.value)
+                      : setItem2Details(e.target.value)
+                  }
+                />
+              </div>
+
+              {/* Tax Dropdown */}
+              <SelectOption
+                width="w-full md:w-32"
+                options={["No Tax", "Tax"]}
               />
+
+              {/* Price Input */}
+              <div className="w-full md:w-32">
+                <input
+                  type="text"
+                  className="custom_input"
+                  defaultValue={i === 1 ? "92.00" : "0.00"}
+                />
+              </div>
             </div>
-            <div className="flex-1 text-sm text-gray-700">
-              <textarea
-                rows={3}
-                className="w-full border border-gray-300 rounded-lg p-2"
-                value={item2Details}
-                onChange={(e) => setItem2Details(e.target.value)}
-              />
-            </div>
-            <select className="border border-gray-300 rounded-lg p-2">
-              <option>No Tax</option>
-            </select>
-            <input
-              type="text"
-              className="border border-gray-300 rounded-lg p-2 w-24 text-right"
-              defaultValue="0.00"
-            />
-          </div>
+          ))}
         </div>
 
         <div className="text-right mb-6 text-gray-800">
@@ -185,12 +181,12 @@ const InvoicePage = () => {
           <p className="mt-4 text-xl font-bold text-blue-800">Total: £92.00</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow mb-6 border">
+        <div className="bg-white p-2 md:p-6 rounded-2xl shadow mb-6 border">
           <label className="block font-bold text-gray-700 mb-2 text-lg">
             Notes
           </label>
           <textarea
-            className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="custom_input"
             rows={3}
             defaultValue="T&Cs apply. Please call for detail"
           />

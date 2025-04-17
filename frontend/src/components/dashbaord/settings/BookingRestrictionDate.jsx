@@ -68,7 +68,7 @@ const BookingRestrictionDate = () => {
     <>
       <div>
         <OutletHeading name="Booking Restriction - Date & Time" />
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-2 mb-4">
           <SelectOption
             width="40"
             value={statusFilter}
@@ -93,7 +93,7 @@ const BookingRestrictionDate = () => {
         onClose={() => setShowModal(false)}
         heading={`Edit ${selectedItem?.caption || "New Entry"}`}
       >
-        <div className="w-96 mx-auto p-4 font-sans space-y-4">
+        <div className="mx-auto p-4 font-sans space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Caption

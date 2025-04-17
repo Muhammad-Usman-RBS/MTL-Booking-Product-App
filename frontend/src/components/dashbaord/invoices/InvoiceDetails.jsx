@@ -24,17 +24,25 @@ const InvoiceDetails = ({ item }) => {
 
   const invoiceUrl = `https://www.megatransfers.com/invoice.php?key=S3wy2dBNrKaemCfLDlqGJHnkA10&id=${item.id}`;
 
-  const downloadPDF = () => {
+  const downloadPDF = async () => {
     const input = document.getElementById("invoiceToDownload");
-    html2canvas(input).then((canvas) => {
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Invoice-${item.invoiceNo}.pdf`);
-      toast.success("PDF downloaded successfully!");
+    if (!input) return;
+
+    const canvas = await html2canvas(input, {
+      scale: 2,
+      useCORS: true,
+      scrollY: -window.scrollY,
+      width: 1200,
+      height: 800,
+      windowWidth: 1200,
+      windowHeight: 800,
     });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "pt", "a4"); // use pt to match pixel-based layout
+    pdf.addImage(imgData, "PNG", 0, 0, 595.28, 841.89); // A4 in pt = 595x842
+    pdf.save(`Invoice-${item.invoiceNo}.pdf`);
+    toast.success("PDF downloaded successfully!");
   };
 
   const openModal = () => {
@@ -60,80 +68,48 @@ const InvoiceDetails = ({ item }) => {
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div>
-        <div style={{ display: "flex", gap: "10px", marginBottom: "12px", marginTop: "30px" }}>
+        <div className="flex flex-wrap gap-2 sm:gap-3 mb-3 mt-8">
+          {/* Edit Button */}
           <Link to="/dashboard/edit-invoice">
-            <button
-              style={{
-                padding: "10px 16px",
-                backgroundColor: "orange",
-                color: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-              }}
-            >
+            <button className="p-2.5 py-3 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition">
               <Icons.SquarePen size={16} />
             </button>
           </Link>
 
+          {/* Download Button */}
           <button
             onClick={downloadPDF}
-            style={{
-              padding: "10px 16px",
-              backgroundColor: "#4B5563",
-              color: "#fff",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-            }}
+            className="p-2.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition"
           >
             <Icons.Download size={16} />
           </button>
 
+          {/* Mail Button */}
           <button
             onClick={openModal}
-            style={{
-              padding: "10px 16px",
-              backgroundColor: "#2563EB",
-              color: "#fff",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-            }}
+            className="p-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
           >
             <Icons.Mail size={16} />
           </button>
 
-          <button
-            style={{
-              padding: "10px 16px",
-              backgroundColor: "red",
-              color: "#fff",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-            }}
-          >
+          {/* Delete Button */}
+          <button className="p-2.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition">
             <Icons.Trash size={16} />
           </button>
-          {/* Status Select and Tick */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <SelectOption
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              options={statusOption}
-              width="40"
-            />
+
+          {/* Status Select + Tick */}
+          <div className="flex gap-2 items-center w-full sm:w-auto mt-2 sm:mt-0">
+            <div className="w-full sm:w-40">
+              <SelectOption
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                options={statusOption}
+                width="full"
+              />
+            </div>
             <button
               onClick={handleStatusUpdate}
-              style={{
-                padding: "10px 16px",
-                backgroundColor: "#10B981",
-                color: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-              }}
+              className="p-2.5 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition"
             >
               <Icons.Check size={16} />
             </button>
@@ -141,105 +117,82 @@ const InvoiceDetails = ({ item }) => {
         </div>
 
         {/* Invoice Display */}
-        <div
-          id="invoiceToDownload"
-          style={{
-            padding: "16px",
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-            backgroundColor: "white",
-            fontSize: "14px",
-            marginTop: "16px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: "20px",
-            }}
-          >
-            <div>
+        <div id="invoiceToDownload" className="invoice-container">
+          <div className="invoice-header">
+            <div className="company-info">
               <img
                 src={IMAGES.dashboardLargeLogo}
                 alt="Logo"
-                style={{ height: "40px", marginBottom: "8px" }}
+                className="company-logo"
               />
-              <p style={{ fontWeight: "600" }}>{item.company.name}</p>
+              <p className="company-name">{item.company.name}</p>
               <p>{item.company.address}</p>
               <p>VAT: {item.company.vat}</p>
-              <a href={`mailto:${item.company.email}`}>{item.company.email}</a>
+              <a href={`mailto:${item.company.email}`} className="email-link">
+                {item.company.email}
+              </a>
               <p>{item.company.phone}</p>
             </div>
 
-            <div>
-              <h2 style={{ fontSize: "20px", fontWeight: "bold" }}>INVOICE</h2>
-              <p style={{ color: "#6B7280" }}>#{item.invoiceNo}</p>
-              <p
-                style={{
-                  color: status === "Paid" ? "#16A34A" : "#DC2626",
-                  fontWeight: "600",
-                }}
-              >
+            <div className="invoice-info">
+              <h2 className="invoice-title">INVOICE</h2>
+              <p className="invoice-no">#{item.invoiceNo}</p>
+              <p className={`status ${status === "Paid" ? "paid" : "unpaid"}`}>
                 {status}
               </p>
               <p>Invoice Date: {item.date}</p>
               <p>Due Date: {item.dueDate}</p>
-              <p style={{ fontWeight: "bold", marginTop: "10px" }}>Bill To</p>
+              <p className="bill-to">Bill To</p>
               <p>{item.customer}</p>
-              <a href={`mailto:${item.email}`}>{item.email}</a>
+              <a href={`mailto:${item.email}`} className="email-link">
+                {item.email}
+              </a>
               <p>{item.phone}</p>
             </div>
           </div>
 
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead style={{ backgroundColor: "black", color: "white" }}>
-              <tr>
-                <th style={thStyle}>#</th>
-                <th style={thStyle}>Item</th>
-                <th style={thStyle}>Tax</th>
-                <th style={thStyle}>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {item.rides.map((ride, index) => (
-                <tr key={index}>
-                  <td style={tdStyle}>{index + 1}</td>
-                  <td style={tdStyle}>
-                    <strong>
-                      {ride.number} - {ride.passenger}
-                    </strong>
-                    <p style={subInfoStyle}>Pickup: {ride.pickup}</p>
-                    <p style={subInfoStyle}>Drop off: {ride.drop}</p>
-                    <p style={subInfoStyle}>Date & Time: {ride.datetime}</p>
-                  </td>
-                  <td style={tdStyle}>{ride.tax}</td>
-                  <td style={tdStyle}>£{ride.amount}</td>
+          <div className="table-wrapper">
+            <table className="invoice-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Item</th>
+                  <th>Tax</th>
+                  <th>Amount</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {item.rides.map((ride, index) => (
+                  <tr key={index}>
+                    <td>{index + 1}</td>
+                    <td>
+                      <div>
+                        <strong>
+                          {ride.number} - {ride.passenger}
+                        </strong>
+                        <p className="sub-info">Pickup: {ride.pickup}</p>
+                        <p className="sub-info">Drop off: {ride.drop}</p>
+                        <p className="sub-info">Date & Time: {ride.datetime}</p>
+                      </div>
+                    </td>
+                    <td>{ride.tax}</td>
+                    <td>£{ride.amount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          <div style={{ textAlign: "right", marginTop: "16px" }}>
+          <div className="totals">
             <p>Sub Total: £{item.subtotal}</p>
             <p>Discount: £{item.discount}</p>
             <p>Deposit: £{item.deposit}</p>
-            <p style={{ fontWeight: "bold" }}>
-              Balance Due: £{item.balanceDue}
-            </p>
+            <p className="balance">Balance Due: £{item.balanceDue}</p>
           </div>
 
-          <div
-            style={{
-              marginTop: "16px",
-              borderTop: "1px solid #ccc",
-              paddingTop: "8px",
-            }}
-          >
-            <p style={{ fontWeight: "600" }}>Notes</p>
-            <p style={{ color: "#4B5563", fontSize: "13px" }}>
-              T&Cs apply. Please call for detail.
-            </p>
+          <div className="invoice-notes">
+            <p className="notes-title">Notes</p>
+            <p className="notes-text">T&Cs apply. Please call for detail.</p>
           </div>
         </div>
       </div>

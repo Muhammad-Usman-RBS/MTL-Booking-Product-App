@@ -24,7 +24,7 @@ const ViewModal = ({ data }) => {
         <h2 style={{ margin: 0 }}>Mega Transfers Limited</h2>
         <p style={{ margin: 0 }}>
           1st Floor, 29 Minerva Road, London, England, NW10 6HJ VAT Number -
-          442612419
+          442612419 asasdasdas
         </p>
       </div>
 

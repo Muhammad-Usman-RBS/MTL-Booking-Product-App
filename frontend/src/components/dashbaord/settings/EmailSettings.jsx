@@ -18,9 +18,9 @@ const EmailSettings = () => {
   return (
     <div>
       <OutletHeading name="Email Settings" />
-      <div className="max-w-xl mx-auto bg-white shadow-md p-6 rounded space-y-6">
+      <div className="max-w-xl mx-auto bg-white shadow-md p-2 md:p-6 rounded space-y-6">
         <div>
-          <div className="mt-4 space-y-4">
+          <div className="mt-0 md:mt-4 space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">
                 From Email

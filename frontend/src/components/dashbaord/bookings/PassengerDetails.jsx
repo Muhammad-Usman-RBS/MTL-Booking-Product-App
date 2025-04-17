@@ -73,7 +73,7 @@ const PassengerDetails = () => {
         </div>
 
         {/* Passenger Dropdown */}
-        <div className="min-w-[200px]">
+        <div className="w-full sm:w-64">
           <select
             value={selectedPassenger}
             onChange={(e) => handleSelect(e.target.value)}
@@ -116,7 +116,7 @@ const PassengerDetails = () => {
         </div>
 
         {/* Phone with Flag */}
-        <div className="col-span-1 sm:col-span-2 lg:col-span-2">
+        <div className="w-full sm:col-span-2 lg:col-span-2">
           <label className="block text-sm font-medium mb-1">
             Contact Number
           </label>
@@ -124,9 +124,10 @@ const PassengerDetails = () => {
             country={"gb"}
             value={details.phone}
             onChange={(phone) => setDetails({ ...details, phone })}
-            inputClass="!w-full !text-sm !py-2 !px-3 !ps-[12%] !border-gray-300 !rounded !focus:outline-none !focus:ring-2 !focus:ring-blue-500"
+            inputClass="!w-full !text-sm !py-2 !px-3 !pl-14 !border-gray-300 !rounded !focus:outline-none !focus:ring-2 !focus:ring-blue-500"
             dropdownClass="!text-sm"
             containerClass="!w-full"
+            buttonClass="!ps-2"
           />
         </div>
       </div>

@@ -68,12 +68,12 @@ const Locations = () => {
         />
       </div>
 
-      <CustomModal 
+      <CustomModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         heading={`Edit ${selectedItem?.name}`}
       >
-        <div className="flex justify-center">
+        <div className="p-3 flex justify-center">
           <div className="space-y-4 w-[480px]">
             <div>
               <label className="text-sm font-medium text-gray-700">
