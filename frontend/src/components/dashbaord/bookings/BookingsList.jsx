@@ -29,7 +29,7 @@ const BookingsList = () => {
   const [auditData, setAuditData] = useState([]);
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewData, setViewData] = useState([]);
-  const [perPage, setPerPage] = useState(5);
+  const [perPage, setPerPage] = useState("All");
   const [page, setPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [selectedDrivers, setSelectedDrivers] = useState([]);
@@ -55,15 +55,15 @@ const BookingsList = () => {
   const filteredData = sampleData.filter((item) => {
     const searchLower = search.toLowerCase();
     const matchesSearch =
-      item.orderNo.toLowerCase().includes(searchLower) ||
+      // item.orderNo.toLowerCase().includes(searchLower) ||
       item.passenger.toLowerCase().includes(searchLower) ||
       item.date.toLowerCase().includes(searchLower) ||
       item.pickUp.toLowerCase().includes(searchLower) ||
       item.dropOff.toLowerCase().includes(searchLower) ||
       item.vehicle.toLowerCase().includes(searchLower) ||
       item.payment.toLowerCase().includes(searchLower) ||
-      item.driver.toLowerCase().includes(searchLower) ||
-      item.fare.toLowerCase().includes(searchLower);
+      item.driver.toLowerCase().includes(searchLower);
+      // item.fare.toLowerCase().includes(searchLower);
 
     const matchesDriver =
       selectedDrivers.length === 0 ||
@@ -127,7 +127,7 @@ const BookingsList = () => {
   };
 
   const tableHeaders = [
-    { label: "Order No.", key: "orderNo" },
+    // { label: "Order No.", key: "orderNo" },
     { label: "Passenger", key: "passenger" },
     { label: "Date & Time", key: "date" },
     { label: "Pick Up", key: "pickUp" },
@@ -135,7 +135,7 @@ const BookingsList = () => {
     { label: "Vehicle", key: "vehicle" },
     { label: "Payment", key: "payment" },
     { label: "Fare", key: "fare" },
-    { label: "DR Fare", key: "drFare" },
+    // { label: "DR Fare", key: "drFare" },
     { label: "Driver", key: "driver" },
     { label: "Status", key: "status" },
     { label: "Actions", key: "actions" },

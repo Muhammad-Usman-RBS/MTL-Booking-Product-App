@@ -9,30 +9,31 @@ const DownloadPDF = ({ targetRef }) => {
 
     const table = targetRef.current;
 
-    // Save original scroll position
+    // Save original scroll position and style
     const scrollX = window.scrollX;
     const scrollY = window.scrollY;
-
-    // Expand the table container width to fit all content
     const originalStyle = table.getAttribute("style") || "";
+
+    // Expand table for rendering
     table.style.width = "max-content";
     table.style.minWidth = "100%";
     table.style.color = "#000";
     table.style.backgroundColor = "#fff";
 
-    // Hide "Actions" column from all rows
+    // Hide the last column ("Actions")
     const rows = table.querySelectorAll("tr");
     const hiddenCells = [];
 
     rows.forEach((row) => {
-      const lastCell = row.lastElementChild;
+      const cells = row.querySelectorAll("td, th");
+      const lastCell = cells[cells.length - 1];
       if (lastCell) {
         hiddenCells.push(lastCell);
         lastCell.style.display = "none";
       }
     });
 
-    // Ensure consistent styles for all table elements
+    // Apply uniform style
     const elements = table.querySelectorAll("*");
     elements.forEach((el) => {
       el.style.color = "#000";
@@ -40,21 +41,21 @@ const DownloadPDF = ({ targetRef }) => {
       el.style.borderColor = "#ccc";
     });
 
-    // Use html2canvas to capture the table
+    // Capture screenshot
     const canvas = await html2canvas(table, {
       scale: 3,
       useCORS: true,
       scrollX: 0,
-      scrollY: -window.scrollY, // Avoid vertical offset
+      scrollY: -scrollY,
       windowWidth: document.body.scrollWidth,
     });
 
-    // Restore hidden cells and original styles
+    // Restore styles
     hiddenCells.forEach((cell) => (cell.style.display = ""));
     table.setAttribute("style", originalStyle);
-    window.scrollTo(scrollX, scrollY); // Restore scroll
+    window.scrollTo(scrollX, scrollY);
 
-    // Convert to PDF
+    // Generate PDF
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("l", "mm", "a4");
     const imgProps = pdf.getImageProperties(imgData);

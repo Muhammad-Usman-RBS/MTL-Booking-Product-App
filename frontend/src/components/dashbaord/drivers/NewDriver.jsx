@@ -137,9 +137,9 @@ const NewDriver = () => {
             />
           ) : (
             <img
-              src={IMAGES.dummyImg}
+              src={IMAGES.profilecarimg}
               alt="Profile Preview"
-              className="w-24 h-24 rounded-full object-cover border-gray-300 border-2"
+              className="w-64 h-40 object-cover border-gray-300 border-2"
             />
           )}
 

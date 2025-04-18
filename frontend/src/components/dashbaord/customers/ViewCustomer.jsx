@@ -9,7 +9,7 @@ const ViewCustomer = ({ customer, onClose }) => {
           <img
             src={customer?.profile || "/default-user.png"}
             alt="Profile"
-            className="w-24 h-24 rounded-full border"
+            className="w-24 h-24 rounded-full border border-gray-300"
           />
         </div>
 
@@ -77,19 +77,10 @@ const ViewCustomer = ({ customer, onClose }) => {
           </div>
         </div>
 
-        <div className="flex justify-center">
+        <div className="flex justify-start">
           <div className="border rounded px-4 py-1 text-gray-700 text-sm">
             Bookings: {customer.bookings || 0}
           </div>
-        </div>
-
-        <div className="mt-6 flex justify-end">
-          <button
-            className="px-4 py-2 border rounded hover:bg-gray-100"
-            onClick={onClose}
-          >
-            Close
-          </button>
         </div>
       </div>
     </CustomModal>

@@ -97,6 +97,19 @@ const Dashboard = () => {
           </div>
         </div>
 
+<button class="btn btn-primary">Primary</button>
+
+<button class="btn btn-success">Success</button>
+
+<button class="btn btn-cancel">Cancel</button>
+
+<button class="btn btn-edit">Edit</button>
+
+<button class="btn btn-reset">Reset</button>
+
+<button class="btn btn-outline">Outline</button>
+
+
         {/* Sections */}
         <div className="space-y-4">
           {sections.map((section, i) => (

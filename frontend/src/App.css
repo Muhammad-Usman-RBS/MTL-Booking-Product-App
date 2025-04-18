@@ -1,43 +1,9 @@
-/* Custom Email */
-.custom_input {
-  border: 1px solid #d1d5db;
-  border-radius: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Scroll Bar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.3);
-  border-radius: 6px;
-  transition: background-color 0.3s ease;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
-}
-
 /* Invoice CSS PDF Design */
 .invoice-container {
   padding: 16px;
   border: 1px solid #ccc;
   border-radius: 8px;
-  background: white;
+  background: #F1EFEF;
   font-size: 14px;
   margin-top: 16px;
   max-width: 100%;

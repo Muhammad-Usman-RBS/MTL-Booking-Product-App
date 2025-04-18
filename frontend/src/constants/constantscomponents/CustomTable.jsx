@@ -103,9 +103,9 @@ const CustomTable = ({
                 <th
                   key={i}
                   onClick={() => showSorting && col.key && requestSort(col.key)}
-                  className={`border-gray-300 border px-2 py-3 text-left ${
+                  className={`px-2 py-3 text-left align-middle whitespace-nowrap ${
                     showSorting && col.key
-                      ? "cursor-pointer bg-theme text-theme transition"
+                      ? "cursor-pointer bg-[#e7eff0] text-dark transition"
                       : ""
                   }`}
                 >
@@ -121,12 +121,12 @@ const CustomTable = ({
             {paginatedData.map((item, rowIdx) => (
               <tr
                 key={rowIdx}
-                className="border border-gray-300 hover:bg-red-50 transition"
+                className="odd:bg-gray-50 even:bg-[#EDEDED] border-b border-gray-300 hover:bg-[#CFE2FF] transition"
               >
                 {tableHeaders.map((col, colIdx) => (
                   <td
                     key={colIdx}
-                    className="border border-gray-300 px-2 py-2 text-sm text-gray-700 align-top break-words"
+                    className="px-2 py-2 text-sm text-gray-700 text-left align-middle break-words"
                   >
                     {item[col.key] ?? "-"}
                   </td>

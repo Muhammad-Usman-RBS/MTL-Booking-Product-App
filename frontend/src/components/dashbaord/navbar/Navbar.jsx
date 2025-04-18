@@ -5,12 +5,36 @@ import useUIStore from "../../../store/useUIStore";
 import Images from "../../../assets/images";
 
 const themes = [
-  { value: "theme-dark-1", bg: "#1f2937", text: "#f9fafb" },
-  { value: "theme-light-1", bg: "#f3f4f6", text: "#1f2937" },
-  { value: "theme-light-2", bg: "#fefce8", text: "#78350f" },
-  { value: "theme-dark-2", bg: "#111827", text: "#e5e7eb" },
-  { value: "theme-dark-3", bg: "#FF7D00", text: "#f1f5f9" },
-  { value: "theme-dark-4", bg: "yellow", text: "black" },
+  {
+    value: "theme-dark-1",
+    bg: "#1E1E1E",
+    text: "#F1EFEF",
+  },
+  {
+    value: "theme-dark-6",
+    bg: "#22333B",
+    text: "#F1EFEF",
+  },
+  {
+    value: "theme-dark-5",
+    bg: "#0A0908",
+    text: "white",
+  },
+  {
+    value: "theme-light-3",
+    bg: "#D0D0D0",
+    text: "#1E1E1E",
+  },
+  {
+    value: "theme-light-2",
+    bg: "#EAE0D5",
+    text: "#1E1E1E",
+  },
+  {
+    value: "theme-light-1",
+    bg: "#cfe2e3",
+    text: "#1E1E1E",
+  },
 ];
 
 function Navbar() {

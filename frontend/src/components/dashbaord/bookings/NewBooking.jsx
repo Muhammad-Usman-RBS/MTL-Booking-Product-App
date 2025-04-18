@@ -44,7 +44,7 @@ const JourneyCard = ({ title }) => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
         <h3 className="text-xl font-semibold mb-4">{title}:-</h3>
         <hr />
-        <div className="btn-reset btn">Fare: $0</div>
+        <div className="btn-edit btn">Fare: $0</div>
       </div>
 
       {/* Pick Up Date & Time */}
@@ -144,8 +144,8 @@ const NewBooking = () => {
               onClick={() => setMode(tab)}
               className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${
                 mode === tab
-                  ? "bg-orange-400 text-white"
-                  : "bg-white text-orange-400 border border-orange-400"
+                  ? "bg-[#f3f4f6] text-dark border border-black"
+                  : "bg-[#f3f4f6] text-dark"
               } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
             >
               {tab}

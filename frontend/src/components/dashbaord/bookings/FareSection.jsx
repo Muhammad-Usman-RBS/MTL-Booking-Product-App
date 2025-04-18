@@ -76,7 +76,7 @@ const FareSection = () => {
       {/* Notifications */}
       <div className="flex flex-wrap justify-center gap-6">
         {/* Email Section */}
-        <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl px-6 py-5 shadow-md w-[250px]">
+        <div className="bg-gray-100 border border-gray-300 rounded-xl px-6 py-5 shadow-md w-[250px]">
           <h4 className="text-lg font-semibold text-blue-800 mb-3 border-b pb-1">
             Email
           </h4>
@@ -110,7 +110,7 @@ const FareSection = () => {
         </div>
 
         {/* Notification Section */}
-        <div className="bg-gradient-to-br from-teal-100 to-teal-200 rounded-xl px-6 py-5 shadow-md w-[250px]">
+        <div className="bg-gray-100 border border-gray-300 rounded-xl px-6 py-5 shadow-md w-[250px]">
           <h4 className="text-lg font-semibold text-teal-800 mb-3 border-b pb-1">
             Notification
           </h4>
