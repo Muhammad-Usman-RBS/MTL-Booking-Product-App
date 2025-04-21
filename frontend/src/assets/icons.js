@@ -69,9 +69,13 @@ import {
   Share2,
   MessageCircle,
   Grid,
+  Columns3,
+  Keyboard,
 } from "lucide-react";
 
 const Icons = {
+  Columns3,
+  Keyboard,
   Grid,
   Sliders,
   Book,

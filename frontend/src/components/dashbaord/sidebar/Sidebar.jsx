@@ -67,8 +67,10 @@ const Sidebar = () => {
                     } ${isOpen ? "pl-4 pr-3" : "justify-center"}`}
                   >
                     <div className="flex items-center gap-3">
-                      <item.icon className="w-5 h-5" />
-                      {isOpen && <span>{item.title}</span>}
+                      <item.icon className="w-4 h-4" />
+                      {isOpen && (
+                        <span className="text-[15px]">{item.title}</span>
+                      )}
                     </div>
                     {isOpen && (
                       <Icons.ChevronDown
@@ -93,7 +95,7 @@ const Sidebar = () => {
                             }`}
                           >
                             <sub.icon className="mr-2 w-4 h-4" />
-                            <span>{sub.title}</span>
+                            <span className="text-[15px]">{sub.title}</span>
                           </Link>
                         </li>
                       ))}
@@ -107,8 +109,10 @@ const Sidebar = () => {
                     isOpen ? "justify-start pl-4" : "justify-center"
                   } ${location.pathname === item.route ? "active-theme" : ""}`}
                 >
-                  <item.icon className="w-5 h-5" />
-                  {isOpen && <span className="ml-3">{item.title}</span>}
+                  <item.icon className="w-4 h-4" />
+                  {isOpen && (
+                    <span className="ml-3 text-[15px]">{item.title}</span>
+                  )}
                 </Link>
               )}
             </div>
@@ -117,6 +121,6 @@ const Sidebar = () => {
       </ul>
     </div>
   );
-}
+};
 
 export default Sidebar;

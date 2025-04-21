@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Headings styling */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+}
+
+/* Paragraphs */
+p {
+  font-family: sans-serif;
+  font-weight: 400;
+}
+
 /* Theme Colours */
 :root {
   --primary-dark-red: #BA090A;
@@ -21,56 +37,16 @@
   --primary: #BA090A;
   --hover: #930000;
   --active: #930000;
-  --scroll-thumb: rgba(255, 255, 255, 0.3);
-  --scroll-track: transparent;
-}
-
-.theme-dark-6 {
-  --bg: #22333B;
-  --text: #F1EFEF;
-  --primary: #C6AC8E;
-  --hover: #5E503F;
-  --active: #5E503F;
-  --scroll-thumb: rgba(255, 255, 255, 0.3);
-  --scroll-track: transparent;
-}
-
-.theme-dark-5 {
-  --bg: #0A0908;
-  --text: #F1EFEF;
-  --primary: #C6AC8E;
-  --hover: #5E503F;
-  --active: #5E503F;
-  --scroll-thumb: rgba(255, 255, 255, 0.3);
-  --scroll-track: transparent;
-}
-
-.theme-light-3 {
-  --bg: #D0D0D0;
-  --text: #1E1E1E;
-  --primary: #22333B;
-  --hover: #595959;
-  --active: #A6A6A6;
-  --scroll-thumb: rgba(0, 0, 0, 0.3);
-  --scroll-track: transparent;
-}
-
-.theme-light-2 {
-  --bg: #EAE0D5;
-  --text: #1E1E1E;
-  --primary: #0D1758;
-  --hover: #f1cfac;
-  --active: #f1cfac;
   --scroll-thumb: rgba(0, 0, 0, 0.3);
   --scroll-track: transparent;
 }
 
 .theme-light-1 {
-  --bg: #cfe2e3;
+  --bg: #f5f9fa;
   --text: #1E1E1E;
-  --primary: #0D1758;
-  --hover: #A5D8DD;
-  --active: #A5D8DD;
+  --primary: #a5d8dd;
+  --hover: #a5d8dd;
+  --active: #a5d8dd;
   --scroll-thumb: rgba(0, 0, 0, 0.3);
   --scroll-track: transparent;
 }

@@ -28,11 +28,7 @@ const CustomTable = ({
   };
 
   const getSortIcon = (key) => (
-    <Icons.ArrowDownUp
-      className={`inline w-4 h-4 ml-4 ${
-        sortConfig.key === key ? "text-gray-600" : "text-theme"
-      }`}
-    />
+    <Icons.ArrowDownUp className="inline w-4 h-4 ml-4 text-gray-600" />
   );
 
   const filteredData = tableData.filter((item) => {

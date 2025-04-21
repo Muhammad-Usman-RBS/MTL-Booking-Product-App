@@ -7,6 +7,9 @@ import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import JourneyDetailsModal from "./JourneyDetailsModal";
 import Icons from "../../../assets/icons";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
+import AuditModal from "./AuditModal";
+import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import {
   sampleData,
   driverList,
@@ -17,9 +20,8 @@ import {
   options,
   actionMenuItems,
 } from "../../../constants/dashboardTabsData/data";
-import AuditModal from "./AuditModal";
-import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import ViewDriver from "./ViewDriver";
+import ShortcutkeysModal from "./ShortcutkeysModal";
 
 const BookingsList = () => {
   const [selectedStatus, setSelectedStatus] = useState(["Payment Pending"]);
@@ -37,6 +39,10 @@ const BookingsList = () => {
   const [selectedVehicleTypes, setSelectedVehicleTypes] = useState([]);
   const [selectedAccounts, setSelectedAccounts] = useState([]);
   const [showDiv, setShowDiv] = useState(false);
+  const [showColumnModal, setShowColumnModal] = useState(false);
+  const [showKeyboardModal, setShowKeyboardModal] = useState(false);
+  const [showDriverModal, setShowDriverModal] = useState(false);
+  const [selectedDriver, setSelectedDriver] = useState(null);
   const [startDate, setStartDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -44,18 +50,15 @@ const BookingsList = () => {
     new Date().toISOString().split("T")[0]
   );
 
-  const requestSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
+  const openDriverModal = (driverName) => {
+    setSelectedDriver(driverName);
+    setShowDriverModal(true);
   };
 
   const filteredData = sampleData.filter((item) => {
     const searchLower = search.toLowerCase();
     const matchesSearch =
-      // item.orderNo.toLowerCase().includes(searchLower) ||
+      item.orderNo.toLowerCase().includes(searchLower) ||
       item.passenger.toLowerCase().includes(searchLower) ||
       item.date.toLowerCase().includes(searchLower) ||
       item.pickUp.toLowerCase().includes(searchLower) ||
@@ -63,7 +66,7 @@ const BookingsList = () => {
       item.vehicle.toLowerCase().includes(searchLower) ||
       item.payment.toLowerCase().includes(searchLower) ||
       item.driver.toLowerCase().includes(searchLower);
-      // item.fare.toLowerCase().includes(searchLower);
+    item.fare.toLowerCase().includes(searchLower);
 
     const matchesDriver =
       selectedDrivers.length === 0 ||
@@ -84,6 +87,14 @@ const BookingsList = () => {
       selectedAccounts.length === 0 ||
       selectedAccounts.includes("All") ||
       selectedAccounts.includes(item.account);
+
+    // Matches status filter
+    const matchesStatus =
+      selectedStatus.length === 0 ||
+      selectedStatus.includes("All") ||
+      selectedStatus.includes(
+        item.statusAudit?.[item.statusAudit.length - 1]?.status || ""
+      );
 
     return (
       matchesSearch &&
@@ -127,7 +138,7 @@ const BookingsList = () => {
   };
 
   const tableHeaders = [
-    // { label: "Order No.", key: "orderNo" },
+    { label: "Order No.", key: "orderNo" },
     { label: "Passenger", key: "passenger" },
     { label: "Date & Time", key: "date" },
     { label: "Pick Up", key: "pickUp" },
@@ -135,46 +146,84 @@ const BookingsList = () => {
     { label: "Vehicle", key: "vehicle" },
     { label: "Payment", key: "payment" },
     { label: "Fare", key: "fare" },
-    // { label: "DR Fare", key: "drFare" },
+    { label: "DR Fare", key: "drFare" },
     { label: "Driver", key: "driver" },
     { label: "Status", key: "status" },
     { label: "Actions", key: "actions" },
   ];
 
-  const tableData = paginatedData.map((item, index) => ({
-    ...item,
-    status: <SelectOption width="32" options={options} className="w-full" />,
-    actions: (
-      <div className="relative text-center">
-        <button
-          onClick={() =>
-            setSelectedActionRow(selectedActionRow === index ? null : index)
-          }
-          className="p-2 rounded hover:bg-gray-100 transition"
-          title="More Actions"
-        >
-          <GripHorizontal size={18} className="text-gray-600" />
-        </button>
-        {selectedActionRow === index && (
-          <div className="absolute right-0 z-50 mt-2 w-40 bg-white border rounded shadow">
-            {actionMenuItems.map((action, i) => (
+  const [selectedColumns, setSelectedColumns] = useState(() => {
+    const initialState = {};
+    tableHeaders.forEach(({ key }) => {
+      initialState[key] = true;
+    });
+    return initialState;
+  });
+
+  const tableData = paginatedData.map((item, index) => {
+    const newRow = {};
+    tableHeaders.forEach(({ key }) => {
+      if (selectedColumns[key]) {
+        if (key === "status") {
+          newRow[key] = (
+            <SelectOption width="32" options={options} className="w-full" />
+          );
+        } else if (key === "actions") {
+          newRow[key] = (
+            <div className="relative text-center">
               <button
-                key={i}
-                onClick={() => {
-                  if (action === "Status Audit")
-                    openAuditModal(item.statusAudit);
-                  else if (action === "View") openViewModal(item.view);
-                }}
-                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition"
+                onClick={() =>
+                  setSelectedActionRow(
+                    selectedActionRow === index ? null : index
+                  )
+                }
+                className="p-2 rounded hover:bg-gray-100 transition"
+                title="More Actions"
               >
-                {action}
+                <GripHorizontal size={18} className="text-gray-600" />
               </button>
-            ))}
-          </div>
-        )}
-      </div>
-    ),
-  }));
+              {selectedActionRow === index && (
+                <div className="absolute right-0 z-50 mt-2 w-40 bg-white border rounded shadow">
+                  {actionMenuItems.map((action, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        if (action === "Status Audit")
+                          openAuditModal(item.statusAudit);
+                        else if (action === "View") openViewModal(item.view);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition"
+                    >
+                      {action}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        } else if (key === "driver") {
+          newRow[key] = (
+            <button
+              className="cursor-pointer"
+              onClick={() => openDriverModal(item[key])}
+            >
+              {item[key]}
+            </button>
+          );
+        } else {
+          newRow[key] = item[key] || "-";
+        }
+      }
+    });
+    return newRow;
+  });
+
+  const handleColumnChange = (e, column) => {
+    setSelectedColumns((prev) => ({
+      ...prev,
+      [column]: e.target.checked,
+    }));
+  };
 
   return (
     <>
@@ -211,6 +260,20 @@ const BookingsList = () => {
               setStartDate={setStartDate}
               setEndDate={setEndDate}
             />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowColumnModal(true)}
+              className="btn btn-reset"
+            >
+              <Icons.Columns3 size={20} />
+            </button>
+            <button
+              onClick={() => setShowKeyboardModal(true)}
+              className="btn btn-outline"
+            >
+              <Icons.Keyboard size={16} />
+            </button>
           </div>
         </div>
       </div>
@@ -257,7 +320,9 @@ const BookingsList = () => {
       )}
 
       <CustomTable
-        tableHeaders={tableHeaders}
+        tableHeaders={tableHeaders.filter(
+          (header) => selectedColumns[header.key]
+        )}
         tableData={tableData}
         showSearch={true}
         showRefresh={true}
@@ -281,6 +346,45 @@ const BookingsList = () => {
         heading="Journey Details"
       >
         <JourneyDetailsModal />
+      </CustomModal>
+
+      <CustomModal
+        isOpen={showColumnModal}
+        onClose={() => setShowColumnModal(false)}
+        heading="Column Visibility"
+      >
+        <div className="space-y-2 p-4">
+          {tableHeaders.map(({ label, key }) => (
+            <label
+              key={key}
+              className="flex items-center gap-3 p-2 rounded-md cursor-pointer bg-white border border-gray-200 hover:bg-gray-50 transition"
+            >
+              <input
+                type="checkbox"
+                checked={!!selectedColumns[key]}
+                onChange={(e) => handleColumnChange(e, key)}
+                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+              />
+              <span className="text-sm text-gray-800">{label}</span>
+            </label>
+          ))}
+        </div>
+      </CustomModal>
+
+      <CustomModal
+        isOpen={showKeyboardModal}
+        onClose={() => setShowKeyboardModal(false)}
+        heading="Keyboard Shortcuts"
+      >
+        <ShortcutkeysModal />
+      </CustomModal>
+
+      <CustomModal
+        isOpen={showDriverModal}
+        onClose={() => setShowDriverModal(false)}
+        heading={`${selectedDriver?.name || "Driver Details"}`}
+      >
+        <ViewDriver />
       </CustomModal>
     </>
   );

@@ -57,7 +57,7 @@ const JourneyDetailsModal = () => {
   };
   return (
     <>
-      <div className="max-w-5xl w-full mx-auto space-y-5">
+      <div className="max-w-5xl w-full mx-auto space-y-5 p-5">
         <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
           <SelectOption options={["Booking Confirmation", "Booking Receipt"]} />
           <div className="flex items-center gap-2 w-full">
