@@ -15,6 +15,9 @@ const tabOptions = [
   "Delete Pending",
 ];
 
+
+
+
 const DriverList = () => {
   const [activeTab, setActiveTab] = useState("Suspended");
   const [search, setSearch] = useState("");
@@ -77,6 +80,19 @@ const DriverList = () => {
     { label: "Actions", key: "actions" },
   ];
 
+  const exportTableData = paginatedData.map((item, index) => ({
+    index:
+      (page - 1) * (perPage === "All" ? filteredData.length : perPage) +
+      index +
+      1,
+    name: item.name,
+    email: item.email,
+    make: item.make,
+    model: item.model,
+    regNo: item.regNo,
+    documents: item.documents,
+  }));
+
   const tableData = paginatedData.map((item, index) => ({
     ...item,
     index:
@@ -85,9 +101,8 @@ const DriverList = () => {
       1,
     documents: (
       <span
-        className={`font-semibold ${
-          item.documents === "Fine" ? "text-green-600" : "text-red-500"
-        }`}
+        className={`font-semibold ${item.documents === "Fine" ? "text-green-600" : "text-red-500"
+          }`}
       >
         {item.documents}
       </span>
@@ -128,11 +143,10 @@ const DriverList = () => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-2 whitespace-nowrap transition-all duration-200 ${
-                activeTab === tab
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-blue-500"
-              }`}
+              className={`pb-2 whitespace-nowrap transition-all duration-200 ${activeTab === tab
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-600 hover:text-blue-500"
+                }`}
             >
               {tab} ({driversData.filter((d) => d.status === tab).length})
             </button>
@@ -143,6 +157,7 @@ const DriverList = () => {
       <CustomTable
         tableHeaders={tableHeaders}
         tableData={tableData}
+        exportTableData={exportTableData}
         showSearch={true}
         showRefresh={true}
         showDownload={true}

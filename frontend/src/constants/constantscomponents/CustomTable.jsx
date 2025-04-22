@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import Icons from "../../assets/icons";
-import DownloadPDF from "../constantscomponents/DownloadPDF";
+import DownloadExcel from "../constantscomponents/DownloadExcel";
 
 const itemsPerPageOptions = [5, 10, 20, "All"];
 
 const CustomTable = ({
   tableHeaders = [],
   tableData = [],
+  exportTableData = null, // ✅ add this line
   showSearch = true,
   showRefresh = true,
   showDownload = true,
@@ -99,11 +100,10 @@ const CustomTable = ({
                 <th
                   key={i}
                   onClick={() => showSorting && col.key && requestSort(col.key)}
-                  className={`px-2 py-3 text-left align-middle whitespace-nowrap ${
-                    showSorting && col.key
-                      ? "cursor-pointer bg-[#e7eff0] text-dark transition"
-                      : ""
-                  }`}
+                  className={`px-2 py-3 text-left align-middle whitespace-nowrap ${showSorting && col.key
+                    ? "cursor-pointer bg-[#e7eff0] text-dark transition"
+                    : ""
+                    }`}
                 >
                   <div className="flex items-center gap-1 whitespace-nowrap">
                     {col.label}
@@ -141,9 +141,14 @@ const CustomTable = ({
           </div>
           {showDownload && (
             <div className="w-full sm:w-auto">
-              <DownloadPDF targetRef={tableRef} />
+              <DownloadExcel
+                tableData={exportTableData || tableData}
+                tableHeaders={tableHeaders}
+              />
+
             </div>
           )}
+
         </div>
 
         {showPagination && (

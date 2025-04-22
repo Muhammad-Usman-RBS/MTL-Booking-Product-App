@@ -58,18 +58,33 @@ const InvoicesList = () => {
     amount: `£${item.amount}`,
     status: (
       <span
-        className={`px-2 py-1 text-xs font-semibold rounded-full ${
-          item.status === "Paid"
-            ? "bg-green-500 text-white"
-            : item.status === "Unpaid"
+        className={`px-2 py-1 text-xs font-semibold rounded-full ${item.status === "Paid"
+          ? "bg-green-500 text-white"
+          : item.status === "Unpaid"
             ? "bg-gray-500 text-white"
             : "bg-black text-white"
-        }`}
+          }`}
       >
         {item.status}
       </span>
     ),
   }));
+
+  const exportTableData = (
+    perPage === "All"
+      ? filteredData
+      : filteredData.slice((page - 1) * perPage, page * perPage)
+  ).map((item) => ({
+    invoiceNo: item.invoiceNo,
+    customer: item.customer,
+    account: item.account,
+    date: item.date,
+    dueDate: item.dueDate,
+    amount: `£${item.amount}`,
+    status: item.status,
+  }));
+
+
 
   return (
     <div>
@@ -84,12 +99,14 @@ const InvoicesList = () => {
       <CustomTable
         tableHeaders={tableHeaders}
         tableData={tableData}
+        exportTableData={exportTableData}
         showSearch={true}
         showRefresh={true}
         showDownload={true}
         showPagination={true}
         showSorting={true}
       />
+
 
       {expandedInvoice && (
         <InvoiceDetails

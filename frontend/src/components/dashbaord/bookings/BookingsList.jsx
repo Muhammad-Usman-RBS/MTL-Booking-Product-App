@@ -160,16 +160,56 @@ const BookingsList = () => {
     return initialState;
   });
 
-  const tableData = paginatedData.map((item, index) => {
-    const newRow = {};
+  const exportTableData = paginatedData.map((item) => {
+    const exportRow = {};
+
     tableHeaders.forEach(({ key }) => {
       if (selectedColumns[key]) {
+        if (key === "actions") return;
+
         if (key === "status") {
-          newRow[key] = (
-            <SelectOption width="32" options={options} className="w-full" />
-          );
+          exportRow[key] = item.statusAudit?.[item.statusAudit.length - 1]?.status || "-";
+        } else {
+          exportRow[key] = item[key] || "-";
+        }
+      }
+    });
+
+    return exportRow;
+  });
+
+  const isClient = typeof window !== "undefined" && window.navigator;
+
+  const tableData = paginatedData.map((item, index) => {
+    const newRow = {};
+
+    tableHeaders.forEach(({ key }) => {
+      if (selectedColumns[key]) {
+        const statusValue = item.statusAudit?.[item.statusAudit.length - 1]?.status || "-";
+
+        if (key === "status") {
+          newRow[key] = isClient
+            ? (
+              <SelectOption
+                width="32"
+                options={options}
+                className="w-full"
+              />
+            )
+            : statusValue;
+        } else if (key === "driver") {
+          newRow[key] = isClient
+            ? (
+              <button
+                className="cursor-pointer"
+                onClick={() => openDriverModal(item[key])}
+              >
+                {item[key]}
+              </button>
+            )
+            : item[key];
         } else if (key === "actions") {
-          newRow[key] = (
+          newRow[key] = isClient ? (
             <div className="relative text-center">
               <button
                 onClick={() =>
@@ -183,40 +223,33 @@ const BookingsList = () => {
                 <GripHorizontal size={18} className="text-gray-600" />
               </button>
               {selectedActionRow === index && (
-                <div className="absolute right-0 z-50 mt-2 w-40 bg-white border rounded shadow">
+                <div className="absolute right-0 z-50 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg animate-slide-in">
                   {actionMenuItems.map((action, i) => (
                     <button
                       key={i}
                       onClick={() => {
-                        if (action === "Status Audit")
-                          openAuditModal(item.statusAudit);
+                        if (action === "Status Audit") openAuditModal(item.statusAudit);
                         else if (action === "View") openViewModal(item.view);
                       }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
                     >
                       {action}
                     </button>
                   ))}
                 </div>
+
               )}
             </div>
-          );
-        } else if (key === "driver") {
-          newRow[key] = (
-            <button
-              className="cursor-pointer"
-              onClick={() => openDriverModal(item[key])}
-            >
-              {item[key]}
-            </button>
-          );
+          ) : "-";
         } else {
           newRow[key] = item[key] || "-";
         }
       }
     });
+
     return newRow;
   });
+
 
   const handleColumnChange = (e, column) => {
     setSelectedColumns((prev) => ({
@@ -320,16 +353,16 @@ const BookingsList = () => {
       )}
 
       <CustomTable
-        tableHeaders={tableHeaders.filter(
-          (header) => selectedColumns[header.key]
-        )}
+        tableHeaders={tableHeaders.filter((header) => selectedColumns[header.key])}
         tableData={tableData}
+        exportTableData={exportTableData} // ✅ NEW
         showSearch={true}
         showRefresh={true}
         showDownload={true}
         showPagination={true}
         showSorting={true}
       />
+
 
       {/* Modals */}
       <CustomModal

@@ -28,7 +28,7 @@ const InvoiceDetails = ({ item }) => {
       downloadPDF("invoiceToDownload", `Invoice-${item.invoiceNo}.pdf`);
     }, 500);
   };
-  
+
   const openModal = () => {
     const msg = `Dear ${item.customer}\n\nWe have prepared the following invoice for you: # <b>${item.invoiceNo}</b>\n\nInvoice status: ${status}\n\nYou can view the invoice on the following link: <a href='${invoiceUrl}' target='_blank'>${item.invoiceNo}</a>\n\nPlease contact us for more information.\n\nKind Regards,\n\n${item.company.name}`;
     setRecipient(item.email);

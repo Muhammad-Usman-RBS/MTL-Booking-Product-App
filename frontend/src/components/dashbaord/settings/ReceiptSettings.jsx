@@ -1,71 +1,10 @@
-// import React, { useState } from "react";
-// import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-// import IMAGES from "../../../assets/images";
-// import ReceiptFirstTemplate from "./ReceiptFirstTemplate";
-// import ReceiptSecondTemplate from "./ReceiptSecondTemplate";
-// import { receiptData } from '../../../constants/dashboardTabsData/data';
-
-// const ReceiptSettings = () => {
-//   const [selectedTemplate, setSelectedTemplate] = useState(null);
-
-//   return (
-//     <>
-//       <OutletHeading name="Receipt Template" />
-
-//       {/* Only show template options if nothing is selected yet */}
-//       {!selectedTemplate && (
-//         <>
-//           <h3 className="text-2xl font-bold text-gray-600 mb-6 text-center underline">
-//             Choose the template design
-//           </h3>
-
-//           <div className="flex justify-center gap-6 mb-8">
-//             <div className="w-[520px] h-[450px] flex flex-col items-center justify-between text-center p-2 rounded-lg shadow bg-white">
-//               <img
-//                 src={IMAGES.receiptFirstTemplate}
-//                 alt="Template One"
-//                 className="w-full h-[380px] object-cover rounded-lg"
-//               />
-//               <button
-//                 onClick={() => setSelectedTemplate("one")}
-//                 className="btn btn-reset mt-2"
-//               >
-//                 Use This
-//               </button>
-//             </div>
-
-//             <div className="w-[520px] h-[450px] flex flex-col items-center justify-between text-center p-2 rounded-lg shadow bg-white">
-//               <img
-//                 src={IMAGES.receiptSecondTemplate}
-//                 alt="Template Two"
-//                 className="w-full h-[380px] object-cover rounded-lg"
-//               />
-//               <button
-//                 onClick={() => setSelectedTemplate("two")}
-//                 className="btn btn-edit mt-2"
-//               >
-//                 Use This
-//               </button>
-//             </div>
-//           </div>
-//         </>
-//       )}
-
-//       {/* Render selected template only */}
-//       {selectedTemplate === "one" && <ReceiptFirstTemplate item={receiptData[0]} />}
-//       {selectedTemplate === "two" && <ReceiptSecondTemplate />}
-//     </>
-//   );
-// };
-
-// export default ReceiptSettings;
-
 import React, { useState } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import IMAGES from "../../../assets/images";
 import { receiptData } from "../../../constants/dashboardTabsData/data";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
 
 const ReceiptSettings = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -101,30 +40,8 @@ const ReceiptSettings = () => {
     }
   };
 
-  const downloadPDF = () => {
-    setIsDownloading(true); // Apply A4 styles
-
-    setTimeout(() => {
-      const input = document.getElementById("invoiceToDownload");
-
-      html2canvas(input, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        windowWidth: document.body.scrollWidth,
-        windowHeight: input.scrollHeight,
-      }).then((canvas) => {
-        const imgData = canvas.toDataURL("image/png");
-        const pdf = new jsPDF("p", "mm", "a4");
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, imgHeight);
-        pdf.save(`Invoice-${form.invoiceNo}.pdf`);
-
-        setIsDownloading(false); // Revert style
-      });
-    }, 100); // delay to apply new style before rendering
+  const handleDownload = () => {
+    downloadPDF("invoiceToDownload", `Invoice-${form.invoiceNo}.pdf`);
   };
 
   const handleRideChange = (index, field, value) => {
@@ -159,23 +76,23 @@ const ReceiptSettings = () => {
         style={{
           ...(isDownloading
             ? {
-                width: "794px",
-                minHeight: "1123px",
-                padding: "32px",
-                backgroundColor: "white",
-                fontSize: "14px",
-                border: "none",
-                boxShadow: "0 0 0 white",
-                margin: "auto",
-              }
+              width: "794px",
+              minHeight: "1123px",
+              padding: "32px",
+              backgroundColor: "white",
+              fontSize: "14px",
+              border: "none",
+              boxShadow: "0 0 0 white",
+              margin: "auto",
+            }
             : {
-                padding: "16px",
-                border: "1px solid #ccc",
-                borderRadius: "8px",
-                backgroundColor: "white",
-                fontSize: "14px",
-                marginTop: "16px",
-              }),
+              padding: "16px",
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+              backgroundColor: "white",
+              fontSize: "14px",
+              marginTop: "16px",
+            }),
         }}
       >
         <div
@@ -456,7 +373,7 @@ const ReceiptSettings = () => {
         </div>
       </div>
       <div className="flex justify-between mt-3">
-        <button className="btn btn-primary" onClick={downloadPDF}>
+        <button className="btn btn-primary" onClick={handleDownload}>
           Donwload
         </button>
         <button onClick={handleEditToggle} className="btn btn-edit">
