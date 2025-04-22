@@ -261,7 +261,6 @@ const BookingsList = () => {
   return (
     <>
       <OutletHeading name="Bookings List" />
-
       <div className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between w-full mb-4">
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full">
           <div className="flex gap-2">
