@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import IMAGES from "../../../assets/images";
@@ -24,27 +23,12 @@ const InvoiceDetails = ({ item }) => {
 
   const invoiceUrl = `https://www.megatransfers.com/invoice.php?key=S3wy2dBNrKaemCfLDlqGJHnkA10&id=${item.id}`;
 
-  const downloadPDF = async () => {
-    const input = document.getElementById("invoiceToDownload");
-    if (!input) return;
-
-    const canvas = await html2canvas(input, {
-      scale: 2,
-      useCORS: true,
-      scrollY: -window.scrollY,
-      width: 1200,
-      height: 800,
-      windowWidth: 1200,
-      windowHeight: 800,
-    });
-
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "pt", "a4"); // use pt to match pixel-based layout
-    pdf.addImage(imgData, "PNG", 0, 0, 595.28, 841.89); // A4 in pt = 595x842
-    pdf.save(`Invoice-${item.invoiceNo}.pdf`);
-    toast.success("PDF downloaded successfully!");
+  const handleDownload = (item) => {
+    setTimeout(() => {
+      downloadPDF("invoiceToDownload", `Invoice-${item.invoiceNo}.pdf`);
+    }, 500);
   };
-
+  
   const openModal = () => {
     const msg = `Dear ${item.customer}\n\nWe have prepared the following invoice for you: # <b>${item.invoiceNo}</b>\n\nInvoice status: ${status}\n\nYou can view the invoice on the following link: <a href='${invoiceUrl}' target='_blank'>${item.invoiceNo}</a>\n\nPlease contact us for more information.\n\nKind Regards,\n\n${item.company.name}`;
     setRecipient(item.email);
@@ -78,7 +62,7 @@ const InvoiceDetails = ({ item }) => {
 
           {/* Download Button */}
           <button
-            onClick={downloadPDF}
+            onClick={handleDownload}
             className="p-2.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition"
           >
             <Icons.Download size={16} />

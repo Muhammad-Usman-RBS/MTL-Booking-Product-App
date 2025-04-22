@@ -4,7 +4,7 @@ import { statementsData } from "../../../constants/dashboardTabsData/data";
 import SelectedSearch from "../../../constants/constantscomponents/SelectedSearch";
 import ViewModal from "../../../components/dashbaord/statements/ViewModal";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import html2pdf from "html2pdf.js";
+import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
 import DriverGeneration from "./DriverGeneration";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
@@ -55,19 +55,7 @@ const DriverStatements = () => {
   const handleDownload = (item) => {
     setViewModalData(item);
     setTimeout(() => {
-      const element = document.getElementById("invoice-content");
-      if (!element) return;
-
-      html2pdf()
-        .set({
-          margin: 0.5,
-          filename: `${item.driver}_statement.pdf`,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-        })
-        .from(element)
-        .save();
+      downloadPDF("invoice-content", `${item.driver}_statement.pdf`);
     }, 500);
   };
 

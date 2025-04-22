@@ -353,7 +353,7 @@ const BookingsList = () => {
         onClose={() => setShowColumnModal(false)}
         heading="Column Visibility"
       >
-        <div className="space-y-2 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
           {tableHeaders.map(({ label, key }) => (
             <label
               key={key}
