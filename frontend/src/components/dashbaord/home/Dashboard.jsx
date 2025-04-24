@@ -97,17 +97,17 @@ const Dashboard = () => {
           </div>
         </div>
 
-<button class="btn btn-primary">Primary</button>
+        <button className="btn btn-primary">Primary</button>
 
-<button class="btn btn-success">Success</button>
+        <button className="btn btn-success">Success</button>
 
-<button class="btn btn-cancel">Cancel</button>
+        <button className="btn btn-cancel">Cancel</button>
 
-<button class="btn btn-edit">Edit</button>
+        <button className="btn btn-edit">Edit</button>
 
-<button class="btn btn-reset">Reset</button>
+        <button className="btn btn-reset">Reset</button>
 
-<button class="btn btn-outline">Outline</button>
+        <button className="btn btn-outline">Outline</button>
 
 
         {/* Sections */}

@@ -39,8 +39,10 @@ function Navbar() {
     hoverActive: "#F7BE7E",
   });
 
-  const name = "Muhammad Usman Aziz";
-  const email = "john@example.com";
+  const user = JSON.parse(localStorage.getItem("user"));
+  const email = user?.email || "No Email";
+  const name = user?.fullName || "Guest";
+  
   const profileImg = Images.profileImg;
 
   const [firstName, lastName] = name.split(" ");

@@ -28,7 +28,7 @@ const AuthLayout = () => {
           </div>
           <p className="text-sm text-gray-500 mt-1">
             © 2025 All Rights Reserved.
-          </p>
+          </p> 
         </div>
       </div>
     </div>

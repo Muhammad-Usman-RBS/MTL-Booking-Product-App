@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import axios from "axios";
+import IMAGES from "../../../assets/images";
 
 const EditProfile = () => {
   const [form, setForm] = useState({
-    email: "mtlcontrol8@gmail.com",
-    name: "Muhammad Usman",
+    email: "",
+    name: "",
     newPassword: "",
     currentPassword: "",
   });
@@ -14,7 +16,25 @@ const EditProfile = () => {
   const [profileImg, setProfileImg] = useState(null);
   const [preview, setPreview] = useState(null);
 
-  // Get initials from name
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (user) {
+      setForm({
+        email: user.email || "",
+        name: user.fullName || "",
+        newPassword: "",
+        currentPassword: "",
+      });
+
+      // ✅ Set full image URL if saved
+      if (user.profileImage) {
+        setPreview(user.profileImage);  // full URL from backend
+      }
+    }
+  }, []);
+
+
+
   const getInitials = (fullName) => {
     const parts = fullName.trim().split(" ");
     return `${parts[0]?.[0] || ""}${parts[1]?.[0] || ""}`.toUpperCase();
@@ -36,27 +56,43 @@ const EditProfile = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // handle form submission logic (e.g. API call)
-    console.log("Form Data:", form);
-    console.log("Profile Image File:", profileImg);
+    try {
+      const token = JSON.parse(localStorage.getItem("user"))?.token;
 
-    toast.success("Profile updated successfully!", {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
+      const formData = new FormData();
+      formData.append("email", form.email);
+      formData.append("fullName", form.name);
+      formData.append("newPassword", form.newPassword);
+      formData.append("currentPassword", form.currentPassword);
+      if (profileImg) formData.append("profileImage", profileImg);
+
+      const response = await axios.put("http://localhost:5000/api/auth/profile", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        },
+      });
+
+      if (response.status === 200) {
+        const updatedUser = response.data;
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setPreview(updatedUser.profileImage); // for preview
+      }
+
+
+    } catch (error) {
+      console.error("Profile update error:", error);
+      toast.error(error.response?.data?.message || "Something went wrong.");
+    }
   };
 
   const handleReset = () => {
+    const user = JSON.parse(localStorage.getItem("user"));
     setForm({
-      email: "",
-      name: "",
+      email: user?.email || "",
+      name: user?.fullName || "",
       newPassword: "",
       currentPassword: "",
     });
@@ -68,18 +104,25 @@ const EditProfile = () => {
     <>
       <OutletHeading name="Profile Update" />
 
-      {/* Profile image section */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+     {/* / /  <img
+          src={preview || IMAGES.profileimg}
+          alt="Profile"
+          className="w-22 h-22 rounded-full object-cover border"
+        /> */}
+
         {preview ? (
           <img
             src={preview}
-            alt="Profile Preview"
-            className="w-22 h-22 rounded-full object-cover border"
+            alt="Profile-Preview"
+            className="w-22 h-22 rounded-full object-cover border border-gray-300S"
           />
         ) : (
-          <div className="w-22 h-22 rounded-full bg-gray-400 flex items-center justify-center text-white font-bold text-lg">
-            {getInitials(form.name)}
-          </div>
+          <img
+          src={IMAGES.dummyImg}
+          alt="Profile-Preview"
+          className="w-22 h-22 rounded-full object-cover border border-gray-300S"
+        />
         )}
 
         <div>
@@ -101,12 +144,10 @@ const EditProfile = () => {
         </div>
       </div>
 
-      {/* Form fields in grid layout */}
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
       >
-        {/* Email */}
         <div>
           <label className="block text-sm font-medium mb-1">
             Email Address <span className="text-red-500">*</span>
@@ -121,7 +162,6 @@ const EditProfile = () => {
           />
         </div>
 
-        {/* Name */}
         <div>
           <label className="block text-sm font-medium mb-1">
             Name <span className="text-red-500">*</span>
@@ -136,7 +176,6 @@ const EditProfile = () => {
           />
         </div>
 
-        {/* New Password */}
         <div>
           <label className="block text-sm font-medium mb-1">New Password</label>
           <input
@@ -148,7 +187,6 @@ const EditProfile = () => {
           />
         </div>
 
-        {/* Current Password */}
         <div>
           <label className="block text-sm font-medium mb-1">
             Current Password <span className="text-red-500">*</span>
@@ -163,7 +201,6 @@ const EditProfile = () => {
           />
         </div>
 
-        {/* Buttons - full width row */}
         <div className="flex flex-wrap gap-3 col-span-1 md:col-span-2">
           <button type="button" onClick={handleReset} className="btn btn-reset">
             Reset
@@ -178,3 +215,7 @@ const EditProfile = () => {
 };
 
 export default EditProfile;
+
+
+
+

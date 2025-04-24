@@ -3,7 +3,7 @@ import Sidebar from "../components/dashbaord/sidebar/Sidebar";
 import Navbar from "../components/dashbaord/navbar/Navbar";
 import { Outlet } from "react-router-dom";
 
-function DashboardLayout() {
+const DashboardLayout = () => {
   return (
     <div className="flex h-screen w-full overflow-hidden">
       <Sidebar />

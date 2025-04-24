@@ -23,9 +23,8 @@ const Sidebar = () => {
 
   return (
     <div
-      className={`${
-        isOpen ? "w-64" : "w-16"
-      } min-w-[64px] bg-theme text-theme h-screen flex flex-col duration-300 overflow-y-auto`}
+      className={`${isOpen ? "w-64" : "w-16"
+        } min-w-[64px] bg-theme text-theme h-screen flex flex-col duration-300 overflow-y-auto`}
       style={{
         transition: "0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
       }}
@@ -44,13 +43,30 @@ const Sidebar = () => {
             Welcome!
           </p>
           <p className="font-semibold text-[#1f2937] truncate">
-            Muhammad Usman
+            {JSON.parse(localStorage.getItem("user"))?.fullName ||
+              "Guest"}
           </p>
         </div>
       )}
 
       <ul className="flex flex-col mt-4">
-        {sidebarItems.map((item, index) => {
+        {(sidebarItems.filter((item) => {
+          const user = JSON.parse(localStorage.getItem("user"));
+          const role = user?.role;
+
+          // Allow only these two tabs for superadmin
+          if (role === "superadmin") {
+            return (
+              item.route === "/dashboard/home" ||
+              item.route === "/dashboard/admin-list" ||
+              item.route === "/dashboard/profile" ||
+              item.route === "/dashboard/logout"
+            );
+          }
+
+          return true; // Allow all for other roles
+        })).map((item, index) => {
+
           const isMainActive =
             index === activeMain ||
             location.pathname === item.route ||
@@ -62,9 +78,8 @@ const Sidebar = () => {
                 <>
                   <li
                     onClick={() => handleToggle(index)}
-                    className={`p-4 hover-theme flex items-center justify-between cursor-pointer ${
-                      isMainActive ? "active-theme" : ""
-                    } ${isOpen ? "pl-4 pr-3" : "justify-center"}`}
+                    className={`p-4 hover-theme flex items-center justify-between cursor-pointer ${isMainActive ? "active-theme" : ""
+                      } ${isOpen ? "pl-4 pr-3" : "justify-center"}`}
                   >
                     <div className="flex items-center gap-3">
                       <item.icon className="w-4 h-4" />
@@ -74,9 +89,8 @@ const Sidebar = () => {
                     </div>
                     {isOpen && (
                       <Icons.ChevronDown
-                        className={`w-4 h-4 transition-transform ${
-                          activeMain === index ? "rotate-180" : ""
-                        }`}
+                        className={`w-4 h-4 transition-transform ${activeMain === index ? "rotate-180" : ""
+                          }`}
                       />
                     )}
                   </li>
@@ -88,11 +102,10 @@ const Sidebar = () => {
                         <li key={subIndex}>
                           <Link
                             to={sub.route}
-                            className={`flex items-center p-2 hover-theme ${
-                              location.pathname === sub.route
-                                ? "active-theme"
-                                : ""
-                            }`}
+                            className={`flex items-center p-2 hover-theme ${location.pathname === sub.route
+                              ? "active-theme"
+                              : ""
+                              }`}
                           >
                             <sub.icon className="mr-2 w-4 h-4" />
                             <span className="text-[15px]">{sub.title}</span>
@@ -105,9 +118,8 @@ const Sidebar = () => {
               ) : (
                 <Link
                   to={item.route}
-                  className={`p-4 hover-theme flex items-center cursor-pointer ${
-                    isOpen ? "justify-start pl-4" : "justify-center"
-                  } ${location.pathname === item.route ? "active-theme" : ""}`}
+                  className={`p-4 hover-theme flex items-center cursor-pointer ${isOpen ? "justify-start pl-4" : "justify-center"
+                    } ${location.pathname === item.route ? "active-theme" : ""}`}
                 >
                   <item.icon className="w-4 h-4" />
                   {isOpen && (
