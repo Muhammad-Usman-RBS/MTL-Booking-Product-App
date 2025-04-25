@@ -11,6 +11,12 @@ const userSchema = new mongoose.Schema({
     default: 'customer',                                       // Default role is 'customer'
   },
 
+  status: {
+    type: String,
+    enum: ['Active', 'Pending', 'Verified', 'Suspended', 'Finished', 'Delete Pending'],
+    default: 'Active',
+  },
+
   permissions: [{ type: String }],
   profileImage: { type: String },
 

@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Icons from "../../../assets/icons";
-import { adminsListData } from "../../../constants/dashboardTabsData/data";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import axios from "axios";
 
 const tabs = [
   "Active",
@@ -18,6 +18,7 @@ const tabs = [
 ];
 
 const AdminList = () => {
+  const [adminsListData, setAdminsListData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("Active");
   const [page, setPage] = useState(1);
@@ -25,9 +26,50 @@ const AdminList = () => {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
+  useEffect(() => {
+    fetchAdmins();
+  }, []);
+
+  const fetchAdmins = async () => {
+    try {
+      const token = JSON.parse(localStorage.getItem("user"))?.token;
+      const res = await axios.get("http://localhost:5000/api/create-clientadmin", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAdminsListData(res.data);
+    } catch (error) {
+      toast.error("Failed to fetch admins");
+    }
+  };
+
   const handleEditModal = (admin) => {
     setSelectedAccount(admin);
     setShowModal(true);
+  };
+
+  const handleSave = async () => {
+    const token = JSON.parse(localStorage.getItem("user"))?.token;
+    try {
+      if (selectedAccount._id) {
+        await axios.put(
+          `http://localhost:5000/api/create-clientadmin/${selectedAccount._id}`,
+          selectedAccount,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success("User updated");
+      } else {
+        await axios.post(
+          "http://localhost:5000/api/create-clientadmin",
+          selectedAccount,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success("User created");
+      }
+      setShowModal(false);
+      fetchAdmins();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Operation failed");
+    }
   };
 
   const tabCounts = tabs.reduce((acc, tab) => {
@@ -50,16 +92,18 @@ const AdminList = () => {
       : filteredData.slice((page - 1) * perPage, page * perPage);
 
   const tableHeaders = [
-    { label: "Type", key: "type" },
-    { label: "Name", key: "name" },
+    { label: "Type", key: "role" },
+    { label: "Name", key: "fullName" },
     { label: "Email", key: "email" },
-    { label: "Last Login", key: "lastLogin" },
     { label: "Status", key: "status" },
-    { label: "Action", key: "actions" },
+    { label: "Actions", key: "actions" },
   ];
 
   const tableData = paginatedData.map((item) => ({
-    ...item,
+    role: item.role || "N/A",
+    fullName: item.fullName || "N/A",
+    email: item.email || "N/A",
+    status: item.status || "N/A",
     actions: (
       <div className="flex gap-2">
         <Icons.Pencil
@@ -75,6 +119,7 @@ const AdminList = () => {
     ),
   }));
 
+
   return (
     <>
       <div>
@@ -84,9 +129,9 @@ const AdminList = () => {
             className="btn btn-edit"
             onClick={() =>
               handleEditModal({
-                name: "",
+                fullName: "",
                 email: "",
-                type: "Admin",
+                role: "clientadmin",
                 status: "Active",
                 password: "",
                 permissions: [],
@@ -106,13 +151,12 @@ const AdminList = () => {
                   setSelectedTab(tab);
                   setPage(1);
                 }}
-                className={`pb-2 whitespace-nowrap transition-all duration-200 ${
-                  selectedTab === tab
+                className={`pb-2 whitespace-nowrap transition-all duration-200 ${selectedTab === tab
                     ? "border-b-2 border-blue-600 text-blue-600"
                     : "text-gray-600 hover:text-blue-500"
-                }`}
+                  }`}
               >
-                {tab} ({tabCounts[tab]})
+                {tab} ({tabCounts[tab] || 0})
               </button>
             ))}
           </div>
@@ -126,135 +170,98 @@ const AdminList = () => {
           currentPage={page}
           setCurrentPage={setPage}
           perPage={perPage}
+          totalCount={filteredData.length}
         />
       </div>
 
       <CustomModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        heading="Edit Admin"
+        heading="Client Info"
       >
-        <div className="mx-auto p-4 font-sans space-y-4">
+        <div className="space-y-4 ps-6 pe-6">
           <SelectOption
             label="Type"
-            width="full"
-            value={selectedAccount?.type || ""}
+            value={selectedAccount?.role || ""}
             onChange={(e) =>
-              setSelectedAccount({ ...selectedAccount, type: e.target.value })
+              setSelectedAccount({ ...selectedAccount, role: e.target.value })
             }
-            options={["Admin", "Manager", "Super Admin"]}
+            options={["clientadmin", "driver", "customer"]}
           />
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Name:
-            </label>
-            <input
-              type="text"
-              value={selectedAccount?.name || ""}
-              onChange={(e) =>
-                setSelectedAccount({ ...selectedAccount, name: e.target.value })
-              }
-              className="custom_input"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email:
-            </label>
-            <input
-              type="email"
-              value={selectedAccount?.email || ""}
-              onChange={(e) =>
-                setSelectedAccount({
-                  ...selectedAccount,
-                  email: e.target.value,
-                })
-              }
-              className="custom_input"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Password:
-            </label>
-            <input
-              type="password"
-              value={selectedAccount?.password || ""}
-              onChange={(e) =>
-                setSelectedAccount({
-                  ...selectedAccount,
-                  password: e.target.value,
-                })
-              }
-              className="custom_input"
-            />
-          </div>
-
+          <input
+            placeholder="Full Name"
+            className="custom_input"
+            value={selectedAccount?.fullName || ""}
+            onChange={(e) =>
+              setSelectedAccount({ ...selectedAccount, fullName: e.target.value })
+            }
+          />
+          <input
+            placeholder="Email"
+            type="email"
+            className="custom_input"
+            value={selectedAccount?.email || ""}
+            onChange={(e) =>
+              setSelectedAccount({ ...selectedAccount, email: e.target.value })
+            }
+          />
+          <input
+            placeholder="Password"
+            type="password"
+            className="custom_input"
+            value={selectedAccount?.password || ""}
+            onChange={(e) =>
+              setSelectedAccount({ ...selectedAccount, password: e.target.value })
+            }
+          />
           <SelectOption
             label="Status"
-            width="full"
             value={selectedAccount?.status || ""}
             onChange={(e) =>
               setSelectedAccount({ ...selectedAccount, status: e.target.value })
             }
-            options={["Active", "Pending", "Suspended"]}
+            options={tabs}
           />
 
-          {/* ✅ Permissions Section */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
               Permissions
             </label>
-            <div className="grid grid-cols-2 gap-2 text-sm text-gray-800">
+            <div className="grid grid-cols-2 gap-2">
               {[
                 "Booking",
                 "Driver",
                 "Customer",
                 "Pricing",
                 "Setting",
-                "Gallery",
-                "Page",
-                "Review",
                 "Seo",
-                "Statement",
                 "Invoice",
-                "Statistics",
-                "Tour",
+                "Statement",
                 "Airport & City Transfers",
-              ].map((permission) => (
-                <label key={permission} className="flex items-center space-x-2">
+              ].map((perm) => (
+                <label key={perm} className="flex gap-2 items-center">
                   <input
                     type="checkbox"
-                    checked={selectedAccount?.permissions?.includes(permission)}
+                    checked={selectedAccount?.permissions?.includes(perm)}
                     onChange={(e) => {
-                      const newPermissions = selectedAccount?.permissions || [];
-                      const updatedPermissions = e.target.checked
-                        ? [...newPermissions, permission]
-                        : newPermissions.filter((p) => p !== permission);
-                      setSelectedAccount({
-                        ...selectedAccount,
-                        permissions: updatedPermissions,
-                      });
+                      const updated = e.target.checked
+                        ? [...(selectedAccount.permissions || []), perm]
+                        : selectedAccount.permissions.filter((p) => p !== perm);
+                      setSelectedAccount({ ...selectedAccount, permissions: updated });
                     }}
                   />
-                  <span>{permission}</span>
+                  <span>{perm}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              onClick={() => {
-                toast.success("Admin Updated!");
-                setShowModal(false);
-              }}
-              className="btn btn-reset"
-            >
-              Update
+          <div className="flex justify-end gap-4 pt-4">
+            <button className="btn btn-reset" onClick={() => setShowModal(false)}>
+              Cancel
+            </button>
+            <button className="btn btn-success" onClick={handleSave}>
+              {selectedAccount?._id ? "Update" : "Create"}
             </button>
           </div>
         </div>

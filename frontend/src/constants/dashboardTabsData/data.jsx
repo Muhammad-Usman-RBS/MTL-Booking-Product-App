@@ -1126,30 +1126,6 @@ export const companyAccountsData = [
   },
 ];
 
-export const adminsListData = [
-  {
-    type: "Admin",
-    name: "Admin",
-    email: "bookings@megatransfers.co.uk",
-    lastLogin: "11-04-2025 09:55",
-    status: "Active",
-  },
-  {
-    type: "User",
-    name: "Admin",
-    email: "asdsadasdas@megatransfers.co.uk",
-    lastLogin: "11-04-2025 09:55",
-    status: "Pending",
-  },
-  {
-    type: "User",
-    name: "Admin",
-    email: "bookings@megatransfers.co.uk",
-    lastLogin: "11-04-2025 09:55",
-    status: "Active",
-  },
-];
-
 export const vehicleData = [
   {
     priority: 0,
