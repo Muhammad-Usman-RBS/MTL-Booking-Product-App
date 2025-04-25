@@ -33,13 +33,6 @@ const EditProfile = () => {
     }
   }, []);
 
-
-
-  const getInitials = (fullName) => {
-    const parts = fullName.trim().split(" ");
-    return `${parts[0]?.[0] || ""}${parts[1]?.[0] || ""}`.toUpperCase();
-  };
-
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -78,13 +71,13 @@ const EditProfile = () => {
       if (response.status === 200) {
         const updatedUser = response.data;
         localStorage.setItem("user", JSON.stringify(updatedUser));
-        setPreview(updatedUser.profileImage); // for preview
+        setPreview(updatedUser.profileImage);
+        toast.success("Profile updated successfully!"); // ✅ Toast success
       }
-
 
     } catch (error) {
       console.error("Profile update error:", error);
-      toast.error(error.response?.data?.message || "Something went wrong.");
+      toast.error(error.response?.data?.message || "Something went wrong."); // ✅ Toast error
     }
   };
 
@@ -105,7 +98,7 @@ const EditProfile = () => {
       <OutletHeading name="Profile Update" />
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-     {/* / /  <img
+        {/* / /  <img
           src={preview || IMAGES.profileimg}
           alt="Profile"
           className="w-22 h-22 rounded-full object-cover border"
@@ -119,10 +112,10 @@ const EditProfile = () => {
           />
         ) : (
           <img
-          src={IMAGES.dummyImg}
-          alt="Profile-Preview"
-          className="w-22 h-22 rounded-full object-cover border border-gray-300S"
-        />
+            src={IMAGES.dummyImg}
+            alt="Profile-Preview"
+            className="w-22 h-22 rounded-full object-cover border border-gray-300S"
+          />
         )}
 
         <div>
