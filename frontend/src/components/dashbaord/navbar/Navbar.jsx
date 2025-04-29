@@ -42,15 +42,14 @@ function Navbar() {
   const user = JSON.parse(localStorage.getItem("user"));
   const email = user?.email || "No Email";
   const name = user?.fullName || "Guest";
-  
+
   const profileImg = Images.profileImg;
 
   const [firstName, lastName] = name.split(" ");
   const displayName = `${firstName || ""} ${lastName || ""}`.trim();
 
-  const initials = `${firstName?.[0] || ""}${
-    lastName?.[0] || ""
-  }`.toUpperCase();
+  const initials = `${firstName?.[0] || ""}${lastName?.[0] || ""
+    }`.toUpperCase();
 
   return (
     <>
@@ -64,6 +63,8 @@ function Navbar() {
         </h1>
 
         <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-wrap">
+          <p>Notifcation Icon</p>
+
           {/*  Theme Selector */}
           <div className="relative">
             <button

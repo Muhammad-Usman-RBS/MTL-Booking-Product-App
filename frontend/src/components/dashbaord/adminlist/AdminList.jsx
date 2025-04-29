@@ -9,7 +9,7 @@ import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import axios from "axios";
 
-const tabs = ["Active", "Pending", "Verified", "Suspended", "Finished", "Delete Pending"];
+const tabs = ["Active", "Pending", "Suspended", "Deleted"];
 
 const AdminList = () => {
   const [adminsListData, setAdminsListData] = useState([]);
@@ -39,6 +39,21 @@ const AdminList = () => {
       toast.error("Failed to fetch admins");
     }
   };
+
+  const handleStatusChange = async (adminId, newStatus) => {
+    const token = user?.token;
+    try {
+      await axios.put(`http://localhost:5000/api/create-clientadmin/${adminId}`, { status: newStatus }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success(`User status updated to ${newStatus}`);
+      fetchAdmins(); // ✅ Refresh List
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to update status");
+    }
+  };
+
 
   const handleEditModal = (admin) => {
     setSelectedAccount(admin);
@@ -138,6 +153,45 @@ const AdminList = () => {
     status: item.status || "N/A",
     actions: (
       <div className="flex gap-2">
+                {/* ✅ New Dropdown for Status Change */}
+                <div className="flex flex-wrap gap-1">
+          {(() => {
+            let allowedStatusChanges = [];
+
+            if (item.status === "Active") {
+              allowedStatusChanges = ["Suspended", "Deleted"];
+            } else if (item.status === "Suspended") {
+              allowedStatusChanges = ["Active", "Deleted"];
+            } else if (item.status === "Deleted") {
+              allowedStatusChanges = ["Active", "Suspended"];
+            } else if (item.status === "Pending") {
+              allowedStatusChanges = ["Active", "Suspended", "Deleted"];
+            }
+
+            const getButtonStyle = (status) => {
+              switch (status) {
+                case "Active":
+                  return "bg-green-100 text-green-700 border-green-300 hover:bg-green-200";
+                case "Suspended":
+                  return "bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200";
+                case "Deleted":
+                  return "bg-red-100 text-red-700 border-red-300 hover:bg-red-200";
+                default:
+                  return "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200";
+              }
+            };
+
+            return allowedStatusChanges.map((status) => (
+              <button
+                key={status}
+                onClick={() => handleStatusChange(item._id, status)}
+                className={`px-3 py-1 text-xs rounded-md border font-medium transition ${getButtonStyle(status)}`}
+              >
+                {status}
+              </button>
+            ));
+          })()}
+        </div>
         <Icons.Pencil
           title="Edit"
           onClick={() => handleEditModal(item)}
@@ -149,7 +203,7 @@ const AdminList = () => {
           className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
         />
       </div>
-    ),
+    )
   }));
 
   let roleOptions = [];

@@ -101,19 +101,33 @@ export const createUserBySuperAdmin = async (req, res) => {
 
 // ✅ Update User by SuperAdmin
 
+
 export const getClientAdmins = async (req, res) => {
     try {
-        let allowedRoles = ['clientadmin', 'manager', 'demo', 'driver', 'customer']; // Staffmember nahi initially
-        let query = {
-            role: { $in: allowedRoles }
-        };
+        let query = {};
 
-        if (req.user.role === "manager" || req.user.role === "clientadmin") {
+        if (req.user.role === "superadmin") {
+            // ✅ SuperAdmin sees ONLY personal (own created) users
+            query = {
+                $or: [
+                    { role: { $in: ['clientadmin', 'manager', 'demo'] } }, // Global users (ClientAdmins/Managers/Demo accounts)
+                    {
+                        role: { $in: ['driver', 'customer'] },
+                        companyId: null  // Personal Drivers and Customers only
+                    }
+                ]
+            };
+
+        } else if (req.user.role === "manager") {
+            // ✅ Manager sees their own company's users
             query.companyId = req.user.companyId;
-
-            if (req.user.role === "clientadmin") {
-                query.role.$in.push('staffmember'); // ✅ Staffmember add karo only for ClientAdmin
-            }
+            query.role = { $in: ['clientadmin', 'manager', 'demo', 'driver', 'customer'] };
+        } else if (req.user.role === "clientadmin") {
+            // ✅ ClientAdmin sees his own company's users
+            query.companyId = req.user.companyId;
+            query.role = { $in: ['staffmember', 'driver', 'customer'] };
+        } else {
+            return res.status(403).json({ message: "Unauthorized access" });
         }
 
         const users = await User.find(query);
@@ -132,6 +146,8 @@ export const getClientAdmins = async (req, res) => {
         res.status(500).json({ message: "Failed to fetch users" });
     }
 };
+
+
 
 export const updateUserBySuperAdmin = async (req, res) => {
     const { id } = req.params;
