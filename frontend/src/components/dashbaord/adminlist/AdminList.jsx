@@ -6,16 +6,10 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import axios from "axios";
 
-const tabs = [
-  "Active",
-  "Pending",
-  "Verified",
-  "Suspended",
-  "Finished",
-  "Delete Pending",
-];
+const tabs = ["Active", "Pending", "Verified", "Suspended", "Finished", "Delete Pending"];
 
 const AdminList = () => {
   const [adminsListData, setAdminsListData] = useState([]);
@@ -25,6 +19,10 @@ const AdminList = () => {
   const [perPage, setPerPage] = useState(10);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState(null);
+
+  const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     fetchAdmins();
@@ -32,7 +30,7 @@ const AdminList = () => {
 
   const fetchAdmins = async () => {
     try {
-      const token = JSON.parse(localStorage.getItem("user"))?.token;
+      const token = user?.token;
       const res = await axios.get("http://localhost:5000/api/create-clientadmin", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -48,28 +46,62 @@ const AdminList = () => {
   };
 
   const handleSave = async () => {
-    const token = JSON.parse(localStorage.getItem("user"))?.token;
+    const token = user?.token;
+    // ✅ Prevent Demo Accounts from Saving
+    if (user?.role === "demo") {
+      toast.error("Demo accounts are not allowed to create users.");
+      return;
+    }
     try {
+      const payload = {
+        ...selectedAccount,
+        companyId: (user?.role === "superadmin" && selectedAccount.role === "clientadmin")
+          ? null
+          : user?.companyId || user?._id,  // For manager or clientadmin creation
+      };
+
       if (selectedAccount._id) {
-        await axios.put(
-          `http://localhost:5000/api/create-clientadmin/${selectedAccount._id}`,
-          selectedAccount,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        toast.success("User updated");
+        await axios.put(`http://localhost:5000/api/create-clientadmin/${selectedAccount._id}`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success("User updated successfully");
       } else {
-        await axios.post(
-          "http://localhost:5000/api/create-clientadmin",
-          selectedAccount,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        toast.success("User created");
+        await axios.post("http://localhost:5000/api/create-clientadmin", payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success("User created successfully");
       }
       setShowModal(false);
       fetchAdmins();
     } catch (err) {
       toast.error(err.response?.data?.message || "Operation failed");
     }
+  };
+
+  const handleDeleteClick = (adminId) => {
+    setDeleteUserId(adminId);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    const token = user?.token;
+    try {
+      await axios.delete(`http://localhost:5000/api/create-clientadmin/${deleteUserId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("User deleted successfully");
+      fetchAdmins();
+      setDeleteModalOpen(false);
+      setDeleteUserId(null);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete user");
+      setDeleteModalOpen(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setDeleteUserId(null);
   };
 
   const tabCounts = tabs.reduce((acc, tab) => {
@@ -79,6 +111,7 @@ const AdminList = () => {
 
   const filteredData = adminsListData.filter(
     (item) =>
+      item.role !== "superadmin" &&
       item.status === selectedTab &&
       Object.values(item)
         .join(" ")
@@ -86,10 +119,9 @@ const AdminList = () => {
         .includes(searchTerm.toLowerCase())
   );
 
-  const paginatedData =
-    perPage === "All"
-      ? filteredData
-      : filteredData.slice((page - 1) * perPage, page * perPage);
+  const paginatedData = perPage === "All"
+    ? filteredData
+    : filteredData.slice((page - 1) * perPage, page * perPage);
 
   const tableHeaders = [
     { label: "Type", key: "role" },
@@ -113,11 +145,27 @@ const AdminList = () => {
         />
         <Icons.Trash
           title="Delete"
+          onClick={() => handleDeleteClick(item._id)}
           className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
         />
       </div>
     ),
   }));
+
+  let roleOptions = [];
+
+  if (user?.role === "superadmin") {
+    roleOptions = ["clientadmin", "manager", "demo", "driver", "customer"];
+  }
+  else if (user?.role === "manager") {
+    roleOptions = ["manager", "demo", "driver", "customer"];
+  }
+  else if (user?.role === "clientadmin") {
+    roleOptions = ["staffmember", "driver", "customer"];
+  }
+  else if (user?.role === "demo") {
+    roleOptions = ["staffmember", "driver", "customer"];
+  }
 
 
   return (
@@ -131,7 +179,7 @@ const AdminList = () => {
               handleEditModal({
                 fullName: "",
                 email: "",
-                role: "clientadmin",
+                role: roleOptions[0],
                 status: "Active",
                 password: "",
                 permissions: [],
@@ -152,8 +200,8 @@ const AdminList = () => {
                   setPage(1);
                 }}
                 className={`pb-2 whitespace-nowrap transition-all duration-200 ${selectedTab === tab
-                    ? "border-b-2 border-blue-600 text-blue-600"
-                    : "text-gray-600 hover:text-blue-500"
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-600 hover:text-blue-500"
                   }`}
               >
                 {tab} ({tabCounts[tab] || 0})
@@ -177,7 +225,7 @@ const AdminList = () => {
       <CustomModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        heading="Client Info"
+        heading="User Info"
       >
         <div className="space-y-4 ps-6 pe-6">
           <SelectOption
@@ -186,8 +234,9 @@ const AdminList = () => {
             onChange={(e) =>
               setSelectedAccount({ ...selectedAccount, role: e.target.value })
             }
-            options={["clientadmin", "driver", "customer"]}
+            options={roleOptions}
           />
+
           <input
             placeholder="Full Name"
             className="custom_input"
@@ -266,6 +315,12 @@ const AdminList = () => {
           </div>
         </div>
       </CustomModal>
+
+      <DeleteModal
+        isOpen={deleteModalOpen}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
     </>
   );
 };

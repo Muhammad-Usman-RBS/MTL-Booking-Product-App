@@ -1,14 +1,29 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  fullName: { type: String },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,          // removes spaces automatically
+    lowercase: true,     // email ko lowercase store karega
+  },
+
+  password: {
+    type: String,
+    required: true,
+    minlength: 6,         // Password validation
+  },
+
+  fullName: {
+    type: String,
+    trim: true,
+  },
 
   role: {
     type: String,
-    enum: ['superadmin', 'clientadmin', 'driver', 'customer'], // Only these roles are allowed
-    default: 'customer',                                       // Default role is 'customer'
+    enum: ['superadmin', 'manager', 'clientadmin', 'staffmember', 'driver', 'customer', 'demo'], // ✅ Full roles
+    default: 'customer',
   },
 
   status: {
@@ -17,18 +32,35 @@ const userSchema = new mongoose.Schema({
     default: 'Active',
   },
 
-  permissions: [{ type: String }],
-  profileImage: { type: String },
+  permissions: {
+    type: [String],
+    default: [],
+  },
 
-  // Reference to the Company model (optional, used for Client Admins or Drivers)
-  company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
+  profileImage: {
+    type: String,
+    default: '',
+  },
 
-  // Login history array to track access times and locations
+  companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+  },
+
   loginHistory: [{
-    loginAt: { type: Date, default: Date.now },                // Timestamp of login
-    systemIpAddress: String,                                   // IP address of login source
-    location: String                                           // Geolocation or city name, optional
-  }]
-});
+    loginAt: {
+      type: Date,
+      default: Date.now,
+    },
+    systemIpAddress: {
+      type: String,
+    },
+    location: {
+      type: String,
+    },
+  }],
+
+}, { timestamps: true });
 
 export default mongoose.model('User', userSchema);

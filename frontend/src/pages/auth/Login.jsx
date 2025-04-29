@@ -22,7 +22,7 @@ const Login = () => {
         { email, password },
         { withCredentials: true }
       );
-      
+
       localStorage.setItem('user', JSON.stringify(data));
       toast.success("Login successful!");
 
@@ -31,14 +31,20 @@ const Login = () => {
           case 'superadmin':
             navigate('/dashboard/home');
             break;
+          case 'clientadmin':
+            navigate('/dashboard/home');
+            break;
           case 'driver':
             navigate('/dashboard/driver');
             break;
-          case 'clientadmin':
-            navigate('/dashboard/client');
+          case 'demo':
+            navigate('/dashboard/home');   // 🛠️ Now demo will also land on dashboard/home
+            break;
+          case 'manager':
+            navigate('/dashboard/home');   // 🛠️ Optional: for future-proofing if manager role comes
             break;
           default:
-            navigate('/');
+            navigate('/dashboard/home');   // 🛠️ Safer default fallback
         }
       }, 1000);
     } catch (err) {
