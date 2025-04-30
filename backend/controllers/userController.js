@@ -72,36 +72,7 @@ export const createUserBySuperAdmin = async (req, res) => {
     }
 };
 
-// export const getClientAdmins = async (req, res) => {
-//     try {
-//         let query = {
-//             role: { $in: ['clientadmin', 'manager', 'demo', 'staffmember', 'driver', 'customer'] }
-//         };
-
-//         if (req.user.role === "manager" || req.user.role === "clientadmin") {
-//             query.companyId = req.user.companyId; // Managers, ClientAdmins limited to their company
-//         }
-
-//         const users = await User.find(query);
-
-//         res.status(200).json(users.map(user => ({
-//             _id: user._id,
-//             fullName: user.fullName,
-//             email: user.email,
-//             role: user.role,
-//             permissions: user.permissions,
-//             status: user.status,
-//             companyId: user.companyId,
-//         })));
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ message: "Failed to fetch users" });
-//     }
-// };
-
-// ✅ Update User by SuperAdmin
-
-
+// ✅ GET All Users
 export const getClientAdmins = async (req, res) => {
     try {
         let query = {};
@@ -147,8 +118,7 @@ export const getClientAdmins = async (req, res) => {
     }
 };
 
-
-
+// ✅ Update User by SuperAdmin
 export const updateUserBySuperAdmin = async (req, res) => {
     const { id } = req.params;
     const { fullName, email, password, role, status, permissions } = req.body;

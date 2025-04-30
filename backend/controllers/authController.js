@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import generateToken from '../utils/generateToken.js';
+import sendEmail from "../utils/sendEmail.js";
 import axios from 'axios';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -17,8 +18,8 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-     // ✅ Check account status first
-     if (user.status !== "Active") {
+    // ✅ Check account status first
+    if (user.status !== "Active") {
       return res.status(403).json({ message: `Your account is ${user.status}. Please contact the administrator.` });
     }
 
@@ -105,5 +106,47 @@ export const updateProfile = async (req, res) => {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+// SendOtpToEmail Controller
+export const sendOtpToEmail = async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+  user.otpCode = otp;
+  user.otpExpiresAt = expires;
+  await user.save();
+
+  const html = `
+    <p>Your OTP for password reset is:</p>
+    <h2>${otp}</h2>
+    <p>Expires in 10 minutes.</p>
+  `;
+
+  await sendEmail(email, "Password Reset OTP", html);
+
+  res.json({ message: "OTP sent successfully" });
+};
+
+// ResetPasswordWithOtp Controller
+export const resetPasswordWithOtp = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  const user = await User.findOne({ email, otpCode: otp });
+
+  if (!user || user.otpExpiresAt < Date.now()) {
+    return res.status(400).json({ message: "Invalid or expired OTP" });
+  }
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  user.otpCode = null;
+  user.otpExpiresAt = null;
+  await user.save();
+
+  res.json({ message: "Password reset successfully" });
 };
 

@@ -54,7 +54,6 @@ const AdminList = () => {
     }
   };
 
-
   const handleEditModal = (admin) => {
     setSelectedAccount(admin);
     setShowModal(true);
@@ -153,8 +152,8 @@ const AdminList = () => {
     status: item.status || "N/A",
     actions: (
       <div className="flex gap-2">
-                {/* ✅ New Dropdown for Status Change */}
-                <div className="flex flex-wrap gap-1">
+        {/* ✅ New Dropdown for Status Change */}
+        <div className="flex flex-wrap gap-1">
           {(() => {
             let allowedStatusChanges = [];
 
@@ -220,7 +219,6 @@ const AdminList = () => {
   else if (user?.role === "demo") {
     roleOptions = ["staffmember", "driver", "customer"];
   }
-
 
   return (
     <>

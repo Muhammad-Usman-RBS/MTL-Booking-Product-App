@@ -20,6 +20,9 @@ const userSchema = new mongoose.Schema({
     trim: true,
   },
 
+  otpCode: { type: String },
+  otpExpiresAt: { type: Date },
+
   role: {
     type: String,
     enum: ['superadmin', 'manager', 'clientadmin', 'staffmember', 'driver', 'customer', 'demo'], // ✅ Full roles

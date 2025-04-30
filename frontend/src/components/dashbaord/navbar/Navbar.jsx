@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Icons from "../../../assets/icons";
 import useUIStore from "../../../store/useUIStore";
-import Images from "../../../assets/images";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
+import IMAGES from "../../../assets/images";
 
 const themes = [
   {
@@ -43,13 +43,10 @@ function Navbar() {
   const email = user?.email || "No Email";
   const name = user?.fullName || "Guest";
 
-  const profileImg = Images.profileImg;
+  const profileImg = user?.profileImage;
 
   const [firstName, lastName] = name.split(" ");
   const displayName = `${firstName || ""} ${lastName || ""}`.trim();
-
-  const initials = `${firstName?.[0] || ""}${lastName?.[0] || ""
-    }`.toUpperCase();
 
   return (
     <>
@@ -139,21 +136,24 @@ function Navbar() {
               <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-lg z-50">
                 <div className="border-b">
                   <div className="ps-4 pt-4 flex items-center space-x-3">
-                    {profileImg ? (
+                    {profileImg && profileImg !== "" && profileImg !== "default" ? (
                       <img
                         src={profileImg}
-                        alt="ProfileImg"
+                        alt="Profile"
                         className="w-12 h-12 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-15 h-12 rounded-full bg-theme flex items-center justify-center text-theme font-semibold text-sm uppercase">
-                        {initials}
-                      </div>
+                      <img
+                        src={IMAGES.dummyImg}
+                        alt="Default"
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
                     )}
                     <div>
                       <p className="font-semibold">{displayName}</p>
                     </div>
                   </div>
+
                   <div className="ps-4 pb-2 pt-2">
                     <p className="text-sm text-gray-600">{email}</p>
                   </div>

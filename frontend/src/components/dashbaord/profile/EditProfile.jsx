@@ -98,12 +98,6 @@ const EditProfile = () => {
       <OutletHeading name="Profile Update" />
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-        {/* / /  <img
-          src={preview || IMAGES.profileimg}
-          alt="Profile"
-          className="w-22 h-22 rounded-full object-cover border"
-        /> */}
-
         {preview ? (
           <img
             src={preview}
