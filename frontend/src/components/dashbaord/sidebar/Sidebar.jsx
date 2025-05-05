@@ -166,6 +166,9 @@ const Sidebar = () => {
     superadmin: [
       "/dashboard/home",
       "/dashboard/admin-list",
+      "/dashboard/company-accounts/list",
+      "/dashboard/company-accounts/new",
+      "/dashboard/company-accounts/edit/:id",
       "/dashboard/profile",
       "/dashboard/logout",
     ],

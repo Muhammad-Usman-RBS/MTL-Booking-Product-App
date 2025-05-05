@@ -1,70 +1,89 @@
-import React, { useState } from "react";
-import Icons from "../../../assets/icons";
-import IMAGES from "../../../assets/images";
-import { companyAccountsData } from "../../../constants/dashboardTabsData/data";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import CustomTable from "../../../constants/constantscomponents/CustomTable";
-import { Link } from "react-router-dom";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import IMAGES from "../../../assets/images";
+import Icons from "../../../assets/icons";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
+import CustomTable from "../../../constants/constantscomponents/CustomTable";
+import "react-toastify/dist/ReactToastify.css";
+import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload"; // adjust path as needed
 
-const tabs = [
-  "Active",
-  "Pending",
-  "Verified",
-  "Suspended",
-  "Finished",
-  "Delete Pending",
-];
+const tabs = ["active", "pending", "suspended", "deleted"];
 
 const CompanyAccountsList = () => {
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTab, setSelectedTab] = useState("Active");
+  const [selectedTab, setSelectedTab] = useState("active");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [driverToSendEmail, setDriverToSendEmail] = useState(null);
   const [emailToSend, setEmailToSend] = useState("");
+  const navigate = useNavigate();
 
-  const downloadPDF = (item) => {
-    const input = document.getElementById("invoiceToDownload");
-    if (!input) {
-      console.error("Element with ID 'invoiceToDownload' not found.");
-      return;
+  const fetchCompanies = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const token = user?.token;
+      const res = await axios.get("http://localhost:5000/api/companies", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const normalized = res.data.map((c) => ({
+        ...c,
+        status: (c.status || "unknown").toLowerCase(),
+      }));
+      setCompanies(normalized);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to fetch companies");
+    } finally {
+      setLoading(false);
     }
-    html2canvas(input).then((canvas) => {
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Invoice-${item.invoiceNo || item.company}.pdf`);
-      toast.success("PDF downloaded successfully!");
-    });
   };
 
-  const handleSendEmail = (driver) => {
-    setDriverToSendEmail(driver);
-    setEmailToSend(driver.email || "");
-    setShowModal(true);
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const handleConfirmSendEmail = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const token = user?.token;
+
+      const {
+        email,
+        ...companyData
+      } = selectedAccount;
+
+      await axios.post(
+        "http://localhost:5000/api/companies/send-company-email",
+        {
+          email,
+          company: companyData, // send everything except email separately
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success("Email sent successfully!");
+      setShowModal(false);
+    } catch (error) {
+      console.error("Email send error:", error);
+      toast.error("Failed to send email.");
+    }
   };
 
-  const tabCounts = tabs.reduce((acc, tab) => {
-    acc[tab] = companyAccountsData.filter((item) => item.status === tab).length;
-    return acc;
-  }, {});
-
-  const filteredData = companyAccountsData.filter(
+  const filteredData = companies.filter(
     (item) =>
-      item.status === selectedTab &&
-      Object.values(item)
-        .join(" ")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+      (item.status || "").toLowerCase() === selectedTab.toLowerCase() &&
+      Object.values(item).join(" ").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const paginatedData =
@@ -73,12 +92,13 @@ const CompanyAccountsList = () => {
       : filteredData.slice((page - 1) * perPage, page * perPage);
 
   const tableHeaders = [
-    { label: "Company", key: "company" },
-    { label: "Primary Contact", key: "primaryContact" },
-    { label: "Email", key: "email" },
-    { label: "Phone", key: "phone" },
-    { label: "Due", key: "due" },
-    { label: "Created", key: "created" },
+    { label: "Company Name", key: "companyName" },
+    { label: "Owner Name", key: "fullName" },
+    { label: "Company Email", key: "email" },
+    { label: "Primary Contact", key: "contactName" },
+    { label: "Phone", key: "contact" },
+    { label: "Due", key: "dueDays" },
+    { label: "Created", key: "createdAt" },
     { label: "Action", key: "actions" },
   ];
 
@@ -88,53 +108,68 @@ const CompanyAccountsList = () => {
       <div className="flex gap-2">
         <Icons.Eye
           title="View"
-          onClick={() => setSelectedAccount(item)} // ✅ Correct view trigger
+          onClick={() => setSelectedAccount(item)}
           className="w-8 h-8 p-2 rounded-md hover:bg-blue-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
         />
-        <Link to="/dashboard/company-accounts/new">
-          <Icons.Pencil
-            title="Edit"
-            className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
-          />
-        </Link>
-        <Icons.Trash
-          title="Delete"
-          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+        <Icons.Pencil
+          title="Edit"
+          onClick={() => navigate(`/dashboard/company-accounts/edit/${item._id}`)}
+          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
         />
       </div>
     ),
   }));
 
+  const tabCounts = tabs.reduce((acc, tab) => {
+    acc[tab] = companies.filter((item) => (item.status || "").toLowerCase() === tab.toLowerCase()).length;
+    return acc;
+  }, {});
+
+  const InfoRow = ({ label, value }) => (
+    <p
+      style={{
+        margin: "6px 0",
+        fontSize: "14px",
+        color: "#374151",
+        wordBreak: "break-word",
+      }}
+    >
+      <strong
+        style={{
+          display: "inline-block",
+          width: "160px",
+          color: "#1f2937",
+          fontWeight: "600",
+        }}
+      >
+        {label}:
+      </strong>
+      <span>{value || "-"}</span>
+    </p>
+  );
+
   return (
     <>
       {!selectedAccount ? (
-        <div>
+        <>
           <OutletHeading name="Company Accounts" />
-          <div className="flex flex-col sm:flex-row justify-between gap-4 px-0 mb-4">
-            <Link to="/dashboard/company-accounts/new">
-              <button className="btn btn-edit">Add New</button>
-            </Link>
-          </div>
+          <Link to="/dashboard/company-accounts/new">
+            <button className="btn btn-edit mb-4">Add New</button>
+          </Link>
 
-          <div className="w-full overflow-x-auto mb-4 mt-4">
-            <div className="flex gap-4 text-sm font-medium border-b min-w-max sm:text-base px-2">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => {
-                    setSelectedTab(tab);
-                    setPage(1);
-                  }}
-                  className={`pb-2 whitespace-nowrap transition-all duration-200 ${
-                    selectedTab === tab
-                      ? "border-b-2 border-blue-600 text-blue-600"
-                      : "text-gray-600 hover:text-blue-500"
-                  }`}
-                >
-                  {tab} ({tabCounts[tab]})
-                </button>
-              ))}
-            </div>
+          <div className="flex gap-4 text-sm font-medium border-b mb-4">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => {
+                  setSelectedTab(tab);
+                  setPage(1);
+                }}
+                className={`pb-2 ${selectedTab === tab ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-600 hover:text-blue-500"}`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)} ({tabCounts[tab] || 0})
+              </button>
+            ))}
           </div>
 
           <CustomTable
@@ -146,156 +181,106 @@ const CompanyAccountsList = () => {
             setCurrentPage={setPage}
             perPage={perPage}
           />
-        </div>
+        </>
       ) : (
         <div className="w-full">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-0 md:gap-4">
+          <div className="flex justify-between items-center mb-6">
             <OutletHeading name="Account Details" />
-            <div className="flex flex-col md:flex-row gap-2">
+            <div className="flex gap-2">
               <button
-                onClick={() => downloadPDF(selectedAccount)}
-                className="btn btn-reset w-full md:w-auto"
+                onClick={() =>
+                  downloadPDF("invoiceToDownload", `Invoice-${selectedAccount.companyName}.pdf`)
+                }
+                className="btn btn-reset"
               >
                 Download PDF
               </button>
-              <button
-                className="btn btn-success w-full md:w-auto"
-                onClick={() => handleSendEmail(selectedAccount)}
-              >
-                Resend Welcome Email
+              <button onClick={handleConfirmSendEmail} className="btn btn-success">
+                Send Email
               </button>
-              <button
-                onClick={() => setSelectedAccount(null)}
-                className="btn btn-cancel w-full md:w-auto"
-              >
-                Close
-              </button>
+
+              {/* <button onClick={() => handleSendEmail(selectedAccount)} className="btn btn-success">Resend Email</button> */}
+              <button onClick={() => setSelectedAccount(null)} className="btn btn-cancel">Close</button>
             </div>
           </div>
 
-          <hr className="border-gray-300 -mt-2" />
-
           <div
             id="invoiceToDownload"
-            className="w-full max-w-5xl mx-auto px-4 py-6 text-[#374151] text-sm font-sans"
+            style={{
+              backgroundColor: "#fff",
+              padding: "24px",
+              borderRadius: "12px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              maxWidth: "1000px",
+              margin: "auto",
+              fontFamily: "sans-serif",
+            }}
           >
-            <div className="flex justify-center mb-6">
+            <div style={{ marginBottom: "24px" }}>
               <img
-                src={IMAGES.profileimg}
+                src={
+                  selectedAccount.profileImage?.startsWith("http")
+                    ? selectedAccount.profileImage
+                    : selectedAccount.profileImage
+                      ? `http://localhost:5000/${selectedAccount.profileImage}`
+                      : IMAGES.dummyImg
+                }
+                style={{
+                  width: "96px",
+                  height: "96px",
+                  borderRadius: "10%",
+                  objectFit: "cover",
+                  border: "2px solid #ccc",
+                }}
                 alt="Profile"
-                className="w-24 h-24 rounded-full object-cover border-2 border-gray-300"
               />
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-8">
-              {/* Left Column */}
-              <div className="flex-1 flex flex-col gap-2">
-                <p>
-                  <strong>Company Name:</strong> {selectedAccount.company}
-                </p>
-                <p>
-                  <strong>Email:</strong> {selectedAccount.email}
-                </p>
-                <p>
-                  <strong>Contact:</strong> {selectedAccount.phone}
-                </p>
-                <p>
-                  <strong>Website:</strong>{" "}
-                  <a
-                    href={selectedAccount.website}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-blue-600 underline break-words"
-                  >
-                    {selectedAccount.website}
-                  </a>
-                </p>
-                <p>
-                  <strong>Address:</strong> {selectedAccount.address}
-                </p>
-                <p>
-                  <strong>City:</strong> {selectedAccount.city}
-                </p>
-                <p>
-                  <strong>State/County:</strong> {selectedAccount.state || "-"}
-                </p>
-                <p>
-                  <strong>Postcode/Zip code:</strong> {selectedAccount.postcode}
-                </p>
-                <p>
-                  <strong>Country:</strong> {selectedAccount.country}
-                </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                gap: "24px",
+              }}
+            >
+              <div>
+                <InfoRow label="Company" value={selectedAccount.companyName} />
+                <InfoRow label="Company Email" value={selectedAccount.email} />
+                <InfoRow label="Primary Contact" value={selectedAccount.contactName} />
+                <InfoRow label="Phone" value={selectedAccount.contact} />
+                <InfoRow label="Website" value={selectedAccount.website} />
+                <InfoRow label="City" value={selectedAccount.city} />
+                <InfoRow label="State" value={selectedAccount.state} />
+                <InfoRow label="Country" value={selectedAccount.country} />
+                <InfoRow label="Zip" value={selectedAccount.zip} />
               </div>
-
-              {/* Right Column */}
-              <div className="flex-1 flex flex-col gap-2">
-                <p>
-                  <strong>Primary Contact Name:</strong>{" "}
-                  {selectedAccount.primaryContact}
-                </p>
-                <p>
-                  <strong>Primary Contact Designation:</strong>{" "}
-                  {selectedAccount.designation}
-                </p>
-                <p>
-                  <strong>Tax:</strong> {selectedAccount.tax || "None"}
-                </p>
-                <p>
-                  <strong>Locations Display (Invoice):</strong>{" "}
-                  {selectedAccount.locationsDisplay}
-                </p>
-                <p>
-                  <strong>Payment Options (Bookings):</strong>{" "}
-                  {selectedAccount.paymentOptionsBooking}
-                </p>
-                <p>
-                  <strong>Payment Options (Invoice Payment):</strong>{" "}
-                  {selectedAccount.paymentOptionsInvoice}
-                </p>
-                <p>
-                  <strong>Invoice Due Days:</strong>{" "}
-                  {selectedAccount.invoiceDueDays}
-                </p>
-                <p>
-                  <strong>Invoice Terms:</strong>{" "}
-                  {selectedAccount.invoiceTerms || "-"}
-                </p>
-                <p>
-                  <strong>Passphrase:</strong>{" "}
-                  {selectedAccount.passphrase || "-"}
-                </p>
-                <p>
-                  <strong>Status:</strong> {selectedAccount.status}
-                </p>
+              <div>
+                <InfoRow label="Owner Name" value={selectedAccount.fullName} />
+                <InfoRow label="Designation" value={selectedAccount.designation} />
+                <InfoRow label="Status" value={selectedAccount.status} />
+                <InfoRow label="Passphrase" value={selectedAccount.passphrase} />
+                <InfoRow label="Due Days" value={selectedAccount.dueDays} />
+                <InfoRow label="Invoice Terms" value={selectedAccount.invoiceTerms} />
+                <InfoRow label="Invoice Payment" value={selectedAccount.invoicePayment} />
+                <InfoRow label="Address" value={selectedAccount.address} />
+                <InfoRow label="Booking Payment" value={selectedAccount.bookingPayment} />
               </div>
             </div>
           </div>
         </div>
       )}
 
-      <CustomModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        heading="Send Email"
-      >
-        <div className="w-full max-w-md mx-auto p-4 font-sans">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email:
-          </label>
+      <CustomModal isOpen={showModal} onClose={() => setShowModal(false)} heading="Send Email">
+        <div className="p-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Email:</label>
           <input
             type="email"
             value={emailToSend}
             onChange={(e) => setEmailToSend(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-5 text-sm"
+            className="w-full px-3 py-2 border rounded-md"
           />
-
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setShowModal(false)}
-              className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-            >
-              Send Email
-            </button>
+          <div className="flex justify-end mt-4">
+            <button onClick={() => setShowModal(false)} className="btn btn-success">Send Email</button>
           </div>
         </div>
       </CustomModal>

@@ -1608,3 +1608,45 @@ export const receiptData = [
     },
   },
 ];
+
+export const bookingPaymentOptions = [
+  {
+    "label": "Pay Now",
+    "value": "Pay Now"
+  },
+  {
+    "label": "Pay Later",
+    "value": "Pay Later"
+  },
+  {
+    "label": "Bank Transfer",
+    "value": "Bank Transfer"
+  },
+]
+
+export const invoicePaymentOptions = [
+  {
+    "label": "Pay Via Debit/Credit Card",
+    "value": "Pay Via Debit/Credit Card"
+  },
+  {
+    "label": "Cash",
+    "value": "Cash"
+  },
+  {
+    "label": "Bank",
+    "value": "Bank"
+  },
+]
+
+export const yesNoOptions = [
+  {
+    "label": "Yes",
+    "value": "Yes"
+  },
+  {
+    "label": "No",
+    "value": "No"
+  },
+]
+

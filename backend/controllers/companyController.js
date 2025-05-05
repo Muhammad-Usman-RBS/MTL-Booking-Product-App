@@ -1,0 +1,169 @@
+import Company from '../models/Company.js';
+import nodemailer from "nodemailer";
+import mongoose from "mongoose";
+
+export const createCompanyAccount = async (req, res) => {
+    try {
+        const {
+            companyName,
+            contactName,
+            email,
+            website,
+            designation,
+            contact,
+            city,
+            dueDays,
+            state,
+            zip,
+            passphrase,
+            country,
+            bookingPayment,
+            invoicePayment,
+            showLocations,
+            address,
+            invoiceTerms,
+            clientAdminId,
+            fullName,
+            status,
+        } = req.body;
+
+        const profileImage = req.file?.path || "";
+
+        const newCompany = new Company({
+            companyName,
+            contactName,
+            email,
+            website,
+            designation,
+            contact,
+            city,
+            dueDays: dueDays ? parseInt(dueDays) : null,
+            state,
+            zip,
+            passphrase,
+            country,
+            bookingPayment,
+            invoicePayment,
+            showLocations,
+            address,
+            invoiceTerms,
+            profileImage,
+            clientAdminId: new mongoose.Types.ObjectId(clientAdminId),
+            fullName,
+            status,
+        });
+
+        const savedCompany = await newCompany.save();
+
+        res.status(201).json(savedCompany); // ✅ Return full saved doc
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+export const deleteCompanyAccount = async (req, res) => {
+    try {
+        await Company.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Company deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getAllCompanies = async (req, res) => {
+    try {
+        // Join with user data
+        const companies = await Company.find()
+            .populate("clientAdminId", "status") // Bring status from User
+            .sort({ createdAt: -1 });
+
+        // Override the company status with the linked user’s status (if available)
+        const updated = companies.map((c) => ({
+            ...c._doc,
+            status: c.clientAdminId?.status || c.status,
+        }));
+
+        res.status(200).json(updated);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getCompanyById = async (req, res) => {
+    try {
+        console.log("Fetching company with ID:", req.params.id); // <== Debug
+        const company = await Company.findById(req.params.id);
+        if (!company) {
+            return res.status(404).json({ message: "Company not found" });
+        }
+        res.status(200).json(company);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const updateCompanyAccount = async (req, res) => {
+    try {
+        if (req.file?.path) {
+            req.body.profileImage = req.file.path; // ✅ use the newly uploaded file
+        }
+
+        const updatedCompany = await Company.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedCompany) {
+            return res.status(404).json({ message: 'Company not found' });
+        }
+
+        res.status(200).json(updatedCompany);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+export const sendCompanyEmail = async (req, res) => {
+    const { email, company } = req.body;
+
+    if (!email || !company) {
+        return res.status(400).json({ message: "Email and company data required." });
+    }
+
+    try {
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.GMAIL_USER,
+                pass: process.env.GMAIL_PASS,
+            },
+        });
+
+        const htmlContent = `
+        <h2>📄 Company Account Details</h2>
+        <table cellpadding="8" border="1" style="border-collapse: collapse; font-family: Arial; font-size: 14px;">
+          ${Object.entries(company).map(([key, value]) => `
+            <tr>
+              <td><strong>${key.replace(/([A-Z])/g, ' $1')}</strong></td>
+              <td>${value || '-'}</td>
+            </tr>
+          `).join('')}
+        </table>
+      `;
+
+        await transporter.sendMail({
+            from: `"MTL Admin" <${process.env.GMAIL_USER}>`,
+            to: email,
+            subject: "📬 Company Account Details",
+            html: htmlContent,
+        });
+
+        res.status(200).json({ message: "Email sent successfully." });
+    } catch (error) {
+        console.error("Email error:", error);
+        res.status(500).json({ message: "Failed to send email." });
+    }
+};
+
+

@@ -28,17 +28,20 @@ const SelectOption = ({ options, label, width = "full", value, onChange }) => {
           className={selectClass}
         >
           {options.map((option, idx) => (
-            <option key={idx} value={option}>
-              {option}
+            // <option key={idx} value={option}>
+            //   {option}
+            // </option>
+            <option key={idx} value={option.value || option}>
+              {option.label || option}
             </option>
+
           ))}
         </select>
 
         <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-500">
           <Icons.ChevronDown
-            className={`w-4 h-4 transition-transform duration-300 ${
-              isOpen ? "rotate-180" : ""
-            }`}
+            className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180" : ""
+              }`}
           />
         </div>
       </div>

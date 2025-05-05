@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Company from '../models/Company.js';
 import bcrypt from 'bcryptjs';
 
 // ✅ SuperAdmin Creates New User
@@ -139,6 +140,14 @@ export const updateUserBySuperAdmin = async (req, res) => {
         }
 
         await user.save();
+
+        // ✅ Sync company status if clientadmin
+        if (user.role === "clientadmin") {
+            await Company.updateMany(
+                { clientAdminId: user._id },
+                { $set: { status: user.status } }
+            );
+        }
 
         res.status(200).json({
             message: "User updated successfully",

@@ -1,169 +1,217 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useParams, useNavigate } from "react-router-dom";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import countries from "../../../constants/constantscomponents/countries";
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import IMAGES from "../../../assets/images";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { bookingPaymentOptions, yesNoOptions, invoicePaymentOptions } from "../../../constants/dashboardTabsData/data";
 
 const AddCompanyAccount = () => {
-  const yesNoOptions = ["Yes", "No"];
-  const bookingPaymentOptions = ["Pay Now", "Pay Later", "Bank Transfer"];
-  const invoicePaymentOptions = ["Pay Via Debit/Credit Card", "Bank", "Cash"];
-  const countryOptions = ["United Kingdom", "Pakistan", "USA"];
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const isEdit = Boolean(id);
+  const [clientAdmins, setClientAdmins] = useState([]);
+
+  const [formData, setFormData] = useState({
+    companyName: "",
+    contactName: "",
+    email: "",
+    website: "",
+    designation: "",
+    contact: "",
+    city: "",
+    dueDays: "",
+    state: "",
+    zip: "",
+    passphrase: "",
+    country: "",
+    bookingPayment: "",
+    invoicePayment: "",
+    showLocations: "",
+    address: "",
+    invoiceTerms: "",
+    clientAdminId: "",
+    fullName: "",
+    status: "",
+  });
 
   const [profileImage, setProfileImage] = useState(null);
+  const [file, setFile] = useState(null);
+
+  useEffect(() => {
+    if (isEdit) fetchCompany();
+  }, [id]);
+
+  const fetchCompany = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const token = user?.token;
+
+      const { data } = await axios.get(`http://localhost:5000/api/companies/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setFormData(data);
+      setFormData(prev => ({
+        ...prev,
+        clientAdminId: data.clientAdminId || ""
+      }));
+      setProfileImage(`http://localhost:5000/${data.profileImage}`);
+    } catch (err) {
+      toast.error("Failed to load company data");
+    }
+  };
+
+
+  const fetchClientAdmins = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const token = user?.token;
+      const res = await axios.get("http://localhost:5000/api/create-clientadmin", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setClientAdmins(res.data.map(user => ({
+        label: user.fullName,
+        value: user._id,
+        email: user.email,
+        status: user.status,
+      })));
+    } catch (err) {
+      console.error("Error fetching client admins", err);
+      toast.error("Failed to load client admins");
+    }
+  };
+
+  useEffect(() => {
+    if (isEdit) fetchCompany();
+    fetchClientAdmins();
+  }, [id]);
 
   const handleProfileImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setProfileImage(URL.createObjectURL(file));
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setProfileImage(URL.createObjectURL(selectedFile));
+    }
+  };
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const token = user?.token;
+
+      if (!token) {
+        alert("Token missing! Please log in again.");
+        return;
+      }
+
+      const data = new FormData();
+
+      Object.keys(formData).forEach((key) => {
+        const value = key === "dueDays" ? parseInt(formData[key] || "0") : formData[key];
+        if (key !== "clientAdminId") {
+          data.append(key, value);
+        }
+      });
+
+      data.append("clientAdminId", formData.clientAdminId || "");
+      data.append("clientAdminName", formData.fullName || ""); // ✅ Add this line
+      data.append("clientAdminName", formData.status || ""); // ✅ Add this line
+
+      if (file) {
+        data.append("profileImage", file);
+      }
+
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      };
+
+      if (isEdit) {
+        await axios.put(`http://localhost:5000/api/companies/${id}`, data, config);
+        toast.success("Company Account updated successfully! ✨");
+      } else {
+        await axios.post("http://localhost:5000/api/companies", data, config);
+        toast.success("Company Account created successfully! 🚀");
+      }
+
+      navigate("/dashboard/company-accounts/list");
+    } catch (err) {
+      console.error(err.response?.data || err);
+      toast.error(err.response?.data?.message || "❌ Something went wrong!");
     }
   };
 
   return (
     <div>
-      <OutletHeading name="Add Account" />
-
+      <OutletHeading name={isEdit ? "Edit Company Account" : "Add Company Account"} />
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-        {profileImage ? (
-          <img
-            src={profileImage}
-            alt="Profile Preview"
-            className="w-24 h-24 rounded-full object-cover border-gray-300 border-2"
-          />
-        ) : (
-          <img
-            src={IMAGES.dummyImg}
-            alt="Profile Preview"
-            className="w-24 h-24 rounded-full object-cover border-gray-300 border-2"
-          />
-        )}
-
+        <img
+          src={profileImage || IMAGES.dummyImg}
+          alt="Profile Preview"
+          className="w-24 h-24 rounded-full object-cover border-gray-300 border-2"
+        />
         <div>
           <label className="block font-medium text-sm mb-1">Upload Image</label>
-          <label
-            htmlFor="driver-upload"
-            className="btn btn-edit mt-1 cursor-pointer inline-block"
-          >
-            Choose File
-          </label>
-          <input
-            id="driver-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleProfileImageChange}
-            className="hidden"
-          />
+          <label htmlFor="driver-upload" className="btn btn-edit mt-1 cursor-pointer inline-block">Choose File</label>
+          <input id="driver-upload" type="file" accept="image/*" onChange={handleProfileImageChange} className="hidden" />
         </div>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-        <div>
-          <label className="block font-medium mb-1">Company Name *</label>
-          <input className="custom_input w-full" />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">
-            Primary Contact Name *
-          </label>
-          <input className="custom_input w-full" />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">Email *</label>
-          <input type="email" className="custom_input w-full" />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">Website</label>
-          <input type="url" className="custom_input w-full" />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">
-            Primary Contact Designation *
-          </label>
-          <input className="custom_input w-full" />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">Contact *</label>
-          <input
-            type="tel"
-            className="custom_input w-full"
-            placeholder="+44 7400 123456"
-          />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">City</label>
-          <input className="custom_input w-full" />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">Invoice Due Days *</label>
-          <input type="number" min="1" className="custom_input w-full" />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">State/County</label>
-          <input className="custom_input w-full" />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">Postcode/Zip Code</label>
-          <input className="custom_input w-full" />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">Passphrase</label>
-          <input className="custom_input w-full" />
-        </div>
+        <input placeholder="Company Name *" className="custom_input w-full" value={formData.companyName} onChange={(e) => handleChange("companyName", e.target.value)} />
+        <input placeholder="Primary Contact Name*" className="custom_input w-full" value={formData.contactName} onChange={(e) => handleChange("contactName", e.target.value)} />
+        <input type="email" placeholder="Email *" className="custom_input w-full" value={formData.email} onChange={(e) => handleChange("email", e.target.value)} />
+        <input placeholder="Website" className="custom_input w-full" value={formData.website} onChange={(e) => handleChange("website", e.target.value)} />
+        <input placeholder="Primary Contact Designation *" className="custom_input w-full" value={formData.designation} onChange={(e) => handleChange("designation", e.target.value)} />
+        <PhoneInput country={'gb'} inputClass="w-full custom_input" inputStyle={{ width: "100%" }} value={formData.contact} onChange={(value) => handleChange("contact", value)} />
+        <input placeholder="City" className="custom_input w-full" value={formData.city} onChange={(e) => handleChange("city", e.target.value)} />
+        <input type="number" min="1" placeholder="Invoice Due Days *" className="custom_input w-full" value={formData.dueDays} onChange={(e) => handleChange("dueDays", e.target.value)} />
+        <input placeholder="State/County" className="custom_input w-full" value={formData.state} onChange={(e) => handleChange("state", e.target.value)} />
+        <input placeholder="Postcode/Zip Code" className="custom_input w-full" value={formData.zip} onChange={(e) => handleChange("zip", e.target.value)} />
+        <input placeholder="Passphrase" className="custom_input w-full" value={formData.passphrase} onChange={(e) => handleChange("passphrase", e.target.value)} />
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         <div className="grid grid-cols-1 gap-4">
-          <div className="w-full md:w-64">
-            <label className="block font-medium mb-1">Country *</label>
-            <SelectOption options={countryOptions} />
-          </div>
+          <SelectOption
+            label="Assign to ClientAdmin"
+            value={formData.clientAdminId || ""}
+            options={clientAdmins}
+            onChange={(e) => {
+              const selectedId = e?.target?.value || e?.value || e;
+              const selectedAdmin = clientAdmins.find(admin => admin.value === selectedId);
 
-          <div className="w-full md:w-64">
-            <label className="block font-medium mb-1">
-              Payment Options (Bookings) *
-            </label>
-            <SelectOption options={bookingPaymentOptions} />
-          </div>
-
-          <div className="w-full md:w-64">
-            <label className="block font-medium mb-1">
-              Payment Options (Invoice Payment) *
-            </label>
-            <SelectOption options={invoicePaymentOptions} />
-          </div>
-
-          <div className="w-full md:w-64">
-            <label className="block font-medium mb-1">
-              Locations Display (Invoice) *
-            </label>
-            <SelectOption options={yesNoOptions} />
-          </div>
+              handleChange("clientAdminId", selectedId);
+              handleChange("fullName", selectedAdmin?.label || "");
+              handleChange("email", selectedAdmin?.email || ""); // disable this field in form
+              handleChange("status", selectedAdmin?.status);
+            }}
+          />
+          <SelectOption options={countries} label="Country *" value={formData.country} onChange={(e) => handleChange("country", e.target.value)} />
+          <SelectOption options={bookingPaymentOptions} label="Payment Option (Bookings) *" value={formData.bookingPayment} onChange={(e) => handleChange("bookingPayment", e.target.value)} />
+          <SelectOption options={invoicePaymentOptions} label="Payment Options (Invoice Payment) *" value={formData.invoicePayment} onChange={(e) => handleChange("invoicePayment", e.target.value)} />
+          <SelectOption options={yesNoOptions} label="Locations Display (Invoice) *" value={formData.showLocations} onChange={(e) => handleChange("showLocations", e.target.value)} />
         </div>
-
         <div className="grid grid-cols-1 gap-4">
-          <div>
-            <label className="block font-medium mb-1">Address</label>
-            <textarea className="custom_input w-full" rows={3}></textarea>
-          </div>
-
-          <div>
-            <label className="block font-medium mb-1">Invoice Terms</label>
-            <textarea className="custom_input w-full" rows={4}></textarea>
-          </div>
+          <textarea placeholder="Address" className="custom_input w-full" rows={3} value={formData.address} onChange={(e) => handleChange("address", e.target.value)}></textarea>
+          <textarea placeholder="Invoice Terms" className="custom_input w-full" rows={4} value={formData.invoiceTerms} onChange={(e) => handleChange("invoiceTerms", e.target.value)}></textarea>
         </div>
       </div>
-
       <div className="mt-8 text-right">
-        <button className="btn btn-reset">Update</button>
+        <button onClick={handleSubmit} className="btn btn-reset">{isEdit ? "Update" : "Submit"}</button>
       </div>
     </div>
   );
