@@ -22,10 +22,15 @@ export const createUserBySuperAdmin = async (req, res) => {
         const creator = req.user;
 
         // ✅ Authorization: clientadmin can only create limited roles
-        if (creator.role === "clientadmin") {
-            const allowedRoles = ["associateadmin", "staffmember", "driver", "customer"];
+        // ✅ Authorization: clientadmin or associateadmin can only create limited roles
+        if (["clientadmin", "associateadmin"].includes(creator.role)) {
+            const allowedRoles = ["staffmember", "driver", "customer"];
+            if (creator.role === "clientadmin") allowedRoles.push("associateadmin");
+
             if (!allowedRoles.includes(role)) {
-                return res.status(403).json({ message: "Unauthorized role assignment by clientadmin" });
+                return res.status(403).json({
+                    message: `Unauthorized role assignment by ${creator.role}`,
+                });
             }
         }
 
@@ -127,13 +132,11 @@ export const createUserBySuperAdmin = async (req, res) => {
     }
 };
 
-
 // ✅ GET All Users
 export const getClientAdmins = async (req, res) => {
     try {
-        const role = req.user.role;
-        const companyId = req.user.companyId;
-        const query = {};
+        const { role, companyId, _id: userId } = req.user;
+        let query = {};
 
         if (role === "superadmin") {
             query.$or = [
@@ -144,26 +147,44 @@ export const getClientAdmins = async (req, res) => {
             query.companyId = companyId;
             query.role = { $in: ['clientadmin', 'manager', 'demo', 'driver', 'customer'] };
         } else if (role === "clientadmin") {
-            query.companyId = companyId;
-            query.role = { $in: ['associateadmin', 'staffmember', 'driver', 'customer'] };
-        } else {
+            // ✅ Get all users created by clientadmin OR by any of their associateadmins
+            const associateAdmins = await User.find({ createdBy: userId, role: 'associateadmin' });
+            const associateAdminIds = associateAdmins.map(user => user._id);
+
+            query = {
+                createdBy: userId, // only direct creations
+                role: { $in: ['associateadmin', 'staffmember', 'driver', 'customer'] }
+            };
+        }
+        else if (role === "associateadmin") {
+            query = {
+                $or: [
+                    { createdBy: userId },
+                    { _id: userId } // So they can also see their own record
+                ],
+                role: { $in: ['associateadmin', 'staffmember', 'driver', 'customer'] }
+            };
+        }
+        else {
             return res.status(403).json({ message: "Unauthorized access" });
         }
 
         const users = await User.find(query);
 
-        res.status(200).json(users.map(user => ({
-            _id: user._id,
-            fullName: user.fullName,
-            email: user.email,
-            role: user.role,
-            permissions: user.permissions,
-            status: user.status,
-            companyId: user.companyId,
-            associateAdminLimit: user.associateAdminLimit,
-        })));
+        return res.status(200).json(
+            users.map(user => ({
+                _id: user._id,
+                fullName: user.fullName,
+                email: user.email,
+                role: user.role,
+                permissions: user.permissions,
+                status: user.status,
+                companyId: user.companyId,
+                associateAdminLimit: user.associateAdminLimit,
+            }))
+        );
     } catch (error) {
-        console.error(error);
+        console.error("Error fetching users:", error);
         res.status(500).json({ message: "Failed to fetch users" });
     }
 };

@@ -167,7 +167,6 @@ const AdminList = () => {
 
   const filteredData = adminsListData.filter(
     (item) =>
-      item.role !== "superadmin" &&
       item.status === selectedTab &&
       Object.values(item)
         .join(" ")
@@ -257,6 +256,9 @@ const AdminList = () => {
   }
   else if (user?.role === "clientadmin") {
     roleOptions = ["associateadmin", "staffmember", "driver", "customer"];
+  }
+  else if (user?.role === "associateadmin") {
+    roleOptions = ["staffmember", "driver", "customer"];
   }
   else if (user?.role === "demo") {
     roleOptions = ["staffmember", "driver", "customer"];

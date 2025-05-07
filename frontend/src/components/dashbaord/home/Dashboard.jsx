@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import RoleCards from "./DashboardCard";
 
 const Dashboard = () => {
   const [startDate, setStartDate] = useState(
@@ -97,7 +98,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <button className="btn btn-primary">Primary</button>
+        {/* <button className="btn btn-primary">Primary</button>
 
         <button className="btn btn-success">Success</button>
 
@@ -107,9 +108,9 @@ const Dashboard = () => {
 
         <button className="btn btn-reset">Reset</button>
 
-        <button className="btn btn-outline">Outline</button>
+        <button className="btn btn-outline">Outline</button> */}
 
-
+        <RoleCards />
         {/* Sections */}
         <div className="space-y-4">
           {sections.map((section, i) => (

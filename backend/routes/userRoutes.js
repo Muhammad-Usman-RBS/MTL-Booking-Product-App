@@ -20,7 +20,7 @@ router.post('/create-clientadmin', protect, authorize('superadmin', 'clientadmin
 // ✅ Get All Users under a Role Scope
 // Access: Superadmin (global), ClientAdmin & Manager (company-specific)
 // Description: Returns filtered user list based on requester's role and company
-router.get('/create-clientadmin', protect, authorize('superadmin', 'clientadmin', 'manager'), getClientAdmins);
+router.get('/create-clientadmin', protect, authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'), getClientAdmins);
 
 // ✅ Update an Existing User by ID
 // Access: Superadmin, ClientAdmin, Manager
@@ -30,6 +30,6 @@ router.put('/create-clientadmin/:id', protect, authorize('superadmin', 'clientad
 // ✅ Delete a User by ID
 // Access: Superadmin, ClientAdmin, Manager
 // Description: Deletes the user document from database based on _id
-router.delete('/create-clientadmin/:id', protect, authorize('superadmin', 'clientadmin', 'manager'), deleteUserBySuperAdmin);
+router.delete('/create-clientadmin/:id', protect, authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'), deleteUserBySuperAdmin);
 
 export default router;
