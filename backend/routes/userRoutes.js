@@ -15,7 +15,7 @@ const router = express.Router();
 // ✅ Create a New User
 // Access: Superadmin, ClientAdmin, Manager (with role-based limitations)
 // Description: Used to create users like clientadmin, staffmember, driver, etc.
-router.post('/create-clientadmin', protect, authorize('superadmin', 'clientadmin', 'manager'), createUserBySuperAdmin);
+router.post('/create-clientadmin', protect, authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'), createUserBySuperAdmin);
 
 // ✅ Get All Users under a Role Scope
 // Access: Superadmin (global), ClientAdmin & Manager (company-specific)
@@ -25,7 +25,7 @@ router.get('/create-clientadmin', protect, authorize('superadmin', 'clientadmin'
 // ✅ Update an Existing User by ID
 // Access: Superadmin, ClientAdmin, Manager
 // Description: Updates selected user’s info like name, email, password, role, etc.
-router.put('/create-clientadmin/:id', protect, authorize('superadmin', 'clientadmin', 'manager'), updateUserBySuperAdmin);
+router.put('/create-clientadmin/:id', protect, authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'), updateUserBySuperAdmin);
 
 // ✅ Delete a User by ID
 // Access: Superadmin, ClientAdmin, Manager

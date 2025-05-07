@@ -175,6 +175,18 @@ const Sidebar = () => {
     clientadmin: [
       "/dashboard/home",
       "/dashboard/admin-list",
+      "/dashboard/company-accounts/list",
+      "/dashboard/company-accounts/new",
+      "/dashboard/company-accounts/edit/:id",
+      "/dashboard/profile",
+      "/dashboard/logout",
+    ],
+    associateadmin: [
+      "/dashboard/home",
+      "/dashboard/admin-list",
+      "/dashboard/company-accounts/list",
+      "/dashboard/company-accounts/new",
+      "/dashboard/company-accounts/edit/:id",
       "/dashboard/profile",
       "/dashboard/logout",
     ],

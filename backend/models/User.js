@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema({
 
   role: {
     type: String,
-    enum: ['superadmin', 'manager', 'clientadmin', 'staffmember', 'driver', 'customer', 'demo'], // ✅ Full roles
+    enum: ['superadmin', 'manager', 'clientadmin', 'staffmember', 'associateadmin', 'driver', 'customer', 'demo'], // ✅ Full roles
     default: 'customer',
   },
 
@@ -49,6 +49,17 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     default: null,
+  },
+
+  associateAdminLimit: {
+    type: Number,
+    enum: [5, 7, 10],
+    default: 5,
+  },
+
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
   },
 
   loginHistory: [{

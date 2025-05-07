@@ -2,49 +2,94 @@ import User from '../models/User.js';
 import Company from '../models/Company.js';
 import bcrypt from 'bcryptjs';
 
-// ✅ SuperAdmin Creates New User
+// ✅ SuperAdmin or ClientAdmin Creates User
 export const createUserBySuperAdmin = async (req, res) => {
-    const { fullName, email, password, role, status, permissions } = req.body;
+    const {
+        fullName,
+        email,
+        password,
+        role,
+        status,
+        permissions,
+        associateAdminLimit,
+    } = req.body;
 
     try {
         const userExists = await User.findOne({ email });
-        if (userExists) return res.status(409).json({ message: "User already exists" });
+        if (userExists)
+            return res.status(409).json({ message: "User already exists" });
 
-        const creatorRole = req.user.role;
+        const creator = req.user;
 
-        // Superadmin and Manager can create same roles
-        if (["superadmin", "manager"].includes(creatorRole)) {
-            if (!["clientadmin", "manager", "demo", "driver", "customer"].includes(role)) {
-                return res.status(400).json({ message: "Role not allowed" });
+        // ✅ Authorization: clientadmin can only create limited roles
+        if (creator.role === "clientadmin") {
+            const allowedRoles = ["associateadmin", "staffmember", "driver", "customer"];
+            if (!allowedRoles.includes(role)) {
+                return res.status(403).json({ message: "Unauthorized role assignment by clientadmin" });
             }
         }
-        // Clientadmin specific
-        else if (creatorRole === "clientadmin") {
-            if (!["staffmember", "driver", "customer"].includes(role)) {
-                return res.status(400).json({ message: `ClientAdmin can only create HR (staffmember), Driver, Customer` });
+
+        // ✅ Validate associateAdminLimit only for clientadmin/manager
+        let parsedLimit;
+        if (["clientadmin", "manager"].includes(role)) {
+            parsedLimit = parseInt(associateAdminLimit);
+            if (![5, 7, 10].includes(parsedLimit)) {
+                return res.status(400).json({
+                    message: "associateAdminLimit must be one of 5, 7, or 10",
+                });
             }
         }
-        else {
-            return res.status(403).json({ message: "You are not allowed to create users" });
+
+        // ✅ Enforce associateadmin limit for clientadmin
+        if (creator.role === "clientadmin" && role === "associateadmin") {
+            const associateAdminCount = await User.countDocuments({
+                createdBy: creator._id,
+                role: "associateadmin",
+                status: { $ne: "Deleted" }
+            });
+
+            const allowed = creator.associateAdminLimit || 5;
+            if (associateAdminCount >= allowed) {
+                return res.status(400).json({
+                    message: `Limit reached: Only ${allowed} associateadmin(s) allowed for this clientadmin.`,
+                });
+            }
         }
 
-        // Limits Checking
+        // ✅ Role limits
         if (role === "manager") {
-            const count = await User.countDocuments({ role: "manager", companyId: req.user.companyId || null });
+            const count = await User.countDocuments({
+                role: "manager",
+                companyId: creator.companyId || null,
+            });
             if (count >= 3) {
-                return res.status(400).json({ message: "Only 3 Manager accounts allowed per company" });
+                return res.status(400).json({
+                    message: "Only 3 Manager accounts allowed per company",
+                });
             }
         }
+
         if (role === "demo") {
-            const count = await User.countDocuments({ role: "demo", companyId: req.user.companyId || null });
+            const count = await User.countDocuments({
+                role: "demo",
+                companyId: creator.companyId || null,
+            });
             if (count >= 2) {
-                return res.status(400).json({ message: "Only 2 Demo accounts allowed per company" });
+                return res.status(400).json({
+                    message: "Only 2 Demo accounts allowed per company",
+                });
             }
         }
+
         if (role === "staffmember") {
-            const count = await User.countDocuments({ role: "staffmember", companyId: req.user.companyId });
+            const count = await User.countDocuments({
+                role: "staffmember",
+                companyId: creator.companyId,
+            });
             if (count >= 2) {
-                return res.status(400).json({ message: "Only 2 staffmembers allowed per company" });
+                return res.status(400).json({
+                    message: "Only 2 staffmembers allowed per company",
+                });
             }
         }
 
@@ -57,47 +102,50 @@ export const createUserBySuperAdmin = async (req, res) => {
             role,
             status,
             permissions,
-            companyId: req.user.role === "superadmin" && role === "clientadmin" ? null : req.user.companyId,
+            createdBy: creator._id,
+            associateAdminLimit: ["clientadmin", "manager"].includes(role) ? parsedLimit : undefined,
+            companyId:
+                creator.role === "superadmin" && role === "clientadmin"
+                    ? null
+                    : creator.companyId,
         });
 
+        // ✅ If new user is clientadmin, assign self as companyId
         if (newUser.role === "clientadmin" && !newUser.companyId) {
             newUser.companyId = newUser._id;
             await newUser.save();
         }
 
-        res.status(201).json({ message: "User created successfully", user: newUser });
+        res.status(201).json({
+            message: "User created successfully",
+            user: newUser,
+        });
 
     } catch (error) {
-        console.error(error);
+        console.error("Create User Error:", error);
         res.status(500).json({ message: "Server error" });
     }
 };
 
+
 // ✅ GET All Users
 export const getClientAdmins = async (req, res) => {
     try {
-        let query = {};
+        const role = req.user.role;
+        const companyId = req.user.companyId;
+        const query = {};
 
-        if (req.user.role === "superadmin") {
-            // ✅ SuperAdmin sees ONLY personal (own created) users
-            query = {
-                $or: [
-                    { role: { $in: ['clientadmin', 'manager', 'demo'] } }, // Global users (ClientAdmins/Managers/Demo accounts)
-                    {
-                        role: { $in: ['driver', 'customer'] },
-                        companyId: null  // Personal Drivers and Customers only
-                    }
-                ]
-            };
-
-        } else if (req.user.role === "manager") {
-            // ✅ Manager sees their own company's users
-            query.companyId = req.user.companyId;
+        if (role === "superadmin") {
+            query.$or = [
+                { role: { $in: ['clientadmin', 'manager', 'demo'] } },
+                { role: { $in: ['driver', 'customer'] }, companyId: null }
+            ];
+        } else if (role === "manager") {
+            query.companyId = companyId;
             query.role = { $in: ['clientadmin', 'manager', 'demo', 'driver', 'customer'] };
-        } else if (req.user.role === "clientadmin") {
-            // ✅ ClientAdmin sees his own company's users
-            query.companyId = req.user.companyId;
-            query.role = { $in: ['staffmember', 'driver', 'customer'] };
+        } else if (role === "clientadmin") {
+            query.companyId = companyId;
+            query.role = { $in: ['associateadmin', 'staffmember', 'driver', 'customer'] };
         } else {
             return res.status(403).json({ message: "Unauthorized access" });
         }
@@ -112,6 +160,7 @@ export const getClientAdmins = async (req, res) => {
             permissions: user.permissions,
             status: user.status,
             companyId: user.companyId,
+            associateAdminLimit: user.associateAdminLimit,
         })));
     } catch (error) {
         console.error(error);
@@ -119,10 +168,18 @@ export const getClientAdmins = async (req, res) => {
     }
 };
 
-// ✅ Update User by SuperAdmin
+// ✅ Update User
 export const updateUserBySuperAdmin = async (req, res) => {
     const { id } = req.params;
-    const { fullName, email, password, role, status, permissions } = req.body;
+    const {
+        fullName,
+        email,
+        password,
+        role,
+        status,
+        permissions,
+        associateAdminLimit,
+    } = req.body;
 
     try {
         const user = await User.findById(id);
@@ -134,6 +191,21 @@ export const updateUserBySuperAdmin = async (req, res) => {
         user.status = status || user.status;
         user.permissions = permissions || user.permissions;
 
+        // ✅ Validate and assign associateAdminLimit
+        if (typeof associateAdminLimit !== "undefined") {
+            const parsedLimit = parseInt(associateAdminLimit);
+            if (["clientadmin", "manager"].includes(role)) {
+                if (![5, 7, 10].includes(parsedLimit)) {
+                    return res.status(400).json({
+                        message: "associateAdminLimit must be one of 5, 7, or 10",
+                    });
+                }
+                user.associateAdminLimit = parsedLimit;
+            } else {
+                user.associateAdminLimit = undefined;
+            }
+        }
+
         if (password) {
             const hashedPassword = await bcrypt.hash(password, 10);
             user.password = hashedPassword;
@@ -141,7 +213,6 @@ export const updateUserBySuperAdmin = async (req, res) => {
 
         await user.save();
 
-        // ✅ Sync company status if clientadmin
         if (user.role === "clientadmin") {
             await Company.updateMany(
                 { clientAdminId: user._id },
@@ -158,6 +229,7 @@ export const updateUserBySuperAdmin = async (req, res) => {
                 role: user.role,
                 permissions: user.permissions,
                 status: user.status,
+                associateAdminLimit: user.associateAdminLimit,
             },
         });
     } catch (error) {
@@ -166,7 +238,7 @@ export const updateUserBySuperAdmin = async (req, res) => {
     }
 };
 
-// ✅ Delete User by SuperAdmin
+// ✅ Delete User
 export const deleteUserBySuperAdmin = async (req, res) => {
     const { id } = req.params;
 
@@ -176,14 +248,10 @@ export const deleteUserBySuperAdmin = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        await User.findByIdAndDelete(id);  // 🛠️ Correct method
-
+        await User.findByIdAndDelete(id);
         res.status(200).json({ message: "User deleted successfully" });
     } catch (error) {
         console.error("Delete user error:", error);
         res.status(500).json({ message: "Server error" });
     }
 };
-
-
-

@@ -281,9 +281,23 @@ function App() {
               <Route path="admin-list" element={<AdminList />} />
               <Route path="profile" element={<EditProfile />} />
               <Route path="logout" element={<Logout />} />
+              <Route path="company-accounts/list" element={<CompanyAccountsList />} />
+              <Route path="company-accounts/new" element={<AddCompanyAccount />} />
+              <Route path="company-accounts/edit/:id" element={<AddCompanyAccount />} />
             </>
           )}
 
+          {/* Clientadmin Routes */}
+          {role === "associateadmin" && (
+            <>
+              <Route path="admin-list" element={<AdminList />} />
+              <Route path="profile" element={<EditProfile />} />
+              <Route path="logout" element={<Logout />} />
+              <Route path="company-accounts/list" element={<CompanyAccountsList />} />
+              <Route path="company-accounts/new" element={<AddCompanyAccount />} />
+              <Route path="company-accounts/edit/:id" element={<AddCompanyAccount />} />
+            </>
+          )}
           {/* Demo and Manager Routes */}
           {role === "demo" && (
             <>

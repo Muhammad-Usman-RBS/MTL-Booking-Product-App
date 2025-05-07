@@ -55,42 +55,84 @@ const AdminList = () => {
   };
 
   const handleEditModal = (admin) => {
-    setSelectedAccount(admin);
+    setSelectedAccount({
+      ...admin,
+      associateAdminLimit: parseInt(admin.associateAdminLimit) || 5,
+      permissions: admin.permissions || [],
+    });
     setShowModal(true);
   };
 
+
   const handleSave = async () => {
     const token = user?.token;
-    // ✅ Prevent Demo Accounts from Saving
+
+    // ✅ Block demo users from creating anyone
     if (user?.role === "demo") {
       toast.error("Demo accounts are not allowed to create users.");
       return;
     }
+
+    if (
+      user?.role === "clientadmin" &&
+      selectedAccount?.role === "associateadmin" &&
+      !selectedAccount._id // Only on create, not update
+    ) {
+      const currentCount = adminsListData.filter(
+        (a) =>
+          a.status !== "Deleted" &&
+          ["associateadmin", "staffmember", "driver", "customer"].includes(a.role) &&
+          a.createdBy === user._id
+      ).length;
+
+      const allowed = user?.associateAdminLimit || 5;
+
+      if (currentCount >= allowed) {
+        toast.error(`Limit reached: Only ${allowed} associateadmins allowed.`);
+        return;
+      }
+    }
+
+
     try {
       const payload = {
         ...selectedAccount,
-        companyId: (user?.role === "superadmin" && selectedAccount.role === "clientadmin")
-          ? null
-          : user?.companyId || user?._id,  // For manager or clientadmin creation
+        companyId:
+          user?.role === "superadmin" && selectedAccount.role === "clientadmin"
+            ? null
+            : user?.companyId || user?._id,
+        createdBy: user?._id,
       };
 
+      if (!["clientadmin", "manager"].includes(payload.role)) {
+        delete payload.associateAdminLimit;
+      }
+
       if (selectedAccount._id) {
-        await axios.put(`http://localhost:5000/api/create-clientadmin/${selectedAccount._id}`, payload, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await axios.put(
+          `http://localhost:5000/api/create-clientadmin/${selectedAccount._id}`,
+          payload,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         toast.success("User updated successfully");
       } else {
-        await axios.post("http://localhost:5000/api/create-clientadmin", payload, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await axios.post(
+          "http://localhost:5000/api/create-clientadmin",
+          payload,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         toast.success("User created successfully");
       }
+
       setShowModal(false);
       fetchAdmins();
+
     } catch (err) {
       toast.error(err.response?.data?.message || "Operation failed");
     }
   };
+
+
 
   const handleDeleteClick = (adminId) => {
     setDeleteUserId(adminId);
@@ -214,7 +256,7 @@ const AdminList = () => {
     roleOptions = ["manager", "demo", "driver", "customer"];
   }
   else if (user?.role === "clientadmin") {
-    roleOptions = ["staffmember", "driver", "customer"];
+    roleOptions = ["associateadmin", "staffmember", "driver", "customer"];
   }
   else if (user?.role === "demo") {
     roleOptions = ["staffmember", "driver", "customer"];
@@ -235,6 +277,7 @@ const AdminList = () => {
                 status: "Active",
                 password: "",
                 permissions: [],
+                associateAdminLimit: 5,
               })
             }
           >
@@ -315,6 +358,23 @@ const AdminList = () => {
               setSelectedAccount({ ...selectedAccount, password: e.target.value })
             }
           />
+
+          {["clientadmin", "manager"].includes(selectedAccount?.role) && (
+            <SelectOption
+              label="Associate Admin Limit"
+              value={selectedAccount?.associateAdminLimit || 5}
+              onChange={(e) =>
+                setSelectedAccount({
+                  ...selectedAccount,
+                  associateAdminLimit: parseInt(e.target.value),
+                })
+              }
+              options={[5, 7, 10].map((num) => ({ label: `${num}`, value: num }))}
+            />
+          )}
+
+
+
           <SelectOption
             label="Status"
             value={selectedAccount?.status || ""}
