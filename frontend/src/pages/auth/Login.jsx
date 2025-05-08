@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import axios from 'axios';
+import { loginUser } from "../../utils/authService";
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -17,11 +17,12 @@ const Login = () => {
     }
 
     try {
-      const { data } = await axios.post(
-        'http://localhost:5000/api/auth/login',
-        { email, password },
-        { withCredentials: true }
-      );
+      const { data } = await loginUser(email, password);
+      // const { data } = await axios.post(
+      //   'http://localhost:5000/api/auth/login',
+      //   { email, password },
+      //   { withCredentials: true }
+      // );
 
       localStorage.setItem('user', JSON.stringify(data));
       toast.success("Login successful!");

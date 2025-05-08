@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import axios from "axios";
+import { updateUserProfile } from "../../../utils/authService";
 import IMAGES from "../../../assets/images";
 
 const EditProfile = () => {
@@ -61,12 +61,13 @@ const EditProfile = () => {
       formData.append("currentPassword", form.currentPassword);
       if (profileImg) formData.append("profileImage", profileImg);
 
-      const response = await axios.put("http://localhost:5000/api/auth/profile", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data"
-        },
-      });
+      const response = await updateUserProfile(formData, token);
+      // const response = await axios.put("http://localhost:5000/api/auth/profile", formData, {
+      //   headers: {
+      //     Authorization: `Bearer ${token}`,
+      //     "Content-Type": "multipart/form-data"
+      //   },
+      // });
 
       if (response.status === 200) {
         const updatedUser = response.data;

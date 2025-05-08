@@ -98,6 +98,28 @@ export const createUserBySuperAdmin = async (req, res) => {
             }
         }
 
+        const allowedPermissions = [
+            "Users", "Home", "Booking", "Invoices", "Drivers", "Customers",
+            "Company/Accounts", "Statements", "Pricing",
+            "Settings", "Widget/API", "Profile", "Logout"
+        ];
+
+        let userPermissions = ["Home", "Profile", "Users", "Logout"]
+
+        if (permissions && Array.isArray(permissions)) {
+            const invalidPermissions = permissions.filter(p => !allowedPermissions.includes(p));
+            if (invalidPermissions.length > 0) {
+                return res.status(400).json({
+                    message: `Invalid permissions provided: ${invalidPermissions.join(', ')}`
+                });
+            }
+            userPermissions = permissions;
+        } else if (permissions !== undefined) {
+            return res.status(400).json({
+                message: "Permissions must be an array of strings"
+            });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = await User.create({
@@ -106,7 +128,7 @@ export const createUserBySuperAdmin = async (req, res) => {
             password: hashedPassword,
             role,
             status,
-            permissions,
+            permissions: userPermissions,
             createdBy: creator._id,
             associateAdminLimit: ["clientadmin", "manager"].includes(role) ? parsedLimit : undefined,
             companyId:

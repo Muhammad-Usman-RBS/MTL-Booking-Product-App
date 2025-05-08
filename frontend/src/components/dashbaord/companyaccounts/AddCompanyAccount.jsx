@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
@@ -10,6 +9,12 @@ import IMAGES from "../../../assets/images";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { bookingPaymentOptions, yesNoOptions, invoicePaymentOptions } from "../../../constants/dashboardTabsData/data";
+import {
+  getCompanyById,
+  createCompany,
+  updateCompany,
+  getClientAdmins
+} from "../../../utils/authService";
 
 const AddCompanyAccount = () => {
   const { id } = useParams();
@@ -52,31 +57,34 @@ const AddCompanyAccount = () => {
       const user = JSON.parse(localStorage.getItem("user"));
       const token = user?.token;
 
-      const { data } = await axios.get(`http://localhost:5000/api/companies/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const { data } = await getCompanyById(id, token);
+      // const { data } = await axios.get(`http://localhost:5000/api/companies/${id}`, {
+      //   headers: {
+      //     Authorization: `Bearer ${token}`,
+      //   },
+      // });
 
-      setFormData(data);
+      // setFormData(data);
       setFormData(prev => ({
         ...prev,
         clientAdminId: data.clientAdminId || ""
       }));
-      setProfileImage(`http://localhost:5000/${data.profileImage}`);
+      const baseURL = process.env.VITE_API_BASE_URL;
+      setProfileImage(`${baseURL}/${data.profileImage}`);
+
     } catch (err) {
       toast.error("Failed to load company data");
     }
   };
 
-
   const fetchClientAdmins = async () => {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
       const token = user?.token;
-      const res = await axios.get("http://localhost:5000/api/create-clientadmin", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await getClientAdmins(token);
+      // const res = await axios.get("http://localhost:5000/api/create-clientadmin", {
+      //   headers: { Authorization: `Bearer ${token}` },
+      // });
       setClientAdmins(res.data.map(user => ({
         label: user.fullName,
         value: user._id,
@@ -133,7 +141,6 @@ const AddCompanyAccount = () => {
         data.append("profileImage", file);
       }
 
-
       const config = {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -142,10 +149,12 @@ const AddCompanyAccount = () => {
       };
 
       if (isEdit) {
-        await axios.put(`http://localhost:5000/api/companies/${id}`, data, config);
+        await updateCompany(id, data, token);
+        // await axios.put(`http://localhost:5000/api/companies/${id}`, data, config);
         toast.success("Company Account updated successfully! ✨");
       } else {
-        await axios.post("http://localhost:5000/api/companies", data, config);
+        await createCompany(data, token);
+        // await axios.post("http://localhost:5000/api/companies", data, config);
         toast.success("Company Account created successfully! 🚀");
       }
 

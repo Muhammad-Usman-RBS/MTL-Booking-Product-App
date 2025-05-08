@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import axios from "axios";
+import { resetPassword } from "../../utils/authService";
 
 const ResetPassword = () => {
   const location = useLocation();
@@ -16,7 +16,8 @@ const ResetPassword = () => {
     if (!otp || !newPassword) return toast.error("Please fill all fields");
 
     try {
-      await axios.post("http://localhost:5000/api/auth/new-password", { email, otp, newPassword });
+      // await axios.post("http://localhost:5000/api/auth/new-password", { email, otp, newPassword });
+      await resetPassword(email, otp, newPassword);
       toast.success("Password reset successful! You can now log in.");
       navigate("/");
     } catch (error) {

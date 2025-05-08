@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import axios from "axios";
+import { sendForgotPasswordOtp } from "../../utils/authService";
 import { useNavigate } from "react-router-dom";
 
 const ForgotPassword = () => {
@@ -12,7 +12,8 @@ const ForgotPassword = () => {
     if (!email) return toast.error("Email is required");
 
     try {
-      await axios.post("http://localhost:5000/api/auth/forgot-password", { email });
+      await sendForgotPasswordOtp(email);
+      // await axios.post("http://localhost:5000/api/auth/forgot-password", { email });
       toast.success("OTP sent to your email!");
       navigate("/new-password", { state: { email } }); // Send email to ResetPassword page
     } catch (error) {

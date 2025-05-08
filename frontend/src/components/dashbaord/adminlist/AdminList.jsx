@@ -7,7 +7,13 @@ import "react-toastify/dist/ReactToastify.css";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import axios from "axios";
+import {
+  fetchClientAdmins,
+  updateClientAdminStatus,
+  createClientAdmin,
+  updateClientAdmin,
+  deleteClientAdmin,
+} from "../../../utils/authService";
 
 const tabs = ["Active", "Pending", "Suspended", "Deleted"];
 
@@ -30,10 +36,11 @@ const AdminList = () => {
 
   const fetchAdmins = async () => {
     try {
-      const token = user?.token;
-      const res = await axios.get("http://localhost:5000/api/create-clientadmin", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetchClientAdmins(user?.token);
+      // const token = user?.token;
+      // const res = await axios.get("http://localhost:5000/api/create-clientadmin", {
+      //   headers: { Authorization: `Bearer ${token}` },
+      // });
       setAdminsListData(res.data);
     } catch (error) {
       toast.error("Failed to fetch admins");
@@ -41,13 +48,14 @@ const AdminList = () => {
   };
 
   const handleStatusChange = async (adminId, newStatus) => {
-    const token = user?.token;
+    // const token = user?.token;
     try {
-      await axios.put(`http://localhost:5000/api/create-clientadmin/${adminId}`, { status: newStatus }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await updateClientAdminStatus(adminId, newStatus, user?.token);
+      // await axios.put(`http://localhost:5000/api/create-clientadmin/${adminId}`, { status: newStatus }, {
+      //   headers: { Authorization: `Bearer ${token}` },
+      // });
       toast.success(`User status updated to ${newStatus}`);
-      fetchAdmins(); // ✅ Refresh List
+      fetchAdmins();
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.message || "Failed to update status");
@@ -76,7 +84,7 @@ const AdminList = () => {
     if (
       user?.role === "clientadmin" &&
       selectedAccount?.role === "associateadmin" &&
-      !selectedAccount._id // Only on create, not update
+      !selectedAccount._id
     ) {
       const currentCount = adminsListData.filter(
         (a) =>
@@ -93,7 +101,6 @@ const AdminList = () => {
       }
     }
 
-
     try {
       const payload = {
         ...selectedAccount,
@@ -109,18 +116,20 @@ const AdminList = () => {
       }
 
       if (selectedAccount._id) {
-        await axios.put(
-          `http://localhost:5000/api/create-clientadmin/${selectedAccount._id}`,
-          payload,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await updateClientAdmin(selectedAccount._id, payload, user?.token);
+        // await axios.put(
+        //   `http://localhost:5000/api/create-clientadmin/${selectedAccount._id}`,
+        //   payload,
+        //   { headers: { Authorization: `Bearer ${token}` } }
+        // );
         toast.success("User updated successfully");
       } else {
-        await axios.post(
-          "http://localhost:5000/api/create-clientadmin",
-          payload,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await createClientAdmin(payload, user?.token);
+        // await axios.post(
+        //   "http://localhost:5000/api/create-clientadmin",
+        //   payload,
+        //   { headers: { Authorization: `Bearer ${token}` } }
+        // );
         toast.success("User created successfully");
       }
 
@@ -132,8 +141,6 @@ const AdminList = () => {
     }
   };
 
-
-
   const handleDeleteClick = (adminId) => {
     setDeleteUserId(adminId);
     setDeleteModalOpen(true);
@@ -142,9 +149,10 @@ const AdminList = () => {
   const confirmDelete = async () => {
     const token = user?.token;
     try {
-      await axios.delete(`http://localhost:5000/api/create-clientadmin/${deleteUserId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await deleteClientAdmin(deleteUserId, user?.token);
+      // await axios.delete(`http://localhost:5000/api/create-clientadmin/${deleteUserId}`, {
+      //   headers: { Authorization: `Bearer ${token}` },
+      // });
       toast.success("User deleted successfully");
       fetchAdmins();
       setDeleteModalOpen(false);
@@ -193,7 +201,6 @@ const AdminList = () => {
     status: item.status || "N/A",
     actions: (
       <div className="flex gap-2">
-        {/* ✅ New Dropdown for Status Change */}
         <div className="flex flex-wrap gap-1">
           {(() => {
             let allowedStatusChanges = [];
@@ -375,8 +382,6 @@ const AdminList = () => {
             />
           )}
 
-
-
           <SelectOption
             label="Status"
             value={selectedAccount?.status || ""}
@@ -385,22 +390,15 @@ const AdminList = () => {
             }
             options={tabs}
           />
-
           <div>
             <label className="text-sm font-medium text-gray-700 mb-2 block">
               Permissions
             </label>
             <div className="grid grid-cols-2 gap-2">
               {[
-                "Booking",
-                "Driver",
-                "Customer",
-                "Pricing",
-                "Setting",
-                "Seo",
-                "Invoice",
-                "Statement",
-                "Airport & City Transfers",
+                "Users", "Home", "Booking", "Invoices", "Drivers", "Customers",
+                "Company/Accounts", "Statements", "Pricing",
+                "Settings", "Widget/API", "Profile", "Logout"
               ].map((perm) => (
                 <label key={perm} className="flex gap-2 items-center">
                   <input
@@ -418,7 +416,6 @@ const AdminList = () => {
               ))}
             </div>
           </div>
-
           <div className="flex justify-end gap-4 pt-4">
             <button className="btn btn-reset" onClick={() => setShowModal(false)}>
               Cancel
