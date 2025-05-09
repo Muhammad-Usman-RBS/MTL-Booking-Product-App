@@ -12,22 +12,18 @@ const Sidebar = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const role = user?.role || "";
   const permissions = user?.permissions || [];
-  console.log("permissions granted are", permissions);
-  console.log("role of this user in backend", role);
+
   let sidebarTabs = [];
 
   if (role.toLowerCase() === "superadmin" && permissions.length === 0) {
-    sidebarTabs = [...sidebarItems];
+    sidebarTabs = [...sidebarItems.filter(item => !["Profile", "Logout"].includes(item.title))];
   } else {
     sidebarTabs = permissions
       .map((key) => {
         const item = sidebarItems.find((tab) => tab.title.toLowerCase() === key.trim().toLowerCase());
-        if (!item) {
-          console.warn(`Permission "${key}" not found in sidebarItems`);
-        }
         return item;
       })
-      .filter(Boolean);
+      .filter((item) => item && !["Profile", "Logout"].includes(item.title));
 
     if (sidebarTabs.length === 0) {
       sidebarTabs = [sidebarItems.find(item => item.title === "Home")];
@@ -39,6 +35,8 @@ const Sidebar = () => {
       }
     }
   }
+
+  const bottomTabs = sidebarItems.filter(item => ["Profile", "Logout"].includes(item.title));
 
   useEffect(() => {
     if (activeMain === null) {
@@ -57,11 +55,9 @@ const Sidebar = () => {
 
   return (
     <div
-      className={`${isOpen ? "w-64" : "w-16"
-        } min-w-[64px] bg-theme text-theme h-screen flex flex-col duration-300 overflow-y-auto`}
+      className={`${isOpen ? "w-64" : "w-16"} min-w-[64px] bg-theme text-theme h-screen flex flex-col duration-300 overflow-y-auto`}
       style={{ transition: "0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)" }}
     >
-      {/* Logo */}
       <div className="p-4 flex justify-center">
         <img
           src={isOpen ? IMAGES.dashboardLargeLogo : IMAGES.dashboardSmallLogo}
@@ -70,7 +66,6 @@ const Sidebar = () => {
         />
       </div>
 
-      {/* User Info */}
       {isOpen && (
         <div className="ps-7 pt-2 mt-[-8px] border-b pb-2 w-full bg-gray-300">
           <p className="text-sm text-[#1f2937] uppercase tracking-widest font-semibold">
@@ -82,7 +77,6 @@ const Sidebar = () => {
         </div>
       )}
 
-      {/* Sidebar Links */}
       <ul className="flex flex-col mt-4">
         {sidebarTabs.map((item, index) => {
           const isMainActive =
@@ -96,8 +90,7 @@ const Sidebar = () => {
                 <>
                   <li
                     onClick={() => handleToggle(index)}
-                    className={`p-4 hover-theme flex items-center justify-between cursor-pointer ${isMainActive ? "active-theme" : ""
-                      } ${isOpen ? "pl-4 pr-3" : "justify-center"}`}
+                    className={`p-4 hover-theme flex items-center justify-between cursor-pointer ${isMainActive ? "active-theme" : ""} ${isOpen ? "pl-4 pr-3" : "justify-center"}`}
                   >
                     <div className="flex items-center gap-3">
                       <item.icon className="w-4 h-4" />
@@ -107,8 +100,7 @@ const Sidebar = () => {
                     </div>
                     {isOpen && (
                       <svg
-                        className={`w-4 h-4 transition-transform ${activeMain === index ? "rotate-180" : ""
-                          }`}
+                        className={`w-4 h-4 transition-transform ${activeMain === index ? "rotate-180" : ""}`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -123,19 +115,15 @@ const Sidebar = () => {
                       </svg>
                     )}
                   </li>
-
-                  {/* SubTabs */}
                   {isOpen && activeMain === index && (
                     <ul className="ml-8">
                       {item.subTabs.map((sub, subIndex) => (
                         <li key={subIndex}>
                           <Link
                             to={sub.route}
-                            className={`flex items-center p-2 hover-theme ${location.pathname === sub.route
-                              ? "active-theme"
-                              : ""
-                              }`}
+                            className={`flex items-center p-2 gap-3 hover-theme ${location.pathname === sub.route ? "active-theme" : ""}`}
                           >
+                            <sub.icon className="w-4 h-4" />
                             <span className="text-[15px]">{sub.title}</span>
                           </Link>
                         </li>
@@ -144,13 +132,11 @@ const Sidebar = () => {
                   )}
                 </>
               ) : (
-                // Simple tab without dropdown
                 <Link
                   to={item.route}
-                  className={`p-4 hover-theme flex items-center cursor-pointer ${isOpen ? "justify-start pl-4" : "justify-center"
-                    } ${location.pathname === item.route ? "active-theme" : ""}`}
+                  className={`p-4 hover-theme flex items-center cursor-pointer ${isOpen ? "justify-start pl-4" : "justify-center"} ${location.pathname === item.route ? "active-theme" : ""}`}
                 >
-                  {/* <item.icon className="w-4 h-4" /> */}
+                  <item.icon className="w-4 h-4" />
                   {isOpen && (
                     <span className="ml-3 text-[15px]">{item.title}</span>
                   )}
@@ -159,12 +145,26 @@ const Sidebar = () => {
             </div>
           );
         })}
+
+        {bottomTabs.map((item, index) => (
+          <Link
+            key={index}
+            to={item.route}
+            className={`p-4 hover-theme flex items-center cursor-pointer ${isOpen ? "justify-start pl-4" : "justify-center"} ${location.pathname === item.route ? "active-theme" : ""}`}
+          >
+            <item.icon className="w-4 h-4" />
+            {isOpen && (
+              <span className="ml-3 text-[15px]">{item.title}</span>
+            )}
+          </Link>
+        ))}
       </ul>
     </div>
   );
 };
 
 export default Sidebar;
+
 
 
 

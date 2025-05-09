@@ -396,9 +396,9 @@ const AdminList = () => {
             </label>
             <div className="grid grid-cols-2 gap-2">
               {[
-                "Users", "Home", "Booking", "Invoices", "Drivers", "Customers",
-                "Company/Accounts", "Statements", "Pricing",
-                "Settings", "Widget/API", "Profile", "Logout"
+                "Users", "Booking", "Invoices", "Drivers", "Customers",
+                "Company Accounts", "Statements", "Pricing",
+                "Settings", "Widget/API"
               ].map((perm) => (
                 <label key={perm} className="flex gap-2 items-center">
                   <input

@@ -22,7 +22,6 @@ export const createUserBySuperAdmin = async (req, res) => {
         const creator = req.user;
 
         // ✅ Authorization: clientadmin can only create limited roles
-        // ✅ Authorization: clientadmin or associateadmin can only create limited roles
         if (["clientadmin", "associateadmin"].includes(creator.role)) {
             const allowedRoles = ["staffmember", "driver", "customer"];
             if (creator.role === "clientadmin") allowedRoles.push("associateadmin");
@@ -100,11 +99,12 @@ export const createUserBySuperAdmin = async (req, res) => {
 
         const allowedPermissions = [
             "Users", "Home", "Booking", "Invoices", "Drivers", "Customers",
-            "Company/Accounts", "Statements", "Pricing",
+            "Company Accounts", "Statements", "Pricing",
             "Settings", "Widget/API", "Profile", "Logout"
         ];
 
-        let userPermissions = ["Home", "Profile", "Users", "Logout"]
+        const defaultPermissions = ["Home", "Profile", "Logout"];
+        let userPermissions = [...defaultPermissions];
 
         if (permissions && Array.isArray(permissions)) {
             const invalidPermissions = permissions.filter(p => !allowedPermissions.includes(p));
@@ -113,7 +113,9 @@ export const createUserBySuperAdmin = async (req, res) => {
                     message: `Invalid permissions provided: ${invalidPermissions.join(', ')}`
                 });
             }
-            userPermissions = permissions;
+
+            const filteredPermissions = permissions.filter(p => !defaultPermissions.includes(p));
+            userPermissions = [...defaultPermissions, ...filteredPermissions];
         } else if (permissions !== undefined) {
             return res.status(400).json({
                 message: "Permissions must be an array of strings"
@@ -153,6 +155,7 @@ export const createUserBySuperAdmin = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+
 
 // ✅ GET All Users
 export const getClientAdmins = async (req, res) => {
