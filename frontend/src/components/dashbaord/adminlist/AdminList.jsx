@@ -396,7 +396,7 @@ const AdminList = () => {
             </label>
             <div className="grid grid-cols-2 gap-2">
               {[
-                "Users", "Booking", "Invoices", "Drivers", "Customers",
+                "Users", "Bookings", "Invoices", "Drivers", "Customers",
                 "Company Accounts", "Statements", "Pricing",
                 "Settings", "Widget/API"
               ].map((perm) => (
