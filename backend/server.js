@@ -8,6 +8,7 @@ import createSuperAdmin from './utils/createSuperAdmin.js';
 import connectDB from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
 import companyRoutes from './routes/companyRoutes.js';
+import pricingRoutes from "./routes/pricingRoutes.js";
 
 dotenv.config(); // .env file
 connectDB(); // Connect to the database
@@ -25,6 +26,8 @@ app.use(cors({
 app.use('/api/auth', authRoutes);                                  // Register authentication routes
 app.use('/api/superadmin', superAdminRoutes);                      // Register super admin routes
 app.use('/api/companies', companyRoutes);
+app.use('/api/pricing', pricingRoutes);
+
 
 app.use('/api', userRoutes);
 

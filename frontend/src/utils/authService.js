@@ -92,3 +92,29 @@ export const sendCompanyEmail = async (payload, token) =>
   API.post("/companies/send-company-email", payload, {
     headers: { Authorization: `Bearer ${token}` },
   });
+
+// ______________GENERAL PRICING API'S______________________________
+// Fetch general pricing data
+export const getGeneralPricing = async (token) =>
+  API.get("/pricing/general", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+// Create or update general pricing
+export const updateGeneralPricing = async (formData, token) =>
+  API.post(
+    "/pricing/general",
+    {
+      ...formData,
+      type: "general", // ensure the required type is included
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
