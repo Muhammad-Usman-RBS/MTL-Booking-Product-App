@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { toast } from "react-toastify";
-import { getGeneralPricing, updateGeneralPricing } from "../../../utils/authService"; 
+import { getGeneralPricing, updateGeneralPricing } from "../../../utils/authService";
 
 const General = () => {
   const [formData, setFormData] = useState({

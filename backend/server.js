@@ -17,7 +17,7 @@ const app = express();
 app.use(express.json());
 
 // CORS POLICY
-app.use(cors({             
+app.use(cors({
   origin: process.env.BASE_URL_FRONTEND,
   credentials: true,
 }));
