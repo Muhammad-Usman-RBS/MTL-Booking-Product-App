@@ -9,18 +9,16 @@ import IMAGES from "../../../assets/images";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { bookingPaymentOptions, yesNoOptions, invoicePaymentOptions } from "../../../constants/dashboardTabsData/data";
-import {
-  getCompanyById,
-  createCompany,
-  updateCompany,
-  getClientAdmins
-} from "../../../utils/authService";
+import { useGetCompanyByIdQuery, useCreateCompanyMutation, useUpdateCompanyMutation } from "../../../redux/api/companyApi";
+import { useFetchClientAdminsQuery } from "../../../redux/api/adminApi";
+import { BASE_API_URL } from "../../../config";
 
 const AddCompanyAccount = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
-  const [clientAdmins, setClientAdmins] = useState([]);
+  const [profileImage, setProfileImage] = useState(null);
+  const [file, setFile] = useState(null);
 
   const [formData, setFormData] = useState({
     companyName: "",
@@ -45,62 +43,39 @@ const AddCompanyAccount = () => {
     status: "",
   });
 
-  const [profileImage, setProfileImage] = useState(null);
-  const [file, setFile] = useState(null);
+  const {
+    data: rawClientAdmins = [],
+    isLoading
+  } = useFetchClientAdminsQuery();
+
+  const clientAdmins = rawClientAdmins.map((admin) => ({
+    label: admin.fullName,
+    value: admin._id,
+    email: admin.email,
+    status: admin.status,
+  }));
+
+  const { data: companyData } = useGetCompanyByIdQuery(id, { skip: !isEdit });
+  const [createCompany] = useCreateCompanyMutation();
+  const [updateCompany] = useUpdateCompanyMutation();
 
   useEffect(() => {
-    if (isEdit) fetchCompany();
-  }, [id]);
-
-  const fetchCompany = async () => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      const token = user?.token;
-
-      const { data } = await getCompanyById(id, token);
-      // const { data } = await axios.get(`http://localhost:5000/api/companies/${id}`, {
-      //   headers: {
-      //     Authorization: `Bearer ${token}`,
-      //   },
-      // });
-
-      // setFormData(data);
+    if (companyData) {
       setFormData(prev => ({
         ...prev,
-        clientAdminId: data.clientAdminId || ""
+        ...companyData,
+        clientAdminId: companyData.clientAdminId || "",
       }));
-      const baseURL = process.env.VITE_API_BASE_URL;
-      setProfileImage(`${baseURL}/${data.profileImage}`);
 
-    } catch (err) {
-      toast.error("Failed to load company data");
+      const imagePath = companyData.profileImage?.startsWith("/")
+        ? companyData.profileImage
+        : `/${companyData.profileImage}`;
+
+      const finalImageUrl = `${BASE_API_URL}${imagePath}`;
+      setProfileImage(finalImageUrl);
     }
-  };
+  }, [companyData]);
 
-  const fetchClientAdmins = async () => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      const token = user?.token;
-      const res = await getClientAdmins(token);
-      // const res = await axios.get("http://localhost:5000/api/create-clientadmin", {
-      //   headers: { Authorization: `Bearer ${token}` },
-      // });
-      setClientAdmins(res.data.map(user => ({
-        label: user.fullName,
-        value: user._id,
-        email: user.email,
-        status: user.status,
-      })));
-    } catch (err) {
-      console.error("Error fetching client admins", err);
-      toast.error("Failed to load client admins");
-    }
-  };
-
-  useEffect(() => {
-    if (isEdit) fetchCompany();
-    fetchClientAdmins();
-  }, [id]);
 
   const handleProfileImageChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -116,14 +91,6 @@ const AddCompanyAccount = () => {
 
   const handleSubmit = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      const token = user?.token;
-
-      if (!token) {
-        alert("Token missing! Please log in again.");
-        return;
-      }
-
       const data = new FormData();
 
       Object.keys(formData).forEach((key) => {
@@ -134,34 +101,25 @@ const AddCompanyAccount = () => {
       });
 
       data.append("clientAdminId", formData.clientAdminId || "");
-      data.append("clientAdminName", formData.fullName || ""); // ✅ Add this line
-      data.append("clientAdminName", formData.status || ""); // ✅ Add this line
+      data.append("clientAdminName", formData.fullName || "");
+      data.append("clientAdminName", formData.status || "");
 
       if (file) {
         data.append("profileImage", file);
       }
 
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      };
-
       if (isEdit) {
-        await updateCompany(id, data, token);
-        // await axios.put(`http://localhost:5000/api/companies/${id}`, data, config);
+        await updateCompany({ id, formData: data }).unwrap();
         toast.success("Company Account updated successfully! ✨");
       } else {
-        await createCompany(data, token);
-        // await axios.post("http://localhost:5000/api/companies", data, config);
+        await createCompany(data).unwrap();
         toast.success("Company Account created successfully! 🚀");
       }
 
       navigate("/dashboard/company-accounts/list");
     } catch (err) {
-      console.error(err.response?.data || err);
-      toast.error(err.response?.data?.message || "❌ Something went wrong!");
+      console.error(err);
+      toast.error(err?.data?.message || "❌ Something went wrong!");
     }
   };
 
@@ -205,7 +163,7 @@ const AddCompanyAccount = () => {
 
               handleChange("clientAdminId", selectedId);
               handleChange("fullName", selectedAdmin?.label || "");
-              handleChange("email", selectedAdmin?.email || ""); // disable this field in form
+              handleChange("email", selectedAdmin?.email || "");
               handleChange("status", selectedAdmin?.status);
             }}
           />

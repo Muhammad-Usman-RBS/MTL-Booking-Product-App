@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import { updateUserProfile } from "../../../utils/authService";
 import IMAGES from "../../../assets/images";
+import { useUpdateUserProfileMutation } from "../../../redux/api/userApi";
 
 const EditProfile = () => {
   const [form, setForm] = useState({
@@ -16,6 +16,8 @@ const EditProfile = () => {
   const [profileImg, setProfileImg] = useState(null);
   const [preview, setPreview] = useState(null);
 
+  const [updateProfile] = useUpdateUserProfileMutation(); // ✅ RTK Mutation hook
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     if (user) {
@@ -26,9 +28,8 @@ const EditProfile = () => {
         currentPassword: "",
       });
 
-      // ✅ Set full image URL if saved
       if (user.profileImage) {
-        setPreview(user.profileImage);  // full URL from backend
+        setPreview(user.profileImage);
       }
     }
   }, []);
@@ -51,9 +52,8 @@ const EditProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const token = JSON.parse(localStorage.getItem("user"))?.token;
 
+    try {
       const formData = new FormData();
       formData.append("email", form.email);
       formData.append("fullName", form.name);
@@ -61,24 +61,14 @@ const EditProfile = () => {
       formData.append("currentPassword", form.currentPassword);
       if (profileImg) formData.append("profileImage", profileImg);
 
-      const response = await updateUserProfile(formData, token);
-      // const response = await axios.put("http://localhost:5000/api/auth/profile", formData, {
-      //   headers: {
-      //     Authorization: `Bearer ${token}`,
-      //     "Content-Type": "multipart/form-data"
-      //   },
-      // });
+      const updatedUser = await updateProfile(formData).unwrap(); // ✅ RTK with .unwrap()
 
-      if (response.status === 200) {
-        const updatedUser = response.data;
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        setPreview(updatedUser.profileImage);
-        toast.success("Profile updated successfully!"); // ✅ Toast success
-      }
-
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setPreview(updatedUser.profileImage);
+      toast.success("Profile updated successfully!");
     } catch (error) {
       console.error("Profile update error:", error);
-      toast.error(error.response?.data?.message || "Something went wrong."); // ✅ Toast error
+      toast.error(error?.data?.message || "Something went wrong.");
     }
   };
 
@@ -99,19 +89,11 @@ const EditProfile = () => {
       <OutletHeading name="Profile Update" />
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-        {preview ? (
-          <img
-            src={preview}
-            alt="Profile-Preview"
-            className="w-22 h-22 rounded-full object-cover border border-gray-300S"
-          />
-        ) : (
-          <img
-            src={IMAGES.dummyImg}
-            alt="Profile-Preview"
-            className="w-22 h-22 rounded-full object-cover border border-gray-300S"
-          />
-        )}
+        <img
+          src={preview || IMAGES.dummyImg}
+          alt="Profile-Preview"
+          className="w-22 h-22 rounded-full object-cover border border-gray-300S"
+        />
 
         <div>
           <label className="block font-medium text-sm mb-1">
@@ -203,7 +185,3 @@ const EditProfile = () => {
 };
 
 export default EditProfile;
-
-
-
-

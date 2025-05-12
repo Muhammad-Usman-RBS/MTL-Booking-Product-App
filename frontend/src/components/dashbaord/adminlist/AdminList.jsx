@@ -8,17 +8,24 @@ import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import {
-  fetchClientAdmins,
-  updateClientAdminStatus,
-  createClientAdmin,
-  updateClientAdmin,
-  deleteClientAdmin,
-} from "../../../utils/authService";
+  useFetchClientAdminsQuery,
+  useCreateClientAdminMutation,
+  useUpdateClientAdminMutation,
+  useDeleteClientAdminMutation,
+  useUpdateClientAdminStatusMutation,
+} from "../../../redux/api/adminApi";
 
 const tabs = ["Active", "Pending", "Suspended", "Deleted"];
 
 const AdminList = () => {
-  const [adminsListData, setAdminsListData] = useState([]);
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const { data: adminsListData = [], refetch } = useFetchClientAdminsQuery();
+  const [createAdmin] = useCreateClientAdminMutation();
+  const [updateAdmin] = useUpdateClientAdminMutation();
+  const [deleteAdmin] = useDeleteClientAdminMutation();
+  const [changeStatus] = useUpdateClientAdminStatusMutation();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("Active");
   const [page, setPage] = useState(1);
@@ -28,37 +35,17 @@ const AdminList = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState(null);
 
-  const user = JSON.parse(localStorage.getItem("user"));
-
   useEffect(() => {
-    fetchAdmins();
+    refetch();
   }, []);
 
-  const fetchAdmins = async () => {
-    try {
-      const res = await fetchClientAdmins(user?.token);
-      // const token = user?.token;
-      // const res = await axios.get("http://localhost:5000/api/create-clientadmin", {
-      //   headers: { Authorization: `Bearer ${token}` },
-      // });
-      setAdminsListData(res.data);
-    } catch (error) {
-      toast.error("Failed to fetch admins");
-    }
-  };
-
   const handleStatusChange = async (adminId, newStatus) => {
-    // const token = user?.token;
     try {
-      await updateClientAdminStatus(adminId, newStatus, user?.token);
-      // await axios.put(`http://localhost:5000/api/create-clientadmin/${adminId}`, { status: newStatus }, {
-      //   headers: { Authorization: `Bearer ${token}` },
-      // });
+      await changeStatus({ adminId, newStatus }).unwrap();
       toast.success(`User status updated to ${newStatus}`);
-      fetchAdmins();
+      refetch();
     } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.message || "Failed to update status");
+      toast.error(error?.data?.message || "Failed to update status");
     }
   };
 
@@ -71,11 +58,7 @@ const AdminList = () => {
     setShowModal(true);
   };
 
-
   const handleSave = async () => {
-    const token = user?.token;
-
-    // ✅ Block demo users from creating anyone
     if (user?.role === "demo") {
       toast.error("Demo accounts are not allowed to create users.");
       return;
@@ -116,28 +99,17 @@ const AdminList = () => {
       }
 
       if (selectedAccount._id) {
-        await updateClientAdmin(selectedAccount._id, payload, user?.token);
-        // await axios.put(
-        //   `http://localhost:5000/api/create-clientadmin/${selectedAccount._id}`,
-        //   payload,
-        //   { headers: { Authorization: `Bearer ${token}` } }
-        // );
+        await updateAdmin({ adminId: selectedAccount._id, payload }).unwrap();
         toast.success("User updated successfully");
       } else {
-        await createClientAdmin(payload, user?.token);
-        // await axios.post(
-        //   "http://localhost:5000/api/create-clientadmin",
-        //   payload,
-        //   { headers: { Authorization: `Bearer ${token}` } }
-        // );
+        await createAdmin(payload).unwrap();
         toast.success("User created successfully");
       }
 
       setShowModal(false);
-      fetchAdmins();
-
+      refetch();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Operation failed");
+      toast.error(err?.data?.message || "Operation failed");
     }
   };
 
@@ -147,18 +119,14 @@ const AdminList = () => {
   };
 
   const confirmDelete = async () => {
-    const token = user?.token;
     try {
-      await deleteClientAdmin(deleteUserId, user?.token);
-      // await axios.delete(`http://localhost:5000/api/create-clientadmin/${deleteUserId}`, {
-      //   headers: { Authorization: `Bearer ${token}` },
-      // });
+      await deleteAdmin(deleteUserId).unwrap();
       toast.success("User deleted successfully");
-      fetchAdmins();
+      refetch();
       setDeleteModalOpen(false);
       setDeleteUserId(null);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete user");
+      toast.error(error?.data?.message || "Failed to delete user");
       setDeleteModalOpen(false);
     }
   };
@@ -217,14 +185,10 @@ const AdminList = () => {
 
             const getButtonStyle = (status) => {
               switch (status) {
-                case "Active":
-                  return "bg-green-100 text-green-700 border-green-300 hover:bg-green-200";
-                case "Suspended":
-                  return "bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200";
-                case "Deleted":
-                  return "bg-red-100 text-red-700 border-red-300 hover:bg-red-200";
-                default:
-                  return "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200";
+                case "Active": return "bg-green-100 text-green-700 border-green-300 hover:bg-green-200";
+                case "Suspended": return "bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200";
+                case "Deleted": return "bg-red-100 text-red-700 border-red-300 hover:bg-red-200";
+                default: return "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200";
               }
             };
 
@@ -254,22 +218,11 @@ const AdminList = () => {
   }));
 
   let roleOptions = [];
-
-  if (user?.role === "superadmin") {
-    roleOptions = ["clientadmin", "manager", "demo", "driver", "customer"];
-  }
-  else if (user?.role === "manager") {
-    roleOptions = ["manager", "demo", "driver", "customer"];
-  }
-  else if (user?.role === "clientadmin") {
-    roleOptions = ["associateadmin", "staffmember", "driver", "customer"];
-  }
-  else if (user?.role === "associateadmin") {
-    roleOptions = ["staffmember", "driver", "customer"];
-  }
-  else if (user?.role === "demo") {
-    roleOptions = ["staffmember", "driver", "customer"];
-  }
+  if (user?.role === "superadmin") roleOptions = ["clientadmin", "manager", "demo", "driver", "customer"];
+  else if (user?.role === "manager") roleOptions = ["manager", "demo", "driver", "customer"];
+  else if (user?.role === "clientadmin") roleOptions = ["associateadmin", "staffmember", "driver", "customer"];
+  else if (user?.role === "associateadmin") roleOptions = ["staffmember", "driver", "customer"];
+  else if (user?.role === "demo") roleOptions = ["staffmember", "driver", "customer"];
 
   return (
     <>
@@ -335,9 +288,7 @@ const AdminList = () => {
           <SelectOption
             label="Type"
             value={selectedAccount?.role || ""}
-            onChange={(e) =>
-              setSelectedAccount({ ...selectedAccount, role: e.target.value })
-            }
+            onChange={(e) => setSelectedAccount({ ...selectedAccount, role: e.target.value })}
             options={roleOptions}
           />
 
@@ -345,27 +296,21 @@ const AdminList = () => {
             placeholder="Full Name"
             className="custom_input"
             value={selectedAccount?.fullName || ""}
-            onChange={(e) =>
-              setSelectedAccount({ ...selectedAccount, fullName: e.target.value })
-            }
+            onChange={(e) => setSelectedAccount({ ...selectedAccount, fullName: e.target.value })}
           />
           <input
             placeholder="Email"
             type="email"
             className="custom_input"
             value={selectedAccount?.email || ""}
-            onChange={(e) =>
-              setSelectedAccount({ ...selectedAccount, email: e.target.value })
-            }
+            onChange={(e) => setSelectedAccount({ ...selectedAccount, email: e.target.value })}
           />
           <input
             placeholder="Password"
             type="password"
             className="custom_input"
             value={selectedAccount?.password || ""}
-            onChange={(e) =>
-              setSelectedAccount({ ...selectedAccount, password: e.target.value })
-            }
+            onChange={(e) => setSelectedAccount({ ...selectedAccount, password: e.target.value })}
           />
 
           {["clientadmin", "manager"].includes(selectedAccount?.role) && (
@@ -385,9 +330,7 @@ const AdminList = () => {
           <SelectOption
             label="Status"
             value={selectedAccount?.status || ""}
-            onChange={(e) =>
-              setSelectedAccount({ ...selectedAccount, status: e.target.value })
-            }
+            onChange={(e) => setSelectedAccount({ ...selectedAccount, status: e.target.value })}
             options={tabs}
           />
           <div>

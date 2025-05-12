@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { toast } from "react-toastify";
-import { getGeneralPricing, updateGeneralPricing } from "../../../utils/authService";
+import { useGetGeneralPricingQuery, useUpdateGeneralPricingMutation } from "../../../redux/api/generalPricingApi";
 
 const General = () => {
   const [formData, setFormData] = useState({
@@ -14,23 +14,21 @@ const General = () => {
     cardPaymentAmount: "0",
   });
 
-  const token = JSON.parse(localStorage.getItem("user"))?.token;
+  const { data, isSuccess, isError } = useGetGeneralPricingQuery();
+  const [updateGeneralPricing, { isLoading }] = useUpdateGeneralPricingMutation();
 
-  const fetchPricing = async () => {
-    try {
-      const res = await getGeneralPricing(token);
-      if (res.data) {
-        setFormData(res.data);
-      }
-    } catch (error) {
+  useEffect(() => {
+    if (isSuccess && data) {
+      setFormData(data);
+    } else if (isError) {
       toast.error("Failed to fetch pricing.");
     }
-  };
+  }, [isSuccess, isError, data]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await updateGeneralPricing(formData, token);
+      await updateGeneralPricing(formData).unwrap();
       toast.success("Pricing updated successfully!");
     } catch (error) {
       toast.error("Failed to update pricing.");
@@ -41,10 +39,6 @@ const General = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
-
-  useEffect(() => {
-    fetchPricing();
-  }, []);
 
   return (
     <>
@@ -135,8 +129,8 @@ const General = () => {
         </div>
 
         <div className="text-center">
-          <button type="submit" className="btn btn-success">
-            UPDATE
+          <button type="submit" className="btn btn-success" disabled={isLoading}>
+            {isLoading ? "UPDATING..." : "UPDATE"}
           </button>
         </div>
       </form>

@@ -1,7 +1,9 @@
+// ✅ Updated CompanyAccountsList.jsx using RTK Query
+
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
-import { fetchAllCompanies, sendCompanyEmail } from "../../../utils/authService";
+import { useFetchAllCompaniesQuery, useSendCompanyEmailMutation } from "../../../redux/api/companyApi";
 import IMAGES from "../../../assets/images";
 import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
@@ -13,67 +15,27 @@ import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload"
 const tabs = ["active", "pending", "suspended", "deleted"];
 
 const CompanyAccountsList = () => {
-  const [companies, setCompanies] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { data: companies = [], refetch } = useFetchAllCompaniesQuery();
+  const [sendEmail] = useSendCompanyEmailMutation();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("active");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [driverToSendEmail, setDriverToSendEmail] = useState(null);
   const [emailToSend, setEmailToSend] = useState("");
-  const navigate = useNavigate();
 
-  const fetchCompanies = async () => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      const token = user?.token;
-      const res = await fetchAllCompanies(token);
-      // const res = await axios.get("http://localhost:5000/api/companies", {
-      //   headers: { Authorization: `Bearer ${token}` },
-      // });
-      const normalized = res.data.map((c) => ({
-        ...c,
-        status: (c.status || "unknown").toLowerCase(),
-      }));
-      setCompanies(normalized);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to fetch companies");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Automatically refetch when component mounts
   useEffect(() => {
-    fetchCompanies();
+    refetch();
   }, []);
 
   const handleConfirmSendEmail = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      const token = user?.token;
-
-      const {
-        email,
-        ...companyData
-      } = selectedAccount;
-
-      // await axios.post(
-      //   "http://localhost:5000/api/companies/send-company-email",
-      //   {
-      //     email,
-      //     company: companyData, // send everything except email separately
-      //   },
-      //   {
-      //     headers: {
-      //       Authorization: `Bearer ${token}`,
-      //     },
-      //   }
-      // );
-      await sendCompanyEmail({ email, company: companyData }, token);
-
+      const { email, ...companyData } = selectedAccount;
+      await sendEmail({ email, company: companyData }).unwrap();
       toast.success("Email sent successfully!");
       setShowModal(false);
     } catch (error) {

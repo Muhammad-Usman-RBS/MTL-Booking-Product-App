@@ -1,23 +1,24 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { sendForgotPasswordOtp } from "../../utils/authService";
 import { useNavigate } from "react-router-dom";
+import { useSendForgotPasswordOtpMutation } from "../../redux/api/userApi"; // ✅ RTK Query Hook
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
+
+  const [sendOtp] = useSendForgotPasswordOtpMutation(); // ✅ RTK mutation
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
     if (!email) return toast.error("Email is required");
 
     try {
-      await sendForgotPasswordOtp(email);
-      // await axios.post("http://localhost:5000/api/auth/forgot-password", { email });
+      await sendOtp(email).unwrap(); // ✅ Unwrap for clean error handling
       toast.success("OTP sent to your email!");
-      navigate("/new-password", { state: { email } }); // Send email to ResetPassword page
+      navigate("/new-password", { state: { email } }); // ✅ Pass email forward
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to send OTP");
+      toast.error(error?.data?.message || "Failed to send OTP");
     }
   };
 

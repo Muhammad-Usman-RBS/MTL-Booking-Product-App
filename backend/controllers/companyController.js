@@ -72,12 +72,12 @@ export const deleteCompanyAccount = async (req, res) => {
 
 export const getAllCompanies = async (req, res) => {
     try {
-        // Join with user data
-        const companies = await Company.find()
-            .populate("clientAdminId", "status") // Bring status from User
+        const clientAdminId = req.user._id;
+
+        const companies = await Company.find({ clientAdminId })
+            .populate("clientAdminId", "status")
             .sort({ createdAt: -1 });
 
-        // Override the company status with the linked user’s status (if available)
         const updated = companies.map((c) => ({
             ...c._doc,
             status: c.clientAdminId?.status || c.status,
@@ -88,6 +88,7 @@ export const getAllCompanies = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
 
 export const getCompanyById = async (req, res) => {
     try {

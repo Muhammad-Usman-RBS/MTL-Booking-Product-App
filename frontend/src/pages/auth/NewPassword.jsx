@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { resetPassword } from "../../utils/authService";
+import { useResetPasswordMutation } from "../../redux/api/userApi"; // ✅ RTK hook
 
 const ResetPassword = () => {
   const location = useLocation();
@@ -11,17 +11,18 @@ const ResetPassword = () => {
 
   const email = location.state?.email || "";
 
+  const [resetPassword] = useResetPasswordMutation(); // ✅ RTK Mutation
+
   const handleResetPassword = async (e) => {
     e.preventDefault();
     if (!otp || !newPassword) return toast.error("Please fill all fields");
 
     try {
-      // await axios.post("http://localhost:5000/api/auth/new-password", { email, otp, newPassword });
-      await resetPassword(email, otp, newPassword);
+      await resetPassword({ email, otp, newPassword }).unwrap(); // ✅ Clean RTK way
       toast.success("Password reset successful! You can now log in.");
       navigate("/");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to reset password");
+      toast.error(error?.data?.message || "Failed to reset password");
     }
   };
 
