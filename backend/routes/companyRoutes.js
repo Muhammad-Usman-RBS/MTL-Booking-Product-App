@@ -29,7 +29,7 @@ router.post(
 router.get(
   '/',
   protect,
-  authorize('superadmin'),
+  authorize('superadmin', 'clientadmin'),
   getAllCompanies
 );
 
