@@ -10,42 +10,46 @@ const Sidebar = () => {
   const [activeMain, setActiveMain] = useState(null);
 
   const user = JSON.parse(localStorage.getItem("user"));
-  const role = user?.role || "";
+  const role = user?.role?.toLowerCase() || "";
   const permissions = user?.permissions || [];
 
+  // ⬇️ Sidebar items that should never appear in main section
+  const bottomTabs = sidebarItems.filter(item =>
+    ["Profile", "Logout"].includes(item.title)
+  );
+
+  // ⬇️ Main tabs logic
   let sidebarTabs = [];
 
-  if (role.toLowerCase() === "superadmin" && permissions.length === 0) {
-    sidebarTabs = [...sidebarItems.filter(item => !["Profile", "Logout"].includes(item.title))];
+  if (role === "superadmin") {
+    // ✅ Superadmin sees all tabs (except bottomTabs)
+    sidebarTabs = sidebarItems.filter(item =>
+      !["Profile", "Logout"].includes(item.title)
+    );
   } else {
+    // ✅ Other roles see only what's allowed via permissions
     sidebarTabs = permissions
-      .map((key) => {
-        const item = sidebarItems.find((tab) => tab.title.toLowerCase() === key.trim().toLowerCase());
-        return item;
-      })
-      .filter((item) => item && !["Profile", "Logout"].includes(item.title));
+      .map((perm) =>
+        sidebarItems.find(item =>
+          item.title.toLowerCase() === perm.trim().toLowerCase()
+        )
+      )
+      .filter(item => item && !["Profile", "Logout"].includes(item.title));
 
-    if (sidebarTabs.length === 0) {
-      sidebarTabs = [sidebarItems.find(item => item.title === "Home")];
-    } else {
-      const hasHome = sidebarTabs.find(item => item.title === "Home");
-      if (!hasHome) {
-        const homeTab = sidebarItems.find(item => item.title === "Home");
-        if (homeTab) sidebarTabs.unshift(homeTab);
-      }
+    // ✅ Always show Home tab if nothing else is visible
+    const hasHome = sidebarTabs.find(item => item.title === "Home");
+    if (!hasHome) {
+      const homeTab = sidebarItems.find(item => item.title === "Home");
+      if (homeTab) sidebarTabs.unshift(homeTab);
     }
   }
-
-  const bottomTabs = sidebarItems.filter(item => ["Profile", "Logout"].includes(item.title));
 
   useEffect(() => {
     if (activeMain === null) {
       const activeIndex = sidebarTabs.findIndex((item) =>
         item.subTabs?.some((sub) => location.pathname === sub.route)
       );
-      if (activeIndex !== -1) {
-        setActiveMain(activeIndex);
-      }
+      if (activeIndex !== -1) setActiveMain(activeIndex);
     }
   }, [location.pathname, sidebarTabs, activeMain]);
 

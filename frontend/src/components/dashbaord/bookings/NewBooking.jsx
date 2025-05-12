@@ -5,130 +5,100 @@ import VehicleSelection from "./VehicleSelection";
 import PassengerDetails from "./PassengerDetails";
 import FareSection from "./FareSection";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
-import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-
-const MAX_DROPOFFS = 3;
+import JourneyCard from "./JourneyCard";
+import { useCreateBookingMutation } from "../../../redux/api/bookingApi";
 
 const hourlyOptions = [
-  "🚗 40 miles • ⏱ 4 Hours",
-  "🚗 60 miles • ⏱ 6 Hours",
-  "🚗 80 miles • ⏱ 8 Hours",
+  "40 miles 4 hours", "60 miles 6 hours", "80 miles 8 hours"
 ];
-
-const JourneyCard = ({ title }) => {
-  const [dropOffs, setDropOffs] = useState([""]);
-
-  const addDropOff = () => {
-    if (dropOffs.length >= MAX_DROPOFFS) {
-      toast.warning("Maximum 3 drop-offs allowed.");
-      return;
-    }
-    setDropOffs([...dropOffs, ""]);
-  };
-
-  const removeDropOff = (index) => {
-    const updated = [...dropOffs];
-    updated.splice(index, 1);
-    setDropOffs(updated);
-  };
-
-  const updateDropOff = (index, value) => {
-    const updated = [...dropOffs];
-    updated[index] = value;
-    setDropOffs(updated);
-  };
-
-  return (
-    <div className="bg-white shadow-lg rounded-xl w-full max-w-4xl mx-auto p-6 border border-gray-300 mt-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
-        <h3 className="text-xl font-semibold mb-4">{title}:-</h3>
-        <hr />
-        <div className="btn-edit btn">Fare: $0</div>
-      </div>
-
-      {/* Pick Up Date & Time */}
-      <div className="mb-6">
-        <label className="block text-sm font-semibold mb-2 text-gray-700">
-          Pick Up Date & Time
-        </label>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <input type="date" className="custom_input" />
-          <div className="flex gap-4 w-full sm:w-1/2">
-            {/* Hours Dropdown */}
-            <div className="relative w-full">
-              <select className="custom_input" defaultValue="HH">
-                <option disabled>HH</option>
-                {[...Array(24).keys()].map((h) => (
-                  <option key={h} className=" h-24">
-                    {h.toString().padStart(2, "0")}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Minutes Dropdown */}
-            <div className="relative w-full">
-              <select className="custom_input" defaultValue="MM">
-                <option disabled>MM</option>
-                {[...Array(60).keys()].map((m) => (
-                  <option key={m}>{m.toString().padStart(2, "0")}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Pick Up & Drop Offs */}
-      <div className="space-y-4">
-        <input type="text" placeholder="Pick Up" className="custom_input" />
-
-        {dropOffs.map((val, idx) => (
-          <div key={idx} className="flex gap-2">
-            <input
-              type="text"
-              value={val}
-              placeholder={`Drop Off${idx === 0 ? "" : ` ${idx + 1}`}`}
-              onChange={(e) => updateDropOff(idx, e.target.value)}
-              className="custom_input"
-            />
-            {idx > 0 && (
-              <button
-                onClick={() => removeDropOff(idx)}
-                className="btn btn-cancel text-white px-3 rounded "
-                title="Remove"
-              >
-                &minus;
-              </button>
-            )}
-          </div>
-        ))}
-
-        <button type="button" onClick={addDropOff} className="btn btn-edit">
-          + Additional Drop Off
-        </button>
-
-        <textarea
-          placeholder="Notes"
-          rows="3"
-          className="custom_input transition-all duration-300"
-        />
-
-        <textarea
-          placeholder="Internal Notes"
-          rows="3"
-          className="custom_input transition-all duration-300"
-        ></textarea>
-      </div>
-    </div>
-  );
-};
 
 const NewBooking = () => {
   const [mode, setMode] = useState("Transfer");
   const [returnJourney, setReturnJourney] = useState(false);
   const [selectedHourly, setSelectedHourly] = useState(hourlyOptions[0]);
+
+  const [journey1Data, setJourney1Data] = useState({
+    pickmeAfter: "",
+    flightNumber: "",
+    arrivefrom: "",
+    doorNumber: "",
+    pickup: "",
+    date: "",
+    hour: "",
+    minute: "",
+    notes: "",
+    internalNotes: ""
+  });
+  const [dropOffs1, setDropOffs1] = useState([""]);
+
+  const [journey2Data, setJourney2Data] = useState({
+    pickmeAfter: "",
+    flightNumber: "",
+    arrivefrom: "",
+    doorNumber: "",
+    pickup: "",
+    date: "",
+    hour: "",
+    minute: "",
+    notes: "",
+    internalNotes: ""
+  });
+  const [dropOffs2, setDropOffs2] = useState([""]);
+
+  const [createBooking, { isLoading }] = useCreateBookingMutation();
+
+  const handleSubmit = async () => {
+    try {
+      const payload = {
+        mode,
+        returnJourney,
+        journey1: {
+          pickmeAfter: journey1Data.pickmeAfter,
+          flightNumber: journey1Data.flightNumber,
+          arrivefrom: journey1Data.arrivefrom,
+          doorNumber: journey1Data.doorNumber,
+          pickup: journey1Data.pickup,
+          dropoff: dropOffs1[0],
+          additionalDropoff1: dropOffs1[1] || null,
+          additionalDropoff2: dropOffs1[2] || null,
+          notes: journey1Data.notes,
+          internalNotes: journey1Data.internalNotes,
+          date: journey1Data.date,
+          hour: journey1Data.hour,
+          minute: journey1Data.minute,
+          fare: 0,
+          hourlyOption: mode === "Hourly" ? selectedHourly : null,
+        },
+      };
+
+      if (returnJourney) {
+        payload.journey2 = {
+          pickmeAfter: journey2Data.pickmeAfter,
+          flightNumber: journey2Data.flightNumber,
+          arrivefrom: journey2Data.arrivefrom,
+          doorNumber: journey2Data.doorNumber,
+          pickup: journey2Data.pickup,
+          dropoff: dropOffs2[0],
+          additionalDropoff1: dropOffs2[1] || null,
+          additionalDropoff2: dropOffs2[2] || null,
+          notes: journey2Data.notes,
+          internalNotes: journey2Data.internalNotes,
+          date: journey2Data.date,
+          hour: journey2Data.hour,
+          minute: journey2Data.minute,
+          fare: 0,
+          hourlyOption: mode === "Hourly" ? selectedHourly : null,
+        };
+      }
+
+      await createBooking(payload).unwrap();
+      toast.success("Booking created successfully!");
+    } catch (error) {
+      console.error("Create booking error:", error);
+      toast.error(error?.data?.message || "Booking failed");
+    }
+  };
 
   return (
     <>
@@ -142,11 +112,10 @@ const NewBooking = () => {
             <button
               key={tab}
               onClick={() => setMode(tab)}
-              className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${
-                mode === tab
-                  ? "bg-[#f3f4f6] text-dark border border-black"
-                  : "bg-[#f3f4f6] text-dark"
-              } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
+              className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${mode === tab
+                ? "bg-[#f3f4f6] text-dark border border-black"
+                : "bg-[#f3f4f6] text-dark"
+                } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
             >
               {tab}
             </button>
@@ -166,9 +135,15 @@ const NewBooking = () => {
         )}
 
         {/* Journey 1 */}
-        <JourneyCard title="Journey 1" />
+        <JourneyCard
+          title="Journey 1"
+          journeyData={journey1Data}
+          setJourneyData={setJourney1Data}
+          dropOffs={dropOffs1}
+          setDropOffs={setDropOffs1}
+        />
 
-        {/* Toggle Switch */}
+        {/* Return Journey Toggle */}
         <div className="flex items-center mt-6 w-full max-w-4xl mx-auto ">
           <label className="flex items-center cursor-pointer relative">
             <input
@@ -185,8 +160,27 @@ const NewBooking = () => {
           </label>
         </div>
 
-        {/* Journey 2 (Return) */}
-        {returnJourney && <JourneyCard title="Journey 2" />}
+        {/* Journey 2 */}
+        {returnJourney && (
+          <JourneyCard
+            title="Journey 2"
+            journeyData={journey2Data}
+            setJourneyData={setJourney2Data}
+            dropOffs={dropOffs2}
+            setDropOffs={setDropOffs2}
+          />
+        )}
+
+        {/* Submit Button */}
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={handleSubmit}
+            className="btn btn-primary"
+            disabled={isLoading}
+          >
+            {isLoading ? "Submitting..." : "Submit Booking"}
+          </button>
+        </div>
 
         <VehicleSelection />
         <PassengerDetails />
