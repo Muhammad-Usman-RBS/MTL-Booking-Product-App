@@ -22,7 +22,7 @@ const CompanyAccountsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("active");
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [perPage, setPerPage] = useState(9999);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [emailToSend, setEmailToSend] = useState("");

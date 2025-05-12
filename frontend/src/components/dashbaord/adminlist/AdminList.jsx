@@ -29,7 +29,7 @@ const AdminList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("Active");
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [perPage, setPerPage] = useState(9999);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);

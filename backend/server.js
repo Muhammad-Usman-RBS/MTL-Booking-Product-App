@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
-import superAdminRoutes from './routes/superAdminRoutes.js';
+// import superAdminRoutes from './routes/superAdminRoutes.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 import createSuperAdmin from './utils/createSuperAdmin.js';
 import connectDB from './config/db.js';
@@ -25,7 +25,7 @@ app.use(cors({
 }));
 
 app.use('/api/auth', authRoutes);
-app.use('/api/superadmin', superAdminRoutes);
+// app.use('/api/superadmin', superAdminRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/pricing', pricingRoutes);
 app.use('/api/booking', bookingRoutes);
