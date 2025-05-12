@@ -37,7 +37,7 @@ export const createUserBySuperAdmin = async (req, res) => {
         let parsedLimit;
         if (["clientadmin", "manager"].includes(role)) {
             parsedLimit = parseInt(associateAdminLimit);
-            if (![5, 7, 10].includes(parsedLimit)) {
+            if (![5, 10, 15].includes(parsedLimit)) {
                 return res.status(400).json({
                     message: "associateAdminLimit must be one of 5, 7, or 10",
                 });
@@ -240,7 +240,7 @@ export const updateUserBySuperAdmin = async (req, res) => {
         if (typeof associateAdminLimit !== "undefined") {
             const parsedLimit = parseInt(associateAdminLimit);
             if (["clientadmin", "manager"].includes(role)) {
-                if (![5, 7, 10].includes(parsedLimit)) {
+                if (![5, 10, 15].includes(parsedLimit)) {
                     return res.status(400).json({
                         message: "associateAdminLimit must be one of 5, 7, or 10",
                     });

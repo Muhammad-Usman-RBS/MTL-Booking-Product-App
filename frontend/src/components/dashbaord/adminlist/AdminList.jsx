@@ -208,11 +208,13 @@ const AdminList = () => {
           onClick={() => handleEditModal(item)}
           className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
         />
-        <Icons.Trash
-          title="Delete"
-          onClick={() => handleDeleteClick(item._id)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
-        />
+        {selectedTab === "Deleted" && (
+          <Icons.Trash
+            title="Delete"
+            onClick={() => handleDeleteClick(item._id)}
+            className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+          />
+        )}
       </div>
     )
   }));
@@ -323,7 +325,7 @@ const AdminList = () => {
                   associateAdminLimit: parseInt(e.target.value),
                 })
               }
-              options={[5, 7, 10].map((num) => ({ label: `${num}`, value: num }))}
+              options={[5, 10, 15].map((num) => ({ label: `${num}`, value: num }))}
             />
           )}
 

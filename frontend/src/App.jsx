@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import AuthLayout from "./layouts/AuthLayout";
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
-import NewPassword from "./pages/auth/NewPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import DashboardLayout from "./layouts/DashboardLayout";
 import NotFound from "./pages/emptypages/NotFound";
 
@@ -73,7 +73,7 @@ function App() {
         <Route element={<AuthLayout />}>
           <Route path="/" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/new-password" element={<NewPassword />} />
+          <Route path="/new-password" element={<ResetPassword />} />
         </Route>
 
         {/* Role-Specific Dashboards */}

@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema({
 
   associateAdminLimit: {
     type: Number,
-    enum: [5, 7, 10],
+    enum: [5, 10, 15],
     default: 5,
   },
 
