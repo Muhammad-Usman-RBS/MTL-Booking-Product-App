@@ -61,6 +61,7 @@ import ProtectedRoute from './layouts/ProtectedRoute';
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import WidgetForm from "./components/dashbaord/widgetapi/WidgetForm";
 
 function App() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -80,6 +81,9 @@ function App() {
         <Route element={<ProtectedRoute role="superadmin" />}>
           <Route path="/dashboard/home" element={<DashboardLayout />} />
         </Route>
+
+        <Route path="/widget-form" element={<WidgetForm />} />
+
 
         {/* <Route element={<ProtectedRoute role="driver" />}>
           <Route path="/dashboard/driver" element={<DriverDashboard />} />
@@ -121,7 +125,7 @@ function App() {
             <Route path="company-accounts/list" element={<CompanyAccountsList />} />
             <Route path="company-accounts/new" element={<AddCompanyAccount />} />
             <Route path="/dashboard/company-accounts/edit/:id" element={<AddCompanyAccount />} />
-            
+
             {/* Pricing */}
             <Route path="pricing/general" element={<General />} />
             <Route path="pricing/vehicle" element={<VehiclePricing />} />
@@ -156,6 +160,7 @@ function App() {
 
             {/* Widget / API */}
             <Route path="widget-api" element={<WidgetAPI />} />
+            <Route path="widget-form" element={<WidgetForm />} />
 
             {/* Statements */}
             <Route path="statements/driver" element={<DriverStatements />} />

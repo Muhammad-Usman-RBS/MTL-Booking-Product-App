@@ -71,24 +71,33 @@ export const deleteCompanyAccount = async (req, res) => {
 };
 
 export const getAllCompanies = async (req, res) => {
-    try {
-        const clientAdminId = req.user._id;
+  try {
+    const currentUser = req.user;
 
-        const companies = await Company.find({ clientAdminId })
-            .populate("clientAdminId", "status")
-            .sort({ createdAt: -1 });
+    let companies;
 
-        const updated = companies.map((c) => ({
-            ...c._doc,
-            status: c.clientAdminId?.status || c.status,
-        }));
-
-        res.status(200).json(updated);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    if (currentUser.role === "superadmin") {
+      // ✅ Superadmin sees ALL companies they created via assigned clientAdmins
+      companies = await Company.find({})
+        .populate("clientAdminId", "status")
+        .sort({ createdAt: -1 });
+    } else {
+      // ✅ Clientadmin sees only their own assigned companies
+      companies = await Company.find({ clientAdminId: currentUser._id })
+        .populate("clientAdminId", "status")
+        .sort({ createdAt: -1 });
     }
-};
 
+    const updated = companies.map((c) => ({
+      ...c._doc,
+      status: c.clientAdminId?.status || c.status,
+    }));
+
+    res.status(200).json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 export const getCompanyById = async (req, res) => {
     try {

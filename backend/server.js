@@ -11,6 +11,7 @@ import companyRoutes from './routes/companyRoutes.js';
 import pricingRoutes from "./routes/pricingRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js"
 import googleRoutes from "./routes/googleRoutes.js"
+import customerBookingRoutes from "./routes/customerBookingRoutes.js";
 
 dotenv.config(); // .env file
 connectDB(); // Connect to the database
@@ -29,7 +30,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/pricing', pricingRoutes);
 app.use('/api/booking', bookingRoutes);
-app.use("/api/google", googleRoutes);
+app.use('/api/google', googleRoutes);
+app.use('/api/widget', customerBookingRoutes);
 
 app.use('/api', userRoutes);
 

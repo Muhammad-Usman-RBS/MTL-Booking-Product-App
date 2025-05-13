@@ -19,7 +19,7 @@ const CustomersList = () => {
   const [activeTab, setActiveTab] = useState("Active");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(9999);
+  const [perPage, setPerPage] = useState(10);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [editCustomer, setEditCustomer] = useState(null);
   const [newCustomer, setNewCustomer] = useState(null);

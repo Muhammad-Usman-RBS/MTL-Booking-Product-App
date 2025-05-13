@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import {
-    useLazySearchAirportsQuery,
-    useLazySearchLocationsQuery,
+    useLazySearchGooglePlacesQuery,
 } from "../../../redux/api/googleApi";
 
 const JourneyCard = ({
@@ -18,8 +17,7 @@ const JourneyCard = ({
     const [isAirportApi, setIsAirportApi] = useState(false);
     const [isLocationApi, setIsLocationApi] = useState(false);
 
-    const [triggerSearchAirports] = useLazySearchAirportsQuery();
-    const [triggerSearchLocations] = useLazySearchLocationsQuery();
+    const [triggerSearchAutocomplete] = useLazySearchGooglePlacesQuery();
 
     const fetchSuggestions = async (query, setter) => {
         if (!query) {
@@ -27,30 +25,15 @@ const JourneyCard = ({
             return;
         }
         try {
-            const [airportRes, locationRes] = await Promise.all([
-                triggerSearchAirports(query).unwrap(),
-                triggerSearchLocations(query).unwrap(),
-            ]);
-
-            const airports = airportRes.results.map((r) => ({
-                ...r,
-                source: "airport",
+            const response = await triggerSearchAutocomplete(query).unwrap();
+            const results = response.predictions.map((r) => ({
+                name: r.structured_formatting?.main_text,
+                formatted_address: r.description,
+                source: r.types?.includes("airport") ? "airport" : "location",
             }));
-            const locations = locationRes.results.map((r) => ({
-                ...r,
-                source: "location",
-            }));
-
-            const combined = [...airports, ...locations];
-            const filtered = combined.filter((item) =>
-                `${item.name} ${item.formatted_address}`
-                    .toLowerCase()
-                    .includes(query.toLowerCase())
-            );
-
-            setter(filtered);
+            setter(results);
         } catch (error) {
-            console.error("Error fetching suggestions:", error);
+            console.error("Error fetching autocomplete:", error);
         }
     };
 
@@ -71,12 +54,6 @@ const JourneyCard = ({
     const handlePickupChange = (e) => {
         const { value } = e.target;
         setJourneyData({ ...journeyData, pickup: value });
-
-        if (!value) {
-            setIsAirportApi(false);
-            setIsLocationApi(false);
-        }
-
         fetchSuggestions(value, setPickupSuggestions);
     };
 
@@ -100,7 +77,6 @@ const JourneyCard = ({
                 <div className="btn-edit btn">Fare: $0</div>
             </div>
 
-            {/* Pick Up Date & Time */}
             <div className="mb-6">
                 <label className="block text-sm font-semibold mb-2 text-gray-700">
                     Pick Up Date & Time
@@ -148,7 +124,6 @@ const JourneyCard = ({
                 </div>
             </div>
 
-            {/* Pickup Input */}
             <div className="mb-4 relative">
                 <input
                     type="text"
@@ -181,7 +156,6 @@ const JourneyCard = ({
                 )}
             </div>
 
-            {/* Additional Fields */}
             {isAirportApi && (
                 <div className="mb-4">
                     <input
@@ -200,7 +174,7 @@ const JourneyCard = ({
                     <input
                         type="text"
                         name="arrivefrom"
-                        placeholder="Arrive From"
+                        placeholder="Arriving From"
                         className="custom_input"
                         value={journeyData.arrivefrom || ""}
                         onChange={handleChange}
@@ -224,7 +198,6 @@ const JourneyCard = ({
                 </div>
             )}
 
-            {/* Drop-Offs */}
             {dropOffs.map((val, idx) => (
                 <div key={idx} className="relative mb-2 flex items-center">
                     <input

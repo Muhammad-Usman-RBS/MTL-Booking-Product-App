@@ -1,28 +1,20 @@
+// redux/api/googleApi.js
 import { apiSlice } from '../apiSlice';
 
 export const googleApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
-        searchAirports: builder.query({
+        searchGooglePlaces: builder.query({
             query: (input) => ({
-                url: "/google/search-airports",
-                method: "GET",
-                params: { input },
-            }),
-        }),
-        searchLocations: builder.query({
-            query: (input) => ({
-                url: "/google/search-locations",
+                url: "/google/autocomplete",
                 method: "GET",
                 params: { input },
             }),
         }),
     }),
-    overrideExisting: false, // optional, but good to prevent warnings
+    overrideExisting: false,
 });
 
 export const {
-    useSearchAirportsQuery,
-    useSearchLocationsQuery,
-    useLazySearchAirportsQuery,   // ✅ ADD THIS
-    useLazySearchLocationsQuery,  // ✅ AND THIS
+    useSearchGooglePlacesQuery,
+    useLazySearchGooglePlacesQuery,
 } = googleApi;
