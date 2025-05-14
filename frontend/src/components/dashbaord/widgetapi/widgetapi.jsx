@@ -1,5 +1,5 @@
 import React from "react";
-import WidgetForm from "./WidgetForm"
+import WidgetBooking from "./WidgetBooking"
 
 const WidgetAPI = () => {
   const iframeCode = `<iframe src="https://www.megatransfers.com/booking-form.php" class="iframe-responsive" style="width:100%;min-height:550px" title="Book Now"></iframe>`;
@@ -24,7 +24,7 @@ const WidgetAPI = () => {
           <code>{iframeCode}</code>
         </pre>
       </div>
-      <WidgetForm/>
+      <WidgetBooking />
     </div>
   );
 };

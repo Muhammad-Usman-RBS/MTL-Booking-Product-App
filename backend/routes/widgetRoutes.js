@@ -1,5 +1,5 @@
 import express from 'express';
-import { submitWidgetForm } from '../controllers/customerBookingController.js';
+import { submitWidgetForm } from '../controllers/widgetController.js';
 
 const router = express.Router();
 
