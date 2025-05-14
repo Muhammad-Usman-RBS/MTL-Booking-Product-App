@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useLazySearchGooglePlacesQuery } from '../../../redux/api/googleApi';
-import { useSubmitWidgetFormMutation } from '../../../redux/api/widgetApi';
-import { useCreateBookingMutation } from '../../../redux/api/bookingApi';
+import { useCreateBookingMutation, useSubmitWidgetFormMutation } from '../../../redux/api/bookingApi';
 import SelectOption from '../../../constants/constantscomponents/SelectOption';
 
 const hourlyOptions = ['40 miles 4 hours', '60 miles 6 hours', '80 miles 8 hours'];
@@ -32,11 +31,11 @@ const WidgetBooking = () => {
     const [submitWidgetForm] = useSubmitWidgetFormMutation();
     const [triggerSearchAutocomplete] = useLazySearchGooglePlacesQuery();
 
-    // useEffect(() => {
-    //     const params = new URLSearchParams(window.location.search);
-    //     const cid = params.get('company');
-    //     if (cid) setCompanyId(cid);
-    // }, []);
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const cid = params.get('company');
+        if (cid) setCompanyId(cid);
+    }, []);
 
     useEffect(() => {
         const sendHeight = () => {
@@ -50,7 +49,6 @@ const WidgetBooking = () => {
 
         return () => resizeObserver.disconnect();
     }, []);
-
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -103,7 +101,6 @@ const WidgetBooking = () => {
         }
     };
 
-
     const handlePickupSelect = (sug) => {
         const full = `${sug.name} - ${sug.formatted_address}`;
         setFormData({ ...formData, pickup: full });
@@ -113,7 +110,6 @@ const WidgetBooking = () => {
         setPickupSuggestions([]);
         setPickupManuallyTyped(false);
     };
-
 
     const handleDropOffChange = (idx, val) => {
         const updated = [...dropOffs];
@@ -138,7 +134,6 @@ const WidgetBooking = () => {
         setDropOffSuggestions([]);
         setDropOffManuallyTyped((prev) => ({ ...prev, [idx]: false }));
     };
-
 
     const addDropOff = () => {
         if (dropOffs.length >= 3) {
@@ -167,7 +162,6 @@ const WidgetBooking = () => {
                 dropOffs[idx] = `Custom Input - ${val}`;
             }
         });
-
 
         const payload = {
             mode,
