@@ -6,7 +6,10 @@ const Logout = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    // Remove user and related data
     localStorage.removeItem("user");
+    localStorage.removeItem("companyId");
+    localStorage.removeItem("token");
 
     toast.success("Successfully logged out.");
 

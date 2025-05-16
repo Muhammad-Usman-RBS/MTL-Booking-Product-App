@@ -18,7 +18,7 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // ✅ Check account status first
+    // ✅ Check account status
     if (user.status !== "Active") {
       return res.status(403).json({ message: `Your account is ${user.status}. Please contact the administrator.` });
     }
@@ -28,12 +28,12 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Get IP Address (IPv6 to IPv4 safe fallback)
+    // Get IP Address
     const forwarded = req.headers['x-forwarded-for'];
     const rawIp = forwarded || req.socket.remoteAddress || '';
     const ip = rawIp.includes("::ffff:") ? rawIp.split("::ffff:")[1] : rawIp;
 
-    // Fetch Geo IP Info
+    // Geo IP Lookup
     let location = "Unknown, Unknown";
     try {
       const { data: geo } = await axios.get(`http://ip-api.com/json/${ip}`);
@@ -44,7 +44,7 @@ export const login = async (req, res) => {
       console.warn("Geo IP lookup failed:", err.message);
     }
 
-    // Update login history
+    // Save login history
     user.loginHistory.push({
       loginAt: new Date(),
       systemIpAddress: ip,
@@ -53,15 +53,16 @@ export const login = async (req, res) => {
 
     await user.save();
 
-    // Send response
+    // ✅ Include companyId in the token
     res.json({
       _id: user._id,
       email: user.email,
       fullName: user.fullName,
       role: user.role,
       permissions: user.permissions,
-      token: generateToken(user._id, user.role),
-      profileImage: user.profileImage || null
+      token: generateToken(user._id, user.role, user.companyId),
+      profileImage: user.profileImage || null,
+      companyId: user.companyId || null,
     });
 
   } catch (error) {

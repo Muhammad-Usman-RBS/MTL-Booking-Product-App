@@ -56,17 +56,13 @@ import SocialMedia from "./components/dashbaord/settings/SocialMedia";
 import ChatPlugin from "./components/dashbaord/settings/ChatPlugin";
 import CronJob from "./components/dashbaord/settings/CronJob";
 import DriverFare from "./components/dashbaord/pricing/DriverFare";
-
-import ProtectedRoute from './layouts/ProtectedRoute';
-
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import WidgetBooking from "./components/dashbaord/widgetapi/WidgetBooking";
 
-function App() {
-  const user = JSON.parse(localStorage.getItem("user"));
-  const role = user?.role;
+import ProtectedRoute from './layouts/ProtectedRoute';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
+function App() {
   return (
     <>
       <Routes>
@@ -77,94 +73,87 @@ function App() {
           <Route path="/new-password" element={<ResetPassword />} />
         </Route>
 
-        {/* Role-Specific Dashboards */}
-        <Route element={<ProtectedRoute role="superadmin" />}>
-          <Route path="/dashboard/home" element={<DashboardLayout />} />
-        </Route>
-
         <Route path="/widget-form" element={<WidgetBooking />} />
+        {/* Role-Specific Dashboards */}
 
+        <Route element={<ProtectedRoute />}>
+          {/* Dashboard Layout with Nested Routes */}
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <>
+              {/* Home */}
+              <Route path="home" index element={<Dashboard />} />
 
-        {/* <Route element={<ProtectedRoute role="driver" />}>
-          <Route path="/dashboard/driver" element={<DriverDashboard />} />
-        </Route> */}
+              {/* Bookings */}
+              <Route path="bookings/list" element={<BookingsList />} />
+              <Route path="bookings/new" element={<NewBooking />} />
 
-        {/* <Route element={<ProtectedRoute role="clientadmin" />}>
-          <Route path="/dashboard/client" element={<ClientAdminDashboard />} />
-        </Route> */}
+              {/* Users/Admin List */}
+              <Route path="admin-list" element={<AdminList />} />
 
-        {/* Dashboard Layout with Nested Routes */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          {/* Always accessible */}
-          <Route path="home" index element={<Dashboard />} />
-          <Route path="admin-list" element={<AdminList />} />
-          <Route path="profile" element={<EditProfile />} />
-          <Route path="logout" element={<Logout />} />
+              {/* Invoices */}
+              <Route path="invoices/list" element={<InvoicesList />} />
+              <Route path="invoices/new" element={<NewInvoice />} />
+              <Route path="invoices/edit" element={<EditInvoice />} />
 
+              {/* Drivers */}
+              <Route path="drivers/list" element={<DriverList />} />
+              <Route path="drivers/new" element={<NewDriver />} />
+              <Route path="drivers/config" element={<DriverRegistrationConfig />} />
 
-          {/* All other routes are hidden from superadmin */}
-          <>
-            {/* Bookings */}
-            <Route path="bookings/list" element={<BookingsList />} />
-            <Route path="bookings/new" element={<NewBooking />} />
+              {/* Customers */}
+              <Route path="customers/list" element={<CustomersList />} />
 
-            {/* Invoices */}
-            <Route path="invoices/list" element={<InvoicesList />} />
-            <Route path="invoices/new" element={<NewInvoice />} />
-            <Route path="invoices/edit" element={<EditInvoice />} />
+              {/* Company Accounts */}
+              <Route path="company-accounts/list" element={<CompanyAccountsList />} />
+              <Route path="company-accounts/new" element={<AddCompanyAccount />} />
+              <Route path="/dashboard/company-accounts/edit/:id" element={<AddCompanyAccount />} />
 
-            {/* Drivers */}
-            <Route path="drivers/list" element={<DriverList />} />
-            <Route path="drivers/new" element={<NewDriver />} />
-            <Route path="drivers/config" element={<DriverRegistrationConfig />} />
+              {/* Pricing */}
+              <Route path="pricing/general" element={<General />} />
+              <Route path="pricing/vehicle" element={<VehiclePricing />} />
+              <Route path="pricing/hourly-packages" element={<HourlyPackages />} />
+              <Route path="pricing/location-category" element={<LocationPricingCategory />} />
+              <Route path="pricing/fixed" element={<FixedPricing />} />
+              <Route path="pricing/distance-slab" element={<DistanceSlab />} />
+              <Route path="pricing/driver-fare" element={<DriverFare />} />
+              <Route path="pricing/congestion" element={<CongestionCharges />} />
+              <Route path="pricing/discounts-date" element={<DiscountsByDate />} />
+              <Route path="pricing/discounts-location" element={<DiscountsByLocation />} />
+              <Route path="pricing/vouchers" element={<Vouchers />} />
 
-            {/* Customers */}
-            <Route path="customers/list" element={<CustomersList />} />
+              {/* Settings */}
+              <Route path="settings/general" element={<SettingsGeneral />} />
+              <Route path="settings/booking" element={<BookingSettings />} />
+              <Route path="settings/email" element={<EmailSettings />} />
+              <Route path="settings/location-category" element={<LocationSettingCategory />} />
+              <Route path="settings/locations" element={<Locations />} />
+              <Route path="settings/zones" element={<Zones />} />
+              <Route path="settings/coverage" element={<Coverage />} />
+              <Route path="settings/payment-options" element={<PaymentOptions />} />
+              <Route path="settings/booking-restriction-date" element={<BookingRestrictionDate />} />
+              <Route path="settings/review" element={<ReviewSettings />} />
+              <Route path="settings/receipt" element={<ReceiptSettings />} />
+              <Route path="settings/notifications" element={<Notifications />} />
+              <Route path="settings/google-calendar" element={<GoogleCalendar />} />
+              <Route path="settings/sms" element={<SMSSettings />} />
+              <Route path="settings/social-media" element={<SocialMedia />} />
+              <Route path="settings/chat-plugin" element={<ChatPlugin />} />
+              <Route path="settings/cron-job" element={<CronJob />} />
 
-            {/* Company Accounts */}
-            <Route path="company-accounts/list" element={<CompanyAccountsList />} />
-            <Route path="company-accounts/new" element={<AddCompanyAccount />} />
-            <Route path="/dashboard/company-accounts/edit/:id" element={<AddCompanyAccount />} />
+              {/* Widget / API */}
+              <Route path="widget-api" element={<WidgetAPI />} />
 
-            {/* Pricing */}
-            <Route path="pricing/general" element={<General />} />
-            <Route path="pricing/vehicle" element={<VehiclePricing />} />
-            <Route path="pricing/hourly-packages" element={<HourlyPackages />} />
-            <Route path="pricing/location-category" element={<LocationPricingCategory />} />
-            <Route path="pricing/fixed" element={<FixedPricing />} />
-            <Route path="pricing/distance-slab" element={<DistanceSlab />} />
-            <Route path="pricing/driver-fare" element={<DriverFare />} />
-            <Route path="pricing/congestion" element={<CongestionCharges />} />
-            <Route path="pricing/discounts-date" element={<DiscountsByDate />} />
-            <Route path="pricing/discounts-location" element={<DiscountsByLocation />} />
-            <Route path="pricing/vouchers" element={<Vouchers />} />
+              {/* Statements */}
+              <Route path="statements/driver" element={<DriverStatements />} />
+              <Route path="statements/payments" element={<DriverPayments />} />
 
-            {/* Settings */}
-            <Route path="settings/general" element={<SettingsGeneral />} />
-            <Route path="settings/booking" element={<BookingSettings />} />
-            <Route path="settings/email" element={<EmailSettings />} />
-            <Route path="settings/location-category" element={<LocationSettingCategory />} />
-            <Route path="settings/locations" element={<Locations />} />
-            <Route path="settings/zones" element={<Zones />} />
-            <Route path="settings/coverage" element={<Coverage />} />
-            <Route path="settings/payment-options" element={<PaymentOptions />} />
-            <Route path="settings/booking-restriction-date" element={<BookingRestrictionDate />} />
-            <Route path="settings/review" element={<ReviewSettings />} />
-            <Route path="settings/receipt" element={<ReceiptSettings />} />
-            <Route path="settings/notifications" element={<Notifications />} />
-            <Route path="settings/google-calendar" element={<GoogleCalendar />} />
-            <Route path="settings/sms" element={<SMSSettings />} />
-            <Route path="settings/social-media" element={<SocialMedia />} />
-            <Route path="settings/chat-plugin" element={<ChatPlugin />} />
-            <Route path="settings/cron-job" element={<CronJob />} />
-
-            {/* Widget / API */}
-            <Route path="widget-api" element={<WidgetAPI />} />
-
-            {/* Statements */}
-            <Route path="statements/driver" element={<DriverStatements />} />
-            <Route path="statements/payments" element={<DriverPayments />} />
-          </>
+              {/* Profile */}
+              <Route path="profile" element={<EditProfile />} />
+              
+              {/* Logout */}
+              <Route path="logout" element={<Logout />} />
+            </>
+          </Route>
         </Route>
 
         {/* Fallback Route */}

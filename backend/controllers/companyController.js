@@ -1,4 +1,5 @@
 import Company from '../models/Company.js';
+import User from '../models/User.js'; // ✅ ADD THIS LINE
 import nodemailer from "nodemailer";
 import mongoose from "mongoose";
 
@@ -27,8 +28,14 @@ export const createCompanyAccount = async (req, res) => {
             status,
         } = req.body;
 
+        // ✅ Validate clientAdminId
+        if (!clientAdminId || !mongoose.Types.ObjectId.isValid(clientAdminId)) {
+            return res.status(400).json({ message: "Invalid or missing clientAdminId" });
+        }
+
         const profileImage = req.file?.path || "";
 
+        // ✅ Create company
         const newCompany = new Company({
             companyName,
             contactName,
@@ -55,8 +62,15 @@ export const createCompanyAccount = async (req, res) => {
 
         const savedCompany = await newCompany.save();
 
+        // ✅ Update assigned ClientAdmin user to set companyId = this company's _id
+        await User.findByIdAndUpdate(
+            clientAdminId,
+            { $set: { companyId: savedCompany._id } }
+        );
+
         res.status(201).json(savedCompany); // ✅ Return full saved doc
     } catch (error) {
+        console.error("Company Create Error:", error);
         res.status(400).json({ message: error.message });
     }
 };
@@ -71,32 +85,32 @@ export const deleteCompanyAccount = async (req, res) => {
 };
 
 export const getAllCompanies = async (req, res) => {
-  try {
-    const currentUser = req.user;
+    try {
+        const currentUser = req.user;
 
-    let companies;
+        let companies;
 
-    if (currentUser.role === "superadmin") {
-      // ✅ Superadmin sees ALL companies they created via assigned clientAdmins
-      companies = await Company.find({})
-        .populate("clientAdminId", "status")
-        .sort({ createdAt: -1 });
-    } else {
-      // ✅ Clientadmin sees only their own assigned companies
-      companies = await Company.find({ clientAdminId: currentUser._id })
-        .populate("clientAdminId", "status")
-        .sort({ createdAt: -1 });
+        if (currentUser.role === "superadmin") {
+            // ✅ Superadmin sees ALL companies they created via assigned clientAdmins
+            companies = await Company.find({})
+                .populate("clientAdminId", "status")
+                .sort({ createdAt: -1 });
+        } else {
+            // ✅ Clientadmin sees only their own assigned companies
+            companies = await Company.find({ clientAdminId: currentUser._id })
+                .populate("clientAdminId", "status")
+                .sort({ createdAt: -1 });
+        }
+
+        const updated = companies.map((c) => ({
+            ...c._doc,
+            status: c.clientAdminId?.status || c.status,
+        }));
+
+        res.status(200).json(updated);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-
-    const updated = companies.map((c) => ({
-      ...c._doc,
-      status: c.clientAdminId?.status || c.status,
-    }));
-
-    res.status(200).json(updated);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
 };
 
 export const getCompanyById = async (req, res) => {

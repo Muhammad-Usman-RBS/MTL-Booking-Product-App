@@ -1,10 +1,11 @@
 import Booking from "../models/Booking.js";
 import Company from "../models/Company.js";
+import User from "../models/User.js";
 
 // ✅ Create Booking (standard route)
 export const createBooking = async (req, res) => {
   try {
-    const { mode, returnJourney, journey1, journey2 } = req.body;
+    const { mode, returnJourney, journey1, journey2, companyId } = req.body;
 
     if (!mode || returnJourney === undefined || !journey1) {
       return res.status(400).json({ message: "Required fields missing" });
@@ -20,10 +21,15 @@ export const createBooking = async (req, res) => {
       }
     }
 
+    if (!companyId || companyId.length !== 24) {
+      return res.status(400).json({ message: "Valid companyId is required" });
+    }
+
     const bookingData = {
       mode,
       returnJourney,
-      journey1,
+      companyId,
+      journey1: { ...journey1, companyId },
       journey2: returnJourney ? journey2 : undefined,
     };
 

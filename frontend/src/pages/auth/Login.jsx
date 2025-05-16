@@ -10,40 +10,53 @@ const Login = () => {
 
   const [loginUser] = useLoginUserMutation(); // ✅ RTK mutation hook
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+const handleLogin = async (e) => {
+  e.preventDefault();
 
-    if (!email || !password) {
-      toast.error("Please enter both email and password.");
-      return;
+  if (!email || !password) {
+    toast.error("Please enter both email and password.");
+    return;
+  }
+
+  try {
+    const data = await loginUser({ email, password }).unwrap(); // ✅ RTK way to get response
+
+    // ✅ Save full user data
+    localStorage.setItem('user', JSON.stringify(data));
+
+    // ✅ Save token if you use one (optional)
+    if (data.token) {
+      localStorage.setItem('token', data.token);
     }
 
-    try {
-      const data = await loginUser({ email, password }).unwrap(); // ✅ RTK way to get response
-
-      localStorage.setItem('user', JSON.stringify(data));
-      toast.success("Login successful!");
-
-      setTimeout(() => {
-        switch (data.role) {
-          case 'superadmin':
-          case 'clientadmin':
-          case 'demo':
-          case 'manager':
-            navigate('/dashboard/home');
-            break;
-          case 'driver':
-            navigate('/dashboard/driver');
-            break;
-          default:
-            navigate('/dashboard/home');
-        }
-      }, 1000);
-    } catch (err) {
-      const msg = err?.data?.message || "Login failed. Check your credentials.";
-      toast.error(msg);
+    // ✅ Save companyId separately if assigned
+    if (data.companyId) {
+      localStorage.setItem('companyId', data.companyId);
     }
-  };
+
+    toast.success("Login successful!");
+
+    setTimeout(() => {
+      switch (data.role) {
+        case 'superadmin':
+        case 'clientadmin':
+        case 'demo':
+        case 'manager':
+          navigate('/dashboard/home');
+          break;
+        case 'driver':
+          navigate('/dashboard/driver');
+          break;
+        default:
+          navigate('/dashboard/home');
+      }
+    }, 1000);
+  } catch (err) {
+    const msg = err?.data?.message || "Login failed. Check your credentials.";
+    toast.error(msg);
+  }
+};
+
 
   return (
     <form onSubmit={handleLogin} className="space-y-5">

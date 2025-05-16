@@ -50,9 +50,18 @@ const NewBooking = () => {
 
   const handleSubmit = async () => {
     try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const companyId = user?.companyId;
+
+      if (!companyId || companyId.length !== 24) {
+        toast.error("Valid companyId is required from logged-in user");
+        return;
+      }
+
       const payload = {
         mode,
         returnJourney,
+        companyId, // ✅ Inject companyId at root
         journey1: {
           pickmeAfter: journey1Data.pickmeAfter,
           flightNumber: journey1Data.flightNumber,
@@ -69,6 +78,7 @@ const NewBooking = () => {
           minute: journey1Data.minute,
           fare: 0,
           hourlyOption: mode === "Hourly" ? selectedHourly : null,
+          companyId, // ✅ Inject inside journey1 also
         },
       };
 
@@ -112,17 +122,18 @@ const NewBooking = () => {
             <button
               key={tab}
               onClick={() => setMode(tab)}
-              className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${mode === tab
-                ? "bg-[#f3f4f6] text-dark border border-black"
-                : "bg-[#f3f4f6] text-dark"
-                } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
+              className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${
+                mode === tab
+                  ? "bg-[#f3f4f6] text-dark border border-black"
+                  : "bg-[#f3f4f6] text-dark"
+              } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
             >
               {tab}
             </button>
           ))}
         </div>
 
-        {/* Hourly Info */}
+        {/* Hourly Options */}
         {mode === "Hourly" && (
           <div className="flex justify-center">
             <SelectOption
@@ -144,7 +155,7 @@ const NewBooking = () => {
         />
 
         {/* Return Journey Toggle */}
-        <div className="flex items-center mt-6 w-full max-w-4xl mx-auto ">
+        <div className="flex items-center mt-6 w-full max-w-4xl mx-auto">
           <label className="flex items-center cursor-pointer relative">
             <input
               type="checkbox"
@@ -154,9 +165,7 @@ const NewBooking = () => {
             />
             <div className="w-12 h-6 bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-colors duration-300"></div>
             <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transform peer-checked:translate-x-6 transition-transform duration-300"></div>
-            <span className="ml-4 text-sm font-medium text-gray-800">
-              Return Journey
-            </span>
+            <span className="ml-4 text-sm font-medium text-gray-800">Return Journey</span>
           </label>
         </div>
 

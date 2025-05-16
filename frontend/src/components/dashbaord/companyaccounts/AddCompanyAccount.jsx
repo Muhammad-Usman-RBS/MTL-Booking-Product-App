@@ -48,12 +48,15 @@ const AddCompanyAccount = () => {
     isLoading
   } = useFetchClientAdminsQuery();
 
-  const clientAdmins = rawClientAdmins.map((admin) => ({
+const clientAdmins = rawClientAdmins
+  .filter((admin) => admin.status !== "Deleted")
+  .map((admin) => ({
     label: admin.fullName,
     value: admin._id,
     email: admin.email,
     status: admin.status,
   }));
+
 
   const { data: companyData } = useGetCompanyByIdQuery(id, { skip: !isEdit });
   const [createCompany] = useCreateCompanyMutation();
@@ -157,15 +160,16 @@ const AddCompanyAccount = () => {
             label="Assign to ClientAdmin"
             value={formData.clientAdminId || ""}
             options={clientAdmins}
-            onChange={(e) => {
-              const selectedId = e?.target?.value || e?.value || e;
-              const selectedAdmin = clientAdmins.find(admin => admin.value === selectedId);
+           onChange={(e) => {
+  const selectedId = e?.target?.value || e?.value || e;
+  const selectedAdmin = clientAdmins.find(admin => admin.value === selectedId);
 
-              handleChange("clientAdminId", selectedId);
-              handleChange("fullName", selectedAdmin?.label || "");
-              handleChange("email", selectedAdmin?.email || "");
-              handleChange("status", selectedAdmin?.status);
-            }}
+  handleChange("clientAdminId", selectedId); // ✅ this is correct
+  handleChange("fullName", selectedAdmin?.label || "");
+  handleChange("email", selectedAdmin?.email || "");
+  handleChange("status", selectedAdmin?.status);
+}}
+
           />
           <SelectOption options={countries} label="Country *" value={formData.country} onChange={(e) => handleChange("country", e.target.value)} />
           <SelectOption options={bookingPaymentOptions} label="Payment Option (Bookings) *" value={formData.bookingPayment} onChange={(e) => handleChange("bookingPayment", e.target.value)} />

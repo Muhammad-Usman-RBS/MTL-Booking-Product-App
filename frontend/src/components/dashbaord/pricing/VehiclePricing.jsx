@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
+import CustomModal from "../../../constants/constantscomponents/CustomModal";
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import { useSelector } from "react-redux";
 import {
   useCreateVehicleMutation,
   useDeleteVehicleMutation,
@@ -14,7 +15,9 @@ import {
 } from "../../../redux/api/vehicleApi";
 
 const VehiclePricing = () => {
-  const { data: vehicleData = [], isLoading } = useGetAllVehiclesQuery();
+  const { data: vehicleData = [], isLoading, refetch, } = useGetAllVehiclesQuery();
+  const companyId = useSelector((state) => state.auth?.user?.companyId);
+
   const [createVehicle] = useCreateVehicleMutation();
   const [updateVehicle] = useUpdateVehicleMutation();
   const [deleteVehicle] = useDeleteVehicleMutation();
@@ -25,14 +28,23 @@ const VehiclePricing = () => {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showImageSelector, setShowImageSelector] = useState(false);
-  const [imageOptions, setImageOptions] = useState([]);
   const [uploadFile, setUploadFile] = useState(null);
+  const [imageOptions, setImageOptions] = useState([]);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   useEffect(() => {
-    const uniqueImages = Array.from(
-      new Set(vehicleData.map((v) => v.image).filter(Boolean))
-    );
-    setImageOptions(uniqueImages);
+    refetch();
+  }, []);
+
+  useEffect(() => {
+    if (vehicleData?.length) {
+      const uniqueImages = Array.from(
+        new Set(vehicleData.map((v) => v.image).filter(Boolean))
+      );
+      setImageOptions(uniqueImages);
+    }
   }, [vehicleData]);
 
   const handleEditModal = (record = {}) => {
@@ -40,51 +52,62 @@ const VehiclePricing = () => {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this vehicle?")) {
-      await deleteVehicle(id);
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await deleteVehicle(deleteId);
       toast.success("Vehicle deleted successfully");
+      setShowDeleteModal(false);
+      setDeleteId(null);
+    } catch (err) {
+      toast.error("Failed to delete vehicle");
     }
   };
 
   const handleSubmit = async () => {
     const formData = new FormData();
-    const user = JSON.parse(localStorage.getItem("user"));
-    const companyId = user?.companyId;
-    if (!companyId) return toast.error("Missing company ID");
 
-    formData.append("companyId", companyId);
+    // ✅ Only once
+    if (companyId) {
+      formData.append("companyId", companyId);
+    } else {
+      toast.error("Company ID missing");
+      return;
+    }
 
     Object.entries(selectedAccount).forEach(([key, value]) => {
+      if (key === "image") return;
       if (value !== undefined && value !== null) {
-        if (key === "priceType" && typeof value === "object") {
-          formData.append(key, value.value || "");
-        } else {
-          formData.append(key, value);
-        }
+        formData.append(key, value);
       }
     });
 
     if (uploadFile) {
       formData.append("image", uploadFile);
+    } else if (selectedAccount.image) {
+      formData.append("image", selectedAccount.image);
     }
 
-    if (selectedAccount._id) {
-      await updateVehicle({ id: selectedAccount._id, formData });
-      toast.success("Vehicle updated successfully");
-    } else {
-      await createVehicle(formData);
-      toast.success("Vehicle created successfully");
+    try {
+      if (selectedAccount._id) {
+        await updateVehicle({ id: selectedAccount._id, formData });
+        toast.success("Vehicle updated successfully");
+      } else {
+        await createVehicle(formData);
+        toast.success("Vehicle created successfully");
+      }
+      setShowModal(false);
+      refetch(); 
+    } catch (err) {
+      toast.error("Error saving vehicle");
     }
-    setShowModal(false);
   };
 
-  const filteredData = vehicleData.filter((item) =>
-    Object.values(item)
-      .join(" ")
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
+  const filteredData = vehicleData
+    .filter((item) => item.companyId === companyId) // ✅ show only user's company vehicles
+    .filter((item) =>
+      Object.values(item).join(" ").toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   const paginatedData =
     perPage === "All"
@@ -113,7 +136,10 @@ const VehiclePricing = () => {
         />
         <Icons.Trash
           title="Delete"
-          onClick={() => handleDelete(item._id)}
+          onClick={() => {
+            setDeleteId(item._id);
+            setShowDeleteModal(true);
+          }}
           className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
         />
       </div>
@@ -139,10 +165,15 @@ const VehiclePricing = () => {
         perPage={perPage}
       />
 
+      {/* Edit/Create Modal */}
       <CustomModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        heading={`Edit ${selectedAccount?.vehicleName || "Vehicle"}`}
+        heading={
+          selectedAccount?._id
+            ? `Edit ${selectedAccount.vehicleName || "Vehicle"}`
+            : "Add Vehicle"
+        }
       >
         <div className="mx-auto p-4 font-sans space-y-4">
           {["priority", "vehicleName", "passengers", "smallLuggage", "largeLuggage", "childSeat", "price"].map(
@@ -168,32 +199,35 @@ const VehiclePricing = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Price Type</label>
-            <SelectOption
-              width="full"
-              options={["Percentage", "Amount"]}
-              value={selectedAccount?.priceType}
-              onChange={(val) =>
+            <select
+              className="custom_input"
+              value={selectedAccount?.priceType || ""}
+              onChange={(e) =>
                 setSelectedAccount({
                   ...selectedAccount,
-                  priceType: val?.value || val,
+                  priceType: e.target.value,
                 })
               }
-            />
+            >
+              <option value="">Select Price Type</option>
+              <option value="Percentage">Percentage</option>
+              <option value="Amount">Amount</option>
+            </select>
           </div>
 
+          {/* Image Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Image Path or URL</label>
             <div className="flex gap-2 items-center">
               <input
                 type="text"
                 className="custom_input flex-1"
-                value={selectedAccount?.image || ""}
-                onChange={(e) =>
-                  setSelectedAccount({
-                    ...selectedAccount,
-                    image: e.target.value,
-                  })
+                value={
+                  uploadFile
+                    ? uploadFile.name // ✅ show uploaded file name
+                    : selectedAccount?.image || ""
                 }
+                readOnly
               />
               <button
                 type="button"
@@ -203,16 +237,21 @@ const VehiclePricing = () => {
                 📁
               </button>
             </div>
+
             {selectedAccount?.image && (
-              <div className="flex justify-center">
+              <div className="flex flex-col items-center mt-3">
                 <img
                   src={selectedAccount.image}
                   alt="Preview"
-                  className="mt-4 w-32 h-20 text-center object-cover rounded shadow"
+                  className="w-32 h-20 object-cover rounded shadow"
                 />
+                {uploadFile && (
+                  <p className="text-xs text-gray-500 mt-1">{uploadFile.name}</p> // ✅ filename below image
+                )}
               </div>
             )}
           </div>
+
 
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={handleSubmit} className="btn btn-reset">
@@ -225,12 +264,13 @@ const VehiclePricing = () => {
         </div>
       </CustomModal>
 
+      {/* Image Selector Modal */}
       <CustomModal
         isOpen={showImageSelector}
         onClose={() => setShowImageSelector(false)}
         heading="Select Image"
       >
-        <div className="grid grid-cols-3 gap-4 p-4">
+        <div className="grid grid-cols-8 gap-4 p-4">
           {imageOptions.map((imgPath) => (
             <img
               key={imgPath}
@@ -238,6 +278,7 @@ const VehiclePricing = () => {
               alt="vehicle"
               className="cursor-pointer rounded shadow border hover:border-blue-500"
               onClick={() => {
+                setUploadFile(null);
                 setSelectedAccount({ ...selectedAccount, image: imgPath });
                 setShowImageSelector(false);
               }}
@@ -255,19 +296,27 @@ const VehiclePricing = () => {
               const file = e.target.files[0];
               if (file) {
                 setUploadFile(file);
-                // Show temp preview in form
-                const tempUrl = URL.createObjectURL(file);
                 setSelectedAccount((prev) => ({
                   ...prev,
-                  image: tempUrl,
+                  image: "",
                 }));
               }
             }}
             className="custom_input mt-2"
           />
-
         </div>
       </CustomModal>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setDeleteId(null);
+          refetch(); 
+        }}
+      />
     </>
   );
 };
