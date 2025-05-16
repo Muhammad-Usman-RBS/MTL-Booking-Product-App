@@ -15,6 +15,7 @@ const Logout = () => {
 
     setTimeout(() => {
       navigate("/", { replace: true });
+      window.location.reload();
     }, 1000);
   };
 
