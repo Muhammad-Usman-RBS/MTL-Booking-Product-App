@@ -2,21 +2,58 @@ import React, { useEffect, useState } from "react";
 import { Users, Baby, Briefcase, Luggage, ChevronDown } from "lucide-react";
 import { useGetAllVehiclesQuery } from "../../../redux/api/vehicleApi";
 
-const VehicleSelection = () => {
+const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras }) => {
   const { data: vehicleOptions = [], isLoading } = useGetAllVehiclesQuery();
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [localSelectedVehicle, setLocalSelectedVehicle] = useState(null);
   const [open, setOpen] = useState(false);
+  const [selections, setSelections] = useState({
+    passenger: 0,
+    childSeat: 0,
+    handLuggage: 0,
+    checkinLuggage: 0,
+  });
 
+  // Default selection on load
   useEffect(() => {
-    if (vehicleOptions.length > 0 && !selectedVehicle) {
-      setSelectedVehicle(vehicleOptions[0]);
+    if (vehicleOptions.length > 0 && !localSelectedVehicle) {
+      const defaultVehicle = vehicleOptions[0];
+      setLocalSelectedVehicle(defaultVehicle);
+      setSelectedVehicle(defaultVehicle);
+      updateMaxValues(defaultVehicle);
     }
   }, [vehicleOptions]);
 
   const toggleDropdown = () => setOpen((prev) => !prev);
+
   const selectVehicle = (vehicle) => {
+    setLocalSelectedVehicle(vehicle);
     setSelectedVehicle(vehicle);
+    updateMaxValues(vehicle);
     setOpen(false);
+  };
+
+  const updateMaxValues = (vehicle) => {
+    setSelections({
+      passenger: 0,
+      childSeat: 0,
+      handLuggage: 0,
+      checkinLuggage: 0,
+    });
+    setVehicleExtras({
+      passenger: 0,
+      childSeat: 0,
+      handLuggage: 0,
+      checkinLuggage: 0,
+    });
+  };
+
+  const handleSelectChange = (type, value) => {
+    const updated = {
+      ...selections,
+      [type]: parseInt(value),
+    };
+    setSelections(updated);
+    setVehicleExtras(updated);
   };
 
   const IconRow = ({ vehicle }) => (
@@ -36,7 +73,7 @@ const VehicleSelection = () => {
     </div>
   );
 
-  if (isLoading || !selectedVehicle) {
+  if (isLoading || !localSelectedVehicle) {
     return (
       <div className="text-center text-gray-500 py-10">
         Loading available vehicles...
@@ -52,8 +89,8 @@ const VehicleSelection = () => {
         <div className="flex flex-col items-center w-full lg:w-1/3">
           <div className="bg-white border border-gray-300 rounded-lg shadow-md p-3 mb-4">
             <img
-              src={selectedVehicle.image}
-              alt={selectedVehicle.vehicleName}
+              src={localSelectedVehicle.image}
+              alt={localSelectedVehicle.vehicleName}
               className="w-28 h-16 object-contain"
             />
           </div>
@@ -65,25 +102,24 @@ const VehicleSelection = () => {
               className="w-full bg-gray-700 text-white px-4 py-2 rounded-md text-left shadow flex justify-between items-center"
             >
               <div className="flex flex-col">
-                <div className="font-semibold text-sm">{selectedVehicle.vehicleName}</div>
+                <div className="font-semibold text-sm">{localSelectedVehicle.vehicleName}</div>
                 <div className="flex gap-4 text-xs text-white mt-1">
                   <span className="flex items-center gap-1">
-                    <Users className="w-4 h-4" /> {selectedVehicle.passengers}
+                    <Users className="w-4 h-4" /> {localSelectedVehicle.passengers}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Baby className="w-4 h-4" /> {selectedVehicle.childSeat}
+                    <Baby className="w-4 h-4" /> {localSelectedVehicle.childSeat}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Briefcase className="w-4 h-4" /> {selectedVehicle.smallLuggage}
+                    <Briefcase className="w-4 h-4" /> {localSelectedVehicle.smallLuggage}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Luggage className="w-4 h-4" /> {selectedVehicle.largeLuggage}
+                    <Luggage className="w-4 h-4" /> {localSelectedVehicle.largeLuggage}
                   </span>
                 </div>
               </div>
               <ChevronDown className="ml-3 w-4 h-4 text-white" />
             </button>
-
 
             {open && (
               <div className="absolute z-50 mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-72 overflow-y-auto">
@@ -107,18 +143,20 @@ const VehicleSelection = () => {
         {/* Right Panel */}
         <div className="w-full lg:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
           {[
-            { label: "Passenger", count: selectedVehicle.passengers + 1 },
-            { label: "Child Seats", count: selectedVehicle.childSeat + 1 },
-            { label: "Hand Luggage", count: selectedVehicle.smallLuggage + 1 },
-            { label: "Check-in Luggage", count: selectedVehicle.largeLuggage + 1 },
-          ].map((item, idx) => (
-            <div key={idx} className="w-full">
-              <label className="text-sm font-medium block mb-1">
-                {item.label}
-              </label>
-              <select className="w-full border border-gray-300 rounded px-2 py-2 focus:outline-none focus:ring focus:ring-gray-600">
-                {[...Array(item.count).keys()].map((n) => (
-                  <option key={n}>{n}</option>
+            { label: "Passenger", key: "passenger", max: localSelectedVehicle.passengers },
+            { label: "Child Seats", key: "childSeat", max: localSelectedVehicle.childSeat },
+            { label: "Hand Luggage", key: "handLuggage", max: localSelectedVehicle.smallLuggage },
+            { label: "Check-in Luggage", key: "checkinLuggage", max: localSelectedVehicle.largeLuggage },
+          ].map(({ label, key, max }) => (
+            <div key={key} className="w-full">
+              <label className="text-sm font-medium block mb-1">{label}</label>
+              <select
+                value={selections[key]}
+                onChange={(e) => handleSelectChange(key, e.target.value)}
+                className="w-full border border-gray-300 rounded px-2 py-2 focus:outline-none focus:ring focus:ring-gray-600"
+              >
+                {[...Array(max + 1).keys()].map((n) => (
+                  <option key={n} value={n}>{n}</option>
                 ))}
               </select>
             </div>

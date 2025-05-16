@@ -18,6 +18,14 @@ const NewBooking = () => {
   const [returnJourney, setReturnJourney] = useState(false);
   const [selectedHourly, setSelectedHourly] = useState(hourlyOptions[0]);
 
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [vehicleExtras, setVehicleExtras] = useState({
+    passenger: 0,
+    childSeat: 0,
+    handLuggage: 0,
+    checkinLuggage: 0,
+  });
+
   const [journey1Data, setJourney1Data] = useState({
     pickmeAfter: "",
     flightNumber: "",
@@ -58,10 +66,22 @@ const NewBooking = () => {
         return;
       }
 
+      if (!selectedVehicle?.vehicleName) {
+        toast.error("Please select a vehicle.");
+        return;
+      }
+
       const payload = {
         mode,
         returnJourney,
-        companyId, // ✅ Inject companyId at root
+        companyId,
+        vehicle: {
+          vehicleName: selectedVehicle.vehicleName,
+          passenger: vehicleExtras.passenger,
+          childSeat: vehicleExtras.childSeat,
+          handLuggage: vehicleExtras.handLuggage,
+          checkinLuggage: vehicleExtras.checkinLuggage,
+        },
         journey1: {
           pickmeAfter: journey1Data.pickmeAfter,
           flightNumber: journey1Data.flightNumber,
@@ -78,7 +98,7 @@ const NewBooking = () => {
           minute: journey1Data.minute,
           fare: 0,
           hourlyOption: mode === "Hourly" ? selectedHourly : null,
-          companyId, // ✅ Inject inside journey1 also
+          companyId,
         },
       };
 
@@ -191,7 +211,12 @@ const NewBooking = () => {
           </button>
         </div>
 
-        <VehicleSelection />
+        {/* Vehicle Section with Prop Passing */}
+        <VehicleSelection
+          setSelectedVehicle={setSelectedVehicle}
+          setVehicleExtras={setVehicleExtras}
+        />
+
         <PassengerDetails />
         <FareSection />
       </div>

@@ -5,10 +5,15 @@ import User from "../models/User.js";
 // ✅ Create Booking (standard route)
 export const createBooking = async (req, res) => {
   try {
-    const { mode, returnJourney, journey1, journey2, companyId } = req.body;
+    const { mode, returnJourney, journey1, journey2, companyId, vehicle } = req.body;
 
-    if (!mode || returnJourney === undefined || !journey1) {
+    // Basic validations
+    if (!mode || returnJourney === undefined || !journey1 || !vehicle) {
       return res.status(400).json({ message: "Required fields missing" });
+    }
+
+    if (!vehicle.vehicleName || vehicle.passenger === undefined) {
+      return res.status(400).json({ message: "Vehicle information is incomplete" });
     }
 
     if (!journey1.date || journey1.hour === undefined || journey1.minute === undefined) {
@@ -29,6 +34,13 @@ export const createBooking = async (req, res) => {
       mode,
       returnJourney,
       companyId,
+      vehicle: {
+        vehicleName: vehicle.vehicleName,
+        passenger: vehicle.passenger,
+        childSeat: vehicle.childSeat || 0,
+        handLuggage: vehicle.handLuggage || 0,
+        checkinLuggage: vehicle.checkinLuggage || 0,
+      },
       journey1: { ...journey1, companyId },
       journey2: returnJourney ? journey2 : undefined,
     };
@@ -117,21 +129,19 @@ export const submitWidgetForm = async (req, res) => {
       companyId,
       referrer,
       journey1,
+      vehicle,
       mode = "Transfer",
       returnJourney = false,
     } = req.body;
 
-    // Validate companyId
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Invalid or missing companyId" });
     }
 
-    const company = await Company.findById(companyId);
-    if (!company) {
-      return res.status(404).json({ message: "Company not found" });
+    if (!vehicle?.vehicleName) {
+      return res.status(400).json({ message: "Vehicle name is required" });
     }
 
-    // Validate required journey1 fields
     const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
     for (const field of requiredFields) {
       if (!journey1?.[field]) {
@@ -142,6 +152,13 @@ export const submitWidgetForm = async (req, res) => {
     const booking = await Booking.create({
       mode,
       returnJourney,
+      vehicle: {
+        vehicleName: vehicle.vehicleName,
+        passenger: vehicle.passenger || 0,
+        childSeat: vehicle.childSeat || 0,
+        handLuggage: vehicle.handLuggage || 0,
+        checkinLuggage: vehicle.checkinLuggage || 0,
+      },
       journey1: {
         pickup: journey1.pickup,
         dropoff: journey1.dropoff,
@@ -175,3 +192,4 @@ export const submitWidgetForm = async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
+

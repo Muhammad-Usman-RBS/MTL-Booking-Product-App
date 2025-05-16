@@ -23,7 +23,15 @@ const JourneySchema = new mongoose.Schema({
     type: String,
     enum: ["40 miles 4 hours", "60 miles 6 hours", "80 miles 8 hours"],
     default: null,
-  }
+  },
+}, { _id: false });
+
+const VehicleInfoSchema = new mongoose.Schema({
+  vehicleName: { type: String, required: true },
+  passenger: { type: Number, default: 0 },
+  childSeat: { type: Number, default: 0 },
+  handLuggage: { type: Number, default: 0 },
+  checkinLuggage: { type: Number, default: 0 },
 }, { _id: false });
 
 const BookingSchema = new mongoose.Schema({
@@ -45,6 +53,10 @@ const BookingSchema = new mongoose.Schema({
     required: function () {
       return this.returnJourney;
     },
+  },
+  vehicle: {
+    type: VehicleInfoSchema,
+    required: true,
   },
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
