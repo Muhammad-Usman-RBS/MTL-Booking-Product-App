@@ -61,6 +61,7 @@ import WidgetBooking from "./components/dashbaord/widgetapi/WidgetBooking";
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import WidgetApi from "./components/dashbaord/widgetapi/widgetapi";
 
 function App() {
   return (
@@ -74,6 +75,7 @@ function App() {
         </Route>
 
         <Route path="/widget-form" element={<WidgetBooking />} />
+        <Route path="/vehicle-form" element={<WidgetApi />} />
         {/* Role-Specific Dashboards */}
 
         <Route element={<ProtectedRoute />}>

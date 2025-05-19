@@ -439,12 +439,6 @@
 
 
 
-
-
-
-
-
-
 import React, { useState, useEffect } from "react";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import BookingsFilters from "./BookingsFilters";
@@ -455,7 +449,6 @@ import JourneyDetailsModal from "./JourneyDetailsModal";
 import ViewDriver from "./ViewDriver";
 import ShortcutkeysModal from "./ShortcutkeysModal";
 import {
-  sampleData,
   statusList,
   driverList,
   passengerList,
@@ -488,8 +481,6 @@ const BookingsList = () => {
   const [auditData, setAuditData] = useState([]);
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewData, setViewData] = useState([]);
-  const [perPage, setPerPage] = useState("All");
-  const [page, setPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [selectedDrivers, setSelectedDrivers] = useState([]);
   const [selectedPassengers, setSelectedPassengers] = useState([]);
@@ -532,74 +523,10 @@ const BookingsList = () => {
     localStorage.setItem("selectedColumns", JSON.stringify(updated));
   };
 
-  const filteredData = sampleData.filter((item) => {
-    const searchLower = search.toLowerCase();
-    const matchesSearch =
-      item.orderNo.toLowerCase().includes(searchLower) ||
-      item.passenger.toLowerCase().includes(searchLower) ||
-      item.date.toLowerCase().includes(searchLower) ||
-      item.pickUp.toLowerCase().includes(searchLower) ||
-      item.dropOff.toLowerCase().includes(searchLower) ||
-      item.vehicle.toLowerCase().includes(searchLower) ||
-      item.payment.toLowerCase().includes(searchLower) ||
-      item.driver.toLowerCase().includes(searchLower);
-
-    const matchesDriver =
-      selectedDrivers.length === 0 ||
-      selectedDrivers.includes("All") ||
-      selectedDrivers.includes(item.driver);
-
-    const matchesPassenger =
-      selectedPassengers.length === 0 ||
-      selectedPassengers.includes("All") ||
-      selectedPassengers.includes(item.passenger);
-
-    const matchesVehicle =
-      selectedVehicleTypes.length === 0 ||
-      selectedVehicleTypes.includes("All") ||
-      selectedVehicleTypes.includes(item.vehicle);
-
-    const matchesAccount =
-      selectedAccounts.length === 0 ||
-      selectedAccounts.includes("All") ||
-      selectedAccounts.includes(item.account);
-
-    const matchesStatus =
-      selectedStatus.length === 0 ||
-      selectedStatus.includes("All") ||
-      selectedStatus.includes(item.statusAudit?.[item.statusAudit.length - 1]?.status || "");
-
-    return (
-      matchesSearch &&
-      matchesDriver &&
-      matchesPassenger &&
-      matchesVehicle &&
-      matchesAccount &&
-      matchesStatus
-    );
-  });
-
-  const sortedData = [...filteredData].sort((a, b) => {
-    if (!sortConfig.key) return 0;
-    const aVal = a[sortConfig.key] || "";
-    const bVal = b[sortConfig.key] || "";
-    return sortConfig.direction === "asc"
-      ? aVal.localeCompare(bVal)
-      : bVal.localeCompare(aVal);
-  });
-
-  const totalPages = perPage === "All" ? 1 : Math.ceil(sortedData.length / perPage);
-  const paginatedData = perPage === "All"
-    ? sortedData
-    : sortedData.slice((page - 1) * perPage, page * perPage);
-
-  useEffect(() => {
-    if (page > totalPages) setPage(1);
-  }, [filteredData, perPage]);
-
   return (
     <>
       <OutletHeading name="Bookings List" />
+
       <BookingsFilters
         selectedStatus={selectedStatus}
         setSelectedStatus={setSelectedStatus}
@@ -624,7 +551,6 @@ const BookingsList = () => {
       <BookingsTable
         selectedColumns={selectedColumns}
         setSelectedColumns={setSelectedColumns}
-        paginatedData={paginatedData}
         sortConfig={sortConfig}
         setSortConfig={setSortConfig}
         selectedActionRow={selectedActionRow}

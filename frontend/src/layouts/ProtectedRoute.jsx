@@ -25,7 +25,7 @@ const ProtectedRoute = () => {
   const location = useLocation();
   const currentPath = location.pathname;
 
-  console.log("Current path:", currentPath);
+  // console.log("Current path:", currentPath);
 
   const authorizedSidebarItems = sidebarItems.filter(item =>
     userPermissions.includes(item.title)

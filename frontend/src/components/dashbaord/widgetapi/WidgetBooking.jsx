@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useLazySearchGooglePlacesQuery } from '../../../redux/api/googleApi';
+import { useLazySearchGooglePlacesQuery, useLazyGetDistanceQuery } from '../../../redux/api/googleApi';
 import { useCreateBookingMutation, useSubmitWidgetFormMutation } from '../../../redux/api/bookingApi';
 import SelectOption from '../../../constants/constantscomponents/SelectOption';
+import { useNavigate } from 'react-router-dom';
 
 const hourlyOptions = ['40 miles 4 hours', '60 miles 6 hours', '80 miles 8 hours'];
 
@@ -25,11 +26,12 @@ const WidgetBooking = () => {
         pickup: '', dropoff: '', pickmeAfter: '', flightNumber: '', arrivefrom: '',
         doorNumber: '', notes: '', internalNotes: '', date: '', hour: '', minute: '', hourlyOption: ''
     });
-
+    const navigate = useNavigate();
     const [companyId, setCompanyId] = useState('');
     const [createBooking] = useCreateBookingMutation();
     const [submitWidgetForm] = useSubmitWidgetFormMutation();
     const [triggerSearchAutocomplete] = useLazySearchGooglePlacesQuery();
+    const [triggerDistance] = useLazyGetDistanceQuery();
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -42,11 +44,9 @@ const WidgetBooking = () => {
             const height = document.documentElement.scrollHeight;
             window.parent.postMessage({ type: "setHeight", height }, "*");
         };
-
         sendHeight();
         const resizeObserver = new ResizeObserver(sendHeight);
         resizeObserver.observe(document.body);
-
         return () => resizeObserver.disconnect();
     }, []);
 
@@ -70,35 +70,20 @@ const WidgetBooking = () => {
         }
     };
 
-    const renderSortedSuggestions = (suggestions, selected, onSelect) => {
-        const unique = [...new Map(suggestions.map((item) => [item.formatted_address, item])).values()];
-        const sorted = selected
-            ? [
-                ...unique.filter(i => `${i.name} - ${i.formatted_address}` === selected),
-                ...unique.filter(i => `${i.name} - ${i.formatted_address}` !== selected)
-            ]
-            : unique;
-
-        return sorted.map((sug, idx) => (
-            <li
-                key={idx}
-                onClick={() => onSelect(sug)}
-                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-            >
-                {sug.name} - {sug.formatted_address}
-            </li>
-        ));
+    const addDropOff = () => {
+        if (dropOffs.length >= 3) {
+            toast.warning('Maximum 3 drop-offs allowed.');
+            return;
+        }
+        setDropOffs([...dropOffs, '']);
     };
 
     const handlePickupChange = (e) => {
         const val = e.target.value;
         setPickupManuallyTyped(true);
         setFormData({ ...formData, pickup: val });
-        if (val.length >= 3) {
-            fetchSuggestions(val, setPickupSuggestions);
-        } else {
-            setPickupSuggestions([]);
-        }
+        if (val.length >= 3) fetchSuggestions(val, setPickupSuggestions);
+        else setPickupSuggestions([]);
     };
 
     const handlePickupSelect = (sug) => {
@@ -117,12 +102,8 @@ const WidgetBooking = () => {
         setDropOffs(updated);
         setActiveDropIndex(idx);
         setDropOffManuallyTyped((prev) => ({ ...prev, [idx]: true }));
-
-        if (val.length >= 3) {
-            fetchSuggestions(val, setDropOffSuggestions);
-        } else {
-            setDropOffSuggestions([]);
-        }
+        if (val.length >= 3) fetchSuggestions(val, setDropOffSuggestions);
+        else setDropOffSuggestions([]);
     };
 
     const handleDropOffSelect = (idx, sug) => {
@@ -135,28 +116,20 @@ const WidgetBooking = () => {
         setDropOffManuallyTyped((prev) => ({ ...prev, [idx]: false }));
     };
 
-    const addDropOff = () => {
-        if (dropOffs.length >= 3) {
-            toast.warning('Maximum 3 drop-offs allowed.');
-            return;
-        }
-        setDropOffs([...dropOffs, '']);
-    };
-
-    const removeDropOff = (idx) => {
-        const updated = [...dropOffs];
-        updated.splice(idx, 1);
-        setDropOffs(updated);
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!formData.pickup || dropOffs[0].trim() === '') {
+            toast.error("Pickup and at least one Drop Off is required.");
+            return;
+        }
+
         const referrer = document.referrer;
 
+        // Standardize manual entries
         if (!selectedPickup && formData.pickup) {
             formData.pickup = `Custom Input - ${formData.pickup}`;
         }
-
         dropOffs.forEach((val, idx) => {
             if (!selectedDropOffs[idx] && val) {
                 dropOffs[idx] = `Custom Input - ${val}`;
@@ -164,32 +137,61 @@ const WidgetBooking = () => {
         });
 
         const payload = {
+            ...formData,
+            dropoff: dropOffs[0],
+            additionalDropoff1: dropOffs[1] || null,
+            additionalDropoff2: dropOffs[2] || null,
+            hourlyOption: mode === 'Hourly' ? selectedHourly : null,
             mode,
             returnJourney: false,
-            companyId,
+            companyId: companyId || '',
             referrer,
-            journey1: {
-                ...formData,
-                dropoff: dropOffs[0],
-                additionalDropoff1: dropOffs[1] || null,
-                additionalDropoff2: dropOffs[2] || null,
-                fare: 0,
-                hourlyOption: mode === 'Hourly' ? selectedHourly : null,
-            },
         };
 
         try {
-            await submitWidgetForm(payload).unwrap();
-            toast.success('🎯 Booking submitted successfully!');
-            setFormData({
-                pickup: '', dropoff: '', pickmeAfter: '', flightNumber: '', arrivefrom: '',
-                doorNumber: '', notes: '', internalNotes: '', date: '', hour: '', minute: '', hourlyOption: ''
-            });
-            setDropOffs(['']);
+            const origin = formData.pickup?.replace("Custom Input - ", "")?.split(" - ")?.pop()?.trim();
+            const destination = dropOffs[0]?.replace("Custom Input - ", "")?.split(" - ")?.pop()?.trim();
+
+            if (!origin || !destination) {
+                toast.error("Origin or destination is empty.");
+                return;
+            }
+
+            const res = await triggerDistance({ origin, destination }).unwrap();
+
+            if (!res?.distanceText || !res?.durationText) {
+                toast.warn("⚠️ Distance not found between given locations.");
+            } else {
+                payload.distanceText = res.distanceText;
+                payload.durationText = res.durationText;
+            }
         } catch (err) {
-            console.error('Booking submission error:', err);
-            toast.error(err?.data?.message || '❌ Booking submission failed');
+            console.error("Distance API error:", err);
+            toast.error("❌ Failed to fetch distance.");
         }
+
+        localStorage.setItem("bookingForm", JSON.stringify(payload));
+        navigate("/vehicle-form");
+    };
+
+    const renderSortedSuggestions = (suggestions, selected, onSelect) => {
+        const unique = [...new Map(suggestions.map((item) => [item.formatted_address, item])).values()];
+        const sorted = selected
+            ? [
+                ...unique.filter(i => `${i.name} - ${i.formatted_address}` === selected),
+                ...unique.filter(i => `${i.name} - ${i.formatted_address}` !== selected)
+            ]
+            : unique;
+
+        return sorted.map((sug, idx) => (
+            <li
+                key={idx}
+                onClick={() => onSelect(sug)}
+                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+            >
+                {sug.name} - {sug.formatted_address}
+            </li>
+        ));
     };
 
     return (
@@ -312,8 +314,8 @@ const WidgetBooking = () => {
                         </div>
 
                         <div className="text-right pt-2">
-                            <button type="submit" className="bg-amber-500 text-white font-semibold px-6 py-2 rounded-md shadow-md transition-all duration-300 border-2 border-amber-500 hover:bg-white hover:text-amber-600 hover:border-amber-600 hover:shadow-lg">
-                                Submit
+                            <button type="submit" className="bg-amber-500 text-white px-6 py-2 rounded-md shadow hover:bg-amber-600">
+                                GET QUOTE
                             </button>
                         </div>
                     </div>
