@@ -24,7 +24,7 @@ import AddCompanyAccount from "./components/dashbaord/companyaccounts/AddCompany
 import CompanyAccountsList from "./components/dashbaord/companyaccounts/CompanyAccountsList";
 import CustomersList from "./components/dashbaord/customers/CustomersList";
 import AdminList from "./components/dashbaord/adminlist/AdminList";
-import WidgetAPI from "./components/dashbaord/widgetapi/widgetapi";
+// import WidgetAPI from "./components/dashbaord/widgetapi/widgetapi";
 
 import General from "./components/dashbaord/pricing/General";
 import VehiclePricing from "./components/dashbaord/pricing/VehiclePricing";
@@ -56,12 +56,11 @@ import SocialMedia from "./components/dashbaord/settings/SocialMedia";
 import ChatPlugin from "./components/dashbaord/settings/ChatPlugin";
 import CronJob from "./components/dashbaord/settings/CronJob";
 import DriverFare from "./components/dashbaord/pricing/DriverFare";
-import WidgetBooking from "./components/dashbaord/widgetapi/WidgetBooking";
+import WidgetMain from "./components/dashbaord/widgetapi/WidgetMain";
 
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import WidgetApi from "./components/dashbaord/widgetapi/widgetapi";
 
 function App() {
   return (
@@ -74,8 +73,7 @@ function App() {
           <Route path="/new-password" element={<ResetPassword />} />
         </Route>
 
-        <Route path="/widget-form" element={<WidgetBooking />} />
-        <Route path="/vehicle-form" element={<WidgetApi />} />
+        <Route path="/widget-form" element={<WidgetMain />} />
         {/* Role-Specific Dashboards */}
 
         <Route element={<ProtectedRoute />}>
@@ -143,7 +141,7 @@ function App() {
               <Route path="settings/cron-job" element={<CronJob />} />
 
               {/* Widget / API */}
-              <Route path="widget-api" element={<WidgetAPI />} />
+              {/* <Route path="widget-api" element={<WidgetAPI />} /> */}
 
               {/* Statements */}
               <Route path="statements/driver" element={<DriverStatements />} />
@@ -151,7 +149,7 @@ function App() {
 
               {/* Profile */}
               <Route path="profile" element={<EditProfile />} />
-              
+
               {/* Logout */}
               <Route path="logout" element={<Logout />} />
             </>

@@ -15,7 +15,7 @@ import {
 } from "../../../redux/api/vehicleApi";
 
 const VehiclePricing = () => {
-  const { data: vehicleData = [], isLoading, refetch, } = useGetAllVehiclesQuery();
+  const { data: vehicleData = [], refetch } = useGetAllVehiclesQuery();
   const companyId = useSelector((state) => state.auth?.user?.companyId);
 
   const [createVehicle] = useCreateVehicleMutation();
@@ -30,7 +30,6 @@ const VehiclePricing = () => {
   const [showImageSelector, setShowImageSelector] = useState(false);
   const [uploadFile, setUploadFile] = useState(null);
   const [imageOptions, setImageOptions] = useState([]);
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
@@ -46,6 +45,15 @@ const VehiclePricing = () => {
       setImageOptions(uniqueImages);
     }
   }, [vehicleData]);
+
+  useEffect(() => {
+    if (showModal) {
+      setSelectedAccount((prev) => ({
+        ...prev,
+        features: prev?.features?.length ? prev.features : [""],
+      }));
+    }
+  }, [showModal]);
 
   const handleEditModal = (record = {}) => {
     setSelectedAccount(record);
@@ -67,16 +75,14 @@ const VehiclePricing = () => {
   const handleSubmit = async () => {
     const formData = new FormData();
 
-    // ✅ Only once
-    if (companyId) {
-      formData.append("companyId", companyId);
-    } else {
+    if (!companyId) {
       toast.error("Company ID missing");
       return;
     }
+    formData.append("companyId", companyId);
 
     Object.entries(selectedAccount).forEach(([key, value]) => {
-      if (key === "image") return;
+      if (key === "image" || key === "features") return;
       if (value !== undefined && value !== null) {
         formData.append(key, value);
       }
@@ -88,6 +94,12 @@ const VehiclePricing = () => {
       formData.append("image", selectedAccount.image);
     }
 
+    // Features array
+    const cleanedFeatures = (selectedAccount.features || [])
+      .map((f) => f.trim())
+      .filter((f) => f);
+    formData.append("features", JSON.stringify(cleanedFeatures));
+
     try {
       if (selectedAccount._id) {
         await updateVehicle({ id: selectedAccount._id, formData });
@@ -97,14 +109,14 @@ const VehiclePricing = () => {
         toast.success("Vehicle created successfully");
       }
       setShowModal(false);
-      refetch(); 
+      refetch();
     } catch (err) {
       toast.error("Error saving vehicle");
     }
   };
 
   const filteredData = vehicleData
-    .filter((item) => item.companyId === companyId) // ✅ show only user's company vehicles
+    .filter((item) => item.companyId === companyId)
     .filter((item) =>
       Object.values(item).join(" ").toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -165,7 +177,7 @@ const VehiclePricing = () => {
         perPage={perPage}
       />
 
-      {/* Edit/Create Modal */}
+      {/* Create/Edit Modal */}
       <CustomModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
@@ -176,26 +188,32 @@ const VehiclePricing = () => {
         }
       >
         <div className="mx-auto p-4 font-sans space-y-4">
-          {["priority", "vehicleName", "passengers", "smallLuggage", "largeLuggage", "childSeat", "price"].map(
-            (key) => (
-              <div key={key}>
-                <label className="block text-sm font-medium text-gray-700 capitalize">
-                  {key.replace(/([A-Z])/g, " $1")}
-                </label>
-                <input
-                  type={key === "vehicleName" ? "text" : "number"}
-                  className="custom_input"
-                  value={selectedAccount?.[key] || ""}
-                  onChange={(e) =>
-                    setSelectedAccount({
-                      ...selectedAccount,
-                      [key]: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            )
-          )}
+          {[
+            "priority",
+            "vehicleName",
+            "passengers",
+            "smallLuggage",
+            "largeLuggage",
+            "childSeat",
+            "price",
+          ].map((key) => (
+            <div key={key}>
+              <label className="block text-sm font-medium text-gray-700 capitalize">
+                {key.replace(/([A-Z])/g, " $1")}
+              </label>
+              <input
+                type={key === "vehicleName" ? "text" : "number"}
+                className="custom_input"
+                value={selectedAccount?.[key] || ""}
+                onChange={(e) =>
+                  setSelectedAccount({
+                    ...selectedAccount,
+                    [key]: e.target.value,
+                  })
+                }
+              />
+            </div>
+          ))}
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Price Type</label>
@@ -215,6 +233,53 @@ const VehiclePricing = () => {
             </select>
           </div>
 
+          {/* Features Fields */}
+          <div className="mt-4">
+            <label className="block text-sm font-semibold mb-1">Features</label>
+            {selectedAccount?.features?.map((feature, index) => (
+              <div key={index} className="flex gap-2 items-center mb-2">
+                <input
+                  type="text"
+                  placeholder={`Feature ${index + 1}`}
+                  className="custom_input flex-1"
+                  value={feature}
+                  onChange={(e) => {
+                    const updated = [...selectedAccount.features];
+                    updated[index] = e.target.value;
+                    setSelectedAccount({ ...selectedAccount, features: updated });
+                  }}
+                />
+                <button
+                  className="text-red-500 font-bold"
+                  onClick={() => {
+                    const updated = [...selectedAccount.features];
+                    updated.splice(index, 1);
+                    setSelectedAccount({ ...selectedAccount, features: updated });
+                  }}
+                >
+                  ✖
+                </button>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              className="mt-2 px-3 py-1 bg-blue-500 text-white text-sm rounded"
+              onClick={() => {
+                if (selectedAccount.features.length >= 10) {
+                  toast.warning("You can only add up to 10 features.");
+                  return;
+                }
+                setSelectedAccount({
+                  ...selectedAccount,
+                  features: [...selectedAccount.features, ""],
+                });
+              }}
+            >
+              + Add More
+            </button>
+          </div>
+
           {/* Image Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Image Path or URL</label>
@@ -222,11 +287,7 @@ const VehiclePricing = () => {
               <input
                 type="text"
                 className="custom_input flex-1"
-                value={
-                  uploadFile
-                    ? uploadFile.name // ✅ show uploaded file name
-                    : selectedAccount?.image || ""
-                }
+                value={uploadFile ? uploadFile.name : selectedAccount?.image || ""}
                 readOnly
               />
               <button
@@ -246,13 +307,13 @@ const VehiclePricing = () => {
                   className="w-32 h-20 object-cover rounded shadow"
                 />
                 {uploadFile && (
-                  <p className="text-xs text-gray-500 mt-1">{uploadFile.name}</p> // ✅ filename below image
+                  <p className="text-xs text-gray-500 mt-1">{uploadFile.name}</p>
                 )}
               </div>
             )}
           </div>
 
-
+          {/* Footer Buttons */}
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={handleSubmit} className="btn btn-reset">
               {selectedAccount?._id ? "Update" : "Create"}
@@ -314,7 +375,7 @@ const VehiclePricing = () => {
         onCancel={() => {
           setShowDeleteModal(false);
           setDeleteId(null);
-          refetch(); 
+          refetch();
         }}
       />
     </>

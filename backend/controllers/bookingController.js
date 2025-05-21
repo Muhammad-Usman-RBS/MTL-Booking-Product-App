@@ -3,62 +3,189 @@ import Company from "../models/Company.js";
 import User from "../models/User.js";
 
 // ✅ Create Booking (standard route)
+// export const createBooking = async (req, res) => {
+//   try {
+//     const { mode, returnJourney, journey1, journey2, companyId, vehicle } = req.body;
+
+//     // Basic validations
+//     if (!mode || returnJourney === undefined || !journey1 || !vehicle) {
+//       return res.status(400).json({ message: "Required fields missing" });
+//     }
+
+//     if (!vehicle.vehicleName || vehicle.passenger === undefined) {
+//       return res.status(400).json({ message: "Vehicle information is incomplete" });
+//     }
+
+//     if (!journey1.date || journey1.hour === undefined || journey1.minute === undefined) {
+//       return res.status(400).json({ message: "Journey1 date/hour/minute missing" });
+//     }
+
+//     if (returnJourney) {
+//       if (!journey2 || !journey2.date || journey2.hour === undefined || journey2.minute === undefined) {
+//         return res.status(400).json({ message: "Journey2 date/hour/minute missing" });
+//       }
+//     }
+
+//     if (!companyId || companyId.length !== 24) {
+//       return res.status(400).json({ message: "Valid companyId is required" });
+//     }
+
+//     const bookingData = {
+//       mode,
+//       returnJourney,
+//       companyId,
+//       vehicle: {
+//         vehicleName: vehicle.vehicleName,
+//         passenger: vehicle.passenger,
+//         childSeat: vehicle.childSeat || 0,
+//         handLuggage: vehicle.handLuggage || 0,
+//         checkinLuggage: vehicle.checkinLuggage || 0,
+//       },
+//       journey1: { ...journey1, companyId },
+//       journey2: returnJourney ? journey2 : undefined,
+//     };
+
+//     const booking = await Booking.create(bookingData);
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Booking created successfully",
+//       booking,
+//     });
+//   } catch (error) {
+//     console.error("Error in createBooking controller:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Internal server error in createBooking",
+//       error: error.message,
+//     });
+//   }
+// };
+// ✅ Create Booking (standard route with full support)
 export const createBooking = async (req, res) => {
   try {
-    const { mode, returnJourney, journey1, journey2, companyId, vehicle } = req.body;
+    const {
+      mode = "Transfer",
+      returnJourney = false,
+      companyId,
+      referrer,
+      vehicle,
+      journey1,
+      journey2
+    } = req.body;
 
-    // Basic validations
-    if (!mode || returnJourney === undefined || !journey1 || !vehicle) {
-      return res.status(400).json({ message: "Required fields missing" });
+    if (!companyId || companyId.length !== 24) {
+      return res.status(400).json({ message: "Invalid or missing companyId" });
     }
 
-    if (!vehicle.vehicleName || vehicle.passenger === undefined) {
-      return res.status(400).json({ message: "Vehicle information is incomplete" });
+    if (!vehicle?.vehicleName) {
+      return res.status(400).json({ message: "Vehicle name is required" });
     }
 
-    if (!journey1.date || journey1.hour === undefined || journey1.minute === undefined) {
-      return res.status(400).json({ message: "Journey1 date/hour/minute missing" });
-    }
-
-    if (returnJourney) {
-      if (!journey2 || !journey2.date || journey2.hour === undefined || journey2.minute === undefined) {
-        return res.status(400).json({ message: "Journey2 date/hour/minute missing" });
+    const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
+    for (const field of requiredFields) {
+      if (!journey1?.[field]) {
+        return res.status(400).json({ message: `Missing required field in journey1: ${field}` });
       }
     }
 
-    if (!companyId || companyId.length !== 24) {
-      return res.status(400).json({ message: "Valid companyId is required" });
+    // ✅ Collect dynamic dropoff fields from journey1
+    const dynamicDropoffFields1 = {};
+    Object.keys(journey1 || {}).forEach((key) => {
+      if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
+        dynamicDropoffFields1[key] = journey1[key];
+      }
+    });
+
+    // ✅ Optional: Collect dynamic fields for return journey too
+    const dynamicDropoffFields2 = {};
+    if (returnJourney && journey2) {
+      Object.keys(journey2 || {}).forEach((key) => {
+        if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
+          dynamicDropoffFields2[key] = journey2[key];
+        }
+      });
     }
 
     const bookingData = {
       mode,
       returnJourney,
       companyId,
+      referrer: referrer || "Manual Entry",
+      source: "admin",
+      status: "Pending",
+
       vehicle: {
         vehicleName: vehicle.vehicleName,
-        passenger: vehicle.passenger,
+        passenger: vehicle.passenger || 0,
         childSeat: vehicle.childSeat || 0,
         handLuggage: vehicle.handLuggage || 0,
         checkinLuggage: vehicle.checkinLuggage || 0,
       },
-      journey1: { ...journey1, companyId },
-      journey2: returnJourney ? journey2 : undefined,
+
+      journey1: {
+        pickup: journey1.pickup,
+        dropoff: journey1.dropoff,
+        additionalDropoff1: journey1.additionalDropoff1 || null,
+        additionalDropoff2: journey1.additionalDropoff2 || null,
+
+        pickupDoorNumber: journey1.pickupDoorNumber || null,
+        terminal: journey1.terminal || null,
+
+        arrivefrom: journey1.arrivefrom || null,
+        flightNumber: journey1.flightNumber || null,
+        pickmeAfter: journey1.pickmeAfter || null,
+
+        notes: journey1.notes || null,
+        internalNotes: journey1.internalNotes || null,
+
+        date: journey1.date,
+        hour: parseInt(journey1.hour),
+        minute: parseInt(journey1.minute),
+        fare: 0,
+        hourlyOption: journey1.hourlyOption || null,
+
+        ...dynamicDropoffFields1,
+      },
+
+      ...(returnJourney && journey2 && {
+        journey2: {
+          pickup: journey2.pickup,
+          dropoff: journey2.dropoff,
+          additionalDropoff1: journey2.additionalDropoff1 || null,
+          additionalDropoff2: journey2.additionalDropoff2 || null,
+
+          pickupDoorNumber: journey2.pickupDoorNumber || null,
+          terminal: journey2.terminal || null,
+
+          arrivefrom: journey2.arrivefrom || null,
+          flightNumber: journey2.flightNumber || null,
+          pickmeAfter: journey2.pickmeAfter || null,
+
+          notes: journey2.notes || null,
+          internalNotes: journey2.internalNotes || null,
+
+          date: journey2.date,
+          hour: parseInt(journey2.hour),
+          minute: parseInt(journey2.minute),
+          fare: 0,
+          hourlyOption: journey2.hourlyOption || null,
+
+          ...dynamicDropoffFields2,
+        },
+      }),
     };
 
     const booking = await Booking.create(bookingData);
 
-    res.status(200).json({
+    res.status(201).json({
       success: true,
       message: "Booking created successfully",
       booking,
     });
   } catch (error) {
     console.error("Error in createBooking controller:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error in createBooking",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -128,10 +255,11 @@ export const submitWidgetForm = async (req, res) => {
     const {
       companyId,
       referrer,
-      journey1,
-      vehicle,
       mode = "Transfer",
       returnJourney = false,
+      vehicle,
+      journey1,
+      journey2
     } = req.body;
 
     if (!companyId || companyId.length !== 24) {
@@ -145,13 +273,36 @@ export const submitWidgetForm = async (req, res) => {
     const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
     for (const field of requiredFields) {
       if (!journey1?.[field]) {
-        return res.status(400).json({ message: `Missing required field: ${field}` });
+        return res.status(400).json({ message: `Missing required field in journey1: ${field}` });
       }
     }
 
-    const booking = await Booking.create({
+    // ✅ Collect dynamic dropoff fields from journey1
+    const dynamicDropoffFields1 = {};
+    Object.keys(journey1 || {}).forEach((key) => {
+      if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
+        dynamicDropoffFields1[key] = journey1[key];
+      }
+    });
+
+    // ✅ Optional: Collect dynamic fields for return journey too
+    const dynamicDropoffFields2 = {};
+    if (returnJourney && journey2) {
+      Object.keys(journey2 || {}).forEach((key) => {
+        if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
+          dynamicDropoffFields2[key] = journey2[key];
+        }
+      });
+    }
+
+    const bookingData = {
       mode,
       returnJourney,
+      companyId,
+      referrer: referrer || "Direct",
+      source: "widget",
+      status: "No Show",
+
       vehicle: {
         vehicleName: vehicle.vehicleName,
         passenger: vehicle.passenger || 0,
@@ -159,28 +310,61 @@ export const submitWidgetForm = async (req, res) => {
         handLuggage: vehicle.handLuggage || 0,
         checkinLuggage: vehicle.checkinLuggage || 0,
       },
+
       journey1: {
         pickup: journey1.pickup,
         dropoff: journey1.dropoff,
         additionalDropoff1: journey1.additionalDropoff1 || null,
         additionalDropoff2: journey1.additionalDropoff2 || null,
-        doorNumber: journey1.doorNumber || null,
+
+        pickupDoorNumber: journey1.pickupDoorNumber || null,
+        terminal: journey1.terminal || null,
+
         arrivefrom: journey1.arrivefrom || null,
         flightNumber: journey1.flightNumber || null,
         pickmeAfter: journey1.pickmeAfter || null,
+
         notes: journey1.notes || null,
         internalNotes: journey1.internalNotes || null,
+
         date: journey1.date,
-        hour: journey1.hour,
-        minute: journey1.minute,
+        hour: parseInt(journey1.hour),
+        minute: parseInt(journey1.minute),
         fare: 0,
         hourlyOption: journey1.hourlyOption || null,
+
+        ...dynamicDropoffFields1, // ✅ injected here
       },
-      companyId,
-      referrer: referrer || "Direct",
-      source: "widget",
-      status: "No Show",
-    });
+
+      ...(returnJourney && journey2 && {
+        journey2: {
+          pickup: journey2.pickup,
+          dropoff: journey2.dropoff,
+          additionalDropoff1: journey2.additionalDropoff1 || null,
+          additionalDropoff2: journey2.additionalDropoff2 || null,
+
+          pickupDoorNumber: journey2.pickupDoorNumber || null,
+          terminal: journey2.terminal || null,
+
+          arrivefrom: journey2.arrivefrom || null,
+          flightNumber: journey2.flightNumber || null,
+          pickmeAfter: journey2.pickmeAfter || null,
+
+          notes: journey2.notes || null,
+          internalNotes: journey2.internalNotes || null,
+
+          date: journey2.date,
+          hour: parseInt(journey2.hour),
+          minute: parseInt(journey2.minute),
+          fare: 0,
+          hourlyOption: journey2.hourlyOption || null,
+
+          ...dynamicDropoffFields2, // ✅ injected for return journey
+        },
+      }),
+    };
+
+    const booking = await Booking.create(bookingData);
 
     res.status(201).json({
       success: true,
@@ -192,4 +376,5 @@ export const submitWidgetForm = async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
+
 

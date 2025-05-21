@@ -25,31 +25,58 @@ export const createVehicle = async (req, res) => {
       priceType,
       companyId,
       image: imageFromBody,
+      features, // expected from FormData as JSON string
     } = req.body;
 
     let image = "";
 
+    // ✅ Upload image if file is present
     if (req.file?.path) {
       image = await uploadToCloudinary(req.file.path);
     } else if (imageFromBody) {
-      image = imageFromBody; // ✅ use image URL from body
+      image = imageFromBody;
     }
 
+    // ✅ Validate companyId
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
 
+    // ✅ Parse and sanitize features (ensure it's an array of clean strings)
+    let parsedFeatures = [];
+    if (features) {
+      try {
+        const featureArray = typeof features === "string" ? JSON.parse(features) : features;
+
+        if (!Array.isArray(featureArray)) {
+          throw new Error("Features must be an array");
+        }
+
+        if (featureArray.length > 10) {
+          throw new Error("Maximum 10 features allowed");
+        }
+
+        parsedFeatures = featureArray
+          .map((f) => String(f).trim())  // Force string and trim
+          .filter((f) => f.length > 0);  // Remove empty entries
+      } catch (err) {
+        return res.status(400).json({ message: `Features error: ${err.message}` });
+      }
+    }
+
+    // ✅ Create and save vehicle with proper features array
     const newVehicle = new Vehicle({
-      priority,
+      priority: Number(priority),
       vehicleName,
-      passengers,
-      smallLuggage,
-      largeLuggage,
-      childSeat,
-      price,
+      passengers: Number(passengers),
+      smallLuggage: Number(smallLuggage),
+      largeLuggage: Number(largeLuggage),
+      childSeat: Number(childSeat),
+      price: Number(price),
       priceType,
-      image, // ✅ now properly handled
+      image,
       companyId,
+      features: parsedFeatures,
     });
 
     const saved = await newVehicle.save();
@@ -76,7 +103,6 @@ export const getAllVehicles = async (req, res) => {
   }
 };
 
-
 // UPDATE
 export const updateVehicle = async (req, res) => {
   try {
@@ -90,10 +116,11 @@ export const updateVehicle = async (req, res) => {
       price,
       priceType,
       companyId,
-      image: imageFromBody, // fallback image string if file not provided
+      image: imageFromBody,
+      features, // ✅ expected as a stringified JSON array from FormData
     } = req.body;
 
-    // ✅ Convert companyId to string if it's an array (FormData issue)
+    // ✅ Fix FormData array conversion issue
     if (Array.isArray(companyId)) {
       companyId = companyId[0];
     }
@@ -102,7 +129,28 @@ export const updateVehicle = async (req, res) => {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
 
-    // ✅ Prepare the update payload
+    // ✅ Properly parse and validate features array
+    let parsedFeatures = [];
+    if (features) {
+      try {
+        // Parse features only if it's a stringified array
+        const featureArray = typeof features === "string" ? JSON.parse(features) : features;
+
+        if (!Array.isArray(featureArray)) {
+          throw new Error("Features must be an array");
+        }
+
+        if (featureArray.length > 10) {
+          throw new Error("Maximum 10 features allowed");
+        }
+
+        parsedFeatures = featureArray.map((f) => String(f).trim()).filter(Boolean);
+      } catch (err) {
+        return res.status(400).json({ message: `Features error: ${err.message}` });
+      }
+    }
+
+    // ✅ Build the update object
     const updates = {
       priority: Number(priority),
       vehicleName,
@@ -113,16 +161,17 @@ export const updateVehicle = async (req, res) => {
       price: Number(price),
       priceType,
       companyId,
+      features: parsedFeatures, // ✅ guaranteed to be array of strings
     };
 
-    // ✅ Handle optional image upload or reuse
+    // ✅ Image handling
     if (req.file?.path) {
       updates.image = await uploadToCloudinary(req.file.path);
     } else if (imageFromBody) {
       updates.image = imageFromBody;
     }
 
-    // ✅ Perform DB update
+    // ✅ Execute update
     const updated = await Vehicle.findByIdAndUpdate(req.params.id, updates, {
       new: true,
     });
@@ -148,3 +197,20 @@ export const deleteVehicle = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Fetches all vehicles for a specific company, sorted by priority.
+export const getVehiclesByCompanyId = async (req, res) => {
+  try {
+    const { companyId } = req.query;
+
+    if (!companyId || companyId.length !== 24) {
+      return res.status(400).json({ message: "Valid companyId is required" });
+    }
+
+    const vehicles = await Vehicle.find({ companyId }).sort({ priority: 1 });
+    res.status(200).json(vehicles);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+

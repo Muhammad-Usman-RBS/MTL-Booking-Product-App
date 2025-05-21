@@ -40,41 +40,48 @@
 
 
 
-
-
-
-
-
-
 import React, { useEffect, useState } from 'react';
 import {
-  Check, AlertCircle, ReceiptText, PlaneTakeoff, PlaneLanding, Clock, CalendarDays, MapPin
+  Check, AlertCircle, ReceiptText, PlaneTakeoff, PlaneLanding, Clock, MapPin
 } from "lucide-react";
 import CarCardSection from './CarCardSection';
-import { useGetAllVehiclesQuery } from '../../../redux/api/vehicleApi';
-import { useCreateBookingMutation } from '../../../redux/api/bookingApi';
+import { useGetPublicVehiclesQuery } from '../../../redux/api/vehicleApi';
+import { useSubmitWidgetFormMutation } from '../../../redux/api/bookingApi';
 import { useLazyGetDistanceQuery } from '../../../redux/api/googleApi';
 import { toast, ToastContainer } from 'react-toastify';
 
-const WidgetApi = ({ baseRate = '197.87', meetAndGreet = '10.50', estimatedTax = '15.00' }) => {
-  const [companyId, setCompanyId] = useState('');
+const WidgetBookingInformation = ({
+  companyId: propCompanyId,
+  baseRate = '197.87',
+  meetAndGreet = '10.50',
+  estimatedTax = '15.00'
+}) => {
+  const companyId = propCompanyId || new URLSearchParams(window.location.search).get('company') || '';
+
   const [selectedCarId, setSelectedCarId] = useState(null);
   const [formData, setFormData] = useState(null);
   const [distanceText, setDistanceText] = useState(null);
   const [durationText, setDurationText] = useState(null);
 
-  const [createBooking] = useCreateBookingMutation();
+  const [submitWidgetForm] = useSubmitWidgetFormMutation();
   const [triggerDistance] = useLazyGetDistanceQuery();
-const { data: carList = [], isLoading, error } = useGetAllVehiclesQuery(companyId, { skip: !companyId });
 
-  // Read company ID from query param
+  // ✅ Use PUBLIC API hook
+  const { data: carList = [], isLoading, error } = useGetPublicVehiclesQuery(companyId, {
+    skip: !companyId,
+  });
+
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const cid = params.get("company");
-    if (cid) setCompanyId(cid);
+    const sendHeight = () => {
+      const height = document.documentElement.scrollHeight;
+      window.parent.postMessage({ type: "setHeight", height }, "*");
+    };
+    sendHeight();
+    const resizeObserver = new ResizeObserver(sendHeight);
+    resizeObserver.observe(document.body);
+    return () => resizeObserver.disconnect();
   }, []);
 
-  // Load form data + trigger distance API
   useEffect(() => {
     const storedForm = localStorage.getItem("bookingForm");
     if (!storedForm) {
@@ -121,13 +128,46 @@ const { data: carList = [], isLoading, error } = useGetAllVehiclesQuery(companyI
       return;
     }
 
+    const journey1DynamicFields = {};
+    Object.keys(formData).forEach((key) => {
+      if (key.startsWith("dropoffDoorNumber") || key.startsWith("dropoff_terminal_")) {
+        journey1DynamicFields[key] = formData[key];
+      }
+    });
+
     const payload = {
-      ...formData,
-      vehicleId: selectedCar._id,
+      mode: formData.mode || "Transfer",
+      returnJourney: false,
+      companyId,
+      referrer: document.referrer,
+      vehicle: {
+        vehicleName: selectedCar.vehicleName,
+        passenger: selectedCar.passengers,
+        childSeat: selectedCar.childSeat || 0,
+        handLuggage: selectedCar.smallLuggage || 0,
+        checkinLuggage: selectedCar.largeLuggage || 0,
+      },
+      journey1: {
+        pickup: formData.pickup,
+        dropoff: formData.dropoff,
+        date: formData.date,
+        hour: parseInt(formData.hour),
+        minute: parseInt(formData.minute),
+        notes: formData.notes || "",
+        distanceText,
+        durationText,
+        arrivefrom: formData.arrivefrom || "",
+        flightNumber: formData.flightNumber || "",
+        pickupDoorNumber: formData.pickupDoorNumber || "",
+        hourlyOption: formData.hourlyOption || null,
+        additionalDropoff1: formData.additionalDropoff1 || null,
+        additionalDropoff2: formData.additionalDropoff2 || null,
+        ...journey1DynamicFields,
+      },
     };
 
     try {
-      await createBooking(payload).unwrap();
+      await submitWidgetForm(payload).unwrap();
       toast.success("✅ Booking submitted successfully!");
       localStorage.removeItem("bookingForm");
     } catch (err) {
@@ -135,6 +175,8 @@ const { data: carList = [], isLoading, error } = useGetAllVehiclesQuery(companyI
       console.error(err);
     }
   };
+
+
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -241,11 +283,16 @@ const { data: carList = [], isLoading, error } = useGetAllVehiclesQuery(companyI
             <p className="text-red-500">Failed to load vehicles.</p>
           ) : (
             <>
-              <CarCardSection
-                carList={carList}
-                selectedCarId={selectedCarId}
-                onSelect={setSelectedCarId}
-              />
+              {carList.length === 0 ? (
+                <p>No cars found.</p>
+              ) : (
+                <CarCardSection
+                  carList={carList}
+                  selectedCarId={selectedCarId}
+                  onSelect={setSelectedCarId}
+                />
+              )}
+
               <div className="text-right mt-4">
                 <button
                   onClick={handleSubmitBooking}
@@ -319,4 +366,4 @@ const { data: carList = [], isLoading, error } = useGetAllVehiclesQuery(companyI
   );
 };
 
-export default WidgetApi;
+export default WidgetBookingInformation;

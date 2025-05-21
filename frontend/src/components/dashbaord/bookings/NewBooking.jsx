@@ -142,11 +142,10 @@ const NewBooking = () => {
             <button
               key={tab}
               onClick={() => setMode(tab)}
-              className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${
-                mode === tab
+              className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${mode === tab
                   ? "bg-[#f3f4f6] text-dark border border-black"
                   : "bg-[#f3f4f6] text-dark"
-              } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
+                } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
             >
               {tab}
             </button>

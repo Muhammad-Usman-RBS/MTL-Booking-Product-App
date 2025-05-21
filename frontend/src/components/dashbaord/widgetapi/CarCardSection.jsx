@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 
-// Single Car Card
+// ✅ Single Car Card
 const CarCard = ({ car, isSelected, onSelect }) => {
   const [showDetails, setShowDetails] = useState(false);
 
@@ -13,19 +13,17 @@ const CarCard = ({ car, isSelected, onSelect }) => {
     passengers = 0,
     smallLuggage = 0,
     largeLuggage = 0,
+    childSeat = 0,
     description = '',
     carModel = '',
-    features = ['Free Wi-Fi', 'Air conditioning', 'Professional driver', 'Flight tracking'],
+    features = [],
   } = car;
-
-  const totalLuggage = smallLuggage + largeLuggage;
 
   return (
     <div
       id={_id}
-      className={`rounded-xl border transition-shadow duration-300 mb-6 overflow-hidden cursor-pointer ${
-        isSelected ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 bg-white'
-      }`}
+      className={`rounded-xl border transition-shadow duration-300 mb-6 overflow-hidden cursor-pointer ${isSelected ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 bg-white'
+        }`}
       onClick={() => onSelect(_id)}
     >
       <div className="p-4">
@@ -34,7 +32,9 @@ const CarCard = ({ car, isSelected, onSelect }) => {
             src={image}
             alt={vehicleName}
             className="w-24 h-24 object-contain rounded-md border border-gray-200 bg-gray-50"
-            onError={(e) => { e.target.src = '/placeholder-car.png'; }}
+            onError={(e) => {
+              e.target.src = '/placeholder-car.png';
+            }}
           />
 
           <div className="flex-1">
@@ -54,20 +54,24 @@ const CarCard = ({ car, isSelected, onSelect }) => {
               </div>
             </div>
 
-            <div className="mt-2 text-sm text-gray-600 flex gap-6">
+            <div className="mt-2 text-sm text-gray-600 flex gap-6 flex-wrap">
               <span>{passengers} Passengers</span>
-              <span>{totalLuggage} Luggage</span>
+              <span>{smallLuggage} Small Luggage</span>
+              <span>{childSeat} Child Seat</span>
+              <span>{largeLuggage} Large Luggage</span>
             </div>
 
-            <div className="text-xs text-gray-500 mt-1">
-              {description && <span>{description}</span>}
-              {carModel && <span> · {carModel}</span>}
-            </div>
+            {(description || carModel) && (
+              <div className="text-xs text-gray-500 mt-1">
+                {description && <span>{description}</span>}
+                {carModel && <span> · {carModel}</span>}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {showDetails && (
+      {showDetails && features.length > 0 && (
         <div className="px-6 pb-4 pt-4 text-sm text-gray-700 bg-gray-50 border-t border-gray-200">
           <ul className="space-y-2">
             {features.map((item, idx) => (
@@ -83,7 +87,7 @@ const CarCard = ({ car, isSelected, onSelect }) => {
   );
 };
 
-// Car Card Section
+// ✅ Single Column Section Layout
 const CarCardSection = ({ carList, selectedCarId, onSelect }) => {
   return (
     <div className="grid grid-cols-1">

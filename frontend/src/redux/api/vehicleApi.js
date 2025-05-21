@@ -1,18 +1,28 @@
-// redux/api/vehicleApi.js
-
 import { apiSlice } from "../apiSlice";
 
 export const vehicleApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    getAllVehicles: builder.query({
+    // ✅ PUBLIC: Get all vehicles by companyId for iframe widget
+    getPublicVehicles: builder.query({
       query: (companyId) => ({
-        url: "/pricing/vehicles",
+        url: `/pricing/vehicles/public`,
         method: "GET",
-        params: { companyId }, // ✅ Pass it in query
+        params: { companyId },
       }),
       providesTags: ["Vehicles"],
     }),
 
+    // ✅ AUTH-PROTECTED: Get all vehicles (if used in dashboard)
+    getAllVehicles: builder.query({
+      query: (companyId) => ({
+        url: `/pricing/vehicles`,
+        method: "GET",
+        params: { companyId },
+      }),
+      providesTags: ["Vehicles"],
+    }),
+
+    // CREATE
     createVehicle: builder.mutation({
       query: (formData) => ({
         url: "/pricing/vehicles",
@@ -22,6 +32,7 @@ export const vehicleApi = apiSlice.injectEndpoints({
       invalidatesTags: ["Vehicles"],
     }),
 
+    // UPDATE
     updateVehicle: builder.mutation({
       query: ({ id, formData }) => ({
         url: `/pricing/vehicles/${id}`,
@@ -31,6 +42,7 @@ export const vehicleApi = apiSlice.injectEndpoints({
       invalidatesTags: ["Vehicles"],
     }),
 
+    // DELETE
     deleteVehicle: builder.mutation({
       query: (id) => ({
         url: `/pricing/vehicles/${id}`,
@@ -43,6 +55,7 @@ export const vehicleApi = apiSlice.injectEndpoints({
 
 export const {
   useGetAllVehiclesQuery,
+  useGetPublicVehiclesQuery,
   useCreateVehicleMutation,
   useUpdateVehicleMutation,
   useDeleteVehicleMutation,

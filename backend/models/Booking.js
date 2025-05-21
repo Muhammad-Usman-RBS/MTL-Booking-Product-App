@@ -6,7 +6,17 @@ const JourneySchema = new mongoose.Schema({
   additionalDropoff1: { type: String },
   additionalDropoff2: { type: String },
 
-  doorNumber: { type: String },
+  // ✅ Correctly named fields
+  pickupDoorNumber: { type: String },
+  dropoffDoorNumber0: { type: String },
+  dropoffDoorNumber1: { type: String },
+  dropoffDoorNumber2: { type: String },
+
+  terminal: { type: String },
+  dropoff_terminal_0: { type: String },
+  dropoff_terminal_1: { type: String },
+  dropoff_terminal_2: { type: String },
+
   arrivefrom: { type: String },
   flightNumber: { type: String },
   pickmeAfter: { type: String },

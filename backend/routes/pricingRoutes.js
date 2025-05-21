@@ -2,51 +2,25 @@ import express from "express";
 import { protect, authorize } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
 import {
-  getGeneralPricing,
-  updateGeneralPricing,
+  getGeneralPricing, updateGeneralPricing,
 } from "../controllers/pricings/generalController.js";
 import {
-  createVehicle,
-  getAllVehicles,
-  updateVehicle,
-  deleteVehicle,
+  createVehicle, getAllVehicles, updateVehicle, deleteVehicle, getVehiclesByCompanyId,
 } from "../controllers/pricings/vehicleController.js";
 
 const router = express.Router();
 
-// 🔐 GET General Pricing (accessible to all authenticated users)
+// 🔐 General Pricing
 router.get("/general", protect, getGeneralPricing);
-
-// 🔐 POST or Update General Pricing (restricted to admins)
 router.post("/general", protect, authorize("admin", "superadmin"), updateGeneralPricing);
 
-// 🔐 Create New Vehicle (requires image upload)
-router.post(
-  "/vehicles",
-  protect,
-  authorize("superadmin", "clientadmin"),
-  upload.single("image"),
-  createVehicle
-);
-
-// 🔓 Get All Vehicles (any authenticated user)
+// 🔐 Vehicle CRUD
+router.post("/vehicles", protect, authorize("superadmin", "clientadmin"), upload.single("image"), createVehicle);
 router.get("/vehicles", protect, getAllVehicles);
+router.put("/vehicles/:id", protect, authorize("superadmin", "clientadmin"), upload.single("image"), updateVehicle);
+router.delete("/vehicles/:id", protect, authorize("superadmin", "clientadmin"), deleteVehicle);
 
-// 🔐 Update Vehicle by ID (requires image upload)
-router.put(
-  "/vehicles/:id",
-  protect,
-  authorize("superadmin", "clientadmin"),
-  upload.single("image"),
-  updateVehicle
-);
-
-// 🔐 Delete Vehicle by ID
-router.delete(
-  "/vehicles/:id",
-  protect,
-  authorize("superadmin", "clientadmin"),
-  deleteVehicle
-);
+// ✅ Public access for iframe/widget
+router.get("/vehicles/public", getVehiclesByCompanyId);
 
 export default router;
