@@ -434,11 +434,6 @@
 
 
 
-
-
-
-
-
 import React, { useState, useEffect } from "react";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import BookingsFilters from "./BookingsFilters";
@@ -448,6 +443,8 @@ import AuditModal from "./AuditModal";
 import JourneyDetailsModal from "./JourneyDetailsModal";
 import ViewDriver from "./ViewDriver";
 import ShortcutkeysModal from "./ShortcutkeysModal";
+import NewBooking from "./NewBooking"; // ✅ Import NewBooking form
+
 import {
   statusList,
   driverList,
@@ -493,6 +490,9 @@ const BookingsList = () => {
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
+
+  const [showEditModal, setShowEditModal] = useState(false); // ✅ Edit modal
+  const [editBookingData, setEditBookingData] = useState(null); // ✅ Data for edit
 
   const openAuditModal = (audit) => {
     setAuditData(audit || []);
@@ -559,6 +559,8 @@ const BookingsList = () => {
         openViewModal={openViewModal}
         openDriverModal={openDriverModal}
         actionMenuItems={actionMenuItems}
+        setEditBookingData={setEditBookingData} // ✅ Pass setter
+        setShowEditModal={setShowEditModal}     // ✅ Pass modal toggle
       />
 
       <CustomModal isOpen={showAuditModal} onClose={() => setShowAuditModal(false)} heading="Status Audit">
@@ -598,6 +600,18 @@ const BookingsList = () => {
             </label>
           ))}
         </div>
+      </CustomModal>
+
+      {/* ✅ EDIT MODAL WITH NewBooking */}
+      <CustomModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        heading="Edit Booking"
+      >
+        <NewBooking
+          editBookingData={editBookingData}
+          onClose={() => setShowEditModal(false)}
+        />
       </CustomModal>
     </>
   );

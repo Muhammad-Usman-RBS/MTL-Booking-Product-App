@@ -7,12 +7,13 @@ import {
 import {
   createVehicle, getAllVehicles, updateVehicle, deleteVehicle, getVehiclesByCompanyId,
 } from "../controllers/pricings/vehicleController.js";
+import { createHourlyPackage, deleteHourlyPackage, getAllHourlyPackages, getHourlyPackageById, updateHourlyPackage } from "../controllers/pricings/hourlyPackageController.js";
 
 const router = express.Router();
 
 // 🔐 General Pricing
 router.get("/general", protect, getGeneralPricing);
-router.post("/general", protect, authorize("admin", "superadmin"), updateGeneralPricing);
+router.post("/general", protect, authorize("superadmin", "clientadmin"), updateGeneralPricing);
 
 // 🔐 Vehicle CRUD
 router.post("/vehicles", protect, authorize("superadmin", "clientadmin"), upload.single("image"), createVehicle);
@@ -22,5 +23,12 @@ router.delete("/vehicles/:id", protect, authorize("superadmin", "clientadmin"), 
 
 // ✅ Public access for iframe/widget
 router.get("/vehicles/public", getVehiclesByCompanyId);
+
+// Hourly Packages Routes
+router.post('/addHourlyPackage', createHourlyPackage);
+router.get('/getAllHourlyRates', getAllHourlyPackages);
+router.get('/getHourlyRateById/:id', getHourlyPackageById);
+router.put('/updateHourlyPackage/:id', updateHourlyPackage);
+router.delete('/delHourlyPackage/:id', deleteHourlyPackage);
 
 export default router;

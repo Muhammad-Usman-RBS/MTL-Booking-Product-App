@@ -425,8 +425,8 @@ export const options = [
 export const actionMenuItems = [
   "View",
   "Edit",
-  "Cancel",
   "Delete",
+  "Copy Booking",
   "Status Audit",
 ];
 

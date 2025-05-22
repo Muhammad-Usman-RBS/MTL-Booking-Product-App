@@ -111,7 +111,7 @@ const JourneyCard = ({ title, journeyData, setJourneyData, dropOffs, setDropOffs
             </div>
 
             <div className="relative">
-                <input type="text" name="pickup" placeholder="Pickup Location" value={journeyData.pickup} onChange={handlePickupChange} className="custom_input" />
+                <input type="text" name="pickup" placeholder="Pickup Location" value={journeyData.pickup} onChange={handlePickupChange} className="custom_input mb-4" />
                 {pickupSuggestions.length > 0 && (
                     <ul className="absolute z-10 bg-white border rounded shadow max-h-40 overflow-y-auto w-full">
                         <li
@@ -145,7 +145,7 @@ const JourneyCard = ({ title, journeyData, setJourneyData, dropOffs, setDropOffs
             )}
 
             {dropOffs.map((val, idx) => (
-                <div key={idx} className="relative mt-4">
+                <div key={idx} className="mt-4 mb-4 flex gap-2">
                     <input
                         type="text"
                         value={val}
@@ -196,7 +196,7 @@ const JourneyCard = ({ title, journeyData, setJourneyData, dropOffs, setDropOffs
                     )}
 
                     {idx > 0 && (
-                        <button type="button" onClick={() => removeDropOff(idx)} className="btn btn-cancel absolute right-0 top-0 mt-1 mr-2">&minus;</button>
+                        <button type="button" onClick={() => removeDropOff(idx)} className="btn btn-cancel mt-1 mr-2">&minus;</button>
                     )}
                 </div>
             ))}

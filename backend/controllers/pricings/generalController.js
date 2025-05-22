@@ -1,4 +1,4 @@
-import GeneralPricing from "../../models/pricings/generalModel.js";
+import GeneralPricing from "../../models/pricings/GeneralModel.js";
 
 export const getGeneralPricing = async (req, res) => {
   try {

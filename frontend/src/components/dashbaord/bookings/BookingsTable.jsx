@@ -1,7 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
-import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
+import { toast } from "react-toastify";
+import {
+    useGetAllBookingsQuery,
+    useDeleteBookingMutation,
+} from "../../../redux/api/bookingApi";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal"; // ✅ Import modal
 import { GripHorizontal } from "lucide-react";
 
 const BookingsTable = ({
@@ -15,11 +20,18 @@ const BookingsTable = ({
     openViewModal,
     openDriverModal,
     actionMenuItems,
+    setEditBookingData,
+    setShowEditModal,
 }) => {
     const user = useSelector((state) => state.auth.user);
     const companyId = user?.companyId;
 
     const { data, isLoading, error } = useGetAllBookingsQuery(companyId);
+    const [deleteBooking] = useDeleteBookingMutation();
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);         // ✅ Track modal
+    const [selectedDeleteId, setSelectedDeleteId] = useState(null);        // ✅ Booking to delete
+
     const bookings = (data?.bookings || []).filter(
         (booking) => booking?.companyId?.toString() === companyId?.toString()
     );
@@ -27,6 +39,17 @@ const BookingsTable = ({
     if (isLoading) return <p>Loading...</p>;
     if (error) return <p>Error loading bookings</p>;
     if (!bookings.length) return <p>No bookings found</p>;
+
+    const handleDeleteBooking = async () => {
+        try {
+            await deleteBooking(selectedDeleteId).unwrap();
+            toast.success("Booking deleted successfully");
+            setSelectedDeleteId(null);
+            setShowDeleteModal(false);
+        } catch (err) {
+            toast.error("Failed to delete booking");
+        }
+    };
 
     const tableHeaders = [
         { label: "Order No.", key: "orderNo" },
@@ -42,11 +65,6 @@ const BookingsTable = ({
         { label: "Status", key: "status" },
         { label: "Actions", key: "actions" },
     ];
-
-    const formatVehicle = (vehicle) => {
-        if (!vehicle || typeof vehicle !== "object") return "-";
-        return `${vehicle.vehicleName || "N/A"} | 👥 ${vehicle.passenger || 0} | 🎒 ${vehicle.handLuggage || 0} | 🧳 ${vehicle.checkinLuggage || 0}`;
-    };
 
     const getBadgeColor = (status) => {
         switch (status) {
@@ -65,6 +83,11 @@ const BookingsTable = ({
             default:
                 return "bg-gray-100 text-gray-800";
         }
+    };
+
+    const formatVehicle = (vehicle) => {
+        if (!vehicle || typeof vehicle !== "object") return "-";
+        return `${vehicle.vehicleName || "N/A"} | 👥 ${vehicle.passenger || 0} | 🎒 ${vehicle.handLuggage || 0} | 🧳 ${vehicle.checkinLuggage || 0}`;
     };
 
     const tableData = bookings.map((item, index) => {
@@ -139,6 +162,13 @@ const BookingsTable = ({
                                             onClick={() => {
                                                 if (action === "Status Audit") openAuditModal(item.statusAudit);
                                                 else if (action === "View") openViewModal(item.view);
+                                                else if (action === "Edit") {
+                                                    setEditBookingData(item);
+                                                    setShowEditModal(true);
+                                                } else if (action === "Delete") {
+                                                    setSelectedDeleteId(item._id); // ✅ set ID
+                                                    setShowDeleteModal(true);       // ✅ show modal
+                                                }
                                             }}
                                             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
                                         >
@@ -173,16 +203,28 @@ const BookingsTable = ({
     }));
 
     return (
-        <CustomTable
-            tableHeaders={tableHeaders.filter((header) => selectedColumns[header.key])}
-            tableData={tableData}
-            exportTableData={exportTableData}
-            showSearch={true}
-            showRefresh={true}
-            showDownload={true}
-            showPagination={true}
-            showSorting={true}
-        />
+        <>
+            <CustomTable
+                tableHeaders={tableHeaders.filter((header) => selectedColumns[header.key])}
+                tableData={tableData}
+                exportTableData={exportTableData}
+                showSearch={true}
+                showRefresh={true}
+                showDownload={true}
+                showPagination={true}
+                showSorting={true}
+            />
+
+            {/* ✅ Delete Confirmation Modal */}
+            <DeleteModal
+                isOpen={showDeleteModal}
+                onConfirm={handleDeleteBooking}
+                onCancel={() => {
+                    setShowDeleteModal(false);
+                    setSelectedDeleteId(null);
+                }}
+            />
+        </>
     );
 };
 

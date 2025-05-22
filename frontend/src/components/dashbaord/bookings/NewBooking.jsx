@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import VehicleSelection from "./VehicleSelection";
@@ -7,12 +7,16 @@ import FareSection from "./FareSection";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import JourneyCard from "./JourneyCard";
-import { useCreateBookingMutation } from "../../../redux/api/bookingApi";
+import {
+  useCreateBookingMutation,
+  useUpdateBookingMutation,
+} from "../../../redux/api/bookingApi";
 import { useLazyGetDistanceQuery } from "../../../redux/api/googleApi";
+import { useSelector } from "react-redux";
 
 const hourlyOptions = ["40 miles 4 hours", "60 miles 6 hours", "80 miles 8 hours"];
 
-const NewBooking = () => {
+const NewBooking = ({ editBookingData = null, onClose }) => {
   const [mode, setMode] = useState("Transfer");
   const [returnJourney, setReturnJourney] = useState(false);
   const [selectedHourly, setSelectedHourly] = useState(hourlyOptions[0]);
@@ -53,10 +57,46 @@ const NewBooking = () => {
   const [dropOffs2, setDropOffs2] = useState([""]);
 
   const [createBooking, { isLoading }] = useCreateBookingMutation();
+  const [updateBooking] = useUpdateBookingMutation();
   const [triggerDistance] = useLazyGetDistanceQuery();
 
-  const user = JSON.parse(localStorage.getItem("user"));
-  const companyId = user?.companyId || "";
+  const user = useSelector((state) => state.auth.user);
+  const companyId = user?.companyId;
+
+  // ✅ Prefill form if editing
+  useEffect(() => {
+    if (editBookingData) {
+      setMode(editBookingData.mode || "Transfer");
+      setReturnJourney(editBookingData.returnJourney || false);
+      setSelectedVehicle(editBookingData.vehicle || null);
+      setVehicleExtras({
+        passenger: editBookingData.vehicle?.passenger || 0,
+        childSeat: editBookingData.vehicle?.childSeat || 0,
+        handLuggage: editBookingData.vehicle?.handLuggage || 0,
+        checkinLuggage: editBookingData.vehicle?.checkinLuggage || 0,
+      });
+
+      setJourney1Data(editBookingData.journey1 || {});
+      setDropOffs1([
+        editBookingData.journey1?.dropoff || "",
+        editBookingData.journey1?.additionalDropoff1 || "",
+        editBookingData.journey1?.additionalDropoff2 || ""
+      ]);
+
+      if (editBookingData.returnJourney) {
+        setJourney2Data(editBookingData.journey2 || {});
+        setDropOffs2([
+          editBookingData.journey2?.dropoff || "",
+          editBookingData.journey2?.additionalDropoff1 || "",
+          editBookingData.journey2?.additionalDropoff2 || ""
+        ]);
+      }
+
+      if (editBookingData.journey1?.hourlyOption) {
+        setSelectedHourly(editBookingData.journey1.hourlyOption);
+      }
+    }
+  }, [editBookingData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -72,13 +112,13 @@ const NewBooking = () => {
     }
 
     const dynamicFields1 = {};
-    dropOffs1.forEach((val, idx) => {
+    dropOffs1.forEach((_, idx) => {
       dynamicFields1[`dropoffDoorNumber${idx}`] = journey1Data[`dropoffDoorNumber${idx}`] || "";
       dynamicFields1[`dropoff_terminal_${idx}`] = journey1Data[`dropoff_terminal_${idx}`] || "";
     });
 
     const dynamicFields2 = {};
-    dropOffs2.forEach((val, idx) => {
+    dropOffs2.forEach((_, idx) => {
       dynamicFields2[`dropoffDoorNumber${idx}`] = journey2Data[`dropoffDoorNumber${idx}`] || "";
       dynamicFields2[`dropoff_terminal_${idx}`] = journey2Data[`dropoff_terminal_${idx}`] || "";
     });
@@ -116,42 +156,47 @@ const NewBooking = () => {
       const origin = journey1Data.pickup?.split(" - ").pop()?.trim();
       const destination = dropOffs1[0]?.split(" - ").pop()?.trim();
 
-      if (!origin || !destination) {
-        toast.error("Origin or destination is empty.");
-        return;
-      }
-
-      const res = await triggerDistance({ origin, destination }).unwrap();
-      if (res?.distanceText && res?.durationText) {
-        payload.journey1.distanceText = res.distanceText;
-        payload.journey1.durationText = res.durationText;
+      if (origin && destination) {
+        const res = await triggerDistance({ origin, destination }).unwrap();
+        if (res?.distanceText && res?.durationText) {
+          payload.journey1.distanceText = res.distanceText;
+          payload.journey1.durationText = res.durationText;
+        }
       }
     } catch (err) {
       console.warn("⚠️ Distance matrix error:", err);
     }
 
     try {
-      await createBooking(payload).unwrap();
-      toast.success("Booking submitted successfully.");
+      if (editBookingData) {
+        await updateBooking({ id: editBookingData._id, updatedData: payload }).unwrap();
+        toast.success("Booking updated successfully.");
+      } else {
+        await createBooking(payload).unwrap();
+        toast.success("Booking submitted successfully.");
+      }
+      if (onClose) onClose(); // ✅ Close modal if passed
     } catch (err) {
-      console.error("❌ Booking submission error:", err);
-      toast.error("Failed to submit booking.");
+      console.error("❌ Booking error:", err);
+      toast.error("Failed to process booking.");
     }
   };
 
   return (
     <>
       <ToastContainer />
-      <div>
-        <OutletHeading name="New Booking" />
+      <div className={editBookingData ? "ps-5 pe-5 pt-5" : "ps-0 pe-0"}>
+
+        <div className={editBookingData ? "hidden" : "block"}>
+          <OutletHeading name="New Booking" />
+        </div>
 
         <div className="flex justify-center mb-4">
           {["Transfer", "Hourly"].map((tab) => (
             <button
               key={tab}
               onClick={() => setMode(tab)}
-              className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${mode === tab ? "bg-[#f3f4f6] text-dark border border-black" : "bg-[#f3f4f6] text-dark"
-                } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
+              className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${mode === tab ? "bg-[#f3f4f6] text-dark border border-black" : "bg-[#f3f4f6] text-dark"} ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
             >
               {tab}
             </button>
@@ -207,7 +252,7 @@ const NewBooking = () => {
             className="btn btn-primary"
             disabled={isLoading}
           >
-            {isLoading ? "Submitting..." : "Submit Booking"}
+            {isLoading ? "Processing..." : editBookingData ? "Update Booking" : "Submit Booking"}
           </button>
         </div>
 
