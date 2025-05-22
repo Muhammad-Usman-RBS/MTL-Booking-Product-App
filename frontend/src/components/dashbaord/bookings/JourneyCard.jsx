@@ -145,7 +145,7 @@ const JourneyCard = ({ title, journeyData, setJourneyData, dropOffs, setDropOffs
             )}
 
             {dropOffs.map((val, idx) => (
-                <div key={idx} className="mt-4 mb-4 flex gap-2">
+                <div key={idx} className="relative mt-4 mb-4">
                     <input
                         type="text"
                         value={val}
@@ -196,7 +196,7 @@ const JourneyCard = ({ title, journeyData, setJourneyData, dropOffs, setDropOffs
                     )}
 
                     {idx > 0 && (
-                        <button type="button" onClick={() => removeDropOff(idx)} className="btn btn-cancel mt-1 mr-2">&minus;</button>
+                        <button type="button" onClick={() => removeDropOff(idx)} className="btn btn-cancel absolute right-0 top-0 mt-1 mr-2">&minus;</button>
                     )}
                 </div>
             ))}
