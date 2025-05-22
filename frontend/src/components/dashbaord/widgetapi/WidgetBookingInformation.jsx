@@ -168,10 +168,10 @@ const WidgetBookingInformation = ({
 
     try {
       await submitWidgetForm(payload).unwrap();
-      toast.success("✅ Booking submitted successfully!");
+      toast.success("Booking submitted successfully!");
       localStorage.removeItem("bookingForm");
     } catch (err) {
-      toast.error("❌ Failed to submit booking.");
+      toast.error("Failed to submit booking.");
       console.error(err);
     }
   };

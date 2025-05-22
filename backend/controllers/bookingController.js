@@ -3,65 +3,6 @@ import Company from "../models/Company.js";
 import User from "../models/User.js";
 
 // ✅ Create Booking (standard route)
-// export const createBooking = async (req, res) => {
-//   try {
-//     const { mode, returnJourney, journey1, journey2, companyId, vehicle } = req.body;
-
-//     // Basic validations
-//     if (!mode || returnJourney === undefined || !journey1 || !vehicle) {
-//       return res.status(400).json({ message: "Required fields missing" });
-//     }
-
-//     if (!vehicle.vehicleName || vehicle.passenger === undefined) {
-//       return res.status(400).json({ message: "Vehicle information is incomplete" });
-//     }
-
-//     if (!journey1.date || journey1.hour === undefined || journey1.minute === undefined) {
-//       return res.status(400).json({ message: "Journey1 date/hour/minute missing" });
-//     }
-
-//     if (returnJourney) {
-//       if (!journey2 || !journey2.date || journey2.hour === undefined || journey2.minute === undefined) {
-//         return res.status(400).json({ message: "Journey2 date/hour/minute missing" });
-//       }
-//     }
-
-//     if (!companyId || companyId.length !== 24) {
-//       return res.status(400).json({ message: "Valid companyId is required" });
-//     }
-
-//     const bookingData = {
-//       mode,
-//       returnJourney,
-//       companyId,
-//       vehicle: {
-//         vehicleName: vehicle.vehicleName,
-//         passenger: vehicle.passenger,
-//         childSeat: vehicle.childSeat || 0,
-//         handLuggage: vehicle.handLuggage || 0,
-//         checkinLuggage: vehicle.checkinLuggage || 0,
-//       },
-//       journey1: { ...journey1, companyId },
-//       journey2: returnJourney ? journey2 : undefined,
-//     };
-
-//     const booking = await Booking.create(bookingData);
-
-//     res.status(200).json({
-//       success: true,
-//       message: "Booking created successfully",
-//       booking,
-//     });
-//   } catch (error) {
-//     console.error("Error in createBooking controller:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Internal server error in createBooking",
-//       error: error.message,
-//     });
-//   }
-// };
-// ✅ Create Booking (standard route with full support)
 export const createBooking = async (req, res) => {
   try {
     const {
@@ -69,38 +10,41 @@ export const createBooking = async (req, res) => {
       returnJourney = false,
       companyId,
       referrer,
-      vehicle,
-      journey1,
-      journey2
+      vehicle = {},
+      journey1 = {},
+      journey2 = {}
     } = req.body;
 
-    if (!companyId || companyId.length !== 24) {
+    // Validate companyId
+    if (!companyId || typeof companyId !== "string" || companyId.length !== 24) {
       return res.status(400).json({ message: "Invalid or missing companyId" });
     }
 
-    if (!vehicle?.vehicleName) {
+    // Validate vehicle
+    if (!vehicle.vehicleName || typeof vehicle.vehicleName !== "string") {
       return res.status(400).json({ message: "Vehicle name is required" });
     }
 
+    // Required journey1 fields
     const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
     for (const field of requiredFields) {
-      if (!journey1?.[field]) {
+      if (!journey1[field] || String(journey1[field]).trim() === "") {
         return res.status(400).json({ message: `Missing required field in journey1: ${field}` });
       }
     }
 
-    // ✅ Collect dynamic dropoff fields from journey1
+    // Extract dynamic dropoff fields from journey1
     const dynamicDropoffFields1 = {};
-    Object.keys(journey1 || {}).forEach((key) => {
+    Object.keys(journey1).forEach((key) => {
       if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
         dynamicDropoffFields1[key] = journey1[key];
       }
     });
 
-    // ✅ Optional: Collect dynamic fields for return journey too
+    // Extract dynamic dropoff fields from journey2
     const dynamicDropoffFields2 = {};
-    if (returnJourney && journey2) {
-      Object.keys(journey2 || {}).forEach((key) => {
+    if (returnJourney) {
+      Object.keys(journey2).forEach((key) => {
         if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
           dynamicDropoffFields2[key] = journey2[key];
         }
@@ -117,15 +61,15 @@ export const createBooking = async (req, res) => {
 
       vehicle: {
         vehicleName: vehicle.vehicleName,
-        passenger: vehicle.passenger || 0,
-        childSeat: vehicle.childSeat || 0,
-        handLuggage: vehicle.handLuggage || 0,
-        checkinLuggage: vehicle.checkinLuggage || 0,
+        passenger: parseInt(vehicle.passenger) || 0,
+        childSeat: parseInt(vehicle.childSeat) || 0,
+        handLuggage: parseInt(vehicle.handLuggage) || 0,
+        checkinLuggage: parseInt(vehicle.checkinLuggage) || 0,
       },
 
       journey1: {
-        pickup: journey1.pickup,
-        dropoff: journey1.dropoff,
+        pickup: journey1.pickup.trim(),
+        dropoff: journey1.dropoff.trim(),
         additionalDropoff1: journey1.additionalDropoff1 || null,
         additionalDropoff2: journey1.additionalDropoff2 || null,
 
@@ -150,8 +94,8 @@ export const createBooking = async (req, res) => {
 
       ...(returnJourney && journey2 && {
         journey2: {
-          pickup: journey2.pickup,
-          dropoff: journey2.dropoff,
+          pickup: journey2.pickup?.trim() || null,
+          dropoff: journey2.dropoff?.trim() || null,
           additionalDropoff1: journey2.additionalDropoff1 || null,
           additionalDropoff2: journey2.additionalDropoff2 || null,
 
@@ -184,7 +128,7 @@ export const createBooking = async (req, res) => {
       booking,
     });
   } catch (error) {
-    console.error("Error in createBooking controller:", error);
+    console.error("❌ Error in createBooking controller:", error);
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };

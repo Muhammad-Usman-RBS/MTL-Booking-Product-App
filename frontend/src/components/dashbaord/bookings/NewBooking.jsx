@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ToastContainer, toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import VehicleSelection from "./VehicleSelection";
 import PassengerDetails from "./PassengerDetails";
@@ -8,16 +8,14 @@ import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import JourneyCard from "./JourneyCard";
 import { useCreateBookingMutation } from "../../../redux/api/bookingApi";
+import { useLazyGetDistanceQuery } from "../../../redux/api/googleApi";
 
-const hourlyOptions = [
-  "40 miles 4 hours", "60 miles 6 hours", "80 miles 8 hours"
-];
+const hourlyOptions = ["40 miles 4 hours", "60 miles 6 hours", "80 miles 8 hours"];
 
 const NewBooking = () => {
   const [mode, setMode] = useState("Transfer");
   const [returnJourney, setReturnJourney] = useState(false);
   const [selectedHourly, setSelectedHourly] = useState(hourlyOptions[0]);
-
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [vehicleExtras, setVehicleExtras] = useState({
     passenger: 0,
@@ -27,106 +25,117 @@ const NewBooking = () => {
   });
 
   const [journey1Data, setJourney1Data] = useState({
-    pickmeAfter: "",
-    flightNumber: "",
-    arrivefrom: "",
-    doorNumber: "",
     pickup: "",
     date: "",
     hour: "",
     minute: "",
+    arrivefrom: "",
+    pickmeAfter: "",
+    flightNumber: "",
+    pickupDoorNumber: "",
     notes: "",
-    internalNotes: ""
+    internalNotes: "",
   });
   const [dropOffs1, setDropOffs1] = useState([""]);
 
   const [journey2Data, setJourney2Data] = useState({
-    pickmeAfter: "",
-    flightNumber: "",
-    arrivefrom: "",
-    doorNumber: "",
     pickup: "",
     date: "",
     hour: "",
     minute: "",
+    arrivefrom: "",
+    pickmeAfter: "",
+    flightNumber: "",
+    pickupDoorNumber: "",
     notes: "",
-    internalNotes: ""
+    internalNotes: "",
   });
   const [dropOffs2, setDropOffs2] = useState([""]);
 
   const [createBooking, { isLoading }] = useCreateBookingMutation();
+  const [triggerDistance] = useLazyGetDistanceQuery();
 
-  const handleSubmit = async () => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      const companyId = user?.companyId;
+  const user = JSON.parse(localStorage.getItem("user"));
+  const companyId = user?.companyId || "";
 
-      if (!companyId || companyId.length !== 24) {
-        toast.error("Valid companyId is required from logged-in user");
-        return;
-      }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-      if (!selectedVehicle?.vehicleName) {
-        toast.error("Please select a vehicle.");
-        return;
-      }
+    if (!companyId || companyId.length !== 24) {
+      toast.error("Missing or invalid company ID.");
+      return;
+    }
 
-      const payload = {
-        mode,
-        returnJourney,
-        companyId,
-        vehicle: {
-          vehicleName: selectedVehicle.vehicleName,
-          passenger: vehicleExtras.passenger,
-          childSeat: vehicleExtras.childSeat,
-          handLuggage: vehicleExtras.handLuggage,
-          checkinLuggage: vehicleExtras.checkinLuggage,
-        },
-        journey1: {
-          pickmeAfter: journey1Data.pickmeAfter,
-          flightNumber: journey1Data.flightNumber,
-          arrivefrom: journey1Data.arrivefrom,
-          doorNumber: journey1Data.doorNumber,
-          pickup: journey1Data.pickup,
-          dropoff: dropOffs1[0],
-          additionalDropoff1: dropOffs1[1] || null,
-          additionalDropoff2: dropOffs1[2] || null,
-          notes: journey1Data.notes,
-          internalNotes: journey1Data.internalNotes,
-          date: journey1Data.date,
-          hour: journey1Data.hour,
-          minute: journey1Data.minute,
-          fare: 0,
-          hourlyOption: mode === "Hourly" ? selectedHourly : null,
-          companyId,
-        },
-      };
+    if (!journey1Data.pickup || dropOffs1[0].trim() === "") {
+      toast.error("Pickup and at least one Drop Off is required.");
+      return;
+    }
 
-      if (returnJourney) {
-        payload.journey2 = {
-          pickmeAfter: journey2Data.pickmeAfter,
-          flightNumber: journey2Data.flightNumber,
-          arrivefrom: journey2Data.arrivefrom,
-          doorNumber: journey2Data.doorNumber,
-          pickup: journey2Data.pickup,
+    const dynamicFields1 = {};
+    dropOffs1.forEach((val, idx) => {
+      dynamicFields1[`dropoffDoorNumber${idx}`] = journey1Data[`dropoffDoorNumber${idx}`] || "";
+      dynamicFields1[`dropoff_terminal_${idx}`] = journey1Data[`dropoff_terminal_${idx}`] || "";
+    });
+
+    const dynamicFields2 = {};
+    dropOffs2.forEach((val, idx) => {
+      dynamicFields2[`dropoffDoorNumber${idx}`] = journey2Data[`dropoffDoorNumber${idx}`] || "";
+      dynamicFields2[`dropoff_terminal_${idx}`] = journey2Data[`dropoff_terminal_${idx}`] || "";
+    });
+
+    const payload = {
+      mode,
+      returnJourney,
+      companyId,
+      referrer: document.referrer || "manual",
+      vehicle: {
+        vehicleName: selectedVehicle?.vehicleName || "",
+        ...vehicleExtras,
+      },
+      journey1: {
+        ...journey1Data,
+        dropoff: dropOffs1[0],
+        additionalDropoff1: dropOffs1[1] || null,
+        additionalDropoff2: dropOffs1[2] || null,
+        hourlyOption: mode === "Hourly" ? selectedHourly : null,
+        ...dynamicFields1,
+      },
+      ...(returnJourney && {
+        journey2: {
+          ...journey2Data,
           dropoff: dropOffs2[0],
           additionalDropoff1: dropOffs2[1] || null,
           additionalDropoff2: dropOffs2[2] || null,
-          notes: journey2Data.notes,
-          internalNotes: journey2Data.internalNotes,
-          date: journey2Data.date,
-          hour: journey2Data.hour,
-          minute: journey2Data.minute,
-          fare: 0,
           hourlyOption: mode === "Hourly" ? selectedHourly : null,
-        };
+          ...dynamicFields2,
+        },
+      }),
+    };
+
+    try {
+      const origin = journey1Data.pickup?.split(" - ").pop()?.trim();
+      const destination = dropOffs1[0]?.split(" - ").pop()?.trim();
+
+      if (!origin || !destination) {
+        toast.error("Origin or destination is empty.");
+        return;
       }
 
+      const res = await triggerDistance({ origin, destination }).unwrap();
+      if (res?.distanceText && res?.durationText) {
+        payload.journey1.distanceText = res.distanceText;
+        payload.journey1.durationText = res.durationText;
+      }
+    } catch (err) {
+      console.warn("⚠️ Distance matrix error:", err);
+    }
+
+    try {
       await createBooking(payload).unwrap();
-      toast.success("Booking created successfully!");
-    } catch (error) {
-      console.error("Create booking error:", error);
-      toast.error(error?.data?.message || "Booking failed");
+      toast.success("Booking submitted successfully.");
+    } catch (err) {
+      console.error("❌ Booking submission error:", err);
+      toast.error("Failed to submit booking.");
     }
   };
 
@@ -136,15 +145,12 @@ const NewBooking = () => {
       <div>
         <OutletHeading name="New Booking" />
 
-        {/* Tabs */}
         <div className="flex justify-center mb-4">
           {["Transfer", "Hourly"].map((tab) => (
             <button
               key={tab}
               onClick={() => setMode(tab)}
-              className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${mode === tab
-                  ? "bg-[#f3f4f6] text-dark border border-black"
-                  : "bg-[#f3f4f6] text-dark"
+              className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${mode === tab ? "bg-[#f3f4f6] text-dark border border-black" : "bg-[#f3f4f6] text-dark"
                 } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
             >
               {tab}
@@ -152,7 +158,6 @@ const NewBooking = () => {
           ))}
         </div>
 
-        {/* Hourly Options */}
         {mode === "Hourly" && (
           <div className="flex justify-center">
             <SelectOption
@@ -164,7 +169,6 @@ const NewBooking = () => {
           </div>
         )}
 
-        {/* Journey 1 */}
         <JourneyCard
           title="Journey 1"
           journeyData={journey1Data}
@@ -173,7 +177,6 @@ const NewBooking = () => {
           setDropOffs={setDropOffs1}
         />
 
-        {/* Return Journey Toggle */}
         <div className="flex items-center mt-6 w-full max-w-4xl mx-auto">
           <label className="flex items-center cursor-pointer relative">
             <input
@@ -188,7 +191,6 @@ const NewBooking = () => {
           </label>
         </div>
 
-        {/* Journey 2 */}
         {returnJourney && (
           <JourneyCard
             title="Journey 2"
@@ -199,7 +201,6 @@ const NewBooking = () => {
           />
         )}
 
-        {/* Submit Button */}
         <div className="flex justify-center mt-8">
           <button
             onClick={handleSubmit}
@@ -210,7 +211,6 @@ const NewBooking = () => {
           </button>
         </div>
 
-        {/* Vehicle Section with Prop Passing */}
         <VehicleSelection
           setSelectedVehicle={setSelectedVehicle}
           setVehicleExtras={setVehicleExtras}
