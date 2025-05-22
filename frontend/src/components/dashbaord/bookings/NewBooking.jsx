@@ -63,7 +63,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
 
-  // ✅ Prefill form if editing
   useEffect(() => {
     if (editBookingData) {
       setMode(editBookingData.mode || "Transfer");
@@ -168,14 +167,14 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     }
 
     try {
-      if (editBookingData) {
+      if (editBookingData && editBookingData._id) {
         await updateBooking({ id: editBookingData._id, updatedData: payload }).unwrap();
         toast.success("Booking updated successfully.");
       } else {
         await createBooking(payload).unwrap();
         toast.success("Booking submitted successfully.");
       }
-      if (onClose) onClose(); // ✅ Close modal if passed
+      if (onClose) onClose();
     } catch (err) {
       console.error("❌ Booking error:", err);
       toast.error("Failed to process booking.");
@@ -186,9 +185,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     <>
       <ToastContainer />
       <div className={editBookingData ? "ps-5 pe-5 pt-5" : "ps-0 pe-0"}>
-
         <div className={editBookingData ? "hidden" : "block"}>
-          <OutletHeading name="New Booking" />
+          <OutletHeading name={editBookingData && !editBookingData._id ? "Copy Booking" : "New Booking"} />
         </div>
 
         <div className="flex justify-center mb-4">
@@ -252,7 +250,11 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             className="btn btn-primary"
             disabled={isLoading}
           >
-            {isLoading ? "Processing..." : editBookingData ? "Update Booking" : "Submit Booking"}
+            {isLoading
+              ? "Processing..."
+              : editBookingData && editBookingData._id
+              ? "Update Booking"
+              : "Submit Booking"}
           </button>
         </div>
 

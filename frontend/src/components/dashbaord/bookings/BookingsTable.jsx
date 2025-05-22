@@ -161,13 +161,19 @@ const BookingsTable = ({
                                             key={i}
                                             onClick={() => {
                                                 if (action === "Status Audit") openAuditModal(item.statusAudit);
-                                                else if (action === "View") openViewModal(item.view);
+                                                else if (action === "View") openViewModal(item);
                                                 else if (action === "Edit") {
                                                     setEditBookingData(item);
                                                     setShowEditModal(true);
                                                 } else if (action === "Delete") {
                                                     setSelectedDeleteId(item._id); // ✅ set ID
                                                     setShowDeleteModal(true);       // ✅ show modal
+                                                }
+                                                else if (action === "Copy Booking") {
+                                                    const copied = { ...item };
+                                                    delete copied._id; // Remove _id to treat as a new entry
+                                                    setEditBookingData(copied);
+                                                    setShowEditModal(true);
                                                 }
                                             }}
                                             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
