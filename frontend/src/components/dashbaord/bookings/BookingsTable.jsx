@@ -4,10 +4,12 @@ import { toast } from "react-toastify";
 import {
     useGetAllBookingsQuery,
     useDeleteBookingMutation,
+    useUpdateBookingStatusMutation, // ✅ Import mutation
 } from "../../../redux/api/bookingApi";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
-import DeleteModal from "../../../constants/constantscomponents/DeleteModal"; // ✅ Import modal
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import { GripHorizontal } from "lucide-react";
+import SelectStatus from "./SelectStatus";
 
 const BookingsTable = ({
     selectedColumns,
@@ -26,11 +28,12 @@ const BookingsTable = ({
     const user = useSelector((state) => state.auth.user);
     const companyId = user?.companyId;
 
-    const { data, isLoading, error } = useGetAllBookingsQuery(companyId);
+    const { data, isLoading, error, refetch } = useGetAllBookingsQuery(companyId);
     const [deleteBooking] = useDeleteBookingMutation();
+    const [updateBookingStatus] = useUpdateBookingStatusMutation(); // ✅ Hook
 
-    const [showDeleteModal, setShowDeleteModal] = useState(false);         // ✅ Track modal
-    const [selectedDeleteId, setSelectedDeleteId] = useState(null);        // ✅ Booking to delete
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedDeleteId, setSelectedDeleteId] = useState(null);
 
     const bookings = (data?.bookings || []).filter(
         (booking) => booking?.companyId?.toString() === companyId?.toString()
@@ -65,25 +68,6 @@ const BookingsTable = ({
         { label: "Status", key: "status" },
         { label: "Actions", key: "actions" },
     ];
-
-    const getBadgeColor = (status) => {
-        switch (status) {
-            case "Accepted":
-                return "bg-blue-100 text-blue-800";
-            case "On Route":
-                return "bg-yellow-100 text-yellow-800";
-            case "At Location":
-                return "bg-purple-100 text-purple-800";
-            case "Ride Started":
-                return "bg-orange-100 text-orange-800";
-            case "No Show":
-                return "bg-red-100 text-red-800";
-            case "Completed":
-                return "bg-green-100 text-green-800";
-            default:
-                return "bg-gray-100 text-gray-800";
-        }
-    };
 
     const formatVehicle = (vehicle) => {
         if (!vehicle || typeof vehicle !== "object") return "-";
@@ -135,11 +119,21 @@ const BookingsTable = ({
                     );
                     break;
                 case "status":
-                    const status = item.status || "-";
                     row[key] = (
-                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getBadgeColor(status)}`}>
-                            {status}
-                        </span>
+                        <SelectStatus
+                            value={item.status || "No Show"}
+                            onChange={async (newStatus) => {
+                                try {
+                                    await updateBookingStatus({ id: item._id, status: newStatus }).unwrap();
+                                    toast.success("Status updated successfully");
+                                    refetch(); // ✅ Force UI update from fresh data
+                                } catch (err) {
+                                    console.error("❌ Status update failed:", err);
+                                    toast.error("Failed to update status");
+                                }
+                            }}
+                        />
+
                     );
                     break;
                 case "actions":
@@ -166,12 +160,11 @@ const BookingsTable = ({
                                                     setEditBookingData(item);
                                                     setShowEditModal(true);
                                                 } else if (action === "Delete") {
-                                                    setSelectedDeleteId(item._id); // ✅ set ID
-                                                    setShowDeleteModal(true);       // ✅ show modal
-                                                }
-                                                else if (action === "Copy Booking") {
+                                                    setSelectedDeleteId(item._id);
+                                                    setShowDeleteModal(true);
+                                                } else if (action === "Copy Booking") {
                                                     const copied = { ...item };
-                                                    delete copied._id; // Remove _id to treat as a new entry
+                                                    delete copied._id;
                                                     setEditBookingData(copied);
                                                     setShowEditModal(true);
                                                 }
@@ -221,7 +214,6 @@ const BookingsTable = ({
                 showSorting={true}
             />
 
-            {/* ✅ Delete Confirmation Modal */}
             <DeleteModal
                 isOpen={showDeleteModal}
                 onConfirm={handleDeleteBooking}

@@ -99,7 +99,14 @@ const WidgetBookingInformation = ({
       triggerDistance({ origin, destination })
         .unwrap()
         .then(res => {
-          setDistanceText(res?.distanceText || null);
+          if (res?.distanceText?.includes("km")) {
+            const km = parseFloat(res.distanceText.replace("km", "").trim());
+            const miles = (km * 0.621371).toFixed(2);
+            setDistanceText(`${miles} miles`);
+          } else {
+            setDistanceText(res?.distanceText || null); 
+          }
+
           setDurationText(res?.durationText || null);
         })
         .catch(() => {
@@ -197,7 +204,7 @@ const WidgetBookingInformation = ({
             <div className="text-xl font-semibold text-gray-900">
               {formData?.hour && formData?.minute
                 ? `${String(formData.hour).padStart(2, '0')}:${String(formData.minute).padStart(2, '0')} ${formData?.hour < 12 ? 'AM' : 'PM'}`
-                : 'Time not set'}{" "}
+                : 'Time not set'}
               <span className="text-sm text-gray-500">(GMT+1)</span>
             </div>
           </div>
@@ -234,7 +241,7 @@ const WidgetBookingInformation = ({
           <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 text-sm text-gray-600 px-2">
             {durationText && (
               <span>
-                Estimated arrival at{" "}
+                Estimated arrival at&nbsp;
                 <strong className="text-gray-800">
                   {formData?.hour && formData?.minute
                     ? (() => {
@@ -253,7 +260,7 @@ const WidgetBookingInformation = ({
                       return dep.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
                     })()
                     : "-"}
-                </strong>{" "}
+                </strong>&nbsp;
                 (GMT+1)
               </span>
             )}

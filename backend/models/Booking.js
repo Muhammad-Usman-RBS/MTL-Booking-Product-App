@@ -34,6 +34,9 @@ const JourneySchema = new mongoose.Schema({
     enum: ["40 miles 4 hours", "60 miles 6 hours", "80 miles 8 hours"],
     default: null,
   },
+
+  distanceText: { type: String },
+  durationText: { type: String },
 }, { _id: false });
 
 const VehicleInfoSchema = new mongoose.Schema({

@@ -50,6 +50,17 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
     input.style.pointerEvents = "none";
   };
 
+  const convertKmToMiles = (text) => {
+    if (!text || typeof text !== "string") return "—";
+    if (text.includes("km")) {
+      const km = parseFloat(text.replace("km", "").trim());
+      if (!isNaN(km)) {
+        return `${(km * 0.621371).toFixed(2)} miles`;
+      }
+    }
+    return text; // fallback if already in miles or unknown format
+  };
+
   const pickupTime = viewData?.journey1?.date && viewData?.journey1?.hour
     ? `${viewData?.journey1?.date} ${viewData?.journey1?.hour}:${viewData?.journey1?.minute}`
     : "N/A";
@@ -82,13 +93,13 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
         {/* Notes */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="bg-yellow-100 border border-yellow-300 p-3 rounded-md text-xs">
-            <strong className="text-gray-700">Internal Notes:</strong>{" "}
+            <strong className="text-gray-700">Internal Notes:</strong>
             <span className="italic text-red-600">
               {viewData?.journey1?.internalNotes || "Empty"}
             </span>
           </div>
           <div className="bg-yellow-100 border border-yellow-300 p-3 rounded-md text-xs">
-            <strong className="text-gray-700">Driver Notes:</strong>{" "}
+            <strong className="text-gray-700">Driver Notes:</strong>
             <span className="italic text-red-600">{viewData?.driverNotes || "Empty"}</span>
           </div>
         </div>
@@ -161,13 +172,13 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             <span className="text-xs ml-1">{viewData?.payment || "Card Payment"}</span>
           </div>
           <div className="text-gray-600 mt-2 text-xs">
-            Approx. Distance: {viewData?.journey1?.distanceText || "—"}
+            Approx. Distance: {convertKmToMiles(viewData?.journey1?.distanceText)}
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-center gap-3 bg-gray-100 border-t border-gray-300 p-3 rounded-md">
           <span className="text-gray-700 font-medium text-sm">
-            This booking has been{" "}
+            This booking has been&nbsp;
             <span className="text-green-600 font-semibold">{viewData?.status || "Pending"}</span>
           </span>
           <button className="btn btn-edit text-sm px-5 py-1.5">REJECT</button>

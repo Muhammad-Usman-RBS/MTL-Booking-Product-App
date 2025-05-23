@@ -124,7 +124,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
     const payload = {
       mode,
-      returnJourney,
+      returnJourney: false, // ✅ always false now; treated as a single booking
       companyId,
       referrer: document.referrer || "manual",
       vehicle: {
@@ -139,16 +139,26 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         hourlyOption: mode === "Hourly" ? selectedHourly : null,
         ...dynamicFields1,
       },
-      ...(returnJourney && {
-        journey2: {
-          ...journey2Data,
-          dropoff: dropOffs2[0],
-          additionalDropoff1: dropOffs2[1] || null,
-          additionalDropoff2: dropOffs2[2] || null,
-          hourlyOption: mode === "Hourly" ? selectedHourly : null,
-          ...dynamicFields2,
-        },
-      }),
+    };
+
+    // Return Journey Payload (separate booking if needed)
+    const returnPayload = {
+      mode,
+      returnJourney: false, // ✅ separate booking = false
+      companyId,
+      referrer: document.referrer || "manual",
+      vehicle: {
+        vehicleName: selectedVehicle?.vehicleName || "",
+        ...vehicleExtras,
+      },
+      journey1: {
+        ...journey2Data,
+        dropoff: dropOffs2[0],
+        additionalDropoff1: dropOffs2[1] || null,
+        additionalDropoff2: dropOffs2[2] || null,
+        hourlyOption: mode === "Hourly" ? selectedHourly : null,
+        ...dynamicFields2,
+      },
     };
 
     try {
@@ -166,19 +176,47 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       console.warn("⚠️ Distance matrix error:", err);
     }
 
+    // After triggerDistance call for returnPayload:
+    try {
+      const origin2 = journey2Data.pickup?.split(" - ").pop()?.trim();
+      const destination2 = dropOffs2[0]?.split(" - ").pop()?.trim();
+
+      if (returnJourney && origin2 && destination2) {
+        const res2 = await triggerDistance({ origin: origin2, destination: destination2 }).unwrap();
+        if (res2?.distanceText && res2?.durationText) {
+          returnPayload.journey1.distanceText = res2.distanceText;
+          returnPayload.journey1.durationText = res2.durationText;
+        }
+      }
+    } catch (err) {
+      console.warn("⚠️ Return journey distance error:", err);
+    }
+
+
     try {
       if (editBookingData && editBookingData._id) {
+        // Update only the primary journey (editing return bookings is separate)
         await updateBooking({ id: editBookingData._id, updatedData: payload }).unwrap();
         toast.success("Booking updated successfully.");
       } else {
+        // Create primary journey booking
         await createBooking(payload).unwrap();
-        toast.success("Booking submitted successfully.");
+        toast.success("Primary journey booking submitted.");
+
+        // If return journey is selected, submit it as a separate booking
+        if (returnJourney) {
+          await createBooking(returnPayload).unwrap();
+          toast.success("Return journey booking submitted.");
+        }
       }
+
+      // Close modal or reset UI
       if (onClose) onClose();
     } catch (err) {
       console.error("❌ Booking error:", err);
       toast.error("Failed to process booking.");
     }
+
   };
 
   return (
@@ -253,8 +291,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             {isLoading
               ? "Processing..."
               : editBookingData && editBookingData._id
-              ? "Update Booking"
-              : "Submit Booking"}
+                ? "Update Booking"
+                : "Submit Booking"}
           </button>
         </div>
 
