@@ -1,61 +1,65 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useLoginUserMutation } from "../../redux/api/userApi"; 
+import { useLoginUserMutation } from "../../redux/api/userApi";
+import { useDispatch } from "react-redux";
+import { setUser } from "../../redux/authSlice";
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [loginUser] = useLoginUserMutation();
 
-  const [loginUser] = useLoginUserMutation(); // ✅ RTK mutation hook
+  const handleLogin = async (e) => {
+    e.preventDefault();
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-
-  if (!email || !password) {
-    toast.error("Please enter both email and password.");
-    return;
-  }
-
-  try {
-    const data = await loginUser({ email, password }).unwrap(); // ✅ RTK way to get response
-
-    // ✅ Save full user data
-    localStorage.setItem('user', JSON.stringify(data));
-
-    // ✅ Save token if you use one (optional)
-    if (data.token) {
-      localStorage.setItem('token', data.token);
+    if (!email || !password) {
+      toast.error("Please enter both email and password.");
+      return;
     }
 
-    // ✅ Save companyId separately if assigned
-    if (data.companyId) {
-      localStorage.setItem('companyId', data.companyId);
-    }
+    try {
+      const data = await loginUser({ email, password }).unwrap();
 
-    toast.success("Login successful!");
+      // ✅ Save full user data
+      localStorage.setItem('user', JSON.stringify(data));
 
-    setTimeout(() => {
-      switch (data.role) {
-        case 'superadmin':
-        case 'clientadmin':
-        case 'demo':
-        case 'manager':
-          navigate('/dashboard/home');
-          break;
-        case 'driver':
-          navigate('/dashboard/driver');
-          break;
-        default:
-          navigate('/dashboard/home');
+      // ✅ Save token if you use one (optional)
+      if (data.token) {
+        localStorage.setItem('token', data.token);
       }
-    }, 1000);
-  } catch (err) {
-    const msg = err?.data?.message || "Login failed. Check your credentials.";
-    toast.error(msg);
-  }
-};
+
+      // ✅ Save companyId separately if assigned
+      if (data.companyId) {
+        localStorage.setItem('companyId', data.companyId);
+      }
+
+      dispatch(setUser(data));
+
+      toast.success("Login successful!");
+
+      setTimeout(() => {
+        switch (data.role) {
+          case 'superadmin':
+          case 'clientadmin':
+          case 'demo':
+          case 'manager':
+            navigate('/dashboard/home');
+            break;
+          case 'driver':
+            navigate('/dashboard/driver');
+            break;
+          default:
+            navigate('/dashboard/home');
+        }
+      }, 1000);
+    } catch (err) {
+      const msg = err?.data || "Login failed. Check your credentials.";
+      toast.error(msg);
+    }
+  };
 
 
   return (

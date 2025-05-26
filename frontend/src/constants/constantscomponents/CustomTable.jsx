@@ -20,6 +20,8 @@ const CustomTable = ({
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const tableRef = useRef();
 
+  const [selectedRow, setSelectedRow] = useState(null); // Mashhood
+
   const requestSort = (key) => {
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
@@ -115,9 +117,21 @@ const CustomTable = ({
           </thead>
           <tbody>
             {paginatedData.map((item, rowIdx) => (
-              <tr
+              // <tr
+              //   key={rowIdx}
+              //   className="odd:bg-gray-50 even:bg-[#EDEDED] border-b border-gray-300 hover:bg-[#CFE2FF] transition"
+              // >
+              <tr    // Mashhood
                 key={rowIdx}
-                className="odd:bg-gray-50 even:bg-[#EDEDED] border-b border-gray-300 hover:bg-[#CFE2FF] transition"
+                onClick={() =>
+                  setSelectedRow(selectedRow === rowIdx ? null : rowIdx)
+                }
+                className={`border-b hover:bg-[#CFE2FF] border-gray-300 transition cursor-pointer ${selectedRow === rowIdx
+                  ? "bg-[#CFE2FF] text-white"
+                  : rowIdx % 2 === 0
+                    ? "bg-gray-50"
+                    : "bg-[#EDEDED] "
+                  }`}
               >
                 {tableHeaders.map((col, colIdx) => (
                   <td

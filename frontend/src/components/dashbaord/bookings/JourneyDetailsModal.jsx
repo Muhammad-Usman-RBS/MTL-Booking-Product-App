@@ -4,13 +4,20 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import PDFContent from "./PDFContent";
 import IMAGES from "../../../assets/images";
+import { useSelector } from "react-redux";
 
 const JourneyDetailsModal = ({ viewData = {} }) => {
   const [email, setEmail] = useState(viewData?.email || "");
   const pdfRef = useRef();
+  const companyId = localStorage.getItem("companyId");
+
+  const companyList = useSelector((state) => state.company?.list);
+  const companyData = Array.isArray(companyList)
+    ? companyList.find((c) => c._id === companyId)
+    : null;
 
   const downloadPDF = async () => {
-    const input = document.getElementById("pdf-container");
+    const input = pdfRef.current;
     if (!input) return;
 
     input.style.opacity = "1";
@@ -43,7 +50,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
       heightLeft -= pdf.internal.pageSize.getHeight();
     }
 
-    pdf.save("booking-confirmation.pdf");
+    pdf.save("Booking-Confirmation.pdf");
 
     input.style.opacity = "0";
     input.style.position = "absolute";
@@ -186,7 +193,13 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
       </div>
 
       {/* Hidden PDF content */}
-      <PDFContent ref={pdfRef} logoUrl={IMAGES.dashboardLargeLogo} />
+      <PDFContent
+        ref={pdfRef}
+        logoUrl={IMAGES.dashboardLargeLogo}
+        viewData={viewData}
+        companyData={companyData}
+      />
+
     </>
   );
 };

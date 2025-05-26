@@ -15,14 +15,12 @@ const STATUS_OPTIONS = [
 
 const SelectStatus = ({ value, onChange }) => {
     return (
-        <div className="relative inline-block w-48">
+        <div className="relative inline-block ">
             <select
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 className={classNames(
-                    "w-full appearance-none px-3 py-1.5 pr-8 rounded-lg text-sm font-medium shadow-sm",
-                    "",
-                    "bg-white text-gray-800"
+                    "w-fit max-w-[9rem] appearance-none pr-6 pl-2 py-1.5 focus:outline-none rounded-lg text-sm font-medium shadow-sm bg-white text-gray-800"
                 )}
             >
                 {STATUS_OPTIONS.map((status) => (
@@ -31,7 +29,7 @@ const SelectStatus = ({ value, onChange }) => {
                     </option>
                 ))}
             </select>
-            <ChevronDown className="absolute right-3 top-2.5 w-4 h-4 text-gray-500 pointer-events-none" />
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
         </div>
     );
 };

@@ -57,6 +57,7 @@ import ChatPlugin from "./components/dashbaord/settings/ChatPlugin";
 import CronJob from "./components/dashbaord/settings/CronJob";
 import DriverFare from "./components/dashbaord/pricing/DriverFare";
 import WidgetMain from "./components/dashbaord/widgetapi/WidgetMain";
+import WidgetAPI from "./components/dashbaord/widgetapi/WidgetAPI";
 
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { ToastContainer } from "react-toastify";
@@ -141,7 +142,7 @@ function App() {
               <Route path="settings/cron-job" element={<CronJob />} />
 
               {/* Widget / API */}
-              {/* <Route path="widget-api" element={<WidgetAPI />} /> */}
+              <Route path="widget-api" element={<WidgetAPI />} />
 
               {/* Statements */}
               <Route path="statements/driver" element={<DriverStatements />} />

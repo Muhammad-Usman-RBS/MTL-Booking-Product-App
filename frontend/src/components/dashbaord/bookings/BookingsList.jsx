@@ -443,7 +443,10 @@ import AuditModal from "./AuditModal";
 import JourneyDetailsModal from "./JourneyDetailsModal";
 import ViewDriver from "./ViewDriver";
 import ShortcutkeysModal from "./ShortcutkeysModal";
-import NewBooking from "./NewBooking"; // ✅ Import NewBooking form
+import NewBooking from "./NewBooking";
+import { useDispatch, useSelector } from "react-redux";
+import { setCompanies } from "../../../redux/companySlice";
+import { useGetCompanyByIdQuery } from "../../../redux/api/companyApi";
 
 import {
   statusList,
@@ -490,6 +493,16 @@ const BookingsList = () => {
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
+
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
+  const { data: companyData } = useGetCompanyByIdQuery(user?.companyId);
+
+  useEffect(() => {
+    if (companyData) {
+      dispatch(setCompanies([companyData]));
+    }
+  }, [companyData]);
 
   const [showEditModal, setShowEditModal] = useState(false); // ✅ Edit modal
   const [editBookingData, setEditBookingData] = useState(null); // ✅ Data for edit
