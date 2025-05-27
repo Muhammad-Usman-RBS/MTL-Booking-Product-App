@@ -2,7 +2,7 @@ import { apiSlice } from '../apiSlice';
 
 export const bookingApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // ✅ Create Booking
+    // Create Booking
     createBooking: builder.mutation({
       query: (bookingData) => ({
         url: "/booking/create-booking",
@@ -12,7 +12,7 @@ export const bookingApi = apiSlice.injectEndpoints({
       invalidatesTags: ["Bookings"],
     }),
 
-    // ✅ Submit Booking via Widget
+    // Submit Booking via Widget
     submitWidgetForm: builder.mutation({
       query: (payload) => ({
         url: "/booking/submit",
@@ -22,7 +22,7 @@ export const bookingApi = apiSlice.injectEndpoints({
       invalidatesTags: ["Bookings"],
     }),
 
-    // ✅ Fetch All Bookings by Company ID
+    // Fetch All Bookings by Company ID
     getAllBookings: builder.query({
       query: (companyId) => ({
         url: `/booking/get-booking?companyId=${companyId}`,
@@ -31,7 +31,7 @@ export const bookingApi = apiSlice.injectEndpoints({
       providesTags: ["Bookings"],
     }),
 
-    // ✅ Update Booking by ID
+    // Update Booking by ID
     updateBooking: builder.mutation({
       query: ({ id, updatedData }) => ({
         url: `/booking/update-booking/${id}`,
@@ -41,7 +41,7 @@ export const bookingApi = apiSlice.injectEndpoints({
       invalidatesTags: ["Bookings"],
     }),
 
-    // ✅ Delete Booking by ID
+    // Delete Booking by ID
     deleteBooking: builder.mutation({
       query: (id) => ({
         url: `/booking/delete-booking/${id}`,
@@ -50,12 +50,20 @@ export const bookingApi = apiSlice.injectEndpoints({
       invalidatesTags: ["Bookings"],
     }),
 
-    // ✅ Update Booking Status
+    // Update Booking Status
     updateBookingStatus: builder.mutation({
       query: ({ id, status }) => ({
         url: `/booking/${id}`,
         method: "PATCH",
         body: { status },
+      }),
+    }),
+
+    // GET ALL PASSENGERS
+    getAllPassengers: builder.query({
+      query: () => ({
+        url: "/booking/get-all-passengers",
+        method: "GET",
       }),
     }),
 
@@ -69,4 +77,5 @@ export const {
   useUpdateBookingMutation,
   useDeleteBookingMutation,
   useUpdateBookingStatusMutation,
+  useGetAllPassengersQuery,
 } = bookingApi;

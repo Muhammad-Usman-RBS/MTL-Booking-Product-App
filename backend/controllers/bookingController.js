@@ -1,137 +1,6 @@
 import Booking from "../models/Booking.js";
-import Company from "../models/Company.js";
-import User from "../models/User.js";
 
-// ✅ Create Booking (standard route)
-// export const createBooking = async (req, res) => {
-//   try {
-//     const {
-//       mode = "Transfer",
-//       returnJourney = false,
-//       companyId,
-//       referrer,
-//       vehicle = {},
-//       journey1 = {},
-//       journey2 = {}
-//     } = req.body;
-
-//     // Validate companyId
-//     if (!companyId || typeof companyId !== "string" || companyId.length !== 24) {
-//       return res.status(400).json({ message: "Invalid or missing companyId" });
-//     }
-
-//     // Validate vehicle
-//     if (!vehicle.vehicleName || typeof vehicle.vehicleName !== "string") {
-//       return res.status(400).json({ message: "Vehicle name is required" });
-//     }
-
-//     // Required journey1 fields
-//     const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
-//     for (const field of requiredFields) {
-//       if (!journey1[field] || String(journey1[field]).trim() === "") {
-//         return res.status(400).json({ message: `Missing required field in journey1: ${field}` });
-//       }
-//     }
-
-//     // Extract dynamic dropoff fields from journey1
-//     const dynamicDropoffFields1 = {};
-//     Object.keys(journey1).forEach((key) => {
-//       if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
-//         dynamicDropoffFields1[key] = journey1[key];
-//       }
-//     });
-
-//     // Extract dynamic dropoff fields from journey2
-//     const dynamicDropoffFields2 = {};
-//     if (returnJourney) {
-//       Object.keys(journey2).forEach((key) => {
-//         if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
-//           dynamicDropoffFields2[key] = journey2[key];
-//         }
-//       });
-//     }
-
-//     const bookingData = {
-//       mode,
-//       returnJourney,
-//       companyId,
-//       referrer: referrer || "Manual Entry",
-//       source: "admin",
-//       status: "Pending",
-
-//       vehicle: {
-//         vehicleName: vehicle.vehicleName,
-//         passenger: parseInt(vehicle.passenger) || 0,
-//         childSeat: parseInt(vehicle.childSeat) || 0,
-//         handLuggage: parseInt(vehicle.handLuggage) || 0,
-//         checkinLuggage: parseInt(vehicle.checkinLuggage) || 0,
-//       },
-
-//       journey1: {
-//         pickup: journey1.pickup.trim(),
-//         dropoff: journey1.dropoff.trim(),
-//         additionalDropoff1: journey1.additionalDropoff1 || null,
-//         additionalDropoff2: journey1.additionalDropoff2 || null,
-
-//         pickupDoorNumber: journey1.pickupDoorNumber || null,
-//         terminal: journey1.terminal || null,
-
-//         arrivefrom: journey1.arrivefrom || null,
-//         flightNumber: journey1.flightNumber || null,
-//         pickmeAfter: journey1.pickmeAfter || null,
-
-//         notes: journey1.notes || null,
-//         internalNotes: journey1.internalNotes || null,
-
-//         date: journey1.date,
-//         hour: parseInt(journey1.hour),
-//         minute: parseInt(journey1.minute),
-//         fare: 0,
-//         hourlyOption: journey1.hourlyOption || null,
-
-//         ...dynamicDropoffFields1,
-//       },
-
-//       ...(returnJourney && journey2 && {
-//         journey2: {
-//           pickup: journey2.pickup?.trim() || null,
-//           dropoff: journey2.dropoff?.trim() || null,
-//           additionalDropoff1: journey2.additionalDropoff1 || null,
-//           additionalDropoff2: journey2.additionalDropoff2 || null,
-
-//           pickupDoorNumber: journey2.pickupDoorNumber || null,
-//           terminal: journey2.terminal || null,
-
-//           arrivefrom: journey2.arrivefrom || null,
-//           flightNumber: journey2.flightNumber || null,
-//           pickmeAfter: journey2.pickmeAfter || null,
-
-//           notes: journey2.notes || null,
-//           internalNotes: journey2.internalNotes || null,
-
-//           date: journey2.date,
-//           hour: parseInt(journey2.hour),
-//           minute: parseInt(journey2.minute),
-//           fare: 0,
-//           hourlyOption: journey2.hourlyOption || null,
-
-//           ...dynamicDropoffFields2,
-//         },
-//       }),
-//     };
-
-//     const booking = await Booking.create(bookingData);
-
-//     res.status(201).json({
-//       success: true,
-//       message: "Booking created successfully",
-//       booking,
-//     });
-//   } catch (error) {
-//     console.error("❌ Error in createBooking controller:", error);
-//     res.status(500).json({ message: "Internal server error", error: error.message });
-//   }
-// };
+// Create Booking (standard route)
 export const createBooking = async (req, res) => {
   try {
     const {
@@ -140,8 +9,9 @@ export const createBooking = async (req, res) => {
       companyId,
       referrer,
       vehicle = {},
+      passenger = {}, // NEW
       journey1 = {},
-      journey2 = {}
+      journey2 = {},
     } = req.body;
 
     // Validate companyId
@@ -162,7 +32,6 @@ export const createBooking = async (req, res) => {
       }
     }
 
-    // Extract dynamic fields
     const extractDynamicDropoffFields = (journey) => {
       const dynamicFields = {};
       Object.keys(journey || {}).forEach((key) => {
@@ -173,7 +42,7 @@ export const createBooking = async (req, res) => {
       return dynamicFields;
     };
 
-    // Booking 1: journey1
+    // Booking 1 (primary)
     const booking1Data = {
       mode,
       returnJourney: false,
@@ -187,6 +56,11 @@ export const createBooking = async (req, res) => {
         childSeat: parseInt(vehicle.childSeat) || 0,
         handLuggage: parseInt(vehicle.handLuggage) || 0,
         checkinLuggage: parseInt(vehicle.checkinLuggage) || 0,
+      },
+      passenger: {
+        name: passenger.name || null,
+        email: passenger.email || null,
+        phone: passenger.phone || null,
       },
       journey1: {
         pickup: journey1.pickup.trim(),
@@ -210,18 +84,18 @@ export const createBooking = async (req, res) => {
         fare: 0,
         hourlyOption: journey1.hourlyOption || null,
 
-        distanceText: journey1.distanceText || null, // ✅ Save distance
-        durationText: journey1.durationText || null, // ✅ Save duration
+        distanceText: journey1.distanceText || null,
+        durationText: journey1.durationText || null,
 
         ...extractDynamicDropoffFields(journey1),
-      }
+      },
     };
 
     const booking1 = await Booking.create(booking1Data);
 
     let booking2 = null;
 
-    // Booking 2: journey2 (if returnJourney is selected)
+    // Booking 2 (return journey)
     if (returnJourney && journey2 && Object.keys(journey2).length) {
       const booking2Data = {
         mode,
@@ -236,6 +110,11 @@ export const createBooking = async (req, res) => {
           childSeat: parseInt(vehicle.childSeat) || 0,
           handLuggage: parseInt(vehicle.handLuggage) || 0,
           checkinLuggage: parseInt(vehicle.checkinLuggage) || 0,
+        },
+        passenger: {
+          name: passenger.name || null,
+          email: passenger.email || null,
+          phone: passenger.phone || null,
         },
         journey1: {
           pickup: journey2.pickup?.trim() || "",
@@ -263,7 +142,7 @@ export const createBooking = async (req, res) => {
           durationText: journey2.durationText || null,
 
           ...extractDynamicDropoffFields(journey2),
-        }
+        },
       };
 
       booking2 = await Booking.create(booking2Data);
@@ -271,7 +150,9 @@ export const createBooking = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: returnJourney ? "Both journeys booked separately" : "Booking created successfully",
+      message: returnJourney
+        ? "Both journeys booked separately"
+        : "Booking created successfully",
       bookings: returnJourney ? [booking1, booking2] : [booking1],
     });
   } catch (error) {
@@ -280,7 +161,7 @@ export const createBooking = async (req, res) => {
   }
 };
 
-// ✅ Get All Bookings for a Company
+// Get All Bookings for a Company
 export const getAllBookings = async (req, res) => {
   try {
     const { companyId } = req.query;
@@ -302,7 +183,7 @@ export const getAllBookings = async (req, res) => {
   }
 };
 
-// ✅ Update Booking by ID
+// Update Booking by ID
 export const updateBooking = async (req, res) => {
   try {
     const { id } = req.params;
@@ -364,7 +245,7 @@ export const updateBooking = async (req, res) => {
   }
 };
 
-// ✅ Delete Booking by ID
+// Delete Booking by ID
 export const deleteBooking = async (req, res) => {
   try {
     const { id } = req.params;
@@ -381,7 +262,7 @@ export const deleteBooking = async (req, res) => {
   }
 };
 
-// ✅ Widget Form Submission
+// Widget Form Submission
 export const submitWidgetForm = async (req, res) => {
   try {
     const {
@@ -458,8 +339,8 @@ export const submitWidgetForm = async (req, res) => {
         minute: parseInt(journey1.minute),
         fare: 0,
         hourlyOption: journey1.hourlyOption || null,
-        distanceText: journey1.distanceText || null, // ✅ FIXED
-        durationText: journey1.durationText || null, // ✅ FIXED
+        distanceText: journey1.distanceText || null, // FIXED
+        durationText: journey1.durationText || null, // FIXED
         ...dynamicDropoffFields1,
       },
       ...(returnJourney && journey2 && {
@@ -500,7 +381,7 @@ export const submitWidgetForm = async (req, res) => {
   }
 };
 
-// ✅ Update Booking Status
+// Update Booking Status
 export const updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -522,4 +403,24 @@ export const updateBookingStatus = async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
 };
+
+// Get All Passengers
+export const getAllPassengers = async (req, res) => {
+  try {
+    const bookings = await Booking.find({}, "passenger");
+    const passengers = bookings
+      .map((b) => b.passenger)
+      .filter(
+        (p) => p && (p.name || p.email || p.phone)
+      );
+    res.status(200).json({ success: true, passengers });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch passengers",
+      error: error.message,
+    });
+  }
+};
+
 

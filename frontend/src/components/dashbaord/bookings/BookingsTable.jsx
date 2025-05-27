@@ -85,7 +85,15 @@ const BookingsTable = ({
                     row[key] = item._id;
                     break;
                 case "passenger":
-                    row[key] = item.passenger || "-";
+                    row[key] = item.passenger
+                        ? (
+                            <div>
+                                <div><strong>{item.passenger.name || "Unnamed"}</strong></div>
+                                <div className="text-sm text-gray-600">{item.passenger.email || "No Email"}</div>
+                                <div className="text-sm text-gray-600">+{item.passenger.phone || "No Phone"}</div>
+                            </div>
+                        )
+                        : "-";
                     break;
                 case "date":
                     row[key] = item.createdAt ? new Date(item.createdAt).toLocaleString() : "-";

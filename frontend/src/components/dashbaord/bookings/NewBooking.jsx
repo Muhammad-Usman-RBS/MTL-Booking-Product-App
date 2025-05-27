@@ -27,6 +27,11 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     handLuggage: 0,
     checkinLuggage: 0,
   });
+  const [passengerDetails, setPassengerDetails] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
 
   const [journey1Data, setJourney1Data] = useState({
     pickup: "",
@@ -131,6 +136,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         vehicleName: selectedVehicle?.vehicleName || "",
         ...vehicleExtras,
       },
+      passenger: passengerDetails,
       journey1: {
         ...journey1Data,
         dropoff: dropOffs1[0],
@@ -151,6 +157,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         vehicleName: selectedVehicle?.vehicleName || "",
         ...vehicleExtras,
       },
+      passenger: passengerDetails,
       journey1: {
         ...journey2Data,
         dropoff: dropOffs2[0],
@@ -301,7 +308,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           setVehicleExtras={setVehicleExtras}
         />
 
-        <PassengerDetails />
+        <PassengerDetails
+          passengerDetails={passengerDetails}
+          setPassengerDetails={setPassengerDetails}
+        />
         <FareSection />
       </div>
     </>

@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
 
+// Journey Subdocument
 const JourneySchema = new mongoose.Schema({
   pickup: { type: String, required: true },
   dropoff: { type: String, required: true },
   additionalDropoff1: { type: String },
   additionalDropoff2: { type: String },
 
-  // ✅ Correctly named fields
   pickupDoorNumber: { type: String },
   dropoffDoorNumber0: { type: String },
   dropoffDoorNumber1: { type: String },
@@ -39,6 +39,7 @@ const JourneySchema = new mongoose.Schema({
   durationText: { type: String },
 }, { _id: false });
 
+// Vehicle Info Subdocument
 const VehicleInfoSchema = new mongoose.Schema({
   vehicleName: { type: String, required: true },
   passenger: { type: Number, default: 0 },
@@ -47,6 +48,14 @@ const VehicleInfoSchema = new mongoose.Schema({
   checkinLuggage: { type: Number, default: 0 },
 }, { _id: false });
 
+// ✅ Passenger Subdocument
+const PassengerSchema = new mongoose.Schema({
+  name: { type: String },
+  email: { type: String },
+  phone: { type: String },
+}, { _id: false });
+
+// Booking Schema
 const BookingSchema = new mongoose.Schema({
   mode: {
     type: String,
@@ -70,6 +79,10 @@ const BookingSchema = new mongoose.Schema({
   vehicle: {
     type: VehicleInfoSchema,
     required: true,
+  },
+  passenger: {
+    type: PassengerSchema, // ✅ Included here
+    required: false,
   },
   companyId: {
     type: mongoose.Schema.Types.ObjectId,

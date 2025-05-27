@@ -1,5 +1,5 @@
 import express from "express"
-import { createBooking, deleteBooking, getAllBookings, updateBooking, submitWidgetForm, updateBookingStatus } from "../controllers/bookingController.js"
+import { createBooking, deleteBooking, getAllBookings, updateBooking, submitWidgetForm, updateBookingStatus, getAllPassengers } from "../controllers/bookingController.js"
 
 const router = express.Router()
 
@@ -9,5 +9,6 @@ router.put("/update-booking/:id", updateBooking)
 router.delete("/delete-booking/:id", deleteBooking)
 router.post('/submit', submitWidgetForm);
 router.patch("/:id", updateBookingStatus);
+router.get("/get-all-passengers", getAllPassengers);
 
 export default router

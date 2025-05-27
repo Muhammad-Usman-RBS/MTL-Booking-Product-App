@@ -2,7 +2,7 @@ import React, { forwardRef } from "react";
 import IMAGES from "../../../assets/images";
 import { BASE_API_URL } from "../../../config";
 
-const PDFContent = forwardRef(({ logoUrl, viewData = {}, companyData = {} }, ref) => {
+const PDFContent = forwardRef(({ viewData = {}, companyData = {} }, ref) => {
 
   const pickupTime = viewData?.journey1?.date && viewData?.journey1?.hour
     ? `${viewData?.journey1?.date} ${viewData?.journey1?.hour}:${viewData?.journey1?.minute}`
@@ -131,7 +131,7 @@ const PDFContent = forwardRef(({ logoUrl, viewData = {}, companyData = {} }, ref
       </div>
 
       {/* Footer */}
-      <div style={{ marginTop: "5%", backgroundColor: "#387CE5", color: "#d1d5db", padding: "20px", borderRadius: "8px", fontSize: "14px", lineHeight: "1.6", textAlign: "center" }}>
+      <div style={{ marginTop: "5%", backgroundColor: "#111827", color: "#d1d5db", padding: "20px", borderRadius: "8px", fontSize: "14px", lineHeight: "1.6", textAlign: "center" }}>
         <p style={{ textAlign: "center", marginBottom: "10px" }}>
           This order is subject to our
           &nbsp;<a href="#" style={{ color: "#2563eb", textDecoration: "underline" }}>Terms and Conditions</a>&nbsp;

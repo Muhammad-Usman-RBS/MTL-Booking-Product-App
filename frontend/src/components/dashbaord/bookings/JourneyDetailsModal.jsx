@@ -195,7 +195,6 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
       {/* Hidden PDF content */}
       <PDFContent
         ref={pdfRef}
-        logoUrl={IMAGES.dashboardLargeLogo}
         viewData={viewData}
         companyData={companyData}
       />
