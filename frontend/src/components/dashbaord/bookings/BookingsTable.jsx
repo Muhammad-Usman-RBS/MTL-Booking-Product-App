@@ -74,6 +74,11 @@ const BookingsTable = ({
         return `${vehicle.vehicleName || "N/A"} | 👥 ${vehicle.passenger || 0} | 🎒 ${vehicle.handLuggage || 0} | 🧳 ${vehicle.checkinLuggage || 0}`;
     };
 
+    const formatPassenger = (passenger) => {
+        if (!passenger || typeof passenger !== "object") return "-";
+        return `${passenger.name || "N/A"} | 👥 ${passenger.email || 0} | 🎒 ${passenger.phone || 0}`;
+    };
+
     const tableData = bookings.map((item, index) => {
         const row = {};
 
@@ -86,13 +91,7 @@ const BookingsTable = ({
                     break;
                 case "passenger":
                     row[key] = item.passenger
-                        ? (
-                            <div>
-                                <div><strong>{item.passenger.name || "Unnamed"}</strong></div>
-                                <div className="text-sm text-gray-600">{item.passenger.email || "No Email"}</div>
-                                <div className="text-sm text-gray-600">+{item.passenger.phone || "No Phone"}</div>
-                            </div>
-                        )
+                        ? `${item.passenger.name || "Unnamed"} | ${item.passenger.email || "No Email"} | ${item.passenger.phone || "No Phone"}`
                         : "-";
                     break;
                 case "date":
@@ -134,9 +133,9 @@ const BookingsTable = ({
                                 try {
                                     await updateBookingStatus({ id: item._id, status: newStatus }).unwrap();
                                     toast.success("Status updated successfully");
-                                    refetch(); // ✅ Force UI update from fresh data
+                                    refetch(); // Force UI update from fresh data
                                 } catch (err) {
-                                    console.error("❌ Status update failed:", err);
+                                    console.error("Status update failed:", err);
                                     toast.error("Failed to update status");
                                 }
                             }}
@@ -146,7 +145,7 @@ const BookingsTable = ({
                     break;
                 case "actions":
                     row[key] = (
-                        <div className="relative text-center">
+                        <div className="text-center">
                             <button
                                 onClick={() =>
                                     setSelectedActionRow(selectedActionRow === index ? null : index)
@@ -157,7 +156,7 @@ const BookingsTable = ({
                                 <GripHorizontal size={18} className="text-gray-600" />
                             </button>
                             {selectedActionRow === index && (
-                                <div className="absolute right-0 z-50 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg animate-slide-in">
+                                <div className="mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg animate-slide-in">
                                     {actionMenuItems.map((action, i) => (
                                         <button
                                             key={i}
@@ -197,7 +196,7 @@ const BookingsTable = ({
 
     const exportTableData = bookings.map((item) => ({
         orderNo: item._id,
-        passenger: item.passenger || "-",
+        passenger: formatPassenger(item.passenger),
         date: item.createdAt ? new Date(item.createdAt).toLocaleString() : "-",
         pickUp: item.journey1?.pickup || "-",
         dropOff: item.journey1?.dropoff || "-",

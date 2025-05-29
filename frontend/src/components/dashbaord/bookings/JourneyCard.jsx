@@ -81,19 +81,18 @@ const JourneyCard = ({ title, journeyData, setJourneyData, dropOffs, setDropOffs
     };
 
     return (
-        <div className="bg-white shadow-lg rounded-xl w-full max-w-4xl mx-auto p-6 border border-gray-300 mt-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
-                <h3 className="text-xl font-semibold mb-4">{title}:</h3>
-                <div className="btn-edit btn">Fare: $0</div>
+        <div className="bg-white shadow-md rounded-2xl p-4 sm:p-6 max-w-4xl w-full mx-auto border border-gray-200 mt-6 text-sm">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+                <h3 className="text-lg sm:text-xl font-semibold">{title}:</h3>
+                <div className="btn-edit btn text-sm sm:text-base">Fare: $0</div>
             </div>
 
-            <div className="mb-6">
-                <label className="block text-sm font-semibold mb-2 text-gray-700">
-                    Pick Up Date & Time
-                </label>
+            {/* Date & Time */}
+            <div className="mb-4">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Pick Up Date & Time</label>
                 <div className="flex flex-col sm:flex-row gap-3">
                     <input type="date" name="date" className="custom_input" value={journeyData.date} onChange={handleChange} />
-                    <div className="flex gap-4 w-full sm:w-1/2">
+                    <div className="flex gap-2 w-full sm:w-1/2">
                         <select name="hour" className="custom_input" value={journeyData.hour} onChange={handleChange}>
                             <option value="">HH</option>
                             {[...Array(24).keys()].map((h) => (
@@ -110,22 +109,34 @@ const JourneyCard = ({ title, journeyData, setJourneyData, dropOffs, setDropOffs
                 </div>
             </div>
 
-            <div className="relative">
-                <input type="text" name="pickup" placeholder="Pickup Location" value={journeyData.pickup} onChange={handlePickupChange} className="custom_input mb-4" />
+            {/* Pickup Location */}
+            <div className="relative mb-4">
+                <input
+                    type="text"
+                    name="pickup"
+                    placeholder="Pickup Location"
+                    value={journeyData.pickup}
+                    onChange={handlePickupChange}
+                    className="custom_input"
+                />
                 {pickupSuggestions.length > 0 && (
-                    <ul className="absolute z-10 bg-white border rounded shadow max-h-40 overflow-y-auto w-full">
+                    <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full">
                         <li
                             onClick={() => {
                                 setJourneyData({ ...journeyData, pickup: journeyData.pickup });
                                 setPickupType("location");
                                 setPickupSuggestions([]);
                             }}
-                            className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b"
+                            className="p-2 text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 cursor-pointer border-b"
                         >
                             ➕ Use: "{journeyData.pickup}"
                         </li>
                         {pickupSuggestions.map((sug, idx) => (
-                            <li key={idx} onClick={() => handlePickupSelect(sug)} className="p-2 hover:bg-gray-100 cursor-pointer">
+                            <li
+                                key={idx}
+                                onClick={() => handlePickupSelect(sug)}
+                                className="p-2 text-xs sm:text-sm hover:bg-gray-100 cursor-pointer"
+                            >
                                 {sug.name} - {sug.formatted_address}
                             </li>
                         ))}
@@ -134,27 +145,35 @@ const JourneyCard = ({ title, journeyData, setJourneyData, dropOffs, setDropOffs
             </div>
 
             {pickupType === "location" && (
-                <input name="pickupDoorNumber" placeholder="Pickup Door No." className="custom_input" value={journeyData.pickupDoorNumber || ""} onChange={handleChange} />
+                <input
+                    name="pickupDoorNumber"
+                    placeholder="Pickup Door No."
+                    className="custom_input mb-4"
+                    value={journeyData.pickupDoorNumber || ""}
+                    onChange={handleChange}
+                />
             )}
+
             {pickupType === "airport" && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
                     <input name="arrivefrom" placeholder="Arriving From" value={journeyData.arrivefrom || ""} onChange={handleChange} className="custom_input" />
                     <input name="pickmeAfter" placeholder="Pick Me After" value={journeyData.pickmeAfter || ""} onChange={handleChange} className="custom_input" />
                     <input name="flightNumber" placeholder="Flight No." value={journeyData.flightNumber || ""} onChange={handleChange} className="custom_input" />
                 </div>
             )}
 
+            {/* Drop Offs */}
             {dropOffs.map((val, idx) => (
-                <div key={idx} className="flex gap-3 mt-4 mb-4 items-center">
+                <div key={idx} className="relative flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4">
                     <input
                         type="text"
                         value={val}
                         placeholder={`Drop Off ${idx + 1}`}
                         onChange={(e) => handleDropOffChange(idx, e.target.value)}
-                        className="custom_input"
+                        className="custom_input w-full"
                     />
                     {dropOffSuggestions.length > 0 && activeDropIndex === idx && (
-                        <ul className="absolute z-10 bg-white border rounded shadow max-h-40 overflow-y-auto w-full top-full left-0 mt-1">
+                        <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full top-full left-0 mt-1">
                             <li
                                 onClick={() => {
                                     const updated = [...dropOffs];
@@ -163,12 +182,12 @@ const JourneyCard = ({ title, journeyData, setJourneyData, dropOffs, setDropOffs
                                     setDropOffTypes((prev) => ({ ...prev, [idx]: "location" }));
                                     setDropOffSuggestions([]);
                                 }}
-                                className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b"
+                                className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
                             >
                                 ➕ Use: "{dropOffs[idx]}"
                             </li>
                             {dropOffSuggestions.map((sug, i) => (
-                                <li key={i} onClick={() => handleDropOffSelect(idx, sug)} className="p-2 hover:bg-gray-100 cursor-pointer">
+                                <li key={i} onClick={() => handleDropOffSelect(idx, sug)} className="p-2 text-xs hover:bg-gray-100 cursor-pointer">
                                     {sug.name} - {sug.formatted_address}
                                 </li>
                             ))}
@@ -180,7 +199,7 @@ const JourneyCard = ({ title, journeyData, setJourneyData, dropOffs, setDropOffs
                             name={`dropoff_terminal_${idx}`}
                             value={journeyData[`dropoff_terminal_${idx}`] || ''}
                             placeholder="Terminal No."
-                            className="custom_input mt-4"
+                            className="custom_input"
                             onChange={handleChange}
                         />
                     )}
@@ -190,23 +209,41 @@ const JourneyCard = ({ title, journeyData, setJourneyData, dropOffs, setDropOffs
                             name={`dropoffDoorNumber${idx}`}
                             value={journeyData[`dropoffDoorNumber${idx}`] || ''}
                             placeholder="Drop Off Door No."
-                            className="custom_input mt-4"
+                            className="custom_input"
                             onChange={handleChange}
                         />
                     )}
 
                     {idx > 0 && (
-                        <button type="button" onClick={() => removeDropOff(idx)} className="btn btn-cancel mt-1 mr-2">&minus;</button>
+                        <button type="button" onClick={() => removeDropOff(idx)} className="btn btn-cancel text-sm px-3 py-1">
+                            &minus;
+                        </button>
                     )}
                 </div>
             ))}
 
             {dropOffs.length < 3 && (
-                <button type="button" onClick={addDropOff} className="btn btn-edit mt-4 mb-4">+ Add Drop Off</button>
+                <button type="button" onClick={addDropOff} className="btn btn-edit w-full sm:w-auto text-sm px-4 py-2 mb-4">
+                    + Add Drop Off
+                </button>
             )}
 
-            <textarea name="notes" placeholder="Notes" rows="3" className="custom_input" value={journeyData.notes} onChange={handleChange} />
-            <textarea name="internalNotes" placeholder="Internal Notes" rows="3" className="custom_input" value={journeyData.internalNotes} onChange={handleChange} />
+            <textarea
+                name="notes"
+                placeholder="Notes"
+                rows="2"
+                className="custom_input mb-2"
+                value={journeyData.notes}
+                onChange={handleChange}
+            />
+            <textarea
+                name="internalNotes"
+                placeholder="Internal Notes"
+                rows="2"
+                className="custom_input"
+                value={journeyData.internalNotes}
+                onChange={handleChange}
+            />
         </div>
     );
 };

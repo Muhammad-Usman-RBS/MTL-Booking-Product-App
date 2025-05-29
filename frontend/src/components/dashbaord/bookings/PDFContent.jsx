@@ -125,9 +125,9 @@ const PDFContent = forwardRef(({ viewData = {}, companyData = {} }, ref) => {
       </div>
       <div style={{ border: "1px solid #e5e7eb", borderRadius: "8px", padding: "16px", backgroundColor: "#f9fafb", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
         <h4 style={{ fontSize: "16px", marginBottom: "10px", color: "#111827" }}>Passenger Details</h4>
-        <p style={{ margin: "4px 0" }}><strong>Name:</strong> {viewData?.passenger || "N/A"}</p>
-        <p style={{ margin: "4px 0" }}><strong>Email:</strong> {viewData?.email || "N/A"}</p>
-        <p style={{ margin: "4px 0" }}><strong>Phone:</strong> {viewData?.contactNumber || "N/A"}</p>
+        <p style={{ margin: "4px 0" }}><strong>Name:</strong> {viewData?.passenger?.name || "N/A"}</p>
+        <p style={{ margin: "4px 0" }}><strong>Email:</strong> {viewData?.passenger?.email || "N/A"}</p>
+        <p style={{ margin: "4px 0" }}><strong>Phone:</strong> {viewData?.passenger?.phone || "N/A"}</p>
       </div>
 
       {/* Footer */}

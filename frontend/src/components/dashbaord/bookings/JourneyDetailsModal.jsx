@@ -3,11 +3,10 @@ import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import PDFContent from "./PDFContent";
-import IMAGES from "../../../assets/images";
 import { useSelector } from "react-redux";
 
 const JourneyDetailsModal = ({ viewData = {} }) => {
-  const [email, setEmail] = useState(viewData?.email || "");
+  const [email, setEmail] = useState(viewData?.passenger?.email || "");
   const pdfRef = useRef();
   const companyId = localStorage.getItem("companyId");
 
@@ -65,17 +64,18 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
         return `${(km * 0.621371).toFixed(2)} miles`;
       }
     }
-    return text; // fallback if already in miles or unknown format
+    return text;
   };
 
-  const pickupTime = viewData?.journey1?.date && viewData?.journey1?.hour
-    ? `${viewData?.journey1?.date} ${viewData?.journey1?.hour}:${viewData?.journey1?.minute}`
-    : "N/A";
+  const pickupTime =
+    viewData?.journey1?.date && viewData?.journey1?.hour
+      ? `${viewData?.journey1?.date} ${viewData?.journey1?.hour}:${viewData?.journey1?.minute}`
+      : "N/A";
 
   return (
     <>
       <div className="max-w-5xl w-full mx-auto space-y-5 p-5" id="pdf-container">
-        {/* Header Row */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
           <SelectOption options={["Booking Confirmation", "Booking Receipt"]} />
           <div className="flex items-center gap-2 w-full">
@@ -93,7 +93,9 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             <button
               onClick={downloadPDF}
               className="border px-4 py-1.5 rounded text-gray-700 hover:bg-gray-100 text-sm"
-            >📥</button>
+            >
+              📥
+            </button>
           </div>
         </div>
 
@@ -107,13 +109,15 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
           </div>
           <div className="bg-yellow-100 border border-yellow-300 p-3 rounded-md text-xs">
             <strong className="text-gray-700">Driver Notes:</strong>
-            <span className="italic text-red-600">{viewData?.driverNotes || "Empty"}</span>
+            <span className="italic text-red-600">
+              {viewData?.driverNotes || "Empty"}
+            </span>
           </div>
         </div>
 
         {/* Main Content */}
         <div className="grid md:grid-cols-2 gap-5 text-xs text-gray-800">
-          {/* Left Column */}
+          {/* Left */}
           <div className="space-y-2.5">
             <div><strong>Order No.:</strong> {viewData?._id || "N/A"}</div>
             <div><strong>Booked On:</strong> {viewData?.createdAt ? new Date(viewData.createdAt).toLocaleString() : "N/A"}</div>
@@ -139,14 +143,14 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             </div>
           </div>
 
-          {/* Right Column */}
+          {/* Right */}
           <div className="space-y-3">
             <div>
               <strong>Passenger Details:</strong>
               <div className="ml-4 mt-1 space-y-1">
-                <div><strong>Passenger Name:</strong> {viewData?.passenger || "N/A"}</div>
-                <div><strong>Email Address:</strong> {viewData?.email || "N/A"}</div>
-                <div><strong>Contact Number:</strong> {viewData?.contactNumber || "N/A"}</div>
+                <div><strong>Name:</strong> {viewData?.passenger?.name || "N/A"}</div>
+                <div><strong>Email:</strong> {viewData?.passenger?.email || "N/A"}</div>
+                <div><strong>Phone:</strong> {viewData?.passenger?.phone || "N/A"}</div>
               </div>
               <hr className="text-gray-300 my-2" />
             </div>
@@ -192,13 +196,8 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
         </div>
       </div>
 
-      {/* Hidden PDF content */}
-      <PDFContent
-        ref={pdfRef}
-        viewData={viewData}
-        companyData={companyData}
-      />
-
+      {/* Hidden PDF */}
+      <PDFContent ref={pdfRef} viewData={viewData} companyData={companyData} />
     </>
   );
 };

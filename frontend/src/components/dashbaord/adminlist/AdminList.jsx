@@ -226,6 +226,36 @@ const AdminList = () => {
   else if (user?.role === "associateadmin") roleOptions = ["staffmember", "driver", "customer"];
   else if (user?.role === "demo") roleOptions = ["staffmember", "driver", "customer"];
 
+  const getAvailablePermissions = (role) => {
+    if (["driver"].includes(role)) {
+      return ["Rides", "Earnings", "Statements", "Bookings", "Drivers"]
+    } else if (["clientadmin", "associateadmin", "staffmember"].includes(role)) {
+      return [
+        "Users",
+        "Bookings",
+        "Invoices",
+        "Drivers",
+        "Customers",
+        "Company Accounts",
+        "Statements",
+        "Pricing",
+        "Settings",
+        "Widget/API",
+      ];
+    } else {
+      return ["Users",
+        "Bookings",
+        "Invoices",
+        "Drivers",
+        "Customers",
+        "Company Accounts",
+        "Statements",
+        "Pricing",
+        "Settings",
+      ];
+    }
+  };
+
   return (
     <>
       <div>
@@ -340,11 +370,7 @@ const AdminList = () => {
               Permissions
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {[
-                "Users", "Bookings", "Invoices", "Drivers", "Customers",
-                "Company Accounts", "Statements", "Pricing",
-                "Settings", "Widget/API"
-              ].map((perm) => (
+              {getAvailablePermissions(selectedAccount?.role).map((perm) => (
                 <label key={perm} className="flex gap-2 items-center">
                   <input
                     type="checkbox"
