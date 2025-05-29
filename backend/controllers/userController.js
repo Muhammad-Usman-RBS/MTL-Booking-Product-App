@@ -98,7 +98,7 @@ export const createUserBySuperAdmin = async (req, res) => {
         }
 
         const allowedPermissions = [
-            "Users", "Home", "Bookings", "Invoices", "Drivers", "Customers",
+            "Users", "Home", "Bookings", "Rides", "Earnings", "Invoices", "Drivers", "Customers",
             "Company Accounts", "Statements", "Pricing",
             "Settings", "Widget/API", "Profile", "Logout"
         ];

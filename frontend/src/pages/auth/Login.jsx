@@ -48,9 +48,6 @@ const Login = () => {
           case 'manager':
             navigate('/dashboard/home');
             break;
-          case 'driver':
-            navigate('/dashboard/driver');
-            break;
           default:
             navigate('/dashboard/home');
         }

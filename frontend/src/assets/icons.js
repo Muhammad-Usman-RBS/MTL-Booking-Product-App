@@ -71,9 +71,25 @@ import {
   Grid,
   Columns3,
   Keyboard,
+  Navigation,
+  AlertCircle,
+  Phone,
+  FileCheck,
+  Lock,
+  TrendingUp,
+  Search,
+  CheckCircle
 } from "lucide-react";
 
 const Icons = {
+  Navigation,
+  AlertCircle,
+  Phone,
+  FileCheck,
+  Lock,
+  TrendingUp,
+  Search,
+  CheckCircle,
   Columns3,
   Keyboard,
   Grid,

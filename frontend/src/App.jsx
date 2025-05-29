@@ -58,6 +58,11 @@ import CronJob from "./components/dashbaord/settings/CronJob";
 import DriverFare from "./components/dashbaord/pricing/DriverFare";
 import WidgetMain from "./components/dashbaord/widgetapi/WidgetMain";
 import WidgetAPI from "./components/dashbaord/widgetapi/WidgetAPI";
+import DriverEarnings from "./portals/driverportal/earnings/DriverEarnings";
+import DriverRides from "./portals/driverportal/rides/DriverRides";
+import DriverJobDetails from "./portals/driverportal/home/DriverJobDetails";
+import TermsCondition from "./portals/driverportal/settings/TermsandConditions";
+import DriverContact from "./portals/driverportal/settings/DriverContact";
 
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { ToastContainer } from "react-toastify";
@@ -100,6 +105,9 @@ function App() {
               <Route path="drivers/list" element={<DriverList />} />
               <Route path="drivers/new" element={<NewDriver />} />
               <Route path="drivers/config" element={<DriverRegistrationConfig />} />
+              <Route path="drivers/earnings" element={<DriverEarnings />} />
+              <Route path="drivers/all-rides" element={<DriverRides />} />
+              <Route path="drivers/jobs/:id" element={<DriverJobDetails />} />
 
               {/* Customers */}
               <Route path="customers/list" element={<CustomersList />} />
@@ -140,6 +148,8 @@ function App() {
               <Route path="settings/social-media" element={<SocialMedia />} />
               <Route path="settings/chat-plugin" element={<ChatPlugin />} />
               <Route path="settings/cron-job" element={<CronJob />} />
+              <Route path="settings/terms-and-condition" element={<TermsCondition />} />
+              <Route path="settings/driver-contact" element={<DriverContact />} />
 
               {/* Widget / API */}
               <Route path="widget-api" element={<WidgetAPI />} />

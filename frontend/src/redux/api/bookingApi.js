@@ -52,10 +52,10 @@ export const bookingApi = apiSlice.injectEndpoints({
 
     // Update Booking Status
     updateBookingStatus: builder.mutation({
-      query: ({ id, status }) => ({
+      query: ({ id, status, updatedBy }) => ({
         url: `/booking/${id}`,
         method: "PATCH",
-        body: { status },
+        body: { status, updatedBy  },
       }),
     }),
 

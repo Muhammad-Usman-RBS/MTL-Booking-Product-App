@@ -65,6 +65,16 @@ const sidebarItems = [
         route: "/dashboard/drivers/config",
         icon: Icons.Settings2,
       },
+      {
+        title: "Rides",
+        icon: Icons.CarFront,
+        route: "/dashboard/drivers/all-rides",
+      },
+      {
+        title: "Earnings",
+        icon: Icons.Activity,
+        route: "/dashboard/drivers/earnings",
+      },
     ],
   },
   {
@@ -260,6 +270,16 @@ const sidebarItems = [
       {
         title: "Cron Job",
         route: "/dashboard/settings/cron-job",
+        icon: Icons.Clock,
+      },
+      {
+        title: "Driver Contact",
+        route: "/dashboard/settings/driver-contact",
+        icon: Icons.Clock,
+      },
+      {
+        title: "Terms and Condition",
+        route: "/dashboard/settings/terms-and-condition",
         icon: Icons.Clock,
       },
     ],

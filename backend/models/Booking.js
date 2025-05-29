@@ -48,11 +48,18 @@ const VehicleInfoSchema = new mongoose.Schema({
   checkinLuggage: { type: Number, default: 0 },
 }, { _id: false });
 
-// ✅ Passenger Subdocument
+// Passenger Subdocument
 const PassengerSchema = new mongoose.Schema({
   name: { type: String },
   email: { type: String },
   phone: { type: String },
+}, { _id: false });
+
+// Status Audit Entry Subdocument
+const StatusAuditSchema = new mongoose.Schema({
+  updatedBy: { type: String, required: true },
+  status: { type: String, required: true },
+  date: { type: Date, default: Date.now },
 }, { _id: false });
 
 // Booking Schema
@@ -81,7 +88,7 @@ const BookingSchema = new mongoose.Schema({
     required: true,
   },
   passenger: {
-    type: PassengerSchema, // ✅ Included here
+    type: PassengerSchema,
     required: false,
   },
   companyId: {
@@ -89,6 +96,13 @@ const BookingSchema = new mongoose.Schema({
     ref: "Company",
   },
   status: { type: String, default: "No Show" },
+
+  // ✅ NEW: Status Change Audit
+  statusAudit: {
+    type: [StatusAuditSchema],
+    default: [],
+  },
+
   source: { type: String },
   referrer: { type: String },
 }, { timestamps: true });

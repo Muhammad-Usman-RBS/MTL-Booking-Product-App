@@ -34,7 +34,7 @@ const createSuperAdmin = async () => {
 
   const existing = await User.findOne({ email });
   const allowedPermissions = [
-    "Users", "Home", "Bookings", "Invoices", "Drivers", "Customers",
+    "Home", "Users", "Bookings", "Invoices", "Drivers", "Customers",
     "Company Accounts", "Statements", "Pricing",
     "Settings", "Widget/API", "Profile", "Logout"
 ];

@@ -1,10 +1,9 @@
-// BookingsFilters.jsx
 import React from "react";
 import { Link } from "react-router-dom";
 import SelectedSearch from "../../../constants/constantscomponents/SelectedSearch";
 import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
 import Icons from "../../../assets/icons";
-import { driverList, passengerList, vehicleList, accountList, statusList } from "../../../constants/dashboardTabsData/data";
+import { driverList, passengerList, vehicleList, accountList } from "../../../constants/dashboardTabsData/data";
 
 const BookingsFilters = ({
   selectedStatus,
@@ -25,6 +24,7 @@ const BookingsFilters = ({
   setShowDiv,
   setShowColumnModal,
   setShowKeyboardModal,
+  statusList,
 }) => {
   return (
     <>

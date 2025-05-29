@@ -3,6 +3,7 @@ import { ChevronDown } from "lucide-react";
 import classNames from "classnames";
 
 const STATUS_OPTIONS = [
+    "New",
     "Accepted",
     "On Route",
     "At Location",

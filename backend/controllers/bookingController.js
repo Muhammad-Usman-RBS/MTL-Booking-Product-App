@@ -9,7 +9,7 @@ export const createBooking = async (req, res) => {
       companyId,
       referrer,
       vehicle = {},
-      passenger = {}, // NEW
+      passenger = {},
       journey1 = {},
       journey2 = {},
     } = req.body;
@@ -49,7 +49,7 @@ export const createBooking = async (req, res) => {
       companyId,
       referrer: referrer || "Manual Entry",
       source: "admin",
-      status: "Pending",
+      status: "New",
       vehicle: {
         vehicleName: vehicle.vehicleName,
         passenger: parseInt(vehicle.passenger) || 0,
@@ -103,7 +103,7 @@ export const createBooking = async (req, res) => {
         companyId,
         referrer: referrer || "Manual Entry",
         source: "admin",
-        status: "Pending",
+        status: "New",
         vehicle: {
           vehicleName: vehicle.vehicleName,
           passenger: parseInt(vehicle.passenger) || 0,
@@ -156,7 +156,7 @@ export const createBooking = async (req, res) => {
       bookings: returnJourney ? [booking1, booking2] : [booking1],
     });
   } catch (error) {
-    console.error("❌ Error in createBooking controller:", error);
+    console.error("Error in createBooking controller:", error);
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
@@ -314,7 +314,7 @@ export const submitWidgetForm = async (req, res) => {
       companyId,
       referrer: referrer || "Direct",
       source: "widget",
-      status: "No Show",
+      status: "New",
       vehicle: {
         vehicleName: vehicle.vehicleName,
         passenger: vehicle.passenger || 0,
@@ -339,8 +339,8 @@ export const submitWidgetForm = async (req, res) => {
         minute: parseInt(journey1.minute),
         fare: 0,
         hourlyOption: journey1.hourlyOption || null,
-        distanceText: journey1.distanceText || null, // FIXED
-        durationText: journey1.durationText || null, // FIXED
+        distanceText: journey1.distanceText || null,
+        durationText: journey1.durationText || null,
         ...dynamicDropoffFields1,
       },
       ...(returnJourney && journey2 && {
@@ -385,19 +385,30 @@ export const submitWidgetForm = async (req, res) => {
 export const updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, updatedBy } = req.body;
 
     if (!id || id.length !== 24) {
-      return res.status(400).json({ message: "Invalid ID" });
+      return res.status(400).json({ message: "Invalid booking ID" });
     }
 
-    const booking = await Booking.findByIdAndUpdate(id, { status }, { new: true });
-
+    const booking = await Booking.findById(id);
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    res.status(200).json({ success: true, booking });
+    // ✅ Log updatedBy
+    const auditEntry = {
+      updatedBy: updatedBy || "Unknown",
+      status,
+      date: new Date(),
+    };
+
+    booking.status = status;
+    booking.statusAudit = [...(booking.statusAudit || []), auditEntry];
+
+    const updatedBooking = await booking.save();
+
+    res.status(200).json({ success: true, booking: updatedBooking });
   } catch (err) {
     console.error("Error updating status:", err);
     res.status(500).json({ message: "Internal server error", error: err.message });

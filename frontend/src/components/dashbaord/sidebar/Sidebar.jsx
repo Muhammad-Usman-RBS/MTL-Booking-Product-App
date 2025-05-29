@@ -19,24 +19,38 @@ const Sidebar = () => {
 
   let sidebarTabs = [];
 
-  if (role === "superadmin") {
-    sidebarTabs = sidebarItems.filter(item =>
-      !["Profile", "Logout"].includes(item.title)
-    );
-  } else {
-    sidebarTabs = permissions
-      .map((perm) =>
-        sidebarItems.find(item =>
-          item.title.toLowerCase() === perm.trim().toLowerCase()
-        )
-      )
-      .filter(item => item && !["Profile", "Logout"].includes(item.title));
+  // if (role === "superadmin") {
+  //   sidebarTabs = sidebarItems.filter(item =>
+  //     !["Profile", "Logout"].includes(item.title)
+  //   );
+  // } else {
+  //   sidebarTabs = permissions
+  //     .map((perm) =>
+  //       sidebarItems.find(item =>
+  //         item.title.toLowerCase() === perm.trim().toLowerCase()
+  //       )
+  //     )
+  //     .filter(item => item && !["Profile", "Logout"].includes(item.title));
 
-    const hasHome = sidebarTabs.find(item => item.title === "Home");
-    if (!hasHome) {
-      const homeTab = sidebarItems.find(item => item.title === "Home");
-      if (homeTab) sidebarTabs.unshift(homeTab);
-    }
+  //   const hasHome = sidebarTabs.find(item => item.title === "Home");
+  //   if (!hasHome) {
+  //     const homeTab = sidebarItems.find(item => item.title === "Home");
+  //     if (homeTab) sidebarTabs.unshift(homeTab);
+  //   }
+  // }
+
+  sidebarTabs = permissions
+    .map((perm) =>
+      sidebarItems.find(item =>
+        item.title.toLowerCase() === perm.trim().toLowerCase()
+      )
+    )
+    .filter(item => item && !["Profile", "Logout"].includes(item.title));
+
+  const hasHome = sidebarTabs.find(item => item.title === "Home");
+  if (!hasHome) {
+    const homeTab = sidebarItems.find(item => item.title === "Home");
+    if (homeTab) sidebarTabs.unshift(homeTab);
   }
 
   useEffect(() => {

@@ -1,16 +1,16 @@
 import IMAGES from "../../assets/images";
 
-export const statusList = [
-  { label: "Scheduled", count: 41 },
-  { label: "Pending", count: 0 },
-  { label: "Payment Pending", count: 20 },
-  { label: "No Show", count: 177 },
-  { label: "Completed", count: 7389 },
-  { label: "Cancelled", count: 193 },
-  { label: "Rejected", count: 0 },
-  { label: "Deleted", count: 0 },
-  { label: "All", count: 7820 },
-];
+// export const statusList = [
+//   { label: "Scheduled", count: 41 },
+//   { label: "Pending", count: 0 },
+//   { label: "Payment Pending", count: 20 },
+//   { label: "No Show", count: 177 },
+//   { label: "Completed", count: 7389 },
+//   { label: "Cancelled", count: 193 },
+//   { label: "Rejected", count: 0 },
+//   { label: "Deleted", count: 0 },
+//   { label: "All", count: 7820 },
+// ];
 
 export const itemsPerPageOptions = [1, 2, 3, 40, "All"];
 
@@ -1650,3 +1650,179 @@ export const yesNoOptions = [
   },
 ]
 
+// New Data
+export const mockJobs = [
+  {
+    id: 1,
+    pickupLocation: "Downtown Mall, Main Street",
+    dropLocation: "Airport Terminal 2, Gate A",
+    extraGuidance: "Customer will be waiting near Starbucks entrance",
+    driverFare: 45.5,
+    totalPayment: 60.0,
+    driverShare: 45.5,
+    estimatedTime: "25 min",
+    distance: "12.5 km",
+    customerName: "John Smith",
+    customerRating: 4.8,
+    status: "available",
+    acceptedAt: null,
+    driverName: "Driver A",
+    driverPhone: "123-456-7890",
+  },
+  {
+    id: 2,
+    pickupLocation: "Central Hospital, Emergency Wing",
+    dropLocation: "Greenwood Apartments, Block C",
+    extraGuidance: "Handle with care - elderly passenger",
+    driverFare: 28.75,
+    totalPayment: 38.0,
+    driverShare: 28.75,
+    estimatedTime: "18 min",
+    distance: "8.2 km",
+    customerName: "Maria Garcia",
+    customerRating: 4.9,
+    status: "available",
+    acceptedAt: null,
+    driverName: "Driver B",
+    driverPhone: "987-654-3210",
+  },
+  {
+    id: 3,
+    pickupLocation: "Tech Park, Building 5",
+    dropLocation: "City Center Mall, Food Court",
+    extraGuidance: "Customer has luggage - please assist",
+    driverFare: 32.25,
+    totalPayment: 42.0,
+    driverShare: 32.25,
+    estimatedTime: "20 min",
+    distance: "9.8 km",
+    customerName: "Alex Johnson",
+    customerRating: 4.7,
+    status: "available",
+    acceptedAt: null,
+    driverName: "Driver C",
+    driverPhone: "555-123-4567",
+  },
+  {
+    id: 4,
+    pickupLocation: "University Campus, Library",
+    dropLocation: "Railway Station, Platform 3",
+    extraGuidance: "Student with books - extra time needed",
+    driverFare: 22.0,
+    totalPayment: 30.0,
+    driverShare: 22.0,
+    estimatedTime: "15 min",
+    distance: "6.5 km",
+    customerName: "Emily Chen",
+    customerRating: 5.0,
+    status: "scheduled",
+    acceptedAt: "2025-05-25T10:30:00",
+    driverName: "Driver D",
+    driverPhone: "444-777-8888",
+  },
+  {
+    id: 5,
+    pickupLocation: "Business District, Tower A",
+    dropLocation: "Residential Area, Pine Street",
+    extraGuidance: "VIP customer - professional service required",
+    driverFare: 55.0,
+    totalPayment: 70.0,
+    driverShare: 55.0,
+    estimatedTime: "30 min",
+    distance: "15.2 km",
+    customerName: "Robert Wilson",
+    customerRating: 4.6,
+    status: "scheduled",
+    acceptedAt: "2025-05-25T09:45:00",
+    driverName: "Driver E",
+    driverPhone: "222-333-4444",
+  },
+];
+
+export const mockEarningsData = [
+  {
+    id: 1,
+    date: "2024-05-27",
+    amount: 85.5,
+    jobType: "pick-drop",
+    status: "completed",
+    tripDistance: 12.5,
+  },
+  {
+    id: 2,
+    date: "2024-05-26",
+    amount: 92.0,
+    jobType: "pick-drop",
+    status: "completed",
+    tripDistance: 15.2,
+  },
+  {
+    id: 3,
+    date: "2024-05-25",
+    amount: 67.25,
+    jobType: "pickup-only",
+    status: "completed",
+    tripDistance: 8.7,
+  },
+  {
+    id: 4,
+    date: "2024-05-24",
+    amount: 110.75,
+    jobType: "pick-drop",
+    status: "completed",
+    tripDistance: 22.1,
+  },
+  {
+    id: 5,
+    date: "2024-05-23",
+    amount: 78.9,
+    jobType: "drop-only",
+    status: "completed",
+    tripDistance: 11.3,
+  },
+  {
+    id: 6,
+    date: "2024-05-22",
+    amount: 95.4,
+    jobType: "pick-drop",
+    status: "completed",
+    tripDistance: 16.8,
+  },
+  {
+    id: 7,
+    date: "2024-05-21",
+    amount: 73.6,
+    jobType: "pickup-only",
+    status: "completed",
+    tripDistance: 9.9,
+  },
+  {
+    id: 8,
+    date: "2024-05-20",
+    amount: 128.25,
+    jobType: "pick-drop",
+    status: "completed",
+    tripDistance: 24.5,
+  },
+];
+
+export const timeFilters = [
+  { value: "1", label: "1 Day" },
+  { value: "7", label: "7 Days" },
+  { value: "15", label: "15 Days" },
+  { value: "30", label: "30 Days" },
+];
+
+export const jobTypes = [
+  { value: "all", label: "All Services" },
+  { value: "pick-drop", label: "Pick & Drop" },
+  { value: "pickup-only", label: "Pickup Only" },
+  { value: "drop-only", label: "Drop Only" },
+];
+
+export const statusOptions = [
+  { value: "all", label: "All Rides" },
+  { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
+  { value: "scheduled", label: "Scheduled" },
+];

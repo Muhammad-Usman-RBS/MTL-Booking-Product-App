@@ -1,21 +1,18 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import SelectStatus from "./SelectStatus";
+import { GripHorizontal } from "lucide-react";
+import CustomTable from "../../../constants/constantscomponents/CustomTable";
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import {
     useGetAllBookingsQuery,
     useDeleteBookingMutation,
-    useUpdateBookingStatusMutation, // ✅ Import mutation
+    useUpdateBookingStatusMutation,
 } from "../../../redux/api/bookingApi";
-import CustomTable from "../../../constants/constantscomponents/CustomTable";
-import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import { GripHorizontal } from "lucide-react";
-import SelectStatus from "./SelectStatus";
 
 const BookingsTable = ({
     selectedColumns,
-    setSelectedColumns,
-    sortConfig,
-    setSortConfig,
     selectedActionRow,
     setSelectedActionRow,
     openAuditModal,
@@ -24,19 +21,26 @@ const BookingsTable = ({
     actionMenuItems,
     setEditBookingData,
     setShowEditModal,
+    selectedStatus,
 }) => {
     const user = useSelector((state) => state.auth.user);
     const companyId = user?.companyId;
 
     const { data, isLoading, error, refetch } = useGetAllBookingsQuery(companyId);
     const [deleteBooking] = useDeleteBookingMutation();
-    const [updateBookingStatus] = useUpdateBookingStatusMutation(); // ✅ Hook
+    const [updateBookingStatus] = useUpdateBookingStatusMutation();
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedDeleteId, setSelectedDeleteId] = useState(null);
 
     const bookings = (data?.bookings || []).filter(
         (booking) => booking?.companyId?.toString() === companyId?.toString()
+    );
+
+    const filteredBookings = bookings.filter((booking) =>
+        selectedStatus.includes("All") || selectedStatus.length === 0
+            ? true
+            : selectedStatus.includes(booking.status)
     );
 
     if (isLoading) return <p>Loading...</p>;
@@ -71,15 +75,15 @@ const BookingsTable = ({
 
     const formatVehicle = (vehicle) => {
         if (!vehicle || typeof vehicle !== "object") return "-";
-        return `${vehicle.vehicleName || "N/A"} | 👥 ${vehicle.passenger || 0} | 🎒 ${vehicle.handLuggage || 0} | 🧳 ${vehicle.checkinLuggage || 0}`;
+        return `${vehicle.vehicleName || "N/A"} | ${vehicle.passenger || 0} | ${vehicle.handLuggage || 0} | ${vehicle.checkinLuggage || 0}`;
     };
 
     const formatPassenger = (passenger) => {
         if (!passenger || typeof passenger !== "object") return "-";
-        return `${passenger.name || "N/A"} | 👥 ${passenger.email || 0} | 🎒 ${passenger.phone || 0}`;
+        return `${passenger.name || "N/A"} | ${passenger.email || 0} | ${passenger.phone || 0}`;
     };
 
-    const tableData = bookings.map((item, index) => {
+    const tableData = filteredBookings.map((item, index) => {
         const row = {};
 
         tableHeaders.forEach(({ key }) => {
@@ -131,9 +135,14 @@ const BookingsTable = ({
                             value={item.status || "No Show"}
                             onChange={async (newStatus) => {
                                 try {
-                                    await updateBookingStatus({ id: item._id, status: newStatus }).unwrap();
+                                    await updateBookingStatus({
+                                        id: item._id,
+                                        status: newStatus,
+                                        updatedBy: `${user.role} | ${user.fullName}`
+                                    }).unwrap();
+
                                     toast.success("Status updated successfully");
-                                    refetch(); // Force UI update from fresh data
+                                    refetch();
                                 } catch (err) {
                                     console.error("Status update failed:", err);
                                     toast.error("Failed to update status");
@@ -194,7 +203,7 @@ const BookingsTable = ({
         return row;
     });
 
-    const exportTableData = bookings.map((item) => ({
+    const exportTableData = filteredBookings.map((item) => ({
         orderNo: item._id,
         passenger: formatPassenger(item.passenger),
         date: item.createdAt ? new Date(item.createdAt).toLocaleString() : "-",

@@ -2,8 +2,12 @@ import React, { useState } from "react";
 import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import RoleCards from "./DashboardCard";
+import DriverPortalHome from "../../../portals/driverportal/home/DriverPortalHome";
+import { useSelector } from "react-redux";
 
 const Dashboard = () => {
+  const user = useSelector((state)=>state.auth.user)
+
   const [startDate, setStartDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -85,20 +89,21 @@ const Dashboard = () => {
   return (
     <>
       <OutletHeading name="Stats" />
-      <div className="space-y-6 max-w-full">
-        {/* Filter Box */}
-        <div className="bg-gray-100 rounded p-4">
-          <div className="w-full md:w-80">
-            <SelectDateRange
-              startDate={startDate}
-              endDate={endDate}
-              setStartDate={setStartDate}
-              setEndDate={setEndDate}
-            />
+      {user.role === "driver" ? <DriverPortalHome /> :
+        <div className="space-y-6 max-w-full">
+          {/* Filter Box */}
+          <div className="bg-gray-100 rounded p-4">
+            <div className="w-full md:w-80">
+              <SelectDateRange
+                startDate={startDate}
+                endDate={endDate}
+                setStartDate={setStartDate}
+                setEndDate={setEndDate}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* <button className="btn btn-primary">Primary</button>
+          {/* <button className="btn btn-primary">Primary</button>
 
         <button className="btn btn-success">Success</button>
 
@@ -110,33 +115,34 @@ const Dashboard = () => {
 
         <button className="btn btn-outline">Outline</button> */}
 
-        <RoleCards />
-        {/* Sections */}
-        <div className="space-y-4">
-          {sections.map((section, i) => (
-            <div
-              key={i}
-              className={`border ${section.borderColor} rounded overflow-x-auto`}
-            >
-              <h3
-                className={`font-bold text-md md:text-lg text-white ${section.bg} p-2`}
+          <RoleCards />
+          {/* Sections */}
+          <div className="space-y-4">
+            {sections.map((section, i) => (
+              <div
+                key={i}
+                className={`border ${section.borderColor} rounded overflow-x-auto`}
               >
-                {section.title}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 p-4 text-sm">
-                {labels.map((label, idx) => (
-                  <div key={idx} className="min-w-0 break-words">
-                    <p className="text-gray-600 whitespace-nowrap">{label}</p>
-                    <p className="font-bold whitespace-nowrap">
-                      {section.values[idx]}
-                    </p>
-                  </div>
-                ))}
+                <h3
+                  className={`font-bold text-md md:text-lg text-white ${section.bg} p-2`}
+                >
+                  {section.title}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 p-4 text-sm">
+                  {labels.map((label, idx) => (
+                    <div key={idx} className="min-w-0 break-words">
+                      <p className="text-gray-600 whitespace-nowrap">{label}</p>
+                      <p className="font-bold whitespace-nowrap">
+                        {section.values[idx]}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      }
     </>
   );
 };
