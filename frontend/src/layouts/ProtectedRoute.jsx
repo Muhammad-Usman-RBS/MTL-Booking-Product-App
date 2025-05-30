@@ -1,44 +1,25 @@
-// import React from 'react';
-// import { Navigate, Outlet } from 'react-router-dom';
-
-// const ProtectedRoute = ({ role }) => {
-//   const user = JSON.parse(localStorage.getItem('user'));
-
-//   if (!user || user.role !== role) {
-//     return <Navigate to="/" replace />;
-//   }
-
-//   return <Outlet />;
-// };
-
-// export default ProtectedRoute;
-
-
-
 import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import sidebarItems from "../constants/constantscomponents/sidebarItems";
+import { useSelector } from "react-redux";
 
 const ProtectedRoute = () => {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = useSelector((state) => state.auth.user);
   const userPermissions = user?.permissions || [];
   const location = useLocation();
   const currentPath = location.pathname;
-
-  // console.log("Current path:", currentPath);
 
   const authorizedSidebarItems = sidebarItems.filter(item =>
     userPermissions.includes(item.title)
   );
 
-
   const authorizedRoutes = authorizedSidebarItems.some(item => {
     // Check top-level route
-    if (item.route === currentPath) return true;
+    if (currentPath.startsWith(item.route)) return true;
 
     // Check subTabs, if any
     if (item.subTabs) {
-      return item.subTabs.some(sub => sub.route === currentPath);
+      return item.subTabs.some(sub => currentPath.startsWith(sub.route));
     }
 
     return false;

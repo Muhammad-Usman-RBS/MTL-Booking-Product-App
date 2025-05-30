@@ -1,23 +1,26 @@
-// ✅ Updated CompanyAccountsList.jsx using RTK Query
-
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
-import { useFetchAllCompaniesQuery, useSendCompanyEmailMutation } from "../../../redux/api/companyApi";
+import { useFetchAllCompaniesQuery, useSendCompanyEmailMutation, useDeleteCompanyAccountMutation } from "../../../redux/api/companyApi";
+import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import CustomTable from "../../../constants/constantscomponents/CustomTable";
+import CustomModal from "../../../constants/constantscomponents/CustomModal";
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
+import "react-toastify/dist/ReactToastify.css";
 import IMAGES from "../../../assets/images";
 import Icons from "../../../assets/icons";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import CustomTable from "../../../constants/constantscomponents/CustomTable";
-import "react-toastify/dist/ReactToastify.css";
-import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
 
 const tabs = ["active", "pending", "suspended", "deleted"];
 
 const CompanyAccountsList = () => {
-  const navigate = useNavigate();
   const { data: companies = [], refetch } = useFetchAllCompaniesQuery();
+  
+  const navigate = useNavigate();
   const [sendEmail] = useSendCompanyEmailMutation();
+  const [deleteCompany] = useDeleteCompanyAccountMutation();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("active");
@@ -79,6 +82,14 @@ const CompanyAccountsList = () => {
           title="Edit"
           onClick={() => navigate(`/dashboard/company-accounts/edit/${item._id}`)}
           className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+        />
+        <Icons.Trash
+          title="Delete"
+          onClick={() => {
+            setAccountToDelete(item);
+            setShowDeleteModal(true);
+          }}
+          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
         />
       </div>
     ),
@@ -247,6 +258,25 @@ const CompanyAccountsList = () => {
           </div>
         </div>
       </CustomModal>
+
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onConfirm={async () => {
+          try {
+            await deleteCompany(accountToDelete._id).unwrap();
+            toast.success("Company deleted successfully!");
+            setShowDeleteModal(false);
+            setAccountToDelete(null);
+          } catch (err) {
+            console.error("Delete failed:", err);
+            toast.error("Failed to delete company.");
+          }
+        }}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setAccountToDelete(null);
+        }}
+      />
     </>
   );
 };

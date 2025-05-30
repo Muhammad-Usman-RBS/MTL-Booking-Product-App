@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
 import Icons from "../../../assets/icons";
+import "react-toastify/dist/ReactToastify.css";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
@@ -18,9 +19,9 @@ import {
 const tabs = ["Active", "Pending", "Suspended", "Deleted"];
 
 const AdminList = () => {
-  const user = JSON.parse(localStorage.getItem("user"));
-
+  const user = useSelector((state) => state.auth.user);
   const { data: adminsListData = [], refetch } = useFetchClientAdminsQuery();
+
   const [createAdmin] = useCreateClientAdminMutation();
   const [updateAdmin] = useUpdateClientAdminMutation();
   const [deleteAdmin] = useDeleteClientAdminMutation();
@@ -220,7 +221,7 @@ const AdminList = () => {
   }));
 
   let roleOptions = [];
-  if (user?.role === "superadmin") roleOptions = ["clientadmin", "manager", "demo", "driver", "customer"];
+  if (user?.role === "superadmin") roleOptions = ["clientadmin", "manager", "demo"];
   else if (user?.role === "manager") roleOptions = ["manager", "demo", "driver", "customer"];
   else if (user?.role === "clientadmin") roleOptions = ["associateadmin", "staffmember", "driver", "customer"];
   else if (user?.role === "associateadmin") roleOptions = ["staffmember", "driver", "customer"];
@@ -228,7 +229,7 @@ const AdminList = () => {
 
   const getAvailablePermissions = (role) => {
     if (["driver"].includes(role)) {
-      return [ "Statements", "Bookings", "Drivers", "Settings"]
+      return ["Statements", "Bookings", "Drivers", "Settings"]
     } else if (["clientadmin", "associateadmin", "staffmember", "manager"].includes(role)) {
       return [
         "Users",

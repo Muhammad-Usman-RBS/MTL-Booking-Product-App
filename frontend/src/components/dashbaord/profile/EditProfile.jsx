@@ -4,8 +4,13 @@ import "react-toastify/dist/ReactToastify.css";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import IMAGES from "../../../assets/images";
 import { useUpdateUserProfileMutation } from "../../../redux/api/userApi";
+import { useSelector, useDispatch } from "react-redux";
+import { setUser } from "../../../redux/authSlice";
 
 const EditProfile = () => {
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
+
   const [form, setForm] = useState({
     email: "",
     name: "",
@@ -16,10 +21,9 @@ const EditProfile = () => {
   const [profileImg, setProfileImg] = useState(null);
   const [preview, setPreview] = useState(null);
 
-  const [updateProfile] = useUpdateUserProfileMutation(); // ✅ RTK Mutation hook
+  const [updateProfile] = useUpdateUserProfileMutation();
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
     if (user) {
       setForm({
         email: user.email || "",
@@ -27,12 +31,11 @@ const EditProfile = () => {
         newPassword: "",
         currentPassword: "",
       });
-
       if (user.profileImage) {
         setPreview(user.profileImage);
       }
     }
-  }, []);
+  }, [user]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -61,10 +64,10 @@ const EditProfile = () => {
       formData.append("currentPassword", form.currentPassword);
       if (profileImg) formData.append("profileImage", profileImg);
 
-      const updatedUser = await updateProfile(formData).unwrap(); // ✅ RTK with .unwrap()
-
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      const updatedUser = await updateProfile(formData).unwrap();
+      dispatch(setUser(updatedUser)); // ✅ Redux update
       setPreview(updatedUser.profileImage);
+
       toast.success("Profile updated successfully!");
     } catch (error) {
       console.error("Profile update error:", error);
@@ -73,15 +76,16 @@ const EditProfile = () => {
   };
 
   const handleReset = () => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    setForm({
-      email: user?.email || "",
-      name: user?.fullName || "",
-      newPassword: "",
-      currentPassword: "",
-    });
-    setProfileImg(null);
-    setPreview(null);
+    if (user) {
+      setForm({
+        email: user.email || "",
+        name: user.fullName || "",
+        newPassword: "",
+        currentPassword: "",
+      });
+      setProfileImg(null);
+      setPreview(user.profileImage || null);
+    }
   };
 
   return (
@@ -92,7 +96,7 @@ const EditProfile = () => {
         <img
           src={preview || IMAGES.dummyImg}
           alt="Profile-Preview"
-          className="w-22 h-22 rounded-full object-cover border border-gray-300S"
+          className="w-22 h-22 rounded-full object-cover border border-gray-300"
         />
 
         <div>

@@ -114,7 +114,7 @@ function App() {
               {/* Company Accounts */}
               <Route path="company-accounts/list" element={<CompanyAccountsList />} />
               <Route path="company-accounts/new" element={<AddCompanyAccount />} />
-              <Route path="/dashboard/company-accounts/edit/:id" element={<AddCompanyAccount />} />
+              <Route path="company-accounts/edit/:id" element={<AddCompanyAccount />} />
 
               {/* Pricing */}
               <Route path="pricing/general" element={<General />} />

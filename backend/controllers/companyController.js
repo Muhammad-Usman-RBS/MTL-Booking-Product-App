@@ -1,78 +1,88 @@
 import Company from '../models/Company.js';
-import User from '../models/User.js'; // ✅ ADD THIS LINE
+import User from '../models/User.js';
 import nodemailer from "nodemailer";
 import mongoose from "mongoose";
 
 export const createCompanyAccount = async (req, res) => {
-    try {
-        const {
-            companyName,
-            contactName,
-            email,
-            website,
-            designation,
-            contact,
-            city,
-            dueDays,
-            state,
-            zip,
-            passphrase,
-            country,
-            bookingPayment,
-            invoicePayment,
-            showLocations,
-            address,
-            invoiceTerms,
-            clientAdminId,
-            fullName,
-            status,
-        } = req.body;
+  try {
+    const {
+      companyName,
+      contactName,
+      email,
+      website,
+      designation,
+      contact,
+      city,
+      dueDays,
+      state,
+      zip,
+      passphrase,
+      country,
+      bookingPayment,
+      invoicePayment,
+      showLocations,
+      address,
+      invoiceTerms,
+      clientAdminId,
+      fullName,
+      status,
+    } = req.body;
 
-        // ✅ Validate clientAdminId
-        if (!clientAdminId || !mongoose.Types.ObjectId.isValid(clientAdminId)) {
-            return res.status(400).json({ message: "Invalid or missing clientAdminId" });
-        }
-
-        const profileImage = req.file?.path || "";
-
-        // ✅ Create company
-        const newCompany = new Company({
-            companyName,
-            contactName,
-            email,
-            website,
-            designation,
-            contact,
-            city,
-            dueDays: dueDays ? parseInt(dueDays) : null,
-            state,
-            zip,
-            passphrase,
-            country,
-            bookingPayment,
-            invoicePayment,
-            showLocations,
-            address,
-            invoiceTerms,
-            profileImage,
-            clientAdminId: new mongoose.Types.ObjectId(clientAdminId),
-            fullName,
-            status,
-        });
-
-        const savedCompany = await newCompany.save();
-
-        // ✅ Update assigned ClientAdmin user to set companyId = this company's _id
-        await User.findByIdAndUpdate(
-            clientAdminId,
-            { $set: { companyId: savedCompany._id } }
-        );
-
-        res.status(201).json(savedCompany); // ✅ Return full saved doc
-    } catch (error) {
-        console.error("Company Create Error:", error);
-        res.status(400).json({ message: error.message });
+    // ✅ Validate required fields
+    if (!clientAdminId || !mongoose.Types.ObjectId.isValid(clientAdminId)) {
+      return res.status(400).json({ message: "Invalid or missing clientAdminId" });
     }
+
+    if (!companyName || !email || !contactName || !designation) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // ✅ Check if clientAdminId exists
+    const clientAdmin = await User.findById(clientAdminId);
+    if (!clientAdmin) {
+      return res.status(404).json({ message: "ClientAdmin not found" });
+    }
+
+    const profileImage = req.file?.path || "";
+
+    // ✅ Create company instance
+    const newCompany = new Company({
+      companyName,
+      contactName,
+      email,
+      website,
+      designation,
+      contact,
+      city,
+      dueDays: dueDays ? parseInt(dueDays) : null,
+      state,
+      zip,
+      passphrase,
+      country,
+      bookingPayment,
+      invoicePayment,
+      showLocations,
+      address,
+      invoiceTerms,
+      profileImage,
+      clientAdminId: new mongoose.Types.ObjectId(clientAdminId),
+      fullName,
+      status,
+    });
+
+    // ✅ Save company and update user
+    const savedCompany = await newCompany.save();
+
+    await User.findByIdAndUpdate(clientAdminId, {
+      $set: { companyId: savedCompany._id },
+    });
+
+    return res.status(201).json(savedCompany);
+
+  } catch (error) {
+    console.error("Company Create Error:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
 };
 
 export const deleteCompanyAccount = async (req, res) => {

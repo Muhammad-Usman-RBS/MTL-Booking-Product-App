@@ -418,14 +418,29 @@ export const updateBookingStatus = async (req, res) => {
 // Get All Passengers
 export const getAllPassengers = async (req, res) => {
   try {
-    const bookings = await Booking.find({}, "passenger");
+    const companyId = req.user?.companyId;
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing companyId from authenticated user",
+      });
+    }
+
+    const bookings = await Booking.find(
+      { companyId },
+      "passenger"
+    );
+
     const passengers = bookings
       .map((b) => b.passenger)
       .filter(
         (p) => p && (p.name || p.email || p.phone)
       );
+
     res.status(200).json({ success: true, passengers });
   } catch (error) {
+    console.error("getAllPassengers error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch passengers",
@@ -433,5 +448,3 @@ export const getAllPassengers = async (req, res) => {
     });
   }
 };
-
-

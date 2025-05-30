@@ -4,156 +4,165 @@ import bcrypt from 'bcryptjs';
 
 // ✅ SuperAdmin or ClientAdmin Creates User
 export const createUserBySuperAdmin = async (req, res) => {
-    const {
-        fullName,
-        email,
-        password,
-        role,
-        status,
-        permissions,
-        associateAdminLimit,
-    } = req.body;
+  const {
+    fullName,
+    email,
+    password,
+    role,
+    status,
+    permissions,
+    associateAdminLimit,
+  } = req.body;
 
-    try {
-        const userExists = await User.findOne({ email });
-        if (userExists)
-            return res.status(409).json({ message: "User already exists" });
+  try {
+    const userExists = await User.findOne({ email });
+    if (userExists)
+      return res.status(409).json({ message: "User already exists" });
 
-        const creator = req.user;
+    const creator = req.user;
 
-        // ✅ Authorization: clientadmin can only create limited roles
-        if (["clientadmin", "associateadmin"].includes(creator.role)) {
-            const allowedRoles = ["staffmember", "driver", "customer"];
-            if (creator.role === "clientadmin") allowedRoles.push("associateadmin");
-
-            if (!allowedRoles.includes(role)) {
-                return res.status(403).json({
-                    message: `Unauthorized role assignment by ${creator.role}`,
-                });
-            }
-        }
-
-        // ✅ Validate associateAdminLimit only for clientadmin/manager
-        let parsedLimit;
-        if (["clientadmin", "manager"].includes(role)) {
-            parsedLimit = parseInt(associateAdminLimit);
-            if (![5, 10, 15].includes(parsedLimit)) {
-                return res.status(400).json({
-                    message: "associateAdminLimit must be one of 5, 7, or 10",
-                });
-            }
-        }
-
-        // ✅ Enforce associateadmin limit for clientadmin
-        if (creator.role === "clientadmin" && role === "associateadmin") {
-            const associateAdminCount = await User.countDocuments({
-                createdBy: creator._id,
-                role: "associateadmin",
-                status: { $ne: "Deleted" }
-            });
-
-            const allowed = creator.associateAdminLimit || 5;
-            if (associateAdminCount >= allowed) {
-                return res.status(400).json({
-                    message: `Limit reached: Only ${allowed} associateadmin(s) allowed for this clientadmin.`,
-                });
-            }
-        }
-
-        // ✅ Role limits
-        if (role === "manager") {
-            const count = await User.countDocuments({
-                role: "manager",
-                companyId: creator.companyId || null,
-            });
-            if (count >= 3) {
-                return res.status(400).json({
-                    message: "Only 3 Manager accounts allowed per company",
-                });
-            }
-        }
-
-        if (role === "demo") {
-            const count = await User.countDocuments({
-                role: "demo",
-                companyId: creator.companyId || null,
-            });
-            if (count >= 2) {
-                return res.status(400).json({
-                    message: "Only 2 Demo accounts allowed per company",
-                });
-            }
-        }
-
-        if (role === "staffmember") {
-            const count = await User.countDocuments({
-                role: "staffmember",
-                companyId: creator.companyId,
-            });
-            if (count >= 2) {
-                return res.status(400).json({
-                    message: "Only 2 staffmembers allowed per company",
-                });
-            }
-        }
-
-        const allowedPermissions = [
-            "Users", "Home", "Bookings", "Rides", "Earnings", "Invoices", "Drivers", "Customers",
-            "Company Accounts", "Statements", "Pricing",
-            "Settings", "Widget/API", "Profile", "Logout"
-        ];
-
-        const defaultPermissions = ["Home", "Profile", "Logout"];
-        let userPermissions = [...defaultPermissions];
-
-        if (permissions && Array.isArray(permissions)) {
-            const invalidPermissions = permissions.filter(p => !allowedPermissions.includes(p));
-            if (invalidPermissions.length > 0) {
-                return res.status(400).json({
-                    message: `Invalid permissions provided: ${invalidPermissions.join(', ')}`
-                });
-            }
-
-            const filteredPermissions = permissions.filter(p => !defaultPermissions.includes(p));
-            userPermissions = [...defaultPermissions, ...filteredPermissions];
-        } else if (permissions !== undefined) {
-            return res.status(400).json({
-                message: "Permissions must be an array of strings"
-            });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const newUser = await User.create({
-            fullName,
-            email,
-            password: hashedPassword,
-            role,
-            status,
-            permissions: userPermissions,
-            createdBy: creator._id,
-            associateAdminLimit: ["clientadmin", "manager"].includes(role) ? parsedLimit : undefined,
-            companyId:
-                creator.role === "superadmin" && role === "clientadmin"
-                    ? null
-                    : creator.companyId,
-        });
-
-        // ✅ If new user is clientadmin, assign self as companyId
-        if (newUser.role === "clientadmin" && !newUser.companyId) {
-            newUser.companyId = newUser._id;
-            await newUser.save();
-        }
-
-        res.status(201).json({
-            message: "User created successfully",
-            user: newUser,
-        });
-
-    } catch (error) {
-        console.error("Create User Error:", error);
-        res.status(500).json({ message: "Server error" });
+    // ❌ Globally disallowed roles
+    if (["driver", "customer"].includes(role)) {
+      return res.status(403).json({
+        message: `Creation of '${role}' accounts is restricted.`,
+      });
     }
+
+    // ✅ Role assignment rules based on creator's role
+    if (["clientadmin", "associateadmin"].includes(creator.role)) {
+      const allowedRoles = ["staffmember"];
+      if (creator.role === "clientadmin") allowedRoles.push("associateadmin");
+
+      if (!allowedRoles.includes(role)) {
+        return res.status(403).json({
+          message: `Unauthorized role assignment by ${creator.role}`,
+        });
+      }
+    }
+
+    // ✅ Validate associateAdminLimit only for specific roles
+    let parsedLimit;
+    if (["clientadmin", "manager"].includes(role)) {
+      parsedLimit = parseInt(associateAdminLimit);
+      if (![5, 10, 15].includes(parsedLimit)) {
+        return res.status(400).json({
+          message: "associateAdminLimit must be one of 5, 10, or 15",
+        });
+      }
+    }
+
+    // ✅ Enforce associateadmin creation limits for clientadmin
+    if (creator.role === "clientadmin" && role === "associateadmin") {
+      const associateAdminCount = await User.countDocuments({
+        createdBy: creator._id,
+        role: "associateadmin",
+        status: { $ne: "Deleted" },
+      });
+
+      const allowed = creator.associateAdminLimit || 5;
+      if (associateAdminCount >= allowed) {
+        return res.status(400).json({
+          message: `Limit reached: Only ${allowed} associateadmin(s) allowed for this clientadmin.`,
+        });
+      }
+    }
+
+    // ✅ Role-based limits
+    if (role === "manager") {
+      const count = await User.countDocuments({
+        role: "manager",
+        companyId: creator.companyId || null,
+      });
+      if (count >= 3) {
+        return res.status(400).json({
+          message: "Only 3 Manager accounts allowed per company",
+        });
+      }
+    }
+
+    if (role === "demo") {
+      const count = await User.countDocuments({
+        role: "demo",
+        companyId: creator.companyId || null,
+      });
+      if (count >= 2) {
+        return res.status(400).json({
+          message: "Only 2 Demo accounts allowed per company",
+        });
+      }
+    }
+
+    if (role === "staffmember") {
+      const count = await User.countDocuments({
+        role: "staffmember",
+        companyId: creator.companyId,
+      });
+      if (count >= 2) {
+        return res.status(400).json({
+          message: "Only 2 staffmembers allowed per company",
+        });
+      }
+    }
+
+    // ✅ Permission validation
+    const allowedPermissions = [
+      "Users", "Home", "Bookings", "Rides", "Earnings", "Invoices", "Drivers", "Customers",
+      "Company Accounts", "Statements", "Pricing",
+      "Settings", "Widget/API", "Profile", "Logout"
+    ];
+
+    const defaultPermissions = ["Home", "Profile", "Logout"];
+    let userPermissions = [...defaultPermissions];
+
+    if (permissions && Array.isArray(permissions)) {
+      const invalidPermissions = permissions.filter(p => !allowedPermissions.includes(p));
+      if (invalidPermissions.length > 0) {
+        return res.status(400).json({
+          message: `Invalid permissions provided: ${invalidPermissions.join(', ')}`
+        });
+      }
+
+      const filteredPermissions = permissions.filter(p => !defaultPermissions.includes(p));
+      userPermissions = [...defaultPermissions, ...filteredPermissions];
+    } else if (permissions !== undefined) {
+      return res.status(400).json({
+        message: "Permissions must be an array of strings"
+      });
+    }
+
+    // ✅ Create user
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await User.create({
+      fullName,
+      email,
+      password: hashedPassword,
+      role,
+      status,
+      permissions: userPermissions,
+      createdBy: creator._id,
+      associateAdminLimit: ["clientadmin", "manager"].includes(role) ? parsedLimit : undefined,
+      companyId:
+        creator.role === "superadmin" && role === "clientadmin"
+          ? null
+          : creator.companyId,
+    });
+
+    // ✅ If new clientadmin, set their own _id as companyId
+    if (newUser.role === "clientadmin" && !newUser.companyId) {
+      newUser.companyId = newUser._id;
+      await newUser.save();
+    }
+
+    res.status(201).json({
+      message: "User created successfully",
+      user: newUser,
+    });
+
+  } catch (error) {
+    console.error("Create User Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 // ✅ GET All Users

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import { informationData } from "../../../constants/dashboardTabsData/data";
 
 const DriverContact = () => {
   const [formData, setFormData] = useState({
@@ -21,64 +21,45 @@ const DriverContact = () => {
       [e.target.name]: e.target.value,
     });
   };
-const Information = [
-  {
-    icon: <Icons.Mail className="size-4 text-black" />,
-    title: "Email Us",
-    detail: "hello@company.com",
-    note: "Send us an email anytime",
-  },
-  {
-    icon: <Icons.Phone className="size-4 text-black" />,
-    title: "Call Us",
-    detail: "+1 (555) 123-4567",
-    note: "Available 24 for support",
-  },
-  {
-    icon: <Icons.MapPin className="size-4 text-black" />,
-    title: "Visit Us",
-    detail: "123 Business St\nNew York, NY 10001",
-  },
-  {
-    icon: <Icons.Clock className="size-4 text-black" />,
-    title: "Office Hours",
-    detail: "Mon - Fri: 9AM - 6PM\nWeekend: 10AM - 4PM",
-  },
-]
+
   return (
     <div>
       <OutletHeading name={"Contact Us"} />
 
       <div className="grid lg:grid-cols-5 gap-8 w-full">
-        {/* Contact Info */}
-        <div className="lg:col-span-2 space-y-6 w-full">
-          {Information.map((item, idx) => (
+        <div className="lg:col-span-2 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {informationData.map((item, idx) => (
             <div
               key={idx}
-              className="bg-white rounded-md p-2 border border-gray-300 hover:bg-gray-50 transition-all duration-300 w-full"
+              className="bg-white shadow-sm hover:shadow-md rounded-xl border border-gray-200 hover:border-blue-500 transition-all duration-300 p-5"
             >
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-gray-100 rounded-md">{item.icon}</div>
-                <div>
-                  <h3 className="font-semibold text-black">{item.title}</h3>
+              <div className="flex items-start gap-4 mb-3">
+                <div className="p-3 bg-blue-50 rounded-full text-blue-600">
+                  {item.icon}
+                </div>
+                <div className="flex-1 space-y-1">
+                  <h3 className="font-semibold text-gray-600 sm:text-lg">
+                    {item.title}
+                  </h3>
                   {item.detail.split("\n").map((line, i) => (
-                    <p key={i} className="text-black">
+                    <p key={i} className="text-sm text-gray-700 leading-relaxed">
                       {line}
                     </p>
                   ))}
                 </div>
               </div>
               {item.note && (
-                <p className="text-gray-600 text-sm">{item.note}</p>
+                <div className="mt-2 border-t pt-2 text-xs text-gray-500 italic">
+                  {item.note}
+                </div>
               )}
             </div>
           ))}
         </div>
 
-        {/* Contact Form */}
         <div className="lg:col-span-3 w-full">
           <div className="bg-white rounded-md p-6 border border-gray-300 w-full">
-           
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
@@ -139,7 +120,7 @@ const Information = [
 
               <button
                 type="submit"
-                className="btn btn-outline flex items-center justify-center"
+                className="btn btn-reset flex items-center justify-center"
               >
                 Send Message
               </button>

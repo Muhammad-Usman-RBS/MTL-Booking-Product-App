@@ -1,4 +1,6 @@
+import React from "react";
 import IMAGES from "../../assets/images";
+import Icons from "../../assets/icons";
 
 // export const statusList = [
 //   { label: "Scheduled", count: 41 },
@@ -1609,6 +1611,7 @@ export const receiptData = [
   },
 ];
 
+// Used
 export const bookingPaymentOptions = [
   {
     "label": "Pay Now",
@@ -1624,6 +1627,7 @@ export const bookingPaymentOptions = [
   },
 ]
 
+// Used
 export const invoicePaymentOptions = [
   {
     "label": "Pay Via Debit/Credit Card",
@@ -1639,6 +1643,7 @@ export const invoicePaymentOptions = [
   },
 ]
 
+// Used
 export const yesNoOptions = [
   {
     "label": "Yes",
@@ -1826,3 +1831,56 @@ export const statusOptions = [
   { value: "cancelled", label: "Cancelled" },
   { value: "scheduled", label: "Scheduled" },
 ];
+
+export const termsData = [
+  {
+    title: "Acceptance of Terms",
+    content:
+      "By accessing and using our service, you accept and agree to be bound by the terms and provision of this agreement.",
+  },
+  {
+    title: "Use License",
+    content:
+      "Permission is granted to temporarily use our service for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title.",
+  },
+  {
+    title: "Privacy Policy",
+    content:
+      "Your privacy is important to us. Our Privacy Policy explains how we collect, use, and protect your information when you use our service.",
+  },
+  {
+    title: "User Responsibilities",
+    content:
+      "You are responsible for maintaining the confidentiality of your account and password and for restricting access to your computer.",
+  },
+  {
+    title: "Limitation of Liability",
+    content:
+      "In no event shall our company be liable for any damages arising out of the use or inability to use our service.",
+  },
+];
+
+export const informationData = [
+  {
+    icon: <Icons.Mail className="size-4 text-black" />,
+    title: "Email Us",
+    detail: "hello@company.com",
+    note: "Send us an email anytime",
+  },
+  {
+    icon: <Icons.Phone className="size-4 text-black" />,
+    title: "Call Us",
+    detail: "+1 (555) 123-4567",
+    note: "Available 24 for support",
+  },
+  {
+    icon: <Icons.MapPin className="size-4 text-black" />,
+    title: "Visit Us",
+    detail: "123 Business St\nNew York, NY 10001",
+  },
+  {
+    icon: <Icons.Clock className="size-4 text-black" />,
+    title: "Office Hours",
+    detail: "Mon - Fri: 9AM - 6PM\nWeekend: 10AM - 4PM",
+  },
+]

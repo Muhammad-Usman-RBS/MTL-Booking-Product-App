@@ -42,6 +42,15 @@ export const companyApi = apiSlice.injectEndpoints({
       invalidatesTags: ["Companies"],
     }),
 
+    // Add this in your companyApi
+    deleteCompanyAccount: builder.mutation({
+      query: (id) => ({
+        url: `/companies/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Companies"],
+    }),
+
     // Send email
     sendCompanyEmail: builder.mutation({
       query: (payload) => ({
@@ -59,4 +68,5 @@ export const {
   useCreateCompanyMutation,
   useUpdateCompanyMutation,
   useSendCompanyEmailMutation,
+  useDeleteCompanyAccountMutation,
 } = companyApi;

@@ -1,14 +1,13 @@
 import React, { useState, useMemo } from "react";
-import {
-  timeFilters,
-  statusOptions,
-  mockJobs,
-} from "../../../constants/dashboardTabsData/data";
 import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
+import {
+  statusOptions,
+  mockJobs,
+} from "../../../constants/dashboardTabsData/data";
 
 const DriverRides = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("7");
@@ -16,6 +15,7 @@ const DriverRides = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
+
   const filteredRides = useMemo(() => {
     const daysAgo = parseInt(selectedPeriod);
     const cutoffDate = new Date();
@@ -23,11 +23,9 @@ const DriverRides = () => {
 
     return mockJobs.filter((ride) => {
       if (!ride.acceptedAt) return false;
-
       const rideDate = new Date(ride.acceptedAt);
       const isWithinPeriod = rideDate >= cutoffDate;
-      const matchesStatus =
-        statusFilter === "all" || ride.status === statusFilter;
+      const matchesStatus = statusFilter === "all" || ride.status === statusFilter;
       const matchesSearch =
         searchTerm === "" ||
         ride.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -39,20 +37,20 @@ const DriverRides = () => {
   }, [selectedPeriod, statusFilter, searchTerm]);
 
   const totalRides = filteredRides.length;
-
-  const completedRides = filteredRides.filter(
-    (ride) => ride.status === "completed"
-  ).length;
-
+  const completedRides = filteredRides.filter((ride) => ride.status === "completed").length;
   const totalEarnings = filteredRides
     .filter((ride) => ride.status === "completed")
     .reduce((sum, ride) => sum + ride.driverFare, 0);
-
   const averageRating =
     filteredRides.length > 0
-      ? filteredRides.reduce((sum, ride) => sum + ride.customerRating, 0) /
-        filteredRides.length
+      ? filteredRides.reduce((sum, ride) => sum + ride.customerRating, 0) / filteredRides.length
       : 0;
+
+  const statusStyles = {
+    completed: "px-3 py-1 text-xs rounded-md border font-medium transition bg-green-100 text-green-700 border-green-300 hover:bg-green-200",
+    pending: "px-3 py-1 text-xs rounded-md border font-medium transition bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200",
+    cancelled: "px-3 py-1 text-xs rounded-md border font-medium transition bg-red-100 text-red-700 border-red-300 hover:bg-red-200",
+  };
 
   const tableHeaders = [
     { label: "Date", key: "date" },
@@ -74,13 +72,7 @@ const DriverRides = () => {
       pickupLocation: ride.pickupLocation,
       dropLocation: ride.dropLocation,
       status: (
-        <span
-          className={`px-2 py-1 text-xs font-medium rounded-full ${
-            ride.status === "completed"
-              ? "bg-green-100 text-green-800"
-              : "bg-yellow-100 text-yellow-800"
-          }`}
-        >
+        <span className={statusStyles[ride.status] || statusStyles["pending"]}>
           {ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
         </span>
       ),
@@ -89,89 +81,40 @@ const DriverRides = () => {
   });
 
   return (
-    <div>
-      <div className="mb-8">
-        <OutletHeading name={"Previous Rides"} />
+    <>
+      <div className="mb-6">
+        <OutletHeading name="Rides" />
       </div>
 
-      {/* Time Period Filter */}
-          <div className=" flex lg:flex-row flex-col space-x-3    items-center ">
-<div className=" flex flex-col mb-6 lg:mr-3 mr-8 md:mr-2  space-y-3">
-
-  <span className="font-semibold  text-gray-800 text-sm">Filter</span>
-            <SelectDateRange
-              startDate={startDate}
-              endDate={endDate}
-              setStartDate={setStartDate}
-              setEndDate={setEndDate}
-              />
-              </div>
-
-      {/* Filters and Search */}
-      <div className="mb-6 ">
+      <div className="flex flex-col lg:flex-row gap-6 lg:items-end mb-8">
+        <div className="flex flex-col gap-2 w-full lg:w-1/3">
+          <span className="font-semibold text-gray-800 text-sm">Date Range</span>
+          <SelectDateRange
+            startDate={startDate}
+            endDate={endDate}
+            setStartDate={setStartDate}
+            setEndDate={setEndDate}
+          />
+        </div>
+        <div className="flex flex-col gap-2 w-full lg:w-1/3">
           <SelectOption
             options={statusOptions}
             label="Status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            width="64"
+            width="full"
           />
-
-
-              </div>
-      </div>
-
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">Total Rides</h3>
-            <Icons.Navigation className="w-5 h-5 text-gray-800" />
-          </div>
-          <p className="text-2xl font-bold text-black">{totalRides}</p>
-          <p className="text-xs text-gray-500 mt-1">
-            Last {selectedPeriod} days
-          </p>
-        </div>
-
-        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">
-              Completed Rides
-            </h3>
-            <Icons.CheckCircle className="w-5 h-5 text-gray-800" />
-          </div>
-          <p className="text-2xl font-bold text-black">{completedRides}</p>
-          <p className="text-xs text-gray-500 mt-1">Completed successfully</p>
-        </div>
-
-        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">
-              Total Earnings
-            </h3>
-            <Icons.DollarSign className="w-5 h-5 text-gray-800" />
-          </div>
-          <p className="text-2xl font-bold text-black">
-            ${totalEarnings}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">From completed rides</p>
-        </div>
-
-        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">Avg. Rating</h3>
-            <Icons.Star className="w-5 h-5 text-gray-800  " />
-          </div>
-          <p className="text-2xl font-bold text-black">
-            {averageRating.toFixed(1)}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">Customer rating</p>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="mt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+        <StatCard title="Total Rides" value={totalRides} icon={<Icons.Navigation />} subtitle={`Last ${selectedPeriod} days`} />
+        <StatCard title="Completed Rides" value={completedRides} icon={<Icons.CheckCircle />} subtitle="Completed successfully" />
+        <StatCard title="Total Earnings" value={`$${totalEarnings}`} icon={<Icons.DollarSign />} subtitle="From completed rides" />
+        <StatCard title="Avg. Rating" value={averageRating.toFixed(1)} icon={<Icons.Star />} subtitle="Customer rating" />
+      </div>
+
+      <div className="mt-12">
         <CustomTable title="Rides History" tableHeaders={tableHeaders} tableData={tableData} />
         {filteredRides.length === 0 && (
           <div className="text-center py-8">
@@ -179,8 +122,19 @@ const DriverRides = () => {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 };
+
+const StatCard = ({ title, value, icon, subtitle }) => (
+  <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-200">
+    <div className="flex items-center justify-between mb-2">
+      <h3 className="text-sm font-medium text-gray-600">{title}</h3>
+      <div className="text-gray-800">{icon}</div>
+    </div>
+    <p className="text-2xl font-bold text-black">{value}</p>
+    <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+  </div>
+);
 
 export default DriverRides;
