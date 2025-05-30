@@ -69,11 +69,13 @@ const sidebarItems = [
         title: "Rides",
         icon: Icons.CarFront,
         route: "/dashboard/drivers/all-rides",
+        roles: ["driver"],
       },
       {
         title: "Earnings",
         icon: Icons.Activity,
         route: "/dashboard/drivers/earnings",
+        roles: ["driver"],
       },
     ],
   },

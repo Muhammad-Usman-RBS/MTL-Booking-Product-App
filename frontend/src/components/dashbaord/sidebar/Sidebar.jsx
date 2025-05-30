@@ -12,10 +12,22 @@ const Sidebar = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const permissions = user?.permissions || [];
 
-  // Filter sidebarItems based on permission order and allow Profile/Logout too
-  const sidebarTabs = sidebarItems.filter(item =>
-    permissions.map(p => p.toLowerCase()).includes(item.title.toLowerCase())
-  );
+  // Filter sidebarItems based on top-level permission and also filter subTabs based on sub-level permission
+  const sidebarTabs = sidebarItems
+    .map((item) => {
+      if (!permissions.map(p => p.toLowerCase()).includes(item.title.toLowerCase())) return null;
+
+      // Filter subTabs if they exist
+      let filteredSubTabs = item.subTabs?.filter(
+        (sub) => !sub.roles || sub.roles.some((r) => permissions.includes(r))
+      );
+
+      return {
+        ...item,
+        subTabs: filteredSubTabs,
+      };
+    })
+    .filter(Boolean);
 
   useEffect(() => {
     const index = sidebarTabs.findIndex((item) =>
@@ -63,7 +75,7 @@ const Sidebar = () => {
 
           return (
             <div key={index}>
-              {item.subTabs ? (
+              {item.subTabs?.length > 0 ? (
                 <>
                   <li
                     onClick={() => handleToggle(index)}

@@ -228,7 +228,7 @@ const AdminList = () => {
 
   const getAvailablePermissions = (role) => {
     if (["driver"].includes(role)) {
-      return ["Rides", "Earnings", "Statements", "Bookings", "Drivers", "Settings"]
+      return [ "Statements", "Bookings", "Drivers", "Settings"]
     } else if (["clientadmin", "associateadmin", "staffmember", "manager"].includes(role)) {
       return [
         "Users",
