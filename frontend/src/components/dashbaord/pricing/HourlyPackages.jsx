@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import DeleteModal from "../../../constants/constantscomponents/DeleteModal"; 
-import { Pencil, Trash } from "lucide-react";
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import { toast } from "react-toastify";
+import Icons from "../../../assets/icons";
 import {
   useGetAllHourlyRatesQuery,
   useAddHourlyPackageMutation,
@@ -59,20 +59,18 @@ const HourlyPackages = () => {
     ...item,
     actions: (
       <div className="flex items-center space-x-2">
-        <button
-          onClick={() => handleEdit(item)}
-          className="p-1 text-blue-600 hover:text-blue-800"
-          title="Edit"
-        >
-          <Pencil size={16} />
-        </button>
-        <button
-          onClick={() => openDeleteModal(item._id)}
-          className="p-1 text-red-600 hover:text-red-800"
-          title="Delete"
-        >
-          <Trash size={16} />
-        </button>
+        <div className="flex gap-2">
+          <Icons.Pencil
+            title="Edit"
+            onClick={() => handleEdit(item)}
+            className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+          />
+          <Icons.Trash
+            title="Delete"
+            onClick={() => openDeleteModal(item._id)}
+            className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+          />
+        </div>
       </div>
     ),
   }));
@@ -174,7 +172,7 @@ const HourlyPackages = () => {
   }, [companyId]);
 
   return (
-    <div className="p-4">
+    <div>
       <OutletHeading name="Hourly Package" />
 
       <button onClick={handleOpenModal} className="mb-6 btn btn-edit">

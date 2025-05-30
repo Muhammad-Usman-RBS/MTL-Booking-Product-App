@@ -60,8 +60,6 @@ function Navbar() {
         </h1>
 
         <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-wrap">
-          <p>Notifcation Icon</p>
-
           {/*  Theme Selector */}
           <div className="relative">
             <button

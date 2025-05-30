@@ -438,21 +438,21 @@ export const driverList = [
   { label: "Zain Ul Abideen" },
 ];
 
-export const passengerList = [
-  { label: "Jeremy Haywood" },
-  { label: "Emily Watson" },
-  { label: "Omar Farooq" },
-  { label: "Sarah Malik" },
-  { label: "Daniel James" },
-];
+// export const passengerList = [
+//   { label: "Jeremy Haywood" },
+//   { label: "Emily Watson" },
+//   { label: "Omar Farooq" },
+//   { label: "Sarah Malik" },
+//   { label: "Daniel James" },
+// ];
 
-export const vehicleList = [
-  { label: "Luxury MPV" },
-  { label: "Executive Sedan" },
-  { label: "Economy" },
-  { label: "SUV" },
-  { label: "All" },
-];
+// export const vehicleList = [
+//   { label: "Luxury MPV" },
+//   { label: "Executive Sedan" },
+//   { label: "Economy" },
+//   { label: "SUV" },
+//   { label: "All" },
+// ];
 
 export const accountList = [
   { label: "Corporate Account" },

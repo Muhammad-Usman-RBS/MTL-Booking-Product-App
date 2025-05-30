@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import BookingsFilters from "./BookingsFilters";
-import BookingsTable from "./BookingsTable";
-import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import AuditModal from "./AuditModal";
-import JourneyDetailsModal from "./JourneyDetailsModal";
-import ViewDriver from "./ViewDriver";
-import ShortcutkeysModal from "./ShortcutkeysModal";
-import NewBooking from "./NewBooking";
 import { useDispatch, useSelector } from "react-redux";
 import { setCompanies } from "../../../redux/companySlice";
 import { useGetCompanyByIdQuery } from "../../../redux/api/companyApi";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import { actionMenuItems } from "../../../constants/dashboardTabsData/data";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import CustomModal from "../../../constants/constantscomponents/CustomModal";
+import JourneyDetailsModal from "./JourneyDetailsModal";
+import ShortcutkeysModal from "./ShortcutkeysModal";
+import BookingsFilters from "./BookingsFilters";
+import BookingsTable from "./BookingsTable";
+import AuditModal from "./AuditModal";
+import ViewDriver from "./ViewDriver";
+import NewBooking from "./NewBooking";
 
 const defaultColumns = {
   orderNo: true,
@@ -30,16 +30,16 @@ const defaultColumns = {
 };
 
 const ALL_STATUSES = [
-    "New",
-    "Accepted",
-    "On Route",
-    "At Location",
-    "Ride Started",
-    "Late Cancel",
-    "No Show",
-    "Completed",
-    "Cancel",
-    "Reject"
+  "New",
+  "Accepted",
+  "On Route",
+  "At Location",
+  "Ride Started",
+  "Late Cancel",
+  "No Show",
+  "Completed",
+  "Cancel",
+  "Reject"
 ];
 
 const BookingsList = () => {
@@ -91,6 +91,32 @@ const BookingsList = () => {
 
   dynamicStatusList.push({ label: "All", count: allBookings.length });
 
+  // Extract unique passenger list
+  const passengerMap = new Map();
+  allBookings.forEach((booking) => {
+    const p = booking.passenger;
+    if (p && p.name && !passengerMap.has(p.name)) {
+      passengerMap.set(p.name, {
+        label: p.name,
+        value: p.name,
+      });
+    }
+  });
+  const passengerList = Array.from(passengerMap.values());
+
+  // Extract unique vehicle list
+  const vehicleMap = new Map();
+  allBookings.forEach((booking) => {
+    const v = booking.vehicle;
+    if (v && v.vehicleName && !vehicleMap.has(v.vehicleName)) {
+      vehicleMap.set(v.vehicleName, {
+        label: v.vehicleName,
+        value: v.vehicleName,
+      });
+    }
+  });
+  const vehicleList = Array.from(vehicleMap.values());
+
   useEffect(() => {
     if (companyData) {
       dispatch(setCompanies([companyData]));
@@ -137,7 +163,7 @@ const BookingsList = () => {
         setSelectedStatus={setSelectedStatus}
         selectedDrivers={selectedDrivers}
         setSelectedDrivers={setSelectedDrivers}
-        selectedPassengers={setSelectedPassengers}
+        selectedPassengers={selectedPassengers}
         setSelectedPassengers={setSelectedPassengers}
         selectedVehicleTypes={selectedVehicleTypes}
         setSelectedVehicleTypes={setSelectedVehicleTypes}
@@ -151,7 +177,9 @@ const BookingsList = () => {
         setShowDiv={setShowDiv}
         setShowColumnModal={setShowColumnModal}
         setShowKeyboardModal={setShowKeyboardModal}
-        statusList={dynamicStatusList} // ✅ Pass dynamic list
+        statusList={dynamicStatusList}
+        passengerList={passengerList}
+        vehicleList={vehicleList}
       />
 
       <BookingsTable
@@ -168,6 +196,8 @@ const BookingsList = () => {
         setEditBookingData={setEditBookingData}
         setShowEditModal={setShowEditModal}
         selectedStatus={selectedStatus}
+        selectedPassengers={selectedPassengers}
+        selectedVehicleTypes={selectedVehicleTypes}
       />
 
       <CustomModal isOpen={showAuditModal} onClose={() => setShowAuditModal(false)} heading="Status Audit">

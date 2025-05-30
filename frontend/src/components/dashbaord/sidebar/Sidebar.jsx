@@ -10,48 +10,12 @@ const Sidebar = () => {
   const [activeMain, setActiveMain] = useState(null);
 
   const user = JSON.parse(localStorage.getItem("user"));
-  const role = user?.role?.toLowerCase() || "";
   const permissions = user?.permissions || [];
 
-  const bottomTabs = sidebarItems.filter(item =>
-    ["Profile", "Logout"].includes(item.title)
+  // Filter sidebarItems based on permission order and allow Profile/Logout too
+  const sidebarTabs = sidebarItems.filter(item =>
+    permissions.map(p => p.toLowerCase()).includes(item.title.toLowerCase())
   );
-
-  let sidebarTabs = [];
-
-  // if (role === "superadmin") {
-  //   sidebarTabs = sidebarItems.filter(item =>
-  //     !["Profile", "Logout"].includes(item.title)
-  //   );
-  // } else {
-  //   sidebarTabs = permissions
-  //     .map((perm) =>
-  //       sidebarItems.find(item =>
-  //         item.title.toLowerCase() === perm.trim().toLowerCase()
-  //       )
-  //     )
-  //     .filter(item => item && !["Profile", "Logout"].includes(item.title));
-
-  //   const hasHome = sidebarTabs.find(item => item.title === "Home");
-  //   if (!hasHome) {
-  //     const homeTab = sidebarItems.find(item => item.title === "Home");
-  //     if (homeTab) sidebarTabs.unshift(homeTab);
-  //   }
-  // }
-
-  sidebarTabs = permissions
-    .map((perm) =>
-      sidebarItems.find(item =>
-        item.title.toLowerCase() === perm.trim().toLowerCase()
-      )
-    )
-    .filter(item => item && !["Profile", "Logout"].includes(item.title));
-
-  const hasHome = sidebarTabs.find(item => item.title === "Home");
-  if (!hasHome) {
-    const homeTab = sidebarItems.find(item => item.title === "Home");
-    if (homeTab) sidebarTabs.unshift(homeTab);
-  }
 
   useEffect(() => {
     const index = sidebarTabs.findIndex((item) =>
@@ -66,7 +30,9 @@ const Sidebar = () => {
 
   return (
     <div
-      className={`${isOpen ? "w-64" : "w-16"} min-w-[64px] bg-theme text-theme h-screen flex flex-col duration-300 overflow-y-auto`}
+      className={`${
+        isOpen ? "w-64" : "w-16"
+      } min-w-[64px] bg-theme text-theme h-screen flex flex-col duration-300 overflow-y-auto`}
       style={{ transition: "0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)" }}
     >
       <div className="p-4 flex justify-center">
@@ -101,7 +67,9 @@ const Sidebar = () => {
                 <>
                   <li
                     onClick={() => handleToggle(index)}
-                    className={`p-4 hover-theme flex items-center justify-between cursor-pointer ${isMainActive ? "active-theme" : ""} ${isOpen ? "pl-4 pr-3" : "justify-center"}`}
+                    className={`p-4 hover-theme flex items-center justify-between cursor-pointer ${
+                      isMainActive ? "active-theme" : ""
+                    } ${isOpen ? "pl-4 pr-3" : "justify-center"}`}
                   >
                     <div className="flex items-center gap-3">
                       <item.icon className="w-4 h-4" />
@@ -111,7 +79,9 @@ const Sidebar = () => {
                     </div>
                     {isOpen && (
                       <svg
-                        className={`w-4 h-4 transition-transform ${activeMain === index ? "rotate-180" : ""}`}
+                        className={`w-4 h-4 transition-transform ${
+                          activeMain === index ? "rotate-180" : ""
+                        }`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -132,7 +102,11 @@ const Sidebar = () => {
                         <li key={subIndex}>
                           <Link
                             to={sub.route}
-                            className={`flex items-center p-2 gap-3 hover-theme ${location.pathname === sub.route ? "active-theme" : ""}`}
+                            className={`flex items-center p-2 gap-3 hover-theme ${
+                              location.pathname === sub.route
+                                ? "active-theme"
+                                : ""
+                            }`}
                           >
                             <sub.icon className="w-4 h-4" />
                             <span className="text-[15px]">{sub.title}</span>
@@ -145,7 +119,11 @@ const Sidebar = () => {
               ) : (
                 <Link
                   to={item.route}
-                  className={`p-4 hover-theme flex items-center cursor-pointer ${isOpen ? "justify-start pl-4" : "justify-center"} ${location.pathname === item.route ? "active-theme" : ""}`}
+                  className={`p-4 hover-theme flex items-center cursor-pointer ${
+                    isOpen ? "justify-start pl-4" : "justify-center"
+                  } ${
+                    location.pathname === item.route ? "active-theme" : ""
+                  }`}
                 >
                   <item.icon className="w-4 h-4" />
                   {isOpen && (
@@ -156,19 +134,6 @@ const Sidebar = () => {
             </div>
           );
         })}
-
-        {bottomTabs.map((item, index) => (
-          <Link
-            key={index}
-            to={item.route}
-            className={`p-4 hover-theme flex items-center cursor-pointer ${isOpen ? "justify-start pl-4" : "justify-center"} ${location.pathname === item.route ? "active-theme" : ""}`}
-          >
-            <item.icon className="w-4 h-4" />
-            {isOpen && (
-              <span className="ml-3 text-[15px]">{item.title}</span>
-            )}
-          </Link>
-        ))}
       </ul>
     </div>
   );

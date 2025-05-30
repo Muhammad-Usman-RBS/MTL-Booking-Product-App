@@ -161,11 +161,9 @@ const VehiclePricing = () => {
   return (
     <>
       <OutletHeading name="Vehicle Pricing" />
-      <div className="flex justify-end px-4 mb-4">
-        <button className="btn btn-edit" onClick={() => handleEditModal({})}>
+        <button className="btn btn-edit mb-4" onClick={() => handleEditModal({})}>
           Add New
         </button>
-      </div>
 
       <CustomTable
         tableHeaders={tableHeaders}

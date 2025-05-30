@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import SelectedSearch from "../../../constants/constantscomponents/SelectedSearch";
 import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
 import Icons from "../../../assets/icons";
-import { driverList, passengerList, vehicleList, accountList } from "../../../constants/dashboardTabsData/data";
+import { driverList, accountList } from "../../../constants/dashboardTabsData/data";
 
 const BookingsFilters = ({
   selectedStatus,
@@ -25,6 +25,8 @@ const BookingsFilters = ({
   setShowColumnModal,
   setShowKeyboardModal,
   statusList,
+  passengerList,
+  vehicleList,
 }) => {
   return (
     <>

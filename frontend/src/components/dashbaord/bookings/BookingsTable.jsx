@@ -22,6 +22,8 @@ const BookingsTable = ({
     setEditBookingData,
     setShowEditModal,
     selectedStatus,
+    selectedPassengers,
+    selectedVehicleTypes,
 }) => {
     const user = useSelector((state) => state.auth.user);
     const companyId = user?.companyId;
@@ -37,11 +39,39 @@ const BookingsTable = ({
         (booking) => booking?.companyId?.toString() === companyId?.toString()
     );
 
-    const filteredBookings = bookings.filter((booking) =>
-        selectedStatus.includes("All") || selectedStatus.length === 0
-            ? true
-            : selectedStatus.includes(booking.status)
-    );
+    let filteredBookings = bookings.filter((booking) => {
+        const statusMatch =
+            selectedStatus.includes("All") || selectedStatus.length === 0
+                ? true
+                : selectedStatus.includes(booking.status);
+
+        const passengerMatch =
+            selectedPassengers.length === 0
+                ? true
+                : selectedPassengers.includes(booking.passenger?.name);
+
+        return statusMatch && passengerMatch;
+    });
+
+    // ✅ Sort: bring matching passengers or vehicles to the top
+    filteredBookings.sort((a, b) => {
+        let aMatch = 0;
+        let bMatch = 0;
+
+        // Vehicle match
+        if (
+            selectedVehicleTypes.length > 0 &&
+            selectedVehicleTypes.some((v) => v === a.vehicle?.vehicleName)
+        )
+            aMatch++;
+        if (
+            selectedVehicleTypes.length > 0 &&
+            selectedVehicleTypes.some((v) => v === b.vehicle?.vehicleName)
+        )
+            bMatch++;
+
+        return bMatch - aMatch; // sort descending
+    });
 
     if (isLoading) return <p>Loading...</p>;
     if (error) return <p>Error loading bookings</p>;

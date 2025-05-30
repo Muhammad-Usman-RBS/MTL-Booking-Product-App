@@ -10,11 +10,13 @@ const SelectedSearch = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  const safeSelected = Array.isArray(selected) ? selected : [];
+
   const toggleCheckbox = (label) => {
-    if (selected.includes(label)) {
-      setSelected(selected.filter((item) => item !== label));
+    if (safeSelected.includes(label)) {
+      setSelected(safeSelected.filter((item) => item !== label));
     } else {
-      setSelected([...selected, label]);
+      setSelected([...safeSelected, label]);
     }
   };
 
@@ -34,7 +36,7 @@ const SelectedSearch = ({
       </button>
 
       {dropdownOpen && (
-        <div className="absolute z-10 mt-2 bg-white border rounded border-gray-300 shadow-md max-h-72 overflow-y-auto">
+        <div className="absolute z-10 mt-2 bg-white border rounded border-gray-300 shadow-md max-h-72 overflow-y-auto w-full">
           <div className="p-2 border-b border-gray-300">
             <input
               type="text"
@@ -45,26 +47,31 @@ const SelectedSearch = ({
             />
           </div>
           <div className="p-2 space-y-1 text-sm">
-            {filteredStatuses.map((item, idx) => (
-              <label
-                key={idx}
-                className="flex items-center justify-between hover:bg-gray-100 p-1 rounded"
-              >
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(item.label)}
-                    onChange={() => toggleCheckbox(item.label)}
-                  />
-                  <span>{item.label}</span>
-                </div>
-                {showCount && (
-                  <span className="text-gray-500 text-xs">
-                    ({item.count || 0})
-                  </span>
-                )}
-              </label>
-            ))}
+            {filteredStatuses.map((item, idx) => {
+              const value = item.value || item.label;
+
+              return (
+                <label
+                  key={idx}
+                  className="flex items-center justify-between hover:bg-gray-100 p-1 rounded cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={safeSelected.includes(value)}
+                      onChange={() => toggleCheckbox(value)}
+                    />
+
+                    <span>{item.label}</span>
+                  </div>
+                  {showCount && (
+                    <span className="text-gray-500 text-xs">
+                      ({item.count || 0})
+                    </span>
+                  )}
+                </label>
+              );
+            })}
           </div>
         </div>
       )}
