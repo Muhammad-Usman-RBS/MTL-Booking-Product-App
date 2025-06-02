@@ -26,7 +26,7 @@ const NotFound = () => {
         </p>
 
         <a
-          href="/"
+          href="/login"
           className="inline-block px-6 mt-4 py-2 text-white rounded-lg font-medium shadow-md hover:opacity-90 transition duration-200"
           style={{
             background:

@@ -53,7 +53,7 @@ const Login = () => {
         }
       }, 1000);
     } catch (err) {
-      const msg = err?.data || "Login failed. Check your credentials.";
+      const msg = err?.data?.message || "Login failed. Check your credentials.";
       toast.error(msg);
     }
   };

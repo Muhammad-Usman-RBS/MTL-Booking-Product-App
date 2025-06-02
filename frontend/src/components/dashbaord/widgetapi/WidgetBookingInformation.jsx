@@ -4,28 +4,24 @@ import {
 } from "lucide-react";
 import CarCardSection from './CarCardSection';
 import { useGetPublicVehiclesQuery } from '../../../redux/api/vehicleApi';
-import { useSubmitWidgetFormMutation } from '../../../redux/api/bookingApi';
 import { useLazyGetDistanceQuery } from '../../../redux/api/googleApi';
 import { toast, ToastContainer } from 'react-toastify';
 
 const WidgetBookingInformation = ({
   companyId: propCompanyId,
   onNext,
-  baseRate = '197.87',
   meetAndGreet = '10.50',
   estimatedTax = '15.00'
 }) => {
   const companyId = propCompanyId || new URLSearchParams(window.location.search).get('company') || '';
-
+  const [actualMiles, setActualMiles] = useState(null);
   const [selectedCarId, setSelectedCarId] = useState(null);
   const [formData, setFormData] = useState(null);
   const [distanceText, setDistanceText] = useState(null);
   const [durationText, setDurationText] = useState(null);
+  const [baseRate, setBaseRate] = useState('0.00');
 
-  // const [submitWidgetForm] = useSubmitWidgetFormMutation();
   const [triggerDistance] = useLazyGetDistanceQuery();
-
-  // ✅ Use PUBLIC API hook
   const { data: carList = [], isLoading, error } = useGetPublicVehiclesQuery(companyId, {
     skip: !companyId,
   });
@@ -60,12 +56,14 @@ const WidgetBookingInformation = ({
         .then(res => {
           if (res?.distanceText?.includes("km")) {
             const km = parseFloat(res.distanceText.replace("km", "").trim());
-            const miles = (km * 0.621371).toFixed(2);
+            const miles = parseFloat((km * 0.621371).toFixed(2));
             setDistanceText(`${miles} miles`);
-          } else {
-            setDistanceText(res?.distanceText || null);
+            setActualMiles(miles);
+          } else if (res?.distanceText?.includes("mi")) {
+            const miles = parseFloat(res.distanceText.replace("mi", "").trim());
+            setDistanceText(`${miles} miles`);
+            setActualMiles(miles);
           }
-
           setDurationText(res?.durationText || null);
         })
         .catch(() => {
@@ -76,56 +74,57 @@ const WidgetBookingInformation = ({
     }
   }, []);
 
+  const getVehiclePriceForDistance = (vehicle, miles) => {
+    if (!vehicle?.slabs || !Array.isArray(vehicle.slabs)) return null;
+    const matchedSlab = vehicle.slabs.find(slab => miles >= slab.from && miles <= slab.to);
+    return matchedSlab ? matchedSlab.price : null;
+  };
+
   useEffect(() => {
     if (carList.length > 0) {
       setSelectedCarId(carList[0]._id);
     }
   }, [carList]);
 
+  useEffect(() => {
+    if (selectedCarId && carList.length > 0 && actualMiles !== null) {
+      const selectedCar = carList.find(car => car._id === selectedCarId);
+      const selectedPrice = getVehiclePriceForDistance(selectedCar, actualMiles);
+      setBaseRate(selectedPrice || '0.00');
+    }
+  }, [selectedCarId, carList, actualMiles]);
+
   const handleSubmitBooking = () => {
     if (!selectedCarId || !formData) {
       toast.error("Please fill the form and select a vehicle.");
       return;
     }
-
     const selectedCar = carList.find(car => car._id === selectedCarId);
     if (!selectedCar) {
       toast.error("Please select a vehicle.");
       return;
     }
-
     localStorage.setItem("selectedVehicle", JSON.stringify(selectedCar));
-    onNext(); // move to payment step
+    onNext();
   };
 
   return (
     <>
       <ToastContainer />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        {/* LEFT PANEL */}
         <div className="lg:col-span-8 w-full">
           <div className="bg-gray-50 border border-gray-200 rounded-2xl shadow-md p-6 w-full">
-            {/* DATE & TIME */}
             <div className="text-center mb-4">
               <h3 className="text-sm font-medium text-gray-700 mb-1">
-                {formData?.date
-                  ? new Date(formData.date).toLocaleDateString('en-UK', {
-                    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-                  })
-                  : 'Date not selected'}
+                {formData?.date ? new Date(formData.date).toLocaleDateString('en-UK', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : 'Date not selected'}
               </h3>
               <div className="text-xl font-semibold text-gray-900">
-                {formData?.hour && formData?.minute
-                  ? `${String(formData.hour).padStart(2, '0')}:${String(formData.minute).padStart(2, '0')} ${formData?.hour < 12 ? 'AM' : 'PM'}`
-                  : 'Time not set'}
+                {formData?.hour && formData?.minute ? `${String(formData.hour).padStart(2, '0')}:${String(formData.minute).padStart(2, '0')} ${formData?.hour < 12 ? 'AM' : 'PM'}` : 'Time not set'}
                 <span className="text-sm text-gray-500">&nbsp;(GMT+1)</span>
               </div>
             </div>
 
-            {/* LOCATIONS */}
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-4 py-3 bg-white border border-gray-100 rounded-xl">
-              {/* FROM */}
               <div className="flex items-center gap-2 w-full md:w-auto">
                 <PlaneTakeoff className="w-8 h-8 text-red-500" />
                 <div>
@@ -133,25 +132,16 @@ const WidgetBookingInformation = ({
                   <p className="text-xs text-gray-500">{formData?.doorNumber ? `Door No. ${formData.doorNumber}` : "All Terminals"}</p>
                 </div>
               </div>
-
-              {/* ARROW */}
               <div className="text-gray-400 text-2xl hidden md:block">→</div>
-
-              {/* TO */}
               <div className="flex items-center gap-2 w-full md:w-auto justify-end">
                 <div className="text-right">
-                  <p className="font-medium text-sm text-green-800">
-                    {formData?.dropoff || "Dropoff Location"}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {formData?.arrivefrom ? `From: ${formData.arrivefrom}` : "Destination"}
-                  </p>
+                  <p className="font-medium text-sm text-green-800">{formData?.dropoff || "Dropoff Location"}</p>
+                  <p className="text-xs text-gray-500">{formData?.arrivefrom ? `From: ${formData.arrivefrom}` : "Destination"}</p>
                 </div>
                 <PlaneLanding className="w-8 h-8 text-green-500" />
               </div>
             </div>
 
-            {/* DISTANCE + ARRIVAL */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 text-sm text-gray-600 px-2">
               {durationText && (
                 <span>
@@ -174,51 +164,31 @@ const WidgetBookingInformation = ({
                         return dep.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
                       })()
                       : "-"}
-                  </strong>&nbsp;
-                  (GMT+1)
+                  </strong>&nbsp;(GMT+1)
                 </span>
               )}
-
               <div className="flex justify-end items-center gap-4 text-sm text-gray-700 mt-2">
-                {distanceText && (
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4 text-blue-500" />
-                    <span>{distanceText}</span>
-                  </div>
-                )}
-                {durationText && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4 text-blue-500" />
-                    <span>{durationText}</span>
-                  </div>
-                )}
+                {distanceText && (<div className="flex items-center gap-1"><MapPin className="w-4 h-4 text-blue-500" /><span>{distanceText}</span></div>)}
+                {durationText && (<div className="flex items-center gap-1"><Clock className="w-4 h-4 text-blue-500" /><span>{durationText}</span></div>)}
               </div>
             </div>
           </div>
 
-          {/* VEHICLES */}
           <div className="mt-6">
-            {isLoading ? (
-              <p>Loading vehicles...</p>
-            ) : error ? (
-              <p className="text-red-500">Failed to load vehicles.</p>
-            ) : (
+            {isLoading ? <p>Loading vehicles...</p> : error ? <p className="text-red-500">Failed to load vehicles.</p> : (
               <>
-                {carList.length === 0 ? (
-                  <p>No cars found.</p>
-                ) : (
+                {carList.length === 0 ? <p>No cars found.</p> : (
                   <CarCardSection
-                    carList={carList}
+                    carList={carList.map(car => ({
+                      ...car,
+                      price: getVehiclePriceForDistance(car, actualMiles),
+                    }))}
                     selectedCarId={selectedCarId}
                     onSelect={setSelectedCarId}
                   />
                 )}
-
                 <div className="text-right mt-4">
-                  <button
-                    onClick={handleSubmitBooking}
-                    className="bg-blue-600 text-white font-semibold px-6 py-2 rounded-md shadow hover:bg-blue-700 transition"
-                  >
+                  <button onClick={handleSubmitBooking} className="bg-blue-600 text-white font-semibold px-6 py-2 rounded-md shadow hover:bg-blue-700 transition">
                     Next
                   </button>
                 </div>
@@ -227,7 +197,6 @@ const WidgetBookingInformation = ({
           </div>
         </div>
 
-        {/* RIGHT PANEL */}
         <div className="lg:col-span-4 w-full space-y-8">
           <div className="rounded-2xl p-6 bg-white shadow-md border border-gray-200">
             <div className="flex items-center justify-between mb-4">
@@ -237,7 +206,6 @@ const WidgetBookingInformation = ({
               </div>
               <span className="text-sm text-gray-500">Rate</span>
             </div>
-
             <div className="space-y-4 text-sm text-gray-700">
               <div className="flex justify-between pb-2 border-b border-dashed border-gray-300">
                 <span>Base Fare</span>
@@ -255,22 +223,15 @@ const WidgetBookingInformation = ({
           </div>
 
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-            <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              ✅ All Classes Include:
-            </h3>
+            <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">✅ All Classes Include:</h3>
             <ul className="space-y-3 text-sm text-gray-700">
-              {[
-                'Free cancellation up until 1 hour before pickup',
-                'Free 60 minutes of wait time',
-                'Meet & Greet',
-              ].map((item, idx) => (
+              {["Free cancellation up until 1 hour before pickup", "Free 60 minutes of wait time", "Meet & Greet"].map((item, idx) => (
                 <li key={idx} className="flex items-start gap-2">
                   <Check className="w-4 h-4 text-green-500 mt-1" />
                   <span>{item}</span>
                 </li>
               ))}
             </ul>
-
             <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-md p-4">
               <h4 className="text-sm font-medium text-yellow-800 mb-2 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-yellow-600" />

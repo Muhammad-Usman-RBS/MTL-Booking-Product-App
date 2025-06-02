@@ -73,7 +73,7 @@ function App() {
       <Routes>
         {/* Auth Pages */}
         <Route element={<AuthLayout />}>
-          <Route path="/" element={<Login />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/new-password" element={<ResetPassword />} />
         </Route>

@@ -80,9 +80,17 @@ const VehiclePricing = () => {
       return;
     }
     formData.append("companyId", companyId);
+    formData.append("priceType", "Percentage");
+
+    const parsedSlabs = (selectedAccount.slabs || []).map(s => ({
+      from: Number(s.from),
+      to: Number(s.to),
+      price: Number(s.price)
+    })).filter(s => !isNaN(s.from) && !isNaN(s.to) && !isNaN(s.price));
+    formData.append("slabs", JSON.stringify(parsedSlabs));
 
     Object.entries(selectedAccount).forEach(([key, value]) => {
-      if (key === "image" || key === "features") return;
+      if (key === "image" || key === "features" || key === "priceType" || key === "slabs") return;
       if (value !== undefined && value !== null) {
         formData.append(key, value);
       }
@@ -94,7 +102,6 @@ const VehiclePricing = () => {
       formData.append("image", selectedAccount.image);
     }
 
-    // Features array
     const cleanedFeatures = (selectedAccount.features || [])
       .map((f) => f.trim())
       .filter((f) => f);
@@ -133,7 +140,7 @@ const VehiclePricing = () => {
     { label: "Small Luggage", key: "smallLuggage" },
     { label: "Large Luggage", key: "largeLuggage" },
     { label: "Child Seat", key: "childSeat" },
-    { label: "Price", key: "price" },
+    { label: "Percentage Rate", key: "percentageIncrease" },
     { label: "Action", key: "actions" },
   ];
 
@@ -161,9 +168,9 @@ const VehiclePricing = () => {
   return (
     <>
       <OutletHeading name="Vehicle Pricing" />
-        <button className="btn btn-edit mb-4" onClick={() => handleEditModal({})}>
-          Add New
-        </button>
+      <button className="btn btn-edit mb-4" onClick={() => handleEditModal({})}>
+        Add New
+      </button>
 
       <CustomTable
         tableHeaders={tableHeaders}
@@ -193,11 +200,11 @@ const VehiclePricing = () => {
             "smallLuggage",
             "largeLuggage",
             "childSeat",
-            "price",
+            "percentageIncrease",
           ].map((key) => (
             <div key={key}>
               <label className="block text-sm font-medium text-gray-700 capitalize">
-                {key.replace(/([A-Z])/g, " $1")}
+                {key === "percentageIncrease" ? "Percentage Increase (%)" : key.replace(/([A-Z])/g, " $1")}
               </label>
               <input
                 type={key === "vehicleName" ? "text" : "number"}
@@ -215,20 +222,12 @@ const VehiclePricing = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Price Type</label>
-            <select
+            <input
+              type="text"
               className="custom_input"
-              value={selectedAccount?.priceType || ""}
-              onChange={(e) =>
-                setSelectedAccount({
-                  ...selectedAccount,
-                  priceType: e.target.value,
-                })
-              }
-            >
-              <option value="">Select Price Type</option>
-              <option value="Percentage">Percentage</option>
-              <option value="Amount">Amount</option>
-            </select>
+              value="Percentage"
+              disabled
+            />
           </div>
 
           {/* Features Fields */}

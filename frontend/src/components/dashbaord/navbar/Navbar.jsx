@@ -8,6 +8,12 @@ import IMAGES from "../../../assets/images";
 const themes = [
   {
     value: "theme-dark-1",
+    bg: "#07384D",
+    text: "#F1EFEF",
+    hoverActive: "#003353",
+  },
+  {
+    value: "theme-dark-2",
     bg: "#22333B",
     text: "#F1EFEF",
     hoverActive: "#930000",

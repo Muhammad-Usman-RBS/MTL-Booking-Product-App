@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import IMAGES from "../../../assets/images";
-import useUIStore from "../../../store/useUIStore";
 import sidebarItems from "../../../constants/constantscomponents/sidebarItems";
+import { Link, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import useUIStore from "../../../store/useUIStore";
+import IMAGES from "../../../assets/images";
 
 const Sidebar = () => {
   const location = useLocation();
   const isOpen = useUIStore((state) => state.isSidebarOpen);
   const [activeMain, setActiveMain] = useState(null);
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = useSelector((state) => state?.auth?.user)
   const permissions = user?.permissions || [];
 
   // Filter sidebarItems based on top-level permission and also filter subTabs based on sub-level permission

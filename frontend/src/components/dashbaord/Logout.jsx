@@ -14,7 +14,7 @@ const Logout = () => {
     toast.success("Successfully logged out.");
 
     setTimeout(() => {
-      navigate("/", { replace: true });
+      navigate("/login", { replace: true });
       window.location.reload();
     }, 1000);
   };

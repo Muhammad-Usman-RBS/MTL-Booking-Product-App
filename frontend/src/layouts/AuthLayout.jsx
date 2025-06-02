@@ -1,12 +1,19 @@
 import React from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, Navigate } from "react-router-dom";
+import { useSelector } from 'react-redux';
 import Icons from "../assets/icons";
 
 const AuthLayout = () => {
+  const user = useSelector((state) => state.auth.user);
   const location = useLocation();
+  const currentPath = location.pathname;
+
+  if (user && currentPath === "/login") {
+    return <Navigate to="/dashboard/home" replace />
+  }
 
   let title = "Welcome";
-  if (location.pathname === "/") title = "Dashboard Login";
+  if (location.pathname === "/login") title = "Dashboard Login";
   else if (location.pathname === "/forgot-password") title = "Forgot Password";
   else if (location.pathname === "/new-password") title = "Reset Password";
 
@@ -28,7 +35,7 @@ const AuthLayout = () => {
           </div>
           <p className="text-sm text-gray-500 mt-1">
             © 2025 All Rights Reserved.
-          </p> 
+          </p>
         </div>
       </div>
     </div>

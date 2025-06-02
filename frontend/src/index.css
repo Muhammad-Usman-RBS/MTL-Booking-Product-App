@@ -32,6 +32,16 @@ p {
 }
 
 .theme-dark-1 {
+  --bg: #07384D;
+  --text: #F1EFEF;
+  --primary: #01F5FE;
+  --hover: #003353;
+  --active: #064f7c;
+  --scroll-thumb: rgba(0, 0, 0, 0.3);
+  --scroll-track: transparent;
+}
+
+.theme-dark-2 {
   --bg: #1E1E1E;
   --text: #F1EFEF;
   --primary: #BA090A;

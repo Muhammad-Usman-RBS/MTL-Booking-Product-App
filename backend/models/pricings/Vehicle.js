@@ -5,6 +5,15 @@ function arrayLimit(val) {
     return val.length <= 10;
 }
 
+const slabSchema = new mongoose.Schema(
+    {
+        from: { type: Number, required: true },
+        to: { type: Number, required: true },
+        price: { type: Number, required: true }, // Price per mile for this slab
+    },
+    { _id: false } // no need for individual _id in slabs
+);
+
 const vehicleSchema = new mongoose.Schema({
     priority: { type: Number, default: 0 },
     vehicleName: { type: String, required: true },
@@ -13,13 +22,18 @@ const vehicleSchema = new mongoose.Schema({
     smallLuggage: { type: Number, default: 0 },
     largeLuggage: { type: Number, default: 0 },
     childSeat: { type: Number, default: 0 },
-    priceType: { type: String },
-    price: { type: Number, default: 0 },
+    priceType: { type: String, default: "Percentage" },
+    percentageIncrease: { type: Number, default: 0 },
 
     // ✅ Features array with limit validation
     features: {
         type: [String],
         validate: [arrayLimit, '{PATH} exceeds the limit of 10'],
+    },
+
+    slabs: {
+        type: [slabSchema],
+        default: [],
     },
 
     companyId: {

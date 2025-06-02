@@ -20,7 +20,7 @@ const ResetPassword = () => {
     try {
       await resetPassword({ email, otp, newPassword }).unwrap(); // ✅ Clean RTK way
       toast.success("Password reset successful! You can now log in.");
-      navigate("/");
+      navigate("/login");
     } catch (error) {
       toast.error(error?.data?.message || "Failed to reset password");
     }

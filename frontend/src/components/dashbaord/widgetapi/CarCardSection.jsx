@@ -41,7 +41,11 @@ const CarCard = ({ car, isSelected, onSelect }) => {
             <div className="flex justify-between items-start">
               <h3 className="text-lg font-semibold text-gray-800">{vehicleName}</h3>
               <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold text-blue-600">£{price}</span>
+                {price !== null ? (
+                  <span className="text-lg font-semibold text-blue-600">£{parseFloat(price).toFixed(2)}</span>
+                ) : (
+                  <span className="text-sm text-gray-500">No price available</span>
+                )}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

@@ -2,16 +2,16 @@ import Vehicle from "../../models/pricings/Vehicle.js";
 import { cloudinary } from "../../config/cloudinary.js";
 import fs from "fs";
 
-// Image Saving Frontend Inside Modal
+// ✅ Upload image to Cloudinary
 const uploadToCloudinary = async (localPath) => {
   const result = await cloudinary.uploader.upload(localPath, {
     folder: "vehicles",
   });
-  fs.unlinkSync(localPath); // Clean up local file
+  fs.unlinkSync(localPath); // remove local file
   return result.secure_url;
 };
 
-// CREATE
+// ✅ CREATE VEHICLE
 export const createVehicle = async (req, res) => {
   try {
     const {
@@ -21,50 +21,56 @@ export const createVehicle = async (req, res) => {
       smallLuggage,
       largeLuggage,
       childSeat,
-      price,
+      percentageIncrease,
       priceType,
       companyId,
       image: imageFromBody,
-      features, // expected from FormData as JSON string
+      features,
+      slabs,
     } = req.body;
 
-    let image = "";
+    // Validate companyId
+    if (!companyId || companyId.length !== 24) {
+      return res.status(400).json({ message: "Valid companyId is required" });
+    }
 
-    // ✅ Upload image if file is present
+    // ✅ Parse features
+    let parsedFeatures = [];
+    if (features) {
+      try {
+        const arr = typeof features === "string" ? JSON.parse(features) : features;
+        if (!Array.isArray(arr)) throw new Error("Features must be an array");
+        if (arr.length > 10) throw new Error("Maximum 10 features allowed");
+        parsedFeatures = arr.map(f => String(f).trim()).filter(Boolean);
+      } catch (err) {
+        return res.status(400).json({ message: `Features error: ${err.message}` });
+      }
+    }
+
+    // ✅ Parse slabs
+    let parsedSlabs = [];
+    if (slabs) {
+      try {
+        const slabArray = typeof slabs === "string" ? JSON.parse(slabs) : slabs;
+        if (!Array.isArray(slabArray)) throw new Error("Slabs must be an array");
+        parsedSlabs = slabArray.map(s => ({
+          from: Number(s.from),
+          to: Number(s.to),
+          price: Number(s.price),
+        }));
+      } catch (err) {
+        return res.status(400).json({ message: `Slabs error: ${err.message}` });
+      }
+    }
+
+    // ✅ Upload image if present
+    let image = "";
     if (req.file?.path) {
       image = await uploadToCloudinary(req.file.path);
     } else if (imageFromBody) {
       image = imageFromBody;
     }
 
-    // ✅ Validate companyId
-    if (!companyId || companyId.length !== 24) {
-      return res.status(400).json({ message: "Valid companyId is required" });
-    }
-
-    // ✅ Parse and sanitize features (ensure it's an array of clean strings)
-    let parsedFeatures = [];
-    if (features) {
-      try {
-        const featureArray = typeof features === "string" ? JSON.parse(features) : features;
-
-        if (!Array.isArray(featureArray)) {
-          throw new Error("Features must be an array");
-        }
-
-        if (featureArray.length > 10) {
-          throw new Error("Maximum 10 features allowed");
-        }
-
-        parsedFeatures = featureArray
-          .map((f) => String(f).trim())  // Force string and trim
-          .filter((f) => f.length > 0);  // Remove empty entries
-      } catch (err) {
-        return res.status(400).json({ message: `Features error: ${err.message}` });
-      }
-    }
-
-    // ✅ Create and save vehicle with proper features array
     const newVehicle = new Vehicle({
       priority: Number(priority),
       vehicleName,
@@ -72,11 +78,12 @@ export const createVehicle = async (req, res) => {
       smallLuggage: Number(smallLuggage),
       largeLuggage: Number(largeLuggage),
       childSeat: Number(childSeat),
-      price: Number(price),
+      percentageIncrease: Number(percentageIncrease),
       priceType,
       image,
       companyId,
       features: parsedFeatures,
+      slabs: parsedSlabs,
     });
 
     const saved = await newVehicle.save();
@@ -87,11 +94,10 @@ export const createVehicle = async (req, res) => {
   }
 };
 
-// READ ALL
+// ✅ READ VEHICLES
 export const getAllVehicles = async (req, res) => {
   try {
-    const companyId = req.user.companyId; // ✅ comes from protect middleware
-
+    const companyId = req.user.companyId;
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
@@ -103,7 +109,7 @@ export const getAllVehicles = async (req, res) => {
   }
 };
 
-// UPDATE
+// ✅ UPDATE VEHICLE
 export const updateVehicle = async (req, res) => {
   try {
     let {
@@ -113,44 +119,55 @@ export const updateVehicle = async (req, res) => {
       smallLuggage,
       largeLuggage,
       childSeat,
-      price,
+      percentageIncrease,
       priceType,
       companyId,
       image: imageFromBody,
-      features, // ✅ expected as a stringified JSON array from FormData
+      features,
+      slabs,
     } = req.body;
 
-    // ✅ Fix FormData array conversion issue
-    if (Array.isArray(companyId)) {
-      companyId = companyId[0];
-    }
+    if (Array.isArray(companyId)) companyId = companyId[0];
 
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
 
-    // ✅ Properly parse and validate features array
+    // ✅ Parse features
     let parsedFeatures = [];
     if (features) {
       try {
-        // Parse features only if it's a stringified array
-        const featureArray = typeof features === "string" ? JSON.parse(features) : features;
-
-        if (!Array.isArray(featureArray)) {
-          throw new Error("Features must be an array");
-        }
-
-        if (featureArray.length > 10) {
-          throw new Error("Maximum 10 features allowed");
-        }
-
-        parsedFeatures = featureArray.map((f) => String(f).trim()).filter(Boolean);
+        const arr = typeof features === "string" ? JSON.parse(features) : features;
+        if (!Array.isArray(arr)) throw new Error("Features must be an array");
+        if (arr.length > 10) throw new Error("Maximum 10 features allowed");
+        parsedFeatures = arr.map(f => String(f).trim()).filter(Boolean);
       } catch (err) {
         return res.status(400).json({ message: `Features error: ${err.message}` });
       }
     }
 
-    // ✅ Build the update object
+    // ✅ Parse slabs
+    let parsedSlabs = [];
+    if (slabs) {
+      try {
+        const slabArray = typeof slabs === "string" ? JSON.parse(slabs) : slabs;
+        if (!Array.isArray(slabArray)) throw new Error("Slabs must be an array");
+        parsedSlabs = slabArray.map(s => ({
+          from: Number(s.from),
+          to: Number(s.to),
+          price: Number(s.price),
+        }));
+      } catch (err) {
+        return res.status(400).json({ message: `Slabs error: ${err.message}` });
+      }
+    }
+
+    // ✅ Image upload
+    let image = imageFromBody;
+    if (req.file?.path) {
+      image = await uploadToCloudinary(req.file.path);
+    }
+
     const updates = {
       priority: Number(priority),
       vehicleName,
@@ -158,20 +175,14 @@ export const updateVehicle = async (req, res) => {
       smallLuggage: Number(smallLuggage),
       largeLuggage: Number(largeLuggage),
       childSeat: Number(childSeat),
-      price: Number(price),
+      percentageIncrease: Number(percentageIncrease),
       priceType,
+      image,
       companyId,
-      features: parsedFeatures, // ✅ guaranteed to be array of strings
+      features: parsedFeatures,
+      slabs: parsedSlabs,
     };
 
-    // ✅ Image handling
-    if (req.file?.path) {
-      updates.image = await uploadToCloudinary(req.file.path);
-    } else if (imageFromBody) {
-      updates.image = imageFromBody;
-    }
-
-    // ✅ Execute update
     const updated = await Vehicle.findByIdAndUpdate(req.params.id, updates, {
       new: true,
     });
@@ -187,7 +198,7 @@ export const updateVehicle = async (req, res) => {
   }
 };
 
-// DELETE
+// ✅ DELETE
 export const deleteVehicle = async (req, res) => {
   try {
     const deleted = await Vehicle.findByIdAndDelete(req.params.id);
@@ -198,11 +209,10 @@ export const deleteVehicle = async (req, res) => {
   }
 };
 
-// Fetches all vehicles for a specific company, sorted by priority.
+// ✅ GET BY COMPANY (Public)
 export const getVehiclesByCompanyId = async (req, res) => {
   try {
     const { companyId } = req.query;
-
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
@@ -213,4 +223,3 @@ export const getVehiclesByCompanyId = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-

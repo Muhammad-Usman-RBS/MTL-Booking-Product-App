@@ -1,121 +1,220 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
-import { distanceslabData } from "../../../constants/dashboardTabsData/data";
-import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useSelector } from "react-redux";
+import {
+  useGetAllVehiclesQuery,
+  useUpdateVehicleMutation,
+} from "../../../redux/api/vehicleApi";
 
 const DistanceSlab = () => {
-  const [data, setData] = useState(distanceslabData);
-  const [selectedSlab, setSelectedSlab] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const companyId = useSelector((state) => state.auth?.user?.companyId);
+  const { data: vehicleList = [] } = useGetAllVehiclesQuery(companyId, {
+    skip: !companyId,
+  });
 
-  const handleEdit = (item) => {
-    setSelectedSlab(item);
-    setShowModal(true);
+  const [data, setData] = useState([]);
+  const [basePrice, setBasePrice] = useState({});
+  const [updateVehicle] = useUpdateVehicleMutation();
+
+  useEffect(() => {
+    if (vehicleList.length) {
+      // initialize basePrice (optional)
+      const initPrices = {};
+      vehicleList.forEach((v) => {
+        initPrices[v.vehicleName] = 0;
+      });
+      setBasePrice(initPrices);
+
+      // 👇 Load slabs from all vehicles and merge into one data table
+      const allSlabs = [];
+
+      vehicleList.forEach((v) => {
+        v.slabs.forEach((slab) => {
+          const existing = allSlabs.find(s => s.from === slab.from && s.to === slab.to);
+          if (existing) {
+            existing[v.vehicleName] = slab.price;
+          } else {
+            allSlabs.push({
+              from: slab.from,
+              to: slab.to,
+              pricePerMile: parseFloat((slab.price / (1 + (v.percentageIncrease || 0) / 100)).toFixed(2)),
+              [v.vehicleName]: slab.price,
+            });
+          }
+        });
+      });
+
+      setData(allSlabs);
+    }
+  }, [vehicleList]);
+
+  const handleAddSlab = () => {
+    const newSlab = {
+      from: 0,
+      to: 0,
+      pricePerMile: 0,
+      isNew: true,
+    };
+    vehicleList.forEach((v) => {
+      newSlab[v.vehicleName] = 0;
+    });
+    setData([...data, newSlab]);
   };
 
-  const handleUpdate = () => {
-    const updated = data.map((item) =>
-      item.start === selectedSlab.start && item.end === selectedSlab.end
-        ? selectedSlab
-        : item
-    );
+  const updateRow = (index, key, value) => {
+    const updated = [...data];
+    updated[index][key] = value;
+
+    // 👇 If user updates "to", auto-update next "from"
+    if (key === "to" && index < updated.length - 1) {
+      updated[index + 1].from = parseFloat(value);
+    }
+
+    // 👇 Auto-calculate vehicle prices if "pricePerMile" updated
+    if (key === "pricePerMile") {
+      const price = parseFloat(value);
+      vehicleList.forEach((v) => {
+        const percent = v.percentageIncrease || 0;
+        const multiplier = 1 + percent / 100;
+        updated[index][v.vehicleName] = parseFloat((price * multiplier).toFixed(2));
+      });
+    }
+
     setData(updated);
-    toast.success("Slab Updated!");
-    setShowModal(false);
+  };
+
+  const handleDelete = (index) => {
+    const updated = [...data];
+    updated.splice(index, 1);
+    setData(updated);
+    toast.success("Slab Deleted!");
+  };
+
+  const handleSaveAll = async () => {
+    try {
+      await Promise.all(
+        vehicleList.map(async (v) => {
+          const vehicleSlabs = data.map((slab) => ({
+            from: slab.from,
+            to: slab.to,
+            price: slab[v.vehicleName] || 0,
+          }));
+
+          await updateVehicle({
+            id: v._id,
+            formData: {
+              slabs: vehicleSlabs,
+              companyId,
+              priority: v.priority,
+              vehicleName: v.vehicleName,
+              passengers: v.passengers,
+              smallLuggage: v.smallLuggage,
+              largeLuggage: v.largeLuggage,
+              childSeat: v.childSeat,
+              percentageIncrease: v.percentageIncrease,
+              priceType: v.priceType,
+              image: v.image,
+              features: v.features,
+            },
+          });
+        })
+      );
+      toast.success("All Slabs Updated Successfully!");
+    } catch (err) {
+      toast.error("Error updating slabs");
+      console.error(err);
+    }
   };
 
   const tableHeaders = [
-    { label: "Start Distance", key: "start" },
-    { label: "End Distance", key: "end" },
-    { label: "Standard Saloon", key: "standard" },
-    { label: "Executive Saloon", key: "executive" },
-    { label: "VIP Saloon", key: "vip" },
-    { label: "Luxury MPV", key: "luxury" },
-    { label: "8 Passenger MPV", key: "passenger" },
+    { label: "Distance (miles)", key: "distance" },
+    { label: "Price Per Mile", key: "pricePerMile" },
+    ...vehicleList.map((v) => ({
+      label: `${v.vehicleName} (${v.percentageIncrease}%)`,
+      key: v.vehicleName,
+    })),
     { label: "Action", key: "actions" },
   ];
 
-  const tableData = data.map((item) => ({
-    ...item,
-    actions: (
-      <div className="flex gap-2">
-        <Icons.Pencil
-          title="Edit"
-          onClick={() => handleEdit(item)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
-        />
-        <Icons.Trash
-          title="Delete"
-          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
-        />
-      </div>
-    ),
-  }));
+  const tableData = data.map((item, idx) => {
+    const row = {
+      distance: (
+        <div className="flex items-center gap-4">
+          <label className="font-bold text-xs">From:</label>
+          <div className="w-20">
+            <input
+              type="number"
+              className="custom_input"
+              value={item.from}
+              onChange={(e) => updateRow(idx, "from", parseFloat(e.target.value))}
+            />
+          </div>
+          <span className="text-gray-500 font-bold px-1">-</span>
+          <label className="font-bold text-xs">To:</label>
+          <div className="w-20">
+            <input
+              type="number"
+              className="custom_input"
+              value={item.to}
+              onChange={(e) => updateRow(idx, "to", parseFloat(e.target.value))}
+            />
+          </div>
+        </div>
+      ),
+      pricePerMile: (
+        <div className="w-24">
+          <input
+            type="number"
+            className="custom_input"
+            value={item.pricePerMile}
+            onChange={(e) => updateRow(idx, "pricePerMile", parseFloat(e.target.value))}
+          />
+        </div>
+      ),
+      actions: (
+        <div className="flex gap-2">
+          <Icons.Trash
+            title="Delete"
+            onClick={() => handleDelete(idx)}
+            className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+          />
+        </div>
+      ),
+    };
+
+    vehicleList.forEach((v) => {
+      row[v.vehicleName] = item[v.vehicleName] || 0;
+    });
+
+    return row;
+  });
 
   return (
     <>
-      <div>
-        <OutletHeading name="Mileage Slab" />
-        <button className="btn btn-edit mb-4">Add New</button>
+      <OutletHeading name="Mileage Slab" />
 
-        <CustomTable
-          tableHeaders={tableHeaders}
-          tableData={tableData}
-          showPagination={true}
-          showSorting={true}
-        />
+      <div className="mb-6">
+        <button className="btn btn-edit" onClick={handleAddSlab}>
+          Add Distance Slab
+        </button>
       </div>
 
-      <CustomModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        heading={`Edit ${selectedSlab?.start} to ${selectedSlab?.end} Slab`}
-      >
-        <div className="mx-auto p-4 font-sans space-y-4">
-          {[
-            { label: "Start Distance", key: "start" },
-            { label: "End Distance", key: "end" },
-            { label: "Standard Saloon", key: "standard" },
-            { label: "Executive Saloon", key: "executive" },
-            { label: "VIP Saloon", key: "vip" },
-            { label: "Luxury MPV", key: "luxury" },
-            { label: "8 Passenger MPV", key: "passenger" },
-          ].map(({ label, key }) => (
-            <div key={key}>
-              <label className="block text-sm font-medium text-gray-700">
-                {label}
-              </label>
-              <input
-                type="number"
-                className="custom_input"
-                value={selectedSlab?.[key] || ""}
-                onChange={(e) =>
-                  setSelectedSlab({
-                    ...selectedSlab,
-                    [key]: parseFloat(e.target.value),
-                  })
-                }
-              />
-            </div>
-          ))}
+      <CustomTable
+        tableHeaders={tableHeaders}
+        tableData={tableData}
+        showPagination={true}
+        showSorting={true}
+      />
 
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              onClick={() => setShowModal(false)}
-              className="btn btn-cancel"
-            >
-              Cancel
-            </button>
-            <button onClick={handleUpdate} className="btn btn-reset">
-              Update
-            </button>
-          </div>
-        </div>
-      </CustomModal>
+      <div className="mt-4 text-right">
+        <button className="btn btn-primary" onClick={handleSaveAll}>
+          Update Pricing
+        </button>
+      </div>
     </>
   );
 };

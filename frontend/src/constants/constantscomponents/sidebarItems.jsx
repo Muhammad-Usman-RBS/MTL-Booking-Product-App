@@ -146,6 +146,11 @@ const sidebarItems = [
         icon: Icons.Truck,
       },
       {
+        title: "Distance Slab",
+        route: "/dashboard/pricing/distance-slab",
+        icon: Icons.Activity,
+      },
+      {
         title: "Hourly Packages",
         route: "/dashboard/pricing/hourly-packages",
         icon: Icons.Clock,
@@ -159,11 +164,6 @@ const sidebarItems = [
         title: "Fixed Pricing",
         route: "/dashboard/pricing/fixed",
         icon: Icons.Tag,
-      },
-      {
-        title: "Distance Slab",
-        route: "/dashboard/pricing/distance-slab",
-        icon: Icons.Activity,
       },
       {
         title: "Driver",

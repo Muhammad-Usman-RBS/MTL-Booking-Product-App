@@ -34,11 +34,16 @@ export const vehicleApi = apiSlice.injectEndpoints({
 
     // UPDATE
     updateVehicle: builder.mutation({
-      query: ({ id, formData }) => ({
-        url: `/pricing/vehicles/${id}`,
-        method: "PUT",
-        body: formData,
-      }),
+      query: ({ id, formData }) => {
+        const isForm = formData instanceof FormData;
+        return {
+          url: `/pricing/vehicles/${id}`,
+          method: "PUT",
+          body: formData,
+          ...(isForm && {
+          }),
+        };
+      },
       invalidatesTags: ["Vehicles"],
     }),
 
