@@ -1,13 +1,14 @@
+
 import React from "react";
 import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
-const ScheduledJobs = ({ jobs, JobCard }) => {
+const DriverScheduledJobs = ({ jobs, JobCard }) => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <OutletHeading name={"Scheduled Jobs"} />
-        <div className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-sm font-semibold border border-emerald-200">
+        <div className="bg-black text-white px-3 py-1 rounded-full text-sm font-semibold ">
           {jobs.length} jobs
         </div>
       </div>
@@ -35,4 +36,4 @@ const ScheduledJobs = ({ jobs, JobCard }) => {
   );
 };
 
-export default ScheduledJobs;
+export default DriverScheduledJobs;

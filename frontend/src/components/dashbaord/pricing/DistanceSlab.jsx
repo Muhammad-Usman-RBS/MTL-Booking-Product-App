@@ -17,32 +17,33 @@ const DistanceSlab = () => {
   });
 
   const [data, setData] = useState([]);
-  const [basePrice, setBasePrice] = useState({});
   const [updateVehicle] = useUpdateVehicleMutation();
 
   useEffect(() => {
     if (vehicleList.length) {
-      // initialize basePrice (optional)
-      const initPrices = {};
-      vehicleList.forEach((v) => {
-        initPrices[v.vehicleName] = 0;
-      });
-      setBasePrice(initPrices);
-
-      // 👇 Load slabs from all vehicles and merge into one data table
       const allSlabs = [];
 
       vehicleList.forEach((v) => {
         v.slabs.forEach((slab) => {
-          const existing = allSlabs.find(s => s.from === slab.from && s.to === slab.to);
+          const existing = allSlabs.find(
+            (s) => s.from === slab.from && s.to === slab.to
+          );
+
+          const distance = slab.to - slab.from;
+          const pricePerMile = distance
+            ? slab.price / distance / (1 + (v.percentageIncrease || 0) / 100)
+            : 0;
+
           if (existing) {
             existing[v.vehicleName] = slab.price;
+            existing[`${v.vehicleName}_pricePerMile`] = parseFloat(pricePerMile.toFixed(2));
           } else {
             allSlabs.push({
               from: slab.from,
               to: slab.to,
-              pricePerMile: parseFloat((slab.price / (1 + (v.percentageIncrease || 0) / 100)).toFixed(2)),
+              pricePerMile: parseFloat(pricePerMile.toFixed(2)),
               [v.vehicleName]: slab.price,
+              [`${v.vehicleName}_pricePerMile`]: parseFloat(pricePerMile.toFixed(2)),
             });
           }
         });
@@ -57,10 +58,10 @@ const DistanceSlab = () => {
       from: 0,
       to: 0,
       pricePerMile: 0,
-      isNew: true,
     };
     vehicleList.forEach((v) => {
       newSlab[v.vehicleName] = 0;
+      newSlab[`${v.vehicleName}_pricePerMile`] = 0;
     });
     setData([...data, newSlab]);
   };
@@ -69,19 +70,24 @@ const DistanceSlab = () => {
     const updated = [...data];
     updated[index][key] = value;
 
-    // 👇 If user updates "to", auto-update next "from"
-    if (key === "to" && index < updated.length - 1) {
-      updated[index + 1].from = parseFloat(value);
-    }
+    const from = key === "from" ? parseFloat(value) : parseFloat(updated[index].from || 0);
+    const to = key === "to" ? parseFloat(value) : parseFloat(updated[index].to || 0);
+    const pricePerMile = key === "pricePerMile" ? parseFloat(value) : parseFloat(updated[index].pricePerMile || 0);
+    const distance = to - from;
 
-    // 👇 Auto-calculate vehicle prices if "pricePerMile" updated
-    if (key === "pricePerMile") {
-      const price = parseFloat(value);
+    if (distance > 0 && pricePerMile >= 0) {
       vehicleList.forEach((v) => {
         const percent = v.percentageIncrease || 0;
-        const multiplier = 1 + percent / 100;
-        updated[index][v.vehicleName] = parseFloat((price * multiplier).toFixed(2));
+        const perMile = pricePerMile * (1 + percent / 100);
+        const total = perMile * distance;
+
+        updated[index][v.vehicleName] = parseFloat(total.toFixed(2));
+        updated[index][`${v.vehicleName}_pricePerMile`] = parseFloat(perMile.toFixed(2));
       });
+    }
+
+    if (key === "to" && index < updated.length - 1) {
+      updated[index + 1].from = parseFloat(value);
     }
 
     setData(updated);
@@ -98,11 +104,18 @@ const DistanceSlab = () => {
     try {
       await Promise.all(
         vehicleList.map(async (v) => {
-          const vehicleSlabs = data.map((slab) => ({
-            from: slab.from,
-            to: slab.to,
-            price: slab[v.vehicleName] || 0,
-          }));
+          const vehicleSlabs = data.map((slab) => {
+            const distance = slab.to - slab.from;
+            const perMile = slab[`${v.vehicleName}_pricePerMile`] || 0;
+            const totalPrice = distance > 0 ? perMile * distance : 0;
+
+            return {
+              from: slab.from,
+              to: slab.to,
+              price: parseFloat(totalPrice.toFixed(2)),         // ✅ this will now match the blue price * distance
+              pricePerMile: parseFloat(perMile.toFixed(2)),     // ✅ this will now exactly match what's shown in blue
+            };
+          });
 
           await updateVehicle({
             id: v._id,
@@ -135,12 +148,14 @@ const DistanceSlab = () => {
     { label: "Price Per Mile", key: "pricePerMile" },
     ...vehicleList.map((v) => ({
       label: `${v.vehicleName} (${v.percentageIncrease}%)`,
-      key: v.vehicleName,
+      key: `${v.vehicleName}_total`,
     })),
     { label: "Action", key: "actions" },
   ];
 
   const tableData = data.map((item, idx) => {
+    const slabDistance = (item.to || 0) - (item.from || 0);
+
     const row = {
       distance: (
         <div className="flex items-center gap-4">
@@ -150,7 +165,9 @@ const DistanceSlab = () => {
               type="number"
               className="custom_input"
               value={item.from}
-              onChange={(e) => updateRow(idx, "from", parseFloat(e.target.value))}
+              onChange={(e) =>
+                updateRow(idx, "from", parseFloat(e.target.value))
+              }
             />
           </div>
           <span className="text-gray-500 font-bold px-1">-</span>
@@ -160,7 +177,9 @@ const DistanceSlab = () => {
               type="number"
               className="custom_input"
               value={item.to}
-              onChange={(e) => updateRow(idx, "to", parseFloat(e.target.value))}
+              onChange={(e) =>
+                updateRow(idx, "to", parseFloat(e.target.value))
+              }
             />
           </div>
         </div>
@@ -171,7 +190,9 @@ const DistanceSlab = () => {
             type="number"
             className="custom_input"
             value={item.pricePerMile}
-            onChange={(e) => updateRow(idx, "pricePerMile", parseFloat(e.target.value))}
+            onChange={(e) =>
+              updateRow(idx, "pricePerMile", parseFloat(e.target.value))
+            }
           />
         </div>
       ),
@@ -187,7 +208,19 @@ const DistanceSlab = () => {
     };
 
     vehicleList.forEach((v) => {
-      row[v.vehicleName] = item[v.vehicleName] || 0;
+      const percent = v.percentageIncrease || 0;
+      const perMile = item.pricePerMile * (1 + percent / 100);
+      const total = perMile * slabDistance;
+
+      item[v.vehicleName] = parseFloat(total.toFixed(2));
+      item[`${v.vehicleName}_pricePerMile`] = parseFloat(perMile.toFixed(2));
+
+      row[`${v.vehicleName}_total`] = (
+        <div className="text-sm">
+          <div className="text-blue-600 font-semibold">£{perMile.toFixed(2)}</div>
+          <div className="text-gray-400 text-xs">x {slabDistance} miles</div>
+        </div>
+      );
     });
 
     return row;

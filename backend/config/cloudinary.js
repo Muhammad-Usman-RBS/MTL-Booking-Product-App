@@ -15,7 +15,7 @@ const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'mtl-booking',
-    allowed_formats: ['jpg', 'jpeg', 'png'],
+    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
     public_id: (req, file) => `profile_${Date.now()}`
   },
 });

@@ -57,6 +57,7 @@ export const createVehicle = async (req, res) => {
           from: Number(s.from),
           to: Number(s.to),
           price: Number(s.price),
+          pricePerMile: Number(s.pricePerMile) || 0,
         }));
       } catch (err) {
         return res.status(400).json({ message: `Slabs error: ${err.message}` });
@@ -156,6 +157,7 @@ export const updateVehicle = async (req, res) => {
           from: Number(s.from),
           to: Number(s.to),
           price: Number(s.price),
+          pricePerMile: Number(s.pricePerMile) || 0,
         }));
       } catch (err) {
         return res.status(400).json({ message: `Slabs error: ${err.message}` });

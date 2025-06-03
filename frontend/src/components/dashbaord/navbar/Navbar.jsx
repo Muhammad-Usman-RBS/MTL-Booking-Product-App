@@ -4,6 +4,7 @@ import Icons from "../../../assets/icons";
 import useUIStore from "../../../store/useUIStore";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import IMAGES from "../../../assets/images";
+import { useSelector } from "react-redux";
 
 const themes = [
   {
@@ -45,7 +46,7 @@ function Navbar() {
     hoverActive: "#F7BE7E",
   });
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = useSelector((state) => state.auth.user)
   const email = user?.email || "No Email";
   const name = user?.fullName || "Guest";
 

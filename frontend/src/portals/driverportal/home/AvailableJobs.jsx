@@ -6,8 +6,8 @@ const AvailableJobs = ({ jobs, JobCard }) => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <OutletHeading name={"Scheduled Jobs"} />
-        <div className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-semibold border border-indigo-200">
+        <OutletHeading name={"Available Jobs"} />
+        <div className="bg-black text-white px-3 py-1 rounded-full text-sm font-semibold ">
           {jobs.length} jobs
         </div>
       </div>
@@ -19,7 +19,7 @@ const AvailableJobs = ({ jobs, JobCard }) => {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-slate-200">
+        <div className="text-center">
           <div className="bg-slate-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
             <Icons.MapPin size={28} className="text-slate-400" />
           </div>

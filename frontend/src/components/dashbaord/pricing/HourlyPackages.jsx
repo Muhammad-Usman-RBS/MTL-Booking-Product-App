@@ -5,6 +5,7 @@ import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import { toast } from "react-toastify";
 import Icons from "../../../assets/icons";
+import { useSelector } from "react-redux";
 import {
   useGetAllHourlyRatesQuery,
   useAddHourlyPackageMutation,
@@ -28,7 +29,7 @@ const HourlyPackages = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = useSelector((state) => state.auth.user)
   const companyId = user?.companyId;
 
   const [addHourlyPackage, { isLoading: adding }] = useAddHourlyPackageMutation();

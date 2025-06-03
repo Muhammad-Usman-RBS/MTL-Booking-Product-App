@@ -1,239 +1,195 @@
 import React, { useState } from "react";
 import IMAGES from "../../../assets/images";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-
+import DriverData from "./DriverData";
+import VehicleData from "./VehicleData";
+import { useCreateDriverMutation } from "../../../redux/api/driverApi";
+import { toast } from "react-toastify"
 const NewDriver = () => {
-  const [driverImage, setDriverImage] = useState(null);
-  const [vehicleImage, setVehicleImage] = useState(null);
+  const [filePreviews, setFilePreviews] = useState({});
+  const [createDriver, { isLoading }] = useCreateDriverMutation()
+  const [formData, setFormData] = useState({
+    motExpiryDate: "",
+    employeeNumber: "",
+    status: "",
+    firstName: "",
+    surName: "",
+    driverPrivateHireLicenseExpiry: "",
+    driverPicture: "",
+    privateHireCardNo: "",
+    privateHireCard: "",
+    dvlaCard: "",
+    NationalInsurance: "",
+    dateOfBirth: "",
+    carRegistration: "",
+    carPicture: "",
+    privateHireCarPaper: "",
+    driverPrivateHirePaper: "",
+    insurance: "",
+    motExpiry: "",
+    V5: "",
+    email: "",
+    address: "",
+    vehicleTypes: "",
+    carMake: "",
+    carModal: "",
+    carColor: "",
+    carPrivateHireLicense: "",
+    carPrivateHireLicenseExpiry: "",
+    carInsuranceExpiry: "",
+    contact: "",
+    driverLicense: "",
+    driverLicenseExpiry: "",
+    availability: [{ from: "", to: "" }],
+  });
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    try {
+      const form = new FormData();
 
-  const handleDriverImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setDriverImage(URL.createObjectURL(file));
+      Object.keys(formData).forEach((key) => {
+        const value = formData[key];
+        if (
+          key === 'availability' ||
+          key === 'nominatedDrivers' ||
+          key === 'experienceHistory'
+        ) {
+          form.append(key, JSON.stringify(value));
+        } else if (value instanceof File || value instanceof Blob) {
+          form.append(key, value);
+        } else if (value !== "" && value !== null && value !== undefined) {
+          form.append(key, value);
+        }
+      });
+
+      createDriver(form);
+      toast.success("Driver profile saved successfully!");
+    } catch (error) {
+      console.error("Error creating driver:", error);
+      toast.error("error creating driver")
+
+
+    }
+  }
+  const handleInputChange = (e, index = null, field = null) => {
+    const { name, type, files, value } = e.target;
+
+    if (name.startsWith("availability") && index !== null) {
+      setFormData((prev) => {
+        const updatedAvailability = [...prev.availability];
+        updatedAvailability[index][field] = value;
+        return {
+          ...prev,
+          availability: updatedAvailability,
+        };
+      });
+      return;
+    }
+
+    if (type === "file") {
+      const file = files[0];
+      const allowedTypes = [
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/jpg",
+      ];
+      if (file && !allowedTypes.includes(file.type)) {
+        toast.error("Only PDF, JPEG, PNG, JPG files are supported.");
+        return;
+      }
+
+      setFormData((prev) => ({ ...prev, [name]: file }));
+      setFilePreviews((prev) => ({
+        ...prev,
+        [name]: file ? URL.createObjectURL(file) : "",
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleVehicleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setVehicleImage(URL.createObjectURL(file));
+
+  const handleAddAvailability = () => {
+    if (formData.availability.length < 3) {
+      setFormData((prev) => ({
+        ...prev,
+        availability: [...prev.availability, { from: "", to: "" }],
+      }));
     }
   };
+  const handleRemoveAvailability = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      availability: prev.availability.filter((_, i) => i !== index),
+    }));
+  };
 
-  return (
+  const handleCheckboxChange = (e) => {
+    const { id, checked } = e.target;
+    setFormData((prev) => {
+      const updatedVehicleTypes = checked
+        ? [...prev.vehicleTypes, id] // Add vehicle type if checked
+        : prev.vehicleTypes.filter((type) => type !== id); // Remove vehicle type if unchecked
+
+      return {
+        ...prev,
+        vehicleTypes: updatedVehicleTypes, // Update vehicleTypes array
+      };
+    });
+  }; return (
     <div>
       <OutletHeading name="Add Driver" />
 
-      <form className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* PROFILE PICTURE */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-          {driverImage ? (
-            <img
-              src={driverImage}
-              alt="Profile Preview"
-              className="w-24 h-24 rounded-full object-cover border-gray-300 border-2"
-            />
-          ) : (
-            <img
-              src={IMAGES.dummyImg}
-              alt="Profile Preview"
-              className="w-24 h-24 rounded-full object-cover border-gray-300 border-2"
-            />
-          )}
+          <img
+            src={filePreviews.driverPicture || IMAGES.dummyImg || formData.driverPicture}
+            alt="Profile Preview"
+            className="w-24 h-24 rounded-full object-cover border-gray-300 border-2"
+          />
+
+
 
           <div>
             <label className="block font-medium text-sm mb-1">
               Upload Driver Image
             </label>
             <label
-              htmlFor="driver-upload"
+              htmlFor="driverPicture"
               className="btn btn-edit mt-1 cursor-pointer inline-block"
             >
               Choose File
             </label>
             <input
-              id="driver-upload"
+              id="driverPicture"
+              name="driverPicture"
+              accept="image/*,application/pdf"
+
               type="file"
-              accept="image/*"
-              onChange={handleDriverImageChange}
+              onChange={handleInputChange}
               className="hidden"
             />
           </div>
         </div>
 
         {/* DRIVER SECTION */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label>Driver No. *</label>
-            <input className="custom_input" required />
-          </div>
-          <div>
-            <label>Short Name *</label>
-            <input className="custom_input" required />
-          </div>
-          <div>
-            <label>Full Name *</label>
-            <input className="custom_input" required />
-          </div>
-          <div>
-            <label>Email *</label>
-            <input type="email" className="custom_input" required />
-          </div>
-          <div>
-            <label>Contact *</label>
-            <input type="tel" className="custom_input" required />
-          </div>
-          <div className="md:col-span-2">
-            <label>Address</label>
-            <textarea className="custom_input" rows="2" />
-          </div>
-          <div>
-            <label>D.O.B.</label>
-            <input type="date" className="custom_input" />
-          </div>
-          <div>
-            <label>Nationality</label>
-            <input className="custom_input" />
-          </div>
-          <div>
-            <label>Driving License</label>
-            <input className="custom_input" />
-          </div>
-          <div>
-            <label>Driving License Expiry</label>
-            <input type="date" className="custom_input" />
-          </div>
-          <div>
-            <label>Driver Taxi License</label>
-            <input className="custom_input" />
-          </div>
-          <div>
-            <label>Driver Taxi License Expiry</label>
-            <input type="date" className="custom_input" />
-          </div>
-          <div>
-            <label>Driver PCO Card</label>
-            <input className="custom_input" />
-          </div>
-          <div>
-            <label>Driver PCO Card Expiry</label>
-            <input type="date" className="custom_input" />
-          </div>
-          <div>
-            <label>NI Number</label>
-            <input className="custom_input" />
-          </div>
-        </div>
 
-        {/* VEHICLE SECTION */}
-        <h3 className="text-xl font-semibold mt-6">Vehicle Information</h3>
-        {/* Vehicle PICTURE */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-          {vehicleImage ? (
-            <img
-              src={vehicleImage}
-              alt="Profile Preview"
-              className="w-64 h-40 object-cover border-gray-300 border-2"
-            />
-          ) : (
-            <img
-              src={IMAGES.profilecarimg}
-              alt="Profile Preview"
-              className="w-64 h-40 object-cover border-gray-300 border-2"
-            />
-          )}
+        <DriverData
+          handleAddAvailability={handleAddAvailability}
+          handleInputChange={handleInputChange}
+          formData={formData}
+          handleRemoveAvailability={handleRemoveAvailability}
+          filePreviews={filePreviews}
+        />
 
-          <div>
-            <label className="block font-medium text-sm mb-1">
-              Upload Car Image
-            </label>
-            <label
-              htmlFor="vehicle-upload"
-              className="btn btn-edit mt-1 cursor-pointer inline-block"
-            >
-              Choose File
-            </label>
-            <input
-              id="vehicle-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleVehicleImageChange}
-              className="hidden"
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label>Vehicle Make</label>
-            <input className="custom_input" />
-          </div>
-          <div>
-            <label>Vehicle Model</label>
-            <input className="custom_input" />
-          </div>
-          <div>
-            <label>Vehicle Color</label>
-            <input className="custom_input" />
-          </div>
-          <div>
-            <label>Vehicle Reg. No.</label>
-            <input className="custom_input" />
-          </div>
-          <div>
-            <label>Vehicle Insurance</label>
-            <input className="custom_input" />
-          </div>
-          <div>
-            <label>Vehicle Insurance Expiry</label>
-            <input type="date" className="custom_input" />
-          </div>
-          <div>
-            <label>Vehicle Taxi License</label>
-            <input className="custom_input" />
-          </div>
-          <div>
-            <label>Vehicle Taxi License Expiry</label>
-            <input type="date" className="custom_input" />
-          </div>
-          <div>
-            <label>Vehicle Condition</label>
-            <input className="custom_input" />
-          </div>
-          <div>
-            <label>Vehicle Condition Expiry</label>
-            <input type="date" className="custom_input" />
-          </div>
-          <div>
-            <label>Car V5</label>
-            <input className="custom_input" />
-          </div>
-        </div>
-
-        {/* VEHICLE TYPES */}
-        <div className="mt-4">
-          <label className="block font-semibold">Vehicle Types *</label>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
-            <label>
-              <input type="checkbox" /> Standard Saloon
-            </label>
-            <label>
-              <input type="checkbox" /> Executive Saloon
-            </label>
-            <label>
-              <input type="checkbox" /> VIP Saloon
-            </label>
-            <label>
-              <input type="checkbox" /> Luxury MPV
-            </label>
-            <label>
-              <input type="checkbox" /> 8 Passenger MPV
-            </label>
-            <label>
-              <input type="checkbox" /> Select All
-            </label>
-          </div>
-        </div>
-
+        <VehicleData
+          handleCheckboxChange={handleCheckboxChange}
+          handleInputChange={handleInputChange}
+          formData={formData}
+          filePreviews={filePreviews}
+        />
         {/* SUBMIT */}
         <div className="text-center mt-6">
           <button type="submit" className="btn btn-reset">

@@ -6,20 +6,17 @@ import ViewDriver from "./ViewDriver";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import {
+  useDeleteDriverByIdMutation,
+  useGetAllDriversQuery,
+  useGetDriverByIdQuery
+} from "../../../redux/api/driverApi";
+import { toast } from "react-toastify";
 
-const tabOptions = [
-  "Active",
-  "Suspended",
-  "Pending",
-  "Deleted",
-  "Delete Pending",
-];
-
-
-
+const tabOptions = ["Active", "Suspended", "Pending", "Deleted"];
 
 const DriverList = () => {
-  const [activeTab, setActiveTab] = useState("Suspended");
+  const [activeTab, setActiveTab] = useState("Active");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
@@ -27,19 +24,23 @@ const DriverList = () => {
   const [showModal, setShowModal] = useState(false);
   const [driverToSendEmail, setDriverToSendEmail] = useState(null);
 
-  const itemsPerPageOptions = [5, 10, 20, "All"];
+  const { data: getAllDrivers, isLoading, refetch } = useGetAllDriversQuery();
+  const {data: getDriverById} = useGetDriverByIdQuery(selectedDriver, {
+    skip: !selectedDriver
+  })
+  const [deleteDriverById] = useDeleteDriverByIdMutation();
 
-  const filteredTabData = driversData.filter(
-    (item) => item.status === activeTab
+  const filteredTabData = (getAllDrivers || []).filter(
+    (driver) => driver?.DriverData?.status === activeTab
   );
 
-  const filteredData = filteredTabData.filter((item) => {
+  const filteredData = filteredTabData.filter((driver) => {
     const query = search.toLowerCase();
     return (
-      item?.name?.toLowerCase().includes(query) ||
-      item?.email?.toLowerCase().includes(query) ||
-      item?.make?.toLowerCase().includes(query) ||
-      item?.model?.toLowerCase().includes(query)
+      driver?.DriverData?.firstName?.toLowerCase().includes(query) ||
+      driver?.DriverData?.email?.toLowerCase().includes(query) ||
+      driver?.VehicleData?.make?.toLowerCase().includes(query) ||
+      driver?.VehicleData?.model?.toLowerCase().includes(query)
     );
   });
 
@@ -56,13 +57,16 @@ const DriverList = () => {
   }, [filteredData, perPage, activeTab]);
 
   if (selectedDriver) {
+    if (!getDriverById) return <p className="p-4">Loading driver details...</p>;
+  
     return (
       <ViewDriver
-        selectedDriver={selectedDriver}
+        selectedDriver={getDriverById}
         setSelectedDriver={setSelectedDriver}
       />
     );
   }
+  
 
   const handleSendEmail = (driver) => {
     setDriverToSendEmail(driver);
@@ -71,14 +75,24 @@ const DriverList = () => {
 
   const tableHeaders = [
     { label: "No.", key: "index" },
-    { label: "Name", key: "name" },
+    { label: "Employee Number", key: "employeeNumber" },
+    { label: "First Name", key: "firstName" },
     { label: "Email", key: "email" },
-    { label: "Make", key: "make" },
-    { label: "Model", key: "model" },
-    { label: "Reg. No.", key: "regNo" },
-    { label: "Documents", key: "documents" },
+    { label: "Car Make", key: "carMake" },
+    { label: "Car Model", key: "carModal" },
+    { label: "Status", key: "status" },
     { label: "Actions", key: "actions" },
   ];
+
+  const handleDeleteDriver = (id) => {
+    try {
+      deleteDriverById(id);
+      toast.success("Driver deleted successfully");
+      refetch();
+    } catch (error) {
+      toast.error("Failed to delete driver");
+    }
+  };
 
   const exportTableData = paginatedData.map((item, index) => ({
     index:
@@ -93,34 +107,34 @@ const DriverList = () => {
     documents: item.documents,
   }));
 
-  const tableData = paginatedData.map((item, index) => ({
-    ...item,
+  const tableData = paginatedData.map((driver, index) => ({
     index:
       (page - 1) * (perPage === "All" ? filteredData.length : perPage) +
       index +
       1,
-    documents: (
-      <span
-        className={`font-semibold ${item.documents === "Fine" ? "text-green-600" : "text-red-500"
-          }`}
-      >
-        {item.documents}
-      </span>
-    ),
+    employeeNumber: driver?.DriverData?.employeeNumber,
+    firstName: driver?.DriverData?.firstName,
+    email: driver?.DriverData?.email,
+    carMake: driver?.VehicleData?.carMake,
+    carModal: driver?.VehicleData?.carModal,
+    status: driver?.DriverData?.status,
     actions: (
       <div className="flex gap-2">
         <Icons.Eye
           className="w-8 h-8 rounded-md hover:bg-blue-600 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
-          onClick={() => setSelectedDriver(item)}
+          onClick={() => setSelectedDriver(driver._id)}
         />
         <Link to="/dashboard/drivers/new">
           <Icons.Pencil className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2" />
         </Link>
         <Icons.Send
           className="w-8 h-8 rounded-md hover:bg-blue-500 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
-          onClick={() => handleSendEmail(item)}
+          onClick={() => handleSendEmail(driver)}
         />
-        <Icons.X className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2" />
+        <Icons.X
+          onClick={() => handleDeleteDriver(driver._id)}
+          className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
+        />
       </div>
     ),
   }));
@@ -143,12 +157,19 @@ const DriverList = () => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-2 whitespace-nowrap transition-all duration-200 ${activeTab === tab
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-600 hover:text-blue-500"
-                }`}
+              className={`pb-2 whitespace-nowrap transition-all duration-200 ${
+                activeTab === tab
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-600 hover:text-blue-500"
+              }`}
             >
-              {tab} ({driversData.filter((d) => d.status === tab).length})
+              {tab} (
+              {
+                (getAllDrivers || []).filter(
+                  (d) => d?.DriverData?.status === tab
+                ).length
+              }
+              ){" "}
             </button>
           ))}
         </div>

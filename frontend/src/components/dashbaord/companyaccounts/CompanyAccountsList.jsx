@@ -15,7 +15,7 @@ const tabs = ["active", "pending", "suspended", "deleted"];
 
 const CompanyAccountsList = () => {
   const { data: companies = [], refetch } = useFetchAllCompaniesQuery();
-  
+
   const navigate = useNavigate();
   const [sendEmail] = useSendCompanyEmailMutation();
   const [deleteCompany] = useDeleteCompanyAccountMutation();

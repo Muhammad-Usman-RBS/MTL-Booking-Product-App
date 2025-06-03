@@ -4,6 +4,7 @@ const IMAGES = {
   profileimg: "/assets/images/profileimg.jpg",
   profilecarimg: "/assets/images/profilecarimg.jpg",
   dummyImg: "/assets/images/dummyImg.webp",
+  dummyFile: "/assets/images/dummyFile.webp",
 
   mercedesSClass: "/assets/images/Mercedes S Class.webp",
   mercedesVClass: "/assets/images/Mercedes V Class.webp",

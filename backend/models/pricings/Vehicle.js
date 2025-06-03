@@ -10,6 +10,7 @@ const slabSchema = new mongoose.Schema(
         from: { type: Number, required: true },
         to: { type: Number, required: true },
         price: { type: Number, required: true }, // Price per mile for this slab
+        pricePerMile: { type: Number, required: false }, // new field
     },
     { _id: false } // no need for individual _id in slabs
 );

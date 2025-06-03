@@ -69,15 +69,33 @@ const WidgetBookingInformation = ({
         .catch(() => {
           setDistanceText(null);
           setDurationText(null);
-          toast.warn("⚠️ Distance not found between given locations.");
+          toast.warn("Distance not found between given locations.");
         });
     }
   }, []);
 
   const getVehiclePriceForDistance = (vehicle, miles) => {
-    if (!vehicle?.slabs || !Array.isArray(vehicle.slabs)) return null;
-    const matchedSlab = vehicle.slabs.find(slab => miles >= slab.from && miles <= slab.to);
-    return matchedSlab ? matchedSlab.price : null;
+    if (!vehicle?.slabs || !Array.isArray(vehicle.slabs)) return 0;
+
+    let totalPrice = 0;
+    let remainingMiles = miles;
+
+    const sortedSlabs = [...vehicle.slabs].sort((a, b) => a.from - b.from);
+
+    for (let i = 0; i < sortedSlabs.length; i++) {
+      const slab = sortedSlabs[i];
+
+      if (remainingMiles <= 0) break;
+
+      const slabDistance = slab.to - slab.from;
+      const milesInThisSlab = Math.min(remainingMiles, slabDistance);
+
+      totalPrice += milesInThisSlab * (slab.pricePerMile || 0); // ✅ correct usage
+
+      remainingMiles -= milesInThisSlab;
+    }
+
+    return parseFloat(totalPrice.toFixed(2));
   };
 
   useEffect(() => {
