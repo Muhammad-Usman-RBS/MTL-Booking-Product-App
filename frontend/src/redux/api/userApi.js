@@ -1,4 +1,3 @@
-// src/redux/userApi.jsx
 import { apiSlice } from '../apiSlice';
 
 export const userApi = apiSlice.injectEndpoints({

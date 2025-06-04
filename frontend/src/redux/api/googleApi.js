@@ -1,4 +1,3 @@
-// redux/api/googleApi.js
 import { apiSlice } from '../apiSlice';
 
 export const googleApi = apiSlice.injectEndpoints({
