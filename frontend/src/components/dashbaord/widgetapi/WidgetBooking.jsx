@@ -1,22 +1,45 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useLazySearchGooglePlacesQuery, useLazyGetDistanceQuery } from '../../../redux/api/googleApi';
-import { useCreateBookingMutation } from '../../../redux/api/bookingApi';
 import SelectOption from '../../../constants/constantscomponents/SelectOption';
-import { useNavigate } from 'react-router-dom';
-
-const hourlyOptions = ['40 miles 4 hours', '60 miles 6 hours', '80 miles 8 hours'];
+import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
+import { useCreateBookingMutation } from '../../../redux/api/bookingApi';
+import {
+    useLazySearchGooglePlacesQuery,
+    useLazyGetDistanceQuery
+} from '../../../redux/api/googleApi';
 
 const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
+    const companyId =
+        parentCompanyId ||
+        new URLSearchParams(window.location.search).get('company') ||
+        '';
+
+    const { data: hourlyPackages = [] } = useGetAllHourlyRatesQuery(companyId, {
+        skip: !companyId,
+    });
+
     const [mode, setMode] = useState('Transfer');
-    const [selectedHourly, setSelectedHourly] = useState(hourlyOptions[0]);
     const [dropOffs, setDropOffs] = useState(['']);
     const [pickupSuggestions, setPickupSuggestions] = useState([]);
     const [dropOffSuggestions, setDropOffSuggestions] = useState([]);
     const [activeDropIndex, setActiveDropIndex] = useState(null);
     const [pickupType, setPickupType] = useState(null);
     const [dropOffTypes, setDropOffTypes] = useState({});
+    const [selectedHourly, setSelectedHourly] = useState('');
+
+    const formattedHourlyOptions = useMemo(() => {
+        return hourlyPackages.map(pkg => ({
+            label: `${pkg.distance} miles ${pkg.hours} hours`,
+            value: { distance: pkg.distance, hours: pkg.hours },
+        }));
+    }, [hourlyPackages]);
+
+    useEffect(() => {
+        if (formattedHourlyOptions.length) {
+            setSelectedHourly(formattedHourlyOptions[0]);
+        }
+    }, [formattedHourlyOptions]);
 
     const [formData, setFormData] = useState({
         pickup: '',
@@ -32,17 +55,14 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
         hourlyOption: '',
     });
 
-    const navigate = useNavigate();
     const [createBooking] = useCreateBookingMutation();
     const [triggerSearchAutocomplete] = useLazySearchGooglePlacesQuery();
     const [triggerDistance] = useLazyGetDistanceQuery();
 
-    const companyId = parentCompanyId || new URLSearchParams(window.location.search).get('company') || '';
-
     useEffect(() => {
         const sendHeight = () => {
             const height = document.documentElement.scrollHeight;
-            window.parent.postMessage({ type: "setHeight", height }, "*");
+            window.parent.postMessage({ type: 'setHeight', height }, '*');
         };
         sendHeight();
         const resizeObserver = new ResizeObserver(sendHeight);
@@ -52,14 +72,14 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const fetchSuggestions = async (query, setter) => {
         if (!query) return setter([]);
         try {
             const res = await triggerSearchAutocomplete(query).unwrap();
-            const results = res.predictions.map((r) => ({
+            const results = res.predictions.map(r => ({
                 name: r.name || r.structured_formatting?.main_text,
                 formatted_address: r.formatted_address || r.description,
                 source: r.source || (r.types?.includes('airport') ? 'airport' : 'location'),
@@ -72,14 +92,14 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
 
     const handlePickupChange = (e) => {
         const val = e.target.value;
-        setFormData({ ...formData, pickup: val });
+        setFormData(prev => ({ ...prev, pickup: val }));
         if (val.length >= 3) fetchSuggestions(val, setPickupSuggestions);
         else setPickupSuggestions([]);
     };
 
     const handlePickupSelect = (sug) => {
         const full = `${sug.name} - ${sug.formatted_address}`;
-        setFormData((prev) => ({ ...prev, pickup: full }));
+        setFormData(prev => ({ ...prev, pickup: full }));
         setPickupType(sug.source);
         setPickupSuggestions([]);
     };
@@ -99,7 +119,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
         updated[idx] = full;
         setDropOffs(updated);
         setDropOffSuggestions([]);
-        setDropOffTypes((prev) => ({ ...prev, [idx]: sug.source }));
+        setDropOffTypes(prev => ({ ...prev, [idx]: sug.source }));
     };
 
     const addDropOff = () => {
@@ -128,7 +148,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
         }
 
         const dynamicFields = {};
-        dropOffs.forEach((val, idx) => {
+        dropOffs.forEach((_, idx) => {
             dynamicFields[`dropoffDoorNumber${idx}`] = formData[`dropoffDoorNumber${idx}`] || '';
             dynamicFields[`dropoff_terminal_${idx}`] = formData[`dropoff_terminal_${idx}`] || '';
         });
@@ -138,7 +158,10 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
             dropoff: dropOffs[0],
             additionalDropoff1: dropOffs[1] || null,
             additionalDropoff2: dropOffs[2] || null,
-            hourlyOption: mode === 'Hourly' ? selectedHourly : null,
+            hourlyOption:
+                mode === 'Hourly' && selectedHourly?.label
+                    ? selectedHourly.label
+                    : null,
             mode,
             returnJourney: false,
             companyId,
@@ -147,8 +170,8 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
         };
 
         try {
-            const origin = formData.pickup?.replace("Custom Input - ", "").split(" - ").pop()?.trim();
-            const destination = dropOffs[0]?.replace("Custom Input - ", "").split(" - ").pop()?.trim();
+            const origin = formData.pickup?.replace('Custom Input - ', '').split(' - ').pop()?.trim();
+            const destination = dropOffs[0]?.replace('Custom Input - ', '').split(' - ').pop()?.trim();
 
             if (!origin || !destination) {
                 toast.error("Origin or destination is empty.");
@@ -175,6 +198,37 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                 className="bg-gradient-to-br from-white via-gray-50 to-gray-100 border border-gray-200 rounded-2xl shadow-md px-5 py-6 space-y-6 text-sm"
             >
                 <ToastContainer />
+
+                <div className="flex justify-center mb-4">
+                    {["Transfer", "Hourly"].map((tab) => (
+                        <button
+                            key={tab}
+                            type='button'
+                            onClick={() => setMode(tab)}
+                            className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${mode === tab ? "bg-[#f3f4f6] text-dark border border-black" : "bg-[#f3f4f6] text-dark"} ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
+                        >
+                            {tab}
+                        </button>
+                    ))}
+                </div>
+
+                {mode === "Hourly" && (
+                    <div className="flex justify-center">
+                        <SelectOption
+                            options={formattedHourlyOptions.map(opt => ({
+                                label: opt.label,
+                                value: JSON.stringify(opt.value),
+                            }))}
+                            value={JSON.stringify(selectedHourly?.value)}
+                            onChange={(e) => {
+                                const selected = formattedHourlyOptions.find(
+                                    opt => JSON.stringify(opt.value) === e.target.value
+                                );
+                                setSelectedHourly(selected);
+                            }}
+                        />
+                    </div>
+                )}
 
                 {/* Pickup Location */}
                 <div className="relative">
@@ -326,15 +380,6 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                     >
                         + Add Drop Off
                     </button>
-                )}
-
-                {/* Hourly Selection */}
-                {mode === "Hourly" && (
-                    <SelectOption
-                        options={hourlyOptions}
-                        value={selectedHourly}
-                        onChange={(e) => setSelectedHourly(e.target.value)}
-                    />
                 )}
 
                 {/* Date & Time */}

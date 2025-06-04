@@ -1,25 +1,29 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import VehicleSelection from "./VehicleSelection";
-import PassengerDetails from "./PassengerDetails";
 import FareSection from "./FareSection";
+import JourneyCard from "./JourneyCard";
+import "react-toastify/dist/ReactToastify.css";
+import PassengerDetails from "./PassengerDetails";
+import VehicleSelection from "./VehicleSelection";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import JourneyCard from "./JourneyCard";
+import { useLazyGetDistanceQuery } from "../../../redux/api/googleApi";
+import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
+import { useSelector } from "react-redux";
 import {
   useCreateBookingMutation,
   useUpdateBookingMutation,
 } from "../../../redux/api/bookingApi";
-import { useLazyGetDistanceQuery } from "../../../redux/api/googleApi";
-import { useSelector } from "react-redux";
-
-const hourlyOptions = ["40 miles 4 hours", "60 miles 6 hours", "80 miles 8 hours"];
 
 const NewBooking = ({ editBookingData = null, onClose }) => {
+  const user = useSelector((state) => state.auth.user);
+  const companyId = user?.companyId;
+  const { data: hourlyPackages = [] } = useGetAllHourlyRatesQuery(companyId, {
+    skip: !companyId,
+  });
+
   const [mode, setMode] = useState("Transfer");
   const [returnJourney, setReturnJourney] = useState(false);
-  const [selectedHourly, setSelectedHourly] = useState(hourlyOptions[0]);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [vehicleExtras, setVehicleExtras] = useState({
     passenger: 0,
@@ -64,9 +68,14 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const [createBooking, { isLoading }] = useCreateBookingMutation();
   const [updateBooking] = useUpdateBookingMutation();
   const [triggerDistance] = useLazyGetDistanceQuery();
+  const [selectedHourly, setSelectedHourly] = useState(null);
 
-  const user = useSelector((state) => state.auth.user);
-  const companyId = user?.companyId;
+  const formattedHourlyOptions = useMemo(() => {
+    return hourlyPackages.map(pkg => ({
+      label: `${pkg.distance} miles ${pkg.hours} hours`,
+      value: { distance: pkg.distance, hours: pkg.hours },
+    }));
+  }, [hourlyPackages]);
 
   useEffect(() => {
     if (editBookingData) {
@@ -142,7 +151,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         dropoff: dropOffs1[0],
         additionalDropoff1: dropOffs1[1] || null,
         additionalDropoff2: dropOffs1[2] || null,
-        hourlyOption: mode === "Hourly" ? selectedHourly : null,
+        hourlyOption:
+          mode === 'Hourly' && selectedHourly?.label
+            ? selectedHourly.label
+            : null,
         ...dynamicFields1,
       },
     };
@@ -163,7 +175,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         dropoff: dropOffs2[0],
         additionalDropoff1: dropOffs2[1] || null,
         additionalDropoff2: dropOffs2[2] || null,
-        hourlyOption: mode === "Hourly" ? selectedHourly : null,
+        hourlyOption:
+          mode === 'Hourly' && selectedHourly?.label
+            ? selectedHourly.label
+            : null,
         ...dynamicFields2,
       },
     };
@@ -249,9 +264,17 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         {mode === "Hourly" && (
           <div className="flex justify-center">
             <SelectOption
-              options={hourlyOptions}
-              value={selectedHourly}
-              onChange={(e) => setSelectedHourly(e.target.value)}
+              options={formattedHourlyOptions.map(opt => ({
+                label: opt.label,
+                value: JSON.stringify(opt.value),
+              }))}
+              value={JSON.stringify(selectedHourly?.value)}
+              onChange={(e) => {
+                const selected = formattedHourlyOptions.find(
+                  opt => JSON.stringify(opt.value) === e.target.value
+                );
+                setSelectedHourly(selected);
+              }}
               width="w-full md:w-64"
             />
           </div>

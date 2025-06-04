@@ -12,92 +12,89 @@ import {
   useUpdateHourlyPackageMutation,
   useDeleteHourlyPackageMutation,
 } from "../../../redux/api/hourlyPricingApi";
+import { useGetAllVehiclesQuery } from "../../../redux/api/vehicleApi";
 
 const HourlyPackages = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formError, setFormError] = useState("");
-  const [formData, setFormData] = useState({
-    distance: "",
-    hours: "",
-    standardSaloon: "",
-    executiveSaloon: "",
-    vipSaloon: "",
-    luxuryMPV: "",
-    eightPassengerMPV: "",
-  });
+  const [formData, setFormData] = useState({ distance: "", hours: "" });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
-  const user = useSelector((state) => state.auth.user)
+  const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
 
   const [addHourlyPackage, { isLoading: adding }] = useAddHourlyPackageMutation();
   const [updateHourlyPackage, { isLoading: updating }] = useUpdateHourlyPackageMutation();
   const [deleteHourlyPackage] = useDeleteHourlyPackageMutation();
 
-  const {
-    data: rawData = [],
-    isLoading: loading,
-    error,
-    refetch,
-  } = useGetAllHourlyRatesQuery(companyId, {
-    skip: !companyId || companyId === "null",
+  const { data: rawData = [], isLoading: loading, error, refetch } = useGetAllHourlyRatesQuery(companyId, {
+    skip: !companyId,
+  });
+
+  const { data: vehicles = [] } = useGetAllVehiclesQuery(companyId, {
+    skip: !companyId,
   });
 
   const tableHeaders = [
-    { key: "distance", label: "Distance" },
+    { key: "distance", label: "Distance (Miles)" },
     { key: "hours", label: "Hours" },
-    { key: "standardSaloon", label: "Standard Saloon" },
-    { key: "executiveSaloon", label: "Executive Saloon" },
-    { key: "vipSaloon", label: "VIP Saloon" },
-    { key: "luxuryMPV", label: "Luxury MPV" },
-    { key: "eightPassengerMPV", label: "8 Passenger MPV" },
+    ...vehicles.map((v) => ({ key: v.vehicleName, label: v.vehicleName })),
     { key: "actions", label: "Action" },
   ];
 
-  const formattedData = rawData.map((item) => ({
-    ...item,
-    actions: (
-      <div className="flex items-center space-x-2">
-        <div className="flex gap-2">
-          <Icons.Pencil
-            title="Edit"
-            onClick={() => handleEdit(item)}
-            className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
-          />
-          <Icons.Trash
-            title="Delete"
-            onClick={() => openDeleteModal(item._id)}
-            className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
-          />
-        </div>
-      </div>
-    ),
-  }));
-
-  const handleEdit = (item) => {
-    setEditingId(item._id);
-    setFormData({
+  const formattedData = rawData.map((item) => {
+    const row = {
       distance: item.distance,
       hours: item.hours,
-      standardSaloon: item.standardSaloon,
-      executiveSaloon: item.executiveSaloon,
-      vipSaloon: item.vipSaloon,
-      luxuryMPV: item.luxuryMPV,
-      eightPassengerMPV: item.eightPassengerMPV,
+    };
+
+    vehicles.forEach((v) => {
+      row[v.vehicleName] = item.vehicleRates?.[v.vehicleName]
+        ? `£${item.vehicleRates[v.vehicleName]}`
+        : "-";
     });
+
+    row.actions = (
+      <div className="flex gap-2">
+        <Icons.Pencil
+          title="Edit"
+          onClick={() => handleEdit(item)}
+          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+        />
+        <Icons.Trash
+          title="Delete"
+          onClick={() => openDeleteModal(item._id)}
+          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+        />
+      </div>
+    );
+
+    return row;
+  });
+
+  const handleEdit = (item) => {
+    const updatedForm = {
+      distance: item.distance,
+      hours: item.hours,
+    };
+
+    vehicles.forEach((v) => {
+      updatedForm[v.vehicleName] = item.vehicleRates?.[v.vehicleName] || "";
+    });
+
+    setFormData(updatedForm);
+    setEditingId(item._id);
     setIsModalOpen(true);
     setFormError("");
   };
 
-  // Open the delete confirmation modal and store the ID
   const openDeleteModal = (id) => {
     setDeleteId(id);
     setIsDeleteModalOpen(true);
   };
 
-  // Delete handler with API call and notifications
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
@@ -112,25 +109,22 @@ const HourlyPackages = () => {
   };
 
   const handleOpenModal = () => {
-    setIsModalOpen(true);
-    setEditingId(null);
-    setFormData({
-      distance: "",
-      hours: "",
-      standardSaloon: "",
-      executiveSaloon: "",
-      vipSaloon: "",
-      luxuryMPV: "",
-      eightPassengerMPV: "",
+    const base = { distance: "", hours: "" };
+    vehicles.forEach((v) => {
+      base[v.vehicleName] = "";
     });
+
+    setFormData(base);
+    setEditingId(null);
     setFormError("");
+    setIsModalOpen(true);
   };
 
   const handleCloseModal = () => setIsModalOpen(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -142,14 +136,19 @@ const HourlyPackages = () => {
       return;
     }
 
-    const payload = { ...formData, companyId };
+    const payload = {
+      distance: formData.distance,
+      hours: formData.hours,
+      companyId,
+    };
+
+    vehicles.forEach((v) => {
+      payload[v.vehicleName] = parseFloat(formData[v.vehicleName]) || 0;
+    });
 
     try {
       if (editingId) {
-        await updateHourlyPackage({
-          id: editingId,
-          updatedData: payload,
-        }).unwrap();
+        await updateHourlyPackage({ id: editingId, updatedData: payload }).unwrap();
         toast.success("Package updated successfully");
       } else {
         await addHourlyPackage(payload).unwrap();
@@ -167,9 +166,7 @@ const HourlyPackages = () => {
   };
 
   useEffect(() => {
-    if (companyId) {
-      refetch();
-    }
+    if (companyId) refetch();
   }, [companyId]);
 
   return (
@@ -200,28 +197,29 @@ const HourlyPackages = () => {
         />
       )}
 
-      {/* Add/Edit Modal */}
+      {/* Modal */}
       <CustomModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         heading={editingId ? "Edit Hourly Package" : "Add Hourly Package"}
       >
-        <form onSubmit={handleSubmit} className="space-y-4 p-4">
+        <form onSubmit={handleSubmit} className="space-y-4 p-4 w-96">
           {[
-            { label: "Distance", name: "distance" },
+            { label: "Distance (Miles)", name: "distance" },
             { label: "Hours", name: "hours" },
-            { label: "Standard Saloon", name: "standardSaloon" },
-            { label: "Executive Saloon", name: "executiveSaloon" },
-            { label: "VIP Saloon", name: "vipSaloon" },
-            { label: "Luxury MPV", name: "luxuryMPV" },
-            { label: "8 Passenger MPV", name: "eightPassengerMPV" },
-          ].map(({ label, name }) => (
+            ...vehicles.map((v) => ({
+              label: v.vehicleName,
+              name: v.vehicleName,
+            })),
+          ].map(({ label, name }, idx) => (
             <div key={name}>
-              <label className="block text-sm font-medium text-gray-700">{label}</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {label}{idx >= 2 ? " (£)" : ""}
+              </label>
               <input
                 type="number"
                 name={name}
-                value={formData[name]}
+                value={formData[name] || ""}
                 onChange={handleInputChange}
                 className="custom_input"
                 required
@@ -235,18 +233,14 @@ const HourlyPackages = () => {
             <button type="submit" className="btn btn-reset" disabled={adding || updating}>
               {editingId ? "Update" : "Create"}
             </button>
-            <button
-              type="button"
-              onClick={handleCloseModal}
-              className="btn btn-cancel"
-            >
+            <button type="button" onClick={handleCloseModal} className="btn btn-cancel">
               Cancel
             </button>
           </div>
         </form>
+
       </CustomModal>
 
-      {/* Delete Confirmation Modal */}
       <DeleteModal
         isOpen={isDeleteModalOpen}
         onConfirm={handleDelete}

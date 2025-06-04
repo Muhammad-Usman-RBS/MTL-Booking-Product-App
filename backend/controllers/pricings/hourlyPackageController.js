@@ -1,29 +1,42 @@
 import HourlyPackage from '../../models/pricings/HourlyPackage.js';
 
-// Create a new hourly package
+// Create a new hourly package (Dynamic vehicle fields)
 export const createHourlyPackage = async (req, res) => {
     try {
-        const { distance, hours, standardSaloon, executiveSaloon, vipSaloon, luxuryMPV, eightPassengerMPV, companyId } = req.body;
+        const { distance, hours, companyId, ...rest } = req.body;
 
+        // Separate vehicleRates from other known fields
+        const vehicleRates = {};
+        Object.keys(rest).forEach((key) => {
+            const value = parseFloat(rest[key]);
+            if (!isNaN(value)) {
+                vehicleRates[key] = value;
+            }
+        });
+
+        // Create new package
         const newHourlyPackage = new HourlyPackage({
             distance,
             hours,
-            standardSaloon,
-            executiveSaloon,
-            vipSaloon,
-            luxuryMPV,
-            eightPassengerMPV,
-            companyId
+            companyId,
+            vehicleRates, // This is the required field
         });
 
         const savedPackage = await newHourlyPackage.save();
+
         res.status(201).json({ message: "Added successfully", savedPackage });
+
     } catch (error) {
-        res.status(500).json({ message: 'Error creating hourly package', error: error.message });
+        console.error("HourlyPackage creation error:", error);
+        res.status(500).json({
+            message: "Error creating hourly package",
+            error: error.message,
+        });
     }
 };
 
-// Get all hourly packages
+
+// Get all hourly packages by companyId
 export const getAllHourlyPackages = async (req, res) => {
     try {
         const { companyId } = req.query;
@@ -59,16 +72,36 @@ export const getHourlyPackageById = async (req, res) => {
 export const updateHourlyPackage = async (req, res) => {
     try {
         const { id } = req.params;
-        const updates = req.body;
+        const { distance, hours, companyId, ...rest } = req.body;
 
-        const updatedPackage = await HourlyPackage.findByIdAndUpdate(id, updates, { new: true });
+        // Construct vehicleRates from dynamic fields
+        const vehicleRates = {};
+        Object.keys(rest).forEach((key) => {
+            const value = parseFloat(rest[key]);
+            if (!isNaN(value)) {
+                vehicleRates[key] = value;
+            }
+        });
+
+        const updatePayload = {
+            distance,
+            hours,
+            companyId,
+            vehicleRates,
+        };
+
+        const updatedPackage = await HourlyPackage.findByIdAndUpdate(id, updatePayload, {
+            new: true,
+        });
 
         if (!updatedPackage) {
             return res.status(404).json({ message: 'Hourly package not found' });
         }
 
         res.status(200).json(updatedPackage);
+
     } catch (error) {
+        console.error("HourlyPackage update error:", error);
         res.status(500).json({ message: 'Error updating hourly package', error: error.message });
     }
 };

@@ -31,7 +31,6 @@ const JourneySchema = new mongoose.Schema({
   fare: { type: Number, default: 0 },
   hourlyOption: {
     type: String,
-    enum: ["40 miles 4 hours", "60 miles 6 hours", "80 miles 8 hours"],
     default: null,
   },
 
