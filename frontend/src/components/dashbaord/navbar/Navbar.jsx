@@ -11,7 +11,7 @@ const themes = [
     value: "theme-dark-1",
     bg: "#07384D",
     text: "#F1EFEF",
-    hoverActive: "#003353",
+    hoverActive: "#064f7c",
   },
   {
     value: "theme-dark-2",
