@@ -12,8 +12,7 @@ import {
 const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
     const companyId =
         parentCompanyId ||
-        new URLSearchParams(window.location.search).get('company') ||
-        '';
+        new URLSearchParams(window.location.search).get('company') || '';
 
     const { data: hourlyPackages = [] } = useGetAllHourlyRatesQuery(companyId, {
         skip: !companyId,
@@ -38,6 +37,11 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
     useEffect(() => {
         if (formattedHourlyOptions.length) {
             setSelectedHourly(formattedHourlyOptions[0]);
+            setFormData(prev => ({
+                ...prev,
+                hourlyOption: formattedHourlyOptions[0],
+                originalHourlyOption: formattedHourlyOptions[0]
+            }));
         }
     }, [formattedHourlyOptions]);
 
@@ -53,6 +57,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
         hour: '',
         minute: '',
         hourlyOption: '',
+        originalHourlyOption: ''
     });
 
     const [createBooking] = useCreateBookingMutation();
@@ -158,10 +163,8 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
             dropoff: dropOffs[0],
             additionalDropoff1: dropOffs[1] || null,
             additionalDropoff2: dropOffs[2] || null,
-            hourlyOption:
-                mode === 'Hourly' && selectedHourly?.label
-                    ? selectedHourly.label
-                    : null,
+            hourlyOption: formData.hourlyOption || null,
+            originalHourlyOption: formData.originalHourlyOption || null,
             mode,
             returnJourney: false,
             companyId,
@@ -179,10 +182,58 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
             }
 
             const res = await triggerDistance({ origin, destination }).unwrap();
+
             if (res?.distanceText && res?.durationText) {
                 payload.distanceText = res.distanceText;
                 payload.durationText = res.durationText;
+
+                if (mode === "Hourly") {
+                    let miles = 0;
+
+                    if (res.distanceText.includes("km")) {
+                        const km = parseFloat(res.distanceText.replace("km", "").trim());
+                        miles = parseFloat((km * 0.621371).toFixed(2));
+                    } else if (res.distanceText.includes("mi")) {
+                        miles = parseFloat(res.distanceText.replace("mi", "").trim());
+                    }
+
+                    const userSelected = formData?.hourlyOption?.value;
+
+                    if (userSelected) {
+                        if (miles > userSelected.distance) {
+                            const upgraded = hourlyPackages.find(pkg => pkg.distance >= miles);
+                            if (upgraded) {
+                                toast.info(`Your selected hourly package was upgraded to ${upgraded.distance} miles / ${upgraded.hours} hours due to trip length.`);
+                                payload.hourlyOption = {
+                                    label: `${upgraded.distance} miles ${upgraded.hours} hours`,
+                                    value: {
+                                        distance: upgraded.distance,
+                                        hours: upgraded.hours,
+                                    }
+                                };
+                            } else {
+                                toast.warning("No hourly package covers this distance.");
+                            }
+                        } else {
+                            payload.hourlyOption = formData.hourlyOption;
+                        }
+                    } else {
+                        const autoMatch = hourlyPackages.find(pkg => pkg.distance >= miles);
+                        if (autoMatch) {
+                            payload.hourlyOption = {
+                                label: `${autoMatch.distance} miles ${autoMatch.hours} hours`,
+                                value: {
+                                    distance: autoMatch.distance,
+                                    hours: autoMatch.hours,
+                                }
+                            };
+                        } else {
+                            toast.warning("No hourly package found for this distance.");
+                        }
+                    }
+                }
             }
+
         } catch (err) {
             console.error("Distance API error:", err);
         }
@@ -225,6 +276,11 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                                     opt => JSON.stringify(opt.value) === e.target.value
                                 );
                                 setSelectedHourly(selected);
+                                setFormData(prev => ({
+                                    ...prev,
+                                    hourlyOption: selected,
+                                    originalHourlyOption: selected
+                                }));
                             }}
                         />
                     </div>

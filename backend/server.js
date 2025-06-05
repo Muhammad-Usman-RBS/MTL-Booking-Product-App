@@ -12,6 +12,7 @@ import pricingRoutes from "./routes/pricingRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js"
 import googleRoutes from "./routes/googleRoutes.js"
 import driverRoutes from "./routes/driverRoutes.js"
+import settingsRoutes from "./routes/settingsRoutes.js"
 
 dotenv.config(); // .env file
 connectDB(); // Connect to the database
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes);
 // app.use('/api/superadmin', superAdminRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/pricing', pricingRoutes);
+app.use('/api/settings', settingsRoutes);
 app.use('/api/booking', bookingRoutes);
 app.use('/api/google', googleRoutes);
 app.use('/api/driver', driverRoutes);

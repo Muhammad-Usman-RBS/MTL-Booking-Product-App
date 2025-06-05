@@ -103,6 +103,7 @@ function App() {
               {/* Drivers */}
               <Route path="drivers/list" element={<DriverList />} />
               <Route path="drivers/new" element={<NewDriver />} />
+              <Route path="drivers/edit/:id" element={<NewDriver />} />
               <Route path="drivers/config" element={<DriverRegistrationConfig />} />
               <Route path="drivers/earnings" element={<DriverEarnings />} />
               <Route path="drivers/all-rides" element={<DriverRides />} />

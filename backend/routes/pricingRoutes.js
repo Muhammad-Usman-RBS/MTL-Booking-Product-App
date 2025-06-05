@@ -1,13 +1,11 @@
 import express from "express";
-import { protect, authorize } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
-import {
-  getGeneralPricing, updateGeneralPricing,
-} from "../controllers/pricings/generalController.js";
-import {
-  createVehicle, getAllVehicles, updateVehicle, deleteVehicle, getVehiclesByCompanyId,
-} from "../controllers/pricings/vehicleController.js";
+import { protect, authorize } from "../middleware/authMiddleware.js";
+import { getGeneralPricing, updateGeneralPricing, } from "../controllers/pricings/generalController.js";
+import { createVehicle, getAllVehicles, updateVehicle, deleteVehicle, getVehiclesByCompanyId, } from "../controllers/pricings/vehicleController.js";
 import { createHourlyPackage, deleteHourlyPackage, getAllHourlyPackages, getHourlyPackageById, updateHourlyPackage } from "../controllers/pricings/hourlyPackageController.js";
+import { getAllFixedPrices, createFixedPrice, updateFixedPrice, deleteFixedPrice } from "../controllers/pricings/fixedPriceController.js";
+import { getAllExtras, createExtra, updateExtra, deleteExtra, } from "../controllers/pricings/extrasController.js";
 
 const router = express.Router();
 
@@ -30,5 +28,16 @@ router.get('/getAllHourlyRates', getAllHourlyPackages);
 router.get('/getHourlyRateById/:id', getHourlyPackageById);
 router.put('/updateHourlyPackage/:id', updateHourlyPackage);
 router.delete('/delHourlyPackage/:id', deleteHourlyPackage);
+
+// Fixed Price Routes
+router.get("/fixed-prices", protect, getAllFixedPrices);
+router.post("/fixed-prices", protect, createFixedPrice);
+router.put("/fixed-prices/:id", protect, updateFixedPrice);
+router.delete("/fixed-prices/:id", protect, deleteFixedPrice);
+
+router.get("/extras", protect, getAllExtras);
+router.post("/extras", protect, createExtra);
+router.put("/extras/:id", protect, updateExtra);
+router.delete("/extras/:id", protect, deleteExtra);
 
 export default router;

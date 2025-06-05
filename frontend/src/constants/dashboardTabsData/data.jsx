@@ -1439,26 +1439,26 @@ export const vouchersData = [
   },
 ];
 
-export const fixedPricingData = [
-  {
-    direction: "Both Ways",
-    pickup: "AL1, AL2, AL3, AL4",
-    dropoff: "London Gatwick Zone",
-    price: 160.0,
-  },
-  {
-    direction: "Pickup",
-    pickup: "AL1, AL2, AL3, AL4, AL10",
-    dropoff: "STN",
-    price: 100.0,
-  },
-  {
-    direction: "Pickup",
-    pickup: "AL1, AL2, AL3, AL4, AL5, AL6, AL7, AL8, AL9, AL10",
-    dropoff: "Heathrow",
-    price: 90.0,
-  },
-];
+// export const fixedPricingData = [
+//   {
+//     direction: "Both Ways",
+//     pickup: "AL1, AL2, AL3, AL4",
+//     dropoff: "London Gatwick Zone",
+//     price: 160.0,
+//   },
+//   {
+//     direction: "Pickup",
+//     pickup: "AL1, AL2, AL3, AL4, AL10",
+//     dropoff: "STN",
+//     price: 100.0,
+//   },
+//   {
+//     direction: "Pickup",
+//     pickup: "AL1, AL2, AL3, AL4, AL5, AL6, AL7, AL8, AL9, AL10",
+//     dropoff: "Heathrow",
+//     price: 90.0,
+//   },
+// ];
 
 export const locationCategoryData = [
   {
@@ -1528,18 +1528,18 @@ export const locationsData = [
   },
 ];
 
-export const zonesData = [
-  { name: "Bath, Bristol" },
-  { name: "Birmingham" },
-  { name: "Brighton" },
-  { name: "Cambridge" },
-  { name: "Central London CC Zone" },
-  { name: "Dover" },
-  { name: "Enfield and Ilford" },
-  { name: "Exeter" },
-  { name: "Heathrow" },
-  { name: "HP Area" },
-];
+// export const zonesData = [
+//   { name: "Bath, Bristol" },
+//   { name: "Birmingham" },
+//   { name: "Brighton" },
+//   { name: "Cambridge" },
+//   { name: "Central London CC Zone" },
+//   { name: "Dover" },
+//   { name: "Enfield and Ilford" },
+//   { name: "Exeter" },
+//   { name: "Heathrow" },
+//   { name: "HP Area" },
+// ];
 
 export const coverageData = [
   { type: "Both", coverage: "Allow", category: "Postcode", value: "E16" },

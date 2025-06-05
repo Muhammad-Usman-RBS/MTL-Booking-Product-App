@@ -6,6 +6,7 @@ import CarCardSection from './CarCardSection';
 import { useGetPublicVehiclesQuery } from '../../../redux/api/vehicleApi';
 import { useLazyGetDistanceQuery } from '../../../redux/api/googleApi';
 import { toast, ToastContainer } from 'react-toastify';
+import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
 
 const WidgetBookingInformation = ({
   companyId: propCompanyId,
@@ -20,11 +21,54 @@ const WidgetBookingInformation = ({
   const [distanceText, setDistanceText] = useState(null);
   const [durationText, setDurationText] = useState(null);
   const [baseRate, setBaseRate] = useState('0.00');
+  const [matchedHourlyRate, setMatchedHourlyRate] = useState('');
+  const [hourlyError, setHourlyError] = useState('');
 
   const [triggerDistance] = useLazyGetDistanceQuery();
   const { data: carList = [], isLoading, error } = useGetPublicVehiclesQuery(companyId, {
     skip: !companyId,
   });
+
+  const { data: hourlyRates = [] } = useGetAllHourlyRatesQuery(companyId, {
+    skip: !companyId,
+  });
+
+  useEffect(() => {
+    if (
+      formData?.mode === "Hourly" &&
+      hourlyRates.length > 0 &&
+      actualMiles !== null &&
+      formData?.originalHourlyOption?.value
+    ) {
+      const selected = formData.originalHourlyOption.value;
+      const match = hourlyRates.find(
+        pkg =>
+          Number(pkg.distance) === Number(selected.distance) &&
+          Number(pkg.hours) === Number(selected.hours)
+      );
+
+      const warningMsg = `⚠️ Your trip is ${actualMiles} miles which exceeds the selected hourly package of ${selected.distance} miles. Additional charges will apply.`;
+
+      if (match) {
+        setMatchedHourlyRate(match.vehicleRates || {});
+
+        if (actualMiles > selected.distance) {
+          setHourlyError(warningMsg);
+        } else {
+          setHourlyError('');
+        }
+      } else {
+        setMatchedHourlyRate(null);
+        setHourlyError("Selected hourly package not available.");
+      }
+    }
+  }, [formData, hourlyRates, actualMiles]);
+
+  useEffect(() => {
+    if (hourlyError) {
+      toast.warning(hourlyError);
+    }
+  }, [hourlyError]);
 
   useEffect(() => {
     const sendHeight = () => {
@@ -90,7 +134,7 @@ const WidgetBookingInformation = ({
       const slabDistance = slab.to - slab.from;
       const milesInThisSlab = Math.min(remainingMiles, slabDistance);
 
-      totalPrice += milesInThisSlab * (slab.pricePerMile || 0); // ✅ correct usage
+      totalPrice += milesInThisSlab * (slab.pricePerMile || 0);
 
       remainingMiles -= milesInThisSlab;
     }
@@ -107,7 +151,10 @@ const WidgetBookingInformation = ({
   useEffect(() => {
     if (selectedCarId && carList.length > 0 && actualMiles !== null) {
       const selectedCar = carList.find(car => car._id === selectedCarId);
-      const selectedPrice = getVehiclePriceForDistance(selectedCar, actualMiles);
+      const selectedPrice =
+        formData?.mode === "Hourly"
+          ? selectedCar?.hourlyPrice || 0
+          : getVehiclePriceForDistance(selectedCar, actualMiles);
       setBaseRate(selectedPrice || '0.00');
     }
   }, [selectedCarId, carList, actualMiles]);
@@ -192,26 +239,33 @@ const WidgetBookingInformation = ({
             </div>
           </div>
 
-          <div className="mt-6">
-            {isLoading ? <p>Loading vehicles...</p> : error ? <p className="text-red-500">Failed to load vehicles.</p> : (
-              <>
-                {carList.length === 0 ? <p>No cars found.</p> : (
-                  <CarCardSection
-                    carList={carList.map(car => ({
-                      ...car,
-                      price: getVehiclePriceForDistance(car, actualMiles),
-                    }))}
-                    selectedCarId={selectedCarId}
-                    onSelect={setSelectedCarId}
-                  />
-                )}
-                <div className="text-right mt-4">
-                  <button onClick={handleSubmitBooking} className="bg-blue-600 text-white font-semibold px-6 py-2 rounded-md shadow hover:bg-blue-700 transition">
-                    Next
-                  </button>
-                </div>
-              </>
+          <div className='mt-6'>
+            {hourlyError && (
+              <div className="mt-4 mb-6 p-3 bg-yellow-100 text-yellow-900 text-sm rounded-md border border-yellow-300">
+                {hourlyError}
+              </div>
             )}
+            <CarCardSection
+              carList={carList.map(car => {
+                let price = 0;
+                if (formData?.mode === "Hourly") {
+                  price = matchedHourlyRate?.[car.vehicleName] || 0;
+                } else {
+                  price = getVehiclePriceForDistance(car, actualMiles);
+                }
+                return { ...car, price };
+              })}
+              selectedCarId={selectedCarId}
+              onSelect={setSelectedCarId}
+            />
+            <div className="text-right mt-4">
+              <button
+                onClick={handleSubmitBooking}
+                className="bg-blue-600 text-white font-semibold px-6 py-2 rounded-md shadow hover:bg-blue-700 transition"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
 
@@ -267,3 +321,6 @@ const WidgetBookingInformation = ({
 };
 
 export default WidgetBookingInformation;
+
+
+

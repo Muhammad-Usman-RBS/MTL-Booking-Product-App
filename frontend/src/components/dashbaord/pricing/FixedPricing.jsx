@@ -1,36 +1,43 @@
 import React, { useState } from "react";
 import Icons from "../../../assets/icons";
+import ExtrasPrcing from "./ExtrasPrcing";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import { fixedPricingData } from "../../../constants/dashboardTabsData/data";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import {
+  useGetAllZonesQuery,
+} from "../../../redux/api/zoneApi";
+import {
+  useGetAllFixedPricesQuery,
+  useCreateFixedPriceMutation,
+  useUpdateFixedPriceMutation,
+  useDeleteFixedPriceMutation,
+} from "../../../redux/api/fixedPriceApi";
 
 const FixedPricing = () => {
-  const [data, setData] = useState(fixedPricingData);
   const [selectedItem, setSelectedItem] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [isNew, setIsNew] = useState(true);
+  const [pickupSuggestions, setPickupSuggestions] = useState([]);
+  const [dropoffSuggestions, setDropoffSuggestions] = useState([]);
+
+  const { data: zones = [] } = useGetAllZonesQuery();
+  const { data: fixedPrices = [], refetch } = useGetAllFixedPricesQuery();
+  const [createFixedPrice] = useCreateFixedPriceMutation();
+  const [updateFixedPrice] = useUpdateFixedPriceMutation();
+  const [deleteFixedPrice] = useDeleteFixedPriceMutation();
+  const [priceChange, setPriceChange] = useState(0);
 
   const handleEdit = (item) => {
+    setIsNew(false);
     setSelectedItem(item);
     setShowModal(true);
   };
 
-  const handleUpdate = () => {
-    const updated = data.map((item) =>
-      item.pickup === selectedItem.pickup &&
-      item.dropoff === selectedItem.dropoff
-        ? selectedItem
-        : item
-    );
-    setData(updated);
-    toast.success("Fixed Price Updated!");
-    setShowModal(false);
-  };
-
   const handleAddNew = () => {
+    setIsNew(true);
     setSelectedItem({
       direction: "Both Ways",
       pickup: "",
@@ -40,6 +47,79 @@ const FixedPricing = () => {
     setShowModal(true);
   };
 
+  const handleSave = async () => {
+    const { pickup, dropoff, price, direction, _id } = selectedItem;
+
+    if (!pickup || !dropoff || !price) {
+      toast.error("Please fill all fields");
+      return;
+    }
+
+    const payload = {
+      pickup: pickup.toString(),
+      dropoff: dropoff.toString(),
+      price: parseFloat(price),
+      direction:
+        direction === "One Way" || direction === "Both Ways"
+          ? direction
+          : "One Way",
+    };
+
+    try {
+      if (isNew) {
+        await createFixedPrice(payload).unwrap();
+        toast.success("Fixed Price Added!");
+      } else {
+        await updateFixedPrice({ id: _id, ...payload }).unwrap();
+        toast.success("Fixed Price Updated!");
+      }
+      setShowModal(false);
+      refetch();
+    } catch (err) {
+      if (err?.status === 409) {
+        toast.error("This pickup-dropoff pair already exists.");
+      } else {
+        toast.error("Operation failed");
+      }
+    }
+  };
+
+  const handleBulkUpdate = async () => {
+    const value = parseFloat(priceChange);
+    if (isNaN(value)) {
+      toast.error("Enter a valid number.");
+      return;
+    }
+
+    try {
+      for (const item of fixedPrices) {
+        const updatedPrice = item.price + value;
+        await updateFixedPrice({
+          id: item._id,
+          pickup: item.pickup,
+          dropoff: item.dropoff,
+          price: updatedPrice,
+          direction: item.direction,
+        }).unwrap();
+      }
+
+      toast.success("All prices updated successfully!");
+      refetch();
+    } catch (err) {
+      toast.error("Bulk update failed.");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteFixedPrice(id);
+      toast.success("Deleted successfully");
+      refetch();
+    } catch {
+      toast.error("Failed to delete");
+    }
+  };
+
   const tableHeaders = [
     { label: "Pick Up", key: "pickup" },
     { label: "Drop Off", key: "dropoff" },
@@ -47,7 +127,7 @@ const FixedPricing = () => {
     { label: "Action", key: "actions" },
   ];
 
-  const tableData = data.map((item) => ({
+  const tableData = fixedPrices.map((item) => ({
     ...item,
     actions: (
       <div className="flex gap-2">
@@ -58,13 +138,7 @@ const FixedPricing = () => {
         />
         <Icons.Trash
           title="Delete"
-          onClick={() => {
-            const updated = data.filter(
-              (d) => d.pickup !== item.pickup || d.dropoff !== item.dropoff
-            );
-            setData(updated);
-            toast.success("Deleted successfully");
-          }}
+          onClick={() => handleDelete(item._id)}
           className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
         />
       </div>
@@ -75,41 +149,27 @@ const FixedPricing = () => {
     <>
       <div>
         <OutletHeading name="Fixed Pricing" />
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-          {/* Fixed Price Adjustment Section */}
-          <div className="w-full md:w-auto">
-            <label className="block mb-1 text-sm font-medium">
-              Increase/Decrease All Fixed Prices
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">
+              Increase / Decrease All Fixed Prices
             </label>
-            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-              <div className="flex w-full sm:w-auto">
-                <input
-                  type="number"
-                  name="minAdditionalDropOff"
-                  className="custom_input rounded-l-md"
-                />
-                <span className="px-4 py-1 border border-l-0 border-gray-300 rounded-r-md bg-gray-100 text-sm">
-                  GBP
-                </span>
-              </div>
-              <button
-                className="btn btn-reset w-full sm:w-auto"
-                onClick={handleAddNew}
-              >
+            <div className="flex gap-2">
+              <input
+                type="number"
+                className="custom_input w-32"
+                placeholder="GBP"
+                value={priceChange}
+                onChange={(e) => setPriceChange(e.target.value)}
+              />
+              <button className="btn btn-reset" onClick={handleBulkUpdate}>
                 Update
               </button>
             </div>
           </div>
-
-          {/* Add New Button */}
-          <div className="w-full md:w-auto">
-            <button
-              className="btn btn-edit w-full md:w-auto"
-              onClick={handleAddNew}
-            >
-              Add New
-            </button>
-          </div>
+          <button className="btn btn-edit" onClick={handleAddNew}>
+            Add New
+          </button>
         </div>
 
         <CustomTable
@@ -123,54 +183,98 @@ const FixedPricing = () => {
       <CustomModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        heading={`Edit ${selectedItem?.pickup || "New Entry"}`}
+        heading={`${isNew ? "Add" : "Edit"} Fixed Price`}
       >
-        <div className="mx-auto p-4 font-sans space-y-4">
-          <SelectOption
-            label="Direction"
-            width="full"
-            value={selectedItem?.direction || ""}
-            onChange={(val) =>
-              setSelectedItem({ ...selectedItem, direction: val })
-            }
-            options={["Pickup", "Dropoff", "Both Ways"]}
-          />
-
+        <div className="space-y-6 w-96 px-2 sm:px-4 pt-2 text-sm">
+          {/* Direction */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Pick Up
-            </label>
-            <textarea
-              rows={2}
+            <label className="block text-gray-700 font-semibold mb-1">Direction</label>
+            <SelectOption
+              width="full"
+              value={selectedItem?.direction || ""}
+              onChange={(val) =>
+                setSelectedItem({ ...selectedItem, direction: val?.value || val })
+              }
+              options={["One Way", "Both Ways"]}
+            />
+          </div>
+
+          {/* Pickup */}
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Pick Up</label>
+            <input
+              type="text"
               className="custom_input"
+              placeholder="Type or select a pickup zone"
               value={selectedItem?.pickup || ""}
-              onChange={(e) =>
-                setSelectedItem({ ...selectedItem, pickup: e.target.value })
-              }
+              onChange={(e) => {
+                setSelectedItem({ ...selectedItem, pickup: e.target.value });
+                setPickupSuggestions(
+                  zones.map((z) => z.name).filter((z) => z.toLowerCase().includes(e.target.value.toLowerCase()))
+                );
+              }}
+              onFocus={() => setPickupSuggestions(zones.map((z) => z.name))}
+              onBlur={() => setTimeout(() => setPickupSuggestions([]), 100)}
             />
+            {pickupSuggestions.length > 0 && (
+              <ul className="absolute z-10 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
+                {pickupSuggestions.map((zone, index) => (
+                  <li
+                    key={index}
+                    onClick={() => {
+                      setSelectedItem({ ...selectedItem, pickup: zone });
+                      setPickupSuggestions([]);
+                    }}
+                    className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+                  >
+                    {zone}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Drop Off
-            </label>
-            <textarea
-              rows={2}
+          {/* Drop Off */}
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Drop Off</label>
+            <input
+              type="text"
               className="custom_input"
+              placeholder="Type or select a dropoff zone"
               value={selectedItem?.dropoff || ""}
-              onChange={(e) =>
-                setSelectedItem({ ...selectedItem, dropoff: e.target.value })
-              }
+              onChange={(e) => {
+                setSelectedItem({ ...selectedItem, dropoff: e.target.value });
+                setDropoffSuggestions(
+                  zones.map((z) => z.name).filter((z) => z.toLowerCase().includes(e.target.value.toLowerCase()))
+                );
+              }}
+              onFocus={() => setDropoffSuggestions(zones.map((z) => z.name))}
+              onBlur={() => setTimeout(() => setDropoffSuggestions([]), 100)}
             />
+            {dropoffSuggestions.length > 0 && (
+              <ul className="absolute z-10 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
+                {dropoffSuggestions.map((zone, index) => (
+                  <li
+                    key={index}
+                    onClick={() => {
+                      setSelectedItem({ ...selectedItem, dropoff: zone });
+                      setDropoffSuggestions([]);
+                    }}
+                    className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+                  >
+                    {zone}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
+          {/* Price */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Price (GBP)
-            </label>
+            <label className="block text-gray-700 font-semibold mb-1">Price (GBP)</label>
             <input
               type="number"
-              className="custom_input"
+              className="custom_input rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={selectedItem?.price || 0}
               onChange={(e) =>
                 setSelectedItem({
@@ -178,22 +282,29 @@ const FixedPricing = () => {
                   price: parseFloat(e.target.value),
                 })
               }
+              placeholder="Enter fixed price in GBP"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          {/* Actions */}
+          <div className="flex justify-end pt-2 gap-3">
             <button
               onClick={() => setShowModal(false)}
               className="btn btn-cancel"
             >
               Cancel
             </button>
-            <button onClick={handleUpdate} className="btn btn-reset">
-              Update
+            <button
+              onClick={handleSave}
+              className="btn btn-reset"
+            >
+              {isNew ? "Add" : "Update"}
             </button>
           </div>
         </div>
       </CustomModal>
+      <hr className="mb-12 mt-12 border-gray-300" />
+      <ExtrasPrcing />
     </>
   );
 };

@@ -89,7 +89,7 @@ export const updateProfile = async (req, res) => {
 
     if (req.file) {
       const path = req.file.path.replace(/\\/g, '/'); // windows fix
-      user.profileImage = `${process.env.BASE_URL}/${path}`;
+      user.profileImage = `${path}`;
     }
 
     await user.save();
