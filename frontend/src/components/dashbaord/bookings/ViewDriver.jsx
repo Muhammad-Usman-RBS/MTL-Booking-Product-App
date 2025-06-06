@@ -1,131 +1,347 @@
 import React from "react";
 import IMAGES from "../../../assets/images";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import { BASE_API_URL } from "../../../config";
+import Icons from "../../../assets/icons";
+import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
 
-const ViewDriver = () => {
+const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
+  const driver = selectedDriver?.driver.DriverData || {};
+  const vehicle = selectedDriver?.driver.VehicleData || {};
+  const uploads = selectedDriver?.driver.UploadedData || {};
+
+  // Helper to format date string safely
+  const formatDate = (dateString) =>
+    dateString ? dateString.split("T")[0] : "N/A";
+
+  // Render availability list or N/A
+  const renderAvailability = () => {
+    if (driver.availability?.length > 0) {
+      return (
+        <div style={{ display: "flex", gap: "0.25rem" }}>
+          <h4 style={{ fontWeight: "600" }}>Availability:</h4>
+          <ul
+            style={{
+              color: "#374151",
+              fontSize: "0.875rem",
+            }}
+          >
+            {driver.availability.map((slot, idx) => (
+              <li key={idx} style={{ marginBottom: "0.25rem" }}>
+                From: {new Date(slot.from).toLocaleDateString()} - To:{" "}
+                {new Date(slot.to).toLocaleDateString()}
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+    return (
+      <p>
+        <strong>Availability:</strong> N/A
+      </p>
+    );
+  };
+  const renderUploadItem = (filePath, label) => {
+    // Handle if filePath is null/undefined
+    if (!filePath) {
+      return (
+        <div>
+          <img
+            src={IMAGES.dummyImg}
+            alt={label}
+            className="w-40 h-28 object-cover border-2 border-gray-300"
+          />
+          <p className="mt-2">{label}</p>
+        </div>
+      );
+    }
+
+    let actualFilePath = "";
+    if (typeof filePath === "string") {
+      actualFilePath = filePath;
+    } else if (
+      typeof filePath === "object" &&
+      filePath !== null &&
+      filePath.url
+    ) {
+      actualFilePath = filePath.url;
+    } else {
+      // fallback
+      actualFilePath = "";
+    }
+
+    const fileUrl = actualFilePath.startsWith("http")
+      ? actualFilePath
+      : `${BASE_API_URL}/${actualFilePath}`;
+
+    const isPdf = fileUrl.toLowerCase().endsWith(".pdf");
+
+    return (
+      <>
+        <div className="flex flex-col items-center">
+          {isPdf ? (
+            <div className="w-40 h-28 flex items-center justify-center border-2 border-gray-300 bg-gray-100 rounded">
+              <Icons.FileText className="w-16 h-16 text-red-600" />
+            </div>
+          ) : (
+            <img
+              src={fileUrl}
+              alt={label}
+              className="w-40 h-28 object-cover border-2 border-gray-300"
+            />
+          )}
+          <p className="mt-2">{label}</p>
+        </div>
+      </>
+    );
+  };
+
   return (
     <>
-      <div className="p-4 space-y-4 text-sm text-gray-800 w-full max-w-full">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block font-semibold text-gray-600 mb-1">
-              Distance:
-            </label>
-            <p className="bg-gray-100 px-3 py-1.5 rounded">27.70 miles</p>
-          </div>
-          <div>
-            <label className="block font-semibold text-gray-600 mb-1">
-              Fare:
-            </label>
-            <input type="number" className="custom_input" />
-          </div>
-        </div>
-
-        <div className="flex space-x-2">
-          <button className="btn btn-primary">All Drivers</button>
-          <button className="btn btn-reset">Matching Drivers</button>
-        </div>
-
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <input
-              type="text"
-              placeholder="Search driver"
-              className="custom_input"
-            />
-          </div>
-          <label className="flex items-center space-x-2 text-sm">
-            <input type="checkbox" className="form-checkbox" />
-            <span>Select All</span>
-          </label>
-        </div>
-
-        <div className="max-h-48 overflow-y-auto pr-1 space-y-3 custom-scroll border border-gray-500 rounded-md">
-          {[
-            {
-              name: "0101 SC",
-              image: IMAGES.profileimg,
-              car: "Mercedes Benz",
-              model: "V Class",
-            },
-            {
-              name: "1 Usman",
-              image: IMAGES.profileimg,
-              car: "Mercedes",
-              model: "S Class",
-            },
-            {
-              name: "10 Aftab Khan",
-              image: IMAGES.profileimg,
-              car: "Mercedes Benz",
-              model: "V Class",
-            },
-            {
-              name: "0101 SC",
-              image: IMAGES.profileimg,
-              car: "Mercedes Benz",
-              model: "V Class",
-            },
-            {
-              name: "1 Usman",
-              image: IMAGES.profileimg,
-              car: "Mercedes",
-              model: "S Class",
-            },
-            {
-              name: "10 Aftab Khan",
-              image: IMAGES.profileimg,
-              car: "Mercedes Benz",
-              model: "V Class",
-            },
-          ].map((driver, i) => (
-            <label
-              key={i}
-              className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg shadow-sm bg-white hover:shadow-md hover:bg-gray-50 transition-all cursor-pointer"
+      <div>
+        <div className="md:flex justify-between">
+          <OutletHeading name="View Driver" />
+          <div className="mb-3 flex items-center space-x-3 justify-center md:mb-0">
+            <button
+              className="btn btn-primary mb-2"
+              onClick={() =>
+                downloadPDF(
+                  "driver-details-pdf",
+                  `Driver-${driver.firstName}.pdf`
+                )
+              }
             >
-              <img
-                src={driver.image}
-                alt={driver.name}
-                className="w-10 h-10 rounded-full object-cover border border-gray-300"
-              />
-              <div className="flex-1">
-                <p className="font-medium text-gray-800">{driver.name}</p>
-                <p className="text-xs text-gray-500">
-                  {driver.car} | {driver.model}
-                </p>
-              </div>
-              <input
-                type="checkbox"
-                className="form-checkbox h-4 w-4 text-indigo-600"
-              />
-            </label>
-          ))}
-        </div>
+              Download Driver Details
+            </button>
 
-        <div>
-          <label className="block font-semibold text-gray-600 mb-1">
-            Driver Notes:
-            <span className="italic text-red-500 underline">Empty</span>
-          </label>
-        </div>
-        <hr />
-        <div>
-          <label className="block font-semibold text-gray-600 mb-2">
-            Alerts
-          </label>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" className="form-checkbox" />
-              <span>Email</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" className="form-checkbox" />
-              <span>Notification</span>
-            </label>
+            <button
+              onClick={() => setSelectedDriver(null)}
+              className="btn btn-primary mb-2"
+            >
+              ← Back to Driver List
+            </button>
           </div>
         </div>
 
-        <div className="pt-4">
-          <button className="btn btn-success">Update</button>
+        <hr className="mb-4" />
+
+        {/* DRIVER INFO */}
+        <div id="driver-details-pdf">
+          <img
+            src={uploads.driverPicture?.url || IMAGES.dummyImg}
+            alt="Driver"
+            style={{
+              width: "8rem",
+              height: "8rem",
+              borderRadius: "0.25rem",
+              objectFit: "cover",
+              border: "2px solid #d1d5db",
+            }}
+          />
+          <div
+            style={{
+              fontSize: "14px",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              color: "#2d3748",
+              rowGap: "6px",
+              columnGap: "20px",
+              marginTop: "1.4rem",
+            }}
+          >
+            <p>
+              <strong>Status:</strong> {driver.status || "N/A"}
+            </p>
+            <p>
+              <strong>Driver No.:</strong> {driver.employeeNumber || "N/A"}
+            </p>
+            <p>
+              <strong>First Name:</strong> {driver.firstName || "N/A"}
+            </p>
+            <p>
+              <strong>Sur Name:</strong> {driver.surName || "N/A"}
+            </p>
+            <p>
+              <strong>Email:</strong> {driver.email || "N/A"}
+            </p>
+            <p>
+              <strong>Contact:</strong> {driver.contact || "N/A"}
+            </p>
+            <p>
+              <strong>Address:</strong> {driver.address || "N/A"}
+            </p>
+            <p>
+              <strong>D.O.B.:</strong> {formatDate(driver.dateOfBirth)}
+            </p>
+
+            <div style={{ gridColumn: "span 2" }}>{renderAvailability()}</div>
+          </div>
+
+          {/* VEHICLE DETAILS */}
+          <h3
+            style={{
+              fontSize: "1.125rem",
+              fontWeight: "bold",
+              color: "#4a5568",
+              marginBottom: "1rem",
+              borderBottom: "1px solid #e2e8f0",
+              paddingBottom: "0.75rem",
+              marginTop: "1rem",
+            }}
+          >
+            Vehicle Details:
+          </h3>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr",
+              gap: "1.5rem",
+              marginBottom: "2.5rem",
+            }}
+          >
+            <img
+              src={uploads.carPicture?.url || IMAGES.dummyImg}
+              alt="Vehicle"
+              data-html2canvas-ignore="true"
+              style={{
+                width: "8rem",
+                height: "8rem",
+                objectFit: "cover",
+                border: "2px solid #d1d5db",
+              }}
+            />
+
+            <div
+              style={{
+                fontSize: "14px",
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                color: "#2d3748",
+                rowGap: "6px",
+                columnGap: "20px",
+              }}
+            >
+              <p>
+                <strong>Make:</strong> {vehicle.carMake || "N/A"}
+              </p>
+              <p>
+                <strong>Model:</strong> {vehicle.carModal || "N/A"}
+              </p>
+              <p>
+                <strong>Color:</strong> {vehicle.carColor || "N/A"}
+              </p>
+              <p>
+                <strong>Reg. No.:</strong> {vehicle.carRegistration || "N/A"}
+              </p>
+              <p>
+                <strong>Vehicle Insurance Expiry:</strong>{" "}
+                {formatDate(vehicle.carInsuranceExpiry)}
+              </p>
+              <p>
+                <strong>MOT Expiry:</strong> {formatDate(vehicle.motExpiryDate)}
+              </p>
+              <div
+                style={{
+                  gridColumn: "span 2",
+                  display: "flex",
+                  gap: "4px",
+                  alignItems: "center",
+                }}
+              >
+                <strong>Vehicle Types:</strong>
+                <span>
+                  {vehicle.vehicleTypes?.length > 0
+                    ? vehicle.vehicleTypes.join(", ")
+                    : "N/A"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* LICENSE DETAILS */}
+          <h3
+            style={{
+              fontSize: "1.125rem",
+              fontWeight: "bold",
+              color: "#4a5568",
+              borderBottom: "1px solid #e2e8f0",
+              paddingBottom: "0.75rem",
+            }}
+          >
+            License Details:
+          </h3>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              marginTop: "0.75rem",
+              marginBottom: "1.5rem",
+              gap: "1.5rem",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "0.875rem",
+                color: "#2d3748",
+              }}
+            >
+              <p style={{ marginBottom: "0.25rem" }}>
+                <strong>Driver License:</strong> {driver.driverLicense || "N/A"}
+              </p>
+              <p style={{ marginBottom: "0.25rem" }}>
+                <strong>Driver License Expiry:</strong>{" "}
+                {formatDate(driver.driverLicenseExpiry)}
+              </p>
+              <p style={{ marginBottom: "0.25rem" }}>
+                <strong>Driver Private Hire License Expiry:</strong>{" "}
+                {formatDate(driver.driverPrivateHireLicenseExpiry)}
+              </p>
+            </div>
+            <div
+              style={{
+                fontSize: "0.875rem",
+                color: "#2d3748",
+              }}
+            >
+              <p style={{ marginBottom: "0.25rem" }}>
+                <strong>National Insurance:</strong>{" "}
+                {driver.NationalInsurance || "N/A"}
+              </p>
+              <p style={{ marginBottom: "0.25rem" }}>
+                <strong>Private Hire Card No:</strong>{" "}
+                {driver.privateHireCardNo || "N/A"}
+              </p>
+              <p style={{ marginBottom: "0.25rem" }}>
+                <strong>Vehicle Private Hire License:</strong>{" "}
+                {vehicle.carPrivateHireLicense || "N/A"}
+              </p>
+              <p style={{ marginBottom: "0.25rem" }}>
+                <strong>Vehicle Private Hire License Expiry:</strong>{" "}
+                {formatDate(vehicle.carPrivateHireLicenseExpiry)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* UPLOADED DOCUMENTS */}
+        <h3 className="text-lg mb-2 font-bold text-black border-b pb-1">
+          Uploaded Documents:
+        </h3>
+        <div className="grid grid-cols-4 mt-4 grid-rows-2 space-y-4">
+          {renderUploadItem(uploads.privateHireCard, "Private Hire Card")}
+          {renderUploadItem(uploads.dvlaCard, "DVLA Card")}
+          {renderUploadItem(
+            uploads.privateHireCarPaper,
+            "Private Hire Car Paper"
+          )}
+          {renderUploadItem(
+            uploads.driverPrivateHirePaper,
+            "Driver Private Hire Paper"
+          )}
+          {renderUploadItem(uploads.insurance, "Insurance")}
+          {renderUploadItem(uploads.motExpiry, "MOT Expiry")}
+          {renderUploadItem(uploads.V5, "V5")}
         </div>
       </div>
     </>

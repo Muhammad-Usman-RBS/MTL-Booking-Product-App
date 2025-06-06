@@ -11,13 +11,13 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'mtl-booking',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
-    public_id: (req, file) => `profile_${Date.now()}`
-  },
-});
+// const storage = new CloudinaryStorage({
+//   cloudinary,
+//   params: {
+//     folder: 'mtl-booking',
+//     allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
+//     public_id: (req, file) => `profile_${Date.now()}`
+//   },
+// });
 
-export { cloudinary, storage };
+export { cloudinary };

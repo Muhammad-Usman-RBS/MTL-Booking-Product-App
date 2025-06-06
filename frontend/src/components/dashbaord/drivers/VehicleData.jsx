@@ -1,17 +1,87 @@
-import React, { useState } from 'react'
+import React, { useState } from "react";
 import IMAGES from "../../../assets/images";
+import Icons from "../../../assets/icons";
 
-const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, formData }) => {
+const VehicleData = ({
+    filePreviews,
+    handleInputChange,
+    handleCheckboxChange,
+    formData,
+}) => {
     const [vehicleImage, setVehicleImage] = useState(null);
+
     const handleVehicleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             setVehicleImage(URL.createObjectURL(file));
         }
     };
+
+
+    // ---------- Vehicle Image Preview ----------
+    // vehicleImage state is updated on local upload
+
+    // ---------- Private Hire Card ----------
+    const privateHireCardFile = formData.privateHireCard;
+    const privateHireCardPreview = filePreviews.privateHireCard;
+    const privateHireCardPreviewName = filePreviews.privateHireCardName;
+    const privateHireCardIsPdf =
+        privateHireCardFile instanceof File
+            ? privateHireCardFile.type === "application/pdf"
+            : false;
+    const privateHireCardPreviewIsPdf =
+        typeof privateHireCardPreview === "string"
+            ? privateHireCardPreview.toLowerCase().endsWith(".pdf")
+            : false;
+
+    // ---------- Private Hire Car Paper ----------
+    const privateHireCarPaperFile = formData.privateHireCarPaper;
+    const privateHireCarPaperPreview = filePreviews.privateHireCarPaper;
+    const privateHireCarPaperPreviewName = filePreviews.privateHireCarPaperName;
+    const privateHireCarPaperIsPdf =
+        privateHireCarPaperFile instanceof File
+            ? privateHireCarPaperFile.type === "application/pdf"
+            : false;
+    const privateHireCarPaperPreviewIsPdf =
+        typeof privateHireCarPaperPreview === "string"
+            ? privateHireCarPaperPreview.toLowerCase().endsWith(".pdf")
+            : false;
+
+    // ---------- Insurance ----------
+    const insuranceFile = formData.insurance;
+    const insurancePreview = filePreviews.insurance;
+    const insurancePreviewName = filePreviews.insuranceName;
+    const insuranceIsPdf =
+        insuranceFile instanceof File ? insuranceFile.type === "application/pdf" : false;
+    const insurancePreviewIsPdf =
+        typeof insurancePreview === "string"
+            ? insurancePreview.toLowerCase().endsWith(".pdf")
+            : false;
+
+    // ---------- MOT Expiry ----------
+    const motExpiryFile = formData.motExpiry;
+    const motExpiryPreview = filePreviews.motExpiry;
+    const motExpiryPreviewName = filePreviews.motExpiryName;
+    const motExpiryIsPdf =
+        motExpiryFile instanceof File ? motExpiryFile.type === "application/pdf" : false;
+    const motExpiryPreviewIsPdf =
+        typeof motExpiryPreview === "string"
+            ? motExpiryPreview.toLowerCase().endsWith(".pdf")
+            : false;
+
+    // ---------- V5 ----------
+    const V5File = formData.V5;
+    const V5Preview = filePreviews.V5;
+    const V5PreviewName = filePreviews.V5Name;
+    const V5IsPdf = V5File instanceof File ? V5File.type === "application/pdf" : false;
+    const V5PreviewIsPdf =
+        typeof V5Preview === "string" ? V5Preview.toLowerCase().endsWith(".pdf") : false;
+
+
     return (
         <>
-            <div>   <h3 className="text-xl font-semibold mt-6">Vehicle Information</h3>
+            <div>
+                <h3 className="text-xl font-semibold mt-6">Vehicle Information</h3>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
                     {vehicleImage ? (
                         <img
@@ -21,7 +91,11 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                         />
                     ) : (
                         <img
-                            src={filePreviews.carPicture || IMAGES.dummyFile || formData.carPicture}
+                            src={
+                                filePreviews.carPicture ||
+                                IMAGES.dummyFile ||
+                                formData.carPicture
+                            }
                             alt="Profile Preview"
                             className="w-64 h-40 object-cover border-gray-300 border-2"
                         />
@@ -38,20 +112,21 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                         </label>
                         <input
                             id="carPicture"
-                            name='carPicture'
+                            name="carPicture"
                             type="file"
-                            accept="image/*"
+                            accept="image/*,application/pdf"
                             onChange={handleInputChange}
                             className="hidden"
                         />
                     </div>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label>Vehicle Make</label>
                         <input
                             name="carMake"
-                            value={formData.carMake || ''}
+                            value={formData.carMake || ""}
                             onChange={handleInputChange}
                             className="custom_input"
                         />
@@ -60,7 +135,7 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                         <label>Vehicle Model</label>
                         <input
                             name="carModal"
-                            value={formData.carModal || ''}
+                            value={formData.carModal || ""}
                             onChange={handleInputChange}
                             className="custom_input"
                         />
@@ -69,7 +144,7 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                         <label>Vehicle Color</label>
                         <input
                             name="carColor"
-                            value={formData.carColor || ''}
+                            value={formData.carColor || ""}
                             onChange={handleInputChange}
                             className="custom_input"
                         />
@@ -78,27 +153,18 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                         <label>Vehicle Reg. No.</label>
                         <input
                             name="carRegistration"
-                            value={formData.carRegistration || ''}
+                            value={formData.carRegistration || ""}
                             onChange={handleInputChange}
                             className="custom_input"
                         />
                     </div>
-                    <div>
-                        <label>Vehicle Insurance</label>
-                        <input
-                            type='date'
-                            name="carInsuranceExpiry"
-                            value={formData.carInsuranceExpiry || ''}
-                            onChange={handleInputChange}
-                            className="custom_input"
-                        />
-                    </div>
+
                     <div>
                         <label>Vehicle Insurance Expiry</label>
                         <input
                             type="date"
-                            name="vehicleInsuranceExpiry"
-                            value={formData.vehicleInsuranceExpiry || ''}
+                            name="carInsuranceExpiry"
+                            value={formData.carInsuranceExpiry || ""}
                             onChange={handleInputChange}
                             className="custom_input"
                         />
@@ -107,17 +173,17 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                         <label>Vehicle Private Hire License</label>
                         <input
                             name="carPrivateHireLicense"
-                            value={formData.carPrivateHireLicense || ''}
+                            value={formData.carPrivateHireLicense || ""}
                             onChange={handleInputChange}
                             className="custom_input"
                         />
                     </div>
                     <div>
-                        <label>Vehicle Taxi License Expiry</label>
+                        <label>Vehicle Private Hire License Expiry</label>
                         <input
                             type="date"
                             name="carPrivateHireLicenseExpiry"
-                            value={formData.carPrivateHireLicenseExpiry || ''}
+                            value={formData.carPrivateHireLicenseExpiry || ""}
                             onChange={handleInputChange}
                             className="custom_input"
                         />
@@ -125,25 +191,59 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                     <div>
                         <label>MOT Expiry</label>
                         <input
-                            type='date'
+                            type="date"
                             name="motExpiryDate"
-                            value={formData.motExpiryDate || ''}
+                            value={formData.motExpiryDate || ""}
                             onChange={handleInputChange}
                             className="custom_input"
                         />
                     </div>
                 </div>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Private Hire Card */}
                 <div>
                     <label>Private Hire Card</label>
                     <div className="flex mt-2 items-center gap-4">
-                        <img
-                            src={filePreviews.privateHireCard || IMAGES.profilecarimg || formData.privateHireCard}
-                            alt="Private Hire Card Preview"
-                            className="w-36 h-24 object-cover border-gray-300 border-2 "
-                        />
+                        {privateHireCardFile ? (
+                            privateHireCardIsPdf ? (
+                                <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+                                    <Icons.FileText className="w-10 h-10 text-red-600" />
+                                    <p className="text-xs text-black mt-1 px-2 text-center break-all">
+                                        {privateHireCardFile.name.slice(0, 20)}
+                                    </p>
+                                </div>
+                            ) : (
+                                <img
+                                    src={privateHireCardPreview}
+                                    alt={privateHireCardFile.name}
+                                    className="w-36 h-24 object-cover border-gray-300 border-2"
+                                />
+                            )
+                        ) : privateHireCardPreview ? (
+                            privateHireCardPreviewIsPdf ? (
+                                <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+                                    <Icons.FileText className="w-10 h-10 text-red-600" />
+                                    <p className="text-xs text-black mt-1 px-2 text-center break-all">
+                                        {(privateHireCardPreviewName || "PDF File").slice(0, 20)}
+                                    </p>
+                                </div>
+                            ) : (
+                                <img
+                                    src={privateHireCardPreview}
+                                    alt="Private Hire Card"
+                                    className="w-36 h-24 object-cover border-gray-300 border-2"
+                                />
+                            )
+                        ) : (
+                            <img
+                                src={IMAGES.profilecarimg}
+                                alt="Private Hire Card"
+                                className="w-36 h-24 object-cover border-gray-300 border-2"
+                            />
+                        )}
+
                         <div>
                             <input
                                 type="file"
@@ -153,7 +253,10 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                                 className="custom_input hidden"
                                 onChange={handleInputChange}
                             />
-                            <label htmlFor="privateHireCard" className="btn btn-primary cursor-pointer">
+                            <label
+                                htmlFor="privateHireCard"
+                                className="btn btn-primary cursor-pointer"
+                            >
                                 Choose file
                             </label>
                         </div>
@@ -165,11 +268,43 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                 <div>
                     <label>Private Hire Car Paper</label>
                     <div className="flex mt-2 items-center gap-4">
-                        <img
-                            src={filePreviews.privateHireCarPaper || IMAGES.profilecarimg || formData.privateHireCarPaper}
-                            alt="Private Hire Car Paper Preview"
-                            className="w-36 h-24 object-cover border-gray-300 border-2 "
-                        />
+                        {privateHireCarPaperFile ? (
+                            privateHireCarPaperIsPdf ? (
+                                <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+                                    <Icons.FileText className="w-10 h-10 text-red-600" />
+                                    <p className="text-xs text-black mt-1 px-2 text-center break-all">
+                                        {privateHireCarPaperFile.name.slice(0, 20)}
+                                    </p>
+                                </div>
+                            ) : (
+                                <img
+                                    src={privateHireCarPaperPreview}
+                                    alt={privateHireCarPaperFile.name}
+                                    className="w-36 h-24 object-cover border-gray-300 border-2"
+                                />
+                            )
+                        ) : privateHireCarPaperPreview ? (
+                            privateHireCarPaperPreviewIsPdf ? (
+                                <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+                                    <Icons.FileText className="w-10 h-10 text-red-600" />
+                                    <p className="text-xs text-black mt-1 px-2 text-center break-all">
+                                        {(privateHireCarPaperPreviewName || "PDF File").slice(0, 20)}
+                                    </p>
+                                </div>
+                            ) : (
+                                <img
+                                    src={privateHireCarPaperPreview}
+                                    alt="Private Hire Car Paper Preview"
+                                    className="w-36 h-24 object-cover border-gray-300 border-2"
+                                />
+                            )
+                        ) : (
+                            <img
+                                src={IMAGES.profilecarimg}
+                                alt="Private Hire Car Paper"
+                                className="w-36 h-24 object-cover border-gray-300 border-2"
+                            />
+                        )}
                         <div>
                             <input
                                 type="file"
@@ -179,7 +314,10 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                                 className="custom_input hidden"
                                 onChange={handleInputChange}
                             />
-                            <label htmlFor="privateHireCarPaper" className="btn btn-primary cursor-pointer">
+                            <label
+                                htmlFor="privateHireCarPaper"
+                                className="btn btn-primary cursor-pointer"
+                            >
                                 Choose file
                             </label>
                         </div>
@@ -190,11 +328,43 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                 <div>
                     <label>Insurance</label>
                     <div className="flex mt-2 items-center gap-4">
-                        <img
-                            src={filePreviews.insurance || IMAGES.profilecarimg || formData.insurance}
-                            alt="Insurance Preview"
-                            className="w-36 h-24 object-cover border-gray-300 border-2 "
-                        />
+                        {insuranceFile ? (
+                            insuranceIsPdf ? (
+                                <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+                                    <Icons.FileText className="w-10 h-10 text-red-600" />
+                                    <p className="text-xs text-black mt-1 px-2 text-center break-all">
+                                        {insuranceFile.name.slice(0, 20)}
+                                    </p>
+                                </div>
+                            ) : (
+                                <img
+                                    src={insurancePreview}
+                                    alt={insuranceFile.name}
+                                    className="w-36 h-24 object-cover border-gray-300 border-2"
+                                />
+                            )
+                        ) : insurancePreview ? (
+                            insurancePreviewIsPdf ? (
+                                <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+                                    <Icons.FileText className="w-10 h-10 text-red-600" />
+                                    <p className="text-xs text-black mt-1 px-2 text-center break-all">
+                                        {(insurancePreviewName || "PDF File").slice(0, 20)}
+                                    </p>
+                                </div>
+                            ) : (
+                                <img
+                                    src={insurancePreview}
+                                    alt="Insurance"
+                                    className="w-36 h-24 object-cover border-gray-300 border-2"
+                                />
+                            )
+                        ) : (
+                            <img
+                                src={IMAGES.profilecarimg}
+                                alt="Insurance"
+                                className="w-36 h-24 object-cover border-gray-300 border-2"
+                            />
+                        )}
                         <div>
                             <input
                                 type="file"
@@ -204,7 +374,10 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                                 className="custom_input hidden"
                                 onChange={handleInputChange}
                             />
-                            <label htmlFor="insurance" className="btn btn-primary cursor-pointer">
+                            <label
+                                htmlFor="insurance"
+                                className="btn btn-primary cursor-pointer"
+                            >
                                 Choose file
                             </label>
                         </div>
@@ -215,11 +388,43 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                 <div>
                     <label>MOT Expiry</label>
                     <div className="flex mt-2 items-center gap-4">
-                        <img
-                            src={filePreviews?.motExpiry || IMAGES.profilecarimg || formData?.motExpiry}
-                            alt="MOT Expiry Preview"
-                            className="w-36 h-24 object-cover border-gray-300 border-2 "
-                        />
+                        {motExpiryFile ? (
+                            motExpiryIsPdf ? (
+                                <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+                                    <Icons.FileText className="w-10 h-10 text-red-600" />
+                                    <p className="text-xs text-black mt-1 px-2 text-center break-all">
+                                        {motExpiryFile.name.slice(0, 20)}
+                                    </p>
+                                </div>
+                            ) : (
+                                <img
+                                    src={motExpiryPreview}
+                                    alt={motExpiryFile.name}
+                                    className="w-36 h-24 object-cover border-gray-300 border-2"
+                                />
+                            )
+                        ) : motExpiryPreview ? (
+                            motExpiryPreviewIsPdf ? (
+                                <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+                                    <Icons.FileText className="w-10 h-10 text-red-600" />
+                                    <p className="text-xs text-black mt-1 px-2 text-center break-all">
+                                        {(motExpiryPreviewName || "PDF File").slice(0, 20)}
+                                    </p>
+                                </div>
+                            ) : (
+                                <img
+                                    src={motExpiryPreview}
+                                    alt="MOT Expiry"
+                                    className="w-36 h-24 object-cover border-gray-300 border-2"
+                                />
+                            )
+                        ) : (
+                            <img
+                                src={IMAGES.profilecarimg}
+                                alt="MOT Expiry"
+                                className="w-36 h-24 object-cover border-gray-300 border-2"
+                            />
+                        )}
                         <div>
                             <input
                                 type="file"
@@ -229,7 +434,10 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                                 className="custom_input hidden"
                                 onChange={handleInputChange}
                             />
-                            <label htmlFor="motExpiry" className="btn btn-primary cursor-pointer">
+                            <label
+                                htmlFor="motExpiry"
+                                className="btn btn-primary cursor-pointer"
+                            >
                                 Choose file
                             </label>
                         </div>
@@ -240,11 +448,43 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                 <div>
                     <label>V5</label>
                     <div className="flex mt-2 items-center gap-4">
-                        <img
-                            src={filePreviews.V5 || IMAGES.profilecarimg || formData.V5}
-                            alt="V5 Preview"
-                            className="w-36 h-24 object-cover border-gray-300 border-2 "
-                        />
+                        {V5File ? (
+                            V5IsPdf ? (
+                                <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+                                    <Icons.FileText className="w-10 h-10 text-red-600" />
+                                    <p className="text-xs text-black mt-1 px-2 text-center break-all">
+                                        {V5File.name.slice(0, 20)}
+                                    </p>
+                                </div>
+                            ) : (
+                                <img
+                                    src={V5Preview}
+                                    alt={V5File.name}
+                                    className="w-36 h-24 object-cover border-gray-300 border-2"
+                                />
+                            )
+                        ) : V5Preview ? (
+                            V5PreviewIsPdf ? (
+                                <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+                                    <Icons.FileText className="w-10 h-10 text-red-600" />
+                                    <p className="text-xs text-black mt-1 px-2 text-center break-all">
+                                        {(V5PreviewName || "PDF File").slice(0, 20)}
+                                    </p>
+                                </div>
+                            ) : (
+                                <img
+                                    src={V5Preview}
+                                    alt="V5"
+                                    className="w-36 h-24 object-cover border-gray-300 border-2"
+                                />
+                            )
+                        ) : (
+                            <img
+                                src={IMAGES.profilecarimg}
+                                alt="V5"
+                                className="w-36 h-24 object-cover border-gray-300 border-2"
+                            />
+                        )}
                         <div>
                             <input
                                 type="file"
@@ -261,7 +501,6 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
                     </div>
                 </div>
             </div>
-            {/* VEHICLE TYPES */}
             <div className="mt-4">
                 <label className="block font-semibold">Vehicle Types *</label>
 
@@ -295,4 +534,4 @@ const VehicleData = ({ filePreviews, handleInputChange, handleCheckboxChange, fo
     )
 }
 
-export default VehicleData
+export default VehicleData;

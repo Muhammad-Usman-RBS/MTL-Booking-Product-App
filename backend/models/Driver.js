@@ -35,15 +35,42 @@ const VehicleDataSchema = new mongoose.Schema({
 }, { _id: false });
 
 const UploadedDataSchema = new mongoose.Schema({
-    driverPicture: String,
-    privateHireCard: String,
-    dvlaCard: String,
-    carPicture: String,
-    privateHireCarPaper: String,
-    driverPrivateHirePaper: String,
-    insurance: String,
-    motExpiry: String,
-    V5: String
+    driverPicture: {
+        url: String,
+        name: String,
+    },
+    privateHireCard: {
+        url: String,
+        name: String,
+    },
+    dvlaCard: {
+        url: String,
+        name: String,
+    },
+    carPicture: {
+        url: String,
+        name: String,
+    },
+    privateHireCarPaper: {
+        url: String,
+        name: String,
+    },
+    driverPrivateHirePaper: {
+        url: String,
+        name: String,
+    },
+    insurance: {
+        url: String,
+        name: String,
+    },
+    motExpiry: {
+        url: String,
+        name: String,
+    },
+    V5: {
+        url: String,
+        name: String,
+    }
 }, { _id: false });
 
 const DriverProfileSchema = new mongoose.Schema({
