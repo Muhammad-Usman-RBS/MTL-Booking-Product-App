@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import IMAGES from "../../../assets/images";
 import Icons from "../../../assets/icons";
 
 const VehicleData = ({
@@ -8,23 +7,10 @@ const VehicleData = ({
     handleCheckboxChange,
     formData,
 }) => {
-    const [vehicleImage, setVehicleImage] = useState(null);
-
-    const handleVehicleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setVehicleImage(URL.createObjectURL(file));
-        }
-    };
 
 
-    // ---------- Vehicle Image Preview ----------
-    // vehicleImage state is updated on local upload
-
-    // ---------- Private Hire Card ----------
     const privateHireCardFile = formData.privateHireCard;
     const privateHireCardPreview = filePreviews.privateHireCard;
-    const privateHireCardPreviewName = filePreviews.privateHireCardName;
     const privateHireCardIsPdf =
         privateHireCardFile instanceof File
             ? privateHireCardFile.type === "application/pdf"
@@ -37,7 +23,6 @@ const VehicleData = ({
     // ---------- Private Hire Car Paper ----------
     const privateHireCarPaperFile = formData.privateHireCarPaper;
     const privateHireCarPaperPreview = filePreviews.privateHireCarPaper;
-    const privateHireCarPaperPreviewName = filePreviews.privateHireCarPaperName;
     const privateHireCarPaperIsPdf =
         privateHireCarPaperFile instanceof File
             ? privateHireCarPaperFile.type === "application/pdf"
@@ -50,7 +35,6 @@ const VehicleData = ({
     // ---------- Insurance ----------
     const insuranceFile = formData.insurance;
     const insurancePreview = filePreviews.insurance;
-    const insurancePreviewName = filePreviews.insuranceName;
     const insuranceIsPdf =
         insuranceFile instanceof File ? insuranceFile.type === "application/pdf" : false;
     const insurancePreviewIsPdf =
@@ -61,7 +45,6 @@ const VehicleData = ({
     // ---------- MOT Expiry ----------
     const motExpiryFile = formData.motExpiry;
     const motExpiryPreview = filePreviews.motExpiry;
-    const motExpiryPreviewName = filePreviews.motExpiryName;
     const motExpiryIsPdf =
         motExpiryFile instanceof File ? motExpiryFile.type === "application/pdf" : false;
     const motExpiryPreviewIsPdf =
@@ -72,7 +55,6 @@ const VehicleData = ({
     // ---------- V5 ----------
     const V5File = formData.V5;
     const V5Preview = filePreviews.V5;
-    const V5PreviewName = filePreviews.V5Name;
     const V5IsPdf = V5File instanceof File ? V5File.type === "application/pdf" : false;
     const V5PreviewIsPdf =
         typeof V5Preview === "string" ? V5Preview.toLowerCase().endsWith(".pdf") : false;
@@ -82,23 +64,18 @@ const VehicleData = ({
         <>
             <div>
                 <h3 className="text-xl font-semibold mt-6">Vehicle Information</h3>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-                    {vehicleImage ? (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6 mt-2">
+
+                    {filePreviews.carPicture || formData.carPicture ? (
                         <img
-                            src={vehicleImage}
-                            alt="Profile Preview"
+                        src={filePreviews.carPicture || formData.carPicture}
+                            alt="Car Picture Preview"
                             className="w-64 h-40 object-cover border-gray-300 border-2"
                         />
                     ) : (
-                        <img
-                            src={
-                                filePreviews.carPicture ||
-                                IMAGES.dummyFile ||
-                                formData.carPicture
-                            }
-                            alt="Profile Preview"
-                            className="w-64 h-40 object-cover border-gray-300 border-2"
-                        />
+                        <div className="w-64 h-40 border border-dashed border-gray-300 flex items-center justify-center text-gray-500 text-sm font-light">
+                            No Car Image Uploaded
+                        </div>
                     )}
                     <div>
                         <label className="block font-medium text-sm mb-1">
@@ -226,7 +203,6 @@ const VehicleData = ({
                                 <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
                                     <Icons.FileText className="w-10 h-10 text-red-600" />
                                     <p className="text-xs text-black mt-1 px-2 text-center break-all">
-                                        {(privateHireCardPreviewName || "PDF File").slice(0, 20)}
                                     </p>
                                 </div>
                             ) : (
@@ -237,13 +213,10 @@ const VehicleData = ({
                                 />
                             )
                         ) : (
-                            <img
-                                src={IMAGES.profilecarimg}
-                                alt="Private Hire Card"
-                                className="w-36 h-24 object-cover border-gray-300 border-2"
-                            />
+                            <div className="w-36 h-24 border border-dashed border-gray-300 flex items-center justify-center text-gray-500 text-xs font-light">
+                                No File Uploaded
+                            </div>
                         )}
-
                         <div>
                             <input
                                 type="file"
@@ -288,7 +261,6 @@ const VehicleData = ({
                                 <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
                                     <Icons.FileText className="w-10 h-10 text-red-600" />
                                     <p className="text-xs text-black mt-1 px-2 text-center break-all">
-                                        {(privateHireCarPaperPreviewName || "PDF File").slice(0, 20)}
                                     </p>
                                 </div>
                             ) : (
@@ -299,11 +271,9 @@ const VehicleData = ({
                                 />
                             )
                         ) : (
-                            <img
-                                src={IMAGES.profilecarimg}
-                                alt="Private Hire Car Paper"
-                                className="w-36 h-24 object-cover border-gray-300 border-2"
-                            />
+                            <div className="w-36 h-24 border border-dashed border-gray-300 flex items-center justify-center text-gray-500 text-xs font-light">
+                                No File Uploaded
+                            </div>
                         )}
                         <div>
                             <input
@@ -348,7 +318,6 @@ const VehicleData = ({
                                 <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
                                     <Icons.FileText className="w-10 h-10 text-red-600" />
                                     <p className="text-xs text-black mt-1 px-2 text-center break-all">
-                                        {(insurancePreviewName || "PDF File").slice(0, 20)}
                                     </p>
                                 </div>
                             ) : (
@@ -359,11 +328,9 @@ const VehicleData = ({
                                 />
                             )
                         ) : (
-                            <img
-                                src={IMAGES.profilecarimg}
-                                alt="Insurance"
-                                className="w-36 h-24 object-cover border-gray-300 border-2"
-                            />
+                            <div className="w-36 h-24 border border-dashed border-gray-300 flex items-center justify-center text-gray-500 text-xs font-light">
+                                No File Uploaded
+                            </div>
                         )}
                         <div>
                             <input
@@ -408,7 +375,6 @@ const VehicleData = ({
                                 <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
                                     <Icons.FileText className="w-10 h-10 text-red-600" />
                                     <p className="text-xs text-black mt-1 px-2 text-center break-all">
-                                        {(motExpiryPreviewName || "PDF File").slice(0, 20)}
                                     </p>
                                 </div>
                             ) : (
@@ -419,11 +385,9 @@ const VehicleData = ({
                                 />
                             )
                         ) : (
-                            <img
-                                src={IMAGES.profilecarimg}
-                                alt="MOT Expiry"
-                                className="w-36 h-24 object-cover border-gray-300 border-2"
-                            />
+                            <div className="w-36 h-24 border border-dashed border-gray-300 flex items-center justify-center text-gray-500 text-xs font-light">
+                                No File Uploaded
+                            </div>
                         )}
                         <div>
                             <input
@@ -468,7 +432,6 @@ const VehicleData = ({
                                 <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
                                     <Icons.FileText className="w-10 h-10 text-red-600" />
                                     <p className="text-xs text-black mt-1 px-2 text-center break-all">
-                                        {(V5PreviewName || "PDF File").slice(0, 20)}
                                     </p>
                                 </div>
                             ) : (
@@ -479,11 +442,9 @@ const VehicleData = ({
                                 />
                             )
                         ) : (
-                            <img
-                                src={IMAGES.profilecarimg}
-                                alt="V5"
-                                className="w-36 h-24 object-cover border-gray-300 border-2"
-                            />
+                            <div className="w-36 h-24 border border-dashed border-gray-300 flex items-center justify-center text-gray-500 text-xs font-light">
+                                No File Uploaded
+                            </div>
                         )}
                         <div>
                             <input
@@ -501,16 +462,16 @@ const VehicleData = ({
                     </div>
                 </div>
             </div>
-            <div className="mt-4">
-                <label className="block font-semibold">Vehicle Types *</label>
+            <div className="mt-6">
+                <label className="block font-semibold mb-2">Vehicle Types *</label>
 
                 <div className="grid grid-cols-3 grid-rows-3 gap-2">
                     {[
                         "Standard Sedan",
-                        "Luxury",
-                        "SUV",
-                        "Van / MPV",
-                        "Commercial MPV",
+                        "Executive Sedan",
+                        "Luxury Saloon",
+                        "6 Passenger MPV",
+                        "8 Passenger MPV",
                     ].map((type) => (
                         <div key={type} className="flex items-center">
                             <input
@@ -534,4 +495,4 @@ const VehicleData = ({
     )
 }
 
-export default VehicleData;
+export default VehicleData;      

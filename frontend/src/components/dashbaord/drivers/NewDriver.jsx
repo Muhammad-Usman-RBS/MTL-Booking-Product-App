@@ -9,7 +9,7 @@ import {
   useUpdateDriverByIdMutation,
 } from "../../../redux/api/driverApi";
 import { toast } from "react-toastify";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 
 const NewDriver = () => {
   const { id } = useParams();
@@ -181,11 +181,11 @@ const NewDriver = () => {
         ),
         driverPrivateHireLicenseExpiry: formatDateForInput(
           DriverData.driverPrivateHireLicenseExpiry ||
-            rest.driverPrivateHireLicenseExpiry
+          rest.driverPrivateHireLicenseExpiry
         ),
         carPrivateHireLicenseExpiry: formatDateForInput(
           VehicleData.carPrivateHireLicenseExpiry ||
-            rest.carPrivateHireLicenseExpiry
+          rest.carPrivateHireLicenseExpiry
         ),
         motExpiryDate: formatDateForInput(
           VehicleData.motExpiryDate || rest.motExpiryDate
@@ -200,52 +200,48 @@ const NewDriver = () => {
       }));
 
       setFilePreviews({
-        driverPicture: UploadedData.driverPicture?.url || "",
-        driverPictureName: UploadedData.driverPicture?.name || "",
-
-        privateHireCard: UploadedData.privateHireCard?.url || "",
-        privateHireCardName: UploadedData.privateHireCard?.name || "",
-
-        dvlaCard: UploadedData.dvlaCard?.url || "",
-        dvlaCardName: UploadedData.dvlaCard?.name || "",
-
-        carPicture: UploadedData.carPicture?.url || "",
-        carPictureName: UploadedData.carPicture?.name || "",
-
-        privateHireCarPaper: UploadedData.privateHireCarPaper?.url || "",
-        privateHireCarPaperName: UploadedData.privateHireCarPaper?.name || "",
-
-        driverPrivateHirePaper: UploadedData.driverPrivateHirePaper?.url || "",
-        driverPrivateHirePaperName:
-          UploadedData.driverPrivateHirePaper?.name || "",
-
-        insurance: UploadedData.insurance?.url || "",
-        insuranceName: UploadedData.insurance?.name || "",
-
-        motExpiry: UploadedData.motExpiry?.url || "",
-        motExpiryName: UploadedData.motExpiry?.name || "",
-
-        V5: UploadedData.V5?.url || "",
-        V5Name: UploadedData.V5?.name || "",
+        driverPicture: UploadedData.driverPicture || "",
+        privateHireCard: UploadedData.privateHireCard || "",
+        dvlaCard: UploadedData.dvlaCard || "",
+        carPicture: UploadedData.carPicture || "",
+        privateHireCarPaper: UploadedData.privateHireCarPaper || "",
+        driverPrivateHirePaper: UploadedData.driverPrivateHirePaper || "",
+        insurance: UploadedData.insurance || "",
+        motExpiry: UploadedData.motExpiry || "",
+        V5: UploadedData.V5 || "",
       });
     }
   }, [driverData, isEdit]);
 
   return (
     <div>
-      <OutletHeading name={isEdit ? "Edit Driver" : "Add Driver"} />
+      <div className={`${isEdit ? "border-gray-300 border-b" : ""} flex items-center justify-between mb-6`}>
+
+        <OutletHeading name={isEdit ? "Edit Driver" : "Add Driver"} />
+
+        <Link to="/dashboard/drivers/list" className="mb-4">
+          <button
+            className="btn btn-primary "
+          >
+            ← Back to Driver List
+          </button>
+        </Link>
+
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* PROFILE PICTURE */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-          <img
-            src={
-              filePreviews.driverPicture ||
-              formData.driverPicture ||
-              IMAGES.dummyImg
-            }
-            alt="Profile Preview"
-            className="w-24 h-24 rounded-full object-cover border-gray-300 border-2"
-          />
+          {filePreviews.driverPicture || formData.driverPicture ? (
+            <img
+              src={filePreviews.driverPicture || formData.driverPicture}
+              alt="Car Picture Preview"
+              className="w-64 h-40 object-cover border-gray-300 border-2"
+            />
+          ) : (
+            <div className="w-64 h-40 border border-dashed border-gray-300 flex items-center justify-center text-gray-500 text-sm font-light">
+              No Driver Image Uploaded
+            </div>
+          )}
 
           <div>
             <label className="block font-medium text-sm mb-1">

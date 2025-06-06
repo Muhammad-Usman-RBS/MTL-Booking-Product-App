@@ -2,6 +2,7 @@ import express from "express";
 import fetch from "node-fetch";
 const router = express.Router();
 
+// Airport terminal data for common UK airports
 const airportTerminals = {
   heathrow: [
     "London Heathrow Airport (LHR), Terminal 1",
@@ -63,12 +64,12 @@ const airportTerminals = {
   ncl: ["Newcastle Airport (NCL), Main Terminal"],
 };
 
+// Autocomplete route using internal airport list or Google Places API
 router.get("/autocomplete", async (req, res) => {
   try {
     const queryRaw = req.query.input || "";
     const query = queryRaw.toLowerCase().replace(/\s+/g, "");
 
-    // 🔁 Match either full or short form key (e.g., "heathrow", "lhr")
     const matchedKey = Object.keys(airportTerminals).find((key) => {
       const normalizedKey = key.toLowerCase().replace(/\s+/g, "");
       return (
@@ -87,7 +88,7 @@ router.get("/autocomplete", async (req, res) => {
       return res.json({ predictions: results });
     }
 
-    // 🔁 Else use Google Autocomplete API
+    // 🌐 Fallback to Google Places Autocomplete API
     const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
       queryRaw
     )}&components=country:gb&key=${process.env.GOOGLE_LOCATION_API}`;
@@ -109,7 +110,7 @@ router.get("/autocomplete", async (req, res) => {
   }
 });
 
-// --- Distance Matrix API ---
+// Calculate distance and duration between two locations using Google Distance Matrix API
 router.get("/distance", async (req, res) => {
   try {
     const { origin, destination } = req.query;
@@ -132,13 +133,13 @@ router.get("/distance", async (req, res) => {
     }
 
     const distanceText = element.distance?.text || null;
-    const distanceValue = element.distance?.value || null; // in meters
+    const distanceValue = element.distance?.value || null;
     const durationText = element.duration?.text || null;
 
     res.json({
-      distanceText, // e.g., "69.6 km"
-      distanceValue, // e.g., 69600 (meters)
-      durationText,  // e.g., "1 hour 2 mins"
+      distanceText,
+      distanceValue,
+      durationText,
     });
   } catch (error) {
     console.error("Distance API error:", error);

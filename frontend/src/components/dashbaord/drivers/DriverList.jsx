@@ -9,7 +9,7 @@ import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 import {
   useDeleteDriverByIdMutation,
   useGetAllDriversQuery,
-  useGetDriverByIdQuery
+  useGetDriverByIdQuery,
 } from "../../../redux/api/driverApi";
 import { toast } from "react-toastify";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
@@ -17,7 +17,6 @@ import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 const tabOptions = ["Active", "Suspended", "Pending", "Deleted"];
 
 const DriverList = () => {
-
   const [activeTab, setActiveTab] = useState("Active");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -29,14 +28,14 @@ const DriverList = () => {
   const [driverToDelete, setdriverToDelete] = useState(null);
   const { data: getAllDrivers, isLoading, refetch } = useGetAllDriversQuery();
   const { data: getDriverById } = useGetDriverByIdQuery(selectedDriver, {
-    skip: !selectedDriver
-  })
+    skip: !selectedDriver,
+  });
   const [deleteDriverById] = useDeleteDriverByIdMutation();
+  const driversArray = getAllDrivers?.drivers || [];
 
-  const filteredTabData = (getAllDrivers || []).filter(
+  const filteredTabData = driversArray.filter(
     (driver) => driver?.DriverData?.status === activeTab
   );
-
   const filteredData = filteredTabData.filter((driver) => {
     const query = search.toLowerCase();
     return (
@@ -69,7 +68,6 @@ const DriverList = () => {
       />
     );
   }
-
 
   const handleSendEmail = (driver) => {
     setDriverToSendEmail(driver);
@@ -138,7 +136,8 @@ const DriverList = () => {
           onClick={() => {
             setdriverToDelete(driver);
             setShowDeleteModal(true);
-          }} className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
+          }}
+          className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
         />
       </div>
     ),
@@ -164,17 +163,13 @@ const DriverList = () => {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`pb-2 whitespace-nowrap transition-all duration-200 ${activeTab === tab
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-blue-500"
+                    ? "border-b-2 border-blue-600 text-blue-600"
+                    : "text-gray-600 hover:text-blue-500"
                   }`}
               >
                 {tab} (
-                {
-                  (getAllDrivers || []).filter(
-                    (d) => d?.DriverData?.status === tab
-                  ).length
-                }
-                ){" "}
+                {driversArray.filter((d) => d?.DriverData?.status === tab).length}
+                )
               </button>
             ))}
           </div>
@@ -198,13 +193,14 @@ const DriverList = () => {
         >
           <div className="p-4">
             <p className="text-sm">
-              Would you like to resend <strong>"Driver Welcome Email"</strong> to
+              Would you like to resend <strong>"Driver Welcome Email"</strong>{" "}
+              to
               <br />
               <strong>{driverToSendEmail?.email}</strong>?
             </p>
             <p className="text-sm mt-2">
-              Driver will be logged out from all devices and new password will be
-              sent.
+              Driver will be logged out from all devices and new password will
+              be sent.
             </p>
             <div className="mt-4 flex justify-end gap-3">
               <button
@@ -238,7 +234,6 @@ const DriverList = () => {
         }}
       />
     </>
-
   );
 };
 

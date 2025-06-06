@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Users, Baby, Briefcase, Luggage, ChevronDown } from "lucide-react";
 import { useGetAllVehiclesQuery } from "../../../redux/api/vehicleApi";
 
-const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras }) => {
+const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingData }) => {
   const { data: vehicleOptions = [], isLoading } = useGetAllVehiclesQuery();
   const [localSelectedVehicle, setLocalSelectedVehicle] = useState(null);
   const [open, setOpen] = useState(false);
@@ -15,13 +15,32 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras }) => {
 
   // Default selection on load
   useEffect(() => {
-    if (vehicleOptions.length > 0 && !localSelectedVehicle) {
-      const defaultVehicle = vehicleOptions[0];
-      setLocalSelectedVehicle(defaultVehicle);
-      setSelectedVehicle(defaultVehicle);
-      updateMaxValues(defaultVehicle);
+  if (vehicleOptions.length > 0) {
+    let defaultVehicle = vehicleOptions[0];
+
+    // 🛠 If editBookingData is available, match the vehicle by name
+    if (editBookingData?.vehicle?.vehicleName) {
+      const matched = vehicleOptions.find(
+        (v) => v.vehicleName === editBookingData.vehicle.vehicleName
+      );
+      if (matched) defaultVehicle = matched;
+
+      // Set extras from editBookingData if available
+      const extras = {
+        passenger: editBookingData.vehicle.passenger ?? 0,
+        childSeat: editBookingData.vehicle.childSeat ?? 0,
+        handLuggage: editBookingData.vehicle.handLuggage ?? 0,
+        checkinLuggage: editBookingData.vehicle.checkinLuggage ?? 0,
+      };
+      setSelections(extras);
+      setVehicleExtras(extras);
     }
-  }, [vehicleOptions]);
+
+    setLocalSelectedVehicle(defaultVehicle);
+    setSelectedVehicle(defaultVehicle);
+  }
+}, [vehicleOptions, editBookingData]);
+
 
   const toggleDropdown = () => setOpen((prev) => !prev);
 

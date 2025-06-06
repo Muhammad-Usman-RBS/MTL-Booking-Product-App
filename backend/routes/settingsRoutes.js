@@ -1,15 +1,10 @@
 import express from "express";
-import {
-  getAllZones,
-  createZone,
-  updateZone,
-  deleteZone
-} from "../controllers/settings/zoneController.js";
+import { getAllZones, createZone, updateZone, deleteZone} from "../controllers/settings/zoneController.js";
 import { protect } from "../middleware/authMiddleware.js"
 
 const router = express.Router();
 
-// Zones CRUD
+// ZONES CRUD
 router.get("/zones", protect, getAllZones);
 router.post("/zones", protect, createZone);
 router.put("/zones/:id", protect, updateZone);

@@ -1,68 +1,20 @@
 import express from 'express';
-import {
-  createCompanyAccount,
-  getAllCompanies,
-  getCompanyById,
-  updateCompanyAccount,
-  deleteCompanyAccount,
-  sendCompanyEmail
-} from '../controllers/companyController.js';
+import { createCompanyAccount, getAllCompanies, getCompanyById, updateCompanyAccount, deleteCompanyAccount, sendCompanyEmail } from '../controllers/companyController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
-import upload from '../middleware/uploadMiddleware.js'; // Handles Cloudinary upload
+import { getUploader } from '../middleware/cloudinaryUpload.js';
 
 const router = express.Router();
+const companyUploader = getUploader('company');
 
-// @route   POST /api/companies
-// @desc    Create new company (with image upload)
-// @access  Protected (superadmin, clientadmin)
-router.post(
-  '/',
-  protect,
-  authorize('superadmin', 'clientadmin'),
-  upload.single('profileImage'), // Cloudinary middleware
-  createCompanyAccount
-);
+// COMPANIES CRUD
+router.post('/', protect, authorize('superadmin', 'clientadmin'), companyUploader.single('profileImage'), createCompanyAccount);
+router.get('/', protect, authorize('superadmin', 'clientadmin'), getAllCompanies);
+router.put('/:id', protect, authorize('superadmin', 'clientadmin'), companyUploader.single('profileImage'), updateCompanyAccount);
+router.delete('/:id', protect, authorize('superadmin'), deleteCompanyAccount);
 
-// @route   GET /api/companies
-// @desc    Get all companies
-// @access  Protected (superadmin)
-router.get(
-  '/',
-  protect,
-  authorize('superadmin', 'clientadmin'),
-  getAllCompanies
-);
-
-// @route   GET /api/companies/:id
-// @desc    Get single company by ID
-// @access  Protected
-router.get(
-  '/:id',
-  protect,
-  getCompanyById
-);
-
-// @route   PUT /api/companies/:id
-// @desc    Update company by ID
-// @access  Protected (superadmin, clientadmin)
-router.put(
-  '/:id',
-  protect,
-  authorize('superadmin', 'clientadmin'),
-  upload.single('profileImage'), // Optional file upload
-  updateCompanyAccount
-);
-
-// @route   DELETE /api/companies/:id
-// @desc    Delete company by ID
-// @access  Protected (superadmin)
-router.delete(
-  '/:id',
-  protect,
-  authorize('superadmin'),
-  deleteCompanyAccount
-);
-
-router.post("/send-company-email", sendCompanyEmail);
+// Get single company by ID
+router.get('/:id', protect, getCompanyById);
+// Send email to company
+router.post('/send-company-email', sendCompanyEmail);
 
 export default router;

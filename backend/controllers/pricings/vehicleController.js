@@ -1,15 +1,4 @@
 import Vehicle from "../../models/pricings/Vehicle.js";
-import { cloudinary } from "../../config/cloudinary.js";
-import fs from "fs";
-
-// ✅ Upload image to Cloudinary
-const uploadToCloudinary = async (localPath) => {
-  const result = await cloudinary.uploader.upload(localPath, {
-    folder: "vehicles",
-  });
-  fs.unlinkSync(localPath); // remove local file
-  return result.secure_url;
-};
 
 // ✅ CREATE VEHICLE
 export const createVehicle = async (req, res) => {
@@ -29,7 +18,6 @@ export const createVehicle = async (req, res) => {
       slabs,
     } = req.body;
 
-    // Validate companyId
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
@@ -64,13 +52,8 @@ export const createVehicle = async (req, res) => {
       }
     }
 
-    // ✅ Upload image if present
-    let image = "";
-    if (req.file?.path) {
-      image = await uploadToCloudinary(req.file.path);
-    } else if (imageFromBody) {
-      image = imageFromBody;
-    }
+    // ✅ Use Cloudinary URL
+    const image = req.file?.path || imageFromBody || "";
 
     const newVehicle = new Vehicle({
       priority: Number(priority),
@@ -95,7 +78,7 @@ export const createVehicle = async (req, res) => {
   }
 };
 
-// ✅ READ VEHICLES
+// ✅ GET ALL VEHICLES (by logged-in user's company)
 export const getAllVehicles = async (req, res) => {
   try {
     const companyId = req.user.companyId;
@@ -164,11 +147,8 @@ export const updateVehicle = async (req, res) => {
       }
     }
 
-    // ✅ Image upload
-    let image = imageFromBody;
-    if (req.file?.path) {
-      image = await uploadToCloudinary(req.file.path);
-    }
+    // ✅ Use Cloudinary URL (new or existing)
+    const image = req.file?.path || imageFromBody || "";
 
     const updates = {
       priority: Number(priority),
@@ -200,18 +180,18 @@ export const updateVehicle = async (req, res) => {
   }
 };
 
-// ✅ DELETE
+// ✅ DELETE VEHICLE
 export const deleteVehicle = async (req, res) => {
   try {
     const deleted = await Vehicle.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: "Not found" });
+    if (!deleted) return res.status(404).json({ message: "Vehicle not found" });
     res.json({ message: "Vehicle deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// ✅ GET BY COMPANY (Public)
+// ✅ GET VEHICLES BY COMPANY ID (Public)
 export const getVehiclesByCompanyId = async (req, res) => {
   try {
     const { companyId } = req.query;

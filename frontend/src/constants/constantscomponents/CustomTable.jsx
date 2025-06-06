@@ -7,7 +7,7 @@ const itemsPerPageOptions = [5, 10, 20, "All"];
 const CustomTable = ({
   tableHeaders = [],
   tableData = [],
-  exportTableData = null, 
+  exportTableData = null,
   showSearch = true,
   showRefresh = true,
   showDownload = true,
@@ -42,12 +42,15 @@ const CustomTable = ({
   });
 
   const sortedData = [...filteredData].sort((a, b) => {
-    if (!sortConfig.key || !showSorting) return 0;
-    const aVal = a[sortConfig.key] || "";
-    const bVal = b[sortConfig.key] || "";
-    return sortConfig.direction === "asc"
-      ? String(aVal).localeCompare(String(bVal))
-      : String(bVal).localeCompare(String(aVal));
+    if (showSorting && sortConfig.key) {
+      const aVal = a[sortConfig.key] || "";
+      const bVal = b[sortConfig.key] || "";
+      return sortConfig.direction === "asc"
+        ? String(aVal).localeCompare(String(bVal))
+        : String(bVal).localeCompare(String(aVal));
+    }
+
+    return new Date(a.createdAt) - new Date(b.createdAt);
   });
 
   const totalPages =

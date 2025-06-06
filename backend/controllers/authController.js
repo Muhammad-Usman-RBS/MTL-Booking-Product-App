@@ -75,25 +75,33 @@ export const login = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
+    // Verify current password
     const isMatch = await bcrypt.compare(req.body.currentPassword, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Current password is incorrect' });
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
 
+    // Update basic fields
     user.email = req.body.email || user.email;
     user.fullName = req.body.fullName || user.fullName;
 
+    // If new password provided
     if (req.body.newPassword) {
       user.password = await bcrypt.hash(req.body.newPassword, 10);
     }
 
-    if (req.file) {
-      const path = req.file.path.replace(/\\/g, '/'); // windows fix
-      user.profileImage = `${path}`;
+    // If profile image uploaded
+    if (req.file?.path) {
+      user.profileImage = req.file.path; // Cloudinary full secure URL
     }
 
     await user.save();
 
+    // Send updated user response
     res.json({
       _id: user._id,
       email: user.email,
@@ -101,10 +109,11 @@ export const updateProfile = async (req, res) => {
       role: user.role,
       permissions: user.permissions,
       profileImage: user.profileImage,
-      token: generateToken(user._id, user.role)
+      token: generateToken(user._id, user.role),
     });
+
   } catch (err) {
-    console.error(err);
+    console.error("Update Profile Error:", err);
     res.status(500).json({ message: 'Server error' });
   }
 };

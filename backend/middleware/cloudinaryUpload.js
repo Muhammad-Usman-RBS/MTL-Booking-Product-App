@@ -1,0 +1,27 @@
+import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// ✅ Reusable function to return Cloudinary storage with dynamic subfolder
+const getCloudinaryStorage = (subfolder) => {
+    return new CloudinaryStorage({
+        cloudinary,
+        params: (req, file) => ({
+            folder: `MTL-BOOKING-APP/${subfolder}`,
+            allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
+            public_id: `${file.fieldname}-${Date.now()}`,
+        }),
+    });
+};
+
+// ✅ Proper export
+export const getUploader = (folder) => multer({ storage: getCloudinaryStorage(folder) });

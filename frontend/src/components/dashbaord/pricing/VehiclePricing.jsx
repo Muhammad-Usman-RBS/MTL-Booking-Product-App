@@ -192,7 +192,7 @@ const VehiclePricing = () => {
             : "Add Vehicle"
         }
       >
-        <div className="mx-auto p-4 font-sans space-y-4">
+        <div className="mx-auto p-4 font-sans space-y-4 w-96">
           {[
             "priority",
             "vehicleName",

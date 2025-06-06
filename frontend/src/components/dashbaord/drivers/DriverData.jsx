@@ -1,6 +1,5 @@
 import React from "react";
 import Icons from "../../../assets/icons";
-import IMAGES from "../../../assets/images";
 
 const DriverData = ({
     filePreviews,
@@ -61,13 +60,12 @@ const DriverData = ({
             ? driverPrivateHirePaperUrl.toLowerCase().endsWith(".pdf")
             : false;
 
-
     return (
         <>
             <div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label>Employee No. *</label>
+                        <label >Employee No. *</label>
                         <input
                             className="custom_input"
                             name="employeeNumber"
@@ -76,7 +74,7 @@ const DriverData = ({
                         />
                     </div>
                     <div>
-                        <label>First Name *</label>
+                        <label >First Name *</label>
                         <input
                             className="custom_input"
                             name="firstName"
@@ -85,7 +83,7 @@ const DriverData = ({
                         />
                     </div>
                     <div>
-                        <label>Sur Name *</label>
+                        <label >Sur Name *</label>
                         <input
                             className="custom_input"
                             name="surName"
@@ -94,7 +92,7 @@ const DriverData = ({
                         />
                     </div>
                     <div>
-                        <label>Email *</label>
+                        <label >Email *</label>
                         <input
                             type="email"
                             className="custom_input"
@@ -104,7 +102,7 @@ const DriverData = ({
                         />
                     </div>
                     <div>
-                        <label>Contact *</label>
+                        <label >Contact *</label>
                         <input
                             type="tel"
                             className="custom_input"
@@ -133,7 +131,7 @@ const DriverData = ({
                     </div>
 
                     <div>
-                        <label>D.O.B.</label>
+                        <label >D.O.B.</label>
                         <input
                             type="date"
                             className="custom_input"
@@ -144,7 +142,7 @@ const DriverData = ({
                     </div>
 
                     <div>
-                        <label>Driving License</label>
+                        <label >Driving License</label>
                         <input
                             className="custom_input"
                             name="driverLicense"
@@ -153,7 +151,7 @@ const DriverData = ({
                         />
                     </div>
                     <div>
-                        <label>Driving License Expiry</label>
+                        <label >Driving License Expiry</label>
                         <input
                             type="date"
                             className="custom_input"
@@ -163,7 +161,7 @@ const DriverData = ({
                         />
                     </div>
                     <div>
-                        <label>Driver Private Hire Card No.</label>
+                        <label >Driver Private Hire Card No.</label>
                         <input
                             className="custom_input"
                             name="privateHireCardNo"
@@ -172,7 +170,7 @@ const DriverData = ({
                         />
                     </div>
                     <div>
-                        <label>Driver Private Hire License Expiry</label>
+                        <label >Driver Private Hire License Expiry</label>
                         <input
                             type="date"
                             className="custom_input"
@@ -183,7 +181,7 @@ const DriverData = ({
                     </div>
 
                     <div>
-                        <label>NI Number</label>
+                        <label >NI Number</label>
                         <input
                             className="custom_input"
                             name="NationalInsurance"
@@ -195,7 +193,7 @@ const DriverData = ({
             </div>
 
             <div>
-                <label>Address</label>
+                <label >Address</label>
                 <textarea
                     className="custom_input"
                     rows="2"
@@ -205,8 +203,8 @@ const DriverData = ({
                 />
             </div>
 
-            <div className="mt-3">
-                <label>Holidays</label>
+            <div >
+                <label >Holidays</label>
 
                 {formData.availability?.map((slot, index) => (
                     <div
@@ -262,137 +260,129 @@ const DriverData = ({
                 )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                {/* DVLA Card */}
-                <div>
-                    <label>DVLA Card</label>
-                    <div className="flex mt-2 items-center gap-4">
-                        {dvlaCardFile ? (
-                            dvlaCardIsPdf ? (
-                                <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
-                                    <Icons.FileText className="w-10 h-10 text-red-600" />
-                                    <p className="text-xs text-black mt-1 px-2 text-center break-all">
-                                        {(dvlaCardName || "PDF File").slice(0, 20)}
-                                    </p>
-                                </div>
-                            ) : (
-                                <img
-                                    src={dvlaCardUrl}
-                                    alt={dvlaCardName}
-                                    className="w-36 h-24 object-cover border-gray-300 border-2"
-                                />
-                            )
-                        ) : dvlaCardUrl ? (
-                            dvlaCardPreviewIsPdf ? (
-                                <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
-                                    <Icons.FileText className="w-10 h-10 text-red-600" />
-                                    <p className="text-xs text-black mt-1 px-2 text-center break-all">
-                                        {(dvlaCardPreviewName || "PDF File").slice(0, 20)}
-                                    </p>
-                                </div>
-                            ) : (
-                                <img
-                                    src={dvlaCardUrl}
-                                    alt="DVLA Card Preview"
-                                    className="w-36 h-24 object-cover border-gray-300 border-2"
-                                />
-                            )
-                        ) : (
-                            <img
-                                src={IMAGES.dummyFile}
-                                alt="DVLA Card Dummy"
-                                className="w-36 h-24 object-cover border-gray-300 border-2"
-                            />
-                        )}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        {/* DVLA Card */}
+        <div>
+          <label >DVLA Card:</label>
+          <div className="flex mt-2 items-center gap-4">
+  {dvlaCardFile ? (
+    dvlaCardIsPdf ? (
+      <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+        <Icons.FileText className="w-10 h-10 text-red-600" />
+        <p className="text-xs text-black mt-1 px-2 text-center break-all">
+          {(dvlaCardName || "PDF File").slice(0, 20)}
+        </p>
+      </div>
+    ) : (
+      <img
+        src={dvlaCardUrl}
+        alt={dvlaCardName}
+        className="w-36 h-24 object-cover border-gray-300 border-2"
+      />
+    )
+  ) : dvlaCardUrl ? (
+    dvlaCardPreviewIsPdf ? (
+      <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+        <Icons.FileText className="w-10 h-10 text-red-600" />
+        <p className="text-xs text-black mt-1 px-2 text-center break-all">
+          {(dvlaCardName || "PDF File").slice(0, 20)}
+        </p>
+      </div>
+    ) : (
+      <img
+        src={dvlaCardUrl}
+        alt={dvlaCardName}
+        className="w-36 h-24 object-cover border-gray-300 border-2"
+      />
+    )
+  ) : (
+    <div className="w-36 h-24 border border-dashed border-gray-300 flex items-center justify-center text-gray-500 text-xs font-light">
+      No File Uploaded
+    </div>
+  )}
 
-                        <div>
-                            <input
-                                type="file"
-                                id="dvlaCard"
-                                name="dvlaCard"
-                                accept="image/*,application/pdf"
-                                className="custom_input hidden"
-                                onChange={handleInputChange}
-                            />
-                            <label
-                                htmlFor="dvlaCard"
-                                className="btn btn-primary cursor-pointer"
-                            >
-                                Choose file
-                            </label>
-                        </div>
-                    </div>
-                </div>
+  <div>
+    <input
+      type="file"
+      id="dvlaCard"
+      name="dvlaCard"
+      accept="image/*,application/pdf"
+      className="custom_input hidden"
+      onChange={handleInputChange}
+    />
+    <label htmlFor="dvlaCard" className="btn btn-primary cursor-pointer mt-1">
+      Choose file
+    </label>
+  </div>
+</div>
 
-                {/* Driver Private Hire Paper */}
-                <div>
-                    <label>Driver Private Hire Paper</label>
-                    <div className="flex mt-2 items-center gap-4">
-                        {driverPrivateHirePaperFile ? (
-                            driverPrivateHirePaperIsPdf ||
-                                driverPrivateHirePaperPreviewIsPdf ? (
-                                <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
-                                    <Icons.FileText className="w-10 h-10 text-red-600" />
-                                    <p className="text-xs text-black mt-1 px-2 text-center break-all">
-                                        {(driverPrivateHirePaperName || "PDF File").slice(0, 20)}
-                                    </p>
-                                </div>
-                            ) : (
-                                <img
-                                    src={driverPrivateHirePaperUrl}
-                                    alt={driverPrivateHirePaperFile.name}
-                                    className="w-36 h-24 object-cover border-gray-300 border-2"
-                                />
-                            )
-                        ) : driverPrivateHirePaperUrl ? (
-                            driverPrivateHirePaperIsPdf ||
-                                driverPrivateHirePaperPreviewIsPdf ? (
-                                <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
-                                    <Icons.FileText className="w-10 h-10 text-red-600" />
-                                    <p className="text-xs text-black mt-1 px-2 text-center break-all">
-                                        {(driverPrivateHirePaperName || "PDF File").slice(0, 20)}
-                                    </p>
-                                </div>
-                            ) : (
-                                <img
-                                    src={driverPrivateHirePaperUrl}
-                                    alt="Driver Private Hire Paper"
-                                    className="w-36 h-24 object-cover border-gray-300 border-2"
-                                />
-                            )
-                        ) : (
-                            <img
-                                src={IMAGES.dummyFile}
-                                alt="Driver Private Hire Paper Dummy"
-                                className="w-36 h-24 object-cover border-gray-300 border-2"
-                            />
-                        )}
+           
+        </div>
 
-                        <div>
-                            <input
-                                type="file"
-                                id="driverPrivateHirePaper"
-                                name="driverPrivateHirePaper"
-                                accept="image/*,application/pdf"
-                                className="custom_input hidden"
-                                onChange={handleInputChange}
-                            />
-                            <label
-                                htmlFor="driverPrivateHirePaper"
-                                className="btn btn-primary cursor-pointer"
-                            >
-                                Choose file
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        {/* Driver Private Hire Paper */}
+        <div>
+          <label >Driver Private Hire Paper:</label>
+          <div className="flex mt-2 items-center gap-4">
+  {driverPrivateHirePaperFile ? (
+    driverPrivateHirePaperIsPdf ? (
+      <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+        <Icons.FileText className="w-10 h-10 text-red-600" />
+        <p className="text-xs text-black mt-1 px-2 text-center break-all">
+          {(driverPrivateHirePaperName || "PDF File").slice(0, 20)}
+        </p>
+      </div>
+    ) : (
+      <img
+        src={driverPrivateHirePaperUrl}
+        alt={driverPrivateHirePaperName}
+        className="w-36 h-24 object-cover border-gray-300 border-2"
+      />
+    )
+  ) : driverPrivateHirePaperUrl ? (
+    driverPrivateHirePaperPreviewIsPdf ? (
+      <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+        <Icons.FileText className="w-10 h-10 text-red-600" />
+        <p className="text-xs text-black mt-1 px-2 text-center break-all">
+          {(driverPrivateHirePaperName || "PDF File").slice(0, 20)}
+        </p>
+      </div>
+    ) : (
+      <img
+        src={driverPrivateHirePaperUrl}
+        alt={driverPrivateHirePaperName}
+        className="w-36 h-24 object-cover border-gray-300 border-2"
+      />
+    )
+  ) : (
+    <div className="w-36 h-24 border border-dashed border-gray-300 flex items-center justify-center text-gray-500 text-xs font-light">
+      No File Uploaded
+    </div>
+  )}
 
-            <div className="mb-12 mt-12">
-                <hr className=" border-gray-300" />
-            </div>
+  <div>
+    <input
+      type="file"
+      id="driverPrivateHirePaper"
+      name="driverPrivateHirePaper"
+      accept="image/*,application/pdf"
+      className="custom_input hidden"
+      onChange={handleInputChange}
+    />
+    <label
+      htmlFor="driverPrivateHirePaper"
+      className="btn btn-primary cursor-pointer mt-1"
+    >
+      Choose file
+    </label>
+  </div>
+</div>
+
+
+        </div>
+      </div>
+            <hr className="mb-12 mt-12 border-gray-300" />
         </>
     );
 };
 
-export default DriverData; 
+export default DriverData;

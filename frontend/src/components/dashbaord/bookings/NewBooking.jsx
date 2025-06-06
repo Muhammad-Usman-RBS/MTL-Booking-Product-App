@@ -82,27 +82,64 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       setMode(editBookingData.mode || "Transfer");
       setReturnJourney(editBookingData.returnJourney || false);
       setSelectedVehicle(editBookingData.vehicle || null);
+
+      // ✅ Fix default fallback values
       setVehicleExtras({
-        passenger: editBookingData.vehicle?.passenger || 0,
-        childSeat: editBookingData.vehicle?.childSeat || 0,
-        handLuggage: editBookingData.vehicle?.handLuggage || 0,
-        checkinLuggage: editBookingData.vehicle?.checkinLuggage || 0,
+        passenger: editBookingData.vehicle?.passenger ?? 0,
+        childSeat: editBookingData.vehicle?.childSeat ?? 0,
+        handLuggage: editBookingData.vehicle?.handLuggage ?? 0,
+        checkinLuggage: editBookingData.vehicle?.checkinLuggage ?? 0,
       });
 
-      setJourney1Data(editBookingData.journey1 || {});
+      setPassengerDetails({
+        name: editBookingData.passenger?.name || "",
+        email: editBookingData.passenger?.email || "",
+        phone: editBookingData.passenger?.phone || "",
+      });
+
+      setJourney1Data({
+        pickup: editBookingData.journey1?.pickup || "",
+        date: editBookingData.journey1?.date || "",
+        hour: editBookingData.journey1?.hour || "",
+        minute: editBookingData.journey1?.minute || "",
+        arrivefrom: editBookingData.journey1?.arrivefrom || "",
+        pickmeAfter: editBookingData.journey1?.pickmeAfter || "",
+        flightNumber: editBookingData.journey1?.flightNumber || "",
+        pickupDoorNumber: editBookingData.journey1?.pickupDoorNumber || "",
+        notes: editBookingData.journey1?.notes || "",
+        internalNotes: editBookingData.journey1?.internalNotes || "",
+        dropoffDoorNumber0: editBookingData.journey1?.dropoffDoorNumber0 || "",
+        dropoff_terminal_0: editBookingData.journey1?.dropoff_terminal_0 || "",
+      });
+
       setDropOffs1([
         editBookingData.journey1?.dropoff || "",
         editBookingData.journey1?.additionalDropoff1 || "",
-        editBookingData.journey1?.additionalDropoff2 || ""
-      ]);
+        editBookingData.journey1?.additionalDropoff2 || "",
+      ].filter(Boolean)); // clean empty entries
 
+      // ✅ Return Journey — only if selected
       if (editBookingData.returnJourney) {
-        setJourney2Data(editBookingData.journey2 || {});
+        setJourney2Data({
+          pickup: editBookingData.journey2?.pickup || "",
+          date: editBookingData.journey2?.date || "",
+          hour: editBookingData.journey2?.hour || "",
+          minute: editBookingData.journey2?.minute || "",
+          arrivefrom: editBookingData.journey2?.arrivefrom || "",
+          pickmeAfter: editBookingData.journey2?.pickmeAfter || "",
+          flightNumber: editBookingData.journey2?.flightNumber || "",
+          pickupDoorNumber: editBookingData.journey2?.pickupDoorNumber || "",
+          notes: editBookingData.journey2?.notes || "",
+          internalNotes: editBookingData.journey2?.internalNotes || "",
+          dropoffDoorNumber0: editBookingData.journey2?.dropoffDoorNumber0 || "",
+          dropoff_terminal_0: editBookingData.journey2?.dropoff_terminal_0 || "",
+        });
+
         setDropOffs2([
           editBookingData.journey2?.dropoff || "",
           editBookingData.journey2?.additionalDropoff1 || "",
-          editBookingData.journey2?.additionalDropoff2 || ""
-        ]);
+          editBookingData.journey2?.additionalDropoff2 || "",
+        ].filter(Boolean));
       }
 
       if (editBookingData.journey1?.hourlyOption) {
@@ -110,6 +147,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       }
     }
   }, [editBookingData]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -329,6 +367,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         <VehicleSelection
           setSelectedVehicle={setSelectedVehicle}
           setVehicleExtras={setVehicleExtras}
+          editBookingData={editBookingData}
         />
 
         <PassengerDetails
