@@ -9,7 +9,8 @@ const generalPricingSchema = new mongoose.Schema(
             enum: ["general"],
             unique: true,
         },
-        priceDecimals: { type: Number, default: 2 },
+        pickupAirportPrice: { type: Number, default: 2 },  
+        dropoffAirportPrice: { type: Number, default: 2 }, 
         minAdditionalDropOff: { type: Number, default: 10 },
         childSeatPrice: { type: Number, default: 5 },
         cardPaymentType: {

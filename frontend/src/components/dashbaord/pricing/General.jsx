@@ -2,12 +2,16 @@ import React, { useEffect, useState } from "react";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { toast } from "react-toastify";
-import { useGetGeneralPricingQuery, useUpdateGeneralPricingMutation } from "../../../redux/api/generalPricingApi";
+import {
+  useGetGeneralPricingQuery,
+  useUpdateGeneralPricingMutation,
+} from "../../../redux/api/generalPricingApi";
 
 const General = () => {
   const [formData, setFormData] = useState({
     type: "general",
-    priceDecimals: "2",
+    pickupAirportPrice: "2",
+    dropoffAirportPrice: "2",
     minAdditionalDropOff: "10",
     childSeatPrice: "5",
     cardPaymentType: "Percentage",
@@ -47,17 +51,44 @@ const General = () => {
         onSubmit={handleSubmit}
         className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 space-y-6"
       >
-        <div>
-          <label className="block text-gray-700 font-semibold mb-2">
-            Price Decimals
-          </label>
-          <input
-            type="number"
-            name="priceDecimals"
-            value={formData.priceDecimals}
-            onChange={handleChange}
-            className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+        <OutletHeading name="Location Category Pricing" />
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* Pickup Section */}
+          <div className="flex-1">
+            <label className="block text-gray-700 font-semibold mb-2">
+              Pickup:
+            </label>
+            <div className="flex gap-2 items-center mt-3">
+              <label className="block font-medium text-gray-500">Airport:</label>
+              <input
+                type="number"
+                name="pickupAirportPrice"
+                value={formData.pickupAirportPrice}
+                onChange={handleChange}
+                className="custom_input"
+              />
+            </div>
+          </div>
+
+          {/* Vertical Line */}
+          <div className="hidden sm:block w-[1px] bg-gray-300 mx-4"></div>
+
+          {/* Drop Off Section */}
+          <div className="flex-1">
+            <label className="block text-gray-700 font-semibold mb-2">
+              Drop Off:
+            </label>
+            <div className="flex gap-2 items-center mt-3">
+              <label className="block font-medium text-gray-500">Airport:</label>
+              <input
+                type="number"
+                name="dropoffAirportPrice"
+                value={formData.dropoffAirportPrice}
+                onChange={handleChange}
+                className="custom_input"
+              />
+            </div>
+          </div>
         </div>
 
         <div>

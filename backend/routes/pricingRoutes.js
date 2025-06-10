@@ -6,6 +6,7 @@ import { createVehicle, getAllVehicles, updateVehicle, deleteVehicle, getVehicle
 import { createHourlyPackage, deleteHourlyPackage, getAllHourlyPackages, getHourlyPackageById, updateHourlyPackage } from "../controllers/pricings/hourlyPackageController.js";
 import { getAllFixedPrices, createFixedPrice, updateFixedPrice, deleteFixedPrice } from "../controllers/pricings/fixedPriceController.js";
 import { getAllExtras, createExtra, updateExtra, deleteExtra } from "../controllers/pricings/extrasController.js";
+import { getAllPostcodePrices, createPostcodePrice, updatePostcodePrice, deletePostcodePrice } from "../controllers/pricings/postcodePriceController.js";
 
 const router = express.Router();
 const vehicleUploader = getUploader("vehicle");
@@ -33,6 +34,12 @@ router.get("/fixed-prices", protect, getAllFixedPrices);
 router.post("/fixed-prices", protect, createFixedPrice);
 router.put("/fixed-prices/:id", protect, updateFixedPrice);
 router.delete("/fixed-prices/:id", protect, deleteFixedPrice);
+
+// POSTCODE PRICING
+router.get("/postcode-prices", protect, getAllPostcodePrices);
+router.post("/postcode-prices", protect, createPostcodePrice);
+router.put("/postcode-prices/:id", protect, updatePostcodePrice);
+router.delete("/postcode-prices/:id", protect, deletePostcodePrice);
 
 // EXTRAS PRICING
 router.get("/extras", protect, getAllExtras);

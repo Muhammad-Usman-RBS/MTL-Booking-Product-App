@@ -4,12 +4,7 @@ import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 const Notifications = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState("Yes");
   const [serverKey, setServerKey] = useState("");
-  const [firebaseConfig, setFirebaseConfig] = useState(`apiKey: "Original API",
-authDomain: "mega-transfers-e0fcb.firebaseapp.com",
-projectId: "mega-transfers-e0fcb",
-storageBucket: "mega-transfers-e0fcb.appspot.com",
-messagingSenderId: "Original ID",
-appId: "Original API"`);
+  const [firebaseConfig, setFirebaseConfig] = useState("");
 
   const handleSubmit = () => {
     // Add your update logic here

@@ -1,34 +1,49 @@
 import React, { useState } from "react";
+import axios from "axios";
 import Icons from "../../../assets/icons";
-import ExtrasPrcing from "./ExtrasPrcing";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { toast } from "react-toastify";
+import { GOOGLE_API_KEY } from "../../../config";
 import {
-  useGetAllZonesQuery,
-} from "../../../redux/api/zoneApi";
-import {
-  useGetAllFixedPricesQuery,
-  useCreateFixedPriceMutation,
-  useUpdateFixedPriceMutation,
-  useDeleteFixedPriceMutation,
-} from "../../../redux/api/fixedPriceApi";
+  useFetchAllPostcodePricesQuery,
+  useCreatePostcodePriceMutation,
+  useUpdatePostcodePriceMutation,
+  useDeletePostcodePriceMutation,
+} from "../../../redux/api/postcodePriceApi";
 
-const FixedPricing = () => {
+const PostcodeDistrict = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [isNew, setIsNew] = useState(true);
+  const [priceChange, setPriceChange] = useState(0);
   const [pickupSuggestions, setPickupSuggestions] = useState([]);
   const [dropoffSuggestions, setDropoffSuggestions] = useState([]);
 
-  const { data: zones = [] } = useGetAllZonesQuery();
-  const { data: fixedPrices = [], refetch } = useGetAllFixedPricesQuery();
-  const [createFixedPrice] = useCreateFixedPriceMutation();
-  const [updateFixedPrice] = useUpdateFixedPriceMutation();
-  const [deleteFixedPrice] = useDeleteFixedPriceMutation();
-  const [priceChange, setPriceChange] = useState(0);
+  const { data: fixedPrices = [], refetch } = useFetchAllPostcodePricesQuery();
+  const [createFixedPrice] = useCreatePostcodePriceMutation();
+  const [updateFixedPrice] = useUpdatePostcodePriceMutation();
+  const [deleteFixedPrice] = useDeletePostcodePriceMutation();
+
+  const fetchPostcodeSuggestions = async (query, setSuggestions) => {
+    if (!query || query.length < 2) return setSuggestions([]);
+    try {
+      const res = await axios.get(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_API_KEY}`
+      );
+      const suggestions = res.data.results
+        .map((r) =>
+          r.address_components.find((c) => c.types.includes("postal_code"))
+        )
+        .filter(Boolean)
+        .map((c) => c.long_name);
+      setSuggestions([...new Set(suggestions)]);
+    } catch (err) {
+      console.error("Google API Error:", err);
+      setSuggestions([]);
+    }
+  };
 
   const handleEdit = (item) => {
     setIsNew(false);
@@ -38,17 +53,12 @@ const FixedPricing = () => {
 
   const handleAddNew = () => {
     setIsNew(true);
-    setSelectedItem({
-      direction: "Both Ways",
-      pickup: "",
-      dropoff: "",
-      price: 0,
-    });
+    setSelectedItem({ pickup: "", dropoff: "", price: 0 });
     setShowModal(true);
   };
 
   const handleSave = async () => {
-    const { pickup, dropoff, price, direction, _id } = selectedItem;
+    const { pickup, dropoff, price, _id } = selectedItem;
 
     if (!pickup || !dropoff || !price) {
       toast.error("Please fill all fields");
@@ -56,13 +66,9 @@ const FixedPricing = () => {
     }
 
     const payload = {
-      pickup: pickup.toString(),
-      dropoff: dropoff.toString(),
+      pickup: pickup.trim(),
+      dropoff: dropoff.trim(),
       price: parseFloat(price),
-      direction:
-        direction === "One Way" || direction === "Both Ways"
-          ? direction
-          : "One Way",
     };
 
     try {
@@ -99,7 +105,6 @@ const FixedPricing = () => {
           pickup: item.pickup,
           dropoff: item.dropoff,
           price: updatedPrice,
-          direction: item.direction,
         }).unwrap();
       }
 
@@ -148,7 +153,7 @@ const FixedPricing = () => {
   return (
     <>
       <div>
-        <OutletHeading name="Fixed Pricing" />
+        <OutletHeading name="Postcode District" />
         <div className="flex justify-between items-center mb-4">
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700">
@@ -183,86 +188,69 @@ const FixedPricing = () => {
       <CustomModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        heading={`${isNew ? "Add" : "Edit"} Fixed Price`}
+        heading={`${isNew ? "Add" : "Edit"} Postcode Price`}
       >
         <div className="space-y-6 w-96 px-2 sm:px-4 pt-2 text-sm">
-          {/* Direction */}
-          <div>
-            <label className="block text-gray-700 font-semibold mb-1">Direction</label>
-            <SelectOption
-              width="full"
-              value={selectedItem?.direction || ""}
-              onChange={(val) =>
-                setSelectedItem({ ...selectedItem, direction: val?.value || val })
-              }
-              options={["One Way", "Both Ways"]}
-            />
-          </div>
-
-          {/* Pickup */}
+          {/* Pickup Postcode */}
           <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pick Up</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Pick Up Postcode</label>
             <input
               type="text"
               className="custom_input"
-              placeholder="Type or select a pickup zone"
+              placeholder="Enter pickup postcode"
               value={selectedItem?.pickup || ""}
               onChange={(e) => {
-                setSelectedItem({ ...selectedItem, pickup: e.target.value });
-                setPickupSuggestions(
-                  zones.map((z) => z.name).filter((z) => z.toLowerCase().includes(e.target.value.toLowerCase()))
-                );
+                const val = e.target.value;
+                setSelectedItem({ ...selectedItem, pickup: val });
+                fetchPostcodeSuggestions(val, setPickupSuggestions);
               }}
-              onFocus={() => setPickupSuggestions(zones.map((z) => z.name))}
-              onBlur={() => setTimeout(() => setPickupSuggestions([]), 100)}
+              onBlur={() => setTimeout(() => setPickupSuggestions([]), 200)}
             />
             {pickupSuggestions.length > 0 && (
               <ul className="absolute z-10 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
-                {pickupSuggestions.map((zone, index) => (
+                {pickupSuggestions.map((postcode, index) => (
                   <li
                     key={index}
                     onClick={() => {
-                      setSelectedItem({ ...selectedItem, pickup: zone });
+                      setSelectedItem({ ...selectedItem, pickup: postcode });
                       setPickupSuggestions([]);
                     }}
                     className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
                   >
-                    {zone}
+                    {postcode}
                   </li>
                 ))}
               </ul>
             )}
           </div>
 
-          {/* Drop Off */}
+          {/* Drop Off Postcode */}
           <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Drop Off</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Drop Off Postcode</label>
             <input
               type="text"
               className="custom_input"
-              placeholder="Type or select a dropoff zone"
+              placeholder="Enter dropoff postcode"
               value={selectedItem?.dropoff || ""}
               onChange={(e) => {
-                setSelectedItem({ ...selectedItem, dropoff: e.target.value });
-                setDropoffSuggestions(
-                  zones.map((z) => z.name).filter((z) => z.toLowerCase().includes(e.target.value.toLowerCase()))
-                );
+                const val = e.target.value;
+                setSelectedItem({ ...selectedItem, dropoff: val });
+                fetchPostcodeSuggestions(val, setDropoffSuggestions);
               }}
-              onFocus={() => setDropoffSuggestions(zones.map((z) => z.name))}
-              onBlur={() => setTimeout(() => setDropoffSuggestions([]), 100)}
+              onBlur={() => setTimeout(() => setDropoffSuggestions([]), 200)}
             />
             {dropoffSuggestions.length > 0 && (
               <ul className="absolute z-10 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
-                {dropoffSuggestions.map((zone, index) => (
+                {dropoffSuggestions.map((postcode, index) => (
                   <li
                     key={index}
                     onClick={() => {
-                      setSelectedItem({ ...selectedItem, dropoff: zone });
+                      setSelectedItem({ ...selectedItem, dropoff: postcode });
                       setDropoffSuggestions([]);
                     }}
                     className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
                   >
-                    {zone}
+                    {postcode}
                   </li>
                 ))}
               </ul>
@@ -294,19 +282,14 @@ const FixedPricing = () => {
             >
               Cancel
             </button>
-            <button
-              onClick={handleSave}
-              className="btn btn-reset"
-            >
+            <button onClick={handleSave} className="btn btn-reset">
               {isNew ? "Add" : "Update"}
             </button>
           </div>
         </div>
       </CustomModal>
-      <hr className="mb-12 mt-12 border-gray-300" />
-      <ExtrasPrcing />
     </>
   );
 };
 
-export default FixedPricing;
+export default PostcodeDistrict;

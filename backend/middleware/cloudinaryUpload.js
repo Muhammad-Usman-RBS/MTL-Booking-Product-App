@@ -18,7 +18,7 @@ const getCloudinaryStorage = (subfolder) => {
         params: (req, file) => ({
             folder: `MTL-BOOKING-APP/${subfolder}`,
             allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
-            public_id: `${file.fieldname}-${Date.now()}`,
+            public_id: `${file.originalname}`,
         }),
     });
 };

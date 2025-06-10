@@ -28,7 +28,7 @@ import AdminList from "./components/dashbaord/adminlist/AdminList";
 import General from "./components/dashbaord/pricing/General";
 import VehiclePricing from "./components/dashbaord/pricing/VehiclePricing";
 import HourlyPackages from "./components/dashbaord/pricing/HourlyPackages";
-import LocationPricingCategory from "./components/dashbaord/pricing/LocationCategory";
+import PostcodeDistrict from "./components/dashbaord/pricing/PostcodeDistrict";
 import FixedPricing from "./components/dashbaord/pricing/FixedPricing";
 import DistanceSlab from "./components/dashbaord/pricing/DistanceSlab";
 import DriverPricing from "./components/dashbaord/pricing/DriverPricing";
@@ -121,7 +121,7 @@ function App() {
               <Route path="pricing/general" element={<General />} />
               <Route path="pricing/vehicle" element={<VehiclePricing />} />
               <Route path="pricing/hourly-packages" element={<HourlyPackages />} />
-              <Route path="pricing/location-category" element={<LocationPricingCategory />} />
+              <Route path="pricing/postcode-district" element={<PostcodeDistrict />} />
               <Route path="pricing/fixed" element={<FixedPricing />} />
               <Route path="pricing/distance-slab" element={<DistanceSlab />} />
               <Route path="pricing/driver-fare" element={<DriverFare />} />

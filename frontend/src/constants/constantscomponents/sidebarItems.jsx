@@ -156,14 +156,14 @@ const sidebarItems = [
         icon: Icons.Clock,
       },
       {
-        title: "Location Category",
-        route: "/dashboard/pricing/location-category",
-        icon: Icons.MapPin,
-      },
-      {
         title: "Fixed Pricing",
         route: "/dashboard/pricing/fixed",
         icon: Icons.Tag,
+      },
+      {
+        title: "Postcode District",
+        route: "/dashboard/pricing/postcode-district",
+        icon: Icons.Map,
       },
       {
         title: "Driver",

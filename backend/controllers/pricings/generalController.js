@@ -1,23 +1,43 @@
 import GeneralPricing from "../../models/pricings/GeneralModel.js";
 
+// GET General Pricing
 export const getGeneralPricing = async (req, res) => {
   try {
     const pricing = await GeneralPricing.findOne({ type: "general" });
+    if (!pricing) {
+      return res.status(404).json({ message: "General pricing not found" });
+    }
     res.status(200).json(pricing);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch pricing", error });
   }
 };
 
+// UPDATE or CREATE General Pricing
 export const updateGeneralPricing = async (req, res) => {
   try {
+    const {
+      pickupAirportPrice,
+      dropoffAirportPrice,
+      minAdditionalDropOff,
+      childSeatPrice,
+      cardPaymentType,
+      cardPaymentAmount,
+    } = req.body;
+
     const data = {
-      ...req.body,
       type: "general",
-      updatedBy: req.user._id,
+      updatedBy: req.user?._id,
+      pickupAirportPrice,
+      dropoffAirportPrice,
+      minAdditionalDropOff,
+      childSeatPrice,
+      cardPaymentType,
+      cardPaymentAmount,
     };
 
     let pricing = await GeneralPricing.findOne({ type: "general" });
+
     if (pricing) {
       pricing = await GeneralPricing.findOneAndUpdate({ type: "general" }, data, { new: true });
     } else {

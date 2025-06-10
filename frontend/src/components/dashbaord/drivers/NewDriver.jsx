@@ -10,6 +10,7 @@ import {
 } from "../../../redux/api/driverApi";
 import { toast } from "react-toastify";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import FilePreview from "../../../constants/constantscomponents/FilePreview";
 
 const NewDriver = () => {
   const { id } = useParams();
@@ -181,11 +182,11 @@ const NewDriver = () => {
         ),
         driverPrivateHireLicenseExpiry: formatDateForInput(
           DriverData.driverPrivateHireLicenseExpiry ||
-          rest.driverPrivateHireLicenseExpiry
+            rest.driverPrivateHireLicenseExpiry
         ),
         carPrivateHireLicenseExpiry: formatDateForInput(
           VehicleData.carPrivateHireLicenseExpiry ||
-          rest.carPrivateHireLicenseExpiry
+            rest.carPrivateHireLicenseExpiry
         ),
         motExpiryDate: formatDateForInput(
           VehicleData.motExpiryDate || rest.motExpiryDate
@@ -215,53 +216,30 @@ const NewDriver = () => {
 
   return (
     <div>
-      <div className={`${isEdit ? "border-gray-300 border-b" : ""} flex items-center justify-between mb-6`}>
-
+      <div
+        className={`${
+          isEdit ? "border-gray-300 border-b" : ""
+        } flex items-center justify-between mb-6`}
+      >
         <OutletHeading name={isEdit ? "Edit Driver" : "Add Driver"} />
 
         <Link to="/dashboard/drivers/list" className="mb-4">
-          <button
-            className="btn btn-primary "
-          >
-            ← Back to Driver List
-          </button>
+          <button className="btn btn-primary ">← Back to Driver List</button>
         </Link>
-
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* PROFILE PICTURE */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-          {filePreviews.driverPicture || formData.driverPicture ? (
-            <img
-              src={filePreviews.driverPicture || formData.driverPicture}
-              alt="Car Picture Preview"
-              className="w-64 h-40 object-cover border-gray-300 border-2"
-            />
-          ) : (
-            <div className="w-64 h-40 border border-dashed border-gray-300 flex items-center justify-center text-gray-500 text-sm font-light">
-              No Driver Image Uploaded
-            </div>
-          )}
-
-          <div>
-            <label className="block font-medium text-sm mb-1">
-              Upload Driver Image
-            </label>
-            <label
-              htmlFor="driverPicture"
-              className="btn btn-edit mt-1 cursor-pointer inline-block"
-            >
-              Choose File
-            </label>
-            <input
-              id="driverPicture"
-              name="driverPicture"
-              accept="image/*,application/pdf"
-              type="file"
-              onChange={handleInputChange}
-              className="hidden"
-            />
-          </div>
+          <FilePreview
+            label="Upload Driver Image:"
+            file={formData.driverPicture}
+            previewUrl={filePreviews.driverPicture}
+            previewName={filePreviews.driverPictureName}
+            formDataFile={formData.driverPicture}
+            name="driverPicture"
+            onChange={handleInputChange}
+            customPreviewClass="w-64 h-40"
+          />
         </div>
 
         {/* DRIVER SECTION */}
