@@ -35,7 +35,6 @@ export const createHourlyPackage = async (req, res) => {
     }
 };
 
-
 // Get all hourly packages by companyId
 export const getAllHourlyPackages = async (req, res) => {
     try {

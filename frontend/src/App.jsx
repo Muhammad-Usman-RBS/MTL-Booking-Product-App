@@ -16,7 +16,6 @@ import InvoicesList from "./components/dashbaord/invoices/InvoicesList";
 import NewInvoice from "./components/dashbaord/invoices/NewInvoice";
 import EditInvoice from "./components/dashbaord/invoices/EditInvoice";
 import NewDriver from "./components/dashbaord/drivers/NewDriver";
-import DriverRegistrationConfig from "./components/dashbaord/drivers/DriverRegistrationConfig";
 import DriverList from "./components/dashbaord/drivers/DriverList";
 import DriverStatements from "./components/dashbaord/statements/DriverStatements";
 import DriverPayments from "./components/dashbaord/statements/DriverPayments";
@@ -104,7 +103,6 @@ function App() {
               <Route path="drivers/list" element={<DriverList />} />
               <Route path="drivers/new" element={<NewDriver />} />
               <Route path="drivers/edit/:id" element={<NewDriver />} />
-              <Route path="drivers/config" element={<DriverRegistrationConfig />} />
               <Route path="drivers/earnings" element={<DriverEarnings />} />
               <Route path="drivers/all-rides" element={<DriverRides />} />
               <Route path="drivers/jobs/:id" element={<DriverJobDetails />} />

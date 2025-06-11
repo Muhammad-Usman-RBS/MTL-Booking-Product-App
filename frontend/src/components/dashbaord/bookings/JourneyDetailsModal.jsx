@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -6,14 +6,25 @@ import PDFContent from "./PDFContent";
 import { useSelector } from "react-redux";
 
 const JourneyDetailsModal = ({ viewData = {} }) => {
-  const [email, setEmail] = useState(viewData?.passenger?.email || "");
+  const [selectedType, setSelectedType] = useState("Send Customer");
+  const [email, setEmail] = useState("");
   const pdfRef = useRef();
-  const companyId = localStorage.getItem("companyId");
 
+  const companyId = localStorage.getItem("companyId");
   const companyList = useSelector((state) => state.company?.list);
   const companyData = Array.isArray(companyList)
     ? companyList.find((c) => c._id === companyId)
     : null;
+
+  const loggedInUser = useSelector((state) => state.auth?.user);
+
+  useEffect(() => {
+    if (selectedType === "Send Customer") {
+      setEmail(viewData?.passenger?.email || "");
+    } else if (selectedType === "Send Client Admin") {
+      setEmail(loggedInUser?.email || "");
+    }
+  }, [selectedType, viewData, loggedInUser]);
 
   const downloadPDF = async () => {
     const input = pdfRef.current;
@@ -77,7 +88,14 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
       <div className="max-w-5xl w-full mx-auto space-y-5 p-5" id="pdf-container">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
-          <SelectOption options={["Booking Confirmation", "Booking Receipt"]} />
+          <SelectOption
+            options={["Send Customer", "Send Client Admin"]}
+            value={selectedType}
+            onChange={(val) => {
+              const selected = typeof val === "string" ? val : val?.target?.value;
+              setSelectedType(selected);
+            }}
+          />
           <div className="flex items-center gap-2 w-full">
             <span className="text-sm text-gray-700">Email</span>
             <input
@@ -117,12 +135,10 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
 
         {/* Main Content */}
         <div className="grid md:grid-cols-2 gap-5 text-xs text-gray-800">
-          {/* Left */}
           <div className="space-y-2.5">
             <div><strong>Order No.:</strong> {viewData?._id || "N/A"}</div>
             <div><strong>Booked On:</strong> {viewData?.createdAt ? new Date(viewData.createdAt).toLocaleString() : "N/A"}</div>
             <div><strong>Payment Reference:</strong> {viewData?.payment || "N/A"}</div>
-
             <div>
               <strong>Pick Up:</strong>
               <div className="ml-4 mt-1 space-y-1">
@@ -132,7 +148,6 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
               </div>
               <hr className="text-gray-300 my-2" />
             </div>
-
             <div>
               <strong>Drop Off:</strong>
               <div className="ml-4 mt-1 space-y-1">
@@ -143,7 +158,6 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             </div>
           </div>
 
-          {/* Right */}
           <div className="space-y-3">
             <div>
               <strong>Passenger Details:</strong>

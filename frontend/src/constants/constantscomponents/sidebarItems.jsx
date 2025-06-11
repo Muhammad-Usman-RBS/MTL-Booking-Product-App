@@ -60,11 +60,11 @@ const sidebarItems = [
         route: "/dashboard/drivers/new",
         icon: Icons.UserPlus,
       },
-      {
-        title: "Registration Config",
-        route: "/dashboard/drivers/config",
-        icon: Icons.Settings2,
-      },
+      // {
+      //   title: "Registration Config",
+      //   route: "/dashboard/drivers/config",
+      //   icon: Icons.Settings2,
+      // },
       {
         title: "Rides",
         icon: Icons.CarFront,

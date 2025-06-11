@@ -14,7 +14,7 @@ const DriverData = ({
       <div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label>Employee No. *</label>
+            <label>Employee No.</label>
             <input
               className="custom_input"
               name="employeeNumber"
@@ -23,7 +23,7 @@ const DriverData = ({
             />
           </div>
           <div>
-            <label>First Name *</label>
+            <label>First Name</label>
             <input
               className="custom_input"
               name="firstName"
@@ -32,7 +32,7 @@ const DriverData = ({
             />
           </div>
           <div>
-            <label>Sur Name *</label>
+            <label>Sur Name</label>
             <input
               className="custom_input"
               name="surName"
@@ -41,7 +41,7 @@ const DriverData = ({
             />
           </div>
           <div>
-            <label>Email *</label>
+            <label>Email</label>
             <input
               type="email"
               className="custom_input"
@@ -51,7 +51,7 @@ const DriverData = ({
             />
           </div>
           <div>
-            <label>Contact *</label>
+            <label>Contact</label>
             <input
               type="tel"
               className="custom_input"
@@ -60,7 +60,6 @@ const DriverData = ({
               onChange={handleInputChange}
             />
           </div>
-
           <div className="w-full">
             <label htmlFor="status">Status</label>
             <select
@@ -78,7 +77,6 @@ const DriverData = ({
               <option value="Expired">Expired</option>
             </select>
           </div>
-
           <div>
             <label>D.O.B.</label>
             <input
@@ -89,7 +87,6 @@ const DriverData = ({
               onChange={handleInputChange}
             />
           </div>
-
           <div>
             <label>Driving License</label>
             <input
@@ -128,7 +125,6 @@ const DriverData = ({
               onChange={handleInputChange}
             />
           </div>
-
           <div>
             <label>NI Number</label>
             <input
@@ -140,7 +136,6 @@ const DriverData = ({
           </div>
         </div>
       </div>
-
       <div>
         <label>Address</label>
         <textarea
@@ -154,7 +149,6 @@ const DriverData = ({
 
       <div>
         <label>Holidays</label>
-
         {formData.availability?.map((slot, index) => (
           <div
             key={index}
@@ -210,11 +204,9 @@ const DriverData = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        {/* DVLA Card */}
-
         <div>
           <FilePreview
-            label="DVLA Card:"
+            label="DVLA Card"
             file={formData.dvlaCard}
             previewUrl={filePreviews.dvlaCard}
             previewName={filePreviews.dvlaCardName}
@@ -223,10 +215,8 @@ const DriverData = ({
             onChange={handleInputChange}
           />
         </div>
-        {/* Driver Private Hire Paper */}
-
         <FilePreview
-          label="Driver Private Hire Paper:"
+          label="Driver Private Hire Paper"
           file={formData.driverPrivateHirePaper}
           previewUrl={filePreviews.driverPrivateHirePaper}
           previewName={filePreviews.driverPrivateHirePaperName}

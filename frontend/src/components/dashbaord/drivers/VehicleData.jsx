@@ -12,18 +12,16 @@ const VehicleData = ({
       <div>
         <h3 className="text-xl font-semibold mt-6">Vehicle Information</h3>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6 mt-2">
-        <FilePreview
-  label="Upload Car Image:"
-  file={formData.carPicture}
-  previewUrl={filePreviews.carPicture}
-  previewName={filePreviews.carPictureName}
-  formDataFile={formData.carPicture}
-  name="carPicture"
-  onChange={handleInputChange}
-/>
-
+          <FilePreview
+            label="Upload Car Image"
+            file={formData.carPicture}
+            previewUrl={filePreviews.carPicture}
+            previewName={filePreviews.carPictureName}
+            formDataFile={formData.carPicture}
+            name="carPicture"
+            onChange={handleInputChange}
+          />
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label>Vehicle Make</label>
@@ -105,10 +103,9 @@ const VehicleData = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Private Hire Card */}
         <div>
           <FilePreview
-            label="Private Hire Card:"
+            label="Private Hire Card"
             file={formData.privateHireCard}
             previewUrl={filePreviews.privateHireCard}
             previewName={filePreviews.privateHireCardName}
@@ -117,11 +114,9 @@ const VehicleData = ({
             onChange={handleInputChange}
           />
         </div>
-
-        {/* Private Hire Car Paper */}
         <div>
           <FilePreview
-            label="Private Hire Car Paper:"
+            label="Private Hire Car Paper"
             file={formData.privateHireCarPaper}
             previewUrl={filePreviews.privateHireCarPaper}
             previewName={filePreviews.privateHireCarPaperName}
@@ -130,11 +125,9 @@ const VehicleData = ({
             onChange={handleInputChange}
           />
         </div>
-
-        {/* Insurance */}
         <div>
           <FilePreview
-            label="Insurance:"
+            label="Insurance"
             file={formData.insurance}
             previewUrl={filePreviews.insurance}
             previewName={filePreviews.insuranceName}
@@ -143,11 +136,9 @@ const VehicleData = ({
             onChange={handleInputChange}
           />
         </div>
-
-        {/* MOT Expiry */}
         <div>
           <FilePreview
-            label="MOT Expiry:"
+            label="MOT Expiry"
             file={formData.motExpiry}
             previewUrl={filePreviews.motExpiry}
             previewName={filePreviews.motExpiryName}
@@ -156,11 +147,9 @@ const VehicleData = ({
             onChange={handleInputChange}
           />
         </div>
-
-        {/* V5 */}
         <div>
           <FilePreview
-            label="V5:"
+            label="V5"
             file={formData.V5}
             previewUrl={filePreviews.V5}
             previewName={filePreviews.V5Name}
@@ -171,8 +160,7 @@ const VehicleData = ({
         </div>
       </div>
       <div className="mt-6">
-        <label className="block font-semibold mb-2">Vehicle Types *</label>
-
+        <label className="block font-semibold mb-2">Vehicle Types</label>
         <div className="grid grid-cols-3 grid-rows-3 gap-2">
           {[
             "Standard Sedan",
