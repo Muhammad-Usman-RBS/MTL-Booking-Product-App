@@ -76,12 +76,6 @@ const BookingSchema = new mongoose.Schema({
     type: JourneySchema,
     required: true,
   },
-  journey2: {
-    type: JourneySchema,
-    required: function () {
-      return this.returnJourney;
-    },
-  },
   vehicle: {
     type: VehicleInfoSchema,
     required: true,
