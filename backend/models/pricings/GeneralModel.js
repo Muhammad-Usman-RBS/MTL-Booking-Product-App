@@ -24,6 +24,6 @@ const generalPricingSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-const GeneralPricing = mongoose.model("GeneralPricing", generalPricingSchema);
+const GeneralModel = mongoose.model("GeneralPricing", generalPricingSchema);
 
-export default GeneralPricing;
+export default GeneralModel;
