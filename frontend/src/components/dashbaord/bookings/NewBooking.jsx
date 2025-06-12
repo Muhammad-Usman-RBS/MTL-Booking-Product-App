@@ -178,7 +178,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
     const payload = {
       mode,
-      returnJourney: false, // ✅ always false now; treated as a single booking
+      returnJourney,
       companyId,
       referrer: document.referrer || "manual",
       vehicle: {
@@ -202,7 +202,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     // Return Journey Payload (separate booking if needed)
     const returnPayload = {
       mode,
-      returnJourney: false, // ✅ separate booking = false
+      returnJourney,
       companyId,
       referrer: document.referrer || "manual",
       vehicle: {

@@ -45,7 +45,7 @@ export const createBooking = async (req, res) => {
     // Booking 1 (primary)
     const booking1Data = {
       mode,
-      returnJourney: false,
+      returnJourney,
       companyId,
       referrer: referrer || "Manual Entry",
       source: "admin",
@@ -99,7 +99,7 @@ export const createBooking = async (req, res) => {
     if (returnJourney && journey2 && Object.keys(journey2).length) {
       const booking2Data = {
         mode,
-        returnJourney: false,
+        returnJourney,
         companyId,
         referrer: referrer || "Manual Entry",
         source: "admin",
@@ -269,7 +269,7 @@ export const submitWidgetForm = async (req, res) => {
       companyId,
       referrer,
       mode = "Transfer",
-      returnJourney = false,
+      returnJourney,
       vehicle,
       journey1,
       journey2
