@@ -5,7 +5,7 @@ import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { toast } from "react-toastify";
-import { GOOGLE_API_KEY } from "../../../config";
+import { VITE_GOOGLE_API_KEY } from "../../../config";
 import {
   useFetchAllPostcodePricesQuery,
   useCreatePostcodePriceMutation,
