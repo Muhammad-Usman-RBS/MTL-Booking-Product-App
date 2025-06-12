@@ -18,6 +18,8 @@ import {
 const NewBooking = ({ editBookingData = null, onClose }) => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
+
+  console.log("asdsa", companyId)
   const { data: hourlyPackages = [] } = useGetAllHourlyRatesQuery(companyId, {
     skip: !companyId,
   });
@@ -350,20 +352,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           />
         )}
 
-        <div className="flex justify-center mt-8">
-          <button
-            onClick={handleSubmit}
-            className="btn btn-primary"
-            disabled={isLoading}
-          >
-            {isLoading
-              ? "Processing..."
-              : editBookingData && editBookingData._id
-                ? "Update Booking"
-                : "Submit Booking"}
-          </button>
-        </div>
-
         <VehicleSelection
           setSelectedVehicle={setSelectedVehicle}
           setVehicleExtras={setVehicleExtras}
@@ -374,7 +362,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           passengerDetails={passengerDetails}
           setPassengerDetails={setPassengerDetails}
         />
-        <FareSection />
+        
+        <FareSection handleSubmit={handleSubmit} isLoading={isLoading} editBookingData={editBookingData} />
       </div>
     </>
   );

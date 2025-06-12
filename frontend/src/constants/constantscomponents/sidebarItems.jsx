@@ -166,24 +166,9 @@ const sidebarItems = [
         icon: Icons.Map,
       },
       {
-        title: "Driver",
-        route: "/dashboard/pricing/driver-fare",
-        icon: Icons.User,
-      },
-      {
-        title: "Congestion Charges",
-        route: "/dashboard/pricing/congestion",
-        icon: Icons.TrafficCone,
-      },
-      {
         title: "Discounts / Surcharge - Date",
         route: "/dashboard/pricing/discounts-date",
         icon: Icons.Calendar,
-      },
-      {
-        title: "Discounts / Surcharge - Location",
-        route: "/dashboard/pricing/discounts-location",
-        icon: Icons.Map,
       },
       {
         title: "Vouchers",

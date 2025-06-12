@@ -31,9 +31,7 @@ import PostcodeDistrict from "./components/dashbaord/pricing/PostcodeDistrict";
 import FixedPricing from "./components/dashbaord/pricing/FixedPricing";
 import DistanceSlab from "./components/dashbaord/pricing/DistanceSlab";
 import DriverPricing from "./components/dashbaord/pricing/DriverPricing";
-import CongestionCharges from "./components/dashbaord/pricing/CongestionCharges";
 import DiscountsByDate from "./components/dashbaord/pricing/DiscountsByDate";
-import DiscountsByLocation from "./components/dashbaord/pricing/DiscountsByLocation";
 import Vouchers from "./components/dashbaord/pricing/Vouchers";
 
 import SettingsGeneral from "./components/dashbaord/settings/SettingsGeneral";
@@ -53,7 +51,6 @@ import SMSSettings from "./components/dashbaord/settings/SMSSettings";
 import SocialMedia from "./components/dashbaord/settings/SocialMedia";
 import ChatPlugin from "./components/dashbaord/settings/ChatPlugin";
 import CronJob from "./components/dashbaord/settings/CronJob";
-import DriverFare from "./components/dashbaord/pricing/DriverFare";
 import WidgetMain from "./components/dashbaord/widgetapi/WidgetMain";
 import WidgetAPI from "./components/dashbaord/widgetapi/WidgetAPI";
 import DriverEarnings from "./portals/driverportal/earnings/DriverEarnings";
@@ -122,10 +119,7 @@ function App() {
               <Route path="pricing/postcode-district" element={<PostcodeDistrict />} />
               <Route path="pricing/fixed" element={<FixedPricing />} />
               <Route path="pricing/distance-slab" element={<DistanceSlab />} />
-              <Route path="pricing/driver-fare" element={<DriverFare />} />
-              <Route path="pricing/congestion" element={<CongestionCharges />} />
               <Route path="pricing/discounts-date" element={<DiscountsByDate />} />
-              <Route path="pricing/discounts-location" element={<DiscountsByLocation />} />
               <Route path="pricing/vouchers" element={<Vouchers />} />
 
               {/* Settings */}

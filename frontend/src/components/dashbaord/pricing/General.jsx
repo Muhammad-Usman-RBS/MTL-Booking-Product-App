@@ -14,7 +14,7 @@ const General = () => {
     dropoffAirportPrice: "2",
     minAdditionalDropOff: "10",
     childSeatPrice: "5",
-    cardPaymentType: "Percentage",
+    cardPaymentType: "Card",
     cardPaymentAmount: "0",
   });
 
@@ -44,20 +44,26 @@ const General = () => {
     setFormData({ ...formData, [name]: value });
   };
 
+  const handlePaymentTypeChange = (e) => {
+    const newType = e.target.value;
+    setFormData({
+      ...formData,
+      cardPaymentType: newType,
+      cardPaymentAmount: newType === "Cash" ? "0" : formData.cardPaymentAmount,
+    });
+  };
+
   return (
     <>
       <OutletHeading name="General Pricing" />
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 space-y-6"
-      >
+      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 space-y-6">
+
         <OutletHeading name="Location Category Pricing" />
+
+        {/* Pickup Section */}
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* Pickup Section */}
           <div className="flex-1">
-            <label className="block text-gray-700 font-semibold mb-2">
-              Pickup:
-            </label>
+            <label className="block text-gray-700 font-semibold mb-2">Pickup:</label>
             <div className="flex gap-2 items-center mt-3">
               <label className="block font-medium text-gray-500">Airport:</label>
               <input
@@ -70,14 +76,11 @@ const General = () => {
             </div>
           </div>
 
-          {/* Vertical Line */}
           <div className="hidden sm:block w-[1px] bg-gray-300 mx-4"></div>
 
           {/* Drop Off Section */}
           <div className="flex-1">
-            <label className="block text-gray-700 font-semibold mb-2">
-              Drop Off:
-            </label>
+            <label className="block text-gray-700 font-semibold mb-2">Drop Off:</label>
             <div className="flex gap-2 items-center mt-3">
               <label className="block font-medium text-gray-500">Airport:</label>
               <input
@@ -91,10 +94,9 @@ const General = () => {
           </div>
         </div>
 
+        {/* Additional Drop Off */}
         <div>
-          <label className="block text-gray-700 font-semibold mb-2">
-            Minimum Price for Additional Drop Off
-          </label>
+          <label className="block text-gray-700 font-semibold mb-2">Minimum Price for Additional Drop Off</label>
           <div className="flex">
             <input
               type="number"
@@ -103,16 +105,13 @@ const General = () => {
               onChange={handleChange}
               className="w-full border border-gray-300 px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <span className="px-4 flex items-center border border-l-0 border-gray-300 bg-gray-100 rounded-r-md">
-              GBP
-            </span>
+            <span className="px-4 flex items-center border border-l-0 border-gray-300 bg-gray-100 rounded-r-md">GBP</span>
           </div>
         </div>
 
+        {/* Child Seat */}
         <div>
-          <label className="block text-gray-700 font-semibold mb-2">
-            Child Seat Price
-          </label>
+          <label className="block text-gray-700 font-semibold mb-2">Child Seat Price</label>
           <div className="flex">
             <input
               type="number"
@@ -121,44 +120,39 @@ const General = () => {
               onChange={handleChange}
               className="w-full border border-gray-300 px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <span className="px-4 flex items-center border border-l-0 border-gray-300 bg-gray-100 rounded-r-md">
-              GBP
-            </span>
+            <span className="px-4 flex items-center border border-l-0 border-gray-300 bg-gray-100 rounded-r-md">GBP</span>
           </div>
         </div>
 
+        {/* Card Payment Type */}
         <div>
-          <label className="block text-gray-700 font-semibold mb-2">
-            Card Payment Price Type
-          </label>
+          <label className="block text-gray-700 font-semibold mb-2">Card Payment Price Type</label>
           <SelectOption
             width="full"
-            options={["Percentage", "Amount"]}
+            options={["Card", "Cash"]}
             value={formData.cardPaymentType}
-            onChange={(e) =>
-              setFormData({ ...formData, cardPaymentType: e.target.value })
-            }
+            onChange={handlePaymentTypeChange}
           />
         </div>
 
-        <div>
-          <label className="block text-gray-700 font-semibold mb-2">
-            Card Payment Amount / Percentage
-          </label>
-          <div className="flex">
-            <input
-              type="number"
-              name="cardPaymentAmount"
-              value={formData.cardPaymentAmount}
-              onChange={handleChange}
-              className="w-full border border-gray-300 px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <span className="px-4 flex items-center border border-l-0 border-gray-300 bg-gray-100 rounded-r-md">
-              {formData.cardPaymentType === "Percentage" ? "%" : "GBP"}
-            </span>
+        {/* Card Payment Card only if Card selected */}
+        {formData.cardPaymentType === "Card" && (
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">Card Payment Percentage</label>
+            <div className="flex">
+              <input
+                type="number"
+                name="cardPaymentAmount"
+                value={formData.cardPaymentAmount}
+                onChange={handleChange}
+                className="w-full border border-gray-300 px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="px-4 flex items-center border border-l-0 border-gray-300 bg-gray-100 rounded-r-md">%</span>
+            </div>
           </div>
-        </div>
+        )}
 
+        {/* Submit Button */}
         <div className="text-center">
           <button type="submit" className="btn btn-success" disabled={isLoading}>
             {isLoading ? "UPDATING..." : "UPDATE"}

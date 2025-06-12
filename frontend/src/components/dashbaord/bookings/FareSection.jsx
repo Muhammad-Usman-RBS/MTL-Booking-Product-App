@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const FareSection = () => {
+const FareSection = ({ handleSubmit, isLoading, editBookingData }) => {
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [emailNotify, setEmailNotify] = useState({
     admin: false,
@@ -135,8 +135,17 @@ const FareSection = () => {
 
       {/* Book Button */}
       <div className="flex justify-center">
-        <button className="btn btn-success font-semibold px-6 py-2 rounded-md shadow transition">
-          Book
+
+        <button
+          onClick={handleSubmit}
+          className="btn btn-success font-semibold px-6 py-2 rounded-md shadow transition"
+          disabled={isLoading}
+        >
+          {isLoading
+            ? "Processing..."
+            : editBookingData && editBookingData._id
+              ? "Update Booking"
+              : "Submit Booking"}
         </button>
       </div>
     </div>

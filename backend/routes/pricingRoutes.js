@@ -1,12 +1,14 @@
 import express from "express";
-import { protect, authorize } from "../middleware/authMiddleware.js";
 import { getUploader } from "../middleware/cloudinaryUpload.js";
+import { protect, authorize } from "../middleware/authMiddleware.js";
 import { getGeneralPricing, updateGeneralPricing } from "../controllers/pricings/generalController.js";
 import { createVehicle, getAllVehicles, updateVehicle, deleteVehicle, getVehiclesByCompanyId } from "../controllers/pricings/vehicleController.js";
 import { createHourlyPackage, deleteHourlyPackage, getAllHourlyPackages, getHourlyPackageById, updateHourlyPackage } from "../controllers/pricings/hourlyPackageController.js";
 import { getAllFixedPrices, createFixedPrice, updateFixedPrice, deleteFixedPrice } from "../controllers/pricings/fixedPriceController.js";
 import { getAllExtras, createExtra, updateExtra, deleteExtra } from "../controllers/pricings/extrasController.js";
 import { getAllPostcodePrices, createPostcodePrice, updatePostcodePrice, deletePostcodePrice } from "../controllers/pricings/postcodePriceController.js";
+import { getAllDiscounts, createDiscount, updateDiscount, deleteDiscount } from "../controllers/pricings/discountController.js";
+import { getAllVouchers, createVoucher, updateVoucher, deleteVoucher } from "../controllers/pricings/voucherController.js";
 
 const router = express.Router();
 const vehicleUploader = getUploader("vehicle");
@@ -46,5 +48,17 @@ router.get("/extras", protect, getAllExtras);
 router.post("/extras", protect, createExtra);
 router.put("/extras/:id", protect, updateExtra);
 router.delete("/extras/:id", protect, deleteExtra);
+
+// DISCOUNT PRICING
+router.get("/discount", protect, getAllDiscounts);
+router.post("/discount", protect, createDiscount);
+router.put("/discount/:id", protect, updateDiscount);
+router.delete("/discount/:id", protect, deleteDiscount);
+
+// VOUCHERS PRICING
+router.get("/vouchers", protect, getAllVouchers);
+router.post("/vouchers", protect, createVoucher);
+router.put("/vouchers/:id", protect, updateVoucher);
+router.delete("/vouchers/:id", protect, deleteVoucher);
 
 export default router;
