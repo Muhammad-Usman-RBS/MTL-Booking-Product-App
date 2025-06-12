@@ -5,7 +5,7 @@ export const createBooking = async (req, res) => {
   try {
     const {
       mode = "Transfer",
-      returnJourney = false,
+      returnJourney,
       companyId,
       referrer,
       vehicle = {},
