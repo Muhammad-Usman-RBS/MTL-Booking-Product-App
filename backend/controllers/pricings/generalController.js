@@ -1,9 +1,9 @@
-import GeneralPricing from "../../models/pricings/GeneralModel.js";
+import GeneralModel from "../../models/pricings/GeneralModel.js";
 
 // GET General Pricing
 export const getGeneralPricing = async (req, res) => {
   try {
-    const pricing = await GeneralPricing.findOne({ type: "general" });
+    const pricing = await GeneralModel.findOne({ type: "general" });
     if (!pricing) {
       return res.status(404).json({ message: "General pricing not found" });
     }
@@ -36,12 +36,12 @@ export const updateGeneralPricing = async (req, res) => {
       cardPaymentAmount,
     };
 
-    let pricing = await GeneralPricing.findOne({ type: "general" });
+    let pricing = await GeneralModel.findOne({ type: "general" });
 
     if (pricing) {
-      pricing = await GeneralPricing.findOneAndUpdate({ type: "general" }, data, { new: true });
+      pricing = await GeneralModel.findOneAndUpdate({ type: "general" }, data, { new: true });
     } else {
-      pricing = await GeneralPricing.create(data);
+      pricing = await GeneralModel.create(data);
     }
 
     res.status(200).json(pricing);
