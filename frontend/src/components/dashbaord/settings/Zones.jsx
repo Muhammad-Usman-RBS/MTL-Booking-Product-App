@@ -5,7 +5,7 @@ import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import { GOOGLE_API_KEY } from "../../../config";
+import { VITE_GOOGLE_API_KEY } from "../../../config";
 import { GoogleMap, LoadScript, DrawingManager, StandaloneSearchBox, Polygon, } from "@react-google-maps/api";
 import { useGetAllZonesQuery, useCreateZoneMutation, useUpdateZoneMutation, useDeleteZoneMutation, } from "../../../redux/api/zoneApi";
 
@@ -175,7 +175,7 @@ const Zones = () => {
             </div>
 
             <div className="h-[500px] mb-4">
-              <LoadScript googleMapsApiKey={GOOGLE_API_KEY} libraries={LIBRARIES}>
+              <LoadScript googleMapsApiKey={VITE_GOOGLE_API_KEY} libraries={LIBRARIES}>
                 <GoogleMap
                   mapContainerStyle={{ width: "100%", height: "100%" }}
                   center={{ lat: 51.5074, lng: -0.1278 }}
@@ -243,7 +243,7 @@ const Zones = () => {
           </div>
 
           <div className="h-[450px] w-full relative">
-            <LoadScript googleMapsApiKey={GOOGLE_API_KEY} libraries={LIBRARIES}>
+            <LoadScript googleMapsApiKey={VITE_GOOGLE_API_KEY} libraries={LIBRARIES}>
               <GoogleMap
                 mapContainerStyle={{ width: "100%", height: "100%" }}
                 center={selectedZone?.coordinates?.[0] || { lat: 51.5074, lng: -0.1278 }}
