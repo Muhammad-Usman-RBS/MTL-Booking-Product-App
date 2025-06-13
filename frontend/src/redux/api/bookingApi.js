@@ -55,7 +55,7 @@ export const bookingApi = apiSlice.injectEndpoints({
       query: ({ id, status, updatedBy }) => ({
         url: `/booking/${id}`,
         method: "PATCH",
-        body: { status, updatedBy  },
+        body: { status, updatedBy },
       }),
     }),
 
@@ -64,6 +64,15 @@ export const bookingApi = apiSlice.injectEndpoints({
       query: () => ({
         url: "/booking/get-all-passengers",
         method: "GET",
+      }),
+    }),
+
+    // Send Booking Data
+    sendBookingEmail: builder.mutation({
+      query: ({ bookingId, email }) => ({
+        url: "/booking/send-booking-email",
+        method: "POST",
+        body: { bookingId, email },
       }),
     }),
 
@@ -78,4 +87,5 @@ export const {
   useDeleteBookingMutation,
   useUpdateBookingStatusMutation,
   useGetAllPassengersQuery,
+  useSendBookingEmailMutation,
 } = bookingApi;

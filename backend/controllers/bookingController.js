@@ -448,3 +448,47 @@ export const getAllPassengers = async (req, res) => {
     });
   }
 };
+
+// Send Booking Data
+export const sendBookingEmail = async (req, res) => {
+  const { bookingId, email  } = req.body;
+
+  if (!bookingId || !email) {
+    return res.status(400).json({ message: "Booking ID and email are required." });
+  }
+
+  try {
+    const booking = await Booking.findById(bookingId).lean();
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found." });
+    }
+
+    const addMilesToDistanceText = (journey) => {
+      if (journey?.distanceText && journey.distanceText.includes("km")) {
+        const km = parseFloat(journey.distanceText);
+        if (!isNaN(km)) {
+          const miles = (km * 0.621371);
+          journey.distanceText = `${km} km (${miles} miles)`;
+        }
+      }
+    };
+
+    addMilesToDistanceText(booking.journey1);
+    if (booking.returnJourney && booking.journey2) {
+      addMilesToDistanceText(booking.journey2);
+    }
+
+    const plainBooking = JSON.parse(JSON.stringify(booking)); 
+
+    await sendEmail(email, "Your Booking Confirmation", {
+      title: "Booking Confirmation",
+      subtitle: "Here are your booking details:",
+      data: plainBooking,
+    });
+
+    res.status(200).json({ message: "Booking email sent successfully." });
+  } catch (err) {
+    console.error("Error sending booking email:", err);
+    res.status(500).json({ message: "Failed to send booking email." });
+  }
+};

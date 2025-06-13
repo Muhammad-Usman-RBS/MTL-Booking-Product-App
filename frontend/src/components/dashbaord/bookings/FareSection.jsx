@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 
-const FareSection = ({ handleSubmit, isLoading, editBookingData }) => {
+const FareSection = ({ handleSubmit, isLoading, editBookingData, emailNotify,
+  setEmailNotify,
+}) => {
   const [paymentMethod, setPaymentMethod] = useState("Cash");
-  const [emailNotify, setEmailNotify] = useState({
-    admin: false,
-    customer: false,
-  });
+
   const [notification, setNotification] = useState({ customer: false });
 
   return (
@@ -138,7 +137,7 @@ const FareSection = ({ handleSubmit, isLoading, editBookingData }) => {
 
         <button
           onClick={handleSubmit}
-          className="btn btn-success font-semibold px-6 py-2 rounded-md shadow transition"
+          className="btn btn-primary font-semibold px-6 py-2 rounded-md shadow transition"
           disabled={isLoading}
         >
           {isLoading

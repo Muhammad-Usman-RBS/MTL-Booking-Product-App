@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import { useSendBookingEmailMutation } from "../../../redux/api/bookingApi";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import PDFContent from "./PDFContent";
 import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 
 const JourneyDetailsModal = ({ viewData = {} }) => {
+  const [sendBookingEmail, { isLoading: isSending }] = useSendBookingEmailMutation();
   const [selectedType, setSelectedType] = useState("Send Customer");
   const [email, setEmail] = useState("");
   const pdfRef = useRef();
@@ -25,6 +28,21 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
       setEmail(loggedInUser?.email || "");
     }
   }, [selectedType, viewData, loggedInUser]);
+
+  const handleSendEmail = async () => {
+    if (!email) return toast.info("Email is required");
+
+    try {
+      await sendBookingEmail({
+        email,
+        bookingId: viewData?._id,
+      }).unwrap();
+      toast.success("Email sent successfully!");
+    } catch (err) {
+      console.error("Failed to send email:", err);
+      toast.error("Failed to send email");
+    }
+  };
 
   const downloadPDF = async () => {
     const input = pdfRef.current;
@@ -107,7 +125,13 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             />
           </div>
           <div className="flex gap-2 w-full md:w-auto">
-            <button className="btn btn-success text-sm px-4 py-1.5">Send</button>
+            <button
+              className="btn btn-success text-sm px-4 py-1.5"
+              onClick={handleSendEmail}
+              disabled={isSending}
+            >
+              {isSending ? "Sending..." : "Send"}
+            </button>
             <button
               onClick={downloadPDF}
               className="border px-4 py-1.5 rounded text-gray-700 hover:bg-gray-100 text-sm"

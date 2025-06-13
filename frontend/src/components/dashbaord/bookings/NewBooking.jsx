@@ -23,7 +23,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const { data: hourlyPackages = [] } = useGetAllHourlyRatesQuery(companyId, {
     skip: !companyId,
   });
-
+  const [emailNotify, setEmailNotify] = useState({
+    admin: false,
+    customer: false,
+  });
   const [mode, setMode] = useState("Transfer");
   const [returnJourney, setReturnJourney] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
@@ -362,8 +365,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           passengerDetails={passengerDetails}
           setPassengerDetails={setPassengerDetails}
         />
-        
-        <FareSection handleSubmit={handleSubmit} isLoading={isLoading} editBookingData={editBookingData} />
+
+        <FareSection emailNotify={emailNotify} setEmailNotify={setEmailNotify} handleSubmit={handleSubmit} isLoading={isLoading} editBookingData={editBookingData} />
       </div>
     </>
   );
