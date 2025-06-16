@@ -11,6 +11,15 @@ export const postcodePriceApi = apiSlice.injectEndpoints({
             providesTags: ["PostcodePrices"],
         }),
 
+        // ✅ Widget Fetch (Public Widget)
+        fetchAllPostcodePricesWidget: builder.query({
+            query: (companyId) => ({
+                url: `/pricing/widget/postcode-prices?companyId=${companyId}`,
+                method: "GET",
+            }),
+            providesTags: ["PostcodePrices"],
+        }),
+
         createPostcodePrice: builder.mutation({
             query: (data) => ({
                 url: "/pricing/postcode-prices",
@@ -44,4 +53,5 @@ export const {
     useCreatePostcodePriceMutation,
     useUpdatePostcodePriceMutation,
     useDeletePostcodePriceMutation,
+    useFetchAllPostcodePricesWidgetQuery,
 } = postcodePriceApi;

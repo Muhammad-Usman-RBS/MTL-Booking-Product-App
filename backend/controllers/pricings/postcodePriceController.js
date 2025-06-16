@@ -9,6 +9,23 @@ export const getAllPostcodePrices = async (req, res) => {
     }
 };
 
+// For Widget
+export const getAllPostcodePricesWidget = async (req, res) => {
+    try {
+        let companyId = req.query.companyId;
+
+        // ✅ Public access: companyId is mandatory in query params
+        if (!companyId) {
+            return res.status(400).json({ message: "Company ID is required in query params" });
+        }
+
+        const prices = await FixedPrice.find({ companyId });
+        res.json(prices);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching prices", error: err.message });
+    }
+};
+
 export const createPostcodePrice = async (req, res) => {
     try {
         const { pickup, dropoff, price } = req.body;

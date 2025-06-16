@@ -1,49 +1,21 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
+import React, { useState } from 'react';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import SelectOption from '../../../constants/constantscomponents/SelectOption';
-import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
-import { useCreateBookingMutation } from '../../../redux/api/bookingApi';
-import {
-    useLazySearchGooglePlacesQuery,
-    useLazyGetDistanceQuery
-} from '../../../redux/api/googleApi';
+import { useLazySearchGooglePlacesQuery } from '../../../redux/api/googleApi';
+import { useFetchAllPostcodePricesWidgetQuery } from '../../../redux/api/postcodePriceApi';
+import { findCheckedPrice } from '../../../utils/postcodeLogic';
 
-const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
-    const companyId =
-        parentCompanyId ||
-        new URLSearchParams(window.location.search).get('company') || '';
-
-    const { data: hourlyPackages = [] } = useGetAllHourlyRatesQuery(companyId, {
-        skip: !companyId,
-    });
+const WidgetBooking = ({ onCheckedPriceFound, companyId }) => {
 
     const [mode, setMode] = useState('Transfer');
     const [dropOffs, setDropOffs] = useState(['']);
+    const [pickupType, setPickupType] = useState(null);
+    const [dropOffTypes, setDropOffTypes] = useState({});
     const [pickupSuggestions, setPickupSuggestions] = useState([]);
     const [dropOffSuggestions, setDropOffSuggestions] = useState([]);
     const [activeDropIndex, setActiveDropIndex] = useState(null);
-    const [pickupType, setPickupType] = useState(null);
-    const [dropOffTypes, setDropOffTypes] = useState({});
-    const [selectedHourly, setSelectedHourly] = useState('');
-
-    const formattedHourlyOptions = useMemo(() => {
-        return hourlyPackages.map(pkg => ({
-            label: `${pkg.distance} miles ${pkg.hours} hours`,
-            value: { distance: pkg.distance, hours: pkg.hours },
-        }));
-    }, [hourlyPackages]);
-
-    useEffect(() => {
-        if (formattedHourlyOptions.length) {
-            setSelectedHourly(formattedHourlyOptions[0]);
-            setFormData(prev => ({
-                ...prev,
-                hourlyOption: formattedHourlyOptions[0],
-                originalHourlyOption: formattedHourlyOptions[0]
-            }));
-        }
-    }, [formattedHourlyOptions]);
+    const [triggerSearchAutocomplete] = useLazySearchGooglePlacesQuery();
 
     const [formData, setFormData] = useState({
         pickup: '',
@@ -52,54 +24,40 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
         flightNumber: '',
         pickupDoorNumber: '',
         notes: '',
-        internalNotes: '',
         date: '',
         hour: '',
-        minute: '',
-        hourlyOption: '',
-        originalHourlyOption: ''
+        minute: ''
     });
 
-    const [createBooking] = useCreateBookingMutation();
-    const [triggerSearchAutocomplete] = useLazySearchGooglePlacesQuery();
-    const [triggerDistance] = useLazyGetDistanceQuery();
-
-    useEffect(() => {
-        const sendHeight = () => {
-            const height = document.documentElement.scrollHeight;
-            window.parent.postMessage({ type: 'setHeight', height }, '*');
-        };
-        sendHeight();
-        const resizeObserver = new ResizeObserver(sendHeight);
-        resizeObserver.observe(document.body);
-        return () => resizeObserver.disconnect();
-    }, []);
+    const { data: postcodePrices = [] } = useFetchAllPostcodePricesWidgetQuery(companyId, {
+        skip: !companyId
+    });
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const fetchSuggestions = async (query, setter) => {
-        if (!query) return setter([]);
-        try {
-            const res = await triggerSearchAutocomplete(query).unwrap();
-            const results = res.predictions.map(r => ({
-                name: r.name || r.structured_formatting?.main_text,
-                formatted_address: r.formatted_address || r.description,
-                source: r.source || (r.types?.includes('airport') ? 'airport' : 'location'),
-            }));
-            setter(results);
-        } catch (err) {
-            console.error('Autocomplete error:', err);
-        }
-    };
-
-    const handlePickupChange = (e) => {
+    // Pickup Autocomplete
+    const handlePickupChange = async (e) => {
         const val = e.target.value;
         setFormData(prev => ({ ...prev, pickup: val }));
-        if (val.length >= 3) fetchSuggestions(val, setPickupSuggestions);
-        else setPickupSuggestions([]);
+
+        if (val.length >= 3) {
+            try {
+                const res = await triggerSearchAutocomplete(val).unwrap();
+                const results = res.predictions.map(r => ({
+                    name: r.name || r.structured_formatting?.main_text,
+                    formatted_address: r.formatted_address || r.description,
+                    source: r.source || (r.types?.includes('airport') ? 'airport' : 'location'),
+                }));
+                setPickupSuggestions(results);
+            } catch (err) {
+                console.error('Autocomplete error:', err);
+            }
+        } else {
+            setPickupSuggestions([]);
+        }
     };
 
     const handlePickupSelect = (sug) => {
@@ -109,13 +67,28 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
         setPickupSuggestions([]);
     };
 
-    const handleDropOffChange = (idx, val) => {
+    // DropOff Autocomplete
+    const handleDropOffChange = async (idx, val) => {
         const updated = [...dropOffs];
         updated[idx] = val;
         setDropOffs(updated);
         setActiveDropIndex(idx);
-        if (val.length >= 3) fetchSuggestions(val, setDropOffSuggestions);
-        else setDropOffSuggestions([]);
+
+        if (val.length >= 3) {
+            try {
+                const res = await triggerSearchAutocomplete(val).unwrap();
+                const results = res.predictions.map(r => ({
+                    name: r.name || r.structured_formatting?.main_text,
+                    formatted_address: r.formatted_address || r.description,
+                    source: r.source || (r.types?.includes('airport') ? 'airport' : 'location'),
+                }));
+                setDropOffSuggestions(results);
+            } catch (err) {
+                console.error('Autocomplete error:', err);
+            }
+        } else {
+            setDropOffSuggestions([]);
+        }
     };
 
     const handleDropOffSelect = (idx, sug) => {
@@ -123,131 +96,48 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
         const updated = [...dropOffs];
         updated[idx] = full;
         setDropOffs(updated);
-        setDropOffSuggestions([]);
         setDropOffTypes(prev => ({ ...prev, [idx]: sug.source }));
+        setDropOffSuggestions([]);
     };
 
     const addDropOff = () => {
-        if (dropOffs.length >= 3) {
-            toast.warning('Maximum 3 drop-offs allowed.');
-            return;
-        }
+        if (dropOffs.length >= 3) return;
         setDropOffs([...dropOffs, '']);
     };
 
     const removeDropOff = (index) => {
         const updated = [...dropOffs];
         updated.splice(index, 1);
-        const types = { ...dropOffTypes };
-        delete types[index];
         setDropOffs(updated);
-        setDropOffTypes(types);
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        if (!formData.pickup || dropOffs[0].trim() === '') {
-            toast.error("Pickup and at least one Drop Off is required.");
+    // ✅ GET QUOTE — PURE
+    const handleGetQuote = () => {
+        if (mode !== 'Transfer') {
+            alert("Only Transfer Mode supported for pricing.");
             return;
         }
 
-        const dynamicFields = {};
-        dropOffs.forEach((_, idx) => {
-            dynamicFields[`dropoffDoorNumber${idx}`] = formData[`dropoffDoorNumber${idx}`] || '';
-            dynamicFields[`dropoff_terminal_${idx}`] = formData[`dropoff_terminal_${idx}`] || '';
-        });
-
-        const payload = {
-            ...formData,
-            dropoff: dropOffs[0],
-            additionalDropoff1: dropOffs[1] || null,
-            additionalDropoff2: dropOffs[2] || null,
-            hourlyOption: formData.hourlyOption || null,
-            originalHourlyOption: formData.originalHourlyOption || null,
-            mode,
-            returnJourney: false,
-            companyId,
-            referrer: document.referrer,
-            ...dynamicFields,
-        };
-
-        try {
-            const origin = formData.pickup?.replace('Custom Input - ', '').split(' - ').pop()?.trim();
-            const destination = dropOffs[0]?.replace('Custom Input - ', '').split(' - ').pop()?.trim();
-
-            if (!origin || !destination) {
-                toast.error("Origin or destination is empty.");
-                return;
-            }
-
-            const res = await triggerDistance({ origin, destination }).unwrap();
-
-            if (res?.distanceText && res?.durationText) {
-                payload.distanceText = res.distanceText;
-                payload.durationText = res.durationText;
-
-                if (mode === "Hourly") {
-                    let miles = 0;
-
-                    if (res.distanceText.includes("km")) {
-                        const km = parseFloat(res.distanceText.replace("km", "").trim());
-                        miles = parseFloat((km * 0.621371).toFixed(2));
-                    } else if (res.distanceText.includes("mi")) {
-                        miles = parseFloat(res.distanceText.replace("mi", "").trim());
-                    }
-
-                    const userSelected = formData?.hourlyOption?.value;
-
-                    if (userSelected) {
-                        if (miles > userSelected.distance) {
-                            const upgraded = hourlyPackages.find(pkg => pkg.distance >= miles);
-                            if (upgraded) {
-                                toast.info(`Your selected hourly package was upgraded to ${upgraded.distance} miles / ${upgraded.hours} hours due to trip length.`);
-                                payload.hourlyOption = {
-                                    label: `${upgraded.distance} miles ${upgraded.hours} hours`,
-                                    value: {
-                                        distance: upgraded.distance,
-                                        hours: upgraded.hours,
-                                    }
-                                };
-                            } else {
-                                toast.warning("No hourly package covers this distance.");
-                            }
-                        } else {
-                            payload.hourlyOption = formData.hourlyOption;
-                        }
-                    } else {
-                        const autoMatch = hourlyPackages.find(pkg => pkg.distance >= miles);
-                        if (autoMatch) {
-                            payload.hourlyOption = {
-                                label: `${autoMatch.distance} miles ${autoMatch.hours} hours`,
-                                value: {
-                                    distance: autoMatch.distance,
-                                    hours: autoMatch.hours,
-                                }
-                            };
-                        } else {
-                            toast.warning("No hourly package found for this distance.");
-                        }
-                    }
-                }
-            }
-
-        } catch (err) {
-            console.error("Distance API error:", err);
+        if (!postcodePrices.length) {
+            alert("Pricing data not loaded.");
+            return;
         }
 
-        localStorage.setItem("bookingForm", JSON.stringify(payload));
-        if (onSubmitSuccess) onSubmitSuccess();
+        const matched = findCheckedPrice(postcodePrices, formData.pickup, dropOffs[0]);
+
+        if (matched) {
+            console.log("Price Found:", matched);
+            if (onCheckedPriceFound) {
+                onCheckedPriceFound(matched);
+            }
+        } else {
+            alert("No matching price found for the given locations.");
+        }
     };
 
     return (
         <div className="max-w-xl w-full mx-auto mt-6 px-4 sm:px-0">
-            <form
-                onSubmit={handleSubmit}
-                className="bg-gradient-to-br from-white via-gray-50 to-gray-100 border border-gray-200 rounded-2xl shadow-md px-5 py-6 space-y-6 text-sm"
-            >
+            <form className="bg-gradient-to-br from-white via-gray-50 to-gray-100 border border-gray-200 rounded-2xl shadow-md px-5 py-6 space-y-6 text-sm">
                 <ToastContainer />
 
                 <div className="flex justify-center mb-4">
@@ -256,7 +146,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                             key={tab}
                             type='button'
                             onClick={() => setMode(tab)}
-                            className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${mode === tab ? "bg-[#f3f4f6] text-dark border border-black" : "bg-[#f3f4f6] text-dark"} ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
+                            className={`px-6 py-2 font-medium transition-all duration-200 ${mode === tab ? "bg-[#f3f4f6] text-dark border border-black" : "bg-[#f3f4f6] text-dark"} ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
                         >
                             {tab}
                         </button>
@@ -265,24 +155,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
 
                 {mode === "Hourly" && (
                     <div className="flex justify-center">
-                        <SelectOption
-                            options={formattedHourlyOptions.map(opt => ({
-                                label: opt.label,
-                                value: JSON.stringify(opt.value),
-                            }))}
-                            value={JSON.stringify(selectedHourly?.value)}
-                            onChange={(e) => {
-                                const selected = formattedHourlyOptions.find(
-                                    opt => JSON.stringify(opt.value) === e.target.value
-                                );
-                                setSelectedHourly(selected);
-                                setFormData(prev => ({
-                                    ...prev,
-                                    hourlyOption: selected,
-                                    originalHourlyOption: selected
-                                }));
-                            }}
-                        />
+                        <SelectOption options={[]} value={''} onChange={() => { }} />
                     </div>
                 )}
 
@@ -299,16 +172,6 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                     />
                     {pickupSuggestions.length > 0 && (
                         <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
-                            <li
-                                onClick={() => {
-                                    setFormData({ ...formData, pickup: formData.pickup });
-                                    setPickupType("location");
-                                    setPickupSuggestions([]);
-                                }}
-                                className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer text-xs border-b"
-                            >
-                                ➕ Use: "{formData.pickup}"
-                            </li>
                             {pickupSuggestions.map((sug, idx) => (
                                 <li
                                     key={idx}
@@ -321,43 +184,6 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                         </ul>
                     )}
                 </div>
-
-                {/* Pickup Details */}
-                {pickupType === "location" && (
-                    <input
-                        name="pickupDoorNumber"
-                        placeholder="Pickup Door No."
-                        className="custom_input"
-                        value={formData.pickupDoorNumber}
-                        onChange={handleChange}
-                    />
-                )}
-
-                {pickupType === "airport" && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <input
-                            name="arrivefrom"
-                            placeholder="Arriving From"
-                            value={formData.arrivefrom}
-                            onChange={handleChange}
-                            className="custom_input"
-                        />
-                        <input
-                            name="pickmeAfter"
-                            placeholder="Pick Me After"
-                            value={formData.pickmeAfter}
-                            onChange={handleChange}
-                            className="custom_input"
-                        />
-                        <input
-                            name="flightNumber"
-                            placeholder="Flight No."
-                            value={formData.flightNumber}
-                            onChange={handleChange}
-                            className="custom_input"
-                        />
-                    </div>
-                )}
 
                 {/* Drop Offs */}
                 {dropOffs.map((val, idx) => (
@@ -372,18 +198,6 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                         />
                         {dropOffSuggestions.length > 0 && activeDropIndex === idx && (
                             <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
-                                <li
-                                    onClick={() => {
-                                        const updated = [...dropOffs];
-                                        updated[idx] = dropOffs[idx];
-                                        setDropOffs(updated);
-                                        setDropOffTypes((prev) => ({ ...prev, [idx]: "location" }));
-                                        setDropOffSuggestions([]);
-                                    }}
-                                    className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer text-xs border-b"
-                                >
-                                    ➕ Use: "{dropOffs[idx]}"
-                                </li>
                                 {dropOffSuggestions.map((sug, i) => (
                                     <li
                                         key={i}
@@ -395,108 +209,44 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                                 ))}
                             </ul>
                         )}
-
-                        {dropOffTypes[idx] === "airport" && (
-                            <input
-                                name={`dropoff_terminal_${idx}`}
-                                value={formData[`dropoff_terminal_${idx}`] || ""}
-                                placeholder="Terminal No."
-                                className="custom_input"
-                                onChange={handleChange}
-                            />
-                        )}
-
-                        {dropOffTypes[idx] === "location" && (
-                            <input
-                                name={`dropoffDoorNumber${idx}`}
-                                value={formData[`dropoffDoorNumber${idx}`] || ""}
-                                placeholder="Drop Off Door No."
-                                className="custom_input"
-                                onChange={handleChange}
-                            />
-                        )}
-
                         {idx > 0 && (
-                            <button
-                                type="button"
-                                onClick={() => removeDropOff(idx)}
-                                className="text-xs text-red-600 absolute right-1 top-0"
-                            >
-                                &minus;
-                            </button>
+                            <button type="button" onClick={() => removeDropOff(idx)} className="text-xs text-red-600 absolute right-1 top-0">&minus;</button>
                         )}
                     </div>
                 ))}
 
                 {dropOffs.length < 3 && (
-                    <button
-                        type="button"
-                        onClick={addDropOff}
-                        className="btn btn-edit text-xs px-4 py-2 w-full sm:w-auto"
-                    >
+                    <button type="button" onClick={addDropOff} className="btn btn-edit text-xs px-4 py-2 w-full sm:w-auto">
                         + Add Drop Off
                     </button>
                 )}
 
                 {/* Date & Time */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <input
-                        type="date"
-                        name="date"
-                        value={formData.date}
-                        onChange={handleChange}
-                        className="custom_input"
-                    />
-                    <select
-                        name="hour"
-                        value={formData.hour}
-                        onChange={handleChange}
-                        className="custom_input"
-                    >
+                    <input type="date" name="date" value={formData.date} onChange={handleChange} className="custom_input" />
+                    <select name="hour" value={formData.hour} onChange={handleChange} className="custom_input">
                         <option value="">HH</option>
                         {[...Array(24).keys()].map((h) => (
-                            <option key={h} value={h}>
-                                {h.toString().padStart(2, "0")}
-                            </option>
+                            <option key={h} value={h}>{h.toString().padStart(2, "0")}</option>
                         ))}
                     </select>
-                    <select
-                        name="minute"
-                        value={formData.minute}
-                        onChange={handleChange}
-                        className="custom_input"
-                    >
+                    <select name="minute" value={formData.minute} onChange={handleChange} className="custom_input">
                         <option value="">MM</option>
                         {[...Array(60).keys()].map((m) => (
-                            <option key={m} value={m}>
-                                {m.toString().padStart(2, "0")}
-                            </option>
+                            <option key={m} value={m}>{m.toString().padStart(2, "0")}</option>
                         ))}
                     </select>
                 </div>
 
-                {/* Notes */}
-                <textarea
-                    name="notes"
-                    placeholder="Notes"
-                    className="custom_input"
-                    value={formData.notes}
-                    onChange={handleChange}
-                    rows={2}
-                />
+                <textarea name="notes" placeholder="Notes" className="custom_input" value={formData.notes} onChange={handleChange} rows={2} />
 
-                {/* Submit Button */}
                 <div className="text-right">
-                    <button
-                        type="submit"
-                        className="bg-amber-500 text-white px-5 py-2 rounded-md text-sm shadow hover:bg-amber-600"
-                    >
+                    <button type="button" onClick={handleGetQuote} className="bg-amber-500 text-white px-5 py-2 rounded-md text-sm shadow hover:bg-amber-600">
                         GET QUOTE
                     </button>
                 </div>
             </form>
         </div>
-
     );
 };
 
