@@ -6,7 +6,7 @@ import { createVehicle, getAllVehicles, updateVehicle, deleteVehicle, getVehicle
 import { createHourlyPackage, deleteHourlyPackage, getAllHourlyPackages, getHourlyPackageById, updateHourlyPackage } from "../controllers/pricings/hourlyPackageController.js";
 import { getAllFixedPrices, createFixedPrice, updateFixedPrice, deleteFixedPrice } from "../controllers/pricings/fixedPriceController.js";
 import { getAllExtras, createExtra, updateExtra, deleteExtra } from "../controllers/pricings/extrasController.js";
-import { getAllPostcodePrices, createPostcodePrice, updatePostcodePrice, deletePostcodePrice } from "../controllers/pricings/postcodePriceController.js";
+import { getAllPostcodePrices, createPostcodePrice, updatePostcodePrice, deletePostcodePrice, getAllPostcodePricesWidget } from "../controllers/pricings/postcodePriceController.js";
 import { getAllDiscounts, createDiscount, updateDiscount, deleteDiscount } from "../controllers/pricings/discountController.js";
 import { getAllVouchers, createVoucher, updateVoucher, deleteVoucher } from "../controllers/pricings/voucherController.js";
 
@@ -39,6 +39,7 @@ router.delete("/fixed-prices/:id", protect, deleteFixedPrice);
 
 // POSTCODE PRICING
 router.get("/postcode-prices", protect, getAllPostcodePrices);
+router.get("/widget/postcode-prices", getAllPostcodePricesWidget);    // For Widget
 router.post("/postcode-prices", protect, createPostcodePrice);
 router.put("/postcode-prices/:id", protect, updatePostcodePrice);
 router.delete("/postcode-prices/:id", protect, deletePostcodePrice);

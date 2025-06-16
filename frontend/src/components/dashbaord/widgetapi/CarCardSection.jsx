@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
+import IMAGES from '../../../assets/images';
 
 // ✅ Single Car Card
 const CarCard = ({ car, isSelected, onSelect }) => {
@@ -7,9 +8,9 @@ const CarCard = ({ car, isSelected, onSelect }) => {
 
   const {
     _id,
-    image = '',
+    image,
     vehicleName = 'Unnamed Vehicle',
-    price = 0,
+    price = null,
     passengers = 0,
     smallLuggage = 0,
     largeLuggage = 0,
@@ -18,6 +19,9 @@ const CarCard = ({ car, isSelected, onSelect }) => {
     carModel = '',
     features = [],
   } = car;
+
+  // ✅ always fallback to placeholder image
+  const validImage = image ? image : IMAGES.profilecarimg;
 
   return (
     <div
@@ -29,17 +33,18 @@ const CarCard = ({ car, isSelected, onSelect }) => {
       <div className="p-4">
         <div className="flex gap-4">
           <img
-            src={image}
+            src={validImage}
             alt={vehicleName}
             className="w-24 h-24 object-contain rounded-md border border-gray-200 bg-gray-50"
             onError={(e) => {
+              e.target.onerror = null;
               e.target.src = '/placeholder-car.png';
             }}
           />
 
           <div className="flex-1">
             <div className="flex justify-between items-start">
-              <h3 className="text-lg font-semibold text-gray-800">{vehicleName}</h3>
+              <h3 className="text-lg font-semibold text-gray-800">{vehicleName || 'Vehicle Name'}</h3>
               <div className="flex items-center gap-2">
                 {price !== null ? (
                   <span className="text-lg font-semibold text-blue-600">£{parseFloat(price).toFixed(2)}</span>
