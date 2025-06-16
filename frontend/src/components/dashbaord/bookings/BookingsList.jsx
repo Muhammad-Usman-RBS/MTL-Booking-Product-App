@@ -15,7 +15,8 @@ import ViewDriver from "./ViewDriver";
 import NewBooking from "./NewBooking";
 
 const defaultColumns = {
-  orderNo: true,
+  bookingType: true,
+  bookingId: true,
   passenger: true,
   date: true,
   pickUp: true,

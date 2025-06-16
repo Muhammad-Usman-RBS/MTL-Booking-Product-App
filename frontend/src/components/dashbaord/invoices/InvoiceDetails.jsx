@@ -49,7 +49,6 @@ const InvoiceDetails = ({ item }) => {
 
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} />
 
       <div>
         <div className="flex flex-wrap gap-2 sm:gap-3 mb-3 mt-8">

@@ -97,8 +97,8 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
   };
 
   const pickupTime =
-    viewData?.journey1?.date && viewData?.journey1?.hour
-      ? `${viewData?.journey1?.date} ${viewData?.journey1?.hour}:${viewData?.journey1?.minute}`
+    viewData?.primaryJourney?.date && viewData?.primaryJourney?.hour
+      ? `${viewData?.primaryJourney?.date} ${viewData?.primaryJourney?.hour}:${viewData?.primaryJourney?.minute}`
       : "N/A";
 
   return (
@@ -146,7 +146,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
           <div className="bg-yellow-100 border border-yellow-300 p-3 rounded-md text-xs">
             <strong className="text-gray-700">Internal Notes:</strong>
             <span className="italic text-red-600">
-              {viewData?.journey1?.internalNotes || "Empty"}
+              {viewData?.primaryJourney?.internalNotes || "Empty"}
             </span>
           </div>
           <div className="bg-yellow-100 border border-yellow-300 p-3 rounded-md text-xs">
@@ -167,16 +167,16 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
               <strong>Pick Up:</strong>
               <div className="ml-4 mt-1 space-y-1">
                 <div><strong>Date & Time:</strong> {pickupTime}</div>
-                <div><strong>Address:</strong> {viewData?.journey1?.pickup || "N/A"}</div>
-                <div><strong>Door No.:</strong> {viewData?.journey1?.pickupDoorNumber || "—"}</div>
+                <div><strong>Address:</strong> {viewData?.primaryJourney?.pickup || "N/A"}</div>
+                <div><strong>Door No.:</strong> {viewData?.primaryJourney?.pickupDoorNumber || "—"}</div>
               </div>
               <hr className="text-gray-300 my-2" />
             </div>
             <div>
               <strong>Drop Off:</strong>
               <div className="ml-4 mt-1 space-y-1">
-                <div><strong>Address:</strong> {viewData?.journey1?.dropoff || "N/A"}</div>
-                <div><strong>Door No.:</strong> {viewData?.journey1?.dropoffDoorNumber0 || "—"}</div>
+                <div><strong>Address:</strong> {viewData?.primaryJourney?.dropoff || "N/A"}</div>
+                <div><strong>Door No.:</strong> {viewData?.primaryJourney?.dropoffDoorNumber0 || "—"}</div>
               </div>
               <hr className="text-gray-300 my-2" />
             </div>
@@ -207,7 +207,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             <div>
               <strong>Special Notes:</strong>
               <div className="ml-4 mt-1 italic text-gray-500">
-                {viewData?.journey1?.notes || "None"}
+                {viewData?.primaryJourney?.notes || "None"}
               </div>
               <hr className="text-gray-300 my-2" />
             </div>
@@ -221,7 +221,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             <span className="text-xs ml-1">{viewData?.payment || "Card Payment"}</span>
           </div>
           <div className="text-gray-600 mt-2 text-xs">
-            Approx. Distance: {convertKmToMiles(viewData?.journey1?.distanceText)}
+            Approx. Distance: {convertKmToMiles(viewData?.primaryJourney?.distanceText)}
           </div>
         </div>
 

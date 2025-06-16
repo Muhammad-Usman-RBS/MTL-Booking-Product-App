@@ -63,18 +63,23 @@ const StatusAuditSchema = new mongoose.Schema({
 
 // Booking Schema
 const BookingSchema = new mongoose.Schema({
+  bookingId: {type:String, unique: true},
   mode: {
     type: String,
     enum: ["Transfer", "Hourly"],
     required: true,
   },
-  returnJourney: {
+  returnJourneyToggle: {
     type: Boolean,
     required: true,
   },
-  journey1: {
+  returnJourney: {
     type: JourneySchema,
-    required: true,
+    required: false,   
+  },
+  primaryJourney: {
+    type: JourneySchema,
+    required: false,
   },
   vehicle: {
     type: VehicleInfoSchema,

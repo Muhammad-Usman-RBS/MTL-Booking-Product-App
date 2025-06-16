@@ -1,10 +1,12 @@
 import nodemailer from "nodemailer";
 
 const generateHtmlTable = (title, subtitle, dataObj) => {
-  const renderRows = (obj, prefix = "") => {
+  const renderRows = (obj, prefix = "" , depth=0) => {
+    if (depth > 5) return ""; 
+
     return Object.entries(obj)
       .map(([key, value]) => {
-        const label = (prefix + key)
+        const label = key
           .replace(/([A-Z])/g, " $1")
           .replace(/^./, (str) => str.toUpperCase());
 
@@ -14,14 +16,14 @@ const generateHtmlTable = (title, subtitle, dataObj) => {
           !Array.isArray(value)
         ) {
           return `
-          <tr><td colspan="2"><strong>${label}</strong></td></tr>
+          <tr><td colspan="2"><strong>${label} Details</strong></td></tr>
           ${renderRows(value, prefix + key + ".")}
         `;
         } else {
           return `
           <tr>
             <td><strong>${label}</strong></td>
-            <td>${value !== undefined && value !== null ? value : "-"}</td>
+            <td>${value !== undefined && value !== null ? value : "Not Provided"}</td>
           </tr>
         `;
         }
@@ -50,7 +52,7 @@ const sendEmail = async (to, subject, { title, subtitle = "", data = {} }) => {
   const html = generateHtmlTable(title, subtitle, data);
 
   await transporter.sendMail({
-    from: "MTL Booking" `<${process.env.GMAIL_USER}>`,
+    from: `"MTL Booking <${process.env.GMAIL_USER}>"`,
     to,
     subject,
     html,

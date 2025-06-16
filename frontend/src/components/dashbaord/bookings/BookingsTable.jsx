@@ -29,7 +29,8 @@ const BookingsTable = ({
   const companyId = user?.companyId;
 
   const tableHeaders = [
-    { label: "Order No.", key: "orderNo" },
+    { label: "Booking Id", key: "bookingId" },
+    { label: "Type", key: "bookingType" },
     { label: "Passenger", key: "passenger" },
     { label: "Date & Time", key: "date" },
     { label: "Pick Up", key: "pickUp" },
@@ -49,7 +50,7 @@ const BookingsTable = ({
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedDeleteId, setSelectedDeleteId] = useState(null);
-
+ console.log(data)
   if (!companyId) {
     return (
       <CustomTable
@@ -131,9 +132,12 @@ const BookingsTable = ({
       if (!selectedColumns[key]) return;
 
       switch (key) {
-        case "orderNo":
-          row[key] = item._id;
+        case "bookingId":
+          row[key] = item.bookingId || "";
           break;
+          case "bookingType":
+            row[key] = item?.returnJourney ? "Return" : "Primary";
+            break;
         case "passenger":
           row[key] = formatPassenger(item.passenger);
           break;
@@ -143,10 +147,10 @@ const BookingsTable = ({
             : "-";
           break;
         case "pickUp":
-          row[key] = item.journey1?.pickup || "-";
+          row[key] = item.primaryJourney?.pickup || "-";
           break;
         case "dropOff":
-          row[key] = item.journey1?.dropoff || "-";
+          row[key] = item.primaryJourney?.dropoff || "-";
           break;
         case "vehicle":
           row[key] = item.vehicle?.vehicleName || "-";
@@ -241,11 +245,12 @@ const BookingsTable = ({
   });
 
   const exportTableData = filteredBookings.map((item) => ({
-    orderNo: item._id,
+    bookingId: item.bookingId,
+    bookingType: item?.returnJourney ? "Return" : "Primary",
     passenger: formatPassenger(item.passenger),
     date: item.createdAt ? new Date(item.createdAt).toLocaleString() : "-",
-    pickUp: item.journey1?.pickup || "-",
-    dropOff: item.journey1?.dropoff || "-",
+    pickUp: item.primaryJourney?.pickup || "-",
+    dropOff: item.primaryJourney?.dropoff || "-",
     vehicle: formatVehicle(item.vehicle),
     payment: item.payment || "-",
     fare: item.fare || "-",
