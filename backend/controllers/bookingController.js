@@ -404,7 +404,6 @@ export const submitWidgetForm = async (req, res) => {
       }
     }
 
-    // Collect dynamic dropoff fields from primaryJourney
     const dynamicDropoffFields1 = {};
     Object.keys(primaryJourney || {}).forEach((key) => {
       if (
