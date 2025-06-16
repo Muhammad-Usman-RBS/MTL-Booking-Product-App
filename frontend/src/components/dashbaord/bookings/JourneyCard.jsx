@@ -109,7 +109,6 @@ const JourneyCard = ({ title, journeyData, setJourneyData, dropOffs, setDropOffs
                 </div>
             </div>
 
-            {/* Pickup Location */}
             <div className="relative mb-4">
                 <input
                     type="text"
