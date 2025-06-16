@@ -33,3 +33,4 @@ export const findCheckedPrice = (postcodePrices, pickupLocation, dropoffLocation
         return null;
     }
 };
+ 
