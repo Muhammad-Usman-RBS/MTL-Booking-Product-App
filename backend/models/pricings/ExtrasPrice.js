@@ -4,7 +4,7 @@ const extrasPriceSchema = new mongoose.Schema(
     {
         companyId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
+            ref: "Company",
             required: true,
         },
         zone: {
@@ -15,6 +15,12 @@ const extrasPriceSchema = new mongoose.Schema(
             type: Number,
             required: true,
         },
+        coordinates: [
+            {
+                lat: { type: Number },
+                lng: { type: Number },
+            }
+        ],
     },
     { timestamps: true }
 );

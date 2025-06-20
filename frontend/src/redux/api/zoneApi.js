@@ -4,7 +4,7 @@ export const zoneApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getAllZones: builder.query({
       query: () => ({
-        url: '/settings/zones',
+        url: '/pricing/zones',
         method: 'GET',
       }),
       providesTags: ['Zones'],
@@ -12,7 +12,7 @@ export const zoneApi = apiSlice.injectEndpoints({
 
     createZone: builder.mutation({
       query: (newZone) => ({
-        url: '/settings/zones',
+        url: '/pricing/zones',
         method: 'POST',
         body: newZone,
       }),
@@ -21,7 +21,7 @@ export const zoneApi = apiSlice.injectEndpoints({
 
     updateZone: builder.mutation({
       query: ({ id, ...updatedZone }) => ({
-        url: `/settings/zones/${id}`,
+        url: `/pricing/zones/${id}`,
         method: 'PUT',
         body: updatedZone,
       }),
@@ -30,11 +30,12 @@ export const zoneApi = apiSlice.injectEndpoints({
 
     deleteZone: builder.mutation({
       query: (id) => ({
-        url: `/settings/zones/${id}`,
+        url: `/pricing/zones/${id}`,
         method: 'DELETE',
       }),
       invalidatesTags: ['Zones'],
     }),
+
   }),
 });
 

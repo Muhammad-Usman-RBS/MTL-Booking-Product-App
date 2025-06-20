@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const postcodePriceSchema = new mongoose.Schema({
     companyId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: 'Company',
         required: true,
     },
     pickup: {

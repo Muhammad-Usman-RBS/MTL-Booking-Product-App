@@ -2,6 +2,7 @@ import { apiSlice } from "../apiSlice";
 
 export const vehicleApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
+
     // ✅ PUBLIC: Get all vehicles by companyId for iframe widget
     getPublicVehicles: builder.query({
       query: (companyId) => ({
@@ -12,12 +13,11 @@ export const vehicleApi = apiSlice.injectEndpoints({
       providesTags: ["Vehicles"],
     }),
 
-    // ✅ AUTH-PROTECTED: Get all vehicles (if used in dashboard)
+    // ✅ AUTH-PROTECTED: Get all vehicles (no companyId param now)
     getAllVehicles: builder.query({
-      query: (companyId) => ({
+      query: () => ({
         url: `/pricing/vehicles`,
         method: "GET",
-        params: { companyId },
       }),
       providesTags: ["Vehicles"],
     }),
@@ -34,16 +34,11 @@ export const vehicleApi = apiSlice.injectEndpoints({
 
     // UPDATE
     updateVehicle: builder.mutation({
-      query: ({ id, formData }) => {
-        const isForm = formData instanceof FormData;
-        return {
-          url: `/pricing/vehicles/${id}`,
-          method: "PUT",
-          body: formData,
-          ...(isForm && {
-          }),
-        };
-      },
+      query: ({ id, formData }) => ({
+        url: `/pricing/vehicles/${id}`,
+        method: "PUT",
+        body: formData,
+      }),
       invalidatesTags: ["Vehicles"],
     }),
 

@@ -6,9 +6,7 @@ import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { toast } from "react-toastify";
-import {
-  useGetAllZonesQuery,
-} from "../../../redux/api/zoneApi";
+import { useGetAllZonesQuery } from "../../../redux/api/zoneApi";
 import {
   useGetAllFixedPricesQuery,
   useCreateFixedPriceMutation,
@@ -40,8 +38,8 @@ const FixedPricing = () => {
     setIsNew(true);
     setSelectedItem({
       direction: "Both Ways",
-      pickup: "",
-      dropoff: "",
+      pickup: null,
+      dropoff: null,
       price: 0,
     });
     setShowModal(true);
@@ -56,8 +54,10 @@ const FixedPricing = () => {
     }
 
     const payload = {
-      pickup: pickup.toString(),
-      dropoff: dropoff.toString(),
+      pickup: pickup?.name,
+      pickupCoordinates: pickup?.coordinates,
+      dropoff: dropoff?.name,
+      dropoffCoordinates: dropoff?.coordinates,
       price: parseFloat(price),
       direction:
         direction === "One Way" || direction === "Both Ways"
@@ -206,14 +206,14 @@ const FixedPricing = () => {
               type="text"
               className="custom_input"
               placeholder="Type or select a pickup zone"
-              value={selectedItem?.pickup || ""}
+              value={selectedItem?.pickup?.name || ""}
               onChange={(e) => {
-                setSelectedItem({ ...selectedItem, pickup: e.target.value });
-                setPickupSuggestions(
-                  zones.map((z) => z.name).filter((z) => z.toLowerCase().includes(e.target.value.toLowerCase()))
+                const filtered = zones.filter((z) =>
+                  z.name.toLowerCase().includes(e.target.value.toLowerCase())
                 );
+                setPickupSuggestions(filtered);
               }}
-              onFocus={() => setPickupSuggestions(zones.map((z) => z.name))}
+              onFocus={() => setPickupSuggestions(zones)}
               onBlur={() => setTimeout(() => setPickupSuggestions([]), 100)}
             />
             {pickupSuggestions.length > 0 && (
@@ -227,7 +227,7 @@ const FixedPricing = () => {
                     }}
                     className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
                   >
-                    {zone}
+                    {zone.name}
                   </li>
                 ))}
               </ul>
@@ -241,14 +241,14 @@ const FixedPricing = () => {
               type="text"
               className="custom_input"
               placeholder="Type or select a dropoff zone"
-              value={selectedItem?.dropoff || ""}
+              value={selectedItem?.dropoff?.name || ""}
               onChange={(e) => {
-                setSelectedItem({ ...selectedItem, dropoff: e.target.value });
-                setDropoffSuggestions(
-                  zones.map((z) => z.name).filter((z) => z.toLowerCase().includes(e.target.value.toLowerCase()))
+                const filtered = zones.filter((z) =>
+                  z.name.toLowerCase().includes(e.target.value.toLowerCase())
                 );
+                setDropoffSuggestions(filtered);
               }}
-              onFocus={() => setDropoffSuggestions(zones.map((z) => z.name))}
+              onFocus={() => setDropoffSuggestions(zones)}
               onBlur={() => setTimeout(() => setDropoffSuggestions([]), 100)}
             />
             {dropoffSuggestions.length > 0 && (
@@ -262,7 +262,7 @@ const FixedPricing = () => {
                     }}
                     className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
                   >
-                    {zone}
+                    {zone.name}
                   </li>
                 ))}
               </ul>
@@ -303,6 +303,7 @@ const FixedPricing = () => {
           </div>
         </div>
       </CustomModal>
+
       <hr className="mb-12 mt-12 border-gray-300" />
       <ExtrasPrcing />
     </>

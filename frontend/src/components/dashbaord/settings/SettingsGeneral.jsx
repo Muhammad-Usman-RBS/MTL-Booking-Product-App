@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import PhoneInput from "react-phone-input-2";
 
 const SettingsGeneral = () => {
   const [logo, setLogo] = useState(null);
@@ -47,101 +48,166 @@ const SettingsGeneral = () => {
       {/* Language Section */}
       <div className="space-y-4">
         <div>
-          <label className="block font-semibold mb-2">Dashboard Language</label>
+          <label className="  text-gray-600 font-semibold  text-lg ">Company Information</label>
         </div>
 
         <div className="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0">
           <div className="w-full md:w-1/2">
-            <label className="block font-semibold mb-2">Google Translate</label>
-            <SelectOption width="full" options={["Yes", "No"]} />
+            <label className="block text-gray-600 mb-2">Company name</label>
+            <input
+              className="custom_input"
+              type="text"
+              placeholder="Mega Transfers Limited"
+            />
           </div>
+
           <div className="w-full md:w-1/2">
-            <label className="block font-semibold mb-2">Cookie Consent</label>
-            <SelectOption width="full" options={["Yes", "No"]} />
+            <label className="block text-gray-600 mb-2">Contact Number</label>
+            <PhoneInput country={'gb'} inputClass="w-full custom_input" inputStyle={{ width: "100%" }} />
+
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0">
+          <div className="w-full md:w-1/2">
+            <label className="block text-gray-600 mb-2">Email address</label>
+            <input
+              type="email"
+              className="custom_input"
+              placeholder="booking@megatransfers.co.uk"
+            />
+          </div>
+
+          <div className="w-full md:w-1/2">
+            <label className="block text-gray-600 mb-2">Company address</label>
+            <input
+              type="text"
+              className="custom_input"
+              placeholder=""
+            />
           </div>
         </div>
       </div>
+
+
 
       {/* Branding Section */}
       <div className="space-y-6 mt-4">
+
+
         <div className="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0">
+          {/* Logo Upload */}
           <div className="w-full md:w-1/2">
-            <label className="block font-semibold mb-2">Company name</label>
-            <input
-              className="custom_input"
-              type="text"
-              placeholder="Mega Transfers Limited"
-            />
+            <label className="block text-gray-600 mb-2">Upload Logo</label>
+            <div className="flex items-center space-x-4">
+              <div className="h-24 w-32  border border-dashed border-gray-300 flex items-center justify-center text-xs text-gray-500">
+                {logo ? (
+                  <img src={logo} alt="Logo Preview" className="h-full  object-contain" />
+                ) : (
+                  <div className="w-44 h-24   flex items-center justify-center text-gray-500 text-xs font-light">
+                    No File Uploaded
+                  </div>)}
+              </div>
+              <div>
+                <label
+                  htmlFor="logo-upload"
+                  className="btn bg-[#f3e8e1] text-gray-700 px-4 py-2 rounded-md cursor-pointer"
+                >
+                  Choose file
+                </label>
+                <input
+                  id="logo-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoChange}
+                  className="hidden"
+                />
+              </div>
+            </div>
           </div>
+
+          {/* Favicon Upload */}
           <div className="w-full md:w-1/2">
-            <label className="block font-semibold mb-2">Trading name</label>
-            <input
-              className="custom_input"
-              type="text"
-              placeholder="Mega Transfers Limited"
-            />
+            <label className="block text-gray-600 mb-2">Upload Favicon</label>
+            <div className="flex items-center space-x-4">
+              <div className="h-24 w-32 border border-dashed border-gray-300  flex items-center justify-center text-xs text-gray-500">
+                {favicon ? (
+                  <img src={favicon} alt="Favicon Preview" className="h-full object-contain" />
+                ) : (
+                  <div className="w-44 h-24   flex items-center justify-center text-gray-500 text-xs font-light">
+                    No File Uploaded
+                  </div>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor="favicon-upload"
+                  className="btn bg-[#f3e8e1] text-gray-700 px-4 py-2 rounded-md cursor-pointer"
+                >
+                  Choose file
+                </label>
+                <input
+                  id="favicon-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFaviconChange}
+                  className="hidden"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0">
-          <div>
-            <label className="block font-semibold mb-2">Upload Logo</label>
-            <label
-              htmlFor="logo-upload"
-              className="btn btn-edit cursor-pointer bg-gray-100 border p-2 rounded-md"
-            >
-              Choose File
-            </label>
-            <input
-              id="logo-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleLogoChange}
-              className="hidden"
-            />
-            {logo && (
-              <img
-                src={logo}
-                alt="Logo Preview"
-                className="mt-2 h-16 object-contain"
-              />
-            )}
-          </div>
+      </div>
+      <hr className="border-gray-300 mt-8 mb-5" />
+      {/* Company Info */}
+      <div className="mb-4 ">
 
-          <div>
-            <label className="block font-semibold mb-2">Upload Favicon</label>
-            <label
-              htmlFor="favicon-upload"
-              className="btn btn-edit cursor-pointer bg-gray-100 border p-2 rounded-md"
-            >
-              Choose File
-            </label>
-            <input
-              id="favicon-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleFaviconChange}
-              className="hidden"
-            />
-            {favicon && (
-              <img
-                src={favicon}
-                alt="Favicon Preview"
-                className="mt-2 h-16 object-contain"
-              />
-            )}
-          </div>
+        <label className="  text-gray-600 font-semibold  text-lg " >Additional Information</label>
+      </div>
+      <div className=" grid grid-cols-2  gap-x-6 gap-y-4">
+        <div className="w-full">
+          <label className="block text-gray-600 mb-2">Cookie Consent</label>
+          <SelectOption width="full" options={["Yes", "No"]} />
+        </div>
+
+        <div className="w-full">
+          <label className="block text-gray-600 mb-2">Trading Name</label>
+          <input
+            className="custom_input"
+            type="text"
+            placeholder=""
+          />
+        </div>
+
+        <div className="w-full">
+          <label className="block text-gray-600 mb-2">License number</label>
+          <input
+            className="custom_input"
+            type="text"
+            placeholder=""
+          />
+        </div>
+
+        <div className="w-full">
+          <label className="block text-gray-600 mb-2">License reference link</label>
+          <input
+            className="custom_input"
+            type="text"
+            placeholder=""
+          />
         </div>
       </div>
+      <hr className="border-gray-300 mt-8 mb-6" />
 
       {/* Theme Colors */}
-      <div className="space-y-4 mt-8 mb-8">
-        <h2 className="text-xl font-bold text-gray-800">Theme Colors</h2>
+      <div className="space-y-4  mb-8">
+        <h2 className=" text-gray-600 font-semibold  text-lg ">Theme Colors</h2>
 
         {colorFields.map(({ key, label }) => (
           <div
             key={key}
-            className="flex flex-col md:flex-row  items-center justify-between"
+            className="flex flex-col md:flex-row text-gray-600 items-center justify-between"
           >
             <label className="font-medium">{label}</label>
             <input
@@ -154,35 +220,8 @@ const SettingsGeneral = () => {
         ))}
       </div>
 
-      {/* Company Info */}
-      <div className="space-y-6">
-        {[
-          {
-            label: "Contact number",
-            placeholder: "+44 208 961 1818",
-            type: "text",
-          },
-          {
-            label: "Email address",
-            placeholder: "booking@megatransfers.co.uk",
-            type: "email",
-          },
-          { label: "Company address", placeholder: "", type: "text" },
-          { label: "License number", placeholder: "", type: "text" },
-          { label: "License reference link", placeholder: "", type: "text" },
-        ].map(({ label, placeholder, type }) => (
-          <div key={label}>
-            <label className="block font-semibold mb-2">{label}</label>
-            <input
-              className="custom_input"
-              type={type}
-              placeholder={placeholder}
-            />
-          </div>
-        ))}
-      </div>
 
-      <div className="text-right mt-4">
+      <div className="text-right mt-8 flex items-center justify-center">
         <button className="btn btn-reset">UPDATE</button>
       </div>
     </div>

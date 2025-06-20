@@ -78,10 +78,12 @@ import {
   Lock,
   TrendingUp,
   Search,
-  CheckCircle
+  CheckCircle,
+  Copy
 } from "lucide-react";
 
 const Icons = {
+  Copy,
   Navigation,
   AlertCircle,
   Phone,

@@ -67,6 +67,11 @@ export const pricingApi = apiSlice.injectEndpoints({
       invalidatesTags: ["Extras"],
     }),
 
+    // 🔹 EXTRAS WIDGET (PUBLIC API)
+    getExtrasForWidget: builder.query({
+      query: (companyId) => `/pricing/extras-widget?companyId=${companyId}`,
+    }),
+
   }),
 });
 
@@ -82,4 +87,7 @@ export const {
   useCreateExtraMutation,
   useUpdateExtraMutation,
   useDeleteExtraMutation,
+
+  // Widget hook (new)
+  useGetExtrasForWidgetQuery,
 } = pricingApi;

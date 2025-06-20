@@ -1,14 +1,15 @@
 import express from "express";
 import { getUploader } from "../middleware/cloudinaryUpload.js";
 import { protect, authorize } from "../middleware/authMiddleware.js";
-import { getGeneralPricing, updateGeneralPricing } from "../controllers/pricings/generalController.js";
+import { getGeneralPricing, updateGeneralPricing, getGeneralPricingWidget } from "../controllers/pricings/generalController.js";
 import { createVehicle, getAllVehicles, updateVehicle, deleteVehicle, getVehiclesByCompanyId } from "../controllers/pricings/vehicleController.js";
 import { createHourlyPackage, deleteHourlyPackage, getAllHourlyPackages, getHourlyPackageById, updateHourlyPackage } from "../controllers/pricings/hourlyPackageController.js";
 import { getAllFixedPrices, createFixedPrice, updateFixedPrice, deleteFixedPrice } from "../controllers/pricings/fixedPriceController.js";
-import { getAllExtras, createExtra, updateExtra, deleteExtra } from "../controllers/pricings/extrasController.js";
+import { getAllExtras, createExtra, updateExtra, deleteExtra, getExtrasByCompanyId } from "../controllers/pricings/extrasController.js";
 import { getAllPostcodePrices, createPostcodePrice, updatePostcodePrice, deletePostcodePrice, getAllPostcodePricesWidget } from "../controllers/pricings/postcodePriceController.js";
 import { getAllDiscounts, createDiscount, updateDiscount, deleteDiscount } from "../controllers/pricings/discountController.js";
 import { getAllVouchers, createVoucher, updateVoucher, deleteVoucher } from "../controllers/pricings/voucherController.js";
+import { getAllZones, createZone, updateZone, deleteZone } from "../controllers/pricings/zoneController.js";
 
 const router = express.Router();
 const vehicleUploader = getUploader("vehicle");
@@ -22,6 +23,7 @@ router.get("/vehicles/public", getVehiclesByCompanyId);
 
 // GENERAL
 router.get("/general", protect, getGeneralPricing);
+router.get("/general/widget", protect, getGeneralPricingWidget);        // For Widget
 router.post("/general", protect, authorize("superadmin", "clientadmin"), updateGeneralPricing);
 
 // HOURLY PACKAGES
@@ -44,11 +46,18 @@ router.post("/postcode-prices", protect, createPostcodePrice);
 router.put("/postcode-prices/:id", protect, updatePostcodePrice);
 router.delete("/postcode-prices/:id", protect, deletePostcodePrice);
 
+// ZONES CRUD
+router.get("/zones", protect, getAllZones);
+router.post("/zones", protect, createZone);
+router.put("/zones/:id", protect, updateZone);
+router.delete("/zones/:id", protect, deleteZone);
+
 // EXTRAS PRICING
 router.get("/extras", protect, getAllExtras);
 router.post("/extras", protect, createExtra);
 router.put("/extras/:id", protect, updateExtra);
 router.delete("/extras/:id", protect, deleteExtra);
+router.get("/extras-widget", getExtrasByCompanyId);                  // For Widget
 
 // DISCOUNT PRICING
 router.get("/discount", protect, getAllDiscounts);

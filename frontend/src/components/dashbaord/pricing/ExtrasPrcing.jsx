@@ -4,9 +4,7 @@ import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { toast } from "react-toastify";
-import {
-    useGetAllZonesQuery,
-} from "../../../redux/api/zoneApi";
+import { useGetAllZonesQuery } from "../../../redux/api/zoneApi";
 import {
     useGetAllExtrasQuery,
     useCreateExtraMutation,
@@ -35,7 +33,7 @@ const ExtrasPricing = () => {
     const handleAddNew = () => {
         setIsNew(true);
         setSelectedItem({
-            zone: "",
+            zone: null,
             price: 0,
         });
         setShowModal(true);
@@ -50,7 +48,8 @@ const ExtrasPricing = () => {
         }
 
         const payload = {
-            zone: zone.toString(),
+            zone: zone?.name,
+            coordinates: zone?.coordinates,
             price: parseFloat(price),
         };
 
@@ -136,16 +135,14 @@ const ExtrasPricing = () => {
                             type="text"
                             className="custom_input"
                             placeholder="Type or select a zone"
-                            value={selectedItem?.zone || ""}
+                            value={selectedItem?.zone?.name || ""}
                             onChange={(e) => {
-                                setSelectedItem({ ...selectedItem, zone: e.target.value });
-                                setZoneSuggestions(
-                                    zones.map((z) => z.name).filter((z) =>
-                                        z.toLowerCase().includes(e.target.value.toLowerCase())
-                                    )
+                                const filtered = zones.filter((z) =>
+                                    z.name.toLowerCase().includes(e.target.value.toLowerCase())
                                 );
+                                setZoneSuggestions(filtered);
                             }}
-                            onFocus={() => setZoneSuggestions(zones.map((z) => z.name))}
+                            onFocus={() => setZoneSuggestions(zones)}
                             onBlur={() => setTimeout(() => setZoneSuggestions([]), 100)}
                         />
                         {zoneSuggestions.length > 0 && (
@@ -159,7 +156,7 @@ const ExtrasPricing = () => {
                                         }}
                                         className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
                                     >
-                                        {zone}
+                                        {zone.name}
                                     </li>
                                 ))}
                             </ul>

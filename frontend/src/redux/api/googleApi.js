@@ -19,6 +19,33 @@ export const googleApi = apiSlice.injectEndpoints({
         params: { origin, destination },
       }),
     }),
+
+    // Google GET API KEY
+    getMapKey: builder.query({
+      query: () => ({
+        url: "/google/map-key",
+        method: "GET",
+      }),
+    }),
+
+    // Postcode Suggestions
+    searchPostcodeSuggestions: builder.query({
+      query: (input) => ({
+        url: "/google/postcode-suggestions",
+        method: "GET",
+        params: { input },
+      }),
+    }),
+
+    // ✅ NEWLY ADDED: Geocode API
+    geocode: builder.query({
+      query: (address) => ({
+        url: "/google/geocode",
+        method: "GET",
+        params: { address },
+      }),
+    }),
+
   }),
   overrideExisting: false,
 });
@@ -28,4 +55,9 @@ export const {
   useLazySearchGooglePlacesQuery,
   useGetDistanceQuery,
   useLazyGetDistanceQuery,
+  useGetMapKeyQuery,
+  useSearchPostcodeSuggestionsQuery,
+  useLazySearchPostcodeSuggestionsQuery,
+  useGeocodeQuery,
+  useLazyGeocodeQuery,
 } = googleApi;

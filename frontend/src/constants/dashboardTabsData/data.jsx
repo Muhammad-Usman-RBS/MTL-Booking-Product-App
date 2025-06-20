@@ -1884,3 +1884,19 @@ export const informationData = [
     detail: "Mon - Fri: 9AM - 6PM\nWeekend: 10AM - 4PM",
   },
 ]
+
+export const CompanyAdditionalInformation =[
+  {
+    label: "Contact number",
+    placeholder: "+44 208 961 1818",
+    type: "text",
+  },
+  {
+    label: "Email address",
+    placeholder: "booking@megatransfers.co.uk",
+    type: "email",
+  },
+  { label: "Company address", placeholder: "", type: "text" },
+  { label: "License number", placeholder: "", type: "text" },
+  { label: "License reference link", placeholder: "", type: "text" },
+]

@@ -165,6 +165,7 @@ const sidebarItems = [
         route: "/dashboard/pricing/postcode-district",
         icon: Icons.Map,
       },
+      { title: "Zones", route: "/dashboard/pricing/zones", icon: Icons.Grid },
       {
         title: "Discounts / Surcharge - Date",
         route: "/dashboard/pricing/discounts-date",
@@ -203,7 +204,6 @@ const sidebarItems = [
         route: "/dashboard/settings/locations",
         icon: Icons.Map,
       },
-      { title: "Zones", route: "/dashboard/settings/zones", icon: Icons.Grid },
       {
         title: "Coverage",
         route: "/dashboard/settings/coverage",

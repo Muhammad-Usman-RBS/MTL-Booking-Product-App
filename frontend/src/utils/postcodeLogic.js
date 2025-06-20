@@ -1,36 +1,57 @@
-export const findCheckedPrice = (postcodePrices, pickupLocation, dropoffLocation) => {
+import { useGetMapKeyQuery } from "../redux/api/googleApi";
 
-    const extractPostcodeDistrict = (address) => {
-        if (!address) return '';
+// ✅ Google PlaceId Based Matching (React hook version)
+export const useVerifyPostcodeFromAddress = (dbPostcodes) => {
+    const { data, isLoading, error } = useGetMapKeyQuery();
 
-        // This regex looks for full UK postcode anywhere inside the address
-        const match = address.match(/([A-Z]{1,2}\d{1,2}[A-Z]?)\s?\d[A-Z]{2}/gi);
-        
-        if (match && match[0]) {
-            const fullPostcode = match[0].toUpperCase().replace(/\s/g, '');  // remove any space
-            const district = fullPostcode.match(/^([A-Z]{1,2}\d{1,2}[A-Z]?)/i);
-            return district ? district[1].toUpperCase() : '';
+    const verifyPostcodeFromAddress = async (placeId) => {
+        try {
+            const apiKey = data?.mapKey;
+            if (!apiKey) {
+                console.error("Google API Key missing");
+                return null;
+            }
+
+            const response = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=address_components&key=${apiKey}`);
+            const resultData = await response.json();
+
+            const components = resultData.result?.address_components || [];
+            const postcode = components.find(c => c.types.includes("postal_code"))?.long_name;
+
+            if (!postcode) {
+                return null;
+            }
+
+            const districtMatch = postcode.match(/^([A-Z]{1,2}\d{1,2}[A-Z]?)/i);
+            const district = districtMatch ? districtMatch[1].toUpperCase() : null;
+
+            const matched = dbPostcodes.find(item =>
+                item.pickup.toUpperCase() === district || item.dropoff.toUpperCase() === district
+            );
+
+            return matched || null;
+
+        } catch (err) {
+            console.error(err);
+            return null;
         }
-        return '';
     };
 
-    const pickupCode = extractPostcodeDistrict(pickupLocation);
-    const dropoffCode = extractPostcodeDistrict(dropoffLocation);
+    return { verifyPostcodeFromAddress, isLoading, error };
+};
 
-    console.log("Extracted Pickup Code:", pickupCode);
-    console.log("Extracted Dropoff Code:", dropoffCode);
-
-    const matched = postcodePrices.find(item =>
-        (item.pickup.toUpperCase() === pickupCode && item.dropoff.toUpperCase() === dropoffCode) ||
-        (item.pickup.toUpperCase() === dropoffCode && item.dropoff.toUpperCase() === pickupCode)
-    );
-
-    if (matched) {
-        alert(`Price Found: £${matched.price}`);
-        return matched;
-    } else {
-        alert("No pricing data found for selected postcodes.");
+// ✅ Pure Text Based Postcode Extraction (this stays same as before)
+export const verifyPostcodeFromText = (pickupText, dbPostcodes) => {
+    const postcodeMatch = pickupText.match(/\b[A-Z]{1,2}\d{1,2}[A-Z]?\b/i);
+    if (!postcodeMatch) {
         return null;
     }
+
+    const manualPostcode = postcodeMatch[0].toUpperCase();
+
+    const matched = dbPostcodes.find(item =>
+        item.pickup.toUpperCase() === manualPostcode || item.dropoff.toUpperCase() === manualPostcode
+    );
+
+    return matched || null;
 };
- 

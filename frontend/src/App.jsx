@@ -28,6 +28,7 @@ import General from "./components/dashbaord/pricing/General";
 import VehiclePricing from "./components/dashbaord/pricing/VehiclePricing";
 import HourlyPackages from "./components/dashbaord/pricing/HourlyPackages";
 import PostcodeDistrict from "./components/dashbaord/pricing/PostcodeDistrict";
+import Zones from "./components/dashbaord/pricing/Zones";
 import FixedPricing from "./components/dashbaord/pricing/FixedPricing";
 import DistanceSlab from "./components/dashbaord/pricing/DistanceSlab";
 import DriverPricing from "./components/dashbaord/pricing/DriverPricing";
@@ -39,7 +40,6 @@ import BookingSettings from "./components/dashbaord/settings/BookingSettings";
 import EmailSettings from "./components/dashbaord/settings/EmailSettings";
 import LocationSettingCategory from "./components/dashbaord/settings/LocationCategory";
 import Locations from "./components/dashbaord/settings/Locations";
-import Zones from "./components/dashbaord/settings/Zones";
 import Coverage from "./components/dashbaord/settings/Coverage";
 import PaymentOptions from "./components/dashbaord/settings/PaymentOptions";
 import BookingRestrictionDate from "./components/dashbaord/settings/BookingRestrictionDate";
@@ -117,6 +117,7 @@ function App() {
               <Route path="pricing/vehicle" element={<VehiclePricing />} />
               <Route path="pricing/hourly-packages" element={<HourlyPackages />} />
               <Route path="pricing/postcode-district" element={<PostcodeDistrict />} />
+              <Route path="pricing/zones" element={<Zones />} />
               <Route path="pricing/fixed" element={<FixedPricing />} />
               <Route path="pricing/distance-slab" element={<DistanceSlab />} />
               <Route path="pricing/discounts-date" element={<DiscountsByDate />} />
@@ -128,7 +129,6 @@ function App() {
               <Route path="settings/email" element={<EmailSettings />} />
               <Route path="settings/location-category" element={<LocationSettingCategory />} />
               <Route path="settings/locations" element={<Locations />} />
-              <Route path="settings/zones" element={<Zones />} />
               <Route path="settings/coverage" element={<Coverage />} />
               <Route path="settings/payment-options" element={<PaymentOptions />} />
               <Route path="settings/booking-restriction-date" element={<BookingRestrictionDate />} />

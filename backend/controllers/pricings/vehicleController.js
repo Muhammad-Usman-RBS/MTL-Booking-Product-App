@@ -12,12 +12,12 @@ export const createVehicle = async (req, res) => {
       childSeat,
       percentageIncrease,
       priceType,
-      companyId,
       image: imageFromBody,
       features,
       slabs,
     } = req.body;
 
+    const companyId = req.user.companyId;
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
@@ -52,7 +52,6 @@ export const createVehicle = async (req, res) => {
       }
     }
 
-    // ✅ Use Cloudinary URL
     const image = req.file?.path || imageFromBody || "";
 
     const newVehicle = new Vehicle({
@@ -105,19 +104,16 @@ export const updateVehicle = async (req, res) => {
       childSeat,
       percentageIncrease,
       priceType,
-      companyId,
       image: imageFromBody,
       features,
       slabs,
     } = req.body;
 
-    if (Array.isArray(companyId)) companyId = companyId[0];
-
+    const companyId = req.user.companyId;
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
 
-    // ✅ Parse features
     let parsedFeatures = [];
     if (features) {
       try {
@@ -130,7 +126,6 @@ export const updateVehicle = async (req, res) => {
       }
     }
 
-    // ✅ Parse slabs
     let parsedSlabs = [];
     if (slabs) {
       try {
@@ -147,7 +142,6 @@ export const updateVehicle = async (req, res) => {
       }
     }
 
-    // ✅ Use Cloudinary URL (new or existing)
     const image = req.file?.path || imageFromBody || "";
 
     const updates = {
@@ -165,9 +159,7 @@ export const updateVehicle = async (req, res) => {
       slabs: parsedSlabs,
     };
 
-    const updated = await Vehicle.findByIdAndUpdate(req.params.id, updates, {
-      new: true,
-    });
+    const updated = await Vehicle.findByIdAndUpdate(req.params.id, updates, { new: true });
 
     if (!updated) {
       return res.status(404).json({ message: "Vehicle not found" });
@@ -191,7 +183,7 @@ export const deleteVehicle = async (req, res) => {
   }
 };
 
-// ✅ GET VEHICLES BY COMPANY ID (Public)
+// ✅ GET VEHICLES BY COMPANY ID (Public access for widget)
 export const getVehiclesByCompanyId = async (req, res) => {
   try {
     const { companyId } = req.query;

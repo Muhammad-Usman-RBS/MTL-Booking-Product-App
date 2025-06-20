@@ -5,9 +5,10 @@ import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import { VITE_GOOGLE_API_KEY } from "../../../config";
-import { GoogleMap, LoadScript, DrawingManager, StandaloneSearchBox, Polygon, } from "@react-google-maps/api";
-import { useGetAllZonesQuery, useCreateZoneMutation, useUpdateZoneMutation, useDeleteZoneMutation, } from "../../../redux/api/zoneApi";
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal"; // ✅ import DeleteModal here
+import { GoogleMap, LoadScript, DrawingManager, Polygon } from "@react-google-maps/api";
+import { useGetAllZonesQuery, useCreateZoneMutation, useUpdateZoneMutation, useDeleteZoneMutation } from "../../../redux/api/zoneApi";
+import { useLazySearchGooglePlacesQuery, useGetMapKeyQuery } from "../../../redux/api/googleApi";
 
 const LIBRARIES = ["drawing", "places"];
 
@@ -20,21 +21,25 @@ const Zones = () => {
   const [tempPolygon, setTempPolygon] = useState(null);
   const [map, setMap] = useState(null);
   const drawingRef = useRef(null);
-  const searchBoxRef = useRef(null);
   const savedPolygonsRef = useRef([]);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [deleteId, setDeleteId] = useState(null); // ✅ state for delete modal
 
   const { data: zones = [], refetch } = useGetAllZonesQuery();
   const [createZone] = useCreateZoneMutation();
   const [updateZone] = useUpdateZoneMutation();
   const [deleteZone] = useDeleteZoneMutation();
+  const [triggerSearchGooglePlaces] = useLazySearchGooglePlacesQuery();
 
-  // Draw polygon callback
+  const { data: mapKeyData, isLoading: mapKeyLoading } = useGetMapKeyQuery();
+  const googleMapKey = mapKeyData?.mapKey || "";
+
   const handlePolygonComplete = useCallback((polygon) => {
     setTempPolygon(polygon);
     drawingRef.current.setDrawingMode(null);
   }, []);
 
-  // Show existing saved zones
   const renderSavedZones = () => {
     if (!map || !window.google) return;
     savedPolygonsRef.current.forEach((poly) => poly.setMap(null));
@@ -58,7 +63,6 @@ const Zones = () => {
     });
   };
 
-  // Create a new zone
   const handleAddZoneToMap = async () => {
     if (!newZoneName || !tempPolygon?.getPath) {
       toast.error("Please draw a polygon and enter a name");
@@ -87,21 +91,11 @@ const Zones = () => {
     }
   };
 
-  const onPlacesChanged = () => {
-    const places = searchBoxRef.current?.getPlaces();
-    if (places && places[0]) {
-      const location = places[0].geometry.location;
-      map.panTo(location);
-      map.setZoom(14);
-    }
-  };
-
   const handleEdit = (zone) => {
     setSelectedZone(zone);
     setShowModal(true);
   };
 
-  // ✅ FIXED: Flat structure for API call
   const handleUpdate = async () => {
     try {
       await updateZone({
@@ -117,19 +111,47 @@ const Zones = () => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
     try {
-      await deleteZone(id);
+      await deleteZone(deleteId);
       toast.success("Zone deleted!");
+      setDeleteId(null);
       refetch();
     } catch {
       toast.error("Failed to delete zone");
     }
   };
 
+  const cancelDelete = () => {
+    setDeleteId(null);
+  };
+
   useEffect(() => {
     renderSavedZones();
   }, [zones, map]);
+
+  const handleSearchChange = async (value) => {
+    setSearchInput(value);
+    if (value.length >= 3) {
+      try {
+        const res = await triggerSearchGooglePlaces(value).unwrap();
+        setSearchSuggestions(res?.predictions || []);
+      } catch (err) {
+        console.error("Autocomplete error", err);
+      }
+    } else {
+      setSearchSuggestions([]);
+    }
+  };
+
+  const handleSuggestionSelect = (sug) => {
+    setSearchInput(`${sug.name} - ${sug.formatted_address}`);
+    setSearchSuggestions([]);
+  };
 
   const tableHeaders = [
     { label: "Zone Name", key: "name" },
@@ -154,11 +176,12 @@ const Zones = () => {
     ),
   }));
 
+  if (mapKeyLoading) return <div>Loading Map...</div>;
+
   return (
     <>
       <div>
         <OutletHeading name={showForm ? "Zone Editor" : "Zones"} />
-
         {showForm ? (
           <>
             <div className="flex items-center gap-3 mb-4">
@@ -175,23 +198,35 @@ const Zones = () => {
             </div>
 
             <div className="h-[500px] mb-4">
-              <LoadScript googleMapsApiKey={VITE_GOOGLE_API_KEY} libraries={LIBRARIES}>
+              <LoadScript googleMapsApiKey={googleMapKey} libraries={LIBRARIES}>
                 <GoogleMap
                   mapContainerStyle={{ width: "100%", height: "100%" }}
                   center={{ lat: 51.5074, lng: -0.1278 }}
                   zoom={11}
                   onLoad={(mapInstance) => setMap(mapInstance)}
                 >
-                  <StandaloneSearchBox
-                    onLoad={(ref) => (searchBoxRef.current = ref)}
-                    onPlacesChanged={onPlacesChanged}
-                  >
+                  <div className="absolute top-2 right-14 z-10 w-72">
                     <input
                       type="text"
                       placeholder="Search location"
-                      className="absolute top-2 right-14 bg-white z-10 w-72 px-4 py-2 rounded-md border border-gray-300 shadow"
+                      value={searchInput}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                      className="bg-white px-4 py-2 rounded-md border border-gray-300 shadow w-full"
                     />
-                  </StandaloneSearchBox>
+                    {searchSuggestions.length > 0 && (
+                      <ul className="bg-white border rounded shadow mt-1 max-h-60 overflow-y-auto">
+                        {searchSuggestions.map((sug, idx) => (
+                          <li
+                            key={idx}
+                            onClick={() => handleSuggestionSelect(sug)}
+                            className="p-2 text-sm hover:bg-gray-100 cursor-pointer"
+                          >
+                            <strong>{sug.name}</strong> — {sug.formatted_address}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
 
                   <DrawingManager
                     onLoad={(drawingManager) => (drawingRef.current = drawingManager)}
@@ -214,18 +249,12 @@ const Zones = () => {
                   />
                 </GoogleMap>
               </LoadScript>
-              {/* <button className="btn btn-edit mt-2" onClick={handleAddZoneToMap}>Add Polygon to Zone</button> */}
             </div>
           </>
         ) : (
           <>
             <button className="btn btn-edit mb-4" onClick={() => setShowForm(true)}>Add New</button>
-            <CustomTable
-              tableHeaders={tableHeaders}
-              tableData={tableData}
-              showPagination={true}
-              showSorting={true}
-            />
+            <CustomTable tableHeaders={tableHeaders} tableData={tableData} showPagination={true} showSorting={true} />
           </>
         )}
       </div>
@@ -243,7 +272,7 @@ const Zones = () => {
           </div>
 
           <div className="h-[450px] w-full relative">
-            <LoadScript googleMapsApiKey={VITE_GOOGLE_API_KEY} libraries={LIBRARIES}>
+            <LoadScript googleMapsApiKey={googleMapKey} libraries={LIBRARIES}>
               <GoogleMap
                 mapContainerStyle={{ width: "100%", height: "100%" }}
                 center={selectedZone?.coordinates?.[0] || { lat: 51.5074, lng: -0.1278 }}
@@ -283,6 +312,9 @@ const Zones = () => {
           </div>
         </div>
       </CustomModal>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteModal isOpen={!!deleteId} onConfirm={confirmDelete} onCancel={cancelDelete} />
     </>
   );
 };

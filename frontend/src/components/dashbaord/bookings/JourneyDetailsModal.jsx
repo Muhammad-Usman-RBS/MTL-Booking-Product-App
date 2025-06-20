@@ -160,7 +160,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
         {/* Main Content */}
         <div className="grid md:grid-cols-2 gap-5 text-xs text-gray-800">
           <div className="space-y-2.5">
-            <div><strong>Order No.:</strong> {viewData?._id || "N/A"}</div>
+            <div><strong>Booking ID:</strong> {viewData?.bookingId || "N/A"}</div>
             <div><strong>Booked On:</strong> {viewData?.createdAt ? new Date(viewData.createdAt).toLocaleString() : "N/A"}</div>
             <div><strong>Payment Reference:</strong> {viewData?.payment || "N/A"}</div>
             <div>

@@ -9,7 +9,6 @@ import {
 
 const General = () => {
   const [formData, setFormData] = useState({
-    type: "general",
     pickupAirportPrice: "2",
     dropoffAirportPrice: "2",
     minAdditionalDropOff: "10",
@@ -23,7 +22,14 @@ const General = () => {
 
   useEffect(() => {
     if (isSuccess && data) {
-      setFormData(data);
+      setFormData({
+        pickupAirportPrice: data.pickupAirportPrice || "2",
+        dropoffAirportPrice: data.dropoffAirportPrice || "2",
+        minAdditionalDropOff: data.minAdditionalDropOff || "10",
+        childSeatPrice: data.childSeatPrice || "5",
+        cardPaymentType: data.cardPaymentType || "Card",
+        cardPaymentAmount: data.cardPaymentAmount || "0",
+      });
     } else if (isError) {
       toast.error("Failed to fetch pricing.");
     }
@@ -57,10 +63,9 @@ const General = () => {
     <>
       <OutletHeading name="General Pricing" />
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 space-y-6">
-
         <OutletHeading name="Location Category Pricing" />
 
-        {/* Pickup Section */}
+        {/* Pickup and Dropoff */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <label className="block text-gray-700 font-semibold mb-2">Pickup:</label>
@@ -78,7 +83,6 @@ const General = () => {
 
           <div className="hidden sm:block w-[1px] bg-gray-300 mx-4"></div>
 
-          {/* Drop Off Section */}
           <div className="flex-1">
             <label className="block text-gray-700 font-semibold mb-2">Drop Off:</label>
             <div className="flex gap-2 items-center mt-3">
@@ -135,7 +139,7 @@ const General = () => {
           />
         </div>
 
-        {/* Card Payment Card only if Card selected */}
+        {/* Card Payment Amount */}
         {formData.cardPaymentType === "Card" && (
           <div>
             <label className="block text-gray-700 font-semibold mb-2">Card Payment Percentage</label>
@@ -152,7 +156,7 @@ const General = () => {
           </div>
         )}
 
-        {/* Submit Button */}
+        {/* Submit */}
         <div className="text-center">
           <button type="submit" className="btn btn-success" disabled={isLoading}>
             {isLoading ? "UPDATING..." : "UPDATE"}
