@@ -4,11 +4,30 @@ import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
-import { bookingRestrictionData } from "../../../constants/dashboardTabsData/data";
 import { toast } from "react-toastify";
+import {
+  useCreateBookingRestrictionMutation,
+  useDeleteBookingRestrictionMutation,
+  useGetAllBookingRestrictionsQuery,
+  useUpdateBookingRestrictionMutation,
+} from "../../../redux/api/bookingRestrictionDateApi";
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
+import { useSelector } from "react-redux";
 
 const BookingRestrictionDate = () => {
-  const [data, setData] = useState(bookingRestrictionData);
+  const user = useSelector((state) => state.auth.user);
+  const companyId = user?.companyId;
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [createBookingRestriction] = useCreateBookingRestrictionMutation();
+  const {
+    data: apiData,
+    isLoading,
+    isError,
+  } = useGetAllBookingRestrictionsQuery(companyId);
+  const [updateBookingRestriction] = useUpdateBookingRestrictionMutation();
+  const [deleteBookingRestriction] = useDeleteBookingRestrictionMutation();
+
   const [selectedItem, setSelectedItem] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState("Any Status");
@@ -17,26 +36,74 @@ const BookingRestrictionDate = () => {
     setSelectedItem(item);
     setShowModal(true);
   };
-
-  const handleUpdate = () => {
-    const updated = data.map((item) =>
-      item.caption === selectedItem.caption ? selectedItem : item
-    );
-    setData(updated);
-    setShowModal(false);
-    toast.success("Booking Restriction Updated!");
+  const handleAddNew = () => {
+    setSelectedItem({
+      caption: "",
+      recurring: "No",
+      from: "",
+      to: "",
+      status: "Active",
+      companyId: companyId,
+      
+    });
+    setShowModal(true);
   };
 
-  const handleDelete = (caption) => {
-    setData(data.filter((item) => item.caption !== caption));
-    toast.success("Entry Deleted!");
+  const handleUpdate = async () => {
+    try {
+      const { _id, caption, recurring, from, to, status } = selectedItem;
+
+      if (!caption || !recurring || !from || !to || !status) {
+        toast.error("All fields are required!");
+        return;
+      }
+
+      const payload = {
+        caption,
+        recurring,
+        from: new Date(from),
+        to: new Date(to),
+        status,
+      };
+
+      if (_id) {
+        // Edit mode
+        const response = await updateBookingRestriction({
+          id: _id,
+          updatedData: payload,
+        }).unwrap();
+        toast.success("Booking Restriction Updated!");
+        console.log("Updated Booking Restriction:", response);
+      } else {
+        // Create mode
+        const response = await createBookingRestriction(payload).unwrap();
+        toast.success("Booking Restriction Created!");
+        console.log("Created Booking Restriction:", response);
+      }
+
+      setShowModal(false);
+    } catch (error) {
+      console.error("Submit failed:", error);
+      toast.error("Failed to save booking restriction");
+    }
   };
+
+  const handleDelete = async (_id) => {
+    try {
+      await deleteBookingRestriction(_id).unwrap();
+      toast.success("Booking Restriction Deleted!");
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete booking restriction");
+    }
+  };
+
+  const data = apiData?.data || [];
 
   const filteredData =
     statusFilter === "Any Status"
       ? data
       : data.filter((item) => item.status === statusFilter);
-
   const tableHeaders = [
     { label: "Caption", key: "caption" },
     { label: "Recurring", key: "recurring" },
@@ -46,8 +113,22 @@ const BookingRestrictionDate = () => {
     { label: "Action", key: "actions" },
   ];
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleString("en-US", { month: "short" });
+    const year = date.getFullYear();
+    const time = date.toLocaleTimeString("en-US", {
+      hour12: true,
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return `${day.toString().padStart(2, "0")}-${month}-${year} ${time}`;
+  };
   const tableData = filteredData.map((item) => ({
     ...item,
+    from: formatDate(item.from),
+    to: formatDate(item.to),
     actions: (
       <div className="flex gap-2">
         <Icons.Pencil
@@ -57,13 +138,26 @@ const BookingRestrictionDate = () => {
         />
         <Icons.Trash
           title="Delete"
-          onClick={() => handleDelete(item.caption)}
+          onClick={() => {
+            setItemToDelete(item);
+            setShowDeleteModal(true);
+          }}
           className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
         />
       </div>
     ),
   }));
+  if (isLoading) {
+    return <p className="text-center py-10">Loading booking restrictions...</p>;
+  }
 
+  if (isError) {
+    return (
+      <p className="text-center text-red-600 py-10">
+        Failed to load booking restrictions.
+      </p>
+    );
+  }
   return (
     <>
       <div>
@@ -76,7 +170,9 @@ const BookingRestrictionDate = () => {
             options={["Any Status", "Active", "Inactive"]}
           />
           <div>
-            <button className="btn btn-edit">Add New</button>
+            <button onClick={handleAddNew} className="btn btn-edit">
+              Add New
+            </button>
           </div>
         </div>
 
@@ -91,7 +187,11 @@ const BookingRestrictionDate = () => {
       <CustomModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        heading={`Edit ${selectedItem?.caption || "New Entry"}`}
+        heading={
+          data.find((d) => d.caption === selectedItem?.caption)
+            ? `Edit`
+            : "Add New Booking Restriction"
+        }
       >
         <div className="mx-auto p-4 font-sans space-y-4">
           <div>
@@ -129,13 +229,12 @@ const BookingRestrictionDate = () => {
               From
             </label>
             <input
-              type="text"
+              type="datetime-local"
               className="custom_input"
               value={selectedItem?.from || ""}
               onChange={(e) =>
                 setSelectedItem({ ...selectedItem, from: e.target.value })
               }
-              placeholder="e.g. 01-Jan 00:00"
             />
           </div>
 
@@ -144,7 +243,7 @@ const BookingRestrictionDate = () => {
               To
             </label>
             <input
-              type="text"
+              type="datetime-local"
               className="custom_input"
               value={selectedItem?.to || ""}
               onChange={(e) =>
@@ -167,6 +266,25 @@ const BookingRestrictionDate = () => {
           </div>
         </div>
       </CustomModal>
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onConfirm={async () => {
+          try {
+            await deleteBookingRestriction(itemToDelete._id).unwrap();
+            toast.success("Booking Restriction Deleted!");
+          } catch (error) {
+            console.error("Delete failed:", error);
+            toast.error("Failed to delete booking restriction");
+          } finally {
+            setShowDeleteModal(false);
+            setItemToDelete(null);
+          }
+        }}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setItemToDelete(null);
+        }}
+      />
     </>
   );
 };

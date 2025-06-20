@@ -17,7 +17,6 @@ export const createBooking = async (req, res) => {
       ClientAdminEmail,
     } = req.body;
 
-    // Validate companyId
     if (
       !companyId ||
       typeof companyId !== "string" ||
@@ -26,12 +25,10 @@ export const createBooking = async (req, res) => {
       return res.status(400).json({ message: "Invalid or missing companyId" });
     }
 
-    // Validate vehicle
     if (!vehicle.vehicleName || typeof vehicle.vehicleName !== "string") {
       return res.status(400).json({ message: "Vehicle name is required" });
     }
 
-    // Validate primaryJourney
     const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
     for (const field of requiredFields) {
       if (
@@ -58,14 +55,14 @@ export const createBooking = async (req, res) => {
     };
     const generateNextBookingId = async () => {
       const lastBooking = await Booking.findOne({})
-        .sort({ bookingId: -1 }) 
+        .sort({ bookingId: -1 })
         .limit(1);
 
       if (lastBooking && lastBooking.bookingId) {
         const lastId = parseInt(lastBooking.bookingId, 10);
         return (lastId + 1).toString();
       } else {
-        return "50301"; // Start from this if no booking exists
+        return "50301";
       }
     };
     // Booking 1 (primary)
@@ -135,7 +132,7 @@ export const createBooking = async (req, res) => {
             PrimaryBooking: sanitize(savedPrimaryBooking),
           },
         };
-    
+
         if (PassengerEmail)
           await sendEmail(
             PassengerEmail,
@@ -149,7 +146,7 @@ export const createBooking = async (req, res) => {
             primaryEmailPayload
           );
       }
-    
+
       return res.status(201).json({
         success: true,
         message: "Primary journey booked successfully",
@@ -216,41 +213,57 @@ export const createBooking = async (req, res) => {
       const savedReturnBooking = await Booking.create(ReturnBooking);
 
       // Add to email payload manually
-     // Send emails separately
-     if (PassengerEmail || ClientAdminEmail) {
-      // Primary Journey Email
-      const primaryEmailPayload = {
-        title: "Booking Confirmation - Primary Journey",
-        data: {
-          PrimaryBooking: sanitize(savedPrimaryBooking),
-        },
-      };
-    
-      if (PassengerEmail)
-        await sendEmail(PassengerEmail, "Your Booking Details (Primary)", primaryEmailPayload);
-      if (ClientAdminEmail)
-        await sendEmail(ClientAdminEmail, "Your Booking Details (Primary)", primaryEmailPayload);
-    
-      // Return Journey Email
-      const returnEmailPayload = {
-        title: "Booking Confirmation - Return Journey",
-        data: {
-          ReturnBooking: sanitize(savedReturnBooking),
-        },
-      };
-    
-      if (PassengerEmail)
-        await sendEmail(PassengerEmail, "Your Booking Details (Return)", returnEmailPayload);
-      if (ClientAdminEmail)
-        await sendEmail(ClientAdminEmail, "Your Booking Details (Return)", returnEmailPayload);
+      // Send emails separately
+      if (PassengerEmail || ClientAdminEmail) {
+        // Primary Journey Email
+        const primaryEmailPayload = {
+          title: "Booking Confirmation - Primary Journey",
+          data: {
+            PrimaryBooking: sanitize(savedPrimaryBooking),
+          },
+        };
+
+        if (PassengerEmail)
+          await sendEmail(
+            PassengerEmail,
+            "Your Booking Details (Primary)",
+            primaryEmailPayload
+          );
+        if (ClientAdminEmail)
+          await sendEmail(
+            ClientAdminEmail,
+            "Your Booking Details (Primary)",
+            primaryEmailPayload
+          );
+
+        // Return Journey Email
+        const returnEmailPayload = {
+          title: "Booking Confirmation - Return Journey",
+          data: {
+            ReturnBooking: sanitize(savedReturnBooking),
+          },
+        };
+
+        if (PassengerEmail)
+          await sendEmail(
+            PassengerEmail,
+            "Your Booking Details (Return)",
+            returnEmailPayload
+          );
+        if (ClientAdminEmail)
+          await sendEmail(
+            ClientAdminEmail,
+            "Your Booking Details (Return)",
+            returnEmailPayload
+          );
+      }
+
+      return res.status(201).json({
+        success: true,
+        message: "Both journeys booked separately",
+        bookings: [sanitize(savedPrimaryBooking), sanitize(savedReturnBooking)],
+      });
     }
-    
-    return res.status(201).json({
-      success: true,
-      message: "Both journeys booked separately",
-      bookings: [sanitize(savedPrimaryBooking), sanitize(savedReturnBooking)],
-    });
-  }
   } catch (error) {
     console.error("Error in createBooking controller:", error);
     res

@@ -13,6 +13,8 @@ const CustomTable = ({
   showDownload = true,
   showPagination = true,
   showSorting = true,
+  selectedRow,
+  setSelectedRow
 }) => {
   const [search, setSearch] = useState("");
   const [perPage, setPerPage] = useState(5);
@@ -20,7 +22,6 @@ const CustomTable = ({
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const tableRef = useRef();
 
-  const [selectedRow, setSelectedRow] = useState(null); // Mashhood
 
   const requestSort = (key) => {
     let direction = "asc";

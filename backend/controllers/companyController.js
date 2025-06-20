@@ -2,6 +2,7 @@ import Company from '../models/Company.js';
 import User from '../models/User.js';
 import nodemailer from "nodemailer";
 import mongoose from "mongoose";
+import sendEmail from '../utils/sendEmail.js';
 
 export const createCompanyAccount = async (req, res) => {
   try {
@@ -157,47 +158,25 @@ export const updateCompanyAccount = async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 };
-
 export const sendCompanyEmail = async (req, res) => {
-    const { email, company } = req.body;
+  const { email, company } = req.body;
 
-    if (!email || !company) {
-        return res.status(400).json({ message: "Email and company data required." });
-    }
+  if (!email || !company) {
+    return res
+      .status(400)
+      .json({ message: "Email and company data required." });
+  }
+  try {
+    const { _id, clientAdminId, __v, createdAt, updatedAt, ...sanitizedCompany } = company;
+    await sendEmail(email, "📬 Company Account Details", {
+      title: "📄 Company Account Details",
+      subtitle: "Please find the details of your company account below.",
+      data: sanitizedCompany,
+    });
 
-    try {
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.GMAIL_USER,
-                pass: process.env.GMAIL_PASS,
-            },
-        });
-
-        const htmlContent = `
-        <h2>📄 Company Account Details</h2>
-        <table cellpadding="8" border="1" style="border-collapse: collapse; font-family: Arial; font-size: 14px;">
-          ${Object.entries(company).map(([key, value]) => `
-            <tr>
-              <td><strong>${key.replace(/([A-Z])/g, ' $1')}</strong></td>
-              <td>${value || '-'}</td>
-            </tr>
-          `).join('')}
-        </table>
-      `;
-
-        await transporter.sendMail({
-            from: `"MTL Admin" <${process.env.GMAIL_USER}>`,
-            to: email,
-            subject: "📬 Company Account Details",
-            html: htmlContent,
-        });
-
-        res.status(200).json({ message: "Email sent successfully." });
-    } catch (error) {
-        console.error("Email error:", error);
-        res.status(500).json({ message: "Failed to send email." });
-    }
+    res.status(200).json({ message: "Email sent successfully." });
+  } catch (error) {
+    console.error("Email error:", error);
+    res.status(500).json({ message: "Failed to send email." });
+  }
 };
-
-

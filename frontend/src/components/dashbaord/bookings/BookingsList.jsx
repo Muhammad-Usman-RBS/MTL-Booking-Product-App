@@ -40,7 +40,7 @@ const ALL_STATUSES = [
   "No Show",
   "Completed",
   "Cancel",
-  "Reject"
+  "Reject",
 ];
 
 const BookingsList = () => {
@@ -60,8 +60,12 @@ const BookingsList = () => {
   const [showKeyboardModal, setShowKeyboardModal] = useState(false);
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState(null);
-  const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
-  const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
+  const [startDate, setStartDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
 
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
@@ -70,7 +74,6 @@ const BookingsList = () => {
 
   const allBookings = bookingData?.bookings || [];
 
-  // ✅ Generate dynamic statusList with 0s
   const statusCountMap = ALL_STATUSES.reduce((acc, status) => {
     acc[status] = 0;
     return acc;
@@ -85,14 +88,15 @@ const BookingsList = () => {
     }
   });
 
-  const dynamicStatusList = Object.entries(statusCountMap).map(([label, count]) => ({
-    label,
-    count
-  }));
+  const dynamicStatusList = Object.entries(statusCountMap).map(
+    ([label, count]) => ({
+      label,
+      count,
+    })
+  );
 
   dynamicStatusList.push({ label: "All", count: allBookings.length });
 
-  // Extract unique passenger list
   const passengerMap = new Map();
   allBookings.forEach((booking) => {
     const p = booking.passenger;
@@ -105,7 +109,6 @@ const BookingsList = () => {
   });
   const passengerList = Array.from(passengerMap.values());
 
-  // Extract unique vehicle list
   const vehicleMap = new Map();
   allBookings.forEach((booking) => {
     const v = booking.vehicle;
@@ -199,25 +202,48 @@ const BookingsList = () => {
         selectedStatus={selectedStatus}
         selectedPassengers={selectedPassengers}
         selectedVehicleTypes={selectedVehicleTypes}
+        setShowViewModal={setShowViewModal}
+        setShowAuditModal={setShowAuditModal}
+        setShowDriverModal={setShowDriverModal}
       />
 
-      <CustomModal isOpen={showAuditModal} onClose={() => setShowAuditModal(false)} heading="Status Audit">
+      <CustomModal
+        isOpen={showAuditModal}
+        onClose={() => setShowAuditModal(false)}
+        heading="Status Audit"
+      >
         <AuditModal auditData={auditData} />
       </CustomModal>
 
-      <CustomModal isOpen={showViewModal} onClose={() => setShowViewModal(false)} heading="Journey Details">
+      <CustomModal
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        heading="Journey Details"
+      >
         <JourneyDetailsModal viewData={viewData} />
       </CustomModal>
 
-      <CustomModal isOpen={showDriverModal} onClose={() => setShowDriverModal(false)} heading={`${selectedDriver?.name || "Driver Details"}`}>
+      <CustomModal
+        isOpen={showDriverModal}
+        onClose={() => setShowDriverModal(false)}
+        heading={`${selectedDriver?.name || "Driver Details"}`}
+      >
         <ViewDriver />
       </CustomModal>
 
-      <CustomModal isOpen={showKeyboardModal} onClose={() => setShowKeyboardModal(false)} heading="Keyboard Shortcuts">
+      <CustomModal
+        isOpen={showKeyboardModal}
+        onClose={() => setShowKeyboardModal(false)}
+        heading="Keyboard Shortcuts"
+      >
         <ShortcutkeysModal />
       </CustomModal>
 
-      <CustomModal isOpen={showColumnModal} onClose={() => setShowColumnModal(false)} heading="Column Visibility">
+      <CustomModal
+        isOpen={showColumnModal}
+        onClose={() => setShowColumnModal(false)}
+        heading="Column Visibility"
+      >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
           {Object.keys(selectedColumns).map((key) => (
             <label
@@ -236,8 +262,15 @@ const BookingsList = () => {
         </div>
       </CustomModal>
 
-      <CustomModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} heading="Edit Booking">
-        <NewBooking editBookingData={editBookingData} onClose={() => setShowEditModal(false)} />
+      <CustomModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        heading="Edit Booking"
+      >
+        <NewBooking
+          editBookingData={editBookingData}
+          onClose={() => setShowEditModal(false)}
+        />
       </CustomModal>
     </>
   );

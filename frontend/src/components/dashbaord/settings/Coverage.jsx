@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
@@ -6,29 +6,81 @@ import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { coverageData } from "../../../constants/dashboardTabsData/data";
 import { toast } from "react-toastify";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import {
+  useCreateCoverageMutation,
+  useDeleteCoverageMutation,
+  useGetAllCoveragesQuery,
+  useUpdateCoverageMutation,
+} from "../../../redux/api/coverageApi";
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
+import { useSelector } from "react-redux";
 
 const Coverage = () => {
-  const [data, setData] = useState(coverageData);
+  const user = useSelector((state) => state.auth.user);
+  const companyId = user?.companyId;
+  console.log(user);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [createCoverage] = useCreateCoverageMutation();
+  const {
+    data: fetchedData,
+    error,
+    isLoading,
+  } = useGetAllCoveragesQuery(companyId);
+  const [updateCoverage] = useUpdateCoverageMutation();
+  const [deleteCoverage] = useDeleteCoverageMutation();
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [coverageToDelete, setCoverageToDelete] = useState(null);
+  const [data, setData] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
   const handleEdit = (item) => {
     setSelectedItem(item);
+    setIsEditMode(true);
     setShowModal(true);
   };
-
-  const handleUpdate = () => {
-    const updatedData = data.map((entry) =>
-      entry.value === selectedItem.originalValue ? selectedItem : entry
-    );
-    setData(updatedData);
-    setShowModal(false);
-    toast.success("Coverage Updated!");
+  const handleAddNew = () => {
+    setSelectedItem({
+      type: "Pickup",
+      coverage: "Allow",
+      category: "Postcode",
+      value: "",
+      companyId: companyId,
+    });
+    setIsEditMode(false);
+    setShowModal(true);
   };
+  const handleUpdate = async () => {
+    if (isEditMode) {
+      try {
+        // Call the update API
+        await updateCoverage({
+          id: selectedItem?._id,
+          updatedData: selectedItem,
+        }).unwrap();
 
-  const handleDelete = (value) => {
-    setData(data.filter((entry) => entry.value !== value));
-    toast.success("Coverage Deleted!");
+        // Update local state
+        const updatedData = data.map((entry) =>
+          entry.id === selectedItem.id ? selectedItem : entry
+        );
+        setData(updatedData);
+        toast.success("Coverage Updated!");
+        setShowModal(false);
+      } catch (error) {
+        toast.error("Failed to update coverage.");
+      }
+    } else {
+      try {
+        const response = await createCoverage(selectedItem).unwrap();
+        setData([...data, response.data]);
+        toast.success("Coverage Added!");
+        setShowModal(false);
+      } catch (error) {
+        console.log("error creating coverage", error);
+        toast.error("Failed to create coverage.", error);
+      }
+    }
   };
 
   const tableHeaders = [
@@ -50,18 +102,27 @@ const Coverage = () => {
         />
         <Icons.Trash
           title="Delete"
-          onClick={() => handleDelete(entry.value)}
+          onClick={() => {
+            setCoverageToDelete(entry);
+            setShowDeleteModal(true);
+          }}
           className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
         />
       </div>
     ),
   }));
-
+  useEffect(() => {
+    if (fetchedData?.data) {
+      setData(fetchedData.data);
+    }
+  }, [fetchedData]);
   return (
     <>
       <div>
         <OutletHeading name="Coverage Settings" />
-        <button className="btn btn-edit mb-4">Add New</button>
+        <button onClick={handleAddNew} className="btn btn-edit mb-4">
+          Add New
+        </button>
         <CustomTable
           tableHeaders={tableHeaders}
           tableData={tableData}
@@ -73,7 +134,7 @@ const Coverage = () => {
       <CustomModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        heading={`Edit ${selectedItem?.value}`}
+        heading={isEditMode ? `Edit ` : "Add New Coverage"}
       >
         <div className="mx-auto p-4 font-sans space-y-4">
           {/* Location Type */}
@@ -85,6 +146,10 @@ const Coverage = () => {
               label="Type"
               width="full"
               options={["Pickup", "Dropoff", "Both"]}
+              value={selectedItem?.type}
+              onChange={(e) =>
+                setSelectedItem({ ...selectedItem, type: e.target.value })
+              }
             />
           </div>
 
@@ -128,9 +193,13 @@ const Coverage = () => {
             </label>
 
             <SelectOption
-              label="Type"
+              label="Category"
               width="full"
               options={["Postcode", "Zone"]}
+              value={selectedItem?.category}
+              onChange={(e) =>
+                setSelectedItem({ ...selectedItem, category: e.target.value })
+              }
             />
           </div>
 
@@ -158,11 +227,31 @@ const Coverage = () => {
               Cancel
             </button>
             <button onClick={handleUpdate} className="btn btn-reset">
-              Update
+              {isEditMode ? "Update" : "Create"}
             </button>
           </div>
         </div>
       </CustomModal>
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onConfirm={async () => {
+          try {
+            await deleteCoverage(coverageToDelete._id).unwrap();
+            setData(data.filter((entry) => entry._id !== coverageToDelete._id));
+            toast.success("Coverage deleted successfully!");
+          } catch (err) {
+            console.error("Delete failed:", err);
+            toast.error("Failed to delete coverage.");
+          } finally {
+            setShowDeleteModal(false);
+            setCoverageToDelete(null);
+          }
+        }}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setCoverageToDelete(null);
+        }}
+      />
     </>
   );
 };

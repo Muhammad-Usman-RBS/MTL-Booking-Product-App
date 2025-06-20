@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { GripHorizontal } from "lucide-react";
@@ -10,6 +10,7 @@ import {
   useDeleteBookingMutation,
   useUpdateBookingStatusMutation,
 } from "../../../redux/api/bookingApi";
+import Icons from "../../../assets/icons";
 
 const BookingsTable = ({
   selectedColumns,
@@ -24,7 +25,12 @@ const BookingsTable = ({
   selectedStatus,
   selectedPassengers,
   selectedVehicleTypes,
+  setShowViewModal,
+  setShowAuditModal,
+  setShowDriverModal,
 }) => {
+  const [selectedRow, setSelectedRow] = useState(null); 
+
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
 
@@ -50,32 +56,6 @@ const BookingsTable = ({
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedDeleteId, setSelectedDeleteId] = useState(null);
- console.log(data)
-  if (!companyId) {
-    return (
-      <CustomTable
-        tableHeaders={tableHeaders.filter((header) => selectedColumns[header.key])}
-        tableData={[]}
-        exportTableData={[]}
-        emptyMessage="Invalid company ID"
-        showSearch
-        showRefresh
-      />
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <CustomTable
-        tableHeaders={tableHeaders.filter((header) => selectedColumns[header.key])}
-        tableData={[]}
-        exportTableData={[]}
-        emptyMessage="Loading bookings..."
-        showSearch
-        showRefresh
-      />
-    );
-  }
 
   const bookings = (data?.bookings || []).filter(
     (b) => b?.companyId?.toString() === companyId?.toString()
@@ -102,11 +82,126 @@ const BookingsTable = ({
     if (selectedVehicleTypes.includes(b.vehicle?.vehicleName)) bMatch++;
     return bMatch - aMatch;
   });
+  useEffect(() => {
+    async function handleKeyDown(event) {
+      if (selectedRow == null) return;
+
+      const selectedBooking = filteredBookings[selectedRow];
+      if (!selectedBooking) return;
+
+      const key = event.key.toLowerCase();
+
+      if (event.shiftKey) {
+        if (key === "c") {
+          updateBookingStatus({
+            id: selectedBooking._id,
+            status: "Cancel",
+            updatedBy: `${user.role} | ${user.fullName}`,
+          })
+            .unwrap()
+            .then(() => {
+              toast.success('Status updated to "Cancel"');
+              refetch();
+            })
+            .catch(() => {
+              toast.error("Failed to update status");
+            });
+          return;
+        }
+
+        if (key === "d") {
+          setSelectedDeleteId(selectedBooking._id);
+          setShowDeleteModal(true);
+          return;
+        }
+
+        if (key === "e") {
+          setEditBookingData(selectedBooking);
+          setShowEditModal(true);
+          return;
+        }
+
+        if (event.shiftKey && key === "r") {
+          if (!selectedDeleteId) {
+            toast.info("No recently deleted booking to restore");
+            return;
+          }
+
+          try {
+            await updateBookingStatus({
+              id: selectedDeleteId,
+              isDeleted: false,
+              updatedBy: `${user.role} | ${user.fullName}`,
+            }).unwrap();
+
+            toast.success("Booking restored");
+            refetch();
+            setSelectedDeleteId(null);
+          } catch (err) {
+            toast.error("Failed to restore booking");
+          }
+        }
+      }
+
+      const statusMap = {
+        a: "Accepted",
+        o: "On Route",
+        l: "At Location",
+        r: "Ride Started",
+        n: "No Show",
+        c: "Completed",
+      };
+      if (event.key === "Escape") {
+        setShowAuditModal(false);
+        setShowViewModal(false);
+        setShowDriverModal(false);
+        setShowEditModal(false);
+        setShowDeleteModal(false);
+        setSelectedActionRow(null);
+      }
+
+      if (key === "d") {
+        openDriverModal(selectedBooking.driver);
+      } else if (key === "enter") {
+        openViewModal(selectedBooking);
+      } else if (key in statusMap) {
+        const newStatus = statusMap[key];
+        updateBookingStatus({
+          id: selectedBooking._id,
+          status: newStatus,
+          updatedBy: `${user.role} | ${user.fullName}`,
+        })
+          .unwrap()
+          .then(() => {
+            toast.success(`Status updated to "${newStatus}"`);
+            refetch();
+          })
+          .catch(() => {
+            toast.error("Failed to update status");
+          });
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [
+    selectedRow,
+    filteredBookings,
+    user,
+    updateBookingStatus,
+    openDriverModal,
+    openViewModal,
+    refetch,
+  ]);
 
   if (error || bookings.length === 0) {
     return (
       <CustomTable
-        tableHeaders={tableHeaders.filter((header) => selectedColumns[header.key])}
+        tableHeaders={tableHeaders.filter(
+          (header) => selectedColumns[header.key]
+        )}
         tableData={[]}
         exportTableData={[]}
         emptyMessage={error ? "Error loading bookings" : "No bookings found"}
@@ -119,7 +214,9 @@ const BookingsTable = ({
   const formatVehicle = (v) =>
     !v || typeof v !== "object"
       ? "-"
-      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${v.handLuggage || 0} | ${v.checkinLuggage || 0}`;
+      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${
+          v.handLuggage || 0
+        } | ${v.checkinLuggage || 0}`;
 
   const formatPassenger = (p) =>
     !p || typeof p !== "object"
@@ -135,9 +232,9 @@ const BookingsTable = ({
         case "bookingId":
           row[key] = item.bookingId || "";
           break;
-          case "bookingType":
-            row[key] = item?.returnJourney ? "Return" : "Primary";
-            break;
+        case "bookingType":
+          row[key] = item?.returnJourney ? "Return" : "Primary";
+          break;
         case "passenger":
           row[key] = formatPassenger(item.passenger);
           break;
@@ -167,10 +264,10 @@ const BookingsTable = ({
         case "driver":
           row[key] = (
             <button
-              className="text-blue-600 hover:underline"
+              className="cursor-pointer"
               onClick={() => openDriverModal(item.driver)}
             >
-              {item.driver || "-"}
+              {/* <Icons.CircleUserRound /> */}
             </button>
           );
           break;
@@ -182,6 +279,8 @@ const BookingsTable = ({
                 try {
                   await updateBookingStatus({
                     id: item._id,
+                    isDeleted: true,
+
                     status: newStatus,
                     updatedBy: `${user.role} | ${user.fullName}`,
                   }).unwrap();
@@ -200,7 +299,9 @@ const BookingsTable = ({
             <div className="text-center">
               <button
                 onClick={() =>
-                  setSelectedActionRow(selectedActionRow === index ? null : index)
+                  setSelectedActionRow(
+                    selectedActionRow === index ? null : index
+                  )
                 }
                 className="p-2 rounded hover:bg-gray-100 transition"
               >
@@ -212,7 +313,8 @@ const BookingsTable = ({
                     <button
                       key={i}
                       onClick={() => {
-                        if (action === "Status Audit") openAuditModal(item.statusAudit);
+                        if (action === "Status Audit")
+                          openAuditModal(item.statusAudit);
                         else if (action === "View") openViewModal(item);
                         else if (action === "Edit") {
                           setEditBookingData(item);
@@ -259,10 +361,41 @@ const BookingsTable = ({
     status: item.statusAudit?.at(-1)?.status || item.status || "-",
   }));
 
+  if (!companyId) {
+    return (
+      <CustomTable
+        tableHeaders={tableHeaders.filter(
+          (header) => selectedColumns[header.key]
+        )}
+        tableData={[]}
+        exportTableData={[]}
+        emptyMessage="Invalid company ID"
+        showSearch
+        showRefresh
+      />
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <CustomTable
+        tableHeaders={tableHeaders.filter(
+          (header) => selectedColumns[header.key]
+        )}
+        tableData={[]}
+        exportTableData={[]}
+        emptyMessage="Loading bookings..."
+        showSearch
+        showRefresh
+      />
+    );
+  }
   return (
     <>
       <CustomTable
-        tableHeaders={tableHeaders.filter((header) => selectedColumns[header.key])}
+        tableHeaders={tableHeaders.filter(
+          (header) => selectedColumns[header.key]
+        )}
         tableData={tableData}
         exportTableData={exportTableData}
         showSearch
@@ -270,6 +403,8 @@ const BookingsTable = ({
         showDownload
         showPagination
         showSorting
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
       />
       <DeleteModal
         isOpen={showDeleteModal}

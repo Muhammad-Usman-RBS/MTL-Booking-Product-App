@@ -3,31 +3,68 @@ import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import { locationsData } from "../../../constants/dashboardTabsData/data";
 import { toast } from "react-toastify";
+import {
+  useCreateLocationMutation,
+  useDeleteLocationByIdMutation,
+  useGetAllLocationsQuery,
+  useUpdateLocationByIdMutation,
+} from "../../../redux/api/locationApi";
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
+import { useSelector } from "react-redux";
 
 const Locations = () => {
-  const [data, setData] = useState(locationsData);
+  const user = useSelector((state) => state.auth.user);
+  const companyId = user?.companyId;
+  const [createLocation, { isLoading: isCreating }] =
+    useCreateLocationMutation();
+  const {
+    data: locationsFromApi,
+    error,
+    isLoading,
+  } = useGetAllLocationsQuery(companyId);
+  const [updateLocation, { isLoading: isUpdating }] =
+    useUpdateLocationByIdMutation();
+  const [deleteLocation] = useDeleteLocationByIdMutation();
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [locationToDelete, setLocationToDelete] = useState(null);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleEdit = (item) => {
     setSelectedItem(item);
+    setIsEditMode(true);
     setShowModal(true);
   };
-
-  const handleUpdate = () => {
-    const updated = data.map((item) =>
-      item.name === selectedItem.name ? selectedItem : item
-    );
-    setData(updated);
-    setShowModal(false);
-    toast.success("Location updated!");
+  const handleAddNew = () => {
+    setSelectedItem({
+      category: "Airport",
+      name: "",
+      latLng: "",
+      companyId: companyId,
+    });
+    setIsEditMode(false);
+    setShowModal(true);
   };
-
-  const handleDelete = (name) => {
-    setData(data.filter((item) => item.name !== name));
-    toast.success("Location deleted!");
+  const handleUpdate = async () => {
+    try {
+      if (isEditMode) {
+        await updateLocation({
+          id: selectedItem._id,
+          updatedData: selectedItem,
+        }).unwrap();
+        toast.success("Location updated!");
+      } else {
+        await createLocation(selectedItem).unwrap();
+        toast.success("Location created!");
+      }
+      setShowModal(false);
+    } catch (err) {
+      console.error("Error updating/creating location:", err);
+      toast.error("Operation failed!");
+    }
   };
 
   const tableHeaders = [
@@ -36,30 +73,38 @@ const Locations = () => {
     { label: "Lat & Lng", key: "latLng" },
     { label: "Action", key: "actions" },
   ];
+  const tableData = Array.isArray(locationsFromApi?.data)
+    ? locationsFromApi.data.map((item) => ({
+        ...item,
+        actions: (
+          <div className="flex gap-2">
+            <Icons.Pencil
+              title="Edit"
+              onClick={() => handleEdit(item)}
+              className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+            />
+            <Icons.Trash
+              title="Delete"
+              onClick={() => {
+                setLocationToDelete(item);
+                setShowDeleteModal(true);
+              }}
+              className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+            />
+          </div>
+        ),
+      }))
+    : [];
 
-  const tableData = data.map((item) => ({
-    ...item,
-    actions: (
-      <div className="flex gap-2">
-        <Icons.Pencil
-          title="Edit"
-          onClick={() => handleEdit(item)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
-        />
-        <Icons.Trash
-          title="Delete"
-          onClick={() => handleDelete(item.name)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
-        />
-      </div>
-    ),
-  }));
-
+  if (isLoading) return <div>Loading locations...</div>;
+  if (error) return <div>Error loading locations!</div>;
   return (
     <>
       <div>
         <OutletHeading name="Locations" />
-        <button className="btn btn-edit mb-4">Add New</button>
+        <button onClick={handleAddNew} className="btn btn-edit mb-4">
+          Add New
+        </button>
         <CustomTable
           tableHeaders={tableHeaders}
           tableData={tableData}
@@ -71,7 +116,7 @@ const Locations = () => {
       <CustomModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        heading={`Edit ${selectedItem?.name}`}
+        heading={isEditMode ? `Edit` : "Add New Location"}
       >
         <div className="p-3 flex justify-center">
           <div className="space-y-4 w-[480px]">
@@ -129,18 +174,35 @@ const Locations = () => {
 
             <div className="flex justify-end gap-3 pt-2">
               <button
-                onClick={() => setShowModal(false)}
-                className="btn btn-cancel"
+                onClick={handleUpdate}
+                className="btn btn-reset"
+                disabled={isCreating}
               >
-                Cancel
-              </button>
-              <button onClick={handleUpdate} className="btn btn-reset">
-                Update
+                {isCreating ? "Creating..." : "Update"}
               </button>
             </div>
           </div>
         </div>
       </CustomModal>
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onConfirm={async () => {
+          try {
+            await deleteLocation(locationToDelete._id).unwrap();
+            toast.success("Location deleted successfully!");
+          } catch (err) {
+            console.error("Delete error", err);
+            toast.error("Failed to delete location");
+          } finally {
+            setShowDeleteModal(false);
+            setLocationToDelete(null);
+          }
+        }}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setLocationToDelete(null);
+        }}
+      />
     </>
   );
 };
