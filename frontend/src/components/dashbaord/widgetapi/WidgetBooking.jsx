@@ -4,10 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import SelectOption from '../../../constants/constantscomponents/SelectOption';
 import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
 import { useCreateBookingMutation } from '../../../redux/api/bookingApi';
-import {
-    useLazySearchGooglePlacesQuery,
-    useLazyGetDistanceQuery
-} from '../../../redux/api/googleApi';
+import { useLazySearchGooglePlacesQuery, useLazyGetDistanceQuery } from '../../../redux/api/googleApi';
 import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
 
 const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
@@ -251,7 +248,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
         localStorage.setItem("bookingForm", JSON.stringify(payload));
         if (onSubmitSuccess) onSubmitSuccess({
             ...payload,
-            dropOffPrice: totalPrice 
+            dropOffPrice: totalPrice
         });
     };
 

@@ -8,13 +8,7 @@ import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import {
-  useFetchClientAdminsQuery,
-  useCreateClientAdminMutation,
-  useUpdateClientAdminMutation,
-  useDeleteClientAdminMutation,
-  useUpdateClientAdminStatusMutation,
-} from "../../../redux/api/adminApi";
+import { useFetchClientAdminsQuery, useCreateClientAdminMutation, useUpdateClientAdminMutation, useDeleteClientAdminMutation, useUpdateClientAdminStatusMutation } from "../../../redux/api/adminApi";
 
 const tabs = ["Active", "Pending", "Suspended", "Deleted"];
 

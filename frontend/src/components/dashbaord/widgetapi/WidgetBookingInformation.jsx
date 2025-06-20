@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Check, AlertCircle, ReceiptText, PlaneTakeoff, PlaneLanding, Clock, MapPin
-} from "lucide-react";
+import Icons from '../../../assets/icons';
 import CarCardSection from './CarCardSection';
 import { useGetPublicVehiclesQuery } from '../../../redux/api/vehicleApi';
 import { useLazyGetDistanceQuery } from '../../../redux/api/googleApi';
 import { toast, ToastContainer } from 'react-toastify';
 import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
-import { useFetchAllPostcodePricesWidgetQuery } from "../../../redux/api/postcodePriceApi";  // ✅ Added Postcode API
+import { useFetchAllPostcodePricesWidgetQuery } from "../../../redux/api/postcodePriceApi";
 import { useGetExtrasForWidgetQuery } from '../../../redux/api/fixedPriceApi';
 import { useLazyGeocodeQuery } from '../../../redux/api/googleApi';
 import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
@@ -248,10 +246,10 @@ const WidgetBookingInformation = ({
   const postcode = matchedPostcodePrice?.price || 0;
 
   const calculatedTotalPrice =
-  (zonePrice > 0
-    ? zonePrice
-    : postcode
-  ) + (dropOffPrice || 0)
+    (zonePrice > 0
+      ? zonePrice
+      : postcode
+    ) + (dropOffPrice || 0)
     + pickupAirportPrice
     + dropoffAirportPrice;
 
@@ -273,7 +271,7 @@ const WidgetBookingInformation = ({
 
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-4 py-3 bg-white border border-gray-100 rounded-xl">
               <div className="flex items-center gap-2 w-full md:w-auto">
-                <PlaneTakeoff className="w-8 h-8 text-red-500" />
+                <Icons.PlaneTakeoff className="w-8 h-8 text-red-500" />
                 <div>
                   <p className="font-medium text-sm text-red-800">{formData?.pickup || "Pickup Location"}</p>
                   <p className="text-xs text-gray-500">{formData?.doorNumber ? `Door No. ${formData.doorNumber}` : "All Terminals"}</p>
@@ -285,7 +283,7 @@ const WidgetBookingInformation = ({
                   <p className="font-medium text-sm text-green-800">{formData?.dropoff || "Dropoff Location"}</p>
                   <p className="text-xs text-gray-500">{formData?.arrivefrom ? `From: ${formData.arrivefrom}` : "Destination"}</p>
                 </div>
-                <PlaneLanding className="w-8 h-8 text-green-500" />
+                <Icons.PlaneLanding className="w-8 h-8 text-green-500" />
               </div>
             </div>
 
@@ -341,8 +339,8 @@ const WidgetBookingInformation = ({
                       : `(Drop-Off Only: $${dropOffPrice || 0})`}
                 </p>
 
-                {distanceText && (<div className="flex items-center gap-1"><MapPin className="w-4 h-4 text-blue-500" /><span>{distanceText}</span></div>)}
-                {durationText && (<div className="flex items-center gap-1"><Clock className="w-4 h-4 text-blue-500" /><span>{durationText}</span></div>)}
+                {distanceText && (<div className="flex items-center gap-1"><Icons.MapPin className="w-4 h-4 text-blue-500" /><span>{distanceText}</span></div>)}
+                {durationText && (<div className="flex items-center gap-1"><Icons.Clock className="w-4 h-4 text-blue-500" /><span>{durationText}</span></div>)}
               </div>
             </div>
           </div>

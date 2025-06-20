@@ -79,10 +79,16 @@ import {
   TrendingUp,
   Search,
   CheckCircle,
-  Copy
+  Copy,
+  ReceiptText,
+  PlaneTakeoff,
+  PlaneLanding,
 } from "lucide-react";
 
 const Icons = {
+  ReceiptText,
+  PlaneTakeoff,
+  PlaneLanding,
   Copy,
   Navigation,
   AlertCircle,

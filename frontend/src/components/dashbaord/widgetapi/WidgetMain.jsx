@@ -36,13 +36,13 @@ const WidgetMain = () => {
                 <WidgetBooking
                     companyId={companyId}
                     data={formData.booking}
-                  onSubmitSuccess={(data) => {
-  handleDataChange('booking', data);
-  handleDataChange('pricing', {
-    dropOffPrice: data.dropOffPrice || 0
-  });
-  handleStepChange('vehicle');
-}}
+                    onSubmitSuccess={(data) => {
+                        handleDataChange('booking', data);
+                        handleDataChange('pricing', {
+                            dropOffPrice: data.dropOffPrice || 0
+                        });
+                        handleStepChange('vehicle');
+                    }}
                     onChange={(data) => handleDataChange('booking', data)}
                     onCheckedPriceFound={(matchedPrice) => {
                         handleDataChange('pricing', matchedPrice);
@@ -53,9 +53,9 @@ const WidgetMain = () => {
             {step === 'vehicle' && (
                 <WidgetBookingInformation
                     companyId={companyId}
-                    totalPrice={formData.pricing.totalPrice}  // Pass total price here
-                    postcodePrice={formData.pricing.postcodePrice}  // Pass postcode price here
-                    dropOffPrice={formData.pricing.dropOffPrice}  // Pass drop-off price here
+                    totalPrice={formData.pricing.totalPrice}
+                    postcodePrice={formData.pricing.postcodePrice}
+                    dropOffPrice={formData.pricing.dropOffPrice}
                     onNext={() => handleStepChange('payment')}
                 />
             )}
