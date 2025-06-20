@@ -139,9 +139,9 @@ const Coverage = () => {
         <div className="mx-auto p-4 font-sans space-y-4">
           {/* Location Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            {/* <label className="block text-sm font-medium text-gray-700">
               Location Type
-            </label>
+            </label> */}
             <SelectOption
               label="Type"
               width="full"
@@ -188,9 +188,9 @@ const Coverage = () => {
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            {/* <label className="block text-sm font-medium text-gray-700">
               Category
-            </label>
+            </label> */}
 
             <SelectOption
               label="Category"

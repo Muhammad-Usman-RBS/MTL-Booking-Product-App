@@ -25,6 +25,7 @@ const BookingRestrictionDate = () => {
     isLoading,
     isError,
   } = useGetAllBookingRestrictionsQuery(companyId);
+  console.log(user)
   const [updateBookingRestriction] = useUpdateBookingRestrictionMutation();
   const [deleteBookingRestriction] = useDeleteBookingRestrictionMutation();
 
@@ -64,6 +65,7 @@ const BookingRestrictionDate = () => {
         from: new Date(from),
         to: new Date(to),
         status,
+        companyId
       };
 
       if (_id) {
