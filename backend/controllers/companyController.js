@@ -48,7 +48,7 @@ export const createCompanyAccount = async (req, res) => {
 
     const profileImage = req.file?.path || "";
 
-    // ✅ Create company instance
+    // Create company instance
     const newCompany = new Company({
       companyName,
       contactName,
