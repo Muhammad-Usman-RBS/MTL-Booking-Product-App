@@ -5,12 +5,7 @@ import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { toast } from "react-toastify";
-import {
-  useCreateBookingRestrictionMutation,
-  useDeleteBookingRestrictionMutation,
-  useGetAllBookingRestrictionsQuery,
-  useUpdateBookingRestrictionMutation,
-} from "../../../redux/api/bookingRestrictionDateApi";
+import { useCreateBookingRestrictionMutation, useDeleteBookingRestrictionMutation, useGetAllBookingRestrictionsQuery, useUpdateBookingRestrictionMutation} from "../../../redux/api/bookingRestrictionDateApi";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import { useSelector } from "react-redux";
 
@@ -199,7 +194,7 @@ const BookingRestrictionDate = () => {
             : "Add New Booking Restriction"
         }
       >
-        <div className="mx-auto p-4 font-sans space-y-4">
+        <div className="mx-auto w-96 p-4 font-sans space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Caption

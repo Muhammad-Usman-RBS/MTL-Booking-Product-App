@@ -169,6 +169,7 @@ export const updateCompanyAccount = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
 export const sendCompanyEmail = async (req, res) => {
   const { email, company } = req.body;
 
@@ -187,7 +188,7 @@ export const sendCompanyEmail = async (req, res) => {
       ...sanitizedCompany
     } = company;
     await sendEmail(email, "📬 Company Account Details", {
-      title: "📄 Company Account Details",
+      title: "Company Account Details",
       subtitle: "Please find the details of your company account below.",
       data: sanitizedCompany,
     });

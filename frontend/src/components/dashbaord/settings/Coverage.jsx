@@ -1,19 +1,14 @@
 import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
 import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { coverageData } from "../../../constants/dashboardTabsData/data";
-import { toast } from "react-toastify";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
-import {
-  useCreateCoverageMutation,
-  useDeleteCoverageMutation,
-  useGetAllCoveragesQuery,
-  useUpdateCoverageMutation,
-} from "../../../redux/api/coverageApi";
+import { useCreateCoverageMutation, useDeleteCoverageMutation, useGetAllCoveragesQuery, useUpdateCoverageMutation } from "../../../redux/api/coverageApi";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import { useSelector } from "react-redux";
 
 const Coverage = () => {
   const user = useSelector((state) => state.auth.user);
@@ -136,12 +131,8 @@ const Coverage = () => {
         onClose={() => setShowModal(false)}
         heading={isEditMode ? `Edit ` : "Add New Coverage"}
       >
-        <div className="mx-auto p-4 font-sans space-y-4">
-          {/* Location Type */}
+        <div className="mx-auto w-96 p-4 font-sans space-y-4">
           <div>
-            {/* <label className="block text-sm font-medium text-gray-700">
-              Location Type
-            </label> */}
             <SelectOption
               label="Type"
               width="full"
@@ -152,8 +143,6 @@ const Coverage = () => {
               }
             />
           </div>
-
-          {/* Coverage */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Coverage
@@ -185,13 +174,7 @@ const Coverage = () => {
               </label>
             </div>
           </div>
-
-          {/* Category */}
           <div>
-            {/* <label className="block text-sm font-medium text-gray-700">
-              Category
-            </label> */}
-
             <SelectOption
               label="Category"
               width="full"
@@ -202,8 +185,6 @@ const Coverage = () => {
               }
             />
           </div>
-
-          {/* Value */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               {selectedItem?.category === "Zone" ? "Zone" : "Postcode"}
@@ -217,8 +198,6 @@ const Coverage = () => {
               }
             />
           </div>
-
-          {/* Buttons */}
           <div className="flex justify-end gap-3 pt-2">
             <button
               onClick={() => setShowModal(false)}
