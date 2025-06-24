@@ -13,10 +13,13 @@ import {
 } from "../../../redux/api/driverApi";
 import { toast } from "react-toastify";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
+import { useSelector } from "react-redux";
 
 const tabOptions = ["Active", "Suspended", "Pending", "Deleted"];
 
 const DriverList = () => {
+  const user = useSelector((state)=> state?.auth?.user)
+  const companyId = user?.companyId
   const [activeTab, setActiveTab] = useState("Active");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -26,7 +29,7 @@ const DriverList = () => {
   const [driverToSendEmail, setDriverToSendEmail] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [driverToDelete, setdriverToDelete] = useState(null);
-  const { data: getAllDrivers, isLoading, refetch } = useGetAllDriversQuery();
+  const { data: getAllDrivers, isLoading, refetch } = useGetAllDriversQuery(companyId);
   const { data: getDriverById } = useGetDriverByIdQuery(selectedDriver, {
     skip: !selectedDriver,
   });
@@ -85,16 +88,7 @@ const DriverList = () => {
     { label: "Actions", key: "actions" },
   ];
 
-  const handleDeleteDriver = (id) => {
-    try {
-      deleteDriverById(id);
-      toast.success("Driver deleted successfully");
-      refetch();
-    } catch (error) {
-      toast.error("Failed to delete driver");
-    }
-  };
-
+  
   const exportTableData = paginatedData.map((item, index) => ({
     index:
       (page - 1) * (perPage === "All" ? filteredData.length : perPage) +

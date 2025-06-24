@@ -13,6 +13,7 @@ import {
 import Icons from "../../../assets/icons";
 
 const BookingsTable = ({
+  assignedDrivers,
   selectedColumns,
   selectedActionRow,
   setSelectedActionRow,
@@ -28,8 +29,10 @@ const BookingsTable = ({
   setShowViewModal,
   setShowAuditModal,
   setShowDriverModal,
+  isAnyModalOpen ,
+  selectedRow,
+  setSelectedRow
 }) => {
-  const [selectedRow, setSelectedRow] = useState(null); 
 
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
@@ -84,7 +87,16 @@ const BookingsTable = ({
   });
   useEffect(() => {
     async function handleKeyDown(event) {
-      if (selectedRow == null) return;
+      if (event.key === "Escape") {
+        setShowAuditModal(false);
+        setShowViewModal(false);
+        setShowDriverModal(false);
+        setShowEditModal(false);
+        setShowDeleteModal(false);
+        setSelectedActionRow(null);
+      }
+
+      if (isAnyModalOpen  || selectedRow == null) return;
 
       const selectedBooking = filteredBookings[selectedRow];
       if (!selectedBooking) return;
@@ -151,15 +163,7 @@ const BookingsTable = ({
         n: "No Show",
         c: "Completed",
       };
-      if (event.key === "Escape") {
-        setShowAuditModal(false);
-        setShowViewModal(false);
-        setShowDriverModal(false);
-        setShowEditModal(false);
-        setShowDeleteModal(false);
-        setSelectedActionRow(null);
-      }
-
+    
       if (key === "d") {
         openDriverModal(selectedBooking.driver);
       } else if (key === "enter") {
@@ -194,6 +198,7 @@ const BookingsTable = ({
     openDriverModal,
     openViewModal,
     refetch,
+    isAnyModalOpen 
   ]);
 
   if (error || bookings.length === 0) {
@@ -243,12 +248,27 @@ const BookingsTable = ({
             ? new Date(item.createdAt).toLocaleString()
             : "-";
           break;
-        case "pickUp":
-          row[key] = item.primaryJourney?.pickup || "-";
-          break;
-        case "dropOff":
-          row[key] = item.primaryJourney?.dropoff || "-";
-          break;
+          case "pickUp":
+            row[key] = (
+              <div className="relative group w-full max-w-[250px] truncate whitespace-nowrap">
+              {item.primaryJourney?.pickup || "-"}
+              <div className="absolute top-full left-0 z-[999] hidden group-hover:flex w-max max-w-[300px] bg-white text-gray-800 text-xs border border-gray-300 rounded-md shadow-md p-2 mt-1">
+              TEST: {item.primaryJourney?.pickup}
+              </div>
+
+            </div>
+            );
+            break;
+         case "dropOff":
+        row[key] = (
+          <div className="relative group w-full max-w-[250px] truncate whitespace-nowrap">
+          {item.primaryJourney?.dropoff || "-"}
+          <div className="absolute top-full left-0 z-[999]  hidden group-hover:block w-max max-w-[300px] bg-white text-gray-800 text-xs border border-gray-300 rounded-md shadow-md p-2 mt-1">
+            {item.primaryJourney?.dropoff}
+          </div>
+        </div>
+        );
+        break;
         case "vehicle":
           row[key] = item.vehicle?.vehicleName || "-";
           break;
@@ -261,16 +281,33 @@ const BookingsTable = ({
         case "drFare":
           row[key] = item.drFare || "-";
           break;
-        case "driver":
-          row[key] = (
-            <button
-              className="cursor-pointer"
-              onClick={() => openDriverModal(item.driver)}
-            >
-              {/* <Icons.CircleUserRound /> */}
-            </button>
-          );
-          break;
+          case "driver":
+            const driversForThisRow = assignedDrivers?.[index];
+            row[key] = driversForThisRow && driversForThisRow.length > 0 ? (
+              <div
+                onClick={() => {
+                  setSelectedRow(index);            
+                  openDriverModal(item.driver);        
+                }}
+                className="text-sm text-gray-700 space-y-0.5 cursor-pointer"
+              >
+                {driversForThisRow.map((driver, i) => (
+                  <div key={i}>{driver.name}</div>
+                ))}
+              </div>
+            ) : (
+              <button
+                className="cursor-pointer"
+                onClick={() => {
+                  setSelectedRow(index);             
+                  openDriverModal(item.driver);       
+                }}
+              >
+                <Icons.CircleUserRound />
+              </button>
+            );
+            break;
+          
         case "status":
           row[key] = (
             <SelectStatus

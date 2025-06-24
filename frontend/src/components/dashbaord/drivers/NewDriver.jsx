@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import IMAGES from "../../../assets/images";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import DriverData from "./DriverData";
 import VehicleData from "./VehicleData";
@@ -11,8 +10,11 @@ import {
 import { toast } from "react-toastify";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import FilePreview from "../../../constants/constantscomponents/FilePreview";
+import { useSelector } from "react-redux";
 
 const NewDriver = () => {
+  const user = useSelector((state)=> state?.auth?.user)
+    const companyId = user?.companyId
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
@@ -71,6 +73,7 @@ const NewDriver = () => {
           form.append(key, value || "");
         }
       });
+      form.append("companyId", companyId);
 
       if (isEdit) {
         await updateDriver({ id, formData: form }).unwrap();

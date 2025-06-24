@@ -1,8 +1,8 @@
-import Company from '../models/Company.js';
-import User from '../models/User.js';
+import Company from "../models/Company.js";
+import User from "../models/User.js";
 import nodemailer from "nodemailer";
 import mongoose from "mongoose";
-import sendEmail from '../utils/sendEmail.js';
+import sendEmail from "../utils/sendEmail.js";
 
 export const createCompanyAccount = async (req, res) => {
   try {
@@ -31,7 +31,9 @@ export const createCompanyAccount = async (req, res) => {
 
     // ✅ Validate required fields
     if (!clientAdminId || !mongoose.Types.ObjectId.isValid(clientAdminId)) {
-      return res.status(400).json({ message: "Invalid or missing clientAdminId" });
+      return res
+        .status(400)
+        .json({ message: "Invalid or missing clientAdminId" });
     }
 
     if (!companyName || !email || !contactName || !designation) {
@@ -79,7 +81,6 @@ export const createCompanyAccount = async (req, res) => {
     });
 
     return res.status(201).json(savedCompany);
-
   } catch (error) {
     console.error("Company Create Error:", error);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -87,76 +88,86 @@ export const createCompanyAccount = async (req, res) => {
 };
 
 export const deleteCompanyAccount = async (req, res) => {
-    try {
-        await Company.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Company deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const company = await Company.findById(req.params.id);
+    if (!company) {
+      return res.status(404).json({ message: "Company not found" });
     }
+
+    await User.findByIdAndUpdate(company.clientAdminId, {
+      $unset: { companyId: "" },
+    });
+
+    await Company.findByIdAndDelete(req.params.id);
+
+    res.json({ message: "Company deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const getAllCompanies = async (req, res) => {
-    try {
-        const currentUser = req.user;
+  try {
+    const currentUser = req.user;
 
-        let companies;
+    let companies;
 
-        if (currentUser.role === "superadmin") {
-            // ✅ Superadmin sees ALL companies they created via assigned clientAdmins
-            companies = await Company.find({})
-                .populate("clientAdminId", "status")
-                .sort({ createdAt: -1 });
-        } else {
-            // ✅ Clientadmin sees only their own assigned companies
-            companies = await Company.find({ clientAdminId: currentUser._id })
-                .populate("clientAdminId", "status")
-                .sort({ createdAt: -1 });
-        }
-
-        const updated = companies.map((c) => ({
-            ...c._doc,
-            status: c.clientAdminId?.status || c.status,
-        }));
-
-        res.status(200).json(updated);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    if (currentUser.role === "superadmin") {
+      // ✅ Superadmin sees ALL companies they created via assigned clientAdmins
+      companies = await Company.find({})
+        .populate("clientAdminId", "status")
+        .sort({ createdAt: -1 });
+    } else {
+      // ✅ Clientadmin sees only their own assigned companies
+      companies = await Company.find({ clientAdminId: currentUser._id })
+        .populate("clientAdminId", "status")
+        .sort({ createdAt: -1 });
     }
+
+    const updated = companies.map((c) => ({
+      ...c._doc,
+      status: c.clientAdminId?.status || c.status,
+    }));
+
+    res.status(200).json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const getCompanyById = async (req, res) => {
-    try {
-        console.log("Fetching company with ID:", req.params.id); // <== Debug
-        const company = await Company.findById(req.params.id);
-        if (!company) {
-            return res.status(404).json({ message: "Company not found" });
-        }
-        res.status(200).json(company);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    console.log("Fetching company with ID:", req.params.id); // <== Debug
+    const company = await Company.findById(req.params.id);
+    if (!company) {
+      return res.status(404).json({ message: "Company not found" });
     }
+    res.status(200).json(company);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const updateCompanyAccount = async (req, res) => {
-    try {
-        if (req.file?.path) {
-            req.body.profileImage = req.file.path; // ✅ use the newly uploaded file
-        }
-
-        const updatedCompany = await Company.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true, runValidators: true }
-        );
-
-        if (!updatedCompany) {
-            return res.status(404).json({ message: 'Company not found' });
-        }
-
-        res.status(200).json(updatedCompany);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+  try {
+    if (req.file?.path) {
+      req.body.profileImage = req.file.path; // ✅ use the newly uploaded file
     }
+
+    const updatedCompany = await Company.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedCompany) {
+      return res.status(404).json({ message: "Company not found" });
+    }
+
+    res.status(200).json(updatedCompany);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 };
 export const sendCompanyEmail = async (req, res) => {
   const { email, company } = req.body;
@@ -167,7 +178,14 @@ export const sendCompanyEmail = async (req, res) => {
       .json({ message: "Email and company data required." });
   }
   try {
-    const { _id, clientAdminId, __v, createdAt, updatedAt, ...sanitizedCompany } = company;
+    const {
+      _id,
+      clientAdminId,
+      __v,
+      createdAt,
+      updatedAt,
+      ...sanitizedCompany
+    } = company;
     await sendEmail(email, "📬 Company Account Details", {
       title: "📄 Company Account Details",
       subtitle: "Please find the details of your company account below.",

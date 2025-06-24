@@ -1,7 +1,121 @@
-import React from "react";
+import React, { useState } from "react";
 import IMAGES from "../../../assets/images";
+import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
+import { useSelector } from "react-redux";
+import {
+  useGetAllBookingsQuery,
+  useSendBookingEmailMutation,
+} from "../../../redux/api/bookingApi";
+import { toast } from "react-toastify";
+const ViewDriver = ({ selectedRow, setShowDriverModal   , onDriversUpdate }) => {
+  const [selectedDriverIds, setSelectedDriverIds] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showMatching, setShowMatching] = useState(false);
+  const [sendEmailChecked, setSendEmailChecked] = useState(false);
 
-const ViewDriver = () => {
+  const user = useSelector((state) => state.auth.user);
+  const companyId = user?.companyId;
+  const [sendBookingEmail] = useSendBookingEmailMutation();
+
+  const { data: drivers = [], isLoading } = useGetAllDriversQuery(companyId, {
+    skip: !companyId,
+  });
+  const { data: bookingData } = useGetAllBookingsQuery(companyId);
+  const allBookings = bookingData?.bookings || [];
+  const selectedBooking = allBookings?.[selectedRow];
+  const bookingVehicleType =
+  selectedBooking?.vehicle?.vehicleName?.trim().toLowerCase() || "";
+  const filteredDriver = (drivers?.drivers || []).filter((driver) => {
+    const name = driver?.DriverData?.firstName?.toLowerCase() || "";
+    const carMake = driver?.VehicleData?.carMake?.toLowerCase() || "";
+    const carModel = driver?.VehicleData?.carModal?.toLowerCase() || "";
+    const vehicleTypes = driver?.VehicleData?.vehicleTypes || [];
+    const matchesSearch =
+      name.includes(searchTerm) ||
+      carMake.includes(searchTerm) ||
+      carModel.includes(searchTerm);
+
+      const matchesVehicle = showMatching
+      ? vehicleTypes.some(
+          (type) =>
+            typeof type === "string" &&
+            type.trim().toLowerCase() === bookingVehicleType
+        )
+      : true;
+    
+
+    return matchesSearch && matchesVehicle;
+  });
+
+  {
+    isLoading && <p>Loading drivers...</p>;
+  }
+  const handleSendEmail = async () => {
+    const booking = allBookings?.[selectedRow];
+  
+    if (!booking?._id) {
+      toast.error("Please select a booking first.");
+      return;
+    }
+  
+    const selectedDrivers = filteredDriver.filter((driver) =>
+      selectedDriverIds.includes(driver._id)
+    );
+  
+    if (selectedDrivers.length === 0) {
+      toast.info("Please select at least one driver.");
+      return;
+    }
+  
+    // ✅ Only send emails if checkbox is checked
+    if (sendEmailChecked) {
+      for (const driver of selectedDrivers) {
+        const email = driver?.DriverData?.email;
+        if (!email) {
+          toast.warning(
+            `${driver?.DriverData?.firstName || "Driver"} has no email. Skipped.`
+          );
+          continue;
+        }
+  
+        const payload = {
+          bookingId: booking._id,
+          email,
+        };
+  
+        try {
+          await sendBookingEmail(payload).unwrap();
+          toast.success(`Email sent to ${driver.DriverData?.firstName}`);
+        } catch (err) {
+          console.error("Email error:", err);
+          toast.error(`Failed to send to ${driver.DriverData?.firstName}`);
+        }
+      }
+    } 
+    setShowDriverModal(false)
+  
+    if (onDriversUpdate) {
+      onDriversUpdate(
+        selectedRow,
+        selectedDrivers.map((d) => ({
+          id: d._id,
+          name: d?.DriverData?.firstName || "Unnamed",
+        }))
+      );
+    }
+  };
+  
+  const convertKmToMiles = (text) => {
+    if (!text || typeof text !== "string") return "—";
+    if (text.includes("km")) {
+      const km = parseFloat(text.replace("km", "").trim());
+      if (!isNaN(km)) {
+        return `${(km * 0.621371).toFixed(2)} miles`;
+      }
+    }
+    return text;
+  };
   return (
     <>
       <div className="p-4 space-y-4 text-sm text-gray-800 w-full max-w-full">
@@ -10,7 +124,11 @@ const ViewDriver = () => {
             <label className="block font-semibold text-gray-600 mb-1">
               Distance:
             </label>
-            <p className="bg-gray-100 px-3 py-1.5 rounded">27.70 miles</p>
+            <p className="bg-gray-100 px-3 py-1.5 rounded">
+              {convertKmToMiles(
+                allBookings?.[selectedRow]?.primaryJourney?.distanceText
+              ) || "Select a booking"}
+            </p>
           </div>
           <div>
             <label className="block font-semibold text-gray-600 mb-1">
@@ -21,8 +139,14 @@ const ViewDriver = () => {
         </div>
 
         <div className="flex space-x-2">
-          <button className="btn btn-primary">All Drivers</button>
-          <button className="btn btn-reset">Matching Drivers</button>
+          <button
+            onClick={() => setShowMatching(false)}
+            className="btn btn-primary"
+          >
+            All Drivers
+          </button>
+          <button     onClick={() => setShowMatching(true)}
+ className="btn btn-reset">Matching Drivers</button>
         </div>
 
         <div className="flex items-center justify-between gap-2">
@@ -31,74 +155,67 @@ const ViewDriver = () => {
               type="text"
               placeholder="Search driver"
               className="custom_input"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
             />
           </div>
           <label className="flex items-center space-x-2 text-sm">
-            <input type="checkbox" className="form-checkbox" />
+            <input
+              type="checkbox"
+              className="form-checkbox h-4 w-4 text-indigo-600"
+              checked={selectAll}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setSelectAll(checked);
+                if (checked) {
+                  const allIds = filteredDriver?.map((d) => d._id) || [];
+                  setSelectedDriverIds(allIds);
+                } else {
+                  setSelectedDriverIds([]);
+                }
+              }}
+            />
             <span>Select All</span>
           </label>
         </div>
 
         <div className="max-h-48 overflow-y-auto pr-1 space-y-3 custom-scroll border border-gray-500 rounded-md">
-          {[
-            {
-              name: "0101 SC",
-              image: IMAGES.profileimg,
-              car: "Mercedes Benz",
-              model: "V Class",
-            },
-            {
-              name: "1 Usman",
-              image: IMAGES.profileimg,
-              car: "Mercedes",
-              model: "S Class",
-            },
-            {
-              name: "10 Aftab Khan",
-              image: IMAGES.profileimg,
-              car: "Mercedes Benz",
-              model: "V Class",
-            },
-            {
-              name: "0101 SC",
-              image: IMAGES.profileimg,
-              car: "Mercedes Benz",
-              model: "V Class",
-            },
-            {
-              name: "1 Usman",
-              image: IMAGES.profileimg,
-              car: "Mercedes",
-              model: "S Class",
-            },
-            {
-              name: "10 Aftab Khan",
-              image: IMAGES.profileimg,
-              car: "Mercedes Benz",
-              model: "V Class",
-            },
-          ].map((driver, i) => (
-            <label
-              key={i}
-              className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg shadow-sm bg-white hover:shadow-md hover:bg-gray-50 transition-all cursor-pointer"
-            >
-              <img
-                src={driver.image}
-                alt={driver.name}
-                className="w-10 h-10 rounded-full object-cover border border-gray-300"
-              />
-              <div className="flex-1">
-                <p className="font-medium text-gray-800">{driver.name}</p>
-                <p className="text-xs text-gray-500">
-                  {driver.car} | {driver.model}
-                </p>
-              </div>
-              <input
-                type="checkbox"
-                className="form-checkbox h-4 w-4 text-indigo-600"
-              />
-            </label>
-          ))}
+          {Array.isArray(filteredDriver) &&
+            filteredDriver.map((driver, i) => (
+              <label
+                key={i}
+                className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg shadow-sm bg-white hover:shadow-md hover:bg-gray-50 transition-all cursor-pointer"
+              >
+                <img
+                  src={driver.UploadedData?.driverPicture || IMAGES.dummyImg}
+                  alt={driver.name}
+                  className="w-10 h-10 rounded-full object-cover border border-gray-300"
+                />
+                <div className="flex-1">
+                  <p className="font-medium text-gray-800">
+                    {driver.DriverData?.firstName}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {driver.VehicleData?.carMake || "N/A"} |{" "}
+                    {driver.VehicleData?.carModal || "N/A"}
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  className="form-checkbox h-4 w-4 text-indigo-600"
+                  checked={selectedDriverIds.includes(driver._id)}
+                  onChange={() => {
+                    if (selectedDriverIds.includes(driver._id)) {
+                      setSelectedDriverIds((prev) =>
+                        prev.filter((id) => id !== driver._id)
+                      );
+                    } else {
+                      setSelectedDriverIds((prev) => [...prev, driver._id]);
+                    }
+                  }}
+                />
+              </label>
+            ))}
         </div>
 
         <div>
@@ -113,19 +230,22 @@ const ViewDriver = () => {
             Alerts
           </label>
           <div className="flex gap-4">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" className="form-checkbox" />
-              <span>Email</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" className="form-checkbox" />
-              <span>Notification</span>
-            </label>
+          <label className="flex items-center gap-2">
+  <input
+    type="checkbox"
+    className="form-checkbox"
+    checked={sendEmailChecked}
+    onChange={(e) => setSendEmailChecked(e.target.checked)}
+  />
+  <span>Email</span>
+</label>
           </div>
         </div>
 
         <div className="pt-4">
-          <button className="btn btn-success">Update</button>
+          <button onClick={handleSendEmail} className="btn btn-edit">
+            Update
+          </button>
         </div>
       </div>
     </>

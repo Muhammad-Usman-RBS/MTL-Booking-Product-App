@@ -26,11 +26,15 @@ export const createDriver = async (req, res) => {
             driverLicenseExpiry,
             NationalInsurance,
             availability,
+            companyId,
         } = req.body;
 
         let parsedAvailability = [];
 
         try {
+            if(!companyId) {
+                return res.status(500).json({message:" companyId is invalid or not provided"})
+            }
             const arr = typeof availability === "string" ? JSON.parse(availability) : availability;
 
             if (Array.isArray(arr)) {
@@ -89,6 +93,7 @@ export const createDriver = async (req, res) => {
                 motExpiry: buildUploadedField("motExpiry"),
                 V5: buildUploadedField("V5"),
             },
+            companyId,
         });
         await newDriver.save();
 
@@ -104,7 +109,8 @@ export const createDriver = async (req, res) => {
 
 export const getAllDrivers = async (req, res) => {
     try {
-        const drivers = await Driver.find();
+        const {companyId} = req.query
+        const drivers = await Driver.find({companyId});
         res.status(200).json({ success: true, drivers });
     } catch (error) {
         console.error("Error fetching drivers:", error);

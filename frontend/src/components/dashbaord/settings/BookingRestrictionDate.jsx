@@ -17,6 +17,8 @@ import { useSelector } from "react-redux";
 const BookingRestrictionDate = () => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
+  const [isEditMode, setIsEditMode] = useState(false);
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [createBookingRestriction] = useCreateBookingRestrictionMutation();
@@ -35,6 +37,7 @@ const BookingRestrictionDate = () => {
 
   const handleEdit = (item) => {
     setSelectedItem(item);
+    setIsEditMode(true);
     setShowModal(true);
   };
   const handleAddNew = () => {
@@ -47,6 +50,7 @@ const BookingRestrictionDate = () => {
       companyId: companyId,
       
     });
+    setIsEditMode(false);
     setShowModal(true);
   };
 
@@ -263,7 +267,7 @@ const BookingRestrictionDate = () => {
               Cancel
             </button>
             <button onClick={handleUpdate} className="btn btn-reset">
-              Update
+            {isEditMode ? "Update" : "Add"}
             </button>
           </div>
         </div>

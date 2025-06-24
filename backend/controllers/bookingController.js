@@ -613,11 +613,13 @@ export const sendBookingEmail = async (req, res) => {
     }
 
     const plainBooking = JSON.parse(JSON.stringify(booking));
-
+    const { _id, statusAudit, createdAt, updatedAt, __v, ...cleanedBooking } = JSON.parse(
+      JSON.stringify(booking)
+    );
     await sendEmail(email, "Your Booking Confirmation", {
       title: "Booking Confirmation",
       subtitle: "Here are your booking details:",
-      data: plainBooking,
+      data: cleanedBooking,
     });
 
     res.status(200).json({ message: "Booking email sent successfully." });

@@ -178,7 +178,7 @@ const Locations = () => {
                 className="btn btn-reset"
                 disabled={isCreating}
               >
-                {isCreating ? "Creating..." : "Update"}
+                {isEditMode ? "Update" : "Add"}
               </button>
             </div>
           </div>

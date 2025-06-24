@@ -44,6 +44,9 @@ const ALL_STATUSES = [
 ];
 
 const BookingsList = () => {
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [assignedDrivers, setAssignedDrivers] = useState({});
+
   const [selectedStatus, setSelectedStatus] = useState(["All"]);
   const [selectedActionRow, setSelectedActionRow] = useState(null);
   const [showAuditModal, setShowAuditModal] = useState(false);
@@ -157,7 +160,13 @@ const BookingsList = () => {
     setSelectedColumns(updated);
     localStorage.setItem("selectedColumns", JSON.stringify(updated));
   };
-
+  const isAnyModalOpen =
+    showAuditModal ||
+    showViewModal ||
+    showDriverModal ||
+    showKeyboardModal ||
+    showColumnModal ||
+    showEditModal;
   return (
     <>
       <OutletHeading name="Bookings List" />
@@ -187,6 +196,10 @@ const BookingsList = () => {
       />
 
       <BookingsTable
+        assignedDrivers={assignedDrivers}
+
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
         selectedColumns={selectedColumns}
         setSelectedColumns={setSelectedColumns}
         sortConfig={sortConfig}
@@ -205,6 +218,7 @@ const BookingsList = () => {
         setShowViewModal={setShowViewModal}
         setShowAuditModal={setShowAuditModal}
         setShowDriverModal={setShowDriverModal}
+        isAnyModalOpen={isAnyModalOpen}
       />
 
       <CustomModal
@@ -228,7 +242,12 @@ const BookingsList = () => {
         onClose={() => setShowDriverModal(false)}
         heading={`${selectedDriver?.name || "Driver Details"}`}
       >
-        <ViewDriver />
+        <ViewDriver setShowDriverModal={setShowDriverModal} selectedRow={selectedRow} setSelectedRow={setSelectedRow}  onDriversUpdate={(rowIndex, drivers) => {
+    setAssignedDrivers((prev) => ({
+      ...prev,
+      [rowIndex]: drivers
+    }));
+  }} />
       </CustomModal>
 
       <CustomModal

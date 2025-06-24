@@ -9,16 +9,18 @@ dotenv.config();
 // Login Controller
 export const login = async (req, res) => {
   const { email, password } = req.body;
-
   try {
     // Find user by email
     const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
+    }if(user.role === "clientadmin" && !user.companyId) {
+      return res.status(403).json({ message: "Client Admin must have a company assigned. Please contact the administrator."  });
+
     }
 
-    // ✅ Check account status
+    // ✅ Check account statusvi
     if (user.status !== "Active") {
       return res.status(403).json({ message: `Your account is ${user.status}. Please contact the administrator.` });
     }

@@ -50,6 +50,10 @@ const DriverProfileSchema = new mongoose.Schema({
     DriverData: DriverDataSchema,
     VehicleData: VehicleDataSchema,
     UploadedData: UploadedDataSchema,
+    companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+        ref:"Company",
+    },
     createdAt: { type: Date, default: Date.now }
 });
 
