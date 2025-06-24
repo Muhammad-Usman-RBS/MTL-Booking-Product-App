@@ -5,12 +5,8 @@ import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { toast } from "react-toastify";
 import { useGetAllZonesQuery } from "../../../redux/api/zoneApi";
-import {
-    useGetAllExtrasQuery,
-    useCreateExtraMutation,
-    useUpdateExtraMutation,
-    useDeleteExtraMutation,
-} from "../../../redux/api/fixedPriceApi";
+import { useGetAllExtrasQuery, useCreateExtraMutation, useUpdateExtraMutation, useDeleteExtraMutation } from "../../../redux/api/fixedPriceApi";
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 
 const ExtrasPricing = () => {
     const [selectedItem, setSelectedItem] = useState(null);
@@ -20,13 +16,21 @@ const ExtrasPricing = () => {
 
     const { data: zones = [] } = useGetAllZonesQuery();
     const { data: extras = [], refetch } = useGetAllExtrasQuery();
+
     const [createExtra] = useCreateExtraMutation();
     const [updateExtra] = useUpdateExtraMutation();
     const [deleteExtra] = useDeleteExtraMutation();
 
+    const [deleteItemId, setDeleteItemId] = useState(null);
+
     const handleEdit = (item) => {
+        const zoneObj = zones.find((z) => z.name === item.zone);
+
         setIsNew(false);
-        setSelectedItem(item);
+        setSelectedItem({
+            ...item,
+            zone: zoneObj || { name: item.zone, coordinates: item.coordinates },
+        });
         setShowModal(true);
     };
 
@@ -99,7 +103,7 @@ const ExtrasPricing = () => {
                 />
                 <Icons.Trash
                     title="Delete"
-                    onClick={() => handleDelete(item._id)}
+                    onClick={() => setDeleteItemId(item._id)}
                     className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
                 />
             </div>
@@ -169,7 +173,7 @@ const ExtrasPricing = () => {
                         <input
                             type="number"
                             className="custom_input rounded-lg border border-gray-300 shadow-sm"
-                            value={selectedItem?.price || 0}
+                            value={selectedItem?.price}
                             onChange={(e) =>
                                 setSelectedItem({
                                     ...selectedItem,
@@ -197,6 +201,21 @@ const ExtrasPricing = () => {
                     </div>
                 </div>
             </CustomModal>
+            <DeleteModal
+                isOpen={!!deleteItemId}
+                onConfirm={async () => {
+                    try {
+                        await deleteExtra(deleteItemId).unwrap();
+                        toast.success("Deleted successfully");
+                        refetch();
+                    } catch {
+                        toast.error("Failed to delete");
+                    } finally {
+                        setDeleteItemId(null);
+                    }
+                }}
+                onCancel={() => setDeleteItemId(null)}
+            />
         </>
     );
 };

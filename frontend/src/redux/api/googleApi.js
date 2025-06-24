@@ -37,7 +37,7 @@ export const googleApi = apiSlice.injectEndpoints({
       }),
     }),
 
-    // ✅ NEWLY ADDED: Geocode API
+    // NEWLY ADDED: Geocode API
     geocode: builder.query({
       query: (address) => ({
         url: "/google/geocode",

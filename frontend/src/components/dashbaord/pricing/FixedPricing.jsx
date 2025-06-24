@@ -7,12 +7,8 @@ import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { toast } from "react-toastify";
 import { useGetAllZonesQuery } from "../../../redux/api/zoneApi";
-import {
-  useGetAllFixedPricesQuery,
-  useCreateFixedPriceMutation,
-  useUpdateFixedPriceMutation,
-  useDeleteFixedPriceMutation,
-} from "../../../redux/api/fixedPriceApi";
+import { useGetAllFixedPricesQuery, useCreateFixedPriceMutation, useUpdateFixedPriceMutation, useDeleteFixedPriceMutation } from "../../../redux/api/fixedPriceApi";
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 
 const FixedPricing = () => {
   const [selectedItem, setSelectedItem] = useState(null);
@@ -27,11 +23,23 @@ const FixedPricing = () => {
   const [updateFixedPrice] = useUpdateFixedPriceMutation();
   const [deleteFixedPrice] = useDeleteFixedPriceMutation();
   const [priceChange, setPriceChange] = useState(0);
+  const [deleteItemId, setDeleteItemId] = useState(null);
 
   const handleEdit = (item) => {
+    const pickupZone = zones.find((z) => z.name === item.pickup);
+    const dropoffZone = zones.find((z) => z.name === item.dropoff);
+
     setIsNew(false);
-    setSelectedItem(item);
+    setSelectedItem({
+      ...item,
+      pickup: pickupZone || { name: item.pickup, coordinates: item.pickupCoordinates },
+      dropoff: dropoffZone || { name: item.dropoff, coordinates: item.dropoffCoordinates },
+    });
     setShowModal(true);
+  };
+
+  const confirmDelete = (id) => {
+    setDeleteItemId(id);
   };
 
   const handleAddNew = () => {
@@ -94,10 +102,13 @@ const FixedPricing = () => {
     try {
       for (const item of fixedPrices) {
         const updatedPrice = item.price + value;
+
         await updateFixedPrice({
           id: item._id,
           pickup: item.pickup,
+          pickupCoordinates: item.pickupCoordinates, // ✅ retain existing coordinates
           dropoff: item.dropoff,
+          dropoffCoordinates: item.dropoffCoordinates, // ✅ retain existing coordinates
           price: updatedPrice,
           direction: item.direction,
         }).unwrap();
@@ -138,7 +149,7 @@ const FixedPricing = () => {
         />
         <Icons.Trash
           title="Delete"
-          onClick={() => handleDelete(item._id)}
+          onClick={() => confirmDelete(item._id)}
           className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
         />
       </div>
@@ -275,7 +286,7 @@ const FixedPricing = () => {
             <input
               type="number"
               className="custom_input"
-              value={selectedItem?.price || 0}
+              value={selectedItem?.price}
               onChange={(e) =>
                 setSelectedItem({
                   ...selectedItem,
@@ -303,6 +314,22 @@ const FixedPricing = () => {
           </div>
         </div>
       </CustomModal>
+
+      <DeleteModal
+        isOpen={!!deleteItemId}
+        onConfirm={async () => {
+          try {
+            await deleteFixedPrice(deleteItemId);
+            toast.success("Deleted successfully");
+            refetch();
+          } catch {
+            toast.error("Failed to delete");
+          } finally {
+            setDeleteItemId(null);
+          }
+        }}
+        onCancel={() => setDeleteItemId(null)}
+      />
 
       <hr className="mb-12 mt-12 border-gray-300" />
       <ExtrasPrcing />

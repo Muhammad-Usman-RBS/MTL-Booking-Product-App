@@ -9,6 +9,7 @@ import { useFetchAllPostcodePricesWidgetQuery } from "../../../redux/api/postcod
 import { useGetExtrasForWidgetQuery } from '../../../redux/api/fixedPriceApi';
 import { useLazyGeocodeQuery } from '../../../redux/api/googleApi';
 import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
+import { useGetFixedPricesForWidgetQuery } from '../../../redux/api/fixedPriceApi';
 
 const WidgetBookingInformation = ({
   companyId: propCompanyId,
@@ -30,6 +31,7 @@ const WidgetBookingInformation = ({
   const [matchedZonePrice, setMatchedZonePrice] = useState(null);
   const [hourlyError, setHourlyError] = useState('');
   const [triggerGeocode] = useLazyGeocodeQuery();
+  const [fixedZonePrice, setFixedZonePrice] = useState(null);
 
   const [triggerDistance] = useLazyGetDistanceQuery();
   const { data: carList = [], isLoading, error } = useGetPublicVehiclesQuery(companyId, { skip: !companyId });
@@ -41,6 +43,8 @@ const WidgetBookingInformation = ({
   const zones = extras.filter(item => item.zone);
 
   const { data: generalPricing } = useGetGeneralPricingPublicQuery(companyId, { skip: !companyId });
+
+  const { data: fixedPrices = [] } = useGetFixedPricesForWidgetQuery(companyId, { skip: !companyId });
 
   const isPickupAirport = formData?.pickup?.toLowerCase()?.includes('airport');
   const isDropoffAirport = formData?.dropoff?.toLowerCase()?.includes('airport');
@@ -57,6 +61,87 @@ const WidgetBookingInformation = ({
   const [dropoffPostcode, setDropoffPostcode] = useState(null);
   const [matchedPostcodePrice, setMatchedPostcodePrice] = useState(null);
 
+  const isWithinBoundingBox = (point, boundsArray) => {
+    if (!point || !boundsArray || boundsArray.length < 4) return false;
+
+    const lats = boundsArray.map(coord => coord.lat);
+    const lngs = boundsArray.map(coord => coord.lng);
+
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+
+    return (
+      point.lat >= minLat &&
+      point.lat <= maxLat &&
+      point.lng >= minLng &&
+      point.lng <= maxLng
+    );
+  };
+
+
+  const matchFixedPrice = (pickupCoords, dropoffCoords, direction) => {
+    if (!Array.isArray(fixedPrices) || fixedPrices.length === 0) return null;
+    if (!pickupCoords?.length || !dropoffCoords?.length) return null;
+
+    for (const zone of fixedPrices) {
+      const pickupInZone = pickupCoords.some(p =>
+        isWithinBoundingBox(p, zone.pickupCoordinates)
+      );
+      const dropoffInZone = dropoffCoords.some(d =>
+        isWithinBoundingBox(d, zone.dropoffCoordinates)
+      );
+
+      const reversePickupInZone = dropoffCoords.some(d =>
+        isWithinBoundingBox(d, zone.pickupCoordinates)
+      );
+      const reverseDropoffInZone = pickupCoords.some(p =>
+        isWithinBoundingBox(p, zone.dropoffCoordinates)
+      );
+
+      if (zone.direction === "One Way") {
+        if (pickupInZone && dropoffInZone && direction === "One Way") {
+          return zone.price;
+        }
+      }
+
+      if (zone.direction === "Both Ways") {
+        const forwardMatch = pickupInZone && dropoffInZone;
+        const reverseMatch = reversePickupInZone && reverseDropoffInZone;
+
+        if (direction === "One Way" && (forwardMatch || reverseMatch)) {
+          return zone.price;
+        }
+
+        if (direction === "Both Ways" && (forwardMatch || reverseMatch)) {
+          return zone.price * 2;
+        }
+      }
+    }
+
+    return null;
+  };
+
+
+
+  useEffect(() => {
+    if (!formData?.pickupCoordinates || !formData?.dropoffCoordinates || !formData?.direction) return;
+
+    const price = matchFixedPrice(
+      formData.pickupCoordinates,
+      formData.dropoffCoordinates,
+      formData.direction
+    );
+
+    console.log("Matching fixed zone price with:", formData.pickupCoordinates, formData.dropoffCoordinates);
+    console.log("Fixed zone price matched:", price);
+
+    setFixedZonePrice(price);
+  }, [formData, fixedPrices]);
+
+
+  // Checked Zone Entry Price
   useEffect(() => {
     if (zones.length > 0 && formData?.pickup && formData?.dropoff) {
       const normalize = (str) => str?.toLowerCase().replace(/[^a-z0-9]/g, ' ').split(' ').filter(Boolean);
@@ -132,15 +217,28 @@ const WidgetBookingInformation = ({
     }
 
     const data = JSON.parse(storedForm);
-    setFormData(data);
 
     const origin = data.pickup?.replace("Custom Input - ", "").split(" - ").pop()?.trim();
     const destination = data.dropoff?.replace("Custom Input - ", "").split(" - ").pop()?.trim();
 
-    if (origin && destination) {
-      triggerDistance({ origin, destination })
-        .unwrap()
-        .then(res => {
+    // Run everything inside an async IIFE
+    (async () => {
+      if (origin && destination) {
+        try {
+          const [pickupCoord, dropoffCoord] = await Promise.all([
+            getLatLng(origin),
+            getLatLng(destination)
+          ]);
+
+          setFormData({
+            ...data,
+            direction: data.direction || "One Way",
+            pickupCoordinates: pickupCoord ? [pickupCoord] : [],
+            dropoffCoordinates: dropoffCoord ? [dropoffCoord] : [],
+          });
+
+          const res = await triggerDistance({ origin, destination }).unwrap();
+
           if (res?.distanceText?.includes("km")) {
             const km = parseFloat(res.distanceText.replace("km", "").trim());
             const miles = parseFloat((km * 0.621371).toFixed(2));
@@ -151,28 +249,24 @@ const WidgetBookingInformation = ({
             setDistanceText(`${miles} miles`);
             setActualMiles(miles);
           }
-          setDurationText(res?.durationText || null);
-        })
-        .catch(() => {
-          setDistanceText(null);
-          setDurationText(null);
-          toast.warn("Distance not found between given locations.");
-        });
 
-      // ✅ Extract Postcodes after form loaded
+          setDurationText(res?.durationText || null);
+        } catch (err) {
+          toast.warn("Distance or geolocation failed.");
+        }
+      }
+
       const pickupCode = extractPostcode(data.pickup);
       const dropoffCode = extractPostcode(data.dropoff);
       setPickupPostcode(pickupCode);
       setDropoffPostcode(dropoffCode);
-    }
+    })();
   }, []);
+
 
   const getLatLng = async (address) => {
     const res = await triggerGeocode(address).unwrap();
-    if (res?.results?.length) {
-      return res.results[0].geometry.location;  // { lat, lng }
-    }
-    return null;
+    return res?.location || null;
   };
 
   // ✅ Match postcode pricing
@@ -246,12 +340,14 @@ const WidgetBookingInformation = ({
   const postcode = matchedPostcodePrice?.price || 0;
 
   const calculatedTotalPrice =
-    (zonePrice > 0
-      ? zonePrice
-      : postcode
-    ) + (dropOffPrice || 0)
-    + pickupAirportPrice
-    + dropoffAirportPrice;
+    (fixedZonePrice !== null
+      ? fixedZonePrice
+      : (zonePrice > 0
+        ? zonePrice
+        : postcode)) +
+    (dropOffPrice || 0) +
+    pickupAirportPrice +
+    dropoffAirportPrice;
 
   return (
     <>
@@ -331,13 +427,29 @@ const WidgetBookingInformation = ({
                   </span>
                 </div>
 
-                <p className="text-xs text-gray-500 mt-1">
-                  {matchedZonePrice
-                    ? `(Zone: £${matchedZonePrice} + Drop-Off: $${dropOffPrice || 0})`
-                    : matchedPostcodePrice
-                      ? `(Postcode: £${matchedPostcodePrice.price} + Drop-Off: $${dropOffPrice || 0})`
-                      : `(Drop-Off Only: $${dropOffPrice || 0})`}
-                </p>
+                {matchedZonePrice !== null ? (
+                  <div className="flex items-center gap-1">
+                    Zone Price: <span>£{Number(matchedZonePrice).toFixed(2)}</span>
+                  </div>
+                ) : matchedPostcodePrice ? (
+                  <div className="flex items-center gap-1">
+                    Postcode Price: <span>£{Number(matchedPostcodePrice.price).toFixed(2)}</span>
+                  </div>
+                ) : null}
+
+                {fixedZonePrice !== null && fixedZonePrice > 0 && (
+                  <div className="flex items-center gap-1 text-green-700 font-medium text-sm">
+                    <Icons.CheckCircle className="w-4 h-4 text-green-600" />
+                    Fixed Zone Matched: <span>£{fixedZonePrice.toFixed(2)}</span>
+                  </div>
+                )}
+                <p>Fixed:</p>
+                {fixedZonePrice !== null && fixedZonePrice > 0 && (
+                  <div className="flex items-center gap-1 text-green-700 font-medium text-sm">
+                    <Icons.CheckCircle className="w-4 h-4 text-green-600" />
+                    Fixed Zone Matched: <span>£{fixedZonePrice.toFixed(2)}</span>
+                  </div>
+                )}
 
                 {distanceText && (<div className="flex items-center gap-1"><Icons.MapPin className="w-4 h-4 text-blue-500" /><span>{distanceText}</span></div>)}
                 {durationText && (<div className="flex items-center gap-1"><Icons.Clock className="w-4 h-4 text-blue-500" /><span>{durationText}</span></div>)}

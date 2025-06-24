@@ -250,7 +250,7 @@ router.get("/postcode-suggestions", async (req, res) => {
   }
 });
 
-// ✅ GEOCODE API - Convert address to lat/lng
+// GEOCODE API - Convert address to lat/lng
 router.get("/geocode", async (req, res) => {
   try {
     const address = req.query.address;

@@ -4,10 +4,10 @@ import { protect, authorize } from "../middleware/authMiddleware.js";
 import { getGeneralPricing, updateGeneralPricing, getGeneralPricingWidget } from "../controllers/pricings/generalController.js";
 import { createVehicle, getAllVehicles, updateVehicle, deleteVehicle, getVehiclesByCompanyId } from "../controllers/pricings/vehicleController.js";
 import { createHourlyPackage, deleteHourlyPackage, getAllHourlyPackages, getHourlyPackageById, updateHourlyPackage } from "../controllers/pricings/hourlyPackageController.js";
-import { getAllFixedPrices, createFixedPrice, updateFixedPrice, deleteFixedPrice } from "../controllers/pricings/fixedPriceController.js";
+import { getAllFixedPrices, createFixedPrice, updateFixedPrice, deleteFixedPrice, getFixedPricesByCompanyId } from "../controllers/pricings/fixedPriceController.js";
 import { getAllExtras, createExtra, updateExtra, deleteExtra, getExtrasByCompanyId } from "../controllers/pricings/extrasController.js";
 import { getAllPostcodePrices, createPostcodePrice, updatePostcodePrice, deletePostcodePrice, getAllPostcodePricesWidget } from "../controllers/pricings/postcodePriceController.js";
-import { getAllDiscounts, createDiscount, updateDiscount, deleteDiscount } from "../controllers/pricings/discountController.js";
+import { getAllDiscounts, createDiscount, updateDiscount, deleteDiscount, getDiscountsByCompanyId } from "../controllers/pricings/discountController.js";
 import { getAllVouchers, createVoucher, updateVoucher, deleteVoucher } from "../controllers/pricings/voucherController.js";
 import { getAllZones, createZone, updateZone, deleteZone } from "../controllers/pricings/zoneController.js";
 
@@ -35,6 +35,7 @@ router.delete("/delHourlyPackage/:id", deleteHourlyPackage);
 
 // FIXED PRICING
 router.get("/fixed-prices", protect, getAllFixedPrices);
+router.get("/fixed-widget", getFixedPricesByCompanyId);                   // For Widget
 router.post("/fixed-prices", protect, createFixedPrice);
 router.put("/fixed-prices/:id", protect, updateFixedPrice);
 router.delete("/fixed-prices/:id", protect, deleteFixedPrice);
@@ -54,13 +55,14 @@ router.delete("/zones/:id", protect, deleteZone);
 
 // EXTRAS PRICING
 router.get("/extras", protect, getAllExtras);
+router.get("/extras-widget", getExtrasByCompanyId);                  // For Widget
 router.post("/extras", protect, createExtra);
 router.put("/extras/:id", protect, updateExtra);
 router.delete("/extras/:id", protect, deleteExtra);
-router.get("/extras-widget", getExtrasByCompanyId);                  // For Widget
 
 // DISCOUNT PRICING
 router.get("/discount", protect, getAllDiscounts);
+router.get("/discount/widget", getDiscountsByCompanyId);    // For Widget
 router.post("/discount", protect, createDiscount);
 router.put("/discount/:id", protect, updateDiscount);
 router.delete("/discount/:id", protect, deleteDiscount);

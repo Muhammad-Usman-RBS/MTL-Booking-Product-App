@@ -35,6 +35,11 @@ export const pricingApi = apiSlice.injectEndpoints({
       invalidatesTags: ["FixedPrices"],
     }),
 
+    // 🔹 FIXED PRICES WIDGET (PUBLIC API)
+    getFixedPricesForWidget: builder.query({
+      query: (companyId) => `/pricing/fixed-widget?companyId=${companyId}`,
+    }),
+
     // 🔹 EXTRAS
     getAllExtras: builder.query({
       query: () => "/pricing/extras",
@@ -76,18 +81,20 @@ export const pricingApi = apiSlice.injectEndpoints({
 });
 
 export const {
-  // Fixed price hooks
+  // Fixed price
   useGetAllFixedPricesQuery,
   useCreateFixedPriceMutation,
   useUpdateFixedPriceMutation,
   useDeleteFixedPriceMutation,
+  // Widget
+  useGetFixedPricesForWidgetQuery,
 
-  // Extras hooks
+  // Extras
   useGetAllExtrasQuery,
   useCreateExtraMutation,
   useUpdateExtraMutation,
   useDeleteExtraMutation,
 
-  // Widget hook (new)
+  // Widget
   useGetExtrasForWidgetQuery,
 } = pricingApi;

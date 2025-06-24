@@ -151,11 +151,11 @@ export const createUserBySuperAdmin = async (req, res) => {
           : creator.companyId,
     });
 
-    // ✅ If new clientadmin, set their own _id as companyId
-    if (newUser.role === "clientadmin" && !newUser.companyId) {
-      newUser.companyId = newUser._id;
-      await newUser.save();
-    }
+    // If new clientadmin, set their own _id as companyId
+    // if (newUser.role === "clientadmin" && !newUser.companyId) {
+    //   newUser.companyId = newUser._id;
+    //   await newUser.save();
+    // }
 
     res.status(201).json({
       message: "User created successfully",

@@ -6,6 +6,7 @@ import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
 import { useCreateBookingMutation } from '../../../redux/api/bookingApi';
 import { useLazySearchGooglePlacesQuery, useLazyGetDistanceQuery } from '../../../redux/api/googleApi';
 import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
+import { useLazyGeocodeQuery } from '../../../redux/api/googleApi';
 
 const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
     const companyId = parentCompanyId || new URLSearchParams(window.location.search).get('company') || '';
@@ -22,6 +23,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
     const [selectedHourly, setSelectedHourly] = useState('');
     const [minAdditionalDropOff, setminAdditionalDropOff] = useState(0);
     const [totalPrice, setTotalPrice] = useState(0);  // To store the total price
+    const [triggerGeocode] = useLazyGeocodeQuery();
 
     // Format hourly options
     const formattedHourlyOptions = useMemo(() => {
@@ -173,6 +175,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
         const payload = {
             ...formData,
             dropoff: dropOffs[0],
+            direction: formData.direction || "One Way",
             additionalDropoff1: dropOffs[1] || null,
             additionalDropoff2: dropOffs[2] || null,
             mode,
@@ -199,6 +202,12 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
             if (res?.distanceText && res?.durationText) {
                 payload.distanceText = res.distanceText;
                 payload.durationText = res.durationText;
+
+                // ✅ Add coordinates
+                const pickupCoord = await triggerGeocode(origin).unwrap();
+                const dropoffCoord = await triggerGeocode(destination).unwrap();
+                payload.pickupCoordinates = pickupCoord?.location ? [pickupCoord.location] : [];
+                payload.dropoffCoordinates = dropoffCoord?.location ? [dropoffCoord.location] : [];
 
                 if (mode === "Hourly") {
                     let miles = 0;

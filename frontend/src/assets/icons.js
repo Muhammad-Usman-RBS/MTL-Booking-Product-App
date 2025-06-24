@@ -83,9 +83,11 @@ import {
   ReceiptText,
   PlaneTakeoff,
   PlaneLanding,
+  CircleUserRound,
 } from "lucide-react";
 
 const Icons = {
+  CircleUserRound,
   ReceiptText,
   PlaneTakeoff,
   PlaneLanding,
