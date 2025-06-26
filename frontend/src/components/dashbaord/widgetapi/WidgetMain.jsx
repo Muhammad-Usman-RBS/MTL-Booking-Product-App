@@ -42,15 +42,15 @@ const WidgetMain = () => {
                 primaryJourney: {
                     ...formData.booking,
                     fare: finalPayload.fare || 0,
-                  hourlyOption: formData.booking?.hourlyOption || null,
+                    hourlyOption: formData.booking?.hourlyOption || null,
                 },
                 PassengerEmail: finalPayload?.passengerDetails?.email || "",
             }).unwrap();
 
-            console.log("✅ Booking saved to MongoDB:", result);
+            console.log("Booking saved to MongoDB:", result);
             setStep("success");
         } catch (err) {
-            console.error("❌ Booking save failed:", err);
+            console.error("Booking save failed:", err);
             setError("Failed to save booking. Please try again.");
         }
     };

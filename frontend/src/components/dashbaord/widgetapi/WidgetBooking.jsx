@@ -203,7 +203,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                 payload.distanceText = res.distanceText;
                 payload.durationText = res.durationText;
 
-                // ✅ Add coordinates
+                //  Add coordinates
                 const pickupCoord = await triggerGeocode(origin).unwrap();
                 const dropoffCoord = await triggerGeocode(destination).unwrap();
                 payload.pickupCoordinates = pickupCoord?.location ? [pickupCoord.location] : [];

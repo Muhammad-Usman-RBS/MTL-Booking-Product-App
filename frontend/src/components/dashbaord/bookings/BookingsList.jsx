@@ -188,7 +188,7 @@ const BookingsList = () => {
         setSelectedPassengers={setSelectedPassengers}
         selectedVehicleTypes={selectedVehicleTypes}
         setSelectedVehicleTypes={setSelectedVehicleTypes}
-       
+
         startDate={startDate}
         setStartDate={setStartDate}
         endDate={endDate}

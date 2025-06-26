@@ -38,7 +38,7 @@ const WidgetBookingInformation = ({
   const { data: carList = [], isLoading, error } = useGetPublicVehiclesQuery(companyId, { skip: !companyId });
   const { data: hourlyRates = [] } = useGetAllHourlyRatesQuery(companyId, { skip: !companyId });
 
-  // ✅ Fetch Postcode Prices
+  // Fetch Postcode Prices
   const { data: postcodePrices = [] } = useFetchAllPostcodePricesWidgetQuery(companyId, { skip: !companyId });
   const { data: extras = [] } = useGetExtrasForWidgetQuery(companyId, { skip: !companyId });
   const zones = extras.filter(item => item.zone);
@@ -280,7 +280,7 @@ const WidgetBookingInformation = ({
     return res?.location || null;
   };
 
-  // ✅ Match postcode pricing
+  // Match postcode pricing
   useEffect(() => {
     if (pickupPostcode && dropoffPostcode && postcodePrices.length > 0) {
       const match = postcodePrices.find(item =>
@@ -321,47 +321,47 @@ const WidgetBookingInformation = ({
     }
   }, [carList]);
 
-useEffect(() => {
-  if (selectedCarId && carList.length > 0) {
-    const selectedCar = carList.find(car => car._id === selectedCarId);
-    if (!selectedCar) return;
+  useEffect(() => {
+    if (selectedCarId && carList.length > 0) {
+      const selectedCar = carList.find(car => car._id === selectedCarId);
+      if (!selectedCar) return;
 
-    const raw = selectedCar.percentageIncrease ?? 0;
-    const cleanPercentage = typeof raw === "string" ? Number(raw.replace("%", "")) : Number(raw);
-    const percentage = isNaN(cleanPercentage) ? 0 : cleanPercentage;
+      const raw = selectedCar.percentageIncrease ?? 0;
+      const cleanPercentage = typeof raw === "string" ? Number(raw.replace("%", "")) : Number(raw);
+      const percentage = isNaN(cleanPercentage) ? 0 : cleanPercentage;
 
-    let base = 0;
+      let base = 0;
 
-    if (formData?.mode === "Hourly") {
-      // ✅ Don't apply percentage for hourly, use pure hourly rate
-      base = matchedHourlyRate?.[selectedCar?.vehicleName] || 0;
-    } else if (fixedZonePrice !== null) {
-      base = fixedZonePrice;
-    } else if (matchedZoneToZonePrice !== null) {
-      base = matchedZoneToZonePrice;
-    } else if (matchedPostcodePrice?.price !== undefined) {
-      base = matchedPostcodePrice.price;
-    } else {
-      base = getVehiclePriceForDistance(selectedCar, actualMiles || 0);
+      if (formData?.mode === "Hourly") {
+        // Don't apply percentage for hourly, use pure hourly rate
+        base = matchedHourlyRate?.[selectedCar?.vehicleName] || 0;
+      } else if (fixedZonePrice !== null) {
+        base = fixedZonePrice;
+      } else if (matchedZoneToZonePrice !== null) {
+        base = matchedZoneToZonePrice;
+      } else if (matchedPostcodePrice?.price !== undefined) {
+        base = matchedPostcodePrice.price;
+      } else {
+        base = getVehiclePriceForDistance(selectedCar, actualMiles || 0);
+      }
+
+      const final =
+        formData?.mode === "Hourly"
+          ? base // No percentage added in hourly
+          : base + (base * (percentage / 100)); // Apply % in all non-hourly modes
+
+      setBaseRate(final.toFixed(2));
     }
-
-    const final =
-      formData?.mode === "Hourly"
-        ? base // ✅ No percentage added in hourly
-        : base + (base * (percentage / 100)); // ✅ Apply % in all non-hourly modes
-
-    setBaseRate(final.toFixed(2));
-  }
-}, [
-  selectedCarId,
-  carList,
-  actualMiles,
-  formData?.mode,
-  matchedHourlyRate,
-  matchedZoneToZonePrice,
-  matchedPostcodePrice,
-  fixedZonePrice
-]);
+  }, [
+    selectedCarId,
+    carList,
+    actualMiles,
+    formData?.mode,
+    matchedHourlyRate,
+    matchedZoneToZonePrice,
+    matchedPostcodePrice,
+    fixedZonePrice
+  ]);
 
   const handleSubmitBooking = () => {
     if (!selectedCarId || !formData) {
@@ -377,7 +377,7 @@ useEffect(() => {
 
     localStorage.setItem("selectedVehicle", JSON.stringify(selectedCar));
 
-    // ✅ Send selected car and final total price to parent
+    // Send selected car and final total price to parent
     onNext({
       totalPrice: calculatedTotalPrice,
       selectedCar: {
@@ -510,7 +510,7 @@ useEffect(() => {
                   const percentage = isNaN(cleanPercentage) ? 0 : cleanPercentage;
 
                   if (isHourly) {
-                    // ✅ Only use hourly rate directly
+                    // Only use hourly rate directly
                     price = matchedHourlyRate?.[car.vehicleName] || 0;
                     label = `Hourly rate: £${price.toFixed(2)}`;
                   } else if (fixedZonePrice !== null) {
@@ -642,7 +642,7 @@ useEffect(() => {
           </div>
 
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-            <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">✅ All Classes Include:</h3>
+            <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">All Classes Include:</h3>
             <ul className="space-y-3 text-sm text-gray-700">
               {["Free cancellation", "Free 60 minutes wait", "Meet & Greet"].map((item, idx) => (
                 <li key={idx} className="flex items-start gap-2">
