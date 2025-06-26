@@ -84,10 +84,10 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
         <Baby className="w-4 h-4" /> {vehicle.childSeat}
       </span>
       <span className="flex items-center gap-1">
-        <Briefcase className="w-4 h-4" /> {vehicle.smallLuggage}
+        <Briefcase className="w-4 h-4" /> {vehicle.handLuggage}
       </span>
       <span className="flex items-center gap-1">
-        <Luggage className="w-4 h-4" /> {vehicle.largeLuggage}
+        <Luggage className="w-4 h-4" /> {vehicle.checkinLuggage}
       </span>
     </div>
   );
@@ -130,10 +130,10 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
                     <Baby className="w-4 h-4" /> {localSelectedVehicle.childSeat}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Briefcase className="w-4 h-4" /> {localSelectedVehicle.smallLuggage}
+                    <Briefcase className="w-4 h-4" /> {localSelectedVehicle.handLuggage}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Luggage className="w-4 h-4" /> {localSelectedVehicle.largeLuggage}
+                    <Luggage className="w-4 h-4" /> {localSelectedVehicle.checkinLuggage}
                   </span>
                 </div>
               </div>
@@ -164,8 +164,8 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
           {[
             { label: "Passenger", key: "passenger", max: localSelectedVehicle.passengers },
             { label: "Child Seats", key: "childSeat", max: localSelectedVehicle.childSeat },
-            { label: "Hand Luggage", key: "handLuggage", max: localSelectedVehicle.smallLuggage },
-            { label: "Check-in Luggage", key: "checkinLuggage", max: localSelectedVehicle.largeLuggage },
+            { label: "Hand Luggage", key: "handLuggage", max: localSelectedVehicle.handLuggage },
+            { label: "Check-in Luggage", key: "checkinLuggage", max: localSelectedVehicle.checkinLuggage },
           ].map(({ label, key, max }) => (
             <div key={key} className="w-full">
               <label className="text-sm font-medium block mb-1">{label}</label>

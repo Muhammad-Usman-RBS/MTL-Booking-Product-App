@@ -5,10 +5,7 @@ import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useSelector } from "react-redux";
-import {
-  useGetAllVehiclesQuery,
-  useUpdateVehicleMutation,
-} from "../../../redux/api/vehicleApi";
+import { useGetAllVehiclesQuery, useUpdateVehicleMutation } from "../../../redux/api/vehicleApi";
 
 const DistanceSlab = () => {
   const companyId = useSelector((state) => state.auth?.user?.companyId);
@@ -112,8 +109,8 @@ const DistanceSlab = () => {
             return {
               from: slab.from,
               to: slab.to,
-              price: parseFloat(totalPrice.toFixed(2)),         // ✅ this will now match the blue price * distance
-              pricePerMile: parseFloat(perMile.toFixed(2)),     // ✅ this will now exactly match what's shown in blue
+              price: parseFloat(totalPrice.toFixed(2)),
+              pricePerMile: parseFloat(perMile.toFixed(2)),
             };
           });
 
@@ -125,8 +122,8 @@ const DistanceSlab = () => {
               priority: v.priority,
               vehicleName: v.vehicleName,
               passengers: v.passengers,
-              smallLuggage: v.smallLuggage,
-              largeLuggage: v.largeLuggage,
+              handLuggage: v.handLuggage,
+              checkinLuggage: v.checkinLuggage,
               childSeat: v.childSeat,
               percentageIncrease: v.percentageIncrease,
               priceType: v.priceType,

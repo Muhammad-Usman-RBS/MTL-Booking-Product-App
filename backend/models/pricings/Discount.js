@@ -7,7 +7,7 @@ const discountSchema = new mongoose.Schema(
         fromDate: { type: Date, required: true },
         toDate: { type: Date, required: true },
         category: { type: String, enum: ["Surcharge", "Discount"], required: true },
-        price: { type: Number, required: true },
+        discountPrice: { type: Number, required: true },
         status: { type: String, enum: ["Active", "Expired"], default: "Active" },
         companyId: {
             type: mongoose.Schema.Types.ObjectId,

@@ -123,7 +123,7 @@ const DiscountsByDate = () => {
       fromDate: "",
       toDate: "",
       category: "Surcharge",
-      price: 0,
+      discountPrice: 0,
       status: "Active",
       priceType: "Percentage",
     });
@@ -149,7 +149,7 @@ const DiscountsByDate = () => {
         fromDate: toISOStringWithLocalTime(selectedItem.fromDate),
         toDate: toISOStringWithLocalTime(selectedItem.toDate),
         category: selectedItem.category,
-        price: parseFloat(selectedItem.price) || 0,
+        discountPrice: parseFloat(selectedItem.discountPrice) || 0,
         status: isExpired ? "Expired" : "Active",
         priceType: "Percentage",
       };
@@ -190,7 +190,7 @@ const DiscountsByDate = () => {
     { label: "From", key: "fromDate" },
     { label: "To", key: "toDate" },
     { label: "Category", key: "category" },
-    { label: "Price (%)", key: "price" },
+    { label: "Discount Price (%)", key: "discountPrice" },
     { label: "Status", key: "status" },
     { label: "Action", key: "actions" },
   ];
@@ -199,7 +199,7 @@ const DiscountsByDate = () => {
     ...item,
     fromDate: formatDate(item.fromDate),
     toDate: formatDate(item.toDate),
-    price: `${item.price?.toFixed(2) || "0.00"}%`,
+    discountPrice: `${item.discountPrice?.toFixed(2) || "0.00"}%`,
     status: item.dynamicStatus,
     actions: (
       <div className="flex gap-2">
@@ -331,15 +331,15 @@ const DiscountsByDate = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Price (%)</label>
+            <label className="block text-sm font-medium text-gray-700">Discount (%)</label>
             <input
               type="number"
               step="0.01"
               min="0"
               className="custom_input"
-              value={selectedItem?.price || ""}
+              value={selectedItem?.discountPrice || ""}
               onChange={(e) =>
-                setSelectedItem({ ...selectedItem, price: parseFloat(e.target.value) || 0 })
+                setSelectedItem({ ...selectedItem, discountPrice: parseFloat(e.target.value) || 0 })
               }
               placeholder="0.00"
             />

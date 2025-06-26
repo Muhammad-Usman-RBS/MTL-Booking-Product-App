@@ -31,7 +31,7 @@ export const createDiscount = async (req, res) => {
       fromDate,
       toDate,
       category,
-      price,
+      discountPrice,
       status,
     } = req.body;
 
@@ -41,7 +41,7 @@ export const createDiscount = async (req, res) => {
       fromDate: new Date(fromDate).toISOString(), // ✅ Ensures UTC ISO format
       toDate: new Date(toDate).toISOString(),     // ✅ Ensures UTC ISO format
       category,
-      price,
+      discountPrice,
       status,
       companyId,
     });
@@ -69,7 +69,7 @@ export const updateDiscount = async (req, res) => {
       fromDate,
       toDate,
       category,
-      price,
+      discountPrice,
       status,
     } = req.body;
 
@@ -81,7 +81,7 @@ export const updateDiscount = async (req, res) => {
         fromDate: new Date(fromDate).toISOString(), // ✅ Ensures 24h precision
         toDate: new Date(toDate).toISOString(),
         category,
-        price,
+        discountPrice,
         status,
       },
       { new: true }

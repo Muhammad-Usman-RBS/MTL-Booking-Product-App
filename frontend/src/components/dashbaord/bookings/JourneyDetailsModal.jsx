@@ -198,6 +198,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
               <div className="ml-4 mt-1 space-y-1">
                 <div><strong>Vehicle:</strong> {viewData?.vehicle?.vehicleName || "N/A"}</div>
                 <div><strong>Passengers:</strong> {viewData?.vehicle?.passenger || 0}</div>
+                <div><strong>Child Seats:</strong> {viewData?.vehicle?.childSeat || 0}</div>
                 <div><strong>Small Luggage:</strong> {viewData?.vehicle?.handLuggage || 0}</div>
                 <div><strong>Large Luggage:</strong> {viewData?.vehicle?.checkinLuggage || 0}</div>
               </div>
@@ -217,7 +218,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
         {/* Fare & Status */}
         <div className="text-center">
           <div className="btn btn-primary text-sm px-5 py-1.5">
-            Fare: <span className="text-base">{viewData?.fare || 0} GBP</span>
+            Fare: <span className="text-base">{viewData?.primaryJourney?.fare || 0} GBP</span>
             <span className="text-xs ml-1">{viewData?.payment || "Card Payment"}</span>
           </div>
           <div className="text-gray-600 mt-2 text-xs">

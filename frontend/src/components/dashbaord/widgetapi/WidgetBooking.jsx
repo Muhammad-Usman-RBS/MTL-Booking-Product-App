@@ -22,7 +22,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
     const [dropOffTypes, setDropOffTypes] = useState({});
     const [selectedHourly, setSelectedHourly] = useState('');
     const [minAdditionalDropOff, setminAdditionalDropOff] = useState(0);
-    const [totalPrice, setTotalPrice] = useState(0);  // To store the total price
+    const [totalPrice, setTotalPrice] = useState(0);
     const [triggerGeocode] = useLazyGeocodeQuery();
 
     // Format hourly options
@@ -62,8 +62,8 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
         date: '',
         hour: '',
         minute: '',
-        hourlyOption: { value: { distance: 0, hours: 0 } }, // Default hourly option
-        originalHourlyOption: { value: { distance: 0, hours: 0 } }, // Default hourly option
+        hourlyOption: { value: { distance: 0, hours: 0 } },
+        originalHourlyOption: { value: { distance: 0, hours: 0 } },
     });
 
     const [createBooking] = useCreateBookingMutation();
@@ -184,7 +184,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
             referrer: document.referrer,
             pickupPostcode,
             dropoffPostcode,
-            totalPrice, // Include totalPrice in the payload
+            totalPrice,
             ...dynamicFields,
         };
 
@@ -233,6 +233,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                             } else {
                                 toast.warning("No hourly package covers this distance.");
                             }
+
                         } else {
                             payload.hourlyOption = formData.hourlyOption;
                         }
@@ -257,6 +258,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
         localStorage.setItem("bookingForm", JSON.stringify(payload));
         if (onSubmitSuccess) onSubmitSuccess({
             ...payload,
+            mode,
             dropOffPrice: totalPrice
         });
     };
@@ -456,20 +458,6 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                         + Add Drop Off
                     </button>
                 )}
-
-                {/* Additional Drop Off Price */}
-                <div className="flex justify-between mt-4">
-                    <span className="text-sm font-semibold">Additional Drop-Off Price:</span>
-                    <span className="text-sm">
-                        ${minAdditionalDropOff ? minAdditionalDropOff.toFixed(2) : "0.00"}
-                    </span>
-                </div>
-
-                {/* Total Price */}
-                <div className="flex justify-between mt-4">
-                    <span className="text-sm font-semibold">Total Price:</span>
-                    <span className="text-sm">${totalPrice.toFixed(2)}</span>
-                </div>
 
                 {/* Date & Time */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

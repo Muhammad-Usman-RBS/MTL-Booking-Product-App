@@ -29,6 +29,7 @@ const WidgetBookingInformation = ({
   const [baseRate, setBaseRate] = useState('0.00');
   const [matchedHourlyRate, setMatchedHourlyRate] = useState('');
   const [matchedZonePrice, setMatchedZonePrice] = useState(null);
+  const [matchedZoneToZonePrice, setMatchedZoneToZonePrice] = useState(null);
   const [hourlyError, setHourlyError] = useState('');
   const [triggerGeocode] = useLazyGeocodeQuery();
   const [fixedZonePrice, setFixedZonePrice] = useState(null);
@@ -45,6 +46,8 @@ const WidgetBookingInformation = ({
   const { data: generalPricing } = useGetGeneralPricingPublicQuery(companyId, { skip: !companyId });
 
   const { data: fixedPrices = [] } = useGetFixedPricesForWidgetQuery(companyId, { skip: !companyId });
+
+  const { data: zoneToZonePrices = [] } = useGetFixedPricesForWidgetQuery(companyId, { skip: !companyId });
 
   const isPickupAirport = formData?.pickup?.toLowerCase()?.includes('airport');
   const isDropoffAirport = formData?.dropoff?.toLowerCase()?.includes('airport');
@@ -79,7 +82,6 @@ const WidgetBookingInformation = ({
       point.lng <= maxLng
     );
   };
-
 
   const matchFixedPrice = (pickupCoords, dropoffCoords, direction) => {
     if (!Array.isArray(fixedPrices) || fixedPrices.length === 0) return null;
@@ -123,8 +125,6 @@ const WidgetBookingInformation = ({
     return null;
   };
 
-
-
   useEffect(() => {
     if (!formData?.pickupCoordinates || !formData?.dropoffCoordinates || !formData?.direction) return;
 
@@ -134,12 +134,8 @@ const WidgetBookingInformation = ({
       formData.direction
     );
 
-    console.log("Matching fixed zone price with:", formData.pickupCoordinates, formData.dropoffCoordinates);
-    console.log("Fixed zone price matched:", price);
-
     setFixedZonePrice(price);
   }, [formData, fixedPrices]);
-
 
   // Checked Zone Entry Price
   useEffect(() => {
@@ -166,28 +162,42 @@ const WidgetBookingInformation = ({
     if (
       formData?.mode === "Hourly" &&
       hourlyRates.length > 0 &&
-      actualMiles !== null &&
-      formData?.originalHourlyOption?.value
+      actualMiles !== null
     ) {
-      const selected = formData.originalHourlyOption.value;
-      const match = hourlyRates.find(pkg =>
-        Number(pkg.distance) === Number(selected.distance) &&
-        Number(pkg.hours) === Number(selected.hours)
-      );
+      const original = formData?.originalHourlyOption?.value;
 
-      const warningMsg = `⚠️ Your trip is ${actualMiles} miles which exceeds the selected hourly package of ${selected.distance} miles. Additional charges will apply.`;
+      if (original) {
+        const selectedSlab = hourlyRates.find(pkg =>
+          Number(pkg.distance) === Number(original.distance) &&
+          Number(pkg.hours) === Number(original.hours)
+        );
 
-      if (match) {
-        setMatchedHourlyRate(match.vehicleRates || {});
+        if (selectedSlab) {
+          setMatchedHourlyRate(selectedSlab.vehicleRates || {});
 
-        if (actualMiles > selected.distance) {
-          setHourlyError(warningMsg);
+          if (actualMiles > Number(original.distance)) {
+            const warningMsg = `You've selected ${original.distance} miles for ${original.hours} hours, but your trip is ${actualMiles} miles. Prices are shown for your selected package. Extra charges may apply.`;
+            setHourlyError(warningMsg);
+          } else {
+            setHourlyError('');
+          }
+
         } else {
-          setHourlyError('');
+          setMatchedHourlyRate(null);
+          setHourlyError("Selected hourly package not found.");
         }
       } else {
-        setMatchedHourlyRate(null);
-        setHourlyError("Selected hourly package not available.");
+        // fallback for any edge case where originalHourlyOption is missing
+        const fallback = hourlyRates.find(pkg => Number(pkg.distance) >= actualMiles) ||
+          [...hourlyRates].sort((a, b) => b.distance - a.distance)[0];
+
+        if (fallback) {
+          setMatchedHourlyRate(fallback.vehicleRates || {});
+          setHourlyError("No selected package found. Showing closest match.");
+        } else {
+          setMatchedHourlyRate(null);
+          setHourlyError("No suitable hourly package found.");
+        }
       }
     }
   }, [formData, hourlyRates, actualMiles]);
@@ -211,6 +221,7 @@ const WidgetBookingInformation = ({
 
   useEffect(() => {
     const storedForm = localStorage.getItem("bookingForm");
+    setFormData(JSON.parse(storedForm));
     if (!storedForm) {
       toast.error("No booking form found.");
       return;
@@ -310,44 +321,94 @@ const WidgetBookingInformation = ({
     }
   }, [carList]);
 
-  useEffect(() => {
-    if (selectedCarId && carList.length > 0 && actualMiles !== null) {
-      const selectedCar = carList.find(car => car._id === selectedCarId);
-      const selectedPrice =
-        formData?.mode === "Hourly"
-          ? selectedCar?.hourlyPrice || 0
-          : getVehiclePriceForDistance(selectedCar, actualMiles);
-      setBaseRate(selectedPrice || '0.00');
+useEffect(() => {
+  if (selectedCarId && carList.length > 0) {
+    const selectedCar = carList.find(car => car._id === selectedCarId);
+    if (!selectedCar) return;
+
+    const raw = selectedCar.percentageIncrease ?? 0;
+    const cleanPercentage = typeof raw === "string" ? Number(raw.replace("%", "")) : Number(raw);
+    const percentage = isNaN(cleanPercentage) ? 0 : cleanPercentage;
+
+    let base = 0;
+
+    if (formData?.mode === "Hourly") {
+      // ✅ Don't apply percentage for hourly, use pure hourly rate
+      base = matchedHourlyRate?.[selectedCar?.vehicleName] || 0;
+    } else if (fixedZonePrice !== null) {
+      base = fixedZonePrice;
+    } else if (matchedZoneToZonePrice !== null) {
+      base = matchedZoneToZonePrice;
+    } else if (matchedPostcodePrice?.price !== undefined) {
+      base = matchedPostcodePrice.price;
+    } else {
+      base = getVehiclePriceForDistance(selectedCar, actualMiles || 0);
     }
-  }, [selectedCarId, carList, actualMiles]);
+
+    const final =
+      formData?.mode === "Hourly"
+        ? base // ✅ No percentage added in hourly
+        : base + (base * (percentage / 100)); // ✅ Apply % in all non-hourly modes
+
+    setBaseRate(final.toFixed(2));
+  }
+}, [
+  selectedCarId,
+  carList,
+  actualMiles,
+  formData?.mode,
+  matchedHourlyRate,
+  matchedZoneToZonePrice,
+  matchedPostcodePrice,
+  fixedZonePrice
+]);
 
   const handleSubmitBooking = () => {
     if (!selectedCarId || !formData) {
       toast.error("Please fill the form and select a vehicle.");
       return;
     }
+
     const selectedCar = carList.find(car => car._id === selectedCarId);
     if (!selectedCar) {
       toast.error("Please select a vehicle.");
       return;
     }
+
     localStorage.setItem("selectedVehicle", JSON.stringify(selectedCar));
-    onNext();
+
+    // ✅ Send selected car and final total price to parent
+    onNext({
+      totalPrice: calculatedTotalPrice,
+      selectedCar: {
+        ...selectedCar,
+        passenger: selectedCar?.passengers || 0,
+        childSeat: selectedCar?.childSeat || 0,
+        handLuggage: selectedCar?.handLuggage || 0,
+        checkinLuggage: selectedCar?.checkinLuggage || 0
+      }
+
+    });
   };
 
-  // Calculate total price including drop-off price
-  const zonePrice = matchedZonePrice || 0;
-  const postcode = matchedPostcodePrice?.price || 0;
+  // const calculatedTotalPrice =
+  //   Number(baseRate) +
+  //   (matchedZonePrice || 0) +
+  //   (matchedZoneToZonePrice || 0) +
+  //   (dropOffPrice || 0) +
+  //   pickupAirportPrice +
+  //   dropoffAirportPrice;
+
+  const isHourlyMode = formData?.mode === "Hourly";
 
   const calculatedTotalPrice =
-    (fixedZonePrice !== null
-      ? fixedZonePrice
-      : (zonePrice > 0
-        ? zonePrice
-        : postcode)) +
+    Number(baseRate) +
+    (isHourlyMode ? 0 : (matchedZonePrice || 0)) +
+    (isHourlyMode ? 0 : (matchedZoneToZonePrice || 0)) +
+    (isHourlyMode ? 0 : (matchedPostcodePrice?.price || 0)) +
     (dropOffPrice || 0) +
-    pickupAirportPrice +
-    dropoffAirportPrice;
+    (pickupAirportPrice || 0) +
+    (dropoffAirportPrice || 0);
 
   return (
     <>
@@ -374,12 +435,22 @@ const WidgetBookingInformation = ({
                 </div>
               </div>
               <div className="text-gray-400 text-2xl hidden md:block">→</div>
-              <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-                <div className="text-right">
-                  <p className="font-medium text-sm text-green-800">{formData?.dropoff || "Dropoff Location"}</p>
-                  <p className="text-xs text-gray-500">{formData?.arrivefrom ? `From: ${formData.arrivefrom}` : "Destination"}</p>
-                </div>
-                <Icons.PlaneLanding className="w-8 h-8 text-green-500" />
+              <div className="flex flex-col items-end gap-2 w-full md:w-auto justify-end text-right">
+                {[formData?.dropoff, formData?.additionalDropoff1, formData?.additionalDropoff2]
+                  .filter(Boolean)
+                  .map((location, index, array) => (
+                    <div key={index} className="flex items-center justify-end gap-2">
+                      <div>
+                        <p className="font-medium text-sm text-green-800">{location}</p>
+                        {index === array.length - 1 && (
+                          <p className="text-xs text-gray-500">
+                            {formData?.arrivefrom ? `From: ${formData.arrivefrom}` : "Destination"}
+                          </p>
+                        )}
+                      </div>
+                      <Icons.PlaneLanding className="w-5 h-5 text-green-500" />
+                    </div>
+                  ))}
               </div>
             </div>
 
@@ -408,49 +479,7 @@ const WidgetBookingInformation = ({
                   </strong>&nbsp;(GMT+1)
                 </span>
               )}
-              <div className="flex justify-end items-center gap-4 text-sm text-gray-700 mt-2">
-                {matchedZonePrice !== null ? (
-                  <div className="flex items-center gap-1">
-                    Zone Price: <span>£{Number(matchedZonePrice).toFixed(2)}</span>
-                  </div>
-                ) : matchedPostcodePrice ? (
-                  <div className="flex items-center gap-1">
-                    Postcode Price: <span>£{Number(matchedPostcodePrice.price).toFixed(2)}</span>
-                  </div>
-                ) : null}
-
-                {/* Display Total Price */}
-                <div className="flex justify-between mt-4">
-                  <span className="text-sm font-semibold">Total Price:</span>
-                  <span className="text-sm">
-                    ${calculatedTotalPrice.toFixed(2)}
-                  </span>
-                </div>
-
-                {matchedZonePrice !== null ? (
-                  <div className="flex items-center gap-1">
-                    Zone Price: <span>£{Number(matchedZonePrice).toFixed(2)}</span>
-                  </div>
-                ) : matchedPostcodePrice ? (
-                  <div className="flex items-center gap-1">
-                    Postcode Price: <span>£{Number(matchedPostcodePrice.price).toFixed(2)}</span>
-                  </div>
-                ) : null}
-
-                {fixedZonePrice !== null && fixedZonePrice > 0 && (
-                  <div className="flex items-center gap-1 text-green-700 font-medium text-sm">
-                    <Icons.CheckCircle className="w-4 h-4 text-green-600" />
-                    Fixed Zone Matched: <span>£{fixedZonePrice.toFixed(2)}</span>
-                  </div>
-                )}
-                <p>Fixed:</p>
-                {fixedZonePrice !== null && fixedZonePrice > 0 && (
-                  <div className="flex items-center gap-1 text-green-700 font-medium text-sm">
-                    <Icons.CheckCircle className="w-4 h-4 text-green-600" />
-                    Fixed Zone Matched: <span>£{fixedZonePrice.toFixed(2)}</span>
-                  </div>
-                )}
-
+              <div className='flex gap-3 items-center'>
                 {distanceText && (<div className="flex items-center gap-1"><Icons.MapPin className="w-4 h-4 text-blue-500" /><span>{distanceText}</span></div>)}
                 {durationText && (<div className="flex items-center gap-1"><Icons.Clock className="w-4 h-4 text-blue-500" /><span>{durationText}</span></div>)}
               </div>
@@ -464,21 +493,52 @@ const WidgetBookingInformation = ({
               </div>
             )}
             <CarCardSection
-              carList={carList.map(car => {
-                let price = 0;
-                if (formData?.mode === "Hourly") {
-                  price = matchedHourlyRate?.[car.vehicleName] || 0;
-                } else {
-                  price = getVehiclePriceForDistance(car, actualMiles);
-                }
+              carList={(() => {
+                const baseFixedZonePrice = fixedZonePrice || 0;
+                const baseZoneToZonePrice = matchedZoneToZonePrice || 0;
+                const basePostcodePrice = matchedPostcodePrice?.price || 0;
+                const isHourly = formData?.mode === "Hourly";
 
-                // ✅ Add Postcode Price
-                if (matchedPostcodePrice) {
-                  price += matchedPostcodePrice.price;
-                }
+                return carList.map((car) => {
+                  let price = 0;
+                  let label = "";
 
-                return { ...car, price };
-              })}
+                  const raw = car.percentageIncrease ?? 0;
+                  const cleanPercentage = typeof raw === "string"
+                    ? Number(raw.replace("%", ""))
+                    : Number(raw);
+                  const percentage = isNaN(cleanPercentage) ? 0 : cleanPercentage;
+
+                  if (isHourly) {
+                    // ✅ Only use hourly rate directly
+                    price = matchedHourlyRate?.[car.vehicleName] || 0;
+                    label = `Hourly rate: £${price.toFixed(2)}`;
+                  } else if (fixedZonePrice !== null) {
+                    const final = baseFixedZonePrice + (baseFixedZonePrice * (percentage / 100));
+                    price = parseFloat(final.toFixed(2));
+                    label = `Fixed Zone: £${baseFixedZonePrice.toFixed(2)} + ${percentage}% = £${price.toFixed(2)}`;
+                  } else if (matchedZoneToZonePrice !== null) {
+                    const final = baseZoneToZonePrice + (baseZoneToZonePrice * (percentage / 100));
+                    price = parseFloat(final.toFixed(2));
+                    label = `Zone: £${baseZoneToZonePrice.toFixed(2)} + ${percentage}% = £${price.toFixed(2)}`;
+                  } else if (matchedPostcodePrice) {
+                    const final = basePostcodePrice + (basePostcodePrice * (percentage / 100));
+                    price = parseFloat(final.toFixed(2));
+                    label = `Postcode: £${basePostcodePrice.toFixed(2)} + ${percentage}% = £${price.toFixed(2)}`;
+                  } else {
+                    const base = getVehiclePriceForDistance(car, actualMiles || 0);
+                    const final = base + (base * (percentage / 100));
+                    price = parseFloat(final.toFixed(2));
+                    label = `Distance rate: £${base.toFixed(2)} + ${percentage}% = £${price.toFixed(2)}`;
+                  }
+
+                  return {
+                    ...car,
+                    price,
+                    labelWithBreakdown: label,
+                  };
+                });
+              })()}
               selectedCarId={selectedCarId}
               onSelect={setSelectedCarId}
             />
@@ -494,7 +554,113 @@ const WidgetBookingInformation = ({
         </div>
 
         <div className="lg:col-span-4 w-full space-y-8">
-          {/* The right summary box — unchanged */}
+          <div className="rounded-2xl p-6 bg-white shadow-md border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 text-gray-800 font-semibold text-lg">
+                <Icons.ReceiptText className="w-5 h-5 text-blue-500" />
+                <span>Price Breakdown</span>
+              </div>
+              <span className="text-sm text-gray-500">GBP</span>
+            </div>
+
+            <div className="space-y-3 text-sm text-gray-700">
+              <div className="flex justify-between border-b border-dashed pb-2">
+                <span>Base Fare</span>
+                <span className="font-medium text-gray-900">£{baseRate}</span>
+              </div>
+
+              {fixedZonePrice !== null && (
+                <div className="flex justify-between border-b border-dashed pb-2">
+                  <span>Fixed Zone Price</span>
+                  <span className="font-medium text-gray-900">£{fixedZonePrice.toFixed(2)}</span>
+                </div>
+              )}
+
+              {!isHourlyMode && matchedZonePrice !== null && (
+                <div className="flex justify-between border-b border-dashed pb-2">
+                  <span>Zone Toll Price</span>
+                  <span className="font-medium text-gray-900">£{matchedZonePrice.toFixed(2)}</span>
+                </div>
+              )}
+
+              {matchedZoneToZonePrice !== null && (
+                <div className="flex justify-between border-b border-dashed pb-2">
+                  <span>Zone-to-Zone Price</span>
+                  <span className="font-medium text-gray-900">£{matchedZoneToZonePrice.toFixed(2)}</span>
+                </div>
+              )}
+
+              {!isHourlyMode && matchedPostcodePrice && (
+                <div className="flex justify-between border-b border-dashed pb-2">
+                  <span>Postcode Price</span>
+                  <span className="font-medium text-gray-900">£{matchedPostcodePrice.price.toFixed(2)}</span>
+                </div>
+              )}
+
+              {dropOffPrice > 0 && (
+                <div className="flex justify-between border-b border-dashed pb-2">
+                  <span>Additional Drop-Offs</span>
+                  <span className="font-medium text-gray-900">£{dropOffPrice.toFixed(2)}</span>
+                </div>
+              )}
+
+              {(pickupAirportPrice > 0 || dropoffAirportPrice > 0) && (
+                <div className="flex justify-between border-b border-dashed pb-2">
+                  <span>Meet & Greet (Airport)</span>
+                  <span className="font-medium text-gray-900">
+                    £{(pickupAirportPrice + dropoffAirportPrice).toFixed(2)}
+                  </span>
+                </div>
+              )}
+
+              {isHourlyMode && (
+                <div className="mt-4 text-sm font-medium text-blue-600">
+                  Hourly Package Selected – Extras added where applicable
+                </div>
+              )}
+
+              {!isHourlyMode && fixedZonePrice !== null && (
+                <div className="flex justify-between border-b border-dashed pb-2">
+                  <span>Fixed Zone Price</span>
+                  <span className="font-medium text-gray-900">£{fixedZonePrice.toFixed(2)}</span>
+                </div>
+              )}
+
+              {!isHourlyMode && matchedZoneToZonePrice !== null && (
+                <div className="flex justify-between border-b border-dashed pb-2">
+                  <span>Zone-to-Zone Price</span>
+                  <span className="font-medium text-gray-900">£{matchedZoneToZonePrice.toFixed(2)}</span>
+                </div>
+              )}
+
+
+              <div className="flex justify-between pt-2 mt-12 border-t border-gray-300 text-base font-semibold">
+                <span>Total</span>
+                <span>£{calculatedTotalPrice.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+            <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">✅ All Classes Include:</h3>
+            <ul className="space-y-3 text-sm text-gray-700">
+              {["Free cancellation", "Free 60 minutes wait", "Meet & Greet"].map((item, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <Icons.Check className="w-4 h-4 text-green-500 mt-1" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-md p-4">
+              <h4 className="text-sm font-medium text-yellow-800 mb-2 flex items-center gap-2">
+                <Icons.AlertCircle className="w-4 h-4 text-yellow-600" />
+                Please Note
+              </h4>
+              <p className="text-sm text-yellow-900">
+                Child seats must be added for safety reasons.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </>

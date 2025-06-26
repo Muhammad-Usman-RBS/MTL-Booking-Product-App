@@ -12,8 +12,8 @@ const CarCard = ({ car, isSelected, onSelect }) => {
     vehicleName = 'Unnamed Vehicle',
     price = null,
     passengers = 0,
-    smallLuggage = 0,
-    largeLuggage = 0,
+    handLuggage = 0,
+    checkinLuggage = 0,
     childSeat = 0,
     description = '',
     carModel = '',
@@ -65,9 +65,9 @@ const CarCard = ({ car, isSelected, onSelect }) => {
 
             <div className="mt-2 text-sm text-gray-600 flex gap-6 flex-wrap">
               <span>{passengers} Passengers</span>
-              <span>{smallLuggage} Small Luggage</span>
+              <span>{handLuggage} Small Luggage</span>
               <span>{childSeat} Child Seat</span>
-              <span>{largeLuggage} Large Luggage</span>
+              <span>{checkinLuggage} Large Luggage</span>
             </div>
 
             {(description || carModel) && (
