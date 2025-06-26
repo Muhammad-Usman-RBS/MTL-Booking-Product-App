@@ -104,7 +104,7 @@ export const createBooking = async (req, res) => {
         date: primaryJourney.date,
         hour: parseInt(primaryJourney.hour),
         minute: parseInt(primaryJourney.minute),
-        fare: 0,
+        fare: primaryJourney.fare,
         hourlyOption: primaryJourney.hourlyOption || null,
 
         distanceText: primaryJourney.distanceText || null,
@@ -199,7 +199,7 @@ export const createBooking = async (req, res) => {
           date: returnJourney.date,
           hour: parseInt(returnJourney.hour),
           minute: parseInt(returnJourney.minute),
-          fare: 0,
+          fare: returnJourney.fare,
           hourlyOption: returnJourney.hourlyOption || null,
 
           distanceText: returnJourney.distanceText || null,
@@ -329,7 +329,6 @@ export const updateBooking = async (req, res) => {
       return dynamicFields;
     };
 
-    // Merge dynamic fields into primaryJourney and returnJourney if present
     if (updatedData.primaryJourney) {
       updatedData.primaryJourney = {
         ...updatedData.primaryJourney,
@@ -343,9 +342,14 @@ export const updateBooking = async (req, res) => {
       };
     }
 
-    const booking = await Booking.findByIdAndUpdate(id, updatedData, {
-      new: true,
-    });
+    const booking = await Booking.findByIdAndUpdate(
+      id,
+      {
+        ...updatedData,
+        ...(updatedData.driverIds && { drivers: updatedData.driverIds }),
+      },
+      { new: true }
+    ).populate("drivers");
 
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
@@ -469,7 +473,7 @@ export const submitWidgetForm = async (req, res) => {
         date: primaryJourney.date,
         hour: parseInt(primaryJourney.hour),
         minute: parseInt(primaryJourney.minute),
-        fare: 0,
+        fare: primaryJourney.fare,
         hourlyOption: primaryJourney.hourlyOption || null,
         distanceText: primaryJourney.distanceText || null,
         durationText: primaryJourney.durationText || null,
@@ -492,7 +496,7 @@ export const submitWidgetForm = async (req, res) => {
             date: returnJourney.date,
             hour: parseInt(returnJourney.hour),
             minute: parseInt(returnJourney.minute),
-            fare: 0,
+            fare: returnJourney.fare,
             hourlyOption: returnJourney.hourlyOption || null,
             distanceText: returnJourney.distanceText || null,
             durationText: returnJourney.durationText || null,
@@ -520,7 +524,7 @@ export const submitWidgetForm = async (req, res) => {
 export const updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, updatedBy } = req.body;
+    const { status, updatedBy, driverIds } = req.body;
 
     if (!id || id.length !== 24) {
       return res.status(400).json({ message: "Invalid booking ID" });
@@ -531,26 +535,31 @@ export const updateBookingStatus = async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    // ✅ Log updatedBy
-    const auditEntry = {
-      updatedBy: updatedBy || "Unknown",
-      status,
-      date: new Date(),
-    };
+    if (Array.isArray(driverIds)) {
+      const fullDriverDocs = await DriverProfile.find({ _id: { $in: driverIds } }).lean();
+      booking.drivers = fullDriverDocs;
+    }
 
+    // Audit status change
     booking.status = status;
-    booking.statusAudit = [...(booking.statusAudit || []), auditEntry];
+    booking.statusAudit = [
+      ...(booking.statusAudit || []),
+      {
+        updatedBy: updatedBy || "Unknown",
+        status,
+        date: new Date(),
+      },
+    ];
 
     const updatedBooking = await booking.save();
 
     res.status(200).json({ success: true, booking: updatedBooking });
   } catch (err) {
     console.error("Error updating status:", err);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: err.message });
+    res.status(500).json({ message: "Internal server error", error: err.message });
   }
 };
+
 
 // Get All Passengers
 export const getAllPassengers = async (req, res) => {

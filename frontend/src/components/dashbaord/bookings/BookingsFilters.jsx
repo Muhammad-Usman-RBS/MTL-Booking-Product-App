@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import SelectedSearch from "../../../constants/constantscomponents/SelectedSearch";
 import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
 import Icons from "../../../assets/icons";
-import { driverList, accountList } from "../../../constants/dashboardTabsData/data";
+import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
+import { useSelector } from "react-redux";
 
 const BookingsFilters = ({
   selectedStatus,
@@ -14,8 +15,6 @@ const BookingsFilters = ({
   setSelectedPassengers,
   selectedVehicleTypes,
   setSelectedVehicleTypes,
-  selectedAccounts,
-  setSelectedAccounts,
   startDate,
   setStartDate,
   endDate,
@@ -28,6 +27,18 @@ const BookingsFilters = ({
   passengerList,
   vehicleList,
 }) => {
+  const user = useSelector((state) => state.auth.user);
+  const companyId = user?.companyId;
+
+  const { data: driverData } = useGetAllDriversQuery(companyId, {
+    skip: !companyId,
+  });
+
+  const driverListForFilter =
+    driverData?.drivers?.map((driver) => ({
+      label: driver?.DriverData?.firstName || "Unnamed",
+      value: driver?._id,
+    })) || [];
   return (
     <>
       <div className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between w-full mb-4">
@@ -85,7 +96,7 @@ const BookingsFilters = ({
             <SelectedSearch
               selected={selectedDrivers}
               setSelected={setSelectedDrivers}
-              statusList={driverList}
+              statusList={driverListForFilter}
               placeholder="Select Driver"
               showCount={false}
             />
@@ -105,15 +116,6 @@ const BookingsFilters = ({
               setSelected={setSelectedVehicleTypes}
               statusList={vehicleList}
               placeholder="Select Vehicle"
-              showCount={false}
-            />
-          </div>
-          <div className="w-full sm:w-64">
-            <SelectedSearch
-              selected={selectedAccounts}
-              setSelected={setSelectedAccounts}
-              statusList={accountList}
-              placeholder="Select Account"
               showCount={false}
             />
           </div>

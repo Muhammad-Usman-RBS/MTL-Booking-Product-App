@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
-
-// Journey Subdocument
+import DriverProfile from "./Driver.js";
 const JourneySchema = new mongoose.Schema({
   pickup: { type: String, required: true },
   dropoff: { type: String, required: true },
@@ -28,9 +27,9 @@ const JourneySchema = new mongoose.Schema({
   hour: { type: Number, required: true },
   minute: { type: Number, required: true },
 
-  fare: { type: Number, default: 0 },
+  fare: { type: Number },
   hourlyOption: {
-    type: String,
+    type: Object,
     default: null,
   },
 
@@ -95,12 +94,15 @@ const BookingSchema = new mongoose.Schema({
   },
   status: { type: String, default: "No Show" },
 
-  // ✅ NEW: Status Change Audit
   statusAudit: {
     type: [StatusAuditSchema],
     default: [],
   },
-
+  drivers: [
+    {
+      type: mongoose.Schema.Types.Mixed,
+    },
+  ],
   source: { type: String },
   referrer: { type: String },
 }, { timestamps: true });

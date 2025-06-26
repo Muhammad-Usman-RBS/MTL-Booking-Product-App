@@ -1,14 +1,17 @@
-import React, { useState } from "react";
+import React, {  useState } from "react";
 import IMAGES from "../../../assets/images";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 import { useSelector } from "react-redux";
 import {
   useGetAllBookingsQuery,
   useSendBookingEmailMutation,
+  useUpdateBookingMutation,
 } from "../../../redux/api/bookingApi";
 import { toast } from "react-toastify";
-const ViewDriver = ({ selectedRow, setShowDriverModal   , onDriversUpdate }) => {
-  const [selectedDriverIds, setSelectedDriverIds] = useState([]);
+const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
+  const [updateBooking] = useUpdateBookingMutation();
+
+  const [selectedDrivers, setSelectedDrivers] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showMatching, setShowMatching] = useState(false);
@@ -21,11 +24,14 @@ const ViewDriver = ({ selectedRow, setShowDriverModal   , onDriversUpdate }) => 
   const { data: drivers = [], isLoading } = useGetAllDriversQuery(companyId, {
     skip: !companyId,
   });
-  const { data: bookingData } = useGetAllBookingsQuery(companyId);
+  const { data: bookingData, refetch: refetchBookings } =
+    useGetAllBookingsQuery(companyId);
   const allBookings = bookingData?.bookings || [];
-  const selectedBooking = allBookings?.[selectedRow];
-  const bookingVehicleType =
-  selectedBooking?.vehicle?.vehicleName?.trim().toLowerCase() || "";
+  const selectedBooking = allBookings.find(
+    (booking) => booking._id === selectedRow
+  );
+    const bookingVehicleType =
+    selectedBooking?.vehicle?.vehicleName?.trim().toLowerCase() || "";
   const filteredDriver = (drivers?.drivers || []).filter((driver) => {
     const name = driver?.DriverData?.firstName?.toLowerCase() || "";
     const carMake = driver?.VehicleData?.carMake?.toLowerCase() || "";
@@ -36,14 +42,13 @@ const ViewDriver = ({ selectedRow, setShowDriverModal   , onDriversUpdate }) => 
       carMake.includes(searchTerm) ||
       carModel.includes(searchTerm);
 
-      const matchesVehicle = showMatching
+    const matchesVehicle = showMatching
       ? vehicleTypes.some(
           (type) =>
             typeof type === "string" &&
             type.trim().toLowerCase() === bookingVehicleType
         )
       : true;
-    
 
     return matchesSearch && matchesVehicle;
   });
@@ -52,23 +57,39 @@ const ViewDriver = ({ selectedRow, setShowDriverModal   , onDriversUpdate }) => 
     isLoading && <p>Loading drivers...</p>;
   }
   const handleSendEmail = async () => {
-    const booking = allBookings?.[selectedRow];
+    const booking = allBookings.find((b) => b._id === selectedRow);
   
     if (!booking?._id) {
       toast.error("Please select a booking first.");
       return;
     }
   
-    const selectedDrivers = filteredDriver.filter((driver) =>
-      selectedDriverIds.includes(driver._id)
-    );
-  
     if (selectedDrivers.length === 0) {
       toast.info("Please select at least one driver.");
       return;
     }
   
-    // ✅ Only send emails if checkbox is checked
+    try {
+      const { _id, createdAt, updatedAt, __v, ...restBookingData } = booking;
+  
+      await updateBooking({
+        id: booking._id,
+        updatedData: {
+          ...restBookingData,
+          drivers: selectedDrivers.map((driver) => driver._id),
+        },
+      }).unwrap();
+  
+      if (typeof refetchBookings === "function") {
+        refetchBookings();
+      }
+  
+      toast.success("Booking updated with selected drivers.");
+    } catch (err) {
+      console.error("Booking update failed:", err);
+      toast.error("Failed to update booking with drivers");
+    }
+  
     if (sendEmailChecked) {
       for (const driver of selectedDrivers) {
         const email = driver?.DriverData?.email;
@@ -92,20 +113,16 @@ const ViewDriver = ({ selectedRow, setShowDriverModal   , onDriversUpdate }) => 
           toast.error(`Failed to send to ${driver.DriverData?.firstName}`);
         }
       }
-    } 
-    setShowDriverModal(false)
+    }
+  
+    setShowDriverModal(false);
   
     if (onDriversUpdate) {
-      onDriversUpdate(
-        selectedRow,
-        selectedDrivers.map((d) => ({
-          id: d._id,
-          name: d?.DriverData?.firstName || "Unnamed",
-        }))
-      );
+      onDriversUpdate(selectedRow, selectedDrivers);
     }
   };
   
+
   const convertKmToMiles = (text) => {
     if (!text || typeof text !== "string") return "—";
     if (text.includes("km")) {
@@ -116,6 +133,8 @@ const ViewDriver = ({ selectedRow, setShowDriverModal   , onDriversUpdate }) => 
     }
     return text;
   };
+
+ 
   return (
     <>
       <div className="p-4 space-y-4 text-sm text-gray-800 w-full max-w-full">
@@ -145,8 +164,12 @@ const ViewDriver = ({ selectedRow, setShowDriverModal   , onDriversUpdate }) => 
           >
             All Drivers
           </button>
-          <button     onClick={() => setShowMatching(true)}
- className="btn btn-reset">Matching Drivers</button>
+          <button
+            onClick={() => setShowMatching(true)}
+            className="btn btn-reset"
+          >
+            Matching Drivers
+          </button>
         </div>
 
         <div className="flex items-center justify-between gap-2">
@@ -168,10 +191,9 @@ const ViewDriver = ({ selectedRow, setShowDriverModal   , onDriversUpdate }) => 
                 const checked = e.target.checked;
                 setSelectAll(checked);
                 if (checked) {
-                  const allIds = filteredDriver?.map((d) => d._id) || [];
-                  setSelectedDriverIds(allIds);
+                  setSelectedDrivers(filteredDriver);
                 } else {
-                  setSelectedDriverIds([]);
+                  setSelectedDrivers([]);
                 }
               }}
             />
@@ -203,14 +225,14 @@ const ViewDriver = ({ selectedRow, setShowDriverModal   , onDriversUpdate }) => 
                 <input
                   type="checkbox"
                   className="form-checkbox h-4 w-4 text-indigo-600"
-                  checked={selectedDriverIds.includes(driver._id)}
+                  checked={selectedDrivers.some((d) => d._id === driver._id)}
                   onChange={() => {
-                    if (selectedDriverIds.includes(driver._id)) {
-                      setSelectedDriverIds((prev) =>
-                        prev.filter((id) => id !== driver._id)
+                    if (selectedDrivers.some((d) => d._id === driver._id)) {
+                      setSelectedDrivers((prev) =>
+                        prev.filter((d) => d._id !== driver._id)
                       );
                     } else {
-                      setSelectedDriverIds((prev) => [...prev, driver._id]);
+                      setSelectedDrivers((prev) => [...prev, driver]);
                     }
                   }}
                 />
@@ -230,15 +252,15 @@ const ViewDriver = ({ selectedRow, setShowDriverModal   , onDriversUpdate }) => 
             Alerts
           </label>
           <div className="flex gap-4">
-          <label className="flex items-center gap-2">
-  <input
-    type="checkbox"
-    className="form-checkbox"
-    checked={sendEmailChecked}
-    onChange={(e) => setSendEmailChecked(e.target.checked)}
-  />
-  <span>Email</span>
-</label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                className="form-checkbox"
+                checked={sendEmailChecked}
+                onChange={(e) => setSendEmailChecked(e.target.checked)}
+              />
+              <span>Email</span>
+            </label>
           </div>
         </div>
 

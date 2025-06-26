@@ -29,21 +29,24 @@ const BookingsTable = ({
   setShowViewModal,
   setShowAuditModal,
   setShowDriverModal,
-  isAnyModalOpen ,
+  isAnyModalOpen,
   selectedRow,
-  setSelectedRow
+  setSelectedRow,
+  selectedDrivers,
+  startDate,
+  endDate,
 }) => {
-
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
+  const [tooltip, setTooltip] = useState({ show: false, text: "", x: 0, y: 0 });
 
   const tableHeaders = [
     { label: "Booking Id", key: "bookingId" },
     { label: "Type", key: "bookingType" },
-    { label: "Passenger", key: "passenger" },
-    { label: "Date & Time", key: "date" },
     { label: "Pick Up", key: "pickUp" },
     { label: "Drop Off", key: "dropOff" },
+    { label: "Passenger", key: "passenger" },
+    { label: "Date & Time", key: "date" },
     { label: "Vehicle", key: "vehicle" },
     { label: "Payment", key: "payment" },
     { label: "Fare", key: "fare" },
@@ -65,19 +68,36 @@ const BookingsTable = ({
   );
 
   let filteredBookings = bookings.filter((b) => {
+    const createdAt = new Date(b.createdAt);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999)
+  
     const statusMatch =
       selectedStatus.includes("All") || selectedStatus.length === 0
         ? true
         : selectedStatus.includes(b.status);
-
+  
     const passengerMatch =
       selectedPassengers.length === 0
         ? true
         : selectedPassengers.includes(b.passenger?.name);
-
-    return statusMatch && passengerMatch;
+  
+    const driverMatch =
+      !Array.isArray(selectedDrivers) || selectedDrivers.length === 0
+        ? true
+        : Array.isArray(b.drivers)
+        ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
+        : false;
+  
+    const dateTime =
+      !startDate || !endDate ? true : createdAt >= start && createdAt <= end;
+  
+    const result = statusMatch && passengerMatch && driverMatch && dateTime;
+  
+    return result;
   });
-
+  
   filteredBookings.sort((a, b) => {
     let aMatch = 0;
     let bMatch = 0;
@@ -96,9 +116,10 @@ const BookingsTable = ({
         setSelectedActionRow(null);
       }
 
-      if (isAnyModalOpen  || selectedRow == null) return;
-
-      const selectedBooking = filteredBookings[selectedRow];
+      if (isAnyModalOpen || selectedRow == null) return;
+      const selectedBooking = filteredBookings.find(
+        (b) => b._id === selectedRow
+      );
       if (!selectedBooking) return;
 
       const key = event.key.toLowerCase();
@@ -163,7 +184,7 @@ const BookingsTable = ({
         n: "No Show",
         c: "Completed",
       };
-    
+
       if (key === "d") {
         openDriverModal(selectedBooking.driver);
       } else if (key === "enter") {
@@ -198,7 +219,7 @@ const BookingsTable = ({
     openDriverModal,
     openViewModal,
     refetch,
-    isAnyModalOpen 
+    isAnyModalOpen,
   ]);
 
   if (error || bookings.length === 0) {
@@ -229,7 +250,7 @@ const BookingsTable = ({
       : `${p.name || "N/A"} | ${p.email || 0} | ${p.phone || 0}`;
 
   const tableData = filteredBookings.map((item, index) => {
-    const row = {};
+    const row = { _id: item._id };
     tableHeaders.forEach(({ key }) => {
       if (!selectedColumns[key]) return;
 
@@ -248,27 +269,58 @@ const BookingsTable = ({
             ? new Date(item.createdAt).toLocaleString()
             : "-";
           break;
-          case "pickUp":
-            row[key] = (
-              <div className="relative group w-full max-w-[250px] truncate whitespace-nowrap">
-              {item.primaryJourney?.pickup || "-"}
-              <div className="absolute top-full left-0 z-[999] hidden group-hover:flex w-max max-w-[300px] bg-white text-gray-800 text-xs border border-gray-300 rounded-md shadow-md p-2 mt-1">
-              TEST: {item.primaryJourney?.pickup}
-              </div>
+        case "pickUp":
+          const pickupLocation = item.returnJourney
+            ? item.returnJourney?.pickup || "-"
+            : item.primaryJourney?.pickup || "-";
 
+          row[key] = (
+            <div
+              className="w-full max-w-[250px] truncate whitespace-nowrap cursor-default"
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTooltip({
+                  show: true,
+                  text: pickupLocation,
+                  x: rect.left + rect.width / 2,
+                  y: rect.top - 10,
+                });
+              }}
+              onMouseLeave={() =>
+                setTooltip({ show: false, text: "", x: 0, y: 0 })
+              }
+            >
+              {pickupLocation}
             </div>
-            );
-            break;
-         case "dropOff":
-        row[key] = (
-          <div className="relative group w-full max-w-[250px] truncate whitespace-nowrap">
-          {item.primaryJourney?.dropoff || "-"}
-          <div className="absolute top-full left-0 z-[999]  hidden group-hover:block w-max max-w-[300px] bg-white text-gray-800 text-xs border border-gray-300 rounded-md shadow-md p-2 mt-1">
-            {item.primaryJourney?.dropoff}
-          </div>
-        </div>
-        );
-        break;
+          );
+          break;
+
+        case "dropOff":
+          const dropoffLocation = item.returnJourney
+            ? item.returnJourney?.dropoff || "-"
+            : item.primaryJourney?.dropoff || "-";
+
+          row[key] = (
+            <div
+              className="w-full max-w-[250px] truncate whitespace-nowrap cursor-default"
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTooltip({
+                  show: true,
+                  text: dropoffLocation,
+                  x: rect.left + rect.width / 2,
+                  y: rect.top - 10,
+                });
+              }}
+              onMouseLeave={() =>
+                setTooltip({ show: false, text: "", x: 0, y: 0 })
+              }
+            >
+              {dropoffLocation}
+            </div>
+          );
+          break;
+
         case "vehicle":
           row[key] = item.vehicle?.vehicleName || "-";
           break;
@@ -281,33 +333,57 @@ const BookingsTable = ({
         case "drFare":
           row[key] = item.drFare || "-";
           break;
-          case "driver":
-            const driversForThisRow = assignedDrivers?.[index];
-            row[key] = driversForThisRow && driversForThisRow.length > 0 ? (
+        case "driver":
+          row[key] =
+            Array.isArray(item.drivers) && item.drivers.length > 0 ? (
               <div
                 onClick={() => {
-                  setSelectedRow(index);            
-                  openDriverModal(item.driver);        
+                  setSelectedRow(item._id);
+                  openDriverModal(item);
                 }}
                 className="text-sm text-gray-700 space-y-0.5 cursor-pointer"
               >
-                {driversForThisRow.map((driver, i) => (
-                  <div key={i}>{driver.name}</div>
-                ))}
+                {item.drivers.map((driverId, i) => {
+                  const driversArray = assignedDrivers;
+
+                  const driverIdToMatch =
+                    typeof driverId === "object" ? driverId._id : driverId;
+
+                  const matchedDriver =
+                    Array.isArray(driversArray) &&
+                    driversArray.find((d) => {
+                      if (!d || !d._id) return false;
+                      return d._id.toString() === driverIdToMatch?.toString();
+                    });
+
+                  let driverName = "Unnamed";
+                  if (matchedDriver) {
+                    driverName =
+                      matchedDriver.DriverData?.firstName || "Unnamed";
+                  } else if (typeof driverId === "object" && driverId.name) {
+                    driverName =
+                      driverId.name ||
+                      driverId.firstName ||
+                      driverId.fullName ||
+                      "Unnamed";
+                  }
+
+                  return <div key={i}>{driverName}</div>;
+                })}
               </div>
             ) : (
               <button
                 className="cursor-pointer"
                 onClick={() => {
-                  setSelectedRow(index);             
-                  openDriverModal(item.driver);       
+                  setSelectedRow(item._id);
+                  openDriverModal(item);
                 }}
               >
                 <Icons.CircleUserRound />
               </button>
             );
-            break;
-          
+
+          break;
         case "status":
           row[key] = (
             <SelectStatus
@@ -394,7 +470,25 @@ const BookingsTable = ({
     payment: item.payment || "-",
     fare: item.fare || "-",
     drFare: item.drFare || "-",
-    driver: item.driver || "-",
+    driver:
+      Array.isArray(item.drivers) && assignedDrivers.length > 0
+        ? item.drivers
+            .map((driverId) => {
+              const driverIdToMatch =
+                typeof driverId === "object" ? driverId._id : driverId;
+              const matchedDriver = assignedDrivers.find(
+                (d) =>
+                  d && d._id && d._id.toString() === driverIdToMatch?.toString()
+              );
+              return (
+                matchedDriver?.DriverData?.firstName ||
+                matchedDriver?.DriverData?.name ||
+                matchedDriver?.name ||
+                "Unnamed"
+              );
+            })
+            .join(", ")
+        : "-",
     status: item.statusAudit?.at(-1)?.status || item.status || "-",
   }));
 
@@ -461,6 +555,18 @@ const BookingsTable = ({
           setSelectedDeleteId(null);
         }}
       />
+      {tooltip.show && (
+        <div
+          className="fixed z-[9999] w-[250px] max-w-sm px-3 py-4 text-[13px] text-gray-600 leading-relaxed bg-white border border-gray-300 rounded-md transition-all duration-300 ease-in-out"
+          style={{
+            top: tooltip.y,
+            left: tooltip.x,
+            transform: "translate(-50%, -100%)",
+          }}
+        >
+          {tooltip.text}
+        </div>
+      )}
     </>
   );
 };

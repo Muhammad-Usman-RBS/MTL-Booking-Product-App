@@ -13,6 +13,7 @@ import BookingsTable from "./BookingsTable";
 import AuditModal from "./AuditModal";
 import ViewDriver from "./ViewDriver";
 import NewBooking from "./NewBooking";
+import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 
 const defaultColumns = {
   bookingType: true,
@@ -45,7 +46,7 @@ const ALL_STATUSES = [
 
 const BookingsList = () => {
   const [selectedRow, setSelectedRow] = useState(null);
-  const [assignedDrivers, setAssignedDrivers] = useState({});
+  const [assignedDrivers, setAssignedDrivers] = useState([]);
 
   const [selectedStatus, setSelectedStatus] = useState(["All"]);
   const [selectedActionRow, setSelectedActionRow] = useState(null);
@@ -57,7 +58,6 @@ const BookingsList = () => {
   const [selectedDrivers, setSelectedDrivers] = useState([]);
   const [selectedPassengers, setSelectedPassengers] = useState([]);
   const [selectedVehicleTypes, setSelectedVehicleTypes] = useState([]);
-  const [selectedAccounts, setSelectedAccounts] = useState([]);
   const [showDiv, setShowDiv] = useState(false);
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [showKeyboardModal, setShowKeyboardModal] = useState(false);
@@ -74,7 +74,14 @@ const BookingsList = () => {
   const user = useSelector((state) => state.auth.user);
   const { data: companyData } = useGetCompanyByIdQuery(user?.companyId);
   const { data: bookingData } = useGetAllBookingsQuery(user?.companyId);
+  const { data: driversData, isLoading: driversLoading } =
+    useGetAllDriversQuery(user?.companyId);
 
+  useEffect(() => {
+    if (driversData?.drivers?.length > 0) {
+      setAssignedDrivers(driversData.drivers); // Direct array assignment
+    }
+  }, [driversData]);
   const allBookings = bookingData?.bookings || [];
 
   const statusCountMap = ALL_STATUSES.reduce((acc, status) => {
@@ -172,6 +179,7 @@ const BookingsList = () => {
       <OutletHeading name="Bookings List" />
 
       <BookingsFilters
+        assignedDrivers={assignedDrivers}
         selectedStatus={selectedStatus}
         setSelectedStatus={setSelectedStatus}
         selectedDrivers={selectedDrivers}
@@ -180,8 +188,7 @@ const BookingsList = () => {
         setSelectedPassengers={setSelectedPassengers}
         selectedVehicleTypes={selectedVehicleTypes}
         setSelectedVehicleTypes={setSelectedVehicleTypes}
-        selectedAccounts={selectedAccounts}
-        setSelectedAccounts={setSelectedAccounts}
+       
         startDate={startDate}
         setStartDate={setStartDate}
         endDate={endDate}
@@ -197,7 +204,8 @@ const BookingsList = () => {
 
       <BookingsTable
         assignedDrivers={assignedDrivers}
-
+        startDate={startDate}
+        endDate={endDate}
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
         selectedColumns={selectedColumns}
@@ -219,6 +227,8 @@ const BookingsList = () => {
         setShowAuditModal={setShowAuditModal}
         setShowDriverModal={setShowDriverModal}
         isAnyModalOpen={isAnyModalOpen}
+        selectedDrivers={selectedDrivers}
+        setSelectedDrivers={setSelectedDrivers}
       />
 
       <CustomModal
@@ -242,12 +252,11 @@ const BookingsList = () => {
         onClose={() => setShowDriverModal(false)}
         heading={`${selectedDriver?.name || "Driver Details"}`}
       >
-        <ViewDriver setShowDriverModal={setShowDriverModal} selectedRow={selectedRow} setSelectedRow={setSelectedRow}  onDriversUpdate={(rowIndex, drivers) => {
-    setAssignedDrivers((prev) => ({
-      ...prev,
-      [rowIndex]: drivers
-    }));
-  }} />
+        <ViewDriver
+          setShowDriverModal={setShowDriverModal}
+          selectedRow={selectedRow}
+          setSelectedRow={setSelectedRow}
+        />
       </CustomModal>
 
       <CustomModal
