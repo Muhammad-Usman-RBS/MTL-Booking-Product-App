@@ -84,9 +84,13 @@ import {
   PlaneTakeoff,
   PlaneLanding,
   CircleUserRound,
+  BellPlus,
+  XCircle,
 } from "lucide-react";
 
 const Icons = {
+  BellPlus,
+  XCircle, 
   CircleUserRound,
   ReceiptText,
   PlaneTakeoff,
@@ -147,7 +151,6 @@ const Icons = {
   Download,
   LayoutGrid,
   LayoutList,
-  SkipBack,
   SkipForward,
   PlusCircle,
   ListChecks,

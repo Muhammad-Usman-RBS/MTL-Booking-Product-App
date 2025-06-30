@@ -18,8 +18,9 @@ import { useSelector } from "react-redux";
 const tabOptions = ["Active", "Suspended", "Pending", "Deleted"];
 
 const DriverList = () => {
-  const user = useSelector((state)=> state?.auth?.user)
-  const companyId = user?.companyId
+  const user = useSelector((state) => state?.auth?.user);
+  const companyId = user?.companyId;
+  
   const [activeTab, setActiveTab] = useState("Active");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -29,16 +30,25 @@ const DriverList = () => {
   const [driverToSendEmail, setDriverToSendEmail] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [driverToDelete, setdriverToDelete] = useState(null);
-  const { data: getAllDrivers, isLoading, refetch } = useGetAllDriversQuery(companyId);
+  const { data: getAllDrivers } = useGetAllDriversQuery(companyId);
   const { data: getDriverById } = useGetDriverByIdQuery(selectedDriver, {
     skip: !selectedDriver,
   });
   const [deleteDriverById] = useDeleteDriverByIdMutation();
   const driversArray = getAllDrivers?.drivers || [];
+  const roleFilteredDrivers =
+  user?.role === "driver"
+    ? driversArray.filter(
+        (driver) =>
+          driver?.DriverData?.employeeNumber?.toString() ===
+          user?.employeeNumber?.toString()
+      )
+    : driversArray;
 
-  const filteredTabData = driversArray.filter(
+  const filteredTabData = roleFilteredDrivers.filter(
     (driver) => driver?.DriverData?.status === activeTab
   );
+
   const filteredData = filteredTabData.filter((driver) => {
     const query = search.toLowerCase();
     return (
@@ -88,7 +98,6 @@ const DriverList = () => {
     { label: "Actions", key: "actions" },
   ];
 
-  
   const exportTableData = paginatedData.map((item, index) => ({
     index:
       (page - 1) * (perPage === "All" ? filteredData.length : perPage) +
@@ -126,13 +135,15 @@ const DriverList = () => {
           className="w-8 h-8 rounded-md hover:bg-blue-500 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
           onClick={() => handleSendEmail(driver)}
         />
-        <Icons.X
-          onClick={() => {
-            setdriverToDelete(driver);
-            setShowDeleteModal(true);
-          }}
-          className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
-        />
+        {user?.role !== "driver" && (
+          <Icons.X
+            onClick={() => {
+              setdriverToDelete(driver);
+              setShowDeleteModal(true);
+            }}
+            className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
+          />
+        )}
       </div>
     ),
   }));
@@ -149,25 +160,30 @@ const DriverList = () => {
             </button>
           </Link>
         </div>
+        {user?.role !== "driver" && (
+  <div className="w-full overflow-x-auto mb-4">
+    <div className="flex gap-4 text-sm font-medium border-b min-w-max sm:text-base px-2">
+      {tabOptions.map((tab) => (
+        <button
+          key={tab}
+          onClick={() => setActiveTab(tab)}
+          className={`pb-2 whitespace-nowrap transition-all duration-200 ${
+            activeTab === tab
+              ? "border-b-2 border-blue-600 text-blue-600"
+              : "text-gray-600 hover:text-blue-500"
+          }`}
+        >
+          {tab} (
+            {
+              roleFilteredDrivers.filter((d) => d?.DriverData?.status === tab).length
+            }
+          )
+        </button>
+      ))}
+    </div>
+  </div>
+)}
 
-        <div className="w-full overflow-x-auto mb-4">
-          <div className="flex gap-4 text-sm font-medium border-b min-w-max sm:text-base px-2">
-            {tabOptions.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-2 whitespace-nowrap transition-all duration-200 ${activeTab === tab
-                    ? "border-b-2 border-blue-600 text-blue-600"
-                    : "text-gray-600 hover:text-blue-500"
-                  }`}
-              >
-                {tab} (
-                {driversArray.filter((d) => d?.DriverData?.status === tab).length}
-                )
-              </button>
-            ))}
-          </div>
-        </div>
 
         <CustomTable
           tableHeaders={tableHeaders}

@@ -200,6 +200,11 @@ const sidebarItems = [
         icon: Icons.MapPin,
       },
       {
+        title: "Notifications",
+        route: "/dashboard/settings/notifications",
+        icon: Icons.Bell,
+      },
+      {
         title: "Locations",
         route: "/dashboard/settings/locations",
         icon: Icons.Map,
@@ -230,8 +235,8 @@ const sidebarItems = [
         icon: Icons.Receipt,
       },
       {
-        title: "Notifications",
-        route: "/dashboard/settings/notifications",
+        title: "Notifications Settings",
+        route: "/dashboard/settings/settings-notifications",
         icon: Icons.Bell,
       },
       {

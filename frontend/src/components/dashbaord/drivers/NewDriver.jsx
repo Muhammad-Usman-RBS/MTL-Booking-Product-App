@@ -248,6 +248,7 @@ const NewDriver = () => {
         {/* DRIVER SECTION */}
 
         <DriverData
+        user={user}
           handleAddAvailability={handleAddAvailability}
           handleInputChange={handleInputChange}
           formData={formData}

@@ -8,19 +8,29 @@ import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import { useFetchClientAdminsQuery, useCreateClientAdminMutation, useUpdateClientAdminMutation, useDeleteClientAdminMutation, useUpdateClientAdminStatusMutation } from "../../../redux/api/adminApi";
+import {
+  useFetchClientAdminsQuery,
+  useCreateClientAdminMutation,
+  useUpdateClientAdminMutation,
+  useDeleteClientAdminMutation,
+  useUpdateClientAdminStatusMutation,
+} from "../../../redux/api/adminApi";
+import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 
 const tabs = ["Active", "Pending", "Suspended", "Deleted"];
 
 const AdminList = () => {
   const user = useSelector((state) => state.auth.user);
   const { data: adminsListData = [], refetch } = useFetchClientAdminsQuery();
+  const { data: driversList = [] } = useGetAllDriversQuery(user?.companyId, {
+    skip: !user?.companyId,
+  });
 
   const [createAdmin] = useCreateClientAdminMutation();
   const [updateAdmin] = useUpdateClientAdminMutation();
   const [deleteAdmin] = useDeleteClientAdminMutation();
   const [changeStatus] = useUpdateClientAdminStatusMutation();
-
+  const [isEdit, setIsEdit] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("Active");
   const [page, setPage] = useState(1);
@@ -45,11 +55,29 @@ const AdminList = () => {
   };
 
   const handleEditModal = (admin) => {
-    setSelectedAccount({
+    const matchedDriver = driversList?.drivers?.find(
+      (driver) => driver.userId === admin._id
+    );
+
+    let updatedAdmin = {
       ...admin,
       associateAdminLimit: parseInt(admin.associateAdminLimit) || 5,
       permissions: admin.permissions || [],
-    });
+      password: "", // default
+    };
+
+    if (admin.role === "driver" && matchedDriver) {
+      updatedAdmin = {
+        ...updatedAdmin,
+        driverId: matchedDriver._id,
+        email: matchedDriver.DriverData.email,
+        employeeNumber: matchedDriver.DriverData.employeeNumber,
+        fullName: admin.fullName,
+        password: matchedDriver.DriverData.password || "", // 👈 INCLUDE PASSWORD HERE
+      };
+    }
+
+    setSelectedAccount(updatedAdmin);
     setShowModal(true);
   };
 
@@ -67,7 +95,9 @@ const AdminList = () => {
       const currentCount = adminsListData.filter(
         (a) =>
           a.status !== "Deleted" &&
-          ["associateadmin", "staffmember", "driver", "customer"].includes(a.role) &&
+          ["associateadmin", "staffmember", "driver", "customer"].includes(
+            a.role
+          ) &&
           a.createdBy === user._id
       ).length;
 
@@ -82,6 +112,7 @@ const AdminList = () => {
     try {
       const payload = {
         ...selectedAccount,
+        employeeNumber: selectedAccount.employeeNumber,
         companyId:
           user?.role === "superadmin" && selectedAccount.role === "clientadmin"
             ? null
@@ -145,9 +176,10 @@ const AdminList = () => {
         .includes(searchTerm.toLowerCase())
   );
 
-  const paginatedData = perPage === "All"
-    ? filteredData
-    : filteredData.slice((page - 1) * perPage, page * perPage);
+  const paginatedData =
+    perPage === "All"
+      ? filteredData
+      : filteredData.slice((page - 1) * perPage, page * perPage);
 
   const tableHeaders = [
     { label: "Type", key: "role" },
@@ -180,10 +212,14 @@ const AdminList = () => {
 
             const getButtonStyle = (status) => {
               switch (status) {
-                case "Active": return "bg-green-100 text-green-700 border-green-300 hover:bg-green-200";
-                case "Suspended": return "bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200";
-                case "Deleted": return "bg-red-100 text-red-700 border-red-300 hover:bg-red-200";
-                default: return "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200";
+                case "Active":
+                  return "bg-green-100 text-green-700 border-green-300 hover:bg-green-200";
+                case "Suspended":
+                  return "bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200";
+                case "Deleted":
+                  return "bg-red-100 text-red-700 border-red-300 hover:bg-red-200";
+                default:
+                  return "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200";
               }
             };
 
@@ -191,7 +227,9 @@ const AdminList = () => {
               <button
                 key={status}
                 onClick={() => handleStatusChange(item._id, status)}
-                className={`px-3 py-1 text-xs rounded-md border font-medium transition ${getButtonStyle(status)}`}
+                className={`px-3 py-1 text-xs rounded-md border font-medium transition ${getButtonStyle(
+                  status
+                )}`}
               >
                 {status}
               </button>
@@ -211,20 +249,27 @@ const AdminList = () => {
           />
         )}
       </div>
-    )
+    ),
   }));
 
   let roleOptions = [];
-  if (user?.role === "superadmin") roleOptions = ["clientadmin", "manager", "demo"];
-  else if (user?.role === "manager") roleOptions = ["manager", "demo", "driver", "customer"];
-  else if (user?.role === "clientadmin") roleOptions = ["associateadmin", "staffmember", "driver", "customer"];
-  else if (user?.role === "associateadmin") roleOptions = ["staffmember", "driver", "customer"];
-  else if (user?.role === "demo") roleOptions = ["staffmember", "driver", "customer"];
+  if (user?.role === "superadmin")
+    roleOptions = ["clientadmin", "manager", "demo"];
+  else if (user?.role === "manager")
+    roleOptions = ["manager", "demo", "driver", "customer"];
+  else if (user?.role === "clientadmin")
+    roleOptions = ["associateadmin", "staffmember", "driver", "customer"];
+  else if (user?.role === "associateadmin")
+    roleOptions = ["staffmember", "driver", "customer"];
+  else if (user?.role === "demo")
+    roleOptions = ["staffmember", "driver", "customer"];
 
   const getAvailablePermissions = (role) => {
     if (["driver"].includes(role)) {
-      return ["Statements", "Bookings", "Drivers", "Settings", "Invoices"]
-    } else if (["clientadmin", "associateadmin", "staffmember", "manager"].includes(role)) {
+      return ["Statements", "Bookings", "Drivers", "Settings", "Invoices"];
+    } else if (
+      ["clientadmin", "associateadmin", "staffmember", "manager"].includes(role)
+    ) {
       return [
         "Users",
         "Bookings",
@@ -238,7 +283,8 @@ const AdminList = () => {
         "Widget/API",
       ];
     } else {
-      return ["Users",
+      return [
+        "Users",
         "Bookings",
         "Invoices",
         "Drivers",
@@ -283,10 +329,11 @@ const AdminList = () => {
                   setSelectedTab(tab);
                   setPage(1);
                 }}
-                className={`pb-2 whitespace-nowrap transition-all duration-200 ${selectedTab === tab
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-blue-500"
-                  }`}
+                className={`pb-2 whitespace-nowrap transition-all duration-200 ${
+                  selectedTab === tab
+                    ? "border-b-2 border-blue-600 text-blue-600"
+                    : "text-gray-600 hover:text-blue-500"
+                }`}
               >
                 {tab} ({tabCounts[tab] || 0})
               </button>
@@ -315,31 +362,57 @@ const AdminList = () => {
           <SelectOption
             label="Type"
             value={selectedAccount?.role || ""}
-            onChange={(e) => setSelectedAccount({ ...selectedAccount, role: e.target.value })}
+            onChange={(e) =>
+              setSelectedAccount({ ...selectedAccount, role: e.target.value })
+            }
             options={roleOptions}
           />
+          {selectedAccount?.role === "driver" && (
+            <SelectOption
+              label="Select Driver"
+              value={selectedAccount?.driverId}
+              onChange={(e) => {
+                const selectedDriver = driversList?.drivers?.find(
+                  (driver) => driver._id === e.target.value
+                );
 
-          <input
-            placeholder="Full Name"
-            className="custom_input"
-            value={selectedAccount?.fullName || ""}
-            onChange={(e) => setSelectedAccount({ ...selectedAccount, fullName: e.target.value })}
-          />
+                if (selectedDriver) {
+                  setSelectedAccount({
+                    ...selectedAccount,
+                    fullName: `${selectedDriver.DriverData.firstName} ${selectedDriver.DriverData.surName}`,
+                    employeeNumber: selectedDriver.DriverData.employeeNumber,
+                    email: selectedDriver.DriverData.email,
+                  });
+                }
+              }}
+              options={driversList?.drivers?.map((driver) => ({
+                label: `${driver.DriverData.firstName} ${driver.DriverData.surName}`,
+                value: driver._id,
+              }))}
+            />
+          )}
           <input
             placeholder="Email"
             type="email"
             className="custom_input"
             value={selectedAccount?.email || ""}
-            onChange={(e) => setSelectedAccount({ ...selectedAccount, email: e.target.value })}
+            onChange={(e) =>
+              setSelectedAccount({ ...selectedAccount, email: e.target.value })
+            }
           />
+
           <input
             placeholder="Password"
             type="password"
             className="custom_input"
             value={selectedAccount?.password || ""}
-            onChange={(e) => setSelectedAccount({ ...selectedAccount, password: e.target.value })}
+            onChange={(e) =>
+              setSelectedAccount({
+                ...selectedAccount,
+                password: e.target.value,
+              })
+            }
           />
-
           {["clientadmin", "manager"].includes(selectedAccount?.role) && (
             <SelectOption
               label="Associate Admin Limit"
@@ -350,14 +423,19 @@ const AdminList = () => {
                   associateAdminLimit: parseInt(e.target.value),
                 })
               }
-              options={[5, 10, 15].map((num) => ({ label: `${num}`, value: num }))}
+              options={[5, 10, 15].map((num) => ({
+                label: `${num}`,
+                value: num,
+              }))}
             />
           )}
 
           <SelectOption
             label="Status"
             value={selectedAccount?.status || ""}
-            onChange={(e) => setSelectedAccount({ ...selectedAccount, status: e.target.value })}
+            onChange={(e) =>
+              setSelectedAccount({ ...selectedAccount, status: e.target.value })
+            }
             options={tabs}
           />
           <div>
@@ -374,7 +452,10 @@ const AdminList = () => {
                       const updated = e.target.checked
                         ? [...(selectedAccount.permissions || []), perm]
                         : selectedAccount.permissions.filter((p) => p !== perm);
-                      setSelectedAccount({ ...selectedAccount, permissions: updated });
+                      setSelectedAccount({
+                        ...selectedAccount,
+                        permissions: updated,
+                      });
                     }}
                   />
                   <span>{perm}</span>
@@ -383,7 +464,10 @@ const AdminList = () => {
             </div>
           </div>
           <div className="flex justify-end gap-4 pt-4">
-            <button className="btn btn-reset" onClick={() => setShowModal(false)}>
+            <button
+              className="btn btn-reset"
+              onClick={() => setShowModal(false)}
+            >
               Cancel
             </button>
             <button className="btn btn-success" onClick={handleSave}>

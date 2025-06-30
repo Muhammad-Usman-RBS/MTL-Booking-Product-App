@@ -3,6 +3,7 @@ import FilePreview from "../../../constants/constantscomponents/FilePreview";
 import Icons from "../../../assets/icons";
 
 const DriverData = ({
+  user,
   filePreviews,
   handleAddAvailability,
   handleInputChange,
@@ -14,14 +15,23 @@ const DriverData = ({
       <div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label>Employee No.</label>
+            <label className="block mb-1 text-sm font-medium">
+              Employee No. 
+            </label>
             <input
-              className="custom_input"
+              type="text"
               name="employeeNumber"
               value={formData.employeeNumber}
               onChange={handleInputChange}
+              readOnly={user?.role === "driver"}
+              className={`custom_input ${
+                user?.role === "driver"
+                  ? "bg-gray-100 cursor-not-allowed opacity-70"
+                  : ""
+              }`}
             />
           </div>
+
           <div>
             <label>First Name</label>
             <input
@@ -41,15 +51,21 @@ const DriverData = ({
             />
           </div>
           <div>
-            <label>Email</label>
+            <label className="block mb-1 text-sm font-medium">Email</label>
             <input
               type="email"
-              className="custom_input"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
+              readOnly={user?.role === "driver"}
+              className={`custom_input ${
+                user?.role === "driver"
+                  ? "bg-gray-100 cursor-not-allowed opacity-70"
+                  : ""
+              }`}
             />
           </div>
+
           <div>
             <label>Contact</label>
             <input
@@ -65,7 +81,12 @@ const DriverData = ({
             <select
               id="status"
               name="status"
-              className="w-full border border-gray-300 rounded-lg p-2.5 text-gray-900"
+              disabled={user?.role === "driver"}
+              className={`custom_input ${
+                user?.role === "driver"
+                  ? "bg-gray-100 cursor-not-allowed opacity-70"
+                  : ""
+              }`}
               value={formData.status}
               onChange={handleInputChange}
             >

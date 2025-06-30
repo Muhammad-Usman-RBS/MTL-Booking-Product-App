@@ -1900,3 +1900,35 @@ export const CompanyAdditionalInformation =[
   { label: "License number", placeholder: "", type: "text" },
   { label: "License reference link", placeholder: "", type: "text" },
 ]
+
+
+
+
+
+export const themes = [
+  {
+    value: "theme-dark-1",
+    bg: "#07384D",
+    text: "#F1EFEF",
+    hoverActive: "#064f7c",
+  },
+  {
+    value: "theme-dark-2",
+    bg: "#22333B",
+    text: "#F1EFEF",
+    hoverActive: "#930000",
+  },
+  {
+    value: "theme-light-1",
+    bg: "#cfe2e3",
+    text: "#1E1E1E",
+    hoverActive: "#a5d8dd",
+  },
+  {
+    value: "custom",
+    bg: "#ffffff",
+    text: "#000000",
+    hoverActive: "#F7BE7E",
+  },
+];
+

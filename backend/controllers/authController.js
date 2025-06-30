@@ -65,6 +65,7 @@ export const login = async (req, res) => {
       token: generateToken(user._id, user.role, user.companyId),
       profileImage: user.profileImage || null,
       companyId: user.companyId || null,
+      employeeNumber: user.employeeNumber
     });
 
   } catch (error) {

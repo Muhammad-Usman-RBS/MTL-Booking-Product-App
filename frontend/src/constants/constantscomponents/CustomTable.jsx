@@ -104,7 +104,7 @@
               <tr className="bg-gray-100 text-gray-700">
                 {tableHeaders.map((col, i) => (
                   <th
-                    key={i}
+                    key={col.key}
                     onClick={() => showSorting && col.key && requestSort(col.key)}
                     className={`px-2 py-3 text-left align-middle whitespace-nowrap ${showSorting && col.key
                       ? "cursor-pointer bg-[#e7eff0] text-dark transition"
@@ -126,7 +126,7 @@
                 //   className="odd:bg-gray-50 even:bg-[#EDEDED] border-b border-gray-300 hover:bg-[#CFE2FF] transition"
                 // >
                 <tr
-                key={item._id}
+                key={item._id || rowIdx}
                 onClick={
                   setSelectedRow
                     ? () =>

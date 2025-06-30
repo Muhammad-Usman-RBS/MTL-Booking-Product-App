@@ -144,9 +144,9 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
               Distance:
             </label>
             <p className="bg-gray-100 px-3 py-1.5 rounded">
-              {convertKmToMiles(
-                allBookings?.[selectedRow]?.primaryJourney?.distanceText
-              ) || "Select a booking"}
+            {/* {convertKmToMiles(viewData?.primaryJourney?.distanceText)} */}
+            {convertKmToMiles(selectedBooking?.primaryJourney?.distanceText) || "Select a booking"}
+
             </p>
           </div>
           <div>

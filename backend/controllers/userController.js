@@ -1,7 +1,7 @@
-import User from '../models/User.js';
-import Company from '../models/Company.js';
-import bcrypt from 'bcryptjs';
-
+import User from "../models/User.js";
+import Company from "../models/Company.js";
+import bcrypt from "bcryptjs";
+import DriverProfile from "../models/Driver.js";
 // ✅ SuperAdmin or ClientAdmin Creates User
 export const createUserBySuperAdmin = async (req, res) => {
   const {
@@ -12,6 +12,7 @@ export const createUserBySuperAdmin = async (req, res) => {
     status,
     permissions,
     associateAdminLimit,
+    employeeNumber,
   } = req.body;
 
   try {
@@ -23,7 +24,11 @@ export const createUserBySuperAdmin = async (req, res) => {
 
     // ❌ Globally disallowed roles
     if (["driver", "customer"].includes(role)) {
-      const allowedCreatorRoles = ["superadmin", "clientadmin", "associateadmin"];
+      const allowedCreatorRoles = [
+        "superadmin",
+        "clientadmin",
+        "associateadmin",
+      ];
       if (!allowedCreatorRoles.includes(creator.role)) {
         return res.status(403).json({
           message: `Creation of '${role}' accounts is restricted for ${creator.role}`,
@@ -109,27 +114,45 @@ export const createUserBySuperAdmin = async (req, res) => {
 
     // ✅ Permission validation
     const allowedPermissions = [
-      "Users", "Home", "Bookings", "Rides", "Earnings", "Invoices", "Drivers", "Customers",
-      "Company Accounts", "Statements", "Pricing",
-      "Settings", "Widget/API", "Profile", "Logout"
+      "Users",
+      "Home",
+      "Bookings",
+      "Rides",
+      "Earnings",
+      "Invoices",
+      "Drivers",
+      "Customers",
+      "Company Accounts",
+      "Statements",
+      "Pricing",
+      "Settings",
+      "Widget/API",
+      "Profile",
+      "Logout",
     ];
 
     const defaultPermissions = ["Home", "Profile", "Logout"];
     let userPermissions = [...defaultPermissions];
 
     if (permissions && Array.isArray(permissions)) {
-      const invalidPermissions = permissions.filter(p => !allowedPermissions.includes(p));
+      const invalidPermissions = permissions.filter(
+        (p) => !allowedPermissions.includes(p)
+      );
       if (invalidPermissions.length > 0) {
         return res.status(400).json({
-          message: `Invalid permissions provided: ${invalidPermissions.join(', ')}`
+          message: `Invalid permissions provided: ${invalidPermissions.join(
+            ", "
+          )}`,
         });
       }
 
-      const filteredPermissions = permissions.filter(p => !defaultPermissions.includes(p));
+      const filteredPermissions = permissions.filter(
+        (p) => !defaultPermissions.includes(p)
+      );
       userPermissions = [...defaultPermissions, ...filteredPermissions];
     } else if (permissions !== undefined) {
       return res.status(400).json({
-        message: "Permissions must be an array of strings"
+        message: "Permissions must be an array of strings",
       });
     }
 
@@ -137,6 +160,7 @@ export const createUserBySuperAdmin = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
+      employeeNumber: role === "driver" ? employeeNumber : undefined,
       fullName,
       email,
       password: hashedPassword,
@@ -144,24 +168,19 @@ export const createUserBySuperAdmin = async (req, res) => {
       status,
       permissions: userPermissions,
       createdBy: creator._id,
-      associateAdminLimit: ["clientadmin", "manager"].includes(role) ? parsedLimit : undefined,
+      associateAdminLimit: ["clientadmin", "manager"].includes(role)
+        ? parsedLimit
+        : undefined,
       companyId:
         creator.role === "superadmin" && role === "clientadmin"
           ? null
           : creator.companyId,
     });
 
-    // If new clientadmin, set their own _id as companyId
-    // if (newUser.role === "clientadmin" && !newUser.companyId) {
-    //   newUser.companyId = newUser._id;
-    //   await newUser.save();
-    // }
-
     res.status(201).json({
       message: "User created successfully",
       user: newUser,
     });
-
   } catch (error) {
     console.error("Create User Error:", error);
     res.status(500).json({ message: "Server error" });
@@ -176,39 +195,42 @@ export const getClientAdmins = async (req, res) => {
 
     if (role === "superadmin") {
       query.$or = [
-        { role: { $in: ['clientadmin', 'manager', 'demo'] } },
-        { role: { $in: ['driver', 'customer'] }, companyId: null }
+        { role: { $in: ["clientadmin", "manager", "demo"] } },
+        { role: { $in: ["driver", "customer"] }, companyId: null },
       ];
     } else if (role === "manager") {
       query.companyId = companyId;
-      query.role = { $in: ['clientadmin', 'manager', 'demo', 'driver', 'customer'] };
+      query.role = {
+        $in: ["clientadmin", "manager", "demo", "driver", "customer"],
+      };
     } else if (role === "clientadmin") {
       // ✅ Get all users created by clientadmin OR by any of their associateadmins
-      const associateAdmins = await User.find({ createdBy: userId, role: 'associateadmin' });
-      const associateAdminIds = associateAdmins.map(user => user._id);
+      const associateAdmins = await User.find({
+        createdBy: userId,
+        role: "associateadmin",
+      });
+      const associateAdminIds = associateAdmins.map((user) => user._id);
 
       query = {
         createdBy: userId, // only direct creations
-        role: { $in: ['associateadmin', 'staffmember', 'driver', 'customer'] }
+        role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
       };
-    }
-    else if (role === "associateadmin") {
+    } else if (role === "associateadmin") {
       query = {
         $or: [
           { createdBy: userId },
-          { _id: userId } // So they can also see their own record
+          { _id: userId }, // So they can also see their own record
         ],
-        role: { $in: ['associateadmin', 'staffmember', 'driver', 'customer'] }
+        role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
       };
-    }
-    else {
+    } else {
       return res.status(403).json({ message: "Unauthorized access" });
     }
 
     const users = await User.find(query);
 
     return res.status(200).json(
-      users.map(user => ({
+      users.map((user) => ({
         _id: user._id,
         fullName: user.fullName,
         email: user.email,

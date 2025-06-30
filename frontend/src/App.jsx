@@ -62,6 +62,7 @@ import DriverContact from "./portals/driverportal/settings/DriverContact";
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ViewNotifications from "./components/dashbaord/settings/ViewNotifications";
 
 function App() {
   return (
@@ -134,7 +135,8 @@ function App() {
               <Route path="settings/booking-restriction-date" element={<BookingRestrictionDate />} />
               <Route path="settings/review" element={<ReviewSettings />} />
               <Route path="settings/receipt" element={<ReceiptSettings />} />
-              <Route path="settings/notifications" element={<Notifications />} />
+              <Route path="settings/settings-notifications" element={<Notifications />} />
+              <Route path="settings/notifications" element={<ViewNotifications />} />
               <Route path="settings/google-calendar" element={<GoogleCalendar />} />
               <Route path="settings/sms" element={<SMSSettings />} />
               <Route path="settings/social-media" element={<SocialMedia />} />

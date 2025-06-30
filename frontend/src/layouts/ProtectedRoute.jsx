@@ -9,7 +9,6 @@ const ProtectedRoute = () => {
   const userPermissions = user?.permissions || [];
   const location = useLocation();
   const currentPath = location.pathname;
-//  For JWT Token Expiry and LOgout 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (isTokenExpired(token)) {
