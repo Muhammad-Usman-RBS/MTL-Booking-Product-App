@@ -15,7 +15,7 @@ import {
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// User options
+// Static user options
 const userOptions = [
   { label: "All Users", count: 100 },
   { label: "user1@email.com", count: 1 },
@@ -23,7 +23,7 @@ const userOptions = [
   { label: "user3@email.com", count: 1 },
 ];
 
-// Date formatting
+// Format readable date string
 const formatDate = (isoDate) => {
   if (!isoDate) return "N/A";
   const date = new Date(isoDate);
@@ -49,7 +49,7 @@ const Vouchers = () => {
   const [deleteItemId, setDeleteItemId] = useState(null);
 
   const handleEdit = (item) => {
-    setSelectedItem(item);
+    setSelectedItem({ ...item });
     setShowModal(true);
   };
 
@@ -64,80 +64,32 @@ const Vouchers = () => {
 
   const handleUpdateOrCreate = async () => {
     try {
-      const today = new Date();
       const validityDate = new Date(selectedItem.validity);
-      const calculatedStatus = validityDate < today ? "Expired" : "Active";
+      const now = new Date();
+      const status = validityDate < now ? "Expired" : "Active";
 
       const payload = {
         ...selectedItem,
-        discountType: "Percentage",  // Always percentage
-        status: calculatedStatus,
+        voucher: selectedItem.voucher?.toUpperCase(),
+        discountType: "Percentage",
+        discountValue: Number(selectedItem.discountValue || 0),
+        quantity: Number(selectedItem.quantity || 0),
+        status,
       };
 
       if (selectedItem._id) {
         await updateVoucher({ id: selectedItem._id, updatedData: payload }).unwrap();
-        toast.success("Updated Successfully");
+        toast.success("Updated successfully");
       } else {
         await createVoucher(payload).unwrap();
-        toast.success("Created Successfully");
+        toast.success("Created successfully");
       }
+
       setShowModal(false);
-    } catch (err) {
+    } catch {
       toast.error("Failed to save");
     }
   };
-
-  const filteredData =
-    statusFilter === "All Status" ? data : data.filter((item) => item.status === statusFilter);
-
-  const tableHeaders = [
-    { label: "Voucher", key: "voucher" },
-    { label: "Quantity", key: "quantity" },
-    {
-      label: "Applicable",
-      key: "applicable",
-      render: (item) => item.applicable?.join(", "),
-    },
-    {
-      label: "Discount (%)",
-      key: "discount",
-      render: (item) => `${item.discountValue.toFixed(2)}%`,
-    },
-    {
-      label: "Validity",
-      key: "validity",
-      render: (item) => formatDate(item.validity),
-    },
-    { label: "Applied", key: "applied" },
-    { label: "Used", key: "used" },
-    { label: "Status", key: "status" },
-    { label: "Action", key: "actions" },
-  ];
-
-  const tableData = filteredData.map((item) => {
-    const today = new Date();
-    const validityDate = new Date(item.validity);
-    const dynamicStatus = validityDate < today ? "Expired" : item.status;
-
-    return {
-      ...item,
-      status: dynamicStatus,
-      actions: (
-        <div className="flex gap-2">
-          <Icons.Pencil
-            title="Edit"
-            onClick={() => handleEdit(item)}
-            className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
-          />
-          <Icons.Trash
-            title="Delete"
-            onClick={() => setDeleteItemId(item._id)}
-            className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
-          />
-        </div>
-      ),
-    };
-  });
 
   const handleAddNew = () => {
     setSelectedItem({
@@ -154,12 +106,72 @@ const Vouchers = () => {
     setShowModal(true);
   };
 
+  const filteredData =
+    statusFilter === "All Status"
+      ? data
+      : data.filter((item) =>
+          statusFilter === "Expired"
+            ? new Date(item.validity) < new Date()
+            : item.status === statusFilter
+        );
+
+  const tableHeaders = [
+    { label: "Voucher", key: "voucher" },
+    { label: "Quantity", key: "quantity" },
+    {
+      label: "Applicable",
+      key: "applicable",
+      render: (item) => item.applicable?.join(", "),
+    },
+    {
+      label: "Discount (%)",
+      key: "discountValue",
+      render: (item) => `${(item.discountValue || 0).toFixed(2)}%`,
+    },
+    {
+      label: "Validity",
+      key: "validity",
+      render: (item) => formatDate(item.validity),
+    },
+    { label: "Applied", key: "applied" },
+    { label: "Used", key: "used" },
+    {
+      label: "Status",
+      key: "status",
+      render: (item) => {
+        const isExpired = new Date(item.validity) < new Date();
+        return isExpired ? "Expired" : item.status;
+      },
+    },
+    { label: "Action", key: "actions" },
+  ];
+
+  const tableData = filteredData.map((item) => ({
+    ...item,
+    actions: (
+      <div className="flex gap-2">
+        <Icons.Pencil
+          title="Edit"
+          onClick={() => handleEdit(item)}
+          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+        />
+        <Icons.Trash
+          title="Delete"
+          onClick={() => setDeleteItemId(item._id)}
+          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+        />
+      </div>
+    ),
+  }));
+
   return (
     <>
       <div>
         <OutletHeading name="Voucher/Coupon" />
         <div className="flex justify-between items-center mb-4">
-          <button className="btn btn-edit" onClick={handleAddNew}>Add New</button>
+          <button className="btn btn-edit" onClick={handleAddNew}>
+            Add New
+          </button>
           <SelectOption
             label="Status"
             width="40"
@@ -169,11 +181,17 @@ const Vouchers = () => {
           />
         </div>
 
-        <CustomTable tableHeaders={tableHeaders} tableData={tableData} showPagination={true} showSorting={true} />
+        <CustomTable
+          tableHeaders={tableHeaders}
+          tableData={tableData}
+          showPagination
+          showSorting
+          loading={isLoading}
+        />
       </div>
 
       <DeleteModal
-        isOpen={deleteItemId !== null}
+        isOpen={!!deleteItemId}
         onConfirm={async () => {
           await handleDelete(deleteItemId);
           setDeleteItemId(null);
@@ -191,9 +209,14 @@ const Vouchers = () => {
             <label className="block text-sm font-medium">Voucher</label>
             <input
               type="text"
-              className="custom_input"
+              className="custom_input uppercase"
               value={selectedItem?.voucher || ""}
-              onChange={(e) => setSelectedItem({ ...selectedItem, voucher: e.target.value })}
+              onChange={(e) =>
+                setSelectedItem({
+                  ...selectedItem,
+                  voucher: e.target.value.toUpperCase(),
+                })
+              }
             />
           </div>
 
@@ -201,9 +224,15 @@ const Vouchers = () => {
             <label className="block text-sm font-medium">Quantity</label>
             <input
               type="number"
+              min={0}
               className="custom_input"
               value={selectedItem?.quantity || 0}
-              onChange={(e) => setSelectedItem({ ...selectedItem, quantity: parseInt(e.target.value) })}
+              onChange={(e) =>
+                setSelectedItem({
+                  ...selectedItem,
+                  quantity: parseInt(e.target.value) || 0,
+                })
+              }
             />
           </div>
 
@@ -211,7 +240,9 @@ const Vouchers = () => {
             <label className="block text-sm font-medium">Applicable</label>
             <SelectedSearch
               selected={selectedItem?.applicable || []}
-              setSelected={(val) => setSelectedItem({ ...selectedItem, applicable: val })}
+              setSelected={(val) =>
+                setSelectedItem({ ...selectedItem, applicable: val })
+              }
               showCount={false}
               statusList={userOptions}
               placeholder="Select Users"
@@ -223,8 +254,14 @@ const Vouchers = () => {
             <input
               type="datetime-local"
               className="custom_input"
-              value={selectedItem?.validity || ""}
-              onChange={(e) => setSelectedItem({ ...selectedItem, validity: e.target.value })}
+              value={
+                selectedItem?.validity
+                  ? new Date(selectedItem.validity).toISOString().slice(0, 16)
+                  : ""
+              }
+              onChange={(e) =>
+                setSelectedItem({ ...selectedItem, validity: e.target.value })
+              }
             />
           </div>
 
@@ -242,14 +279,23 @@ const Vouchers = () => {
             <label className="block text-sm font-medium">Discount Value (%)</label>
             <input
               type="number"
+              min={0}
+              max={100}
               className="custom_input"
               value={selectedItem?.discountValue || 0}
-              onChange={(e) => setSelectedItem({ ...selectedItem, discountValue: parseFloat(e.target.value) })}
+              onChange={(e) =>
+                setSelectedItem({
+                  ...selectedItem,
+                  discountValue: parseFloat(e.target.value) || 0,
+                })
+              }
             />
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => setShowModal(false)} className="btn btn-cancel">Cancel</button>
+            <button onClick={() => setShowModal(false)} className="btn btn-cancel">
+              Cancel
+            </button>
             <button onClick={handleUpdateOrCreate} className="btn btn-reset">
               {selectedItem?._id ? "Update" : "Create"}
             </button>

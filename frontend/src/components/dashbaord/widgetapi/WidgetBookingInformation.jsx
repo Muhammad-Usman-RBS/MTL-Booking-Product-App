@@ -10,6 +10,7 @@ import { useGetExtrasForWidgetQuery } from '../../../redux/api/fixedPriceApi';
 import { useLazyGeocodeQuery } from '../../../redux/api/googleApi';
 import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
 import { useGetFixedPricesForWidgetQuery } from '../../../redux/api/fixedPriceApi';
+import { useGetDiscountsByCompanyIdQuery } from '../../../redux/api/discountApi';
 
 const WidgetBookingInformation = ({
   companyId: propCompanyId,
@@ -33,6 +34,10 @@ const WidgetBookingInformation = ({
   const [hourlyError, setHourlyError] = useState('');
   const [triggerGeocode] = useLazyGeocodeQuery();
   const [fixedZonePrice, setFixedZonePrice] = useState(null);
+  const [surchargePercent, setSurchargePercent] = useState(0);
+  const [journeyDateTime, setJourneyDateTime] = useState(null);
+  const [matchedSurcharge, setMatchedSurcharge] = useState(0);
+  const [selectedCarFinalPrice, setSelectedCarFinalPrice] = useState(0);
 
   const [triggerDistance] = useLazyGetDistanceQuery();
   const { data: carList = [], isLoading, error } = useGetPublicVehiclesQuery(companyId, { skip: !companyId });
@@ -48,6 +53,8 @@ const WidgetBookingInformation = ({
   const { data: fixedPrices = [] } = useGetFixedPricesForWidgetQuery(companyId, { skip: !companyId });
 
   const { data: zoneToZonePrices = [] } = useGetFixedPricesForWidgetQuery(companyId, { skip: !companyId });
+
+  const { data: discounts = [] } = useGetDiscountsByCompanyIdQuery(companyId, { skip: !companyId });
 
   const isPickupAirport = formData?.pickup?.toLowerCase()?.includes('airport');
   const isDropoffAirport = formData?.dropoff?.toLowerCase()?.includes('airport');
@@ -124,6 +131,28 @@ const WidgetBookingInformation = ({
 
     return null;
   };
+
+  useEffect(() => {
+    if (!journeyDateTime || discounts.length === 0) return;
+
+    const match = discounts.find(d =>
+      d.status === 'Active' &&
+      d.category === 'Surcharge' &&
+      new Date(d.fromDate) <= journeyDateTime &&
+      new Date(d.toDate) >= journeyDateTime
+    );
+
+    setMatchedSurcharge(match?.surchargePrice || 0);
+  }, [journeyDateTime, discounts]);
+
+  useEffect(() => {
+    if (formData?.date && formData?.hour !== undefined && formData?.minute !== undefined) {
+      const dt = new Date(formData.date);
+      dt.setHours(Number(formData.hour));
+      dt.setMinutes(Number(formData.minute));
+      setJourneyDateTime(dt);
+    }
+  }, [formData]);
 
   useEffect(() => {
     if (!formData?.pickupCoordinates || !formData?.dropoffCoordinates || !formData?.direction) return;
@@ -321,48 +350,6 @@ const WidgetBookingInformation = ({
     }
   }, [carList]);
 
-  useEffect(() => {
-    if (selectedCarId && carList.length > 0) {
-      const selectedCar = carList.find(car => car._id === selectedCarId);
-      if (!selectedCar) return;
-
-      const raw = selectedCar.percentageIncrease ?? 0;
-      const cleanPercentage = typeof raw === "string" ? Number(raw.replace("%", "")) : Number(raw);
-      const percentage = isNaN(cleanPercentage) ? 0 : cleanPercentage;
-
-      let base = 0;
-
-      if (formData?.mode === "Hourly") {
-        // Don't apply percentage for hourly, use pure hourly rate
-        base = matchedHourlyRate?.[selectedCar?.vehicleName] || 0;
-      } else if (fixedZonePrice !== null) {
-        base = fixedZonePrice;
-      } else if (matchedZoneToZonePrice !== null) {
-        base = matchedZoneToZonePrice;
-      } else if (matchedPostcodePrice?.price !== undefined) {
-        base = matchedPostcodePrice.price;
-      } else {
-        base = getVehiclePriceForDistance(selectedCar, actualMiles || 0);
-      }
-
-      const final =
-        formData?.mode === "Hourly"
-          ? base // No percentage added in hourly
-          : base + (base * (percentage / 100)); // Apply % in all non-hourly modes
-
-      setBaseRate(final.toFixed(2));
-    }
-  }, [
-    selectedCarId,
-    carList,
-    actualMiles,
-    formData?.mode,
-    matchedHourlyRate,
-    matchedZoneToZonePrice,
-    matchedPostcodePrice,
-    fixedZonePrice
-  ]);
-
   const handleSubmitBooking = () => {
     if (!selectedCarId || !formData) {
       toast.error("Please fill the form and select a vehicle.");
@@ -385,30 +372,116 @@ const WidgetBookingInformation = ({
         passenger: selectedCar?.passengers || 0,
         childSeat: selectedCar?.childSeat || 0,
         handLuggage: selectedCar?.handLuggage || 0,
-        checkinLuggage: selectedCar?.checkinLuggage || 0
+        checkinLuggage: selectedCar?.checkinLuggage || 0,
+        finalPrice: selectedCar.price,
       }
 
     });
   };
 
-  // const calculatedTotalPrice =
-  //   Number(baseRate) +
-  //   (matchedZonePrice || 0) +
-  //   (matchedZoneToZonePrice || 0) +
-  //   (dropOffPrice || 0) +
-  //   pickupAirportPrice +
-  //   dropoffAirportPrice;
-
   const isHourlyMode = formData?.mode === "Hourly";
 
-  const calculatedTotalPrice =
-    Number(baseRate) +
-    (isHourlyMode ? 0 : (matchedZonePrice || 0)) +
-    (isHourlyMode ? 0 : (matchedZoneToZonePrice || 0)) +
-    (isHourlyMode ? 0 : (matchedPostcodePrice?.price || 0)) +
-    (dropOffPrice || 0) +
-    (pickupAirportPrice || 0) +
-    (dropoffAirportPrice || 0);
+  // 1. Hourly > 2. Postcode > 3. Zone > 4. Mileage
+  const getActivePricingMode = () => {
+    if (formData?.mode === 'Hourly') return 'hourly';
+    if (matchedPostcodePrice?.price !== undefined) return 'postcode';
+    if (fixedZonePrice !== null || matchedZoneToZonePrice !== null) return 'zone';
+    return 'mileage';
+  };
+
+  const activePricingMode = getActivePricingMode();
+
+  const calculatedTotalPrice = (() => {
+    const selectedCar = carList.find(c => c._id === selectedCarId);
+    if (!selectedCar) return 0;
+
+    const raw = selectedCar.percentageIncrease ?? 0;
+    const cleanPercentage = typeof raw === "string"
+      ? Number(raw.replace("%", "")) : Number(raw);
+    const percentage = isNaN(cleanPercentage) ? 0 : cleanPercentage;
+
+    let coreFare = 0;
+
+    switch (activePricingMode) {
+      case 'hourly':
+        coreFare = matchedHourlyRate?.[selectedCar.vehicleName] || 0;
+        break;
+      case 'postcode':
+        coreFare = matchedPostcodePrice?.price || 0;
+        break;
+      case 'zone':
+        coreFare = fixedZonePrice !== null
+          ? fixedZonePrice
+          : matchedZoneToZonePrice || 0;
+        break;
+      case 'mileage':
+      default:
+        coreFare = getVehiclePriceForDistance(selectedCar, actualMiles || 0);
+        break;
+    }
+
+    const baseWithMarkup = (activePricingMode === 'postcode' || activePricingMode === 'zone')
+      ? coreFare + (coreFare * (percentage / 100))
+      : coreFare;
+
+    const surchargeAmount = baseWithMarkup * (matchedSurcharge / 100);
+
+    return (
+      baseWithMarkup +
+      surchargeAmount +
+      (matchedZonePrice || 0) +
+      (dropOffPrice || 0) +
+      (pickupAirportPrice || 0) +
+      (dropoffAirportPrice || 0)
+    );
+  })();
+
+  useEffect(() => {
+    if (!selectedCarId || carList.length === 0) return;
+
+    const selectedCar = carList.find(car => car._id === selectedCarId);
+    if (!selectedCar) return;
+
+    const raw = selectedCar.percentageIncrease ?? 0;
+    const cleanPercentage = typeof raw === "string"
+      ? Number(raw.replace("%", ""))
+      : Number(raw);
+    const percentage = isNaN(cleanPercentage) ? 0 : cleanPercentage;
+
+    let base = 0;
+    switch (activePricingMode) {
+      case 'hourly':
+        base = matchedHourlyRate?.[selectedCar?.vehicleName] || 0;
+        break;
+      case 'postcode':
+        base = matchedPostcodePrice?.price || 0;
+        break;
+      case 'zone':
+        base = fixedZonePrice !== null ? fixedZonePrice : (matchedZoneToZonePrice || 0);
+        break;
+      case 'mileage':
+      default:
+        base = getVehiclePriceForDistance(selectedCar, actualMiles || 0);
+        break;
+    }
+
+    const markupBase = (activePricingMode === 'postcode' || activePricingMode === 'zone')
+      ? base + (base * (percentage / 100))
+      : base;
+
+    const withSurcharge = markupBase + (markupBase * (matchedSurcharge / 100));
+    setSelectedCarFinalPrice(withSurcharge.toFixed(2)); // ✅ update here
+  }, [
+    selectedCarId,
+    carList,
+    actualMiles,
+    activePricingMode,
+    matchedHourlyRate,
+    matchedPostcodePrice,
+    matchedZoneToZonePrice,
+    fixedZonePrice,
+    matchedSurcharge
+  ]);
 
   return (
     <>
@@ -424,6 +497,12 @@ const WidgetBookingInformation = ({
                 {formData?.hour && formData?.minute ? `${String(formData.hour).padStart(2, '0')}:${String(formData.minute).padStart(2, '0')} ${formData?.hour < 12 ? 'AM' : 'PM'}` : 'Time not set'}
                 <span className="text-sm text-gray-500">&nbsp;(GMT+1)</span>
               </div>
+              {matchedSurcharge > 0 && (
+                <div className="flex justify-between border-b border-dashed pb-2">
+                  <span>Surcharge</span>
+                  <span className="font-medium text-gray-900">£{matchedSurcharge.toFixed(2)}</span>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-4 py-3 bg-white border border-gray-100 rounded-xl">
@@ -509,28 +588,25 @@ const WidgetBookingInformation = ({
                     : Number(raw);
                   const percentage = isNaN(cleanPercentage) ? 0 : cleanPercentage;
 
+                  let base = 0;
+
                   if (isHourly) {
-                    // Only use hourly rate directly
-                    price = matchedHourlyRate?.[car.vehicleName] || 0;
-                    label = `Hourly rate: £${price.toFixed(2)}`;
+                    base = matchedHourlyRate?.[car.vehicleName] || 0;
                   } else if (fixedZonePrice !== null) {
-                    const final = baseFixedZonePrice + (baseFixedZonePrice * (percentage / 100));
-                    price = parseFloat(final.toFixed(2));
-                    label = `Fixed Zone: £${baseFixedZonePrice.toFixed(2)} + ${percentage}% = £${price.toFixed(2)}`;
+                    base = baseFixedZonePrice + (baseFixedZonePrice * (percentage / 100));
                   } else if (matchedZoneToZonePrice !== null) {
-                    const final = baseZoneToZonePrice + (baseZoneToZonePrice * (percentage / 100));
-                    price = parseFloat(final.toFixed(2));
-                    label = `Zone: £${baseZoneToZonePrice.toFixed(2)} + ${percentage}% = £${price.toFixed(2)}`;
+                    base = baseZoneToZonePrice + (baseZoneToZonePrice * (percentage / 100));
                   } else if (matchedPostcodePrice) {
-                    const final = basePostcodePrice + (basePostcodePrice * (percentage / 100));
-                    price = parseFloat(final.toFixed(2));
-                    label = `Postcode: £${basePostcodePrice.toFixed(2)} + ${percentage}% = £${price.toFixed(2)}`;
+                    base = basePostcodePrice + (basePostcodePrice * (percentage / 100));
                   } else {
-                    const base = getVehiclePriceForDistance(car, actualMiles || 0);
-                    const final = base + (base * (percentage / 100));
-                    price = parseFloat(final.toFixed(2));
-                    label = `Distance rate: £${base.toFixed(2)} + ${percentage}% = £${price.toFixed(2)}`;
+                    base = getVehiclePriceForDistance(car, actualMiles || 0);
                   }
+
+                  // Apply surcharge percentage (e.g. 63%)
+                  const surchargeAmount = base * (matchedSurcharge / 100);
+                  price = parseFloat((base + surchargeAmount).toFixed(2));
+
+                  label = `Base: £${base.toFixed(2)} + ${matchedSurcharge}% surcharge = £${price.toFixed(2)}`;
 
                   return {
                     ...car,
@@ -542,6 +618,7 @@ const WidgetBookingInformation = ({
               selectedCarId={selectedCarId}
               onSelect={setSelectedCarId}
             />
+
             <div className="text-right mt-4">
               <button
                 onClick={handleSubmitBooking}
@@ -562,11 +639,14 @@ const WidgetBookingInformation = ({
               </div>
               <span className="text-sm text-gray-500">GBP</span>
             </div>
+            <div className="text-sm text-blue-500">
+              Pricing Mode: <strong>{activePricingMode.toUpperCase()}</strong>
+            </div>
 
             <div className="space-y-3 text-sm text-gray-700">
               <div className="flex justify-between border-b border-dashed pb-2">
                 <span>Base Fare</span>
-                <span className="font-medium text-gray-900">£{baseRate}</span>
+                <span className="font-medium text-gray-900">£{selectedCarFinalPrice}</span>
               </div>
 
               {fixedZonePrice !== null && (
@@ -613,18 +693,12 @@ const WidgetBookingInformation = ({
                 </div>
               )}
 
-              {isHourlyMode && (
-                <div className="mt-4 text-sm font-medium text-blue-600">
-                  Hourly Package Selected – Extras added where applicable
-                </div>
-              )}
-
-              {!isHourlyMode && fixedZonePrice !== null && (
+              {/* {!isHourlyMode && fixedZonePrice !== null && (
                 <div className="flex justify-between border-b border-dashed pb-2">
                   <span>Fixed Zone Price</span>
                   <span className="font-medium text-gray-900">£{fixedZonePrice.toFixed(2)}</span>
                 </div>
-              )}
+              )} */}
 
               {!isHourlyMode && matchedZoneToZonePrice !== null && (
                 <div className="flex justify-between border-b border-dashed pb-2">
@@ -633,11 +707,15 @@ const WidgetBookingInformation = ({
                 </div>
               )}
 
-
               <div className="flex justify-between pt-2 mt-12 border-t border-gray-300 text-base font-semibold">
-                <span>Total</span>
+                <span className='flex items-center'>Total {isHourlyMode && (
+                  <div className="ms-2 text-xs font-medium text-blue-600">
+                    (Hourly Package Selected)
+                  </div>
+                )}</span>
                 <span>£{calculatedTotalPrice.toFixed(2)}</span>
               </div>
+
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 import Discount from "../../models/pricings/Discount.js";
 
-// Get All Discounts (for current company)
+// Get All Discounts for Admin Panel
 export const getAllDiscounts = async (req, res) => {
   try {
     const companyId = req.user.companyId;
@@ -9,14 +9,32 @@ export const getAllDiscounts = async (req, res) => {
       return res.status(400).json({ message: "Valid companyId is required." });
     }
 
-    const discounts = await Discount.find({ companyId }).sort({ createdAt: -1 });
-    res.status(200).json(discounts);
+    let discounts = await Discount.find({ companyId }).sort({ createdAt: -1 });
+
+    const now = new Date();
+
+    // Update expired statuses in DB
+    const updatedDiscounts = await Promise.all(
+      discounts.map(async (discount) => {
+        const toDate = new Date(discount.toDate);
+        const newStatus = toDate < now ? "Expired" : "Active";
+
+        if (discount.status !== newStatus) {
+          discount.status = newStatus;
+          await discount.save(); // update the status in DB
+        }
+
+        return discount;
+      })
+    );
+
+    res.status(200).json(updatedDiscounts);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch discounts", error: err.message });
   }
 };
 
-// Create Discount
+// Create Discount/Surcharge Entry
 export const createDiscount = async (req, res) => {
   try {
     const companyId = req.user.companyId;
@@ -27,22 +45,36 @@ export const createDiscount = async (req, res) => {
 
     const {
       caption,
-      recurring,
+      recurring = "No",
       fromDate,
       toDate,
       category,
       discountPrice,
+      surchargePrice,
       status,
     } = req.body;
+
+    if (
+      !caption ||
+      !fromDate ||
+      !toDate ||
+      !category ||
+      (discountPrice === undefined && surchargePrice === undefined)
+    ) {
+      return res.status(400).json({ message: "Missing required fields." });
+    }
+
+    const dynamicStatus = new Date(toDate).getTime() < Date.now() ? "Expired" : "Active";
 
     const discount = new Discount({
       caption,
       recurring,
-      fromDate: new Date(fromDate).toISOString(), // ✅ Ensures UTC ISO format
-      toDate: new Date(toDate).toISOString(),     // ✅ Ensures UTC ISO format
+      fromDate: new Date(fromDate).toISOString(),
+      toDate: new Date(toDate).toISOString(),
       category,
-      discountPrice,
-      status,
+      discountPrice: category === "Discount" ? parseFloat(discountPrice) : 0,
+      surchargePrice: category === "Surcharge" ? parseFloat(surchargePrice) : 0,
+      status: status || dynamicStatus,
       companyId,
     });
 
@@ -53,36 +85,52 @@ export const createDiscount = async (req, res) => {
   }
 };
 
-// Update Discount
+// Update Discount/Surcharge
 export const updateDiscount = async (req, res) => {
   try {
     const companyId = req.user.companyId;
     const { id } = req.params;
 
-    if (!companyId || companyId.length !== 24) {
-      return res.status(400).json({ message: "Valid companyId is required." });
+    if (!companyId || companyId.length !== 24 || !id) {
+      return res.status(400).json({ message: "Valid companyId and ID are required." });
     }
 
     const {
       caption,
-      recurring,
+      recurring = "No",
       fromDate,
       toDate,
       category,
       discountPrice,
+      surchargePrice,
       status,
     } = req.body;
+
+    if (
+      !caption ||
+      !fromDate ||
+      !toDate ||
+      !category ||
+      (discountPrice === undefined && surchargePrice === undefined)
+    ) {
+      return res.status(400).json({ message: "Missing required fields." });
+    }
+
+    const currentDate = new Date();
+    const toDateObj = new Date(toDate);
+    const dynamicStatus = toDateObj < currentDate ? "Expired" : "Active";
 
     const updated = await Discount.findOneAndUpdate(
       { _id: id, companyId },
       {
         caption,
         recurring,
-        fromDate: new Date(fromDate).toISOString(), // ✅ Ensures 24h precision
+        fromDate: new Date(fromDate).toISOString(),
         toDate: new Date(toDate).toISOString(),
         category,
-        discountPrice,
-        status,
+        discountPrice: category === "Discount" ? parseFloat(discountPrice) : 0,
+        surchargePrice: category === "Surcharge" ? parseFloat(surchargePrice) : 0,
+        status: status || dynamicStatus,
       },
       { new: true }
     );
@@ -97,14 +145,14 @@ export const updateDiscount = async (req, res) => {
   }
 };
 
-// Delete Discount
+// Delete Discount/Surcharge
 export const deleteDiscount = async (req, res) => {
   try {
     const companyId = req.user.companyId;
     const { id } = req.params;
 
-    if (!companyId || companyId.length !== 24) {
-      return res.status(400).json({ message: "Valid companyId is required." });
+    if (!companyId || companyId.length !== 24 || !id) {
+      return res.status(400).json({ message: "Valid companyId and ID are required." });
     }
 
     const deleted = await Discount.findOneAndDelete({ _id: id, companyId });
@@ -119,7 +167,7 @@ export const deleteDiscount = async (req, res) => {
   }
 };
 
-// Public API: Get Discounts by companyId (for widget use)
+// Public API: Get Active Discounts/Surcharges for Widget Use
 export const getDiscountsByCompanyId = async (req, res) => {
   try {
     const { companyId } = req.query;
@@ -135,4 +183,3 @@ export const getDiscountsByCompanyId = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch discounts", error: err.message });
   }
 };
-

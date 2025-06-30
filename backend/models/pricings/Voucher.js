@@ -9,7 +9,7 @@ const voucherSchema = new mongoose.Schema({
     discountValue: { type: Number, required: true },
     applied: { type: Number, default: 0 },
     used: { type: Number, default: 0 },
-    status: { type: String, enum: ["Active", "Expired", "Deleted"], default: "Active" },
+    status: { type: String, enum: ["Active", "Expired"], default: "Active" },
 }, { timestamps: true });
 
 export default mongoose.model("Voucher", voucherSchema);

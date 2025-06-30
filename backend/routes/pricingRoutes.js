@@ -8,7 +8,7 @@ import { getAllFixedPrices, createFixedPrice, updateFixedPrice, deleteFixedPrice
 import { getAllExtras, createExtra, updateExtra, deleteExtra, getExtrasByCompanyId } from "../controllers/pricings/extrasController.js";
 import { getAllPostcodePrices, createPostcodePrice, updatePostcodePrice, deletePostcodePrice, getAllPostcodePricesWidget } from "../controllers/pricings/postcodePriceController.js";
 import { getAllDiscounts, createDiscount, updateDiscount, deleteDiscount, getDiscountsByCompanyId } from "../controllers/pricings/discountController.js";
-import { getAllVouchers, createVoucher, updateVoucher, deleteVoucher } from "../controllers/pricings/voucherController.js";
+import { getAllVouchers, createVoucher, updateVoucher, deleteVoucher, getVoucherByCode } from "../controllers/pricings/voucherController.js";
 import { getAllZones, createZone, updateZone, deleteZone } from "../controllers/pricings/zoneController.js";
 
 const router = express.Router();
@@ -69,6 +69,7 @@ router.delete("/discount/:id", protect, deleteDiscount);
 
 // VOUCHERS PRICING
 router.get("/vouchers", protect, getAllVouchers);
+router.get("/vouchers/widget", getVoucherByCode);    // For Widget
 router.post("/vouchers", protect, createVoucher);
 router.put("/vouchers/:id", protect, updateVoucher);
 router.delete("/vouchers/:id", protect, deleteVoucher);

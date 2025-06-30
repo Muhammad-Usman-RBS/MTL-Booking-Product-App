@@ -7,77 +7,30 @@ import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import {
-  useGetAllDiscountsQuery,
-  useCreateDiscountMutation,
-  useUpdateDiscountMutation,
-  useDeleteDiscountMutation,
-} from "../../../redux/api/discountApi";
+import { useGetAllDiscountsQuery, useCreateDiscountMutation, useUpdateDiscountMutation, useDeleteDiscountMutation } from "../../../redux/api/discountApi";
 
-// ✅ Fixed: Format input for datetime-local field (preserve exact local time)
-const formatInputDateTime = (isoDate) => {
-  if (!isoDate) return "";
-
-  // Parse the ISO date but use UTC methods to avoid timezone conversion
-  const date = new Date(isoDate);
-
-  // Use UTC methods to get the exact stored time
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const hours = String(date.getUTCHours()).padStart(2, '0');
-  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+// Utility Functions
+const toISOStringWithTimezone = (dateString) => {
+  const date = new Date(dateString);
+  return date.toISOString();
 };
 
-// ✅ Fixed: Convert datetime-local to ISO without timezone shift
-const toISOStringWithLocalTime = (value) => {
-  if (!value) return null;
-
-  // Parse the datetime-local value manually to avoid timezone conversion
-  const [datePart, timePart] = value.split("T");
-  const [year, month, day] = datePart.split("-").map(Number);
-  const [hours, minutes] = timePart.split(":").map(Number);
-
-  // Create date object using local time components
-  const date = new Date(year, month - 1, day, hours, minutes, 0, 0);
-
-  // Convert to ISO string manually to preserve exact time
-  const pad = (n) => n.toString().padStart(2, '0');
-  const isoYear = date.getFullYear();
-  const isoMonth = pad(date.getMonth() + 1);
-  const isoDay = pad(date.getDate());
-  const isoHours = pad(date.getHours());
-  const isoMinutes = pad(date.getMinutes());
-  const isoSeconds = pad(date.getSeconds());
-
-  return `${isoYear}-${isoMonth}-${isoDay}T${isoHours}:${isoMinutes}:${isoSeconds}.000Z`;
+const formatInputDateTime = (dateStr) => {
+  const date = new Date(dateStr);
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60000);
+  return localDate.toISOString().slice(0, 16);
 };
 
-// ✅ Fixed: Format display value for table (show exact saved time with AM/PM)
-const formatDate = (isoDate) => {
-  if (!isoDate) return "N/A";
-
-  // Parse ISO date and display local components
-  const date = new Date(isoDate);
-
-  const pad = (n) => n.toString().padStart(2, "0");
-  const year = date.getUTCFullYear(); // Use UTC to avoid timezone conversion
-  const month = pad(date.getUTCMonth() + 1);
-  const day = pad(date.getUTCDate());
-
-  // Convert 24-hour to 12-hour format with AM/PM
-  let hours = date.getUTCHours();
-  const minutes = pad(date.getUTCMinutes());
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-
-  // Convert hours to 12-hour format
-  hours = hours % 12;
-  hours = hours ? hours : 12; // the hour '0' should be '12'
-  const displayHours = pad(hours);
-
-  return `${year}-${month}-${day} ${displayHours}:${minutes} ${ampm}`;
+const formatDate = (dateStr) => {
+  const date = new Date(dateStr);
+  return date.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
 const DiscountsByDate = () => {
@@ -91,31 +44,27 @@ const DiscountsByDate = () => {
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [deleteItemId, setDeleteItemId] = useState(null);
 
-  // ✅ Attach dynamic status using UTC comparison to match saved format
   const processedData = data.map((item) => {
-    const today = new Date();
-    const toDate = new Date(item.toDate);
-    const dynamicStatus = toDate < today ? "Expired" : "Active";
+    const dynamicStatus = new Date(item.toDate).getTime() < Date.now() ? "Expired" : "Active";
     return { ...item, dynamicStatus };
   });
 
-  // ✅ Filter based on status dropdown
   const filteredData =
     statusFilter === "All Status"
       ? processedData
       : processedData.filter((item) => item.dynamicStatus === statusFilter);
 
-  // ✅ Edit existing item - properly format dates for datetime-local input
   const handleEdit = (item) => {
     setSelectedItem({
       ...item,
       fromDate: formatInputDateTime(item.fromDate),
       toDate: formatInputDateTime(item.toDate),
+      discountPrice: item.discountPrice || 0,
+      surchargePrice: item.surchargePrice || 0,
     });
     setShowModal(true);
   };
 
-  // ✅ Add new item
   const handleAddNew = () => {
     setSelectedItem({
       caption: "",
@@ -124,16 +73,15 @@ const DiscountsByDate = () => {
       toDate: "",
       category: "Surcharge",
       discountPrice: 0,
+      surchargePrice: 0,
       status: "Active",
       priceType: "Percentage",
     });
     setShowModal(true);
   };
 
-  // ✅ Save item (create or update) - preserve exact time
   const handleSave = async () => {
     try {
-      // Validate required fields
       if (!selectedItem.caption || !selectedItem.fromDate || !selectedItem.toDate) {
         toast.error("Please fill all required fields");
         return;
@@ -146,15 +94,20 @@ const DiscountsByDate = () => {
       const payload = {
         caption: selectedItem.caption,
         recurring: selectedItem.recurring,
-        fromDate: toISOStringWithLocalTime(selectedItem.fromDate),
-        toDate: toISOStringWithLocalTime(selectedItem.toDate),
         category: selectedItem.category,
-        discountPrice: parseFloat(selectedItem.discountPrice) || 0,
+        fromDate: toISOStringWithTimezone(selectedItem.fromDate),
+        toDate: toISOStringWithTimezone(selectedItem.toDate),
+        discountPrice:
+          selectedItem.category === "Discount"
+            ? parseFloat(selectedItem.discountPrice) || 0
+            : 0,
+        surchargePrice:
+          selectedItem.category === "Surcharge"
+            ? parseFloat(selectedItem.surchargePrice) || 0
+            : 0,
         status: isExpired ? "Expired" : "Active",
         priceType: "Percentage",
       };
-
-      console.log("Saving payload:", payload); // Debug log
 
       if (selectedItem._id) {
         await updateDiscount({ id: selectedItem._id, updatedData: payload }).unwrap();
@@ -167,55 +120,56 @@ const DiscountsByDate = () => {
       setShowModal(false);
       setSelectedItem(null);
     } catch (err) {
-      console.error("Save error:", err);
       toast.error("Failed to save");
+      console.error("Save error:", err);
     }
   };
 
-  // ✅ Delete item
   const handleDelete = async (id) => {
     try {
       await deleteDiscount(id).unwrap();
       toast.success("Deleted successfully");
-    } catch (error) {
-      console.error("Delete error:", error);
+    } catch (err) {
       toast.error("Failed to delete");
+      console.error("Delete error:", err);
     }
   };
 
-  // ✅ Table configuration
   const tableHeaders = [
     { label: "Caption", key: "caption" },
     { label: "Recurring", key: "recurring" },
     { label: "From", key: "fromDate" },
     { label: "To", key: "toDate" },
     { label: "Category", key: "category" },
-    { label: "Discount Price (%)", key: "discountPrice" },
+    { label: "Price (%)", key: "priceValue" },
     { label: "Status", key: "status" },
     { label: "Action", key: "actions" },
   ];
 
-  const tableData = filteredData.map((item) => ({
-    ...item,
-    fromDate: formatDate(item.fromDate),
-    toDate: formatDate(item.toDate),
-    discountPrice: `${item.discountPrice?.toFixed(2) || "0.00"}%`,
-    status: item.dynamicStatus,
-    actions: (
-      <div className="flex gap-2">
-        <Icons.Pencil
-          title="Edit"
-          onClick={() => handleEdit(item)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
-        />
-        <Icons.Trash
-          title="Delete"
-          onClick={() => setDeleteItemId(item._id)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
-        />
-      </div>
-    ),
-  }));
+  const tableData = filteredData.map((item) => {
+    const value = item.category === "Discount" ? item.discountPrice : item.surchargePrice;
+    return {
+      ...item,
+      fromDate: formatDate(item.fromDate),
+      toDate: formatDate(item.toDate),
+      priceValue: `${value?.toFixed(2) || "0.00"}%`,
+      status: item.dynamicStatus,
+      actions: (
+        <div className="flex gap-2">
+          <Icons.Pencil
+            title="Edit"
+            onClick={() => handleEdit(item)}
+            className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+          />
+          <Icons.Trash
+            title="Delete"
+            onClick={() => setDeleteItemId(item._id)}
+            className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+          />
+        </div>
+      ),
+    };
+  });
 
   return (
     <>
@@ -275,7 +229,9 @@ const DiscountsByDate = () => {
               type="text"
               className="custom_input"
               value={selectedItem?.caption || ""}
-              onChange={(e) => setSelectedItem({ ...selectedItem, caption: e.target.value })}
+              onChange={(e) =>
+                setSelectedItem({ ...selectedItem, caption: e.target.value })
+              }
               placeholder="Enter caption"
             />
           </div>
@@ -284,7 +240,9 @@ const DiscountsByDate = () => {
             label="Recurring"
             width="full"
             value={selectedItem?.recurring || "No"}
-            onChange={(e) => setSelectedItem({ ...selectedItem, recurring: e.target.value })}
+            onChange={(e) =>
+              setSelectedItem({ ...selectedItem, recurring: e.target.value })
+            }
             options={["No", "Yearly"]}
           />
 
@@ -296,7 +254,9 @@ const DiscountsByDate = () => {
               type="datetime-local"
               className="custom_input"
               value={selectedItem?.fromDate || ""}
-              onChange={(e) => setSelectedItem({ ...selectedItem, fromDate: e.target.value })}
+              onChange={(e) =>
+                setSelectedItem({ ...selectedItem, fromDate: e.target.value })
+              }
             />
           </div>
 
@@ -308,7 +268,9 @@ const DiscountsByDate = () => {
               type="datetime-local"
               className="custom_input"
               value={selectedItem?.toDate || ""}
-              onChange={(e) => setSelectedItem({ ...selectedItem, toDate: e.target.value })}
+              onChange={(e) =>
+                setSelectedItem({ ...selectedItem, toDate: e.target.value })
+              }
             />
           </div>
 
@@ -316,12 +278,16 @@ const DiscountsByDate = () => {
             label="Category"
             width="full"
             value={selectedItem?.category || "Surcharge"}
-            onChange={(e) => setSelectedItem({ ...selectedItem, category: e.target.value })}
+            onChange={(e) =>
+              setSelectedItem({ ...selectedItem, category: e.target.value })
+            }
             options={["Surcharge", "Discount"]}
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Price Type</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Price Type
+            </label>
             <input
               type="text"
               className="custom_input bg-gray-100 cursor-not-allowed"
@@ -330,20 +296,49 @@ const DiscountsByDate = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Discount (%)</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              className="custom_input"
-              value={selectedItem?.discountPrice || ""}
-              onChange={(e) =>
-                setSelectedItem({ ...selectedItem, discountPrice: parseFloat(e.target.value) || 0 })
-              }
-              placeholder="0.00"
-            />
-          </div>
+          {selectedItem?.category === "Discount" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Discount (%)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                className="custom_input"
+                value={selectedItem?.discountPrice || ""}
+                onChange={(e) =>
+                  setSelectedItem({
+                    ...selectedItem,
+                    discountPrice: parseFloat(e.target.value) || 0,
+                  })
+                }
+                placeholder="0.00"
+              />
+            </div>
+          )}
+
+          {selectedItem?.category === "Surcharge" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Surcharge (%)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                className="custom_input"
+                value={selectedItem?.surchargePrice || ""}
+                onChange={(e) =>
+                  setSelectedItem({
+                    ...selectedItem,
+                    surchargePrice: parseFloat(e.target.value) || 0,
+                  })
+                }
+                placeholder="0.00"
+              />
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-2">
             <button
@@ -355,10 +350,7 @@ const DiscountsByDate = () => {
             >
               Cancel
             </button>
-            <button
-              onClick={handleSave}
-              className="btn btn-reset"
-            >
+            <button onClick={handleSave} className="btn btn-reset">
               {selectedItem?._id ? "Update" : "Create"}
             </button>
           </div>
