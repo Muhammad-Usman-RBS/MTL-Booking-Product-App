@@ -19,7 +19,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
 
     const [fetchVoucher] = useLazyGetVoucherByCodeQuery();
     const { data: discounts = [] } = useGetDiscountsByCompanyIdQuery(companyId);
-    const { data: allBookings = [] } = useGetAllBookingsQuery(); 
+    const { data: allBookings = [] } = useGetAllBookingsQuery();
 
     const [voucher, setVoucher] = useState('');
     const [companyDiscountPercent, setCompanyDiscountPercent] = useState(0);
