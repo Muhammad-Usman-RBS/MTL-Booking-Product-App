@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import DriverProfile from "./Driver.js";
+
 const JourneySchema = new mongoose.Schema({
   pickup: { type: String, required: true },
   dropoff: { type: String, required: true },
@@ -35,6 +36,9 @@ const JourneySchema = new mongoose.Schema({
 
   distanceText: { type: String },
   durationText: { type: String },
+
+  voucher: { type: String, default: null },
+  voucherApplied: { type: Boolean, default: false },
 }, { _id: false });
 
 // Vehicle Info Subdocument
@@ -62,7 +66,7 @@ const StatusAuditSchema = new mongoose.Schema({
 
 // Booking Schema
 const BookingSchema = new mongoose.Schema({
-  bookingId: {type:String, unique: true},
+  bookingId: { type: String, unique: true },
   mode: {
     type: String,
     enum: ["Transfer", "Hourly"],
@@ -74,7 +78,7 @@ const BookingSchema = new mongoose.Schema({
   },
   returnJourney: {
     type: JourneySchema,
-    required: false,   
+    required: false,
   },
   primaryJourney: {
     type: JourneySchema,

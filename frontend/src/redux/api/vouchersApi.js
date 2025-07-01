@@ -50,5 +50,5 @@ export const {
   useCreateVoucherMutation,
   useUpdateVoucherMutation,
   useDeleteVoucherMutation,
-  useGetVoucherByCodeQuery,
+  useLazyGetVoucherByCodeQuery,
 } = vouchersApi;

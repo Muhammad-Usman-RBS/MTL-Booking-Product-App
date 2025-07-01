@@ -1,55 +1,80 @@
 import Voucher from "../../models/pricings/Voucher.js";
 
-// Admin: Get All Vouchers
+// Admin: Get All Vouchers (By Company)
 export const getAllVouchers = async (req, res) => {
     try {
-        const vouchers = await Voucher.find().sort({ createdAt: -1 });
+        const companyId = req.user?.companyId;
 
-        const updatedVouchers = vouchers.map(voucher => {
-            const today = new Date();
+        if (!companyId || companyId.length !== 24) {
+            return res.status(400).json({ message: "Invalid or missing companyId." });
+        }
+
+        const vouchers = await Voucher.find({
+            companyId,
+            status: { $ne: "Deleted" },
+        });
+
+        const today = new Date();
+
+        const updatedVouchers = vouchers.map((voucher) => {
             const validity = new Date(voucher.validity);
-            let status = voucher.status;
+            const isExpired = validity < today;
+            const status = voucher.status === "Deleted"
+                ? "Deleted"
+                : isExpired
+                    ? "Expired"
+                    : "Active";
 
-            if (voucher.status !== "Deleted") {
-                status = validity < today ? "Expired" : "Active";
-            }
-
-            return { ...voucher.toObject(), status };
+            return {
+                ...voucher.toObject(),
+                status,
+            };
         });
 
         res.status(200).json(updatedVouchers);
     } catch (err) {
-        res.status(500).json({ message: "Failed to fetch vouchers", error: err.message });
+        res.status(500).json({
+            message: "Failed to fetch vouchers",
+            error: err.message,
+        });
     }
 };
 
 // Admin: Create New Voucher
 export const createVoucher = async (req, res) => {
     try {
-        const { voucher, quantity, applicable, validity, discountType, discountValue } = req.body;
+        const { voucher, quantity, validity, discountType, discountValue } = req.body;
+        const companyId = req.user?.companyId;
 
-        if (!voucher || !quantity || !validity || !discountType || !discountValue) {
+        if (
+            !voucher || !quantity || !validity ||
+            !discountType || discountValue === undefined || !companyId
+        ) {
             return res.status(400).json({ message: "All required fields must be filled." });
         }
 
-        const today = new Date();
-        const isExpired = new Date(validity) < today;
+        const isExpired = new Date(validity) < new Date();
         const status = isExpired ? "Expired" : "Active";
 
         const newVoucher = new Voucher({
+            companyId,
             voucher: voucher.toUpperCase(),
             quantity,
-            applicable,
             validity,
             discountType,
             discountValue,
-            status
+            status,
+            used: 0,
         });
 
         await newVoucher.save();
+
         res.status(201).json(newVoucher);
     } catch (err) {
-        res.status(500).json({ message: "Failed to create voucher", error: err.message });
+        res.status(500).json({
+            message: "Failed to create voucher",
+            error: err.message,
+        });
     }
 };
 
@@ -57,56 +82,67 @@ export const createVoucher = async (req, res) => {
 export const updateVoucher = async (req, res) => {
     try {
         const { id } = req.params;
-        const { voucher, quantity, applicable, validity, discountType, discountValue } = req.body;
+        const { voucher, quantity, validity, discountType, discountValue } = req.body;
+        const companyId = req.user?.companyId;
 
-        if (!id || !voucher || !quantity || !validity || !discountType || !discountValue) {
+        if (
+            !id || !voucher || !quantity || !validity ||
+            !discountType || discountValue === undefined || !companyId
+        ) {
             return res.status(400).json({ message: "All required fields must be filled." });
         }
 
-        const today = new Date();
-        const isExpired = new Date(validity) < today;
+        const isExpired = new Date(validity) < new Date();
         const status = isExpired ? "Expired" : "Active";
 
-        const updated = await Voucher.findByIdAndUpdate(
-            id,
+        const updated = await Voucher.findOneAndUpdate(
+            { _id: id, companyId },
             {
                 voucher: voucher.toUpperCase(),
                 quantity,
-                applicable,
                 validity,
                 discountType,
                 discountValue,
-                status
+                status,
             },
             { new: true }
         );
 
         if (!updated) {
-            return res.status(404).json({ message: "Voucher not found" });
+            return res.status(404).json({ message: "Voucher not found or unauthorized." });
         }
 
         res.status(200).json(updated);
     } catch (err) {
-        res.status(500).json({ message: "Failed to update voucher", error: err.message });
+        res.status(500).json({
+            message: "Failed to update voucher",
+            error: err.message,
+        });
     }
 };
 
-// Admin: Delete Voucher (Soft Delete)
+// Admin: Soft Delete Voucher
 export const deleteVoucher = async (req, res) => {
     try {
         const { id } = req.params;
+        const companyId = req.user?.companyId;
 
-        const updated = await Voucher.findByIdAndUpdate(id, { status: "Deleted" }, { new: true });
+        const deleted = await Voucher.findOneAndDelete({ _id: id, companyId });
 
-        if (!updated) return res.status(404).json({ message: "Voucher not found" });
+        if (!deleted) {
+            return res.status(404).json({ message: "Voucher not found or unauthorized." });
+        }
 
-        res.status(200).json({ message: "Voucher marked as Deleted" });
+        res.status(200).json({ message: "Voucher permanently deleted" });
     } catch (err) {
-        res.status(500).json({ message: "Failed to delete voucher", error: err.message });
+        res.status(500).json({
+            message: "Failed to delete voucher",
+            error: err.message,
+        });
     }
 };
 
-// Widget: Public API to Fetch Voucher by Code
+// Public: Get Voucher by Code (For Widget Use)
 export const getVoucherByCode = async (req, res) => {
     try {
         const { code } = req.query;
@@ -117,17 +153,25 @@ export const getVoucherByCode = async (req, res) => {
 
         const voucher = await Voucher.findOne({ voucher: code.toUpperCase() });
 
-        if (!voucher) return res.status(404).json({ message: "Voucher not found" });
+        if (!voucher) {
+            return res.status(404).json({ message: "Voucher not found" });
+        }
 
         const today = new Date();
         const isExpired = new Date(voucher.validity) < today;
+        const hasReachedLimit = voucher.used >= voucher.quantity;
 
-        if (voucher.status === "Deleted" || isExpired || voucher.used >= voucher.quantity) {
+        const isInactive = voucher.status === "Deleted" || voucher.status === "Expired";
+
+        if (isExpired || hasReachedLimit || isInactive) {
             return res.status(410).json({ message: "Voucher is no longer valid." });
         }
 
         res.status(200).json(voucher);
     } catch (err) {
-        res.status(500).json({ message: "Failed to fetch voucher", error: err.message });
+        res.status(500).json({
+            message: "Failed to fetch voucher",
+            error: err.message,
+        });
     }
 };

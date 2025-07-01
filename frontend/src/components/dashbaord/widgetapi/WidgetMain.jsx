@@ -36,9 +36,10 @@ const WidgetMain = () => {
                 mode: formData.booking?.mode || "Transfer",
                 referrer: document.referrer || "Widget",
                 vehicle: finalPayload.selectedVehicle,
-                fare: finalPayload.fare || 0,
                 hourlyOption: formData.booking?.hourlyOption || null,
                 passenger: finalPayload.passengerDetails || {},
+                voucher: finalPayload.voucher,
+                voucherApplied: !!finalPayload.voucher,
                 primaryJourney: {
                     ...formData.booking,
                     fare: finalPayload.fare || 0,

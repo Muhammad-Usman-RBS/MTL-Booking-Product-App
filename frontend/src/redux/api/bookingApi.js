@@ -61,8 +61,8 @@ export const bookingApi = apiSlice.injectEndpoints({
 
     // GET ALL PASSENGERS
     getAllPassengers: builder.query({
-      query: () => ({
-        url: "/booking/get-all-passengers",
+      query: (companyId) => ({
+        url: `/booking/get-all-passengers?companyId=${companyId}`,
         method: "GET",
       }),
     }),

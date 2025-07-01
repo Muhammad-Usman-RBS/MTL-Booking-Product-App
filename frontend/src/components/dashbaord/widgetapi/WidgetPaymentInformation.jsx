@@ -5,6 +5,8 @@ import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import SelectOption from '../../../constants/constantscomponents/SelectOption';
 import { useGetDiscountsByCompanyIdQuery } from "../../../redux/api/discountApi";
+import { useLazyGetVoucherByCodeQuery } from "../../../redux/api/vouchersApi";
+import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi"; // Import here
 
 const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, booking = {} }) => {
     const [passengerDetails, setPassengerDetails] = useState({ name: '', email: '', phone: '' });
@@ -15,10 +17,13 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
         checkinLuggage: ''
     });
 
+    const [fetchVoucher] = useLazyGetVoucherByCodeQuery();
     const { data: discounts = [] } = useGetDiscountsByCompanyIdQuery(companyId);
+    const { data: allBookings = [] } = useGetAllBookingsQuery(); 
+
     const [voucher, setVoucher] = useState('');
-    const [discountPercent, setDiscountPercent] = useState(0);
-    const [surchargePercent, setSurchargePercent] = useState(0);
+    const [companyDiscountPercent, setCompanyDiscountPercent] = useState(0);
+    const [voucherDiscountPercent, setVoucherDiscountPercent] = useState(0);
     const [journeyDateTime, setJourneyDateTime] = useState(null);
 
     useEffect(() => {
@@ -34,25 +39,17 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
         if (!journeyDateTime || !discounts?.length) return;
 
         const activeDiscount = discounts.find((d) => {
-            const from = new Date(d.fromDate);
-            const to = new Date(d.toDate);
+            const from = new Date(d.fromDate).getTime();
+            const to = new Date(d.toDate).getTime();
+            const journey = journeyDateTime?.getTime();
+
             return d.category === "Discount" &&
-                journeyDateTime >= from &&
-                journeyDateTime <= to &&
+                journey >= from &&
+                journey <= to &&
                 d.status === "Active";
         });
 
-        const activeSurcharge = discounts.find((d) => {
-            const from = new Date(d.fromDate);
-            const to = new Date(d.toDate);
-            return d.category === "Surcharge" &&
-                journeyDateTime >= from &&
-                journeyDateTime <= to &&
-                d.status === "Active";
-        });
-
-        setDiscountPercent(activeDiscount?.discountPrice || 0);
-        setSurchargePercent(activeSurcharge?.discountPrice || 0);
+        setCompanyDiscountPercent(activeDiscount?.discountPrice || 0);
     }, [journeyDateTime, discounts]);
 
     const generateOptions = (max = 10) => {
@@ -87,13 +84,11 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
     };
 
     const calculateFinalFare = () => {
+        const totalDiscount = companyDiscountPercent + voucherDiscountPercent;
         let updatedFare = fare;
 
-        if (surchargePercent > 0) {
-            updatedFare += fare * (surchargePercent / 100);
-        }
-        if (discountPercent > 0) {
-            updatedFare = updatedFare * (1 - discountPercent / 100);
+        if (totalDiscount > 0) {
+            updatedFare = updatedFare * (1 - totalDiscount / 100);
         }
 
         return parseFloat(updatedFare.toFixed(2));
@@ -111,6 +106,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
             passengerDetails,
             fare: finalFare,
             voucher,
+            voucherApplied: !!voucherDiscountPercent,
             selectedVehicle: {
                 ...vehicle,
                 passenger: formData.passenger,
@@ -122,6 +118,44 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
 
         onBookNow?.(payload);
     };
+
+    const handleVoucherApply = async () => {
+        if (!voucher) {
+            toast.error("Please enter a voucher code.");
+            return;
+        }
+
+        try {
+            const res = await fetchVoucher(voucher).unwrap();
+
+            if (!res || !res.voucher) {
+                toast.error("Invalid voucher code.");
+                setVoucherDiscountPercent(0);
+                return;
+            }
+
+            if (res.status !== "Active") {
+                toast.error("This voucher is not active.");
+                setVoucherDiscountPercent(0);
+                return;
+            }
+
+            const validityDate = new Date(res.validity);
+            if (!journeyDateTime || journeyDateTime > validityDate) {
+                toast.error("Voucher is not valid for your journey date.");
+                setVoucherDiscountPercent(0);
+                return;
+            }
+
+            setVoucherDiscountPercent(res.discountValue || 0);
+            toast.success(`Voucher applied: ${res.discountValue}% off.`);
+        } catch (err) {
+            toast.error("Something went wrong. Try again.");
+            setVoucherDiscountPercent(0);
+        }
+    };
+
+    const maxAppliedDiscount = Math.max(companyDiscountPercent, voucherDiscountPercent);
 
     return (
         <div className="max-w-xl w-full mx-auto mt-6 px-4 sm:px-0">
@@ -206,7 +240,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
 
                     {/* Fare Breakdown */}
                     <div className="text-2xl font-bold text-gray-800 mt-4">
-                        {(discountPercent > 0 || surchargePercent > 0) ? (
+                        {(companyDiscountPercent + voucherDiscountPercent > 0) ? (
                             <>
                                 <span className="line-through text-red-400 me-2">
                                     {(fare || 0).toFixed(2)} GBP
@@ -218,11 +252,15 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                         )}
                     </div>
 
-                    {surchargePercent > 0 && (
-                        <p className="text-sm text-red-600">Surcharge Applied: {surchargePercent}%</p>
-                    )}
-                    {discountPercent > 0 && (
-                        <p className="text-sm text-green-600">Discount Applied: {discountPercent}%</p>
+                    {(companyDiscountPercent + voucherDiscountPercent > 0) && (
+                        <p className="text-sm text-green-600 font-semibold">
+                            Discount Applied: {companyDiscountPercent + voucherDiscountPercent}% &nbsp;
+                            <span className="text-xs font-normal text-gray-600">
+                                ({companyDiscountPercent > 0 && `Company: ${companyDiscountPercent}%`}
+                                {companyDiscountPercent > 0 && voucherDiscountPercent > 0 && ' + '}
+                                {voucherDiscountPercent > 0 && `Voucher: ${voucherDiscountPercent}%`})
+                            </span>
+                        </p>
                     )}
 
                     <div className="text-sm mt-2 text-gray-700">Payment gateway:</div>
@@ -241,7 +279,10 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                             placeholder="Voucher Code"
                             className="flex-grow px-3 py-2 rounded border text-sm"
                         />
-                        <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm">
+                        <button
+                            onClick={handleVoucherApply}
+                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm"
+                        >
                             Apply
                         </button>
                     </div>

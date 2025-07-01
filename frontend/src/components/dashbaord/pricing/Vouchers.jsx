@@ -1,27 +1,15 @@
 import React, { useState } from "react";
+import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
 import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import SelectedSearch from "../../../constants/constantscomponents/SelectedSearch";
-import {
-  useGetAllVouchersQuery,
-  useCreateVoucherMutation,
-  useUpdateVoucherMutation,
-  useDeleteVoucherMutation,
-} from "../../../redux/api/vouchersApi";
-import { toast } from "react-toastify";
+import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
+import { useGetAllVouchersQuery, useCreateVoucherMutation, useUpdateVoucherMutation, useDeleteVoucherMutation } from "../../../redux/api/vouchersApi";
 import "react-toastify/dist/ReactToastify.css";
-
-// Static user options
-const userOptions = [
-  { label: "All Users", count: 100 },
-  { label: "user1@email.com", count: 1 },
-  { label: "user2@email.com", count: 1 },
-  { label: "user3@email.com", count: 1 },
-];
 
 // Format readable date string
 const formatDate = (isoDate) => {
@@ -37,8 +25,30 @@ const formatDate = (isoDate) => {
   });
 };
 
+// Converts ISO string to local datetime string (yyyy-MM-ddTHH:mm)
+const toLocalDateTime = (isoDate) => {
+  const date = new Date(isoDate);
+  const tzOffset = date.getTimezoneOffset() * 60000; // offset in ms
+  return new Date(date - tzOffset).toISOString().slice(0, 16);
+};
+
 const Vouchers = () => {
-  const { data = [], isLoading } = useGetAllVouchersQuery();
+  const user = useSelector((state) => state.auth.user);
+
+  const companyId = user?.companyId || "";
+  const {
+    data: bookingsResponse = {},
+    isLoading: bookingsLoading,
+  } = useGetAllBookingsQuery(companyId, { skip: !companyId });
+
+  const allBookings = bookingsResponse.bookings || [];
+
+  const {
+    data: voucherData = [],
+    isLoading,
+    refetch,
+  } = useGetAllVouchersQuery();
+
   const [createVoucher] = useCreateVoucherMutation();
   const [updateVoucher] = useUpdateVoucherMutation();
   const [deleteVoucher] = useDeleteVoucherMutation();
@@ -49,7 +59,13 @@ const Vouchers = () => {
   const [deleteItemId, setDeleteItemId] = useState(null);
 
   const handleEdit = (item) => {
-    setSelectedItem({ ...item });
+    const discountValue = parseFloat(item.discountValue?.toString().replace("%", "")) || 0;
+
+    setSelectedItem({
+      ...item,
+      discountValue,
+    });
+
     setShowModal(true);
   };
 
@@ -57,7 +73,8 @@ const Vouchers = () => {
     try {
       await deleteVoucher(id).unwrap();
       toast.success("Deleted successfully");
-    } catch (err) {
+      await refetch();
+    } catch {
       toast.error("Failed to delete");
     }
   };
@@ -65,15 +82,14 @@ const Vouchers = () => {
   const handleUpdateOrCreate = async () => {
     try {
       const validityDate = new Date(selectedItem.validity);
-      const now = new Date();
-      const status = validityDate < now ? "Expired" : "Active";
+      const status = validityDate < new Date() ? "Expired" : "Active";
 
       const payload = {
-        ...selectedItem,
         voucher: selectedItem.voucher?.toUpperCase(),
+        quantity: Number(selectedItem.quantity || 0),
+        validity: selectedItem.validity,
         discountType: "Percentage",
         discountValue: Number(selectedItem.discountValue || 0),
-        quantity: Number(selectedItem.quantity || 0),
         status,
       };
 
@@ -86,6 +102,8 @@ const Vouchers = () => {
       }
 
       setShowModal(false);
+      setSelectedItem(null);
+      await refetch();
     } catch {
       toast.error("Failed to save");
     }
@@ -95,54 +113,47 @@ const Vouchers = () => {
     setSelectedItem({
       voucher: "",
       quantity: 0,
-      applicable: ["All Users"],
       discountType: "Percentage",
       discountValue: 0,
       validity: "",
-      applied: 0,
       used: 0,
       status: "Active",
     });
     setShowModal(true);
   };
 
-  const filteredData =
-    statusFilter === "All Status"
-      ? data
-      : data.filter((item) =>
-          statusFilter === "Expired"
-            ? new Date(item.validity) < new Date()
-            : item.status === statusFilter
-        );
+  const processedData = voucherData.map((item) => {
+    const isExpired = new Date(item.validity) < new Date();
+    const dynamicStatus = item.status === "Deleted" ? "Deleted" : isExpired ? "Expired" : "Active";
+
+    // Count bookings that used this voucher
+    const usedCount = allBookings.filter(
+      (booking) =>
+        booking?.primaryJourney?.voucher?.toUpperCase() === item.voucher?.toUpperCase() &&
+        booking?.primaryJourney?.voucherApplied
+    ).length;
+
+    return {
+      ...item,
+      status: dynamicStatus,
+      discountValue: `${(item.discountValue || 0).toFixed(2)}%`,
+      validity: formatDate(item.validity),
+      used: usedCount,
+    };
+  });
+
+  const filteredData = processedData.filter((item) => {
+    if (statusFilter === "All Status") return true;
+    return item.status === statusFilter;
+  });
 
   const tableHeaders = [
     { label: "Voucher", key: "voucher" },
     { label: "Quantity", key: "quantity" },
-    {
-      label: "Applicable",
-      key: "applicable",
-      render: (item) => item.applicable?.join(", "),
-    },
-    {
-      label: "Discount (%)",
-      key: "discountValue",
-      render: (item) => `${(item.discountValue || 0).toFixed(2)}%`,
-    },
-    {
-      label: "Validity",
-      key: "validity",
-      render: (item) => formatDate(item.validity),
-    },
-    { label: "Applied", key: "applied" },
+    { label: "Discount (%)", key: "discountValue" },
+    { label: "Validity", key: "validity" },
     { label: "Used", key: "used" },
-    {
-      label: "Status",
-      key: "status",
-      render: (item) => {
-        const isExpired = new Date(item.validity) < new Date();
-        return isExpired ? "Expired" : item.status;
-      },
-    },
+    { label: "Status", key: "status" },
     { label: "Action", key: "actions" },
   ];
 
@@ -177,7 +188,7 @@ const Vouchers = () => {
             width="40"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            options={["All Status", "Active", "Expired", "Deleted"]}
+            options={["All Status", "Active", "Expired"]}
           />
         </div>
 
@@ -201,10 +212,13 @@ const Vouchers = () => {
 
       <CustomModal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        heading={`Edit ${selectedItem?.voucher || "New Voucher"}`}
+        onClose={() => {
+          setShowModal(false);
+          setSelectedItem(null);
+        }}
+        heading={selectedItem?._id ? `Edit ${selectedItem.voucher}` : "New Voucher"}
       >
-        <div className="mx-auto p-4 font-sans space-y-4">
+        <div className="mx-auto w-96 p-4 font-sans space-y-4">
           <div>
             <label className="block text-sm font-medium">Voucher</label>
             <input
@@ -237,26 +251,13 @@ const Vouchers = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium">Applicable</label>
-            <SelectedSearch
-              selected={selectedItem?.applicable || []}
-              setSelected={(val) =>
-                setSelectedItem({ ...selectedItem, applicable: val })
-              }
-              showCount={false}
-              statusList={userOptions}
-              placeholder="Select Users"
-            />
-          </div>
-
-          <div>
             <label className="block text-sm font-medium">Validity</label>
             <input
               type="datetime-local"
               className="custom_input"
               value={
                 selectedItem?.validity
-                  ? new Date(selectedItem.validity).toISOString().slice(0, 16)
+                  ? toLocalDateTime(selectedItem.validity)
                   : ""
               }
               onChange={(e) =>
@@ -293,7 +294,13 @@ const Vouchers = () => {
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => setShowModal(false)} className="btn btn-cancel">
+            <button
+              onClick={() => {
+                setShowModal(false);
+                setSelectedItem(null);
+              }}
+              className="btn btn-cancel"
+            >
               Cancel
             </button>
             <button onClick={handleUpdateOrCreate} className="btn btn-reset">
