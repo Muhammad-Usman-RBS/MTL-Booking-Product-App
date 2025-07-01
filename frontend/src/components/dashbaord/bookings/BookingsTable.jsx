@@ -97,7 +97,17 @@ const BookingsTable = ({
   
     return result;
   });
-  
+  if (user?.role === 'driver' && user?.employeeNumber) {
+    filteredBookings = filteredBookings.filter(booking => {
+      if (!Array.isArray(booking.drivers)) return false;
+      
+      return booking.drivers.some(driverId => {
+        const id = typeof driverId === 'object' ? driverId._id : driverId;
+        const driver = assignedDrivers.find(d => d._id === id);
+        return driver?.DriverData?.employeeNumber === user.employeeNumber;
+      });
+    });
+  }
   filteredBookings.sort((a, b) => {
     let aMatch = 0;
     let bMatch = 0;
@@ -220,6 +230,7 @@ const BookingsTable = ({
     openViewModal,
     refetch,
     isAnyModalOpen,
+    assignedDrivers,
   ]);
 
   if (error || bookings.length === 0) {
@@ -421,34 +432,43 @@ const BookingsTable = ({
                 <GripHorizontal size={18} className="text-gray-600" />
               </button>
               {selectedActionRow === index && (
-                <div className="mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg animate-slide-in">
-                  {actionMenuItems.map((action, i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        if (action === "Status Audit")
-                          openAuditModal(item.statusAudit);
-                        else if (action === "View") openViewModal(item);
-                        else if (action === "Edit") {
-                          setEditBookingData(item);
-                          setShowEditModal(true);
-                        } else if (action === "Delete") {
-                          setSelectedDeleteId(item._id);
-                          setShowDeleteModal(true);
-                        } else if (action === "Copy Booking") {
-                          const copied = { ...item };
-                          delete copied._id;
-                          setEditBookingData(copied);
-                          setShowEditModal(true);
-                        }
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
-                    >
-                      {action}
-                    </button>
-                  ))}
-                </div>
-              )}
+  <div className="mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg animate-slide-in">
+    {actionMenuItems
+      .filter(action => {
+        // If user is driver, only show View and Status Audit
+        if (user?.role === 'driver') {
+          return action === 'View' || action === 'Status Audit';
+        }
+        // For other roles, show all actions
+        return true;
+      })
+      .map((action, i) => (
+        <button
+          key={i}
+          onClick={() => {
+            if (action === "Status Audit")
+              openAuditModal(item.statusAudit);
+            else if (action === "View") openViewModal(item);
+            else if (action === "Edit") {
+              setEditBookingData(item);
+              setShowEditModal(true);
+            } else if (action === "Delete") {
+              setSelectedDeleteId(item._id);
+              setShowDeleteModal(true);
+            } else if (action === "Copy Booking") {
+              const copied = { ...item };
+              delete copied._id;
+              setEditBookingData(copied);
+              setShowEditModal(true);
+            }
+          }}
+          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
+        >
+          {action}
+        </button>
+      ))}
+  </div>
+)}
             </div>
           );
           break;

@@ -20,7 +20,7 @@ router.delete("/delete-booking/:id", deleteBooking);
 router.post('/submit', submitWidgetForm);
 
 // Update booking status (e.g., confirmed, cancelled)
-router.patch("/:id", updateBookingStatus);
+router.patch("/:id",protect, updateBookingStatus);
 
 // Get all passengers (protected & role-based access)
 router.get("/get-all-passengers", protect, authorize('clientadmin', 'associateadmin', 'staffmember'), getAllPassengers);

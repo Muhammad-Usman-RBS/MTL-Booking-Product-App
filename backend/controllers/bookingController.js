@@ -1,5 +1,8 @@
 import Booking from "../models/Booking.js";
 import sendEmail from "../utils/sendEmail.js";
+import DriverProfile from "../models/Driver.js";
+import User from "../models/User.js";
+import mongoose from "mongoose";
 
 // Create Booking (standard route)
 export const createBooking = async (req, res) => {
@@ -15,6 +18,8 @@ export const createBooking = async (req, res) => {
       returnJourney = {},
       PassengerEmail,
       ClientAdminEmail,
+      voucher,
+      voucherApplied,
     } = req.body;
 
     if (
@@ -109,6 +114,9 @@ export const createBooking = async (req, res) => {
 
         distanceText: primaryJourney.distanceText || null,
         durationText: primaryJourney.durationText || null,
+
+        voucher: voucher || null,
+        voucherApplied: !!voucherApplied,
 
         ...extractDynamicDropoffFields(primaryJourney),
       },
@@ -481,28 +489,28 @@ export const submitWidgetForm = async (req, res) => {
       },
       ...(returnJourneyToggle &&
         returnJourney && {
-        returnJourney: {
-          pickup: returnJourney.pickup,
-          dropoff: returnJourney.dropoff,
-          additionalDropoff1: returnJourney.additionalDropoff1 || null,
-          additionalDropoff2: returnJourney.additionalDropoff2 || null,
-          pickupDoorNumber: returnJourney.pickupDoorNumber || null,
-          terminal: returnJourney.terminal || null,
-          arrivefrom: returnJourney.arrivefrom || null,
-          flightNumber: returnJourney.flightNumber || null,
-          pickmeAfter: returnJourney.pickmeAfter || null,
-          notes: returnJourney.notes || null,
-          internalNotes: returnJourney.internalNotes || null,
-          date: returnJourney.date,
-          hour: parseInt(returnJourney.hour),
-          minute: parseInt(returnJourney.minute),
-          fare: returnJourney.fare,
-          hourlyOption: returnJourney.hourlyOption || null,
-          distanceText: returnJourney.distanceText || null,
-          durationText: returnJourney.durationText || null,
-          ...dynamicDropoffFields2,
-        },
-      }),
+          returnJourney: {
+            pickup: returnJourney.pickup,
+            dropoff: returnJourney.dropoff,
+            additionalDropoff1: returnJourney.additionalDropoff1 || null,
+            additionalDropoff2: returnJourney.additionalDropoff2 || null,
+            pickupDoorNumber: returnJourney.pickupDoorNumber || null,
+            terminal: returnJourney.terminal || null,
+            arrivefrom: returnJourney.arrivefrom || null,
+            flightNumber: returnJourney.flightNumber || null,
+            pickmeAfter: returnJourney.pickmeAfter || null,
+            notes: returnJourney.notes || null,
+            internalNotes: returnJourney.internalNotes || null,
+            date: returnJourney.date,
+            hour: parseInt(returnJourney.hour),
+            minute: parseInt(returnJourney.minute),
+            fare: returnJourney.fare,
+            hourlyOption: returnJourney.hourlyOption || null,
+            distanceText: returnJourney.distanceText || null,
+            durationText: returnJourney.durationText || null,
+            ...dynamicDropoffFields2,
+          },
+        }),
     };
 
     const booking = await Booking.create(bookingData);
@@ -525,6 +533,7 @@ export const updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, updatedBy, driverIds } = req.body;
+    const currentUser = req.user;
 
     if (!id || id.length !== 24) {
       return res.status(400).json({ message: "Invalid booking ID" });
@@ -536,11 +545,12 @@ export const updateBookingStatus = async (req, res) => {
     }
 
     if (Array.isArray(driverIds)) {
-      const fullDriverDocs = await DriverProfile.find({ _id: { $in: driverIds } }).lean();
+      const fullDriverDocs = await DriverProfile.find({
+        _id: { $in: driverIds },
+      }).lean();
       booking.drivers = fullDriverDocs;
     }
 
-    // Audit status change
     booking.status = status;
     booking.statusAudit = [
       ...(booking.statusAudit || []),
@@ -553,13 +563,114 @@ export const updateBookingStatus = async (req, res) => {
 
     const updatedBooking = await booking.save();
 
+    // ✅ Driver updated the status
+    if (currentUser?.role === "driver" && status) {
+      const driverProfile = await DriverProfile.findOne({
+        "DriverData.employeeNumber": currentUser.employeeNumber,
+        companyId: currentUser.companyId,
+      }).lean();
+
+      if (driverProfile) {
+        const clientAdmin = await User.findOne({
+          companyId: currentUser.companyId,
+          role: "clientadmin",
+        }).lean();
+
+        const statusStyled = `<span style="color: green;">${status}</span>`;
+        const driverName = `"${driverProfile?.DriverData?.firstName || ""} ${
+          driverProfile?.DriverData?.surName || ""
+        }"`.trim();
+        const bookingId = booking.bookingId;
+
+        const title = `Driver ${driverName} changed the status to ${statusStyled} for booking #${bookingId}`;
+        const subtitle = `Booking status changed by driver ${driverName} to ${statusStyled}`;
+        const data = {
+          BookingId: bookingId,
+          Status: status,
+          DriverName: driverName,
+        };
+
+        if (clientAdmin?.email) {
+          await sendEmail(clientAdmin.email, "Booking Status Updated", {
+            title,
+            subtitle,
+            data,
+          });
+        }
+
+        if (booking?.passenger?.email) {
+          await sendEmail(
+            booking.passenger.email,
+            "Your Ride Status Has Been Updated",
+            {
+              title: `Your Ride Status Has Been Updated by Driver ${driverName}`,
+              subtitle,
+              data,
+            }
+          );
+        }
+      }
+    }
+
+    // ✅ Client Admin updated the status
+    if (currentUser?.role === "clientadmin" && status) {
+      const bookingId = booking.bookingId;
+      const statusStyled = `<span style="color: green;">${status}</span>`;
+
+      const firstDriverId = booking.drivers?.[0]?._id || booking.drivers?.[0];
+      const assignedDriverProfile = mongoose.Types.ObjectId.isValid(
+        firstDriverId
+      )
+        ? await DriverProfile.findById(firstDriverId).lean()
+        : null;
+
+      const driverName = assignedDriverProfile
+        ? `"${assignedDriverProfile.DriverData.firstName || ""} ${
+            assignedDriverProfile.DriverData.surName || ""
+          }"`.trim()
+        : `"Assigned Driver"`;
+
+      const driverEmail = assignedDriverProfile?.DriverData?.email;
+
+      const data = {
+        BookingId: bookingId,
+        Status: status,
+        DriverName: driverName,
+      };
+
+      // ✅ Log for debugging
+      console.log("Passenger email:", booking?.passenger?.email);
+      console.log("Driver email:", driverEmail);
+
+      if (booking?.passenger?.email) {
+        await sendEmail(
+          booking.passenger.email,
+          "Ride Status Updated by Admin",
+          {
+            title: `Ride Status Updated for Booking #${bookingId}`,
+            subtitle: `The status of your booking has been changed to ${statusStyled} by the admin.`,
+            data,
+          }
+        );
+      }
+
+      if (driverEmail) {
+        await sendEmail(driverEmail, "Ride Status Updated by Admin", {
+          title: `Booking #${bookingId} Status Updated`,
+          subtitle: `Admin changed your assigned ride status to ${statusStyled}.`,
+          data,
+        });
+      }
+    }
+
     res.status(200).json({ success: true, booking: updatedBooking });
   } catch (err) {
     console.error("Error updating status:", err);
-    res.status(500).json({ message: "Internal server error", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
 };
-
 
 // Get All Passengers
 export const getAllPassengers = async (req, res) => {
@@ -575,10 +686,25 @@ export const getAllPassengers = async (req, res) => {
 
     const bookings = await Booking.find({ companyId }, "passenger");
 
-    const passengers = bookings
-      .map((b) => b.passenger)
-      .filter((p) => p && (p.name || p.email || p.phone));
+    // Extract passengers from bookings
+    let passengerMap = new Map();
 
+    bookings.forEach((booking) => {
+      const p = booking.passenger;
+      if (p && (p.name || p.email || p.phone)) {
+        const key = `${p.name}-${p.email}-${p.phone}`;
+        if (!passengerMap.has(key)) {
+          passengerMap.set(key, {
+            name: p.name || "Unnamed",
+            email: p.email || "",
+            phone: p.phone || "",
+            _id: p._id || key, // fallback _id
+          });
+        }
+      }
+    });
+
+    const passengers = Array.from(passengerMap.values());
     res.status(200).json({ success: true, passengers });
   } catch (error) {
     console.error("getAllPassengers error:", error);
@@ -622,9 +748,8 @@ export const sendBookingEmail = async (req, res) => {
     }
 
     const plainBooking = JSON.parse(JSON.stringify(booking));
-    const { _id, statusAudit, createdAt, updatedAt, __v, ...cleanedBooking } = JSON.parse(
-      JSON.stringify(booking)
-    );
+    const { _id, statusAudit, createdAt, updatedAt, __v, ...cleanedBooking } =
+      JSON.parse(JSON.stringify(booking));
     await sendEmail(email, "Your Booking Confirmation", {
       title: "Booking Confirmation",
       subtitle: "Here are your booking details:",

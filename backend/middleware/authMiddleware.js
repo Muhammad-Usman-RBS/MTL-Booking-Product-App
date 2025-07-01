@@ -23,6 +23,7 @@ export const protect = async (req, res, next) => {
         companyId: user.companyId?.toString(), // ✅ convert ObjectId to string
         permissions: user.permissions,
         fullName: user.fullName,
+        employeeNumber: user.employeeNumber,
       };
 
       next();

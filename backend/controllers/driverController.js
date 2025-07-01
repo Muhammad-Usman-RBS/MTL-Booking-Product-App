@@ -1,4 +1,5 @@
 import Driver from "../models/Driver.js";
+import User from "../models/User.js";
 
 export const createDriver = async (req, res) => {
     try {
@@ -32,6 +33,15 @@ export const createDriver = async (req, res) => {
         let parsedAvailability = [];
 
         try {
+
+            const CheckDriverExists =await Driver.findOne({ "DriverData.employeeNumber": employeeNumber, companyId });
+
+            if (CheckDriverExists) {
+                return res.status(400).json({ message: "Driver with this employee number already exists" });
+            }
+            if (!employeeNumber || !firstName || !surName ) {
+                return res.status(400).json({ message: "Employee Number , First Name and Last Name are required" });
+            }
             if(!companyId) {
                 return res.status(500).json({message:" companyId is invalid or not provided"})
             }
@@ -191,8 +201,8 @@ export const updateDriverById = async (req, res) => {
         if (!driver) {
             return res.status(404).json({ error: "Driver not found" });
         }
-
-        // Update driver data
+        const oldEmail = driver?.DriverData?.email;
+        const companyId = driver?.companyId;
         driver.DriverData = {
             employeeNumber,
             status,
@@ -210,7 +220,6 @@ export const updateDriverById = async (req, res) => {
             availability: parsedAvailability,
         };
 
-        // Update vehicle data
         driver.VehicleData = {
             carRegistration,
             carMake,
@@ -223,7 +232,6 @@ export const updateDriverById = async (req, res) => {
             motExpiryDate,
         };
 
-        // Update uploaded data
         driver.UploadedData = {
             driverPicture: buildUploadedField("driverPicture", driver.UploadedData?.driverPicture),
             privateHireCard: buildUploadedField("privateHireCard", driver.UploadedData?.privateHireCard),
@@ -237,7 +245,18 @@ export const updateDriverById = async (req, res) => {
         };
 
         await driver.save();
-
+        if (oldEmail && oldEmail !== email) {
+            const linkedUser = await User.findOne({
+              employeeNumber: employeeNumber,
+              companyId: companyId,
+            });
+      
+            if (linkedUser) {
+              linkedUser.email = email;
+              await linkedUser.save();
+            }
+          }
+      
         res.status(200).json({
             message: "Driver profile updated successfully",
             driver,

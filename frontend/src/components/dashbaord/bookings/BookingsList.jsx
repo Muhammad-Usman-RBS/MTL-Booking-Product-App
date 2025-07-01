@@ -79,7 +79,7 @@ const BookingsList = () => {
 
   useEffect(() => {
     if (driversData?.drivers?.length > 0) {
-      setAssignedDrivers(driversData.drivers); // Direct array assignment
+      setAssignedDrivers(driversData.drivers); 
     }
   }, [driversData]);
   const allBookings = bookingData?.bookings || [];

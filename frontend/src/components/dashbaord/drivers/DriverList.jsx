@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { driversData } from "../../../constants/dashboardTabsData/data";
 import Icons from "../../../assets/icons";
 import ViewDriver from "./ViewDriver";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";

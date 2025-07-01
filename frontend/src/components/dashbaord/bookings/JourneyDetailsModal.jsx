@@ -8,7 +8,8 @@ import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
 const JourneyDetailsModal = ({ viewData = {} }) => {
-  const [sendBookingEmail, { isLoading: isSending }] = useSendBookingEmailMutation();
+  const [sendBookingEmail, { isLoading: isSending }] =
+    useSendBookingEmailMutation();
   const [selectedType, setSelectedType] = useState("Send Customer");
   const [email, setEmail] = useState("");
   const pdfRef = useRef();
@@ -103,14 +104,18 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
 
   return (
     <>
-      <div className="max-w-5xl w-full mx-auto space-y-5 p-5" id="pdf-container">
+      <div
+        className="max-w-5xl w-full mx-auto space-y-5 p-5"
+        id="pdf-container"
+      >
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
           <SelectOption
             options={["Send Customer", "Send Client Admin"]}
             value={selectedType}
             onChange={(val) => {
-              const selected = typeof val === "string" ? val : val?.target?.value;
+              const selected =
+                typeof val === "string" ? val : val?.target?.value;
               setSelectedType(selected);
             }}
           />
@@ -160,47 +165,97 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
         {/* Main Content */}
         <div className="grid md:grid-cols-2 gap-5 text-xs text-gray-800">
           <div className="space-y-2.5">
-            <div><strong>Booking ID:</strong> {viewData?.bookingId || "N/A"}</div>
-            <div><strong>Booked On:</strong> {viewData?.createdAt ? new Date(viewData.createdAt).toLocaleString() : "N/A"}</div>
-            <div><strong>Payment Reference:</strong> {viewData?.payment || "N/A"}</div>
+            <div>
+              <strong>Booking ID:</strong> {viewData?.bookingId || "N/A"}
+            </div>
+            <div>
+              <strong>Booked On:</strong>{" "}
+              {viewData?.createdAt
+                ? new Date(viewData.createdAt).toLocaleString()
+                : "N/A"}
+            </div>
+            <div>
+              <strong>Payment Reference:</strong> {viewData?.payment || "N/A"}
+            </div>
             <div>
               <strong>Pick Up:</strong>
               <div className="ml-4 mt-1 space-y-1">
-                <div><strong>Date & Time:</strong> {pickupTime}</div>
-                <div><strong>Address:</strong> {viewData?.primaryJourney?.pickup || "N/A"}</div>
-                <div><strong>Door No.:</strong> {viewData?.primaryJourney?.pickupDoorNumber || "—"}</div>
+                <div>
+                  <strong>Date & Time:</strong> {pickupTime}
+                </div>
+                <div>
+                  <strong>Address:</strong>{" "}
+                  {viewData?.primaryJourney?.pickup || "N/A"}
+                </div>
+                <div>
+                  <strong>Door No.:</strong>{" "}
+                  {viewData?.primaryJourney?.pickupDoorNumber || "—"}
+                </div>
               </div>
               <hr className="text-gray-300 my-2" />
             </div>
             <div>
               <strong>Drop Off:</strong>
               <div className="ml-4 mt-1 space-y-1">
-                <div><strong>Address:</strong> {viewData?.primaryJourney?.dropoff || "N/A"}</div>
-                <div><strong>Door No.:</strong> {viewData?.primaryJourney?.dropoffDoorNumber0 || "—"}</div>
+                <div>
+                  <strong>Address:</strong>{" "}
+                  {viewData?.primaryJourney?.dropoff || "N/A"}
+                </div>
+                <div>
+                  <strong>Door No.:</strong>{" "}
+                  {viewData?.primaryJourney?.dropoffDoorNumber0 || "—"}
+                </div>
               </div>
               <hr className="text-gray-300 my-2" />
             </div>
           </div>
 
           <div className="space-y-3">
-            <div>
-              <strong>Passenger Details:</strong>
-              <div className="ml-4 mt-1 space-y-1">
-                <div><strong>Name:</strong> {viewData?.passenger?.name || "N/A"}</div>
-                <div><strong>Email:</strong> {viewData?.passenger?.email || "N/A"}</div>
-                <div><strong>Phone:</strong> {viewData?.passenger?.phone || "N/A"}</div>
+            {!(
+              loggedInUser?.role === "driver" && viewData?.status !== "Accepted"
+            ) && (
+              <div>
+                <strong>Passenger Details:</strong>
+                <div className="ml-4 mt-1 space-y-1">
+                  <div>
+                    <strong>Name:</strong> {viewData?.passenger?.name || "N/A"}
+                  </div>
+                  <div>
+                    <strong>Email:</strong>{" "}
+                    {viewData?.passenger?.email || "N/A"}
+                  </div>
+                  <div>
+                    <strong>Phone:</strong>{" "}
+                    {viewData?.passenger?.phone || "N/A"}
+                  </div>
+                </div>
+                <hr className="text-gray-300 my-2" />
               </div>
-              <hr className="text-gray-300 my-2" />
-            </div>
+            )}
 
             <div>
               <strong>Vehicle Details:</strong>
               <div className="ml-4 mt-1 space-y-1">
-                <div><strong>Vehicle:</strong> {viewData?.vehicle?.vehicleName || "N/A"}</div>
-                <div><strong>Passengers:</strong> {viewData?.vehicle?.passenger || 0}</div>
-                <div><strong>Child Seats:</strong> {viewData?.vehicle?.childSeat || 0}</div>
-                <div><strong>Small Luggage:</strong> {viewData?.vehicle?.handLuggage || 0}</div>
-                <div><strong>Large Luggage:</strong> {viewData?.vehicle?.checkinLuggage || 0}</div>
+                <div>
+                  <strong>Vehicle:</strong>{" "}
+                  {viewData?.vehicle?.vehicleName || "N/A"}
+                </div>
+                <div>
+                  <strong>Passengers:</strong>{" "}
+                  {viewData?.vehicle?.passenger || 0}
+                </div>
+                <div>
+                  <strong>Child Seats:</strong>{" "}
+                  {viewData?.vehicle?.childSeat || 0}
+                </div>
+                <div>
+                  <strong>Small Luggage:</strong>{" "}
+                  {viewData?.vehicle?.handLuggage || 0}
+                </div>
+                <div>
+                  <strong>Large Luggage:</strong>{" "}
+                  {viewData?.vehicle?.checkinLuggage || 0}
+                </div>
               </div>
               <hr className="text-gray-300 my-2" />
             </div>
@@ -215,21 +270,28 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
           </div>
         </div>
 
-        {/* Fare & Status */}
         <div className="text-center">
           <div className="btn btn-primary text-sm px-5 py-1.5">
-            Fare: <span className="text-base">{viewData?.primaryJourney?.fare || 0} GBP</span>
-            <span className="text-xs ml-1">{viewData?.payment || "Card Payment"}</span>
+            Fare:{" "}
+            <span className="text-base">
+              {viewData?.primaryJourney?.fare || 0} GBP
+            </span>
+            <span className="text-xs ml-1">
+              {viewData?.payment || "Card Payment"}
+            </span>
           </div>
           <div className="text-gray-600 mt-2 text-xs">
-            Approx. Distance: {convertKmToMiles(viewData?.primaryJourney?.distanceText)}
+            Approx. Distance:{" "}
+            {convertKmToMiles(viewData?.primaryJourney?.distanceText)}
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-center gap-3 bg-gray-100 border-t border-gray-300 p-3 rounded-md">
           <span className="text-gray-700 font-medium text-sm">
             This booking has been&nbsp;
-            <span className="text-green-600 font-semibold">{viewData?.status || "Pending"}</span>
+            <span className="text-green-600 font-semibold">
+              {viewData?.status || "Pending"}
+            </span>
           </span>
           <button className="btn btn-edit text-sm px-5 py-1.5">REJECT</button>
         </div>

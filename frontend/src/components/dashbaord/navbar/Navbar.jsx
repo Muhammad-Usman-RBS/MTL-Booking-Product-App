@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Icons from "../../../assets/icons";
 import useUIStore from "../../../store/useUIStore";
@@ -23,25 +23,36 @@ function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+    const [readNotifications, setReadNotifications] = useState(new Set());
+
   const [showJourneyModal, setShowJourneyModal] = useState(false);
   const [selectedJourneyData, setSelectedJourneyData] = useState(null);
-  const { data: bookingData } = useGetAllBookingsQuery(user?.companyId, {skip: !user?.companyId,});
-  const { data: driversData } = useGetAllDriversQuery(user?.companyId, {skip: !user?.companyId,});
+  const { data: bookingData, refetch: refetchBookings } =
+    useGetAllBookingsQuery(user?.companyId, { skip: !user?.companyId });
+  const { data: driversData } = useGetAllDriversQuery(user?.companyId, {
+    skip: !user?.companyId,
+  });
   const userBookings = React.useMemo(() => {
-    if (!bookingData?.bookings || !driversData?.drivers || !user?.employeeNumber) return [];
-    
-    return bookingData.bookings.filter(booking => {
+    if (
+      !bookingData?.bookings ||
+      !driversData?.drivers ||
+      !user?.employeeNumber
+    )
+      return [];
+
+    return bookingData.bookings.filter((booking) => {
       if (!Array.isArray(booking.drivers)) return false;
-      
-      return booking.drivers.some(driverId => {
-        const id = typeof driverId === 'object' ? driverId._id : driverId;
-        const driver = driversData.drivers.find(d => d._id === id);
+
+      return booking.drivers.some((driverId) => {
+        const id = typeof driverId === "object" ? driverId._id : driverId;
+        const driver = driversData.drivers.find((d) => d._id === id);
         return driver?.DriverData?.employeeNumber === user.employeeNumber;
       });
     });
   }, [bookingData?.bookings, driversData?.drivers, user?.employeeNumber]);
-  const [customTheme, setCustomTheme] = useState({bg: "#ffffff",
-text: "#000000",
+  const [customTheme, setCustomTheme] = useState({
+    bg: "#ffffff",
+    text: "#000000",
     hoverActive: "#F7BE7E",
   });
 
@@ -98,6 +109,15 @@ text: "#000000",
     return `${diffInDays} day${diffInDays !== 1 ? "s" : ""} ago`;
   };
 
+  useEffect(() => {
+    if (!user?.companyId) return;
+
+    const interval = setInterval(() => {
+      refetchBookings();
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [refetchBookings, user?.companyId]);
   return (
     <>
       <nav className="bg-theme text-theme z-20 relative p-4 flex flex-wrap justify-between items-center gap-2 sm:gap-4">
@@ -223,9 +243,9 @@ text: "#000000",
           >
             <Icons.BellPlus className="size-5" />
             <div>
-            <span className="absolute -top-2 right-0 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
-  {userBookings?.length || 0}
-</span>
+              <span className="absolute -top-2 right-0 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
+                {(userBookings?.length || 0) - readNotifications.size}
+              </span>
             </div>
 
             {showTooltip && (
@@ -237,28 +257,47 @@ text: "#000000",
                 <div className="border-b px-4 py-3 text-theme bg-theme">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold ">Notifications</h3>
+                      <h3 className="font-semibold">Notifications</h3>
                     </div>
+                    <button
+                      onClick={() =>
+                        setReadNotifications(
+                          new Set(userBookings.map((b) => b._id))
+                        )
+                      }
+                      className="text-sm "
+                    >
+                      Mark all as read
+                    </button>
                   </div>
                 </div>
-                {(!Array.isArray(userBookings) || userBookings.length === 0) && (
-  <div className="px-4 py-3 text-gray-500 text-sm">
-    No new notifications
-  </div>
-)}
+                {(!Array.isArray(userBookings) ||
+                  userBookings.length === 0) && (
+                  <div className="px-4 py-3 text-gray-500 text-sm">
+                    No new notifications
+                  </div>
+                )}
                 {/* Notifications List */}
                 <div className="max-h-64 overflow-y-auto">
-                {Array.isArray(userBookings) &&
-  userBookings.map((data) => (
+                  {Array.isArray(userBookings) &&
+                    userBookings.map((data) => (
                       <div
                         key={data._id}
                         onClick={() => {
+                          setReadNotifications(
+                            (prev) => new Set([...prev, data._id])
+                          );
+
                           setSelectedJourneyData(data);
                           setShowJourneyModal(true);
                           setShowTooltip(false);
                           navigate("/dashboard/bookings/list");
                         }}
-                        className={`px-4 py-3 bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 `}
+                        className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${
+                          readNotifications.has(data._id)
+                            ? "bg-gray-50 opacity-60"
+                            : "bg-white"
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div className={`flex-1 `}>
@@ -289,13 +328,28 @@ text: "#000000",
                               )}
                             </p>
                             <div className=" flex items-center mt-2 justify-between">
-                              <div className="flex items-center gap-1 ">
-                                <Icons.Clock className="w-3 h-3 text-gray-400" />
-                                <span className="text-xs text-gray-500">
-                                  {getTimeAgo(data.createdAt)}
-                                </span>
+                                <div className="flex items-center">
+                                  <Icons.Clock className="w-3 h-3 text-gray-400" />
+                                  <span className="text-xs text-gray-500">
+                                    {getTimeAgo(data.createdAt)}
+                                  </span>
+                                </div>
+                                <div>
+                                  {!readNotifications.has(data._id) && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setReadNotifications(
+                                          (prev) => new Set([...prev, data._id])
+                                        );
+                                      }}
+                                      className=" text-xs px-2 py-1 text-black cursor-pointer"
+                                    >
+                                      Mark as read
+                                    </button>
+                                  )}
+                                </div>
                               </div>
-                            </div>
                           </div>
                         </div>
                       </div>

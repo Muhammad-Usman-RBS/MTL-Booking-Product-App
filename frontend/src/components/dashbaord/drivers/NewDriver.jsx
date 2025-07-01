@@ -86,8 +86,13 @@ const NewDriver = () => {
       navigate("/dashboard/drivers/list");
     } catch (error) {
       console.error("Error creating driver:", error);
-      toast.error("Error creating driver");
-    }
+      const errorMessage =
+      error?.data?.message ||
+      error?.error ||
+      "Something went wrong while creating the driver";
+  
+    toast.error(errorMessage);
+  }    
   };
   const handleInputChange = (e, index = null, field = null) => {
     const { name, type, files, value } = e.target;

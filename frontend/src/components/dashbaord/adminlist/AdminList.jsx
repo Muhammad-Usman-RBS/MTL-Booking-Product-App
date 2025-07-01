@@ -297,6 +297,23 @@ const AdminList = () => {
     }
   };
 
+  useEffect(() => {
+    if (
+      selectedAccount?.role === "driver" &&
+      driversList?.drivers?.length === 1 &&
+      !selectedAccount?.driverId
+    ) {
+      const singleDriver = driversList.drivers[0];
+      setSelectedAccount((prev) => ({
+        ...prev,
+        driverId: singleDriver._id,
+        fullName: `${singleDriver.DriverData.firstName} ${singleDriver.DriverData.surName}`,
+        employeeNumber: singleDriver.DriverData.employeeNumber,
+        email: singleDriver.DriverData.email,
+      }));
+    }
+  }, [selectedAccount?.role, driversList]);
+
   return (
     <>
       <div>
@@ -362,11 +379,12 @@ const AdminList = () => {
           <SelectOption
             label="Type"
             value={selectedAccount?.role || ""}
-            onChange={(e) =>
-              setSelectedAccount({ ...selectedAccount, role: e.target.value })
-            }
+            onChange={(e) => {
+              setSelectedAccount({ ...selectedAccount, role: e.target.value });
+            }}
             options={roleOptions}
           />
+
           {selectedAccount?.role === "driver" && (
             <SelectOption
               label="Select Driver"
@@ -377,8 +395,11 @@ const AdminList = () => {
                 );
 
                 if (selectedDriver) {
+                  console.log("Driver Selected:", selectedDriver._id);
+
                   setSelectedAccount({
                     ...selectedAccount,
+                    driverId: selectedDriver._id,
                     fullName: `${selectedDriver.DriverData.firstName} ${selectedDriver.DriverData.surName}`,
                     employeeNumber: selectedDriver.DriverData.employeeNumber,
                     email: selectedDriver.DriverData.email,
@@ -391,15 +412,21 @@ const AdminList = () => {
               }))}
             />
           )}
-          <input
-            placeholder="Email"
-            type="email"
-            className="custom_input"
-            value={selectedAccount?.email || ""}
-            onChange={(e) =>
-              setSelectedAccount({ ...selectedAccount, email: e.target.value })
-            }
-          />
+         <input
+  placeholder="Email"
+  type="email"
+  className={`custom_input ${
+    selectedAccount?.role === "driver"
+      ? "bg-gray-100 cursor-not-allowed opacity-70"
+      : ""
+  }`}
+  readOnly={selectedAccount?.role === "driver"}
+  value={selectedAccount?.email || ""}
+  onChange={(e) =>
+    setSelectedAccount({ ...selectedAccount, email: e.target.value })
+  }
+/>
+
 
           <input
             placeholder="Password"
