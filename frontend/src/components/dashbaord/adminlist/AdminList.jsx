@@ -384,49 +384,60 @@ const AdminList = () => {
             }}
             options={roleOptions}
           />
+          <input
+            name="fullName"
+            placeholder="Full Name"
+            type="fullName"
+            className="custom_input"
+            value={selectedAccount?.fullName || ""}
+            onChange={(e) =>
+              setSelectedAccount({
+                ...selectedAccount,
+                fullName: e.target.value,
+              })
+            }
+          />
+          <div className="">
+            {selectedAccount?.role === "driver" && (
+              <SelectOption
+                label="Select Driver"
+                value={selectedAccount?.driverId}
+                onChange={(e) => {
+                  const selectedDriver = driversList?.drivers?.find(
+                    (driver) => driver._id === e.target.value
+                  );
 
-          {selectedAccount?.role === "driver" && (
-            <SelectOption
-              label="Select Driver"
-              value={selectedAccount?.driverId}
-              onChange={(e) => {
-                const selectedDriver = driversList?.drivers?.find(
-                  (driver) => driver._id === e.target.value
-                );
-
-                if (selectedDriver) {
-                  console.log("Driver Selected:", selectedDriver._id);
-
-                  setSelectedAccount({
-                    ...selectedAccount,
-                    driverId: selectedDriver._id,
-                    fullName: `${selectedDriver.DriverData.firstName} ${selectedDriver.DriverData.surName}`,
-                    employeeNumber: selectedDriver.DriverData.employeeNumber,
-                    email: selectedDriver.DriverData.email,
-                  });
-                }
-              }}
-              options={driversList?.drivers?.map((driver) => ({
-                label: `${driver.DriverData.firstName} ${driver.DriverData.surName}`,
-                value: driver._id,
-              }))}
-            />
-          )}
-         <input
-  placeholder="Email"
-  type="email"
-  className={`custom_input ${
-    selectedAccount?.role === "driver"
-      ? "bg-gray-100 cursor-not-allowed opacity-70"
-      : ""
-  }`}
-  readOnly={selectedAccount?.role === "driver"}
-  value={selectedAccount?.email || ""}
-  onChange={(e) =>
-    setSelectedAccount({ ...selectedAccount, email: e.target.value })
-  }
-/>
-
+                  if (selectedDriver) {
+                    setSelectedAccount({
+                      ...selectedAccount,
+                      driverId: selectedDriver._id,
+                      fullName: `${selectedDriver.DriverData.firstName} ${selectedDriver.DriverData.surName}`,
+                      employeeNumber: selectedDriver.DriverData.employeeNumber,
+                      email: selectedDriver.DriverData.email,
+                    });
+                  }
+                }}
+                options={driversList?.drivers?.map((driver) => ({
+                  label: `${driver.DriverData.firstName} ${driver.DriverData.surName}`,
+                  value: driver._id,
+                }))}
+              />
+            )}
+          </div>
+          <input
+            placeholder="Email"
+            type="email"
+            className={`custom_input ${
+              selectedAccount?.role === "driver"
+                ? "bg-gray-100 cursor-not-allowed opacity-70"
+                : ""
+            }`}
+            readOnly={selectedAccount?.role === "driver"}
+            value={selectedAccount?.email || ""}
+            onChange={(e) =>
+              setSelectedAccount({ ...selectedAccount, email: e.target.value })
+            }
+          />
 
           <input
             placeholder="Password"
@@ -466,10 +477,36 @@ const AdminList = () => {
             options={tabs}
           />
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
-              Permissions
-            </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  Permissions
+                </label>
+              </div>
+              <button
+                className="btn btn-reset"
+                onClick={() => {
+                  const allPermissions = getAvailablePermissions(
+                    selectedAccount?.role
+                  );
+                  const allSelected = allPermissions.every((perm) =>
+                    selectedAccount?.permissions?.includes(perm)
+                  );
+
+                  setSelectedAccount({
+                    ...selectedAccount,
+                    permissions: allSelected ? [] : allPermissions,
+                  });
+                }}
+              >
+                {getAvailablePermissions(selectedAccount?.role).every((perm) =>
+                  selectedAccount?.permissions?.includes(perm)
+                )
+                  ? "Unselect All"
+                  : "Select All"}
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
               {getAvailablePermissions(selectedAccount?.role).map((perm) => (
                 <label key={perm} className="flex gap-2 items-center">
                   <input

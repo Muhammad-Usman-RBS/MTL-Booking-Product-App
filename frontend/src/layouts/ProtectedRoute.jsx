@@ -10,14 +10,21 @@ const ProtectedRoute = () => {
   const location = useLocation();
   const currentPath = location.pathname;
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (isTokenExpired(token)) {
-      localStorage.clear();
-      window.location.href = "/login";
-    }
+    const checkTokenExpiration = () => {
+      const token = localStorage.getItem("token");
+      
+      if (isTokenExpired(token)) {
+        localStorage.clear();
+        window.location.href = "/login";
+        return;
+      } 
+      
+    };
+  
+    checkTokenExpiration();
+    
   }, [currentPath]);
-
-  const authorizedSidebarItems = sidebarItems.filter((item) =>
+   const authorizedSidebarItems = sidebarItems.filter((item) =>
     userPermissions.includes(item.title)
   );
 
