@@ -7,6 +7,7 @@ import SelectOption from '../../../constants/constantscomponents/SelectOption';
 import { useGetDiscountsByCompanyIdQuery } from "../../../redux/api/discountApi";
 import { useLazyGetVoucherByCodeQuery } from "../../../redux/api/vouchersApi";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi"; // Import here
+import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
 
 const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, booking = {} }) => {
     const [passengerDetails, setPassengerDetails] = useState({ name: '', email: '', phone: '' });
@@ -20,6 +21,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
     const [fetchVoucher] = useLazyGetVoucherByCodeQuery();
     const { data: discounts = [] } = useGetDiscountsByCompanyIdQuery(companyId);
     const { data: allBookings = [] } = useGetAllBookingsQuery();
+    const { data: generalPricing } = useGetGeneralPricingPublicQuery(companyId);
 
     const [voucher, setVoucher] = useState('');
     const [companyDiscountPercent, setCompanyDiscountPercent] = useState(0);
@@ -72,7 +74,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
         if (vehicle) {
             setFormData({
                 passenger: String(vehicle?.passenger || ''),
-                childSeats: String(vehicle?.childSeat || ''),
+                childSeats: '',
                 handLuggage: String(vehicle?.handLuggage || ''),
                 checkinLuggage: String(vehicle?.checkinLuggage || '')
             });
@@ -84,8 +86,18 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
     };
 
     const calculateFinalFare = () => {
+        if (!generalPricing) return fare;
+
         const totalDiscount = companyDiscountPercent + voucherDiscountPercent;
         let updatedFare = fare;
+
+        const selectedChildSeats = parseInt(formData.childSeats || '0');
+        const isValidSelection = !isNaN(selectedChildSeats) && selectedChildSeats > 0;
+        const unitPrice = parseFloat(generalPricing?.childSeatPrice || 0);
+
+        if (isValidSelection) {
+            updatedFare += selectedChildSeats * unitPrice;
+        }
 
         if (totalDiscount > 0) {
             updatedFare = updatedFare * (1 - totalDiscount / 100);
@@ -93,6 +105,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
 
         return parseFloat(updatedFare.toFixed(2));
     };
+
 
     const finalFare = calculateFinalFare();
 
@@ -149,13 +162,13 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
 
             setVoucherDiscountPercent(res.discountValue || 0);
             toast.success(`Voucher applied: ${res.discountValue}% off.`);
-        }  catch (err) {
+        } catch (err) {
             const errorMessage =
                 err?.data?.message || err?.error || err?.message || "Failed to apply voucher";
             toast.error(errorMessage);
             setVoucherDiscountPercent(0);
         }
-        
+
     };
 
     const maxAppliedDiscount = Math.max(companyDiscountPercent, voucherDiscountPercent);
@@ -241,9 +254,8 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                         </div>
                     )}
 
-                    {/* Fare Breakdown */}
                     <div className="text-2xl font-bold text-gray-800 mt-4">
-                        {(companyDiscountPercent + voucherDiscountPercent > 0) ? (
+                        {((companyDiscountPercent + voucherDiscountPercent) > 0 || parseInt(formData.childSeats || '0') > 0) ? (
                             <>
                                 <span className="line-through text-red-400 me-2">
                                     {(fare || 0).toFixed(2)} GBP
@@ -251,7 +263,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                 <span className="text-green-600">{finalFare} GBP</span>
                             </>
                         ) : (
-                            <>FARE: {(fare || 0).toFixed(2)} GBP</>
+                            <>FARE: {finalFare} GBP</>
                         )}
                     </div>
 
