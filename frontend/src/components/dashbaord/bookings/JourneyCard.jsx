@@ -8,6 +8,7 @@ const JourneyCard = ({
     setJourneyData,
     dropOffs,
     setDropOffs,
+    fare,
 }) => {
     const [pickupSuggestions, setPickupSuggestions] = useState([]);
     const [dropOffSuggestions, setDropOffSuggestions] = useState([]);
@@ -91,7 +92,9 @@ const JourneyCard = ({
         <div className="bg-white shadow-md rounded-2xl p-4 sm:p-6 max-w-4xl w-full mx-auto border border-gray-200 mt-6 text-sm">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="text-lg sm:text-xl font-semibold">{title}:</h3>
-                <div className="btn-edit btn text-sm sm:text-base">Fare: $0</div>
+                <div className="btn-edit btn text-sm sm:text-base">
+                    Fare: £{fare?.toFixed(2) || 0}
+                </div>
             </div>
 
             <div className="mb-4">

@@ -10,10 +10,8 @@ import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 import { useLazyGetDistanceQuery } from "../../../redux/api/googleApi";
 import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
 import { useSelector } from "react-redux";
-import {
-  useCreateBookingMutation,
-  useUpdateBookingMutation,
-} from "../../../redux/api/bookingApi";
+import { useCreateBookingMutation, useUpdateBookingMutation, } from "../../../redux/api/bookingApi";
+import { useHourlyPricing } from "../../../utils/useHourlyPricing";
 
 const NewBooking = ({ editBookingData = null, onClose }) => {
   const user = useSelector((state) => state.auth.user);
@@ -57,6 +55,15 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   });
   const [dropOffs1, setDropOffs1] = useState([""]);
 
+  const [selectedHourly, setSelectedHourly] = useState(null);
+  
+  const [createBooking, { isLoading }] = useCreateBookingMutation();
+  const [updateBooking] = useUpdateBookingMutation();
+  const [triggerDistance] = useLazyGetDistanceQuery();
+
+  const [primaryFare, setPrimaryFare] = useState(0);
+  const [returnFare, setReturnFare] = useState(0);
+
   const [returnJourneyData, setreturnJourneyData] = useState({
     pickup: "",
     date: "",
@@ -71,17 +78,25 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   });
   const [dropOffs2, setDropOffs2] = useState([""]);
 
-  const [createBooking, { isLoading }] = useCreateBookingMutation();
-  const [updateBooking] = useUpdateBookingMutation();
-  const [triggerDistance] = useLazyGetDistanceQuery();
-  const [selectedHourly, setSelectedHourly] = useState(null);
-
-  const formattedHourlyOptions = useMemo(() => {
-    return hourlyPackages.map((pkg) => ({
-      label: `${pkg.distance} miles ${pkg.hours} hours`,
-      value: { distance: pkg.distance, hours: pkg.hours },
-    }));
-  }, [hourlyPackages]);
+  const {
+    formattedHourlyOptions,
+    hourlyError,
+    returnHourlyError,
+    actualMiles,
+    returnActualMiles,
+    vehicleHourlyFare,
+  } = useHourlyPricing({
+    mode,
+    primaryJourneyData,
+    dropOffs1,
+    returnJourneyData,
+    dropOffs2,
+    selectedHourly,
+    selectedVehicle,
+    returnJourneyToggle,
+    hourlyPackages,
+    triggerDistance,
+  });
 
   useEffect(() => {
     if (editBookingData) {
@@ -211,6 +226,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           mode === "Hourly" && selectedHourly?.label
             ? selectedHourly.label
             : null,
+        fare: vehicleHourlyFare,
         ...dynamicFields1,
       },
     };
@@ -340,11 +356,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             <button
               key={tab}
               onClick={() => setMode(tab)}
-              className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${
-                mode === tab
-                  ? "bg-[#f3f4f6] text-dark border border-black"
-                  : "bg-[#f3f4f6] text-dark"
-              } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
+              className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${mode === tab
+                ? "bg-[#f3f4f6] text-dark border border-black"
+                : "bg-[#f3f4f6] text-dark"
+                } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
             >
               {tab}
             </button>
@@ -370,12 +385,21 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           </div>
         )}
 
+        {hourlyError && (
+          <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 mt-4 max-w-2xl mx-auto rounded shadow-sm">
+            <p className="text-sm leading-snug">
+              {hourlyError}
+            </p>
+          </div>
+        )}
+
         <JourneyCard
           title="Journey 1"
           journeyData={primaryJourneyData}
           setJourneyData={setprimaryJourneyData}
           dropOffs={dropOffs1}
           setDropOffs={setDropOffs1}
+          fare={mode === "Hourly" ? vehicleHourlyFare : primaryFare}
         />
 
         <div className="flex items-center mt-6 w-full max-w-4xl mx-auto">
@@ -394,6 +418,14 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           </label>
         </div>
 
+        {returnHourlyError && (
+          <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 mt-4 max-w-2xl mx-auto rounded shadow-sm">
+            <p className="text-sm leading-snug">
+              {returnHourlyError}
+            </p>
+          </div>
+        )}
+
         {returnJourneyToggle && (
           <JourneyCard
             title="Journey 2"
@@ -401,6 +433,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             setJourneyData={setreturnJourneyData}
             dropOffs={dropOffs2}
             setDropOffs={setDropOffs2}
+            fare={returnFare}
           />
         )}
 
