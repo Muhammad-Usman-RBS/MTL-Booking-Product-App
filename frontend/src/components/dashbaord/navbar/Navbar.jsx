@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import Icons from "../../../assets/icons";
-import useUIStore from "../../../store/useUIStore";
-import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import IMAGES from "../../../assets/images";
-import { useSelector } from "react-redux";
+import CustomModal from "../../../constants/constantscomponents/CustomModal";
+import { themes } from "../../../constants/dashboardTabsData/data";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
+import useUIStore from "../../../store/useUIStore";
 import JourneyDetailsModal from "../bookings/JourneyDetailsModal";
-import { themes } from "../../../constants/dashboardTabsData/data";
 
 function Navbar() {
   const TimeRef = useRef(null);
@@ -237,7 +237,7 @@ function Navbar() {
           </div>
 
           <div
-            className="cursor-pointer relative hover:bg-white/30 backdrop-blur-md p-1 rounded-full"
+            className="cursor-pointer relative hover:bg-white/30 backdrop-blur-md p-2 rounded-full"
             onClick={() => setShowTooltip(true)}
             onMouseLeave={handleMouseLeave}
           >

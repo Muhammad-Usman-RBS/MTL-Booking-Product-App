@@ -149,10 +149,13 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
 
             setVoucherDiscountPercent(res.discountValue || 0);
             toast.success(`Voucher applied: ${res.discountValue}% off.`);
-        } catch (err) {
-            toast.error("Something went wrong. Try again.");
+        }  catch (err) {
+            const errorMessage =
+                err?.data?.message || err?.error || err?.message || "Failed to apply voucher";
+            toast.error(errorMessage);
             setVoucherDiscountPercent(0);
         }
+        
     };
 
     const maxAppliedDiscount = Math.max(companyDiscountPercent, voucherDiscountPercent);

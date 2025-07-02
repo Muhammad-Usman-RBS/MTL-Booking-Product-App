@@ -3,6 +3,7 @@ import sendEmail from "../utils/sendEmail.js";
 import DriverProfile from "../models/Driver.js";
 import User from "../models/User.js";
 import mongoose from "mongoose";
+import Voucher from "../models/pricings/Voucher.js";
 
 // Create Booking (standard route)
 export const createBooking = async (req, res) => {
@@ -27,7 +28,36 @@ export const createBooking = async (req, res) => {
       typeof companyId !== "string" ||
       companyId.length !== 24
     ) {
+      console.log("❌ Invalid companyId:", companyId);
+
       return res.status(400).json({ message: "Invalid or missing companyId" });
+    }
+
+
+
+    let validVoucher = null;
+    let isVoucherApplied = false;
+
+    if (voucher && voucherApplied) {
+      const v = await Voucher.findOne({
+        voucher: voucher.toUpperCase(),
+        companyId: new mongoose.Types.ObjectId(companyId),
+      });
+      const today = new Date();
+      const isExpired = !v || new Date(v.validity) < today;
+      const hasReachedLimit = !v || v.used >= v.quantity;
+      const isInactive = !v || v.status === "Deleted" || v.status === "Expired";
+
+      if (!v || isExpired || hasReachedLimit || isInactive) {
+        console.warn(`Voucher "${voucher}" is invalid or expired. Skipping.`);
+      } else {
+        validVoucher = v.voucher;
+        isVoucherApplied = true;
+
+        await Voucher.findByIdAndUpdate(v._id, {
+          $inc: { used: 1 },
+        });
+      }
     }
 
     if (!vehicle.vehicleName || typeof vehicle.vehicleName !== "string") {
@@ -115,8 +145,8 @@ export const createBooking = async (req, res) => {
         distanceText: primaryJourney.distanceText || null,
         durationText: primaryJourney.durationText || null,
 
-        voucher: voucher || null,
-        voucherApplied: !!voucherApplied,
+        voucher: validVoucher,
+        voucherApplied: isVoucherApplied,
 
         ...extractDynamicDropoffFields(primaryJourney),
       },

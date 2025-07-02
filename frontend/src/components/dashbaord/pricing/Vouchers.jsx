@@ -240,11 +240,11 @@ const Vouchers = () => {
               type="number"
               min={0}
               className="custom_input"
-              value={selectedItem?.quantity || 0}
+              value={selectedItem?.quantity}
               onChange={(e) =>
                 setSelectedItem({
                   ...selectedItem,
-                  quantity: parseInt(e.target.value) || 0,
+                  quantity: parseInt(e.target.value),
                 })
               }
             />
@@ -283,11 +283,11 @@ const Vouchers = () => {
               min={0}
               max={100}
               className="custom_input"
-              value={selectedItem?.discountValue || 0}
+              value={selectedItem?.discountValue}
               onChange={(e) =>
                 setSelectedItem({
                   ...selectedItem,
-                  discountValue: parseFloat(e.target.value) || 0,
+                  discountValue: parseFloat(e.target.value),
                 })
               }
             />
