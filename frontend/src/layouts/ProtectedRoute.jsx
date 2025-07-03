@@ -9,21 +9,23 @@ const ProtectedRoute = () => {
   const userPermissions = user?.permissions || [];
   const location = useLocation();
   const currentPath = location.pathname;
+  const token = localStorage.getItem("token");
+  
   useEffect(() => {
-    const checkTokenExpiration = () => {
-      const token = localStorage.getItem("token");
-      
-      if (isTokenExpired(token)) {
-        localStorage.clear();
-        window.location.href = "/login";
-        return;
-      } 
-      
+    const redirectToLogin = () => {
+      localStorage.clear();
+      window.location.replace("/login");
     };
   
-    checkTokenExpiration();
-    
-  }, [currentPath]);
+    if (!token || isTokenExpired(token)) {
+      redirectToLogin();
+  
+      
+      window.addEventListener
+    }
+  }, [currentPath, token]);
+  
+
    const authorizedSidebarItems = sidebarItems.filter((item) =>
     userPermissions.includes(item.title)
   );
