@@ -382,15 +382,19 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
 
                 {/* Drop Offs */}
                 {dropOffs.map((val, idx) => (
-                    <div key={idx} className="relative space-y-2">
-                        <label className="text-xs text-gray-600">Drop Off {idx + 1}</label>
-                        <input
-                            type="text"
-                            value={val}
-                            placeholder={`Drop Off ${idx + 1}`}
-                            onChange={(e) => handleDropOffChange(idx, e.target.value)}
-                            className="custom_input"
-                        />
+                    <div key={idx} className="relative space-y-2 flex items-center">
+                        <div>
+                            <label className="text-xs pb-6 text-gray-600">Drop Off {idx + 1}</label>
+                            <div className='mt-2'>
+                                <input
+                                    type="text"
+                                    value={val}
+                                    placeholder={`Drop Off ${idx + 1}`}
+                                    onChange={(e) => handleDropOffChange(idx, e.target.value)}
+                                    className="custom_input"
+                                />
+                            </div>
+                        </div>
                         {dropOffSuggestions.length > 0 && activeDropIndex === idx && (
                             <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
                                 <li
@@ -441,7 +445,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                             <button
                                 type="button"
                                 onClick={() => removeDropOff(idx)}
-                                className="text-xs text-red-600 absolute right-1 top-0"
+                                className="btn btn-cancel"
                             >
                                 &minus;
                             </button>
