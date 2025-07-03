@@ -156,7 +156,7 @@ router.get("/autocomplete", async (req, res) => {
     }
 
     // If not found locally → fallback to Google
-    const autocompleteUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(queryRaw)}&components=country:gb&key=${process.env.GOOGLE_LOCATION_API}`;
+    const autocompleteUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(queryRaw)}&components=country:gb&key=${process.env.GOOGLE_API_KEY}`;
     const autocompleteResponse = await fetch(autocompleteUrl);
     const autocompleteData = await autocompleteResponse.json();
 
@@ -164,7 +164,7 @@ router.get("/autocomplete", async (req, res) => {
 
     const detailedResults = await Promise.all(predictions.map(async (prediction) => {
       const placeId = prediction.place_id;
-      const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address&key=${process.env.GOOGLE_LOCATION_API}`;
+      const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address&key=${process.env.GOOGLE_API_KEY}`;
       const detailsResponse = await fetch(detailsUrl);
       const detailsData = await detailsResponse.json();
 
@@ -191,7 +191,7 @@ router.get("/distance", async (req, res) => {
       return res.status(400).json({ error: "Origin and destination are required" });
     }
 
-    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=${encodeURIComponent(origin)}&destinations=${encodeURIComponent(destination)}&key=${process.env.GOOGLE_LOCATION_API}`;
+    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=${encodeURIComponent(origin)}&destinations=${encodeURIComponent(destination)}&key=${process.env.GOOGLE_API_KEY}`;
     const response = await fetch(url);
     const data = await response.json();
 
@@ -231,7 +231,7 @@ router.get("/postcode-suggestions", async (req, res) => {
       return res.json({ postcodes: [] });
     }
 
-    const googleUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&components=country:gb&types=postal_code&key=${process.env.GOOGLE_LOCATION_API}`;
+    const googleUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&components=country:gb&types=postal_code&key=${process.env.GOOGLE_API_KEY}`;
 
     const response = await fetch(googleUrl);
     const data = await response.json();
@@ -259,7 +259,7 @@ router.get("/geocode", async (req, res) => {
       return res.status(400).json({ error: "Address is required" });
     }
 
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.GOOGLE_LOCATION_API}`;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.GOOGLE_API_KEY}`;
     const response = await fetch(url);
     const data = await response.json();
 
