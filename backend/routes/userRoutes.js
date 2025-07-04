@@ -1,5 +1,5 @@
 import express from 'express';
-import { createUserBySuperAdmin, getClientAdmins, updateUserBySuperAdmin, deleteUserBySuperAdmin } from '../controllers/userController.js';
+import { createUserBySuperAdmin, getClientAdmins, updateUserBySuperAdmin, deleteUserBySuperAdmin, getAllUsers } from '../controllers/userController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -9,6 +9,7 @@ router.post('/create-clientadmin', protect, authorize('superadmin', 'clientadmin
 
 // Get users based on role and company scope
 router.get('/create-clientadmin', protect, authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'), getClientAdmins);
+router.get('/get-All-Users', protect, authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'), getAllUsers);
 
 // Update user by ID (name, email, role, etc.)
 router.put('/create-clientadmin/:id', protect, authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'), updateUserBySuperAdmin);

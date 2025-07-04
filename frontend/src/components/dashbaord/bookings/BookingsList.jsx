@@ -74,12 +74,13 @@ const BookingsList = () => {
   const user = useSelector((state) => state.auth.user);
   const { data: companyData } = useGetCompanyByIdQuery(user?.companyId);
   const { data: bookingData } = useGetAllBookingsQuery(user?.companyId);
-  const { data: driversData, isLoading: driversLoading } =
+  const { data: driversData, isLoading } =
     useGetAllDriversQuery(user?.companyId);
 
   useEffect(() => {
     if (driversData?.drivers?.length > 0) {
       setAssignedDrivers(driversData.drivers); 
+
     }
   }, [driversData]);
   const allBookings = bookingData?.bookings || [];

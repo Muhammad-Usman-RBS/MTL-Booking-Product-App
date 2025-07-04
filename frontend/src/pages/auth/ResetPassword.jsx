@@ -2,8 +2,11 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useResetPasswordMutation } from "../../redux/api/userApi"; // ✅ RTK hook
+import Icons from "../../assets/icons";
+import usePasswordToggle from "../../hooks/usePasswordToggle";
 
 const ResetPassword = () => {
+  const { type: passwordType, visible: passwordVisible, toggleVisibility: togglePasswordVisibility } = usePasswordToggle();
   const location = useLocation();
   const navigate = useNavigate();
   const [otp, setOtp] = useState("");
@@ -41,13 +44,23 @@ const ResetPassword = () => {
 
       <div>
         <label className="block text-sm font-medium mb-1">New Password</label>
+        <div className="relative">
+
         <input
-          type="password"
-          placeholder="Enter new password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          className="custom_input"
-        />
+
+type={passwordType}
+placeholder="Enter new password"
+value={newPassword}
+onChange={(e) => setNewPassword(e.target.value)}
+className="custom_input"
+/>
+          <span
+                 className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500"
+                 onClick={togglePasswordVisibility}
+                  >
+                    {passwordVisible ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
+                  </span>
+                 </div>
       </div>
 
       <button type="submit" className="btn btn-success w-full">

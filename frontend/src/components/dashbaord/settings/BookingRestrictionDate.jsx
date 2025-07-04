@@ -5,7 +5,12 @@ import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { toast } from "react-toastify";
-import { useCreateBookingRestrictionMutation, useDeleteBookingRestrictionMutation, useGetAllBookingRestrictionsQuery, useUpdateBookingRestrictionMutation} from "../../../redux/api/bookingRestrictionDateApi";
+import {
+  useCreateBookingRestrictionMutation,
+  useDeleteBookingRestrictionMutation,
+  useGetAllBookingRestrictionsQuery,
+  useUpdateBookingRestrictionMutation,
+} from "../../../redux/api/bookingRestrictionDateApi";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import { useSelector } from "react-redux";
 
@@ -22,7 +27,7 @@ const BookingRestrictionDate = () => {
     isLoading,
     isError,
   } = useGetAllBookingRestrictionsQuery(companyId);
-  console.log(user)
+  console.log(user);
   const [updateBookingRestriction] = useUpdateBookingRestrictionMutation();
   const [deleteBookingRestriction] = useDeleteBookingRestrictionMutation();
 
@@ -31,7 +36,15 @@ const BookingRestrictionDate = () => {
   const [statusFilter, setStatusFilter] = useState("Any Status");
 
   const handleEdit = (item) => {
-    setSelectedItem(item);
+    const fromDate = item.from
+      ? new Date(item.from).toISOString().slice(0, 16)
+      : "";
+    const toDate = item.to ? new Date(item.to).toISOString().slice(0, 16) : "";
+    setSelectedItem({
+      ...item,
+      from: fromDate,
+      to: toDate,
+    });
     setIsEditMode(true);
     setShowModal(true);
   };
@@ -43,12 +56,10 @@ const BookingRestrictionDate = () => {
       to: "",
       status: "Active",
       companyId: companyId,
-      
     });
     setIsEditMode(false);
     setShowModal(true);
   };
-
   const handleUpdate = async () => {
     try {
       const { _id, caption, recurring, from, to, status } = selectedItem;
@@ -57,14 +68,13 @@ const BookingRestrictionDate = () => {
         toast.error("All fields are required!");
         return;
       }
-
       const payload = {
         caption,
         recurring,
         from: new Date(from),
         to: new Date(to),
         status,
-        companyId
+        companyId,
       };
 
       if (_id) {
@@ -76,31 +86,17 @@ const BookingRestrictionDate = () => {
         toast.success("Booking Restriction Updated!");
         console.log("Updated Booking Restriction:", response);
       } else {
-        // Create mode
         const response = await createBookingRestriction(payload).unwrap();
         toast.success("Booking Restriction Created!");
         console.log("Created Booking Restriction:", response);
       }
-
       setShowModal(false);
     } catch (error) {
       console.error("Submit failed:", error);
       toast.error("Failed to save booking restriction");
     }
   };
-
-  const handleDelete = async (_id) => {
-    try {
-      await deleteBookingRestriction(_id).unwrap();
-      toast.success("Booking Restriction Deleted!");
-    } catch (error) {
-      console.error("Delete failed:", error);
-      toast.error("Failed to delete booking restriction");
-    }
-  };
-
   const data = apiData?.data || [];
-
   const filteredData =
     statusFilter === "Any Status"
       ? data
@@ -119,8 +115,8 @@ const BookingRestrictionDate = () => {
     const day = date.getDate();
     const month = date.toLocaleString("en-US", { month: "short" });
     const year = date.getFullYear();
-    const time = date.toLocaleTimeString("en-US", {
-      hour12: true,
+    const time = date.toLocaleTimeString("en-GB", {
+      hour12: false,
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -262,7 +258,7 @@ const BookingRestrictionDate = () => {
               Cancel
             </button>
             <button onClick={handleUpdate} className="btn btn-reset">
-            {isEditMode ? "Update" : "Add"}
+              {isEditMode ? "Update" : "Add"}
             </button>
           </div>
         </div>

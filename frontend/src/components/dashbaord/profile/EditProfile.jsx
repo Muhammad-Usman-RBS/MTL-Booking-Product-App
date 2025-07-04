@@ -6,8 +6,23 @@ import IMAGES from "../../../assets/images";
 import { useUpdateUserProfileMutation } from "../../../redux/api/userApi";
 import { useSelector, useDispatch } from "react-redux";
 import { setUser } from "../../../redux/authSlice";
+import Icons from "../../../assets/icons";
+import usePasswordToggle from "../../../hooks/usePasswordToggle";
 
 const EditProfile = () => {
+// Two independent instances
+const {
+  type: newPasswordType,
+  visible: newPasswordVisible,
+  toggleVisibility: toggleNewPassword,
+} = usePasswordToggle();
+
+const {
+  type: currentPasswordType,
+  visible: currentPasswordVisible,
+  toggleVisibility: toggleCurrentPassword,
+} = usePasswordToggle();
+  
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
 
@@ -152,27 +167,46 @@ const EditProfile = () => {
 
         <div>
           <label className="block text-sm font-medium mb-1">New Password</label>
-          <input
-            type="password"
-            name="newPassword"
-            value={form.newPassword}
-            onChange={handleChange}
-            className="custom_input"
-          />
+         <div className="relative">
+         <input
+  type={newPasswordType}
+  name="newPassword"
+  value={form.newPassword}
+  onChange={handleChange}
+  className="custom_input"
+/>
+<span
+  className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500"
+  onClick={toggleNewPassword}
+>
+  {newPasswordVisible ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
+</span>
+
+            </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1">
             Current Password <span className="text-red-500">*</span>
           </label>
+          <div className="relative">
           <input
-            type="password"
-            name="currentPassword"
-            value={form.currentPassword}
-            onChange={handleChange}
-            required
-            className="custom_input"
-          />
+  type={currentPasswordType}
+  name="currentPassword"
+  value={form.currentPassword}
+  onChange={handleChange}
+  required
+  className="custom_input"
+/>
+<span
+  className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500"
+  onClick={toggleCurrentPassword}
+>
+  {currentPasswordVisible ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
+</span>
+
+            </div>
+          
         </div>
 
         <div className="flex flex-wrap gap-3 col-span-1 md:col-span-2">

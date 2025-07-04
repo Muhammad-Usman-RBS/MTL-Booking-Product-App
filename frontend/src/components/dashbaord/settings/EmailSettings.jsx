@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import usePasswordToggle from "../../../hooks/usePasswordToggle";
+import Icons from "../../../assets/icons";
 
 const EmailSettings = () => {
+  const {type: passwordType, visible: passwordVisible, toggleVisibility: togglePasswordVisibility} = usePasswordToggle();
   const [formData, setFormData] = useState({
     fromEmail: "megatransfers22@gmail.com",
     fromName: "Mega Transfers Limited",
@@ -116,12 +119,21 @@ const EmailSettings = () => {
               <label className="block text-sm font-medium mb-1">
                 SMTP Password
               </label>
+              <div className="relative">
+
               <input
-                type="password"
-                className="w-full border border-gray-300 rounded px-3 py-2"
+    type={passwordType}
+    className="w-full border border-gray-300 rounded px-3 py-2"
                 placeholder="********"
                 readOnly
               />
+              <span
+                 className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {passwordVisible ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
+                  </span>
+              </div>
             </div>
 
             <div className="text-right">

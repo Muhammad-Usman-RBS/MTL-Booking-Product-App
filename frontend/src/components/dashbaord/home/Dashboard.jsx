@@ -19,7 +19,7 @@ const Dashboard = () => {
     {
       title: "Bookings Scheduled",
       values: [0, 11, 11, "0.00", "1,565.95", "1,565.95", "0.00", "1,565.95"],
-      borderColor: "border-gray-300",
+      borderColor: "border-gray-300", 
       bg: "bg-[#2A7B9B]",
     },
     {

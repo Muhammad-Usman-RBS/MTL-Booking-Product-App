@@ -16,10 +16,12 @@ import {
   useUpdateClientAdminStatusMutation,
 } from "../../../redux/api/adminApi";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
+import usePasswordToggle from "../../../hooks/usePasswordToggle";
 
 const tabs = ["Active", "Pending", "Suspended", "Deleted"];
 
 const AdminList = () => {
+       const { type: passwordType, visible:passwordVisible , toggleVisibility: toggleVisibility } = usePasswordToggle();
   const user = useSelector((state) => state.auth.user);
   const { data: adminsListData = [], refetch } = useFetchClientAdminsQuery();
   const { data: driversList = [] } = useGetAllDriversQuery(user?.companyId, {
@@ -397,8 +399,9 @@ const AdminList = () => {
               })
             }
           />
-          <div className="">
             {selectedAccount?.role === "driver" && (
+            <div className="lg:w-[33.4rem] w-[15rem]">
+
               <SelectOption
                 label="Select Driver"
                 value={selectedAccount?.driverId}
@@ -422,8 +425,8 @@ const AdminList = () => {
                   value: driver._id,
                 }))}
               />
+              </div>
             )}
-          </div>
           <input
             placeholder="Email"
             type="email"
@@ -438,10 +441,11 @@ const AdminList = () => {
               setSelectedAccount({ ...selectedAccount, email: e.target.value })
             }
           />
+          <div className="relative">
 
           <input
             placeholder="Password"
-            type="password"
+            type={passwordType}
             className="custom_input"
             value={selectedAccount?.password || ""}
             onChange={(e) =>
@@ -450,7 +454,14 @@ const AdminList = () => {
                 password: e.target.value,
               })
             }
-          />
+            />
+              <span
+                             className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500"
+                             onClick={toggleVisibility}
+                              >
+                                {passwordVisible ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
+                              </span>
+            </div>
           {["clientadmin", "manager"].includes(selectedAccount?.role) && (
             <SelectOption
               label="Associate Admin Limit"
@@ -476,68 +487,68 @@ const AdminList = () => {
             }
             options={tabs}
           />
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Permissions
-                </label>
-              </div>
-              <button
-                className="btn btn-reset"
-                onClick={() => {
-                  const allPermissions = getAvailablePermissions(
-                    selectedAccount?.role
-                  );
-                  const allSelected = allPermissions.every((perm) =>
-                    selectedAccount?.permissions?.includes(perm)
-                  );
+             <div className="bg-gray-50 p-4 rounded-lg">
+  <div className="flex justify-between items-center mb-4">
+    <h3 className="text-sm font-medium text-gray-700">Permissions</h3>
+    <button
+      className="btn btn-edit"
+      onClick={() => {
+        const allPermissions = getAvailablePermissions(
+          selectedAccount?.role
+        );
+        const allSelected = allPermissions.every((perm) =>
+          selectedAccount?.permissions?.includes(perm)
+        );
 
-                  setSelectedAccount({
-                    ...selectedAccount,
-                    permissions: allSelected ? [] : allPermissions,
-                  });
-                }}
-              >
-                {getAvailablePermissions(selectedAccount?.role).every((perm) =>
-                  selectedAccount?.permissions?.includes(perm)
-                )
-                  ? "Unselect All"
-                  : "Select All"}
-              </button>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {getAvailablePermissions(selectedAccount?.role).map((perm) => (
-                <label key={perm} className="flex gap-2 items-center">
-                  <input
-                    type="checkbox"
-                    checked={selectedAccount?.permissions?.includes(perm)}
-                    onChange={(e) => {
-                      const updated = e.target.checked
-                        ? [...(selectedAccount.permissions || []), perm]
-                        : selectedAccount.permissions.filter((p) => p !== perm);
-                      setSelectedAccount({
-                        ...selectedAccount,
-                        permissions: updated,
-                      });
-                    }}
-                  />
-                  <span>{perm}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div className="flex justify-end gap-4 pt-4">
-            <button
-              className="btn btn-reset"
-              onClick={() => setShowModal(false)}
-            >
-              Cancel
-            </button>
-            <button className="btn btn-success" onClick={handleSave}>
-              {selectedAccount?._id ? "Update" : "Create"}
-            </button>
-          </div>
+        setSelectedAccount({
+          ...selectedAccount,
+          permissions: allSelected ? [] : allPermissions,
+        });
+      }}
+    >
+      {getAvailablePermissions(selectedAccount?.role).every((perm) =>
+        selectedAccount?.permissions?.includes(perm)
+      )
+        ? "Unselect All"
+        : "Select All"}
+    </button>
+  </div>
+  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+    {getAvailablePermissions(selectedAccount?.role).map((perm) => (
+      <label key={perm} className="flex items-center  gap-2 p-2 bg-white rounded-md border border-gray-200 hover:bg-gray-50 cursor-pointer">
+        <input
+          type="checkbox"
+          className="text-blue-600 focus:ring-blue-500 rounded"
+          checked={selectedAccount?.permissions?.includes(perm)}
+          onChange={(e) => {
+            const updated = e.target.checked
+              ? [...(selectedAccount.permissions || []), perm]
+              : selectedAccount.permissions.filter((p) => p !== perm);
+            setSelectedAccount({
+              ...selectedAccount,
+              permissions: updated,
+            });
+          }}
+        />
+        <span className="text-sm  text-gray-700">{perm}</span>
+      </label>
+    ))}
+  </div>
+</div>
+<div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+  <button
+    className="btn btn-reset"
+    onClick={() => setShowModal(false)}
+  >
+    Cancel
+  </button>
+  <button 
+    className="btn btn-success"
+    onClick={handleSave}
+  >
+    {selectedAccount?._id ? "Update User" : "Create User"}
+  </button>
+</div>
         </div>
       </CustomModal>
 

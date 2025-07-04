@@ -220,7 +220,7 @@ const PostcodeDistrict = () => {
           {/* Price */}
           <div>
             <label className="block text-gray-700 font-semibold mb-1">Price (GBP)</label>
-            <input type="number" className="custom_input" value={selectedItem?.price || 0} onChange={(e) => setSelectedItem({ ...selectedItem, price: parseFloat(e.target.value) })} placeholder="Enter fixed price" />
+            <input type="number" className="custom_input" value={selectedItem?.price} onChange={(e) => setSelectedItem({ ...selectedItem, price: parseFloat(e.target.value) })} placeholder="Enter fixed price" />
           </div>
 
           {/* Footer Buttons */}

@@ -112,11 +112,7 @@ function Navbar() {
   useEffect(() => {
     if (!user?.companyId) return;
 
-    const interval = setInterval(() => {
-      refetchBookings();
-    }, 10000);
-
-    return () => clearInterval(interval);
+    
   }, [refetchBookings, user?.companyId]);
   return (
     <>
@@ -125,7 +121,7 @@ function Navbar() {
           <Icons.Menu className="size-6 text-theme" />
         </button>
 
-        <h1 className="text-xl font-bold uppercase">Admin Panel</h1>
+        <h1 className="text-xl hidden lg:block  font-bold uppercase">Admin Panel</h1>
         <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-wrap">
           <div className="relative">
             <button
@@ -243,9 +239,14 @@ function Navbar() {
           >
             <Icons.BellPlus className="size-5" />
             <div>
-              <span className="absolute -top-2 right-0 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
-                {(userBookings?.length || 0) - readNotifications.size}
+              { userBookings?.length >= 1&& 
+              <>
+
+                <span className="absolute -top-2 right-0 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
+                {(userBookings?.length ) - readNotifications.size}
               </span>
+              </>
+              }
             </div>
 
             {showTooltip && (

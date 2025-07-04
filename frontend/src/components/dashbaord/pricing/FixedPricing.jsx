@@ -1,14 +1,19 @@
 import React, { useState } from "react";
-import Icons from "../../../assets/icons";
-import ExtrasPrcing from "./ExtrasPrcing";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import CustomTable from "../../../constants/constantscomponents/CustomTable";
-import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { toast } from "react-toastify";
-import { useGetAllZonesQuery } from "../../../redux/api/zoneApi";
-import { useGetAllFixedPricesQuery, useCreateFixedPriceMutation, useUpdateFixedPriceMutation, useDeleteFixedPriceMutation } from "../../../redux/api/fixedPriceApi";
+import Icons from "../../../assets/icons";
+import CustomModal from "../../../constants/constantscomponents/CustomModal";
+import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import {
+  useCreateFixedPriceMutation,
+  useDeleteFixedPriceMutation,
+  useGetAllFixedPricesQuery,
+  useUpdateFixedPriceMutation,
+} from "../../../redux/api/fixedPriceApi";
+import { useGetAllZonesQuery } from "../../../redux/api/zoneApi";
+import ExtrasPrcing from "./ExtrasPrcing";
 
 const FixedPricing = () => {
   const [selectedItem, setSelectedItem] = useState(null);
@@ -32,8 +37,14 @@ const FixedPricing = () => {
     setIsNew(false);
     setSelectedItem({
       ...item,
-      pickup: pickupZone || { name: item.pickup, coordinates: item.pickupCoordinates },
-      dropoff: dropoffZone || { name: item.dropoff, coordinates: item.dropoffCoordinates },
+      pickup: pickupZone || {
+        name: item.pickup,
+        coordinates: item.pickupCoordinates,
+      },
+      dropoff: dropoffZone || {
+        name: item.dropoff,
+        coordinates: item.dropoffCoordinates,
+      },
     });
     setShowModal(true);
   };
@@ -121,15 +132,6 @@ const FixedPricing = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    try {
-      await deleteFixedPrice(id);
-      toast.success("Deleted successfully");
-      refetch();
-    } catch {
-      toast.error("Failed to delete");
-    }
-  };
 
   const tableHeaders = [
     { label: "Pick Up", key: "pickup" },
@@ -173,6 +175,7 @@ const FixedPricing = () => {
                 value={priceChange}
                 onChange={(e) => setPriceChange(e.target.value)}
               />
+
               <button className="btn btn-reset" onClick={handleBulkUpdate}>
                 Update
               </button>
@@ -199,90 +202,78 @@ const FixedPricing = () => {
         <div className="space-y-6 w-96 px-2 sm:px-4 pt-2 text-sm">
           {/* Direction */}
           <div>
-            <label className="block text-gray-700 font-semibold mb-1">Direction</label>
+            <label className="block text-gray-700 font-semibold mb-1">
+              Direction
+            </label>
             <SelectOption
               width="full"
               value={selectedItem?.direction || ""}
               onChange={(val) =>
-                setSelectedItem({ ...selectedItem, direction: val?.value || val })
+                setSelectedItem({
+                  ...selectedItem,
+                  direction: val?.value || val,
+                })
               }
               options={["One Way", "Both Ways"]}
             />
           </div>
 
           {/* Pickup */}
-          <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pick Up</label>
-            <input
-              type="text"
-              className="custom_input"
-              placeholder="Type or select a pickup zone"
+          {/* Pickup */}
+          <div>
+            <SelectOption
+              label="Pick Up"
+              width="full"
               value={selectedItem?.pickup?.name || ""}
               onChange={(e) => {
-                const filtered = zones.filter((z) =>
-                  z.name.toLowerCase().includes(e.target.value.toLowerCase())
+                console.log("Pickup onChange triggered:", e.target.value);
+                const selectedZone = zones.find(
+                  (z) => z.name === e.target.value
                 );
-                setPickupSuggestions(filtered);
+                console.log("Selected pickup zone:", selectedZone);
+                setSelectedItem({
+                  ...selectedItem,
+                  pickup: selectedZone || null,
+                });
               }}
-              onFocus={() => setPickupSuggestions(zones)}
-              onBlur={() => setTimeout(() => setPickupSuggestions([]), 100)}
+              options={zones.map((zone) => ({
+                value: zone.name,
+                label: zone.name,
+                coordinates: zone.coordinates,
+              }))}
             />
-            {pickupSuggestions.length > 0 && (
-              <ul className="absolute z-10 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
-                {pickupSuggestions.map((zone, index) => (
-                  <li
-                    key={index}
-                    onClick={() => {
-                      setSelectedItem({ ...selectedItem, pickup: zone });
-                      setPickupSuggestions([]);
-                    }}
-                    className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
-                  >
-                    {zone.name}
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
 
           {/* Drop Off */}
-          <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Drop Off</label>
-            <input
-              type="text"
-              className="custom_input"
-              placeholder="Type or select a dropoff zone"
+          <div>
+            <SelectOption
+              label="Drop Off"
+              width="full"
               value={selectedItem?.dropoff?.name || ""}
               onChange={(e) => {
-                const filtered = zones.filter((z) =>
-                  z.name.toLowerCase().includes(e.target.value.toLowerCase())
+                console.log("Dropoff onChange triggered:", e.target.value);
+                const selectedZone = zones.find(
+                  (z) => z.name === e.target.value
                 );
-                setDropoffSuggestions(filtered);
+                console.log("Selected dropoff zone:", selectedZone);
+                setSelectedItem({
+                  ...selectedItem,
+                  dropoff: selectedZone || null,
+                });
               }}
-              onFocus={() => setDropoffSuggestions(zones)}
-              onBlur={() => setTimeout(() => setDropoffSuggestions([]), 100)}
+              options={zones.map((zone) => ({
+                value: zone.name,
+                label: zone.name,
+                coordinates: zone.coordinates,
+              }))}
             />
-            {dropoffSuggestions.length > 0 && (
-              <ul className="absolute z-10 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
-                {dropoffSuggestions.map((zone, index) => (
-                  <li
-                    key={index}
-                    onClick={() => {
-                      setSelectedItem({ ...selectedItem, dropoff: zone });
-                      setDropoffSuggestions([]);
-                    }}
-                    className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
-                  >
-                    {zone.name}
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
 
           {/* Price */}
           <div>
-            <label className="block text-gray-700 font-semibold mb-1">Price (GBP)</label>
+            <label className="block text-gray-700 font-semibold mb-1">
+              Price (GBP)
+            </label>
             <input
               type="number"
               className="custom_input"
@@ -305,10 +296,7 @@ const FixedPricing = () => {
             >
               Cancel
             </button>
-            <button
-              onClick={handleSave}
-              className="btn btn-reset"
-            >
+            <button onClick={handleSave} className="btn btn-reset">
               {isNew ? "Add" : "Update"}
             </button>
           </div>

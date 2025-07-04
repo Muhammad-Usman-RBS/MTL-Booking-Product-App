@@ -11,6 +11,13 @@ export const adminApi = apiSlice.injectEndpoints({
       }),
       providesTags: ["ClientAdmins"],
     }),
+    getAllUsers: builder.query({
+      query: () => ({
+        url: "get-All-Users",
+        method: "GET",
+      }),
+      providesTags: ["Users"]
+    }),
 
     // Create new client admin
     createClientAdmin: builder.mutation({
@@ -54,6 +61,7 @@ export const adminApi = apiSlice.injectEndpoints({
 });
 
 export const {
+  useGetAllUsersQuery ,
   useFetchClientAdminsQuery,
   useCreateClientAdminMutation,
   useUpdateClientAdminMutation,
