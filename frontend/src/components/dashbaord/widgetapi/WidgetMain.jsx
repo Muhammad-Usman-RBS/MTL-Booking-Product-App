@@ -30,86 +30,29 @@ const WidgetMain = () => {
 
     const handleBookingSubmission = async (finalPayload) => {
         try {
-            const baseBookingPayload = {
+            const result = await createBooking({
+                returnJourneyToggle: false,
                 companyId,
-                referrer: document.referrer || "Widget",
                 mode: formData.booking?.mode || "Transfer",
+                referrer: document.referrer || "Widget",
                 vehicle: finalPayload.selectedVehicle,
-                passenger: finalPayload.passenger,
-                voucher: finalPayload.voucher || null,
+                hourlyOption: formData.booking?.hourlyOption || null,
+                passenger: finalPayload.passengerDetails || {},
+                voucher: finalPayload.voucher,
                 voucherApplied: !!finalPayload.voucher,
-                source: "widget",
-                PassengerEmail: finalPayload.passenger?.email || "",
-                ClientAdminEmail: formData.booking?.adminEmail || ""
-            };
-
-            const returnJourneyEnabled = formData.booking?.returnJourneyToggle === true;
-
-            // ✅ 1. Create Primary Booking
-            const primaryBooking = await createBooking({
-                ...baseBookingPayload,
-                returnJourneyToggle: returnJourneyEnabled,
                 primaryJourney: {
-                    pickup: formData.booking.pickup,
-                    dropoff: formData.booking.dropoff,
-                    additionalDropoff1: formData.booking.additionalDropoff1 || '',
-                    additionalDropoff2: formData.booking.additionalDropoff2 || '',
-                    pickupDoorNumber: formData.booking.pickupDoorNumber || '',
-                    terminal: formData.booking.terminal || '',
-                    arrivefrom: formData.booking.arrivefrom || '',
-                    flightNumber: formData.booking.flightNumber || '',
-                    pickmeAfter: formData.booking.pickmeAfter || '',
-                    notes: formData.booking.notes || '',
-                    internalNotes: formData.booking.internalNotes || '',
-                    date: formData.booking.date,
-                    hour: parseInt(formData.booking.hour),
-                    minute: parseInt(formData.booking.minute),
-                    fare: finalPayload.fare,
+                    ...formData.booking,
+                    fare: finalPayload.fare || 0,
                     hourlyOption: formData.booking?.hourlyOption || null,
-                    distanceText: formData.booking.distanceText || '',
-                    durationText: formData.booking.durationText || '',
-                    dropoffDoorNumber0: formData.booking.dropoffDoorNumber0 || '',
-                    dropoff_terminal_0: formData.booking.dropoff_terminal_0 || ''
-                }
+                },
+                PassengerEmail: finalPayload?.passengerDetails?.email || "",
             }).unwrap();
 
-            console.log("✅ Primary booking saved:", primaryBooking);
-
-            // ✅ 2. Conditionally create return booking
-            if (returnJourneyEnabled) {
-                const returnBooking = await createBooking({
-                    ...baseBookingPayload,
-                    returnJourneyToggle: true,
-                    returnJourney: {
-                        pickup: finalPayload.returnPickup || formData.booking.dropoff,
-                        dropoff: finalPayload.returnDropoff || formData.booking.pickup,
-                        additionalDropoff1: finalPayload.returnAdditionalDropoff1 || '',
-                        additionalDropoff2: finalPayload.returnAdditionalDropoff2 || '',
-                        pickupDoorNumber: finalPayload.returnPickupDoorNumber || '',
-                        dropoffDoorNumber0: finalPayload.returnDropoffDoorNumber || '',
-                        dropoff_terminal_0: finalPayload.returnDropoffTerminal || '',
-                        arrivefrom: finalPayload.returnArriveFrom || '',
-                        flightNumber: finalPayload.returnFlightNumber || '',
-                        pickmeAfter: finalPayload.returnPickmeAfter || '',
-                        notes: formData.booking.notes || '',
-                        internalNotes: formData.booking.internalNotes || '',
-                        date: new Date(finalPayload.returnDate),
-                        hour: parseInt(finalPayload.returnHour),
-                        minute: parseInt(finalPayload.returnMinute),
-                        fare: finalPayload.fare,
-                        hourlyOption: formData.booking?.hourlyOption || null,
-                        distanceText: finalPayload.returnDistanceText || '',
-                        durationText: finalPayload.returnDurationText || ''
-                    }
-                }).unwrap();
-
-                console.log("✅ Return booking saved:", returnBooking);
-            }
-
+            console.log("Booking saved to MongoDB:", result);
             setStep("success");
         } catch (err) {
-            console.error("❌ Booking failed:", err);
-            setError("Failed to complete your booking. Please try again.");
+            console.error("Booking save failed:", err);
+            setError("Failed to save booking. Please try again.");
         }
     };
 
@@ -149,14 +92,10 @@ const WidgetMain = () => {
                     totalPrice={formData.pricing.totalPrice}
                     postcodePrice={formData.pricing.postcodePrice}
                     dropOffPrice={formData.pricing.dropOffPrice}
-                    onNext={({ totalPrice, selectedCar, returnJourneyToggle }) => {
+                    onNext={({ totalPrice, selectedCar }) => {
                         handleDataChange('pricing', { totalPrice });
                         handleDataChange('vehicle', selectedCar);
                         handleStepChange('payment');
-                        handleDataChange('booking', {
-                            ...formData.booking,
-                            returnJourneyToggle: returnJourneyToggle || false
-                        });
                     }}
                 />
             )}

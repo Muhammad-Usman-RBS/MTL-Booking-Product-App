@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
+import DriverProfile from "./Driver.js";
 
-// Journey Subdocument
 const JourneySchema = new mongoose.Schema({
   pickup: { type: String, required: true },
   dropoff: { type: String, required: true },
@@ -39,15 +39,9 @@ const JourneySchema = new mongoose.Schema({
 
   voucher: { type: String, default: null },
   voucherApplied: { type: Boolean, default: false },
-
-  journeyType: {
-    type: String,
-    enum: ['primary', 'return'],
-    required: true,
-  }
 }, { _id: false });
 
-// Vehicle Subdocument
+// Vehicle Info Subdocument
 const VehicleInfoSchema = new mongoose.Schema({
   vehicleName: { type: String, required: true },
   passenger: { type: Number, default: 0 },
@@ -63,14 +57,14 @@ const PassengerSchema = new mongoose.Schema({
   phone: { type: String },
 }, { _id: false });
 
-// Status Audit Subdocument
+// Status Audit Entry Subdocument
 const StatusAuditSchema = new mongoose.Schema({
   updatedBy: { type: String, required: true },
   status: { type: String, required: true },
   date: { type: Date, default: Date.now },
 }, { _id: false });
 
-// ✅ Final Booking Schema
+// Booking Schema
 const BookingSchema = new mongoose.Schema({
   bookingId: { type: String, unique: true },
   mode: {
@@ -78,9 +72,17 @@ const BookingSchema = new mongoose.Schema({
     enum: ["Transfer", "Hourly"],
     required: true,
   },
-  journeyDetails: {
-    type: [JourneySchema],
-    validate: [arr => arr.length > 0, 'At least one journey is required']
+  returnJourneyToggle: {
+    type: Boolean,
+    required: true,
+  },
+  returnJourney: {
+    type: JourneySchema,
+    required: false,
+  },
+  primaryJourney: {
+    type: JourneySchema,
+    required: false,
   },
   vehicle: {
     type: VehicleInfoSchema,
@@ -95,6 +97,7 @@ const BookingSchema = new mongoose.Schema({
     ref: "Company",
   },
   status: { type: String, default: "No Show" },
+
   statusAudit: {
     type: [StatusAuditSchema],
     default: [],

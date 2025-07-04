@@ -114,7 +114,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
         if (!passengerDetails.name || !passengerDetails.email || !passengerDetails.phone) {
             toast.error("Please fill all required passenger details.");
             return;
-        }
+        } 
 
         const payload = {
             passengerDetails,
