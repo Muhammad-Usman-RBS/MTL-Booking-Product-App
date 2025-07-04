@@ -11,6 +11,7 @@ import { useLazyGeocodeQuery } from '../../../redux/api/googleApi';
 import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
 import { useGetFixedPricesForWidgetQuery } from '../../../redux/api/fixedPriceApi';
 import { useGetDiscountsByCompanyIdQuery } from '../../../redux/api/discountApi';
+import WidgetBooking from './WidgetBooking';
 
 const WidgetBookingInformation = ({
   companyId: propCompanyId,
@@ -38,6 +39,11 @@ const WidgetBookingInformation = ({
   const [journeyDateTime, setJourneyDateTime] = useState(null);
   const [matchedSurcharge, setMatchedSurcharge] = useState(0);
   const [selectedCarFinalPrice, setSelectedCarFinalPrice] = useState(0);
+  const [showReturnJourney, setShowReturnJourney] = useState(false);
+  const [returnForm, setReturnForm] = useState(null);
+  const [journeyType, setJourneyType] = useState('one-way');
+  const [returnPickup, setReturnPickup] = useState('');
+  const [returnDropoff, setReturnDropoff] = useState('');
 
   const [triggerDistance] = useLazyGetDistanceQuery();
   const { data: carList = [], isLoading, error } = useGetPublicVehiclesQuery(companyId, { skip: !companyId });
@@ -367,6 +373,7 @@ const WidgetBookingInformation = ({
     // Send selected car and final total price to parent
     onNext({
       totalPrice: calculatedTotalPrice,
+      returnJourneyToggle: formData?.returnJourneyToggle || false,
       selectedCar: {
         ...selectedCar,
         passenger: selectedCar?.passengers || 0,
@@ -374,8 +381,25 @@ const WidgetBookingInformation = ({
         handLuggage: selectedCar?.handLuggage || 0,
         checkinLuggage: selectedCar?.checkinLuggage || 0,
         finalPrice: selectedCar.price,
+      },
+      // ✅ Send return journey data too
+      returnJourneyData: {
+        returnDate: formData?.returnDate,
+        returnHour: formData?.returnHour,
+        returnMinute: formData?.returnMinute,
+        returnPickup: returnPickup,
+        returnDropoff: returnDropoff,
+        returnAdditionalDropoff1: formData?.returnAdditionalDropoff1,
+        returnAdditionalDropoff2: formData?.returnAdditionalDropoff2,
+        returnPickupDoorNumber: formData?.returnPickupDoorNumber,
+        returnDropoffDoorNumber: formData?.returnDropoffDoorNumber,
+        returnDropoffTerminal: formData?.returnDropoffTerminal,
+        returnArriveFrom: formData?.returnArriveFrom,
+        returnFlightNumber: formData?.returnFlightNumber,
+        returnPickmeAfter: formData?.returnPickmeAfter,
+        returnDistanceText: distanceText,
+        returnDurationText: durationText
       }
-
     });
   };
 
@@ -426,14 +450,14 @@ const WidgetBookingInformation = ({
 
     const surchargeAmount = baseWithMarkup * (matchedSurcharge / 100);
 
-    return (
-      baseWithMarkup +
-      surchargeAmount +
-      (matchedZonePrice || 0) +
-      (dropOffPrice || 0) +
-      (pickupAirportPrice || 0) +
-      (dropoffAirportPrice || 0)
-    );
+    let total = baseWithMarkup + surchargeAmount + (matchedZonePrice || 0) + (dropOffPrice || 0) + (pickupAirportPrice || 0) + (dropoffAirportPrice || 0);
+
+    if (journeyType === 'return') {
+      total *= 2;
+    }
+
+    return total;
+
   })();
 
   useEffect(() => {
@@ -486,7 +510,7 @@ const WidgetBookingInformation = ({
   return (
     <>
       <ToastContainer />
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="lg:col-span-8 w-full">
           <div className="bg-gray-50 border border-gray-200 rounded-2xl shadow-md p-6 w-full">
             <div className="text-center mb-4">
@@ -505,33 +529,64 @@ const WidgetBookingInformation = ({
               )}
             </div>
 
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-4 py-3 bg-white border border-gray-100 rounded-xl">
-              <div className="flex items-center gap-2 w-full md:w-auto">
-                <Icons.PlaneTakeoff className="w-8 h-8 text-red-500" />
-                <div>
-                  <p className="font-medium text-sm text-red-800">{formData?.pickup || "Pickup Location"}</p>
-                  <p className="text-xs text-gray-500">{formData?.doorNumber ? `Door No. ${formData.doorNumber}` : "All Terminals"}</p>
+            {/* ONE-WAY JOURNEY */}
+            {journeyType !== 'return' && (
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-4 py-3 border rounded-xl bg-white">
+                <div className="flex flex-col gap-1 sm:w-1/2">
+                  <div className="flex items-center gap-2">
+                    <Icons.PlaneTakeoff className="w-5 h-5 text-red-500" />
+                    <p className="text-sm font-medium text-red-700">
+                      {formData?.pickup || 'Pickup Location'}
+                    </p>
+                  </div>
+                  {formData?.additionalDropoff1 && (
+                    <p className="text-xs text-gray-500 ms-6">+ {formData.additionalDropoff1}</p>
+                  )}
+                  {formData?.additionalDropoff2 && (
+                    <p className="text-xs text-gray-500 ms-6">+ {formData.additionalDropoff2}</p>
+                  )}
+                </div>
+
+                <div className="text-gray-400 text-xl hidden sm:block">→</div>
+
+                <div className="flex items-center gap-2 sm:w-1/2 justify-end">
+                  <p className="text-sm font-medium text-green-700">
+                    {formData?.dropoff || 'Dropoff Location'}
+                  </p>
+                  <Icons.PlaneLanding className="w-5 h-5 text-green-500" />
                 </div>
               </div>
-              <div className="text-gray-400 text-2xl hidden md:block">→</div>
-              <div className="flex flex-col items-end gap-2 w-full md:w-auto justify-end text-right">
-                {[formData?.dropoff, formData?.additionalDropoff1, formData?.additionalDropoff2]
-                  .filter(Boolean)
-                  .map((location, index, array) => (
-                    <div key={index} className="flex items-center justify-end gap-2">
-                      <div>
-                        <p className="font-medium text-sm text-green-800">{location}</p>
-                        {index === array.length - 1 && (
-                          <p className="text-xs text-gray-500">
-                            {formData?.arrivefrom ? `From: ${formData.arrivefrom}` : "Destination"}
-                          </p>
-                        )}
-                      </div>
-                      <Icons.PlaneLanding className="w-5 h-5 text-green-500" />
-                    </div>
-                  ))}
+            )}
+
+            {/* RETURN JOURNEY */}
+            {journeyType === 'return' && (
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-4 py-3 mt-3 border border-dashed rounded-xl bg-blue-50">
+                <div className="flex flex-col gap-1 sm:w-1/2">
+                  <div className="flex items-center gap-2">
+                    <Icons.PlaneTakeoff className="w-5 h-5 text-red-500" />
+                    <p className="text-sm font-medium text-red-700">
+                      {returnPickup || 'Return Pickup'}
+                    </p>
+                  </div>
+                  {formData?.returnAdditionalDropoff1 && (
+                    <p className="text-xs text-gray-500 ms-6">+ {formData.returnAdditionalDropoff1}</p>
+                  )}
+                  {formData?.returnAdditionalDropoff2 && (
+                    <p className="text-xs text-gray-500 ms-6">+ {formData.returnAdditionalDropoff2}</p>
+                  )}
+                </div>
+
+                <div className="text-gray-400 text-xl hidden sm:block">→</div>
+
+                <div className="flex items-center gap-2 sm:w-1/2 justify-end">
+                  <p className="text-sm font-medium text-green-700">
+                    {returnDropoff || 'Return Dropoff'}
+                  </p>
+                  <Icons.PlaneLanding className="w-5 h-5 text-green-500" />
+                </div>
               </div>
-            </div>
+            )}
+
 
             <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 text-sm text-gray-600 px-2">
               {durationText && (
@@ -602,7 +657,6 @@ const WidgetBookingInformation = ({
                     base = getVehiclePriceForDistance(car, actualMiles || 0);
                   }
 
-                  // Apply surcharge percentage (e.g. 63%)
                   const surchargeAmount = base * (matchedSurcharge / 100);
                   price = parseFloat((base + surchargeAmount).toFixed(2));
 
@@ -616,7 +670,31 @@ const WidgetBookingInformation = ({
                 });
               })()}
               selectedCarId={selectedCarId}
-              onSelect={setSelectedCarId}
+              onSelect={(id, type) => {
+                setSelectedCarId(id);
+                setJourneyType(type);
+                setShowReturnJourney(type === 'return');
+
+                if (type === 'return') {
+                  // User selected RETURN journey
+                  setFormData(prev => ({
+                    ...prev,
+                    direction: 'Both Ways',
+                    returnJourneyToggle: true
+                  }));
+                  setReturnPickup(formData?.dropoff || '');
+                  setReturnDropoff(formData?.pickup || '');
+                } else {
+                  // User selected ONE WAY journey
+                  setFormData(prev => ({
+                    ...prev,
+                    direction: 'One Way',
+                    returnJourneyToggle: false
+                  }));
+                  setReturnPickup('');
+                  setReturnDropoff('');
+                }
+              }}
             />
 
             <div className="text-right mt-4">
@@ -693,13 +771,6 @@ const WidgetBookingInformation = ({
                 </div>
               )}
 
-              {/* {!isHourlyMode && fixedZonePrice !== null && (
-                <div className="flex justify-between border-b border-dashed pb-2">
-                  <span>Fixed Zone Price</span>
-                  <span className="font-medium text-gray-900">£{fixedZonePrice.toFixed(2)}</span>
-                </div>
-              )} */}
-
               {!isHourlyMode && matchedZoneToZonePrice !== null && (
                 <div className="flex justify-between border-b border-dashed pb-2">
                   <span>Zone-to-Zone Price</span>
@@ -719,26 +790,26 @@ const WidgetBookingInformation = ({
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-            <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">All Classes Include:</h3>
-            <ul className="space-y-3 text-sm text-gray-700">
-              {["Free cancellation", "Free 60 minutes wait", "Meet & Greet"].map((item, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <Icons.Check className="w-4 h-4 text-green-500 mt-1" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-md p-4">
-              <h4 className="text-sm font-medium text-yellow-800 mb-2 flex items-center gap-2">
-                <Icons.AlertCircle className="w-4 h-4 text-yellow-600" />
-                Please Note
-              </h4>
-              <p className="text-sm text-yellow-900">
-                Child seats must be added for safety reasons.
-              </p>
+          {showReturnJourney && (
+            <div className="mt-2">
+              <h2 className="text-lg font-semibold text-gray-800 mb-2">Return Journey Details</h2>
+              {journeyType === 'return' && (
+                <WidgetBooking
+                  isReturnJourney={true}
+                  returnPickup={returnPickup}
+                  returnDropoff={returnDropoff}
+                  onReturnPickupChange={(val) => {
+                    setReturnPickup(val);
+                    setFormData(prev => ({ ...prev, dropoff: prev.pickup })); // optional for syncing
+                  }}
+                  onReturnDropoffChange={(val) => {
+                    setReturnDropoff(val);
+                    setFormData(prev => ({ ...prev, pickup: prev.dropoff })); // optional for syncing
+                  }}
+                />
+              )}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </>

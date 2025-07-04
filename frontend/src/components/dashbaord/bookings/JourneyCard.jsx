@@ -9,6 +9,11 @@ const JourneyCard = ({
     dropOffs,
     setDropOffs,
     fare,
+    mode,
+    primaryFare,
+    selectedVehicle,
+    matchedPostcodePrice,
+    pricingMode
 }) => {
     const [pickupSuggestions, setPickupSuggestions] = useState([]);
     const [dropOffSuggestions, setDropOffSuggestions] = useState([]);
@@ -92,11 +97,21 @@ const JourneyCard = ({
         <div className="bg-white shadow-md rounded-2xl p-4 sm:p-6 max-w-4xl w-full mx-auto border border-gray-200 mt-6 text-sm">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                 <h3 className="text-lg sm:text-xl font-semibold">{title}:</h3>
-                <div className="btn-edit btn text-sm sm:text-base">
-                    Fare: £{fare?.toFixed(2) || 0}
+                <div className="flex flex-col sm:items-end">
+                    <div className="btn-edit btn text-sm sm:text-base">
+                        Fare: £{fare?.toFixed(2) || "0.00"} ({selectedVehicle?.vehicleName || "N/A"})
+                    </div>
+
+                    {pricingMode === 'postcode' &&
+                        matchedPostcodePrice?.price &&
+                        selectedVehicle?.percentageRate > 0 && (
+                            <p className="text-xs mt-1 text-gray-600">
+                                Base: £{matchedPostcodePrice.price.toFixed(2)} + {selectedVehicle.percentageRate}% = £{fare?.toFixed(2)}
+                            </p>
+                        )}
+
                 </div>
             </div>
-
             <div className="mb-4">
                 <label className="block text-xs font-medium text-gray-600 mb-1">
                     Pick Up Date & Time

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import { useCreateBookingMutation } from '../../../redux/api/bookingApi';
+import Icons from '../../../assets/icons';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import SelectOption from '../../../constants/constantscomponents/SelectOption';
@@ -232,6 +233,16 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                     <SelectOption label="Hand Luggage" value={formData.handLuggage} options={handLuggageOptions} onChange={handleSelectChange('handLuggage')} />
                     <SelectOption label="Check-in Luggage" value={formData.checkinLuggage} options={checkinLuggageOptions} onChange={handleSelectChange('checkinLuggage')} />
                 </div>
+            </div>
+
+            <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                <h4 className="text-sm font-medium text-yellow-800 mb-2 flex items-center gap-2">
+                    <Icons.AlertCircle className="w-4 h-4 text-yellow-600" />
+                    Please Note
+                </h4>
+                <p className="text-sm text-yellow-900">
+                    Child seats must be added for safety reasons.
+                </p>
             </div>
 
             {/* Payment Section */}

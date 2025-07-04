@@ -20,7 +20,6 @@ const CarCard = ({ car, isSelected, onSelect }) => {
     features = [],
   } = car;
 
-  // ✅ always fallback to placeholder image
   const validImage = image ? image : IMAGES.profilecarimg;
 
   return (
@@ -28,7 +27,6 @@ const CarCard = ({ car, isSelected, onSelect }) => {
       id={_id}
       className={`rounded-xl border transition-shadow duration-300 mb-6 overflow-hidden cursor-pointer ${isSelected ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 bg-white'
         }`}
-      onClick={() => onSelect(_id)}
     >
       <div className="p-4">
         <div className="flex gap-4">
@@ -44,23 +42,16 @@ const CarCard = ({ car, isSelected, onSelect }) => {
 
           <div className="flex-1">
             <div className="flex justify-between items-start">
-              <h3 className="text-lg font-semibold text-gray-800">{vehicleName || 'Vehicle Name'}</h3>
-              <div className="flex items-center gap-2">
-                {price !== null ? (
-                  <span className="text-lg font-semibold text-blue-600">£{parseFloat(price).toFixed(2)}</span>
-                ) : (
-                  <span className="text-sm text-gray-500">No price available</span>
-                )}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowDetails((prev) => !prev);
-                  }}
-                  className="text-gray-600 hover:text-gray-800"
-                >
-                  {showDetails ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                </button>
-              </div>
+              <h3 className="text-lg font-semibold text-gray-800">{vehicleName}</h3>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDetails((prev) => !prev);
+                }}
+                className="text-gray-600 hover:text-gray-800 flex items-center"
+              >Properties
+                {showDetails ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              </button>
             </div>
 
             <div className="mt-2 text-sm text-gray-600 flex gap-6 flex-wrap">
@@ -75,6 +66,30 @@ const CarCard = ({ car, isSelected, onSelect }) => {
                 {description && <span>{description}</span>}
                 {carModel && <span> · {carModel}</span>}
               </div>
+            )}
+
+            {/* ✅ ONE WAY / RETURN buttons */}
+            {price !== null && (
+              <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                <button
+                  type="button"
+                  onClick={() => onSelect(_id, 'one-way')}
+                  className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded shadow"
+                >
+                  ONE WAY: £{parseFloat(price).toFixed(2)}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelect(_id, 'return')}
+                  className="bg-gray-700 hover:bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded shadow"
+                >
+                  RETURN: £{(parseFloat(price) * 2).toFixed(2)}
+                </button>
+              </div>
+            )}
+
+            {price === null && (
+              <div className="text-sm text-gray-500 mt-3">No price available</div>
             )}
           </div>
         </div>
@@ -96,7 +111,6 @@ const CarCard = ({ car, isSelected, onSelect }) => {
   );
 };
 
-// ✅ Single Column Section Layout
 const CarCardSection = ({ carList, selectedCarId, onSelect }) => {
   return (
     <div className="grid grid-cols-1">
@@ -105,7 +119,7 @@ const CarCardSection = ({ carList, selectedCarId, onSelect }) => {
           key={car._id}
           car={car}
           isSelected={selectedCarId === car._id}
-          onSelect={onSelect}
+          onSelect={(id, type) => onSelect(id, type)}
         />
       ))}
     </div>
