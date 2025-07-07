@@ -1,13 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Icons from "../../../assets/icons";
-import { locationCategoryData } from "../../../constants/dashboardTabsData/data";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import { toast } from "react-toastify";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import { useCreateLocationCategoryMutation, useDeleteLocationCategoryMutation, useFetchAllLocationCategoriesQuery, useUpdateLocationCategoryMutation } from "../../../redux/api/locationCategoryApi";
 
 const LocationCategory = () => {
-  const [data, setData] = useState(locationCategoryData);
+  const { data: locationCategories = [], isLoading, refetch } = useFetchAllLocationCategoriesQuery();
+  const [createLocationCategory] = useCreateLocationCategoryMutation();
+  const [deleteLocationCategory] = useDeleteLocationCategoryMutation(); 
+  const [updateLocationCategory] = useUpdateLocationCategoryMutation();
+  
+  const [editId, setEditId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [categoryName, setCategoryName] = useState("");
   const [pickupFields, setPickupFields] = useState([]);
@@ -20,11 +25,17 @@ const LocationCategory = () => {
     selectValues: "",
   };
 
-  const handleAddNew = () => {
-    setShowForm(true);
+  // Reset form state
+  const resetForm = () => {
     setCategoryName("");
     setPickupFields([]);
     setDropoffFields([]);
+    setEditId(null);
+  };
+
+  const handleAddNew = () => {
+    resetForm();
+    setShowForm(true);
   };
 
   const handleAddPickupField = () => {
@@ -37,7 +48,7 @@ const LocationCategory = () => {
 
   const handleFieldChange = (list, setList, index, key, value) => {
     const updated = [...list];
-    updated[index][key] = value;
+    updated[index] = { ...updated[index], [key]: value };
     setList(updated);
   };
 
@@ -47,36 +58,81 @@ const LocationCategory = () => {
     setList(updated);
   };
 
-  const handleSubmit = () => {
-    if (!categoryName) return toast.error("Category Name is required!");
-    setData([
-      ...data,
-      {
-        category: categoryName,
-        locations: pickupFields.length + dropoffFields.length,
-      },
-    ]);
-    toast.success("Location Category Added!");
-    setShowForm(false);
+  const handleSubmit = async () => {
+    if (!categoryName.trim()) {
+      return toast.error("Category Name is required!");
+    }
+  
+    const payload = {
+      categoryName: categoryName.trim(),
+      pickupFields,
+      dropoffFields,
+    };
+  
+    try {
+      if (editId) {
+        await updateLocationCategory({ id: editId, payload }).unwrap();
+        toast.success("Location Category Updated!");
+      } else {
+        await createLocationCategory(payload).unwrap();
+        toast.success("Location Category Added!");
+      }
+  
+      setShowForm(false);
+      resetForm();
+      refetch();
+    } catch (error) {
+      toast.error(error?.data?.message || "Operation failed");
+    }
   };
-
+  
   const handleEdit = (item) => {
-    // Add edit logic
+    // Properly populate form with existing data
+    setCategoryName(item.categoryName || "");
+    
+    // Ensure fields have proper structure with default values
+    const formattedPickupFields = (item.pickupFields || []).map(field => ({
+      fieldName: field.fieldName || "",
+      type: field.type || "Optional",
+      inputType: field.inputType || "Text Value",
+      selectValues: field.selectValues || "",
+    }));
+    
+    const formattedDropoffFields = (item.dropoffFields || []).map(field => ({
+      fieldName: field.fieldName || "",
+      type: field.type || "Optional", 
+      inputType: field.inputType || "Text Value",
+      selectValues: field.selectValues || "",
+    }));
+    
+    setPickupFields(formattedPickupFields);
+    setDropoffFields(formattedDropoffFields);
+    setEditId(item._id);
+    setShowForm(true);
   };
 
-  const handleDelete = (category) => {
-    setData(data.filter((item) => item.category !== category));
-    toast.success("Location Category Deleted!");
+  const handleDelete = async (categoryName) => {
+    const category = locationCategories.find((item) => item.categoryName === categoryName);
+    if (!category?._id) return toast.error("Category not found");
+  
+    try {
+      await deleteLocationCategory(category._id).unwrap();
+      toast.success("Location Category Deleted!");
+      refetch();
+    } catch (error) {
+      toast.error(error?.data?.message || "Failed to delete category");
+    }
   };
-
+  
   const tableHeaders = [
     { label: "Category", key: "category" },
     { label: "No. Of Locations", key: "locations" },
     { label: "Action", key: "actions" },
   ];
 
-  const tableData = data.map((item) => ({
-    ...item,
+  const tableData = locationCategories.map((item) => ({
+    category: item.categoryName,
+    locations: (item.pickupFields?.length || 0) + (item.dropoffFields?.length || 0),
     actions: (
       <div className="flex gap-2">
         <Icons.Pencil
@@ -86,7 +142,7 @@ const LocationCategory = () => {
         />
         <Icons.Trash
           title="Delete"
-          onClick={() => handleDelete(item.category)}
+          onClick={() => handleDelete(item.categoryName)}
           className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
         />
       </div>
@@ -103,7 +159,7 @@ const LocationCategory = () => {
             <input
               type="text"
               className="custom_input"
-              value={field.fieldName}
+              value={field.fieldName || ""}
               onChange={(e) =>
                 handleFieldChange(
                   fields,
@@ -117,11 +173,25 @@ const LocationCategory = () => {
           </div>
           <div>
             <label className="text-sm">Type *</label>
-            <SelectOption width="full" options={["Optional", "Required"]} />
+            <SelectOption
+              width="full"
+              options={["Optional", "Required"]}
+              value={field.type || "Optional"}
+              onChange={(e) =>
+                handleFieldChange(fields, setFields, idx, "type", e.target.value)
+              }
+            />
           </div>
           <div>
             <label className="text-sm">Input Type *</label>
-            <SelectOption width="full" options={["Text Value", "Select Box"]} />
+            <SelectOption
+              width="full"
+              options={["Text Value", "Select Box"]}
+              value={field.inputType || "Text Value"}
+              onChange={(e) =>
+                handleFieldChange(fields, setFields, idx, "inputType", e.target.value)
+              }
+            />
           </div>
           <div>
             <label className="text-sm">Select Values *</label>
@@ -129,7 +199,7 @@ const LocationCategory = () => {
               type="text"
               className="custom_input"
               placeholder="Comma separated"
-              value={field.selectValues}
+              value={field.selectValues || ""}
               onChange={(e) =>
                 handleFieldChange(
                   fields,
@@ -142,6 +212,7 @@ const LocationCategory = () => {
             />
           </div>
           <button
+            type="button"
             className="text-red-600 border border-red-500 px-3 py-1 rounded hover:bg-red-100"
             onClick={() => handleRemoveField(fields, setFields, idx)}
           >
@@ -155,7 +226,7 @@ const LocationCategory = () => {
   return (
     <div>
       <OutletHeading
-        name={showForm ? "Add Location Category" : "Location Category"}
+        name={showForm ? (editId ? "Edit Location Category" : "Add Location Category") : "Location Category"}
       />
 
       {showForm ? (
@@ -176,8 +247,12 @@ const LocationCategory = () => {
             </div>
             <div>
               <button
+                type="button"
                 className="btn btn-success"
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  setShowForm(false);
+                  resetForm();
+                }}
               >
                 Location Category List
               </button>
@@ -185,10 +260,10 @@ const LocationCategory = () => {
           </div>
 
           <div className="flex gap-4 mt-8">
-            <button className="btn btn-primary" onClick={handleAddPickupField}>
+            <button type="button" className="btn btn-primary" onClick={handleAddPickupField}>
               Add Pickup Field
             </button>
-            <button className="btn btn-edit" onClick={handleAddDropoffField}>
+            <button type="button" className="btn btn-edit" onClick={handleAddDropoffField}>
               Add Dropoff Field
             </button>
           </div>
@@ -197,14 +272,14 @@ const LocationCategory = () => {
           {renderFields(dropoffFields, setDropoffFields, "Dropoff")}
 
           <div className="flex justify-center">
-            <button className="btn btn-reset mt-4" onClick={handleSubmit}>
-              Submit
+            <button type="button" className="btn btn-reset mt-4" onClick={handleSubmit}>
+              {editId ? "Update" : "Submit"}
             </button>
           </div>
         </div>
       ) : (
         <>
-          <button className="btn btn-edit mb-4" onClick={handleAddNew}>
+          <button type="button" className="btn btn-edit mb-4" onClick={handleAddNew}>
             Add New
           </button>
           <CustomTable

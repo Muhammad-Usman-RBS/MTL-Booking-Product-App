@@ -1,9 +1,7 @@
 import Company from "../models/Company.js";
 import User from "../models/User.js";
-import nodemailer from "nodemailer";
-import mongoose from "mongoose";
 import sendEmail from "../utils/sendEmail.js";
-
+import mongoose from "mongoose";
 export const createCompanyAccount = async (req, res) => {
   try {
     const {
@@ -27,6 +25,10 @@ export const createCompanyAccount = async (req, res) => {
       clientAdminId,
       fullName,
       status,
+      cookieConsent,
+      tradingName,
+      licenseNo,
+      licenseReferenceLink,
     } = req.body;
 
     // ✅ Validate required fields
@@ -71,6 +73,10 @@ export const createCompanyAccount = async (req, res) => {
       clientAdminId: new mongoose.Types.ObjectId(clientAdminId),
       fullName,
       status,
+      cookieConsent,
+      tradingName,
+      licenseNo,
+      licenseReferenceLink,
     });
 
     // ✅ Save company and update user

@@ -21,6 +21,10 @@ const companySchema = new mongoose.Schema({
   address: String,
   invoiceTerms: String,
   profileImage: String,
+  cookieConsent: String,
+  tradingName: String,
+  licenseNo: String,
+  licenseReferenceLink: String,
   clientAdminId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

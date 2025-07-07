@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { Link, useNavigate } from "react-router-dom";
+import {  Link, useNavigate } from "react-router-dom";
 import { useFetchAllCompaniesQuery, useSendCompanyEmailMutation, useDeleteCompanyAccountMutation } from "../../../redux/api/companyApi";
 import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
@@ -15,7 +15,7 @@ const tabs = ["active", "pending", "suspended", "deleted"];
 
 const CompanyAccountsList = () => {
   const { data: companies = [], refetch } = useFetchAllCompaniesQuery();
-
+  console.log(companies, "Company Accounts Data"); ;
   const navigate = useNavigate();
   const [sendEmail] = useSendCompanyEmailMutation();
   const [deleteCompany] = useDeleteCompanyAccountMutation();

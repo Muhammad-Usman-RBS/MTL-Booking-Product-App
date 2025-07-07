@@ -1,18 +1,18 @@
 import React, { useState } from "react";
-import Icons from "../../../assets/icons";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import CustomTable from "../../../constants/constantscomponents/CustomTable";
-import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import Icons from "../../../assets/icons";
+import CustomModal from "../../../constants/constantscomponents/CustomModal";
+import CustomTable from "../../../constants/constantscomponents/CustomTable";
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import {
   useCreateBookingRestrictionMutation,
   useDeleteBookingRestrictionMutation,
   useGetAllBookingRestrictionsQuery,
   useUpdateBookingRestrictionMutation,
 } from "../../../redux/api/bookingRestrictionDateApi";
-import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import { useSelector } from "react-redux";
 
 const BookingRestrictionDate = () => {
   const user = useSelector((state) => state.auth.user);
@@ -27,7 +27,6 @@ const BookingRestrictionDate = () => {
     isLoading,
     isError,
   } = useGetAllBookingRestrictionsQuery(companyId);
-  console.log(user);
   const [updateBookingRestriction] = useUpdateBookingRestrictionMutation();
   const [deleteBookingRestriction] = useDeleteBookingRestrictionMutation();
 
@@ -78,17 +77,14 @@ const BookingRestrictionDate = () => {
       };
 
       if (_id) {
-        // Edit mode
-        const response = await updateBookingRestriction({
+        await updateBookingRestriction({
           id: _id,
           updatedData: payload,
         }).unwrap();
         toast.success("Booking Restriction Updated!");
-        console.log("Updated Booking Restriction:", response);
       } else {
-        const response = await createBookingRestriction(payload).unwrap();
+        await createBookingRestriction(payload).unwrap();
         toast.success("Booking Restriction Created!");
-        console.log("Created Booking Restriction:", response);
       }
       setShowModal(false);
     } catch (error) {
@@ -146,6 +142,13 @@ const BookingRestrictionDate = () => {
   }));
   if (isLoading) {
     return <p className="text-center py-10">Loading booking restrictions...</p>;
+  }
+  if (!companyId) {
+    return (
+      <p className="text-center text-red-600 py-10">
+        Company ID is not available. Please contact Admin
+      </p>
+    );
   }
 
   if (isError) {
