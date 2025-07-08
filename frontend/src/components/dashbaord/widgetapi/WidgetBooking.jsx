@@ -213,7 +213,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
 
             const returnPayload = {
                 ...primaryData,
-                returnJourneyToggle: true,
+                // returnJourneyToggle: true,
                 returnJourney: {
                     ...returnFormData, // ✅ Includes date, hour, minute properly
                     dropoff: dropOffs[0],
@@ -232,7 +232,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                         additionalDropoff1: dropOffs[1] || null,
                         additionalDropoff2: dropOffs[2] || null,
                     },
-                    returnJourneyToggle: true,
+                    // returnJourneyToggle: true,
                 });
             } catch (error) {
                 toast.error("Return journey booking failed.");
@@ -479,6 +479,29 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                                 </button>
                             ))}
                         </div>
+
+                        {mode === "Hourly" && (
+                            <div className="flex justify-center">
+                                <SelectOption
+                                    options={formattedHourlyOptions.map(opt => ({
+                                        label: opt.label,
+                                        value: JSON.stringify(opt.value),
+                                    }))}
+                                    value={JSON.stringify(selectedHourly?.value)}
+                                    onChange={(e) => {
+                                        const selected = formattedHourlyOptions.find(
+                                            opt => JSON.stringify(opt.value) === e.target.value
+                                        );
+                                        setSelectedHourly(selected);
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            hourlyOption: selected,
+                                            originalHourlyOption: selected
+                                        }));
+                                    }}
+                                />
+                            </div>
+                        )}
 
                         {/* Pickup Location */}
                         <div className="relative">

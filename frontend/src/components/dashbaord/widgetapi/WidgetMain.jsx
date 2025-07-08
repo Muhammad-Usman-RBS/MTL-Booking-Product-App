@@ -35,7 +35,7 @@ const WidgetMain = () => {
 
             const primaryJourney = {
                 ...formData.booking,
-                fare: finalPayload.fare || 0,
+                fare: formData.pricing.totalPrice / 2 || 0,
                 hourlyOption: isPrimaryHourly ? formData.booking?.hourlyOption : null,
                 pickup: formData.booking?.pickup || "",
                 dropoff: formData.booking?.dropoff || "",
@@ -45,7 +45,6 @@ const WidgetMain = () => {
             };
 
             const returnData = formData.booking?.returnBooking;
-
             const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
             const isReturnValid =
                 formData.booking?.returnJourneyToggle &&
@@ -55,7 +54,7 @@ const WidgetMain = () => {
                     return typeof value === "string" ? value.trim() !== "" : value !== null && value !== undefined;
                 });
 
-            // ✅ Submit Primary Journey Booking
+            // ✅ Submit Primary Journey as first booking
             const primaryPayload = {
                 companyId,
                 source: "widget",
@@ -73,12 +72,12 @@ const WidgetMain = () => {
             console.log("🚀 Submitting Primary Journey Payload:", primaryPayload);
             await createBooking(primaryPayload).unwrap();
 
-            // ✅ Submit Return Journey Separately
+            // ✅ Submit Return Journey as second booking — put data in returnJourney
             if (isReturnValid) {
                 const returnJourney = {
                     ...returnData,
-                    fare: finalPayload.returnBooking?.fare || 0,
-                    hourlyOption: isReturnHourly ? returnData?.hourlyOption : null,
+                    fare: formData.pricing.totalPrice / 2 || 0,
+                    hourlyOption: isReturnHourly ? formData.booking?.returnBooking?.hourlyOption : null,
                     pickup: returnData?.pickup || "",
                     dropoff: returnData?.dropoff || "",
                     date: returnData?.date || "",
@@ -86,26 +85,37 @@ const WidgetMain = () => {
                     minute: returnData?.minute || "",
                     notes: `(Return Journey) ${returnData?.notes || ""}`,
                 };
-
                 const returnPayload = {
                     companyId,
                     source: "widget",
-                    referrer: `${document.referrer || "Widget"} (Return Journey)`,
+                    referrer: `${document.referrer || "Widget"} (Return)`,
                     vehicle: formData.vehicle,
                     passenger: finalPayload.passenger || {},
                     voucher: finalPayload.voucher,
                     voucherApplied: !!finalPayload.voucher,
                     PassengerEmail: finalPayload?.passengerDetails?.email || "",
                     mode: formData.booking?.mode || "Transfer",
-                    returnJourneyToggle: false,
-                    primaryJourney: returnJourney,
+                    returnJourneyToggle: true,
+
+                    // 🔁 Actual return data
+                    returnJourney: {
+                        ...returnData,
+                        fare: formData.pricing.totalPrice / 2 || 0,
+                        hourlyOption: isReturnHourly ? formData.booking?.returnBooking?.hourlyOption : null,
+                        pickup: returnData?.pickup || "",
+                        dropoff: returnData?.dropoff || "",
+                        date: returnData?.date || "",
+                        hour: returnData?.hour || "",
+                        minute: returnData?.minute || "",
+                        notes: `(Return Journey) ${returnData?.notes || ""}`,
+                    },
                 };
 
                 console.log("🔁 Submitting Return Journey Payload:", returnPayload);
                 await createBooking(returnPayload).unwrap();
             }
 
-            // ✅ Go to success screen
+            // ✅ Success step
             setStep("success");
         } catch (err) {
             console.error("❌ Booking save failed:", err);
@@ -182,6 +192,7 @@ const WidgetMain = () => {
                         const finalPayload = {
                             companyId,
                             referrer: window.location.href,
+                            fare: formData.pricing.totalPrice,
                             mode: formData.booking?.mode || "Transfer",
                             returnJourneyToggle: formData.booking?.returnJourneyToggle || false,
                             primaryJourney: formData.booking,

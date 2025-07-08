@@ -45,9 +45,19 @@ export const createBooking = async (req, res) => {
     }
 
     const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
-    for (const field of requiredFields) {
-      if (!primaryJourney[field]) {
-        return res.status(400).json({ message: `Missing field in primaryJourney: ${field}` });
+
+    // ✅ Only validate required fields based on journey type
+    if (!returnJourneyToggle) {
+      for (const field of requiredFields) {
+        if (!primaryJourney[field]) {
+          return res.status(400).json({ message: `Missing field in primaryJourney: ${field}` });
+        }
+      }
+    } else {
+      for (const field of requiredFields) {
+        if (!returnJourney[field]) {
+          return res.status(400).json({ message: `Missing field in returnJourney: ${field}` });
+        }
       }
     }
 
@@ -69,10 +79,10 @@ export const createBooking = async (req, res) => {
     };
 
     const bookingId = await generateNextBookingId();
-    const source = referrer?.includes("widget") ? "widget" : "admin";
+    const source = referrer?.toLowerCase()?.includes("widget") ? "widget" : "admin";
 
     const baseVehicleInfo = {
-      vehicleName: vehicle.vehicleName,
+      vehicleName: vehicle.vehicleName || null,
       passenger: parseInt(vehicle.passenger) || 0,
       childSeat: parseInt(vehicle.childSeat) || 0,
       handLuggage: parseInt(vehicle.handLuggage) || 0,
@@ -90,7 +100,7 @@ export const createBooking = async (req, res) => {
       returnJourney &&
       requiredFields.every((f) => returnJourney[f]);
 
-    // ✅ Build final payload once
+    // ✅ Build base booking payload
     const bookingPayload = {
       bookingId,
       mode,
@@ -101,7 +111,11 @@ export const createBooking = async (req, res) => {
       status: "New",
       vehicle: baseVehicleInfo,
       passenger: basePassengerInfo,
-      primaryJourney: {
+    };
+
+    // ✅ Add primaryJourney if it's a primary booking
+    if (!returnJourneyToggle) {
+      bookingPayload.primaryJourney = {
         pickup: primaryJourney.pickup?.trim() || "",
         dropoff: primaryJourney.dropoff?.trim() || "",
         additionalDropoff1: primaryJourney.additionalDropoff1 || null,
@@ -114,8 +128,8 @@ export const createBooking = async (req, res) => {
         notes: primaryJourney.notes || null,
         internalNotes: primaryJourney.internalNotes || null,
         date: primaryJourney.date,
-        hour: parseInt(primaryJourney.hour),
-        minute: parseInt(primaryJourney.minute),
+        hour: primaryJourney.hour !== undefined ? parseInt(primaryJourney.hour) : null,
+        minute: primaryJourney.minute !== undefined ? parseInt(primaryJourney.minute) : null,
         fare: primaryJourney.fare,
         hourlyOption: primaryJourney.hourlyOption || null,
         distanceText: primaryJourney.distanceText || null,
@@ -123,10 +137,10 @@ export const createBooking = async (req, res) => {
         voucher: validVoucher,
         voucherApplied: isVoucherApplied,
         ...extractDynamicDropoffFields(primaryJourney),
-      }
-    };
+      };
+    }
 
-    // ✅ Add returnJourney only if valid
+    // ✅ Add returnJourney if valid
     if (returnIsValid) {
       bookingPayload.returnJourney = {
         pickup: returnJourney.pickup?.trim() || "",
@@ -141,8 +155,8 @@ export const createBooking = async (req, res) => {
         notes: returnJourney.notes || null,
         internalNotes: returnJourney.internalNotes || null,
         date: returnJourney.date,
-        hour: parseInt(returnJourney.hour),
-        minute: parseInt(returnJourney.minute),
+        hour: returnJourney.hour !== undefined ? parseInt(returnJourney.hour) : null,
+        minute: returnJourney.minute !== undefined ? parseInt(returnJourney.minute) : null,
         fare: returnJourney.fare || 0,
         hourlyOption: returnJourney.hourlyOption || null,
         distanceText: returnJourney.distanceText || null,
@@ -151,23 +165,25 @@ export const createBooking = async (req, res) => {
       };
     }
 
-
-    // ✅ Save booking once
+    // ✅ Save booking
     const savedBooking = await Booking.create(bookingPayload);
 
-    // ✅ Email logic
+    // ✅ Email sending
     const sanitize = (booking) => {
       const { _id, __v, createdAt, updatedAt, companyId, ...clean } = booking.toObject();
       return clean;
     };
 
-    if (PassengerEmail || ClientAdminEmail) {
-      const emailData = {
-        title: "Booking Confirmation",
-        data: { Booking: sanitize(savedBooking) },
-      };
-      if (PassengerEmail) await sendEmail(PassengerEmail, "Your Booking Confirmation", emailData);
-      if (ClientAdminEmail) await sendEmail(ClientAdminEmail, "New Booking Received", emailData);
+    const emailData = {
+      title: "Booking Confirmation",
+      data: { Booking: sanitize(savedBooking) },
+    };
+
+    if (PassengerEmail) {
+      await sendEmail(PassengerEmail, "Your Booking Confirmation", emailData);
+    }
+    if (ClientAdminEmail) {
+      await sendEmail(ClientAdminEmail, "New Booking Received", emailData);
     }
 
     return res.status(201).json({
@@ -185,7 +201,6 @@ export const createBooking = async (req, res) => {
     });
   }
 };
-
 
 // Create Booking (updated for bookingJourney only)
 // export const createBooking = async (req, res) => {
@@ -543,7 +558,8 @@ export const submitWidgetForm = async (req, res) => {
         notes: primaryJourney.notes || null,
         internalNotes: primaryJourney.internalNotes || null,
         date: primaryJourney.date,
-        hour: parseInt(primaryJourney.hour),
+        hour: primaryJourney.hour !== undefined ? parseInt(primaryJourney.hour) : null,
+        minute: primaryJourney.minute !== undefined ? parseInt(primaryJourney.minute) : null,
         minute: parseInt(primaryJourney.minute),
         fare: primaryJourney.fare,
         hourlyOption: primaryJourney.hourlyOption || null,
