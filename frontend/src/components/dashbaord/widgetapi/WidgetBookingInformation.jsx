@@ -11,6 +11,7 @@ import { useLazyGeocodeQuery } from '../../../redux/api/googleApi';
 import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
 import { useGetFixedPricesForWidgetQuery } from '../../../redux/api/fixedPriceApi';
 import { useGetDiscountsByCompanyIdQuery } from '../../../redux/api/discountApi';
+import WidgetBooking from './WidgetBooking';
 
 const WidgetBookingInformation = ({
   companyId: propCompanyId,
@@ -38,6 +39,9 @@ const WidgetBookingInformation = ({
   const [journeyDateTime, setJourneyDateTime] = useState(null);
   const [matchedSurcharge, setMatchedSurcharge] = useState(0);
   const [selectedCarFinalPrice, setSelectedCarFinalPrice] = useState(0);
+  const [showReturnBooking, setShowReturnBooking] = useState(false);
+  const [returnFormData, setReturnFormData] = useState({});
+  const [selectedJourneyType, setSelectedJourneyType] = useState("oneWay"); // default
 
   const [triggerDistance] = useLazyGetDistanceQuery();
   const { data: carList = [], isLoading, error } = useGetPublicVehiclesQuery(companyId, { skip: !companyId });
@@ -131,6 +135,10 @@ const WidgetBookingInformation = ({
 
     return null;
   };
+
+  useEffect(() => {
+    console.log("🧪 returnFormData state updated:", returnFormData);
+  }, [returnFormData]);
 
   useEffect(() => {
     if (!journeyDateTime || discounts.length === 0) return;
@@ -357,25 +365,56 @@ const WidgetBookingInformation = ({
     }
 
     const selectedCar = carList.find(car => car._id === selectedCarId);
-    if (!selectedCar) {
-      toast.error("Please select a vehicle.");
+    if (!selectedCar || !selectedCar.vehicleName) {
+      toast.error("Please select a valid vehicle with name.");
       return;
     }
 
-    localStorage.setItem("selectedVehicle", JSON.stringify(selectedCar));
+    const vehiclePayload = {
+      vehicleName: selectedCar.vehicleName,
+      passenger: selectedCar.passengers || 0,
+      childSeat: selectedCar.childSeat || 0,
+      handLuggage: selectedCar.handLuggage || 0,
+      checkinLuggage: selectedCar.checkinLuggage || 0,
+      finalPrice:
+        selectedJourneyType === "return"
+          ? selectedCar.returnPrice || 0
+          : selectedCar.price || 0,
+    };
 
-    // Send selected car and final total price to parent
+    const dropOffPrice = formData.dropOffPrice || 0;
+    const totalPrice = selectedJourneyType === "return"
+      ? vehiclePayload.finalPrice * 2 + dropOffPrice
+      : vehiclePayload.finalPrice + dropOffPrice;
+
+    // Fallback to HTML field values for return journey
+    const getSafeReturnField = (field) => {
+      const el = document.querySelector(`[name="${field}"]`);
+      return el ? el.value : "";
+    };
+
+    const parsedReturn = {
+      ...returnFormData,
+      date: returnFormData.date || getSafeReturnField("date"),
+      hour: returnFormData.hour || getSafeReturnField("hour"),
+      minute: returnFormData.minute || getSafeReturnField("minute"),
+    };
+
+
+    const returnFare = parseFloat((calculatedTotalPrice / 2).toFixed(2));
+
     onNext({
       totalPrice: calculatedTotalPrice,
+      returnJourneyToggle: formData?.returnJourneyToggle || false,
       selectedCar: {
-        ...selectedCar,
-        passenger: selectedCar?.passengers || 0,
-        childSeat: selectedCar?.childSeat || 0,
-        handLuggage: selectedCar?.handLuggage || 0,
-        checkinLuggage: selectedCar?.checkinLuggage || 0,
-        finalPrice: selectedCar.price,
-      }
-
+        ...vehiclePayload,
+        fare: vehiclePayload.finalPrice,
+        returnFare: returnFare
+      },
+      returnBooking: {
+        ...parsedReturn, // ✅ use this instead of returnFormData directly
+        fare: returnFare
+      },
     });
   };
 
@@ -427,12 +466,13 @@ const WidgetBookingInformation = ({
     const surchargeAmount = baseWithMarkup * (matchedSurcharge / 100);
 
     return (
-      baseWithMarkup +
-      surchargeAmount +
-      (matchedZonePrice || 0) +
-      (dropOffPrice || 0) +
-      (pickupAirportPrice || 0) +
-      (dropoffAirportPrice || 0)
+      (baseWithMarkup +
+        surchargeAmount +
+        (matchedZonePrice || 0) +
+        (dropOffPrice || 0) +
+        (pickupAirportPrice || 0) +
+        (dropoffAirportPrice || 0)) *
+      (selectedJourneyType === "return" ? 2 : 1)
     );
   })();
 
@@ -533,6 +573,38 @@ const WidgetBookingInformation = ({
               </div>
             </div>
 
+            {showReturnBooking && (
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 px-4 py-3 bg-white border border-gray-100 rounded-xl">
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                  <Icons.PlaneTakeoff className="w-8 h-8 text-red-500" />
+                  <div>
+                    <p className="font-medium text-sm text-red-800">{returnFormData?.pickup || "Pickup not set"}</p>
+                    <p className="text-xs text-gray-500">
+                      {returnFormData?.pickupDoorNumber ? `Door No. ${returnFormData.pickupDoorNumber}` : "All Terminals"}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-gray-400 text-2xl hidden md:block">→</div>
+                <div className="flex flex-col items-end gap-2 w-full md:w-auto justify-end text-right">
+                  {[returnFormData?.dropoff, returnFormData?.additionalDropoff1, returnFormData?.additionalDropoff2]
+                    .filter(Boolean)
+                    .map((location, index, array) => (
+                      <div key={index} className="flex items-center justify-end gap-2">
+                        <div>
+                          <p className="font-medium text-sm text-green-800">{location}</p>
+                          {index === array.length - 1 && (
+                            <p className="text-xs text-gray-500">
+                              {returnFormData?.arrivefrom ? `From: ${returnFormData.arrivefrom}` : "Return Destination"}
+                            </p>
+                          )}
+                        </div>
+                        <Icons.PlaneLanding className="w-5 h-5 text-green-500" />
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 text-sm text-gray-600 px-2">
               {durationText && (
                 <span>
@@ -571,7 +643,7 @@ const WidgetBookingInformation = ({
                 {hourlyError}
               </div>
             )}
-            <CarCardSection
+            {/* <CarCardSection
               carList={(() => {
                 const baseFixedZonePrice = fixedZonePrice || 0;
                 const baseZoneToZonePrice = matchedZoneToZonePrice || 0;
@@ -617,6 +689,42 @@ const WidgetBookingInformation = ({
               })()}
               selectedCarId={selectedCarId}
               onSelect={setSelectedCarId}
+            /> */}
+
+
+            <CarCardSection
+              carList={carList.map((car) => {
+                let base = 0;
+                const raw = car.percentageIncrease ?? 0;
+                const percentage = isNaN(parseFloat(raw)) ? 0 : parseFloat(raw);
+
+                if (formData?.mode === 'Hourly') {
+                  base = matchedHourlyRate?.[car.vehicleName] || 0;
+                } else if (fixedZonePrice !== null) {
+                  base = fixedZonePrice + (fixedZonePrice * (percentage / 100));
+                } else if (matchedZoneToZonePrice !== null) {
+                  base = matchedZoneToZonePrice + (matchedZoneToZonePrice * (percentage / 100));
+                } else if (matchedPostcodePrice) {
+                  base = matchedPostcodePrice.price + (matchedPostcodePrice.price * (percentage / 100));
+                } else {
+                  base = getVehiclePriceForDistance(car, actualMiles || 0);
+                }
+
+                const surchargeAmount = base * (matchedSurcharge / 100);
+                const oneWay = base + surchargeAmount;
+                const totalWithReturn = formData?.returnJourneyToggle ? oneWay * 2 : oneWay;
+
+                return {
+                  ...car,
+                  price: oneWay,
+                  returnPrice: totalWithReturn,
+                };
+              })}
+              selectedCarId={selectedCarId}
+              onSelect={(id, type) => {
+                setSelectedCarId(id);
+                setSelectedJourneyType(type); // 'oneWay' or 'return'
+              }}
             />
 
             <div className="text-right mt-4">
@@ -719,18 +827,72 @@ const WidgetBookingInformation = ({
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-            <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">All Classes Include:</h3>
-            <ul className="space-y-3 text-sm text-gray-700">
-              {["Free cancellation", "Free 60 minutes wait", "Meet & Greet"].map((item, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <Icons.Check className="w-4 h-4 text-green-500 mt-1" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-       
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 flex items-center justify-between">
+            <p className="text-gray-700 font-medium">Add Return Journey?</p>
+            <label className="inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData?.returnJourneyToggle || false}
+                onChange={(e) => {
+                  const isChecked = e.target.checked;
+                  setFormData((prev) => ({
+                    ...prev,
+                    returnJourneyToggle: isChecked,
+                  }));
+                  setShowReturnBooking(isChecked);
+
+                  if (isChecked && formData?.pickup && formData?.dropoff) {
+                    setReturnFormData({
+                      pickup: formData.dropoff,
+                      dropoff: formData.pickup,
+                      pickupDoorNumber: formData.dropoffDoorNumber || "",
+                      additionalDropoff1: null,
+                      additionalDropoff2: null,
+                      arrivefrom: "",
+                      date: "",
+                      hour: "",
+                      minute: "",
+                      notes: ""
+                    });
+                  } else {
+                    setReturnFormData({});
+                  }
+                }}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-400 rounded-full peer peer-checked:bg-blue-600 relative transition-all duration-300">
+                <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 peer-checked:translate-x-full"></div>
+              </div>
+            </label>
           </div>
+
+          {showReturnBooking && (
+            <WidgetBooking
+              companyId={companyId}
+              isReturnForm={true}
+              data={returnFormData}
+              onChange={(data) => {
+                setReturnFormData(prev => ({ ...prev, ...data }));
+                setFormData(prev => ({
+                  ...prev,
+                  returnBooking: { ...prev.returnBooking, ...data }
+                }));
+              }}
+              onSubmitSuccess={(data) => {
+                const updated = { ...returnFormData, ...data };
+                setReturnFormData(updated);
+                localStorage.setItem("returnBookingForm", JSON.stringify(updated));
+
+                // ✅ Correct way: update returnBooking directly on root formData
+                setFormData(prev => ({
+                  ...prev,
+                  returnJourneyToggle: true,
+                  returnBooking: updated
+                }));
+              }}
+            />
+          )}
+
         </div>
       </div>
     </>

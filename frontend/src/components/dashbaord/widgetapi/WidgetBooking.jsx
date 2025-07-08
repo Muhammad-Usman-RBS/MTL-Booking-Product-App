@@ -8,7 +8,7 @@ import { useLazySearchGooglePlacesQuery, useLazyGetDistanceQuery } from '../../.
 import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
 import { useLazyGeocodeQuery } from '../../../redux/api/googleApi';
 
-const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
+const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnForm = false }) => {
     const companyId = parentCompanyId || new URLSearchParams(window.location.search).get('company') || '';
     const { data: hourlyPackages = [] } = useGetAllHourlyRatesQuery(companyId, { skip: !companyId });
     const { data: generalPricing } = useGetGeneralPricingPublicQuery(companyId, { skip: !companyId });
@@ -32,6 +32,21 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
             value: { distance: pkg.distance, hours: pkg.hours },
         }));
     }, [hourlyPackages]);
+
+    useEffect(() => {
+        if (isReturnForm) {
+            console.log("🟡 returnFormData updated:", returnFormData);
+            const stored = localStorage.getItem("bookingForm");
+            if (stored) {
+                const prev = JSON.parse(stored);
+                setFormData(prevData => ({
+                    ...prevData,
+                    pickup: prev.dropoff || "",
+                }));
+                setDropOffs([prev.pickup || ""]);
+            }
+        }
+    }, [isReturnForm]);
 
     useEffect(() => {
         if (formattedHourlyOptions.length) {
@@ -66,6 +81,19 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
         originalHourlyOption: { value: { distance: 0, hours: 0 } },
     });
 
+    const [returnFormData, setReturnFormData] = useState({
+        pickup: '',
+        arrivefrom: '',
+        pickmeAfter: '',
+        flightNumber: '',
+        pickupDoorNumber: '',
+        notes: '',
+        internalNotes: '',
+        date: '',
+        hour: '',
+        minute: '',
+    });
+
     const [createBooking] = useCreateBookingMutation();
     const [triggerSearchAutocomplete] = useLazySearchGooglePlacesQuery();
     const [triggerDistance] = useLazyGetDistanceQuery();
@@ -77,7 +105,18 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+
+        if (isReturnForm) {
+            setReturnFormData((prev) => ({
+                ...prev,
+                [name]: value,
+            }));
+        } else {
+            setFormData((prev) => ({
+                ...prev,
+                [name]: value,
+            }));
+        }
     };
 
     const fetchSuggestions = async (query, setter) => {
@@ -158,6 +197,52 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (isReturnForm) {
+            // ✅ Return form validation
+            if (!returnFormData.date || returnFormData.hour === '' || returnFormData.minute === '') {
+                toast.error("Please fill in date, hour, and minute for the return journey.");
+                return;
+            }
+
+            // ✅ Retrieve primary journey from localStorage
+            const primaryData = JSON.parse(localStorage.getItem("bookingForm"));
+            if (!primaryData) {
+                toast.error("Primary journey data is missing.");
+                return;
+            }
+
+            const returnPayload = {
+                ...primaryData,
+                returnJourneyToggle: true,
+                returnJourney: {
+                    ...returnFormData, // ✅ Includes date, hour, minute properly
+                    dropoff: dropOffs[0],
+                    additionalDropoff1: dropOffs[1] || null,
+                    additionalDropoff2: dropOffs[2] || null,
+                },
+            };
+
+            try {
+                const response = await createBooking(returnPayload).unwrap();
+                toast.success("Return journey booked successfully!");
+                onSubmitSuccess && onSubmitSuccess({
+                    returnBooking: {
+                        ...returnFormData,
+                        dropoff: dropOffs[0],
+                        additionalDropoff1: dropOffs[1] || null,
+                        additionalDropoff2: dropOffs[2] || null,
+                    },
+                    returnJourneyToggle: true,
+                });
+            } catch (error) {
+                toast.error("Return journey booking failed.");
+                console.error("Booking error:", error);
+            }
+
+            return;
+        }
+
+        // ✅ Primary journey logic
         if (!formData.pickup || dropOffs[0].trim() === '') {
             toast.error("Pickup and at least one Drop Off is required.");
             return;
@@ -203,7 +288,6 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                 payload.distanceText = res.distanceText;
                 payload.durationText = res.durationText;
 
-                //  Add coordinates
                 const pickupCoord = await triggerGeocode(origin).unwrap();
                 const dropoffCoord = await triggerGeocode(destination).unwrap();
                 payload.pickupCoordinates = pickupCoord?.location ? [pickupCoord.location] : [];
@@ -211,7 +295,6 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
 
                 if (mode === "Hourly") {
                     let miles = 0;
-
                     if (res.distanceText.includes("km")) {
                         const km = parseFloat(res.distanceText.replace("km", "").trim());
                         miles = parseFloat((km * 0.621371).toFixed(2));
@@ -225,7 +308,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                         if (miles > userSelected.distance) {
                             const upgraded = hourlyPackages.find(pkg => pkg.distance >= miles);
                             if (upgraded) {
-                                toast.info(`Your selected hourly package was upgraded to ${upgraded.distance} miles / ${upgraded.hours} hours due to trip length.`);
+                                toast.info(`Upgraded to ${upgraded.distance} miles / ${upgraded.hours} hours.`);
                                 payload.hourlyOption = {
                                     label: `${upgraded.distance} miles ${upgraded.hours} hours`,
                                     value: { distance: upgraded.distance, hours: upgraded.hours }
@@ -233,7 +316,6 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
                             } else {
                                 toast.warning("No hourly package covers this distance.");
                             }
-
                         } else {
                             payload.hourlyOption = formData.hourlyOption;
                         }
@@ -255,12 +337,17 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
             console.error("Distance API error:", err);
         }
 
+        // ✅ Save to localStorage for return journey
         localStorage.setItem("bookingForm", JSON.stringify(payload));
-        if (onSubmitSuccess) onSubmitSuccess({
-            ...payload,
-            mode,
-            dropOffPrice: totalPrice
-        });
+
+        // ✅ Trigger success callback
+        if (onSubmitSuccess) {
+            onSubmitSuccess({
+                ...payload,
+                mode,
+                dropOffPrice: totalPrice
+            });
+        }
     };
 
     return (
@@ -271,250 +358,338 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId }) => {
             >
                 <ToastContainer />
 
-                <div className="flex justify-center mb-4">
-                    {["Transfer", "Hourly"].map((tab) => (
-                        <button
-                            key={tab}
-                            type='button'
-                            onClick={() => setMode(tab)}
-                            className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${mode === tab ? "bg-[#f3f4f6] text-dark border border-black" : "bg-[#f3f4f6] text-dark"} ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
-                        >
-                            {tab}
-                        </button>
-                    ))}
-                </div>
+                {isReturnForm ? (
+                    <>
+                        {/* ✅ Return Journey Booking Form */}
 
-                {mode === "Hourly" && (
-                    <div className="flex justify-center">
-                        <SelectOption
-                            options={formattedHourlyOptions.map(opt => ({
-                                label: opt.label,
-                                value: JSON.stringify(opt.value),
-                            }))}
-                            value={JSON.stringify(selectedHourly?.value)}
-                            onChange={(e) => {
-                                const selected = formattedHourlyOptions.find(
-                                    opt => JSON.stringify(opt.value) === e.target.value
-                                );
-                                setSelectedHourly(selected);
-                                setFormData(prev => ({
-                                    ...prev,
-                                    hourlyOption: selected,
-                                    originalHourlyOption: selected
-                                }));
-                            }}
-                        />
-                    </div>
-                )}
+                        {/* Pickup Location (disabled) */}
+                        <div className="relative">
+                            <label className="text-xs font-medium text-gray-400 mb-1 block">Pickup Location</label>
+                            <input
+                                type="text"
+                                name="pickup"
+                                value={formData.pickup}
+                                placeholder="Pickup Location"
+                                className="custom_input bg-gray-300"
+                                disabled
+                            />
+                        </div>
 
-                {/* Pickup Location */}
-                <div className="relative">
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Pickup Location</label>
-                    <input
-                        type="text"
-                        name="pickup"
-                        placeholder="Enter pickup location"
-                        value={formData.pickup}
-                        onChange={handlePickupChange}
-                        className="custom_input"
-                    />
-                    {pickupSuggestions.length > 0 && (
-                        <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
-                            <li
-                                onClick={() => {
-                                    setFormData({ ...formData, pickup: formData.pickup });
-                                    setPickupType("location");
-                                    setPickupSuggestions([]);
-                                }}
-                                className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer text-xs border-b"
+                        {/* Drop Off(s) (disabled) */}
+                        {dropOffs.map((val, idx) => (
+                            <div key={idx} className="relative space-y-2">
+                                <label className="text-xs text-gray-600">Drop Off {idx + 1}</label>
+                                <input
+                                    type="text"
+                                    value={val}
+                                    placeholder={`Drop Off ${idx + 1}`}
+                                    className="custom_input bg-gray-300"
+                                    disabled
+                                />
+                            </div>
+                        ))}
+
+                        {/* Always show airport-related fields (regardless of pickupType) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <input
+                                name="arrivefrom"
+                                placeholder="Arriving From"
+                                value={returnFormData.arrivefrom}
+                                onChange={handleChange}
+                                className="custom_input"
+                            />
+                            <input
+                                name="pickmeAfter"
+                                placeholder="Pick Me After"
+                                value={returnFormData.pickmeAfter}
+                                onChange={handleChange}
+                                className="custom_input"
+                            />
+                            <input
+                                name="flightNumber"
+                                placeholder="Flight No."
+                                value={returnFormData.flightNumber}
+                                onChange={handleChange}
+                                className="custom_input"
+                            />
+                        </div>
+
+                        {/* Date & Time */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <input
+                                type="date"
+                                name="date"
+                                value={returnFormData.date}
+                                onChange={handleChange}
+                                className="custom_input"
+
+                            />
+                            <select
+                                name="hour"
+                                value={returnFormData.hour}
+                                onChange={handleChange}
+                                className="custom_input"
                             >
-                                ➕ Use: "{formData.pickup}"
-                            </li>
-                            {pickupSuggestions.map((sug, idx) => (
-                                <li
-                                    key={idx}
-                                    onClick={() => handlePickupSelect(sug)}
-                                    className="p-2 hover:bg-gray-100 cursor-pointer text-xs"
-                                >
-                                    {sug.name} - {sug.formatted_address}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-
-                {/* Pickup Details */}
-                {pickupType === "location" && (
-                    <input
-                        name="pickupDoorNumber"
-                        placeholder="Pickup Door No."
-                        className="custom_input"
-                        value={formData.pickupDoorNumber}
-                        onChange={handleChange}
-                    />
-                )}
-
-                {pickupType === "airport" && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <input
-                            name="arrivefrom"
-                            placeholder="Arriving From"
-                            value={formData.arrivefrom}
-                            onChange={handleChange}
-                            className="custom_input"
-                        />
-                        <input
-                            name="pickmeAfter"
-                            placeholder="Pick Me After"
-                            value={formData.pickmeAfter}
-                            onChange={handleChange}
-                            className="custom_input"
-                        />
-                        <input
-                            name="flightNumber"
-                            placeholder="Flight No."
-                            value={formData.flightNumber}
-                            onChange={handleChange}
-                            className="custom_input"
-                        />
-                    </div>
-                )}
-
-                {/* Drop Offs */}
-                {dropOffs.map((val, idx) => (
-                    <div key={idx} className="relative space-y-2">
-                        <label className="text-xs text-gray-600">Drop Off {idx + 1}</label>
-                        <input
-                            type="text"
-                            value={val}
-                            placeholder={`Drop Off ${idx + 1}`}
-                            onChange={(e) => handleDropOffChange(idx, e.target.value)}
-                            className="custom_input"
-                        />
-                        {dropOffSuggestions.length > 0 && activeDropIndex === idx && (
-                            <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
-                                <li
-                                    onClick={() => {
-                                        const updated = [...dropOffs];
-                                        updated[idx] = dropOffs[idx];
-                                        setDropOffs(updated);
-                                        setDropOffTypes((prev) => ({ ...prev, [idx]: "location" }));
-                                        setDropOffSuggestions([]);
-                                    }}
-                                    className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer text-xs border-b"
-                                >
-                                    ➕ Use: "{dropOffs[idx]}"
-                                </li>
-                                {dropOffSuggestions.map((sug, i) => (
-                                    <li
-                                        key={i}
-                                        onClick={() => handleDropOffSelect(idx, sug)}
-                                        className="p-2 hover:bg-gray-100 cursor-pointer text-xs"
-                                    >
-                                        {sug.name} - {sug.formatted_address}
-                                    </li>
+                                <option value="">HH</option>
+                                {[...Array(24).keys()].map((h) => (
+                                    <option key={h} value={h}>
+                                        {h.toString().padStart(2, "0")}
+                                    </option>
                                 ))}
-                            </ul>
-                        )}
-
-                        {dropOffTypes[idx] === "airport" && (
-                            <input
-                                name={`dropoff_terminal_${idx}`}
-                                value={formData[`dropoff_terminal_${idx}`] || ""}
-                                placeholder="Terminal No."
+                            </select>
+                            <select
+                                name="minute"
+                                value={returnFormData.minute}
+                                onChange={handleChange}
                                 className="custom_input"
+                            >
+                                <option value="">MM</option>
+                                {[...Array(60).keys()].map((m) => (
+                                    <option key={m} value={m}>
+                                        {m.toString().padStart(2, "0")}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Notes */}
+                        <textarea
+                            name="notes"
+                            placeholder="Notes"
+                            className="custom_input"
+                            value={returnFormData.notes}
+                            onChange={handleChange}
+                            rows={2}
+                        />
+                    </>
+
+                ) : (
+                    <>
+                        {/* ✅ Primary Journey Form Tabs */}
+                        <div className="flex justify-center mb-4">
+                            {["Transfer", "Hourly"].map((tab) => (
+                                <button
+                                    key={tab}
+                                    type="button"
+                                    onClick={() => setMode(tab)}
+                                    className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${mode === tab ? "bg-[#f3f4f6] text-dark border border-black" : "bg-[#f3f4f6] text-dark"
+                                        } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
+                                >
+                                    {tab}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Pickup Location */}
+                        <div className="relative">
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">Pickup Location</label>
+                            <input
+                                type="text"
+                                name="pickup"
+                                placeholder="Enter pickup location"
+                                value={formData.pickup}
+                                onChange={handlePickupChange}
+                                className="custom_input"
+                            />
+                            {pickupSuggestions.length > 0 && (
+                                <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
+                                    <li
+                                        onClick={() => {
+                                            setFormData({ ...formData, pickup: formData.pickup });
+                                            setPickupType("location");
+                                            setPickupSuggestions([]);
+                                        }}
+                                        className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer text-xs border-b"
+                                    >
+                                        ➕ Use: "{formData.pickup}"
+                                    </li>
+                                    {pickupSuggestions.map((sug, idx) => (
+                                        <li
+                                            key={idx}
+                                            onClick={() => handlePickupSelect(sug)}
+                                            className="p-2 hover:bg-gray-100 cursor-pointer text-xs"
+                                        >
+                                            {sug.name} - {sug.formatted_address}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+
+                        {/* Pickup Details */}
+                        {pickupType === "location" && (
+                            <input
+                                name="pickupDoorNumber"
+                                placeholder="Pickup Door No."
+                                className="custom_input"
+                                value={formData.pickupDoorNumber}
                                 onChange={handleChange}
                             />
                         )}
 
-                        {dropOffTypes[idx] === "location" && (
-                            <input
-                                name={`dropoffDoorNumber${idx}`}
-                                value={formData[`dropoffDoorNumber${idx}`] || ""}
-                                placeholder="Drop Off Door No."
-                                className="custom_input"
-                                onChange={handleChange}
-                            />
+                        {pickupType === "airport" && (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <input
+                                    name="arrivefrom"
+                                    placeholder="Arriving From"
+                                    value={formData.arrivefrom}
+                                    onChange={handleChange}
+                                    className="custom_input"
+                                />
+                                <input
+                                    name="pickmeAfter"
+                                    placeholder="Pick Me After"
+                                    value={formData.pickmeAfter}
+                                    onChange={handleChange}
+                                    className="custom_input"
+                                />
+                                <input
+                                    name="flightNumber"
+                                    placeholder="Flight No."
+                                    value={formData.flightNumber}
+                                    onChange={handleChange}
+                                    className="custom_input"
+                                />
+                            </div>
                         )}
 
-                        {idx > 0 && (
+                        {/* Drop Offs */}
+                        {dropOffs.map((val, idx) => (
+                            <div key={idx} className="relative space-y-2">
+                                <label className="text-xs text-gray-600">Drop Off {idx + 1}</label>
+                                <input
+                                    type="text"
+                                    value={val}
+                                    placeholder={`Drop Off ${idx + 1}`}
+                                    onChange={(e) => handleDropOffChange(idx, e.target.value)}
+                                    className="custom_input"
+                                />
+                                {dropOffSuggestions.length > 0 && activeDropIndex === idx && (
+                                    <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
+                                        <li
+                                            onClick={() => {
+                                                const updated = [...dropOffs];
+                                                updated[idx] = dropOffs[idx];
+                                                setDropOffs(updated);
+                                                setDropOffTypes((prev) => ({ ...prev, [idx]: "location" }));
+                                                setDropOffSuggestions([]);
+                                            }}
+                                            className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer text-xs border-b"
+                                        >
+                                            ➕ Use: "{dropOffs[idx]}"
+                                        </li>
+                                        {dropOffSuggestions.map((sug, i) => (
+                                            <li
+                                                key={i}
+                                                onClick={() => handleDropOffSelect(idx, sug)}
+                                                className="p-2 hover:bg-gray-100 cursor-pointer text-xs"
+                                            >
+                                                {sug.name} - {sug.formatted_address}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+
+                                {dropOffTypes[idx] === "airport" && (
+                                    <input
+                                        name={`dropoff_terminal_${idx}`}
+                                        value={formData[`dropoff_terminal_${idx}`] || ""}
+                                        placeholder="Terminal No."
+                                        className="custom_input"
+                                        onChange={handleChange}
+                                    />
+                                )}
+
+                                {dropOffTypes[idx] === "location" && (
+                                    <input
+                                        name={`dropoffDoorNumber${idx}`}
+                                        value={formData[`dropoffDoorNumber${idx}`] || ""}
+                                        placeholder="Drop Off Door No."
+                                        className="custom_input"
+                                        onChange={handleChange}
+                                    />
+                                )}
+
+                                {idx > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => removeDropOff(idx)}
+                                        className="bg-red-800 p-2 text-xs text-red-600 absolute right-1 top-0"
+                                    >
+                                        &minus;
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+
+                        {dropOffs.length < 3 && (
                             <button
                                 type="button"
-                                onClick={() => removeDropOff(idx)}
-                                className="bg-red-800 p-2 text-xs text-red-600 absolute right-1 top-0"
+                                onClick={addDropOff}
+                                className="btn btn-edit text-xs px-4 py-2 w-full sm:w-auto"
                             >
-                                &minus;
+                                + Add Drop Off
                             </button>
                         )}
-                    </div>
-                ))}
 
-                {dropOffs.length < 3 && (
-                    <button
-                        type="button"
-                        onClick={addDropOff}
-                        className="btn btn-edit text-xs px-4 py-2 w-full sm:w-auto"
-                    >
-                        + Add Drop Off
-                    </button>
+                        {/* Date & Time */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <input
+                                type="date"
+                                name="date"
+                                value={formData.date}
+                                onChange={handleChange}
+                                className="custom_input"
+                            />
+                            <select
+                                name="hour"
+                                value={formData.hour}
+                                onChange={handleChange}
+                                className="custom_input"
+                            >
+                                <option value="">HH</option>
+                                {[...Array(24).keys()].map((h) => (
+                                    <option key={h} value={h}>
+                                        {h.toString().padStart(2, "0")}
+                                    </option>
+                                ))}
+                            </select>
+                            <select
+                                name="minute"
+                                value={formData.minute}
+                                onChange={handleChange}
+                                className="custom_input"
+                            >
+                                <option value="">MM</option>
+                                {[...Array(60).keys()].map((m) => (
+                                    <option key={m} value={m}>
+                                        {m.toString().padStart(2, "0")}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <textarea
+                            name="notes"
+                            placeholder="Notes"
+                            className="custom_input"
+                            value={formData.notes}
+                            onChange={handleChange}
+                            rows={2}
+                        />
+
+                        {/* Submit Button (common to both) */}
+                        <div className="text-right">
+                            <button
+                                type="submit"
+                                className="bg-amber-500 text-white px-5 py-2 rounded-md text-sm shadow hover:bg-amber-600"
+                            >
+                                GET QUOTE
+                            </button>
+                        </div>
+                    </>
                 )}
 
-                {/* Date & Time */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <input
-                        type="date"
-                        name="date"
-                        value={formData.date}
-                        onChange={handleChange}
-                        className="custom_input"
-                    />
-                    <select
-                        name="hour"
-                        value={formData.hour}
-                        onChange={handleChange}
-                        className="custom_input"
-                    >
-                        <option value="">HH</option>
-                        {[...Array(24).keys()].map((h) => (
-                            <option key={h} value={h}>
-                                {h.toString().padStart(2, "0")}
-                            </option>
-                        ))}
-                    </select>
-                    <select
-                        name="minute"
-                        value={formData.minute}
-                        onChange={handleChange}
-                        className="custom_input"
-                    >
-                        <option value="">MM</option>
-                        {[...Array(60).keys()].map((m) => (
-                            <option key={m} value={m}>
-                                {m.toString().padStart(2, "0")}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Notes */}
-                <textarea
-                    name="notes"
-                    placeholder="Notes"
-                    className="custom_input"
-                    value={formData.notes}
-                    onChange={handleChange}
-                    rows={2}
-                />
-
-                {/* Submit Button */}
-                <div className="text-right">
-                    <button
-                        type="submit"
-                        className="bg-amber-500 text-white px-5 py-2 rounded-md text-sm shadow hover:bg-amber-600"
-                    >
-                        GET QUOTE
-                    </button>
-                </div>
             </form>
         </div>
     );

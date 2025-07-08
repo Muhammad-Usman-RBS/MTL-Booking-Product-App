@@ -46,18 +46,13 @@ const CarCard = ({ car, isSelected, onSelect }) => {
             <div className="flex justify-between items-start">
               <h3 className="text-lg font-semibold text-gray-800">{vehicleName || 'Vehicle Name'}</h3>
               <div className="flex items-center gap-2">
-                {price !== null ? (
-                  <span className="text-lg font-semibold text-blue-600">£{parseFloat(price).toFixed(2)}</span>
-                ) : (
-                  <span className="text-sm text-gray-500">No price available</span>
-                )}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowDetails((prev) => !prev);
                   }}
-                  className="text-gray-600 hover:text-gray-800"
-                >
+                  className="text-gray-600 flex hover:text-gray-800"
+                >Properties:
                   {showDetails ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </button>
               </div>
@@ -69,6 +64,35 @@ const CarCard = ({ car, isSelected, onSelect }) => {
               <span>{childSeat} Child Seat</span>
               <span>{checkinLuggage} Large Luggage</span>
             </div>
+
+            {price !== null && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(_id, 'oneWay');
+                }}
+                className="bg-red-600 text-white font-bold text-sm px-4 py-2 rounded-md shadow hover:bg-red-700 transition"
+              >
+                ONE WAY: £{parseFloat(price).toFixed(2)}
+                <div className="text-xs font-medium">BOOK NOW</div>
+              </button>
+            )}
+
+            {car.returnPrice && car.returnPrice !== price && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(_id, 'return');
+                }}
+                className="bg-gray-600 text-white font-bold text-sm px-4 py-2 rounded-md shadow hover:bg-gray-700 transition"
+              >
+                RETURN: £{parseFloat(car.returnPrice).toFixed(2)}
+                <div className="text-xs font-medium">BOOK NOW</div>
+              </button>
+            )}
+
 
             {(description || carModel) && (
               <div className="text-xs text-gray-500 mt-1">

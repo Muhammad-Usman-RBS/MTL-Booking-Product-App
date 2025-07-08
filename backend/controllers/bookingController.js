@@ -5,7 +5,6 @@ import User from "../models/User.js";
 import mongoose from "mongoose";
 import Voucher from "../models/pricings/Voucher.js";
 
-// Create Booking (standard route)
 export const createBooking = async (req, res) => {
   try {
     const {
@@ -23,18 +22,11 @@ export const createBooking = async (req, res) => {
       voucherApplied,
     } = req.body;
 
-    if (
-      !companyId ||
-      typeof companyId !== "string" ||
-      companyId.length !== 24
-    ) {
-      console.log("❌ Invalid companyId:", companyId);
-
+    if (!companyId || typeof companyId !== "string" || companyId.length !== 24) {
       return res.status(400).json({ message: "Invalid or missing companyId" });
     }
 
-
-
+    // ✅ Voucher logic
     let validVoucher = null;
     let isVoucherApplied = false;
 
@@ -43,272 +35,310 @@ export const createBooking = async (req, res) => {
         voucher: voucher.toUpperCase(),
         companyId: new mongoose.Types.ObjectId(companyId),
       });
-      const today = new Date();
-      const isExpired = !v || new Date(v.validity) < today;
-      const hasReachedLimit = !v || v.used >= v.quantity;
-      const isInactive = !v || v.status === "Deleted" || v.status === "Expired";
 
-      if (!v || isExpired || hasReachedLimit || isInactive) {
-        console.warn(`Voucher "${voucher}" is invalid or expired. Skipping.`);
-      } else {
+      const today = new Date();
+      if (v && new Date(v.validity) >= today && v.used < v.quantity && v.status === "Active") {
         validVoucher = v.voucher;
         isVoucherApplied = true;
-
-        await Voucher.findByIdAndUpdate(v._id, {
-          $inc: { used: 1 },
-        });
+        await Voucher.findByIdAndUpdate(v._id, { $inc: { used: 1 } });
       }
-    }
-
-    if (!vehicle.vehicleName || typeof vehicle.vehicleName !== "string") {
-      return res.status(400).json({ message: "Vehicle name is required" });
     }
 
     const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
     for (const field of requiredFields) {
-      if (
-        !primaryJourney[field] ||
-        String(primaryJourney[field]).trim() === ""
-      ) {
-        return res.status(400).json({
-          message: `Missing required field in primaryJourney: ${field}`,
-        });
+      if (!primaryJourney[field]) {
+        return res.status(400).json({ message: `Missing field in primaryJourney: ${field}` });
       }
     }
 
     const extractDynamicDropoffFields = (journey) => {
-      const dynamicFields = {};
+      const fields = {};
       Object.keys(journey || {}).forEach((key) => {
-        if (
-          key.startsWith("dropoff_terminal_") ||
-          key.startsWith("dropoffDoorNumber")
-        ) {
-          dynamicFields[key] = journey[key];
+        if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
+          fields[key] = journey[key];
         }
       });
-      return dynamicFields;
+      return fields;
     };
-    const generateNextBookingId = async () => {
-      const lastBooking = await Booking.findOne({})
-        .sort({ bookingId: -1 })
-        .limit(1);
 
-      if (lastBooking && lastBooking.bookingId) {
-        const lastId = parseInt(lastBooking.bookingId, 10);
-        return (lastId + 1).toString();
-      } else {
-        return "50301";
-      }
+    const generateNextBookingId = async () => {
+      const lastBooking = await Booking.findOne().sort({ bookingId: -1 }).limit(1);
+      return lastBooking?.bookingId
+        ? (parseInt(lastBooking.bookingId, 10) + 1).toString()
+        : "50301";
     };
-    // Booking 1 (primary)
-    const PrimaryBooking = {
+
+    const bookingId = await generateNextBookingId();
+    const source = referrer?.includes("widget") ? "widget" : "admin";
+
+    const baseVehicleInfo = {
+      vehicleName: vehicle.vehicleName,
+      passenger: parseInt(vehicle.passenger) || 0,
+      childSeat: parseInt(vehicle.childSeat) || 0,
+      handLuggage: parseInt(vehicle.handLuggage) || 0,
+      checkinLuggage: parseInt(vehicle.checkinLuggage) || 0,
+    };
+
+    const basePassengerInfo = {
+      name: passenger.name || null,
+      email: passenger.email || null,
+      phone: passenger.phone || null,
+    };
+
+    const returnIsValid =
+      returnJourneyToggle &&
+      returnJourney &&
+      requiredFields.every((f) => returnJourney[f]);
+
+    // ✅ Build final payload once
+    const bookingPayload = {
+      bookingId,
       mode,
       companyId,
-      returnJourneyToggle,
+      returnJourneyToggle: !!returnJourneyToggle,
       referrer: referrer || "Manual Entry",
-      source: "admin",
+      source,
       status: "New",
-      vehicle: {
-        vehicleName: vehicle.vehicleName,
-        passenger: parseInt(vehicle.passenger) || 0,
-        childSeat: parseInt(vehicle.childSeat) || 0,
-        handLuggage: parseInt(vehicle.handLuggage) || 0,
-        checkinLuggage: parseInt(vehicle.checkinLuggage) || 0,
-      },
-      passenger: {
-        name: passenger.name || null,
-        email: passenger.email || null,
-        phone: passenger.phone || null,
-      },
+      vehicle: baseVehicleInfo,
+      passenger: basePassengerInfo,
       primaryJourney: {
-        pickup: primaryJourney.pickup.trim(),
-        dropoff: primaryJourney.dropoff.trim(),
+        pickup: primaryJourney.pickup?.trim() || "",
+        dropoff: primaryJourney.dropoff?.trim() || "",
         additionalDropoff1: primaryJourney.additionalDropoff1 || null,
         additionalDropoff2: primaryJourney.additionalDropoff2 || null,
-
         pickupDoorNumber: primaryJourney.pickupDoorNumber || null,
         terminal: primaryJourney.terminal || null,
-
         arrivefrom: primaryJourney.arrivefrom || null,
         flightNumber: primaryJourney.flightNumber || null,
         pickmeAfter: primaryJourney.pickmeAfter || null,
-
         notes: primaryJourney.notes || null,
         internalNotes: primaryJourney.internalNotes || null,
-
         date: primaryJourney.date,
         hour: parseInt(primaryJourney.hour),
         minute: parseInt(primaryJourney.minute),
         fare: primaryJourney.fare,
         hourlyOption: primaryJourney.hourlyOption || null,
-
         distanceText: primaryJourney.distanceText || null,
         durationText: primaryJourney.durationText || null,
-
         voucher: validVoucher,
         voucherApplied: isVoucherApplied,
-
         ...extractDynamicDropoffFields(primaryJourney),
-      },
+      }
     };
-    const nextBookingId = await generateNextBookingId();
-    PrimaryBooking.bookingId = nextBookingId;
-    const savedPrimaryBooking = await Booking.create(PrimaryBooking);
 
-    // Prepare email data
+    // ✅ Add returnJourney only if valid
+    if (returnIsValid) {
+      bookingPayload.returnJourney = {
+        pickup: returnJourney.pickup?.trim() || "",
+        dropoff: returnJourney.dropoff?.trim() || "",
+        additionalDropoff1: returnJourney.additionalDropoff1 || null,
+        additionalDropoff2: returnJourney.additionalDropoff2 || null,
+        pickupDoorNumber: returnJourney.pickupDoorNumber || null,
+        terminal: returnJourney.terminal || null,
+        arrivefrom: returnJourney.arrivefrom || null,
+        flightNumber: returnJourney.flightNumber || null,
+        pickmeAfter: returnJourney.pickmeAfter || null,
+        notes: returnJourney.notes || null,
+        internalNotes: returnJourney.internalNotes || null,
+        date: returnJourney.date,
+        hour: parseInt(returnJourney.hour),
+        minute: parseInt(returnJourney.minute),
+        fare: returnJourney.fare || 0,
+        hourlyOption: returnJourney.hourlyOption || null,
+        distanceText: returnJourney.distanceText || null,
+        durationText: returnJourney.durationText || null,
+        ...extractDynamicDropoffFields(returnJourney),
+      };
+    }
+
+
+    // ✅ Save booking once
+    const savedBooking = await Booking.create(bookingPayload);
+
+    // ✅ Email logic
     const sanitize = (booking) => {
-      const { _id, __v, createdAt, companyId, updatedAt, ...clean } =
-        booking.toObject();
+      const { _id, __v, createdAt, updatedAt, companyId, ...clean } = booking.toObject();
       return clean;
     };
-    if (!returnJourneyToggle || !Object.keys(returnJourney).length) {
-      // Send email for only primary booking
-      if (PassengerEmail || ClientAdminEmail) {
-        const primaryEmailPayload = {
-          title: "Booking Confirmation - Primary Booking",
-          data: {
-            PrimaryBooking: sanitize(savedPrimaryBooking),
-          },
-        };
 
-        if (PassengerEmail)
-          await sendEmail(
-            PassengerEmail,
-            "Your Booking Details (Primary)",
-            primaryEmailPayload
-          );
-        if (ClientAdminEmail)
-          await sendEmail(
-            ClientAdminEmail,
-            "Your Booking Details (Primary)",
-            primaryEmailPayload
-          );
-      }
-
-      return res.status(201).json({
-        success: true,
-        message: "Primary journey booked successfully",
-        bookings: [sanitize(savedPrimaryBooking)],
-      });
-    }
-
-    // Booking 2 (return journey)
-    if (
-      returnJourneyToggle &&
-      returnJourney &&
-      Object.keys(returnJourney).length
-    ) {
-      const ReturnBooking = {
-        mode,
-        companyId,
-
-        returnJourneyToggle,
-        referrer: referrer || "Manual Entry",
-        source: "admin",
-        status: "New",
-        vehicle: {
-          vehicleName: vehicle.vehicleName,
-          passenger: parseInt(vehicle.passenger) || 0,
-          childSeat: parseInt(vehicle.childSeat) || 0,
-          handLuggage: parseInt(vehicle.handLuggage) || 0,
-          checkinLuggage: parseInt(vehicle.checkinLuggage) || 0,
-        },
-        passenger: {
-          name: passenger.name || null,
-          email: passenger.email || null,
-          phone: passenger.phone || null,
-        },
-        returnJourney: {
-          pickup: returnJourney.pickup?.trim() || "",
-          dropoff: returnJourney.dropoff?.trim() || "",
-          additionalDropoff1: returnJourney.additionalDropoff1 || null,
-          additionalDropoff2: returnJourney.additionalDropoff2 || null,
-
-          pickupDoorNumber: returnJourney.pickupDoorNumber || null,
-          terminal: returnJourney.terminal || null,
-
-          arrivefrom: returnJourney.arrivefrom || null,
-          flightNumber: returnJourney.flightNumber || null,
-          pickmeAfter: returnJourney.pickmeAfter || null,
-
-          notes: returnJourney.notes || null,
-          internalNotes: returnJourney.internalNotes || null,
-
-          date: returnJourney.date,
-          hour: parseInt(returnJourney.hour),
-          minute: parseInt(returnJourney.minute),
-          fare: returnJourney.fare,
-          hourlyOption: returnJourney.hourlyOption || null,
-
-          distanceText: returnJourney.distanceText || null,
-          durationText: returnJourney.durationText || null,
-
-          ...extractDynamicDropoffFields(returnJourney),
-        },
+    if (PassengerEmail || ClientAdminEmail) {
+      const emailData = {
+        title: "Booking Confirmation",
+        data: { Booking: sanitize(savedBooking) },
       };
-      const returnBookingId = await generateNextBookingId();
-      ReturnBooking.bookingId = returnBookingId;
-      const savedReturnBooking = await Booking.create(ReturnBooking);
-
-      // Add to email payload manually
-      // Send emails separately
-      if (PassengerEmail || ClientAdminEmail) {
-        // Primary Journey Email
-        const primaryEmailPayload = {
-          title: "Booking Confirmation - Primary Journey",
-          data: {
-            PrimaryBooking: sanitize(savedPrimaryBooking),
-          },
-        };
-
-        if (PassengerEmail)
-          await sendEmail(
-            PassengerEmail,
-            "Your Booking Details (Primary)",
-            primaryEmailPayload
-          );
-        if (ClientAdminEmail)
-          await sendEmail(
-            ClientAdminEmail,
-            "Your Booking Details (Primary)",
-            primaryEmailPayload
-          );
-
-        // Return Journey Email
-        const returnEmailPayload = {
-          title: "Booking Confirmation - Return Journey",
-          data: {
-            ReturnBooking: sanitize(savedReturnBooking),
-          },
-        };
-
-        if (PassengerEmail)
-          await sendEmail(
-            PassengerEmail,
-            "Your Booking Details (Return)",
-            returnEmailPayload
-          );
-        if (ClientAdminEmail)
-          await sendEmail(
-            ClientAdminEmail,
-            "Your Booking Details (Return)",
-            returnEmailPayload
-          );
-      }
-
-      return res.status(201).json({
-        success: true,
-        message: "Both journeys booked separately",
-        bookings: [sanitize(savedPrimaryBooking), sanitize(savedReturnBooking)],
-      });
+      if (PassengerEmail) await sendEmail(PassengerEmail, "Your Booking Confirmation", emailData);
+      if (ClientAdminEmail) await sendEmail(ClientAdminEmail, "New Booking Received", emailData);
     }
+
+    return res.status(201).json({
+      success: true,
+      message: returnIsValid
+        ? "Primary and return journeys booked together."
+        : "Primary journey booked.",
+      bookings: [sanitize(savedBooking)],
+    });
   } catch (error) {
-    console.error("Error in createBooking controller:", error);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
+    console.error("❌ createBooking error:", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 };
+
+
+// Create Booking (updated for bookingJourney only)
+// export const createBooking = async (req, res) => {
+//   try {
+//     const {
+//       mode = "Transfer",
+//       returnJourneyToggle,
+//       companyId,
+//       referrer,
+//       vehicle = {},
+//       passenger = {},
+//       bookingJourney = [],
+//       PassengerEmail,
+//       ClientAdminEmail,
+//       voucher,
+//       voucherApplied,
+//       drivers = [],
+//     } = req.body;
+
+//     // ✅ Basic Validations
+//     if (!companyId || companyId.length !== 24) {
+//       return res.status(400).json({ message: "Invalid or missing companyId" });
+//     }
+
+//     if (!Array.isArray(bookingJourney) || bookingJourney.length === 0) {
+//       return res.status(400).json({ message: "bookingJourney must contain at least one journey" });
+//     }
+
+//     const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
+//     for (let i = 0; i < bookingJourney.length; i++) {
+//       for (const field of requiredFields) {
+//         if (!bookingJourney[i][field]) {
+//           return res.status(400).json({ message: `Missing field in bookingJourney[${i}]: ${field}` });
+//         }
+//       }
+//     }
+
+//     if (!vehicle.vehicleName) {
+//       return res.status(400).json({ message: "Vehicle name is required" });
+//     }
+
+//     // ✅ Voucher Logic
+//     let validVoucher = null;
+//     let isVoucherApplied = false;
+
+//     if (voucher && voucherApplied) {
+//       const v = await Voucher.findOne({
+//         voucher: voucher.toUpperCase(),
+//         companyId: new mongoose.Types.ObjectId(companyId),
+//       });
+
+//       const today = new Date();
+//       const isExpired = !v || new Date(v.validity) < today;
+//       const hasReachedLimit = !v || v.used >= v.quantity;
+//       const isInactive = !v || v.status === "Deleted" || v.status === "Expired";
+
+//       if (!v || isExpired || hasReachedLimit || isInactive) {
+//         console.warn(`Voucher "${voucher}" is invalid or expired`);
+//       } else {
+//         validVoucher = v.voucher;
+//         isVoucherApplied = true;
+//         await Voucher.findByIdAndUpdate(v._id, { $inc: { used: 1 } });
+//       }
+//     }
+
+//     const extractDynamicFields = (journey) => {
+//       const dynamic = {};
+//       for (const key in journey) {
+//         if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
+//           dynamic[key] = journey[key];
+//         }
+//       }
+//       return dynamic;
+//     };
+
+//     const formatJourney = (data) => ({
+//       pickup: data.pickup?.trim() || "",
+//       dropoff: data.dropoff?.trim() || "",
+//       additionalDropoff1: data.additionalDropoff1 || null,
+//       additionalDropoff2: data.additionalDropoff2 || null,
+//       pickupDoorNumber: data.pickupDoorNumber || null,
+//       terminal: data.terminal || null,
+//       arrivefrom: data.arrivefrom || null,
+//       flightNumber: data.flightNumber || null,
+//       pickmeAfter: data.pickmeAfter || null,
+//       notes: data.notes || null,
+//       internalNotes: data.internalNotes || null,
+//       date: data.date,
+//       hour: parseInt(data.hour),
+//       minute: parseInt(data.minute),
+//       fare: data.fare,
+//       hourlyOption: data.hourlyOption || null,
+//       distanceText: data.distanceText || null,
+//       durationText: data.durationText || null,
+//       voucher: validVoucher,
+//       voucherApplied: isVoucherApplied,
+//       ...extractDynamicFields(data),
+//     });
+
+//     const formattedJourneys = bookingJourney.map(formatJourney);
+
+//     // ✅ Create One Booking with Multiple Journeys
+//     const bookingId = await (async () => {
+//       const last = await Booking.findOne({}).sort({ bookingId: -1 });
+//       return last && last.bookingId ? (parseInt(last.bookingId, 10) + 1).toString() : "50301";
+//     })();
+
+//     const savedBooking = await Booking.create({
+//       bookingId,
+//       mode,
+//       returnJourneyToggle,
+//       referrer: referrer || "Widget",
+//       source: "admin",
+//       status: "New",
+//       companyId,
+//       vehicle,
+//       passenger,
+//       bookingJourney: formattedJourneys,
+//       drivers,
+//     });
+
+//     // ✅ Email (single, with both journeys)
+//     const clean = (b) => {
+//       const { _id, __v, createdAt, updatedAt, companyId, ...rest } = b.toObject();
+//       return rest;
+//     };
+
+//     const bookingData = clean(savedBooking);
+
+//     if (PassengerEmail || ClientAdminEmail) {
+//       const emailPayload = {
+//         title: returnJourneyToggle ? "Booking Confirmation - Round Trip" : "Booking Confirmation",
+//         data: { Booking: bookingData },
+//       };
+
+//       if (PassengerEmail) await sendEmail(PassengerEmail, "Your Booking Details", emailPayload);
+//       if (ClientAdminEmail) await sendEmail(ClientAdminEmail, "New Booking Received", emailPayload);
+//     }
+
+//     return res.status(201).json({
+//       success: true,
+//       message: "Booking saved with full journey array",
+//       booking: bookingData,
+//     });
+//   } catch (err) {
+//     console.error("❌ createBooking error:", err);
+//     return res.status(500).json({
+//       message: "Internal Server Error",
+//       error: err.message,
+//     });
+//   }
+// };
+
 // Get All Bookings for a Company
 export const getAllBookings = async (req, res) => {
   try {
@@ -482,6 +512,10 @@ export const submitWidgetForm = async (req, res) => {
       });
     }
 
+    if (isNaN(parseInt(returnJourney.hour)) || isNaN(parseInt(returnJourney.minute))) {
+      return res.status(400).json({ message: "Invalid return journey time format" });
+    }
+
     const bookingData = {
       mode,
       returnJourneyToggle,
@@ -519,28 +553,28 @@ export const submitWidgetForm = async (req, res) => {
       },
       ...(returnJourneyToggle &&
         returnJourney && {
-          returnJourney: {
-            pickup: returnJourney.pickup,
-            dropoff: returnJourney.dropoff,
-            additionalDropoff1: returnJourney.additionalDropoff1 || null,
-            additionalDropoff2: returnJourney.additionalDropoff2 || null,
-            pickupDoorNumber: returnJourney.pickupDoorNumber || null,
-            terminal: returnJourney.terminal || null,
-            arrivefrom: returnJourney.arrivefrom || null,
-            flightNumber: returnJourney.flightNumber || null,
-            pickmeAfter: returnJourney.pickmeAfter || null,
-            notes: returnJourney.notes || null,
-            internalNotes: returnJourney.internalNotes || null,
-            date: returnJourney.date,
-            hour: parseInt(returnJourney.hour),
-            minute: parseInt(returnJourney.minute),
-            fare: returnJourney.fare,
-            hourlyOption: returnJourney.hourlyOption || null,
-            distanceText: returnJourney.distanceText || null,
-            durationText: returnJourney.durationText || null,
-            ...dynamicDropoffFields2,
-          },
-        }),
+        returnJourney: {
+          pickup: returnJourney.pickup,
+          dropoff: returnJourney.dropoff,
+          additionalDropoff1: returnJourney.additionalDropoff1 || null,
+          additionalDropoff2: returnJourney.additionalDropoff2 || null,
+          pickupDoorNumber: returnJourney.pickupDoorNumber || null,
+          terminal: returnJourney.terminal || null,
+          arrivefrom: returnJourney.arrivefrom || null,
+          flightNumber: returnJourney.flightNumber || null,
+          pickmeAfter: returnJourney.pickmeAfter || null,
+          notes: returnJourney.notes || null,
+          internalNotes: returnJourney.internalNotes || null,
+          date: returnJourney.date,
+          hour: parseInt(returnJourney.hour),
+          minute: parseInt(returnJourney.minute),
+          fare: returnJourney.fare,
+          hourlyOption: returnJourney.hourlyOption || null,
+          distanceText: returnJourney.distanceText || null,
+          durationText: returnJourney.durationText || null,
+          ...dynamicDropoffFields2,
+        },
+      }),
     };
 
     const booking = await Booking.create(bookingData);
@@ -607,9 +641,8 @@ export const updateBookingStatus = async (req, res) => {
         }).lean();
 
         const statusStyled = `<span style="color: green;">${status}</span>`;
-        const driverName = `"${driverProfile?.DriverData?.firstName || ""} ${
-          driverProfile?.DriverData?.surName || ""
-        }"`.trim();
+        const driverName = `"${driverProfile?.DriverData?.firstName || ""} ${driverProfile?.DriverData?.surName || ""
+          }"`.trim();
         const bookingId = booking.bookingId;
 
         const title = `Driver ${driverName} changed the status to ${statusStyled} for booking #${bookingId}`;
@@ -655,8 +688,7 @@ export const updateBookingStatus = async (req, res) => {
         : null;
 
       const driverName = assignedDriverProfile
-        ? `"${assignedDriverProfile.DriverData.firstName || ""} ${
-            assignedDriverProfile.DriverData.surName || ""
+        ? `"${assignedDriverProfile.DriverData.firstName || ""} ${assignedDriverProfile.DriverData.surName || ""
           }"`.trim()
         : `"Assigned Driver"`;
 

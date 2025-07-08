@@ -30,28 +30,71 @@ const WidgetMain = () => {
 
     const handleBookingSubmission = async (finalPayload) => {
         try {
-            const result = await createBooking({
-                returnJourneyToggle: false,
+            const isPrimaryHourly = formData.booking?.mode === "Hourly";
+            const isReturnHourly = formData.booking?.returnBooking?.mode === "Hourly";
+
+            const primaryJourney = {
+                ...formData.booking,
+                fare: finalPayload.fare || 0,
+                hourlyOption: isPrimaryHourly ? formData.booking?.hourlyOption : null,
+                pickup: formData.booking?.pickup || "",
+                dropoff: formData.booking?.dropoff || "",
+                date: formData.booking?.date || "",
+                hour: formData.booking?.hour || "",
+                minute: formData.booking?.minute || "",
+            };
+
+            let returnJourney = null;
+
+            const returnData = formData.booking?.returnBooking;
+
+            const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
+            const isReturnValid =
+                formData.booking?.returnJourneyToggle &&
+                returnData &&
+                requiredFields.every((field) => {
+                    const value = returnData[field] ?? "";
+                    return typeof value === "string" ? value.trim() !== "" : value !== null && value !== undefined;
+                });
+
+            if (isReturnValid) {
+                returnJourney = {
+                    ...returnData,
+                    fare: finalPayload.returnBooking?.fare || 0,
+                    hourlyOption: isReturnHourly ? returnData?.hourlyOption : null,
+                    pickup: returnData?.pickup || "",
+                    dropoff: returnData?.dropoff || "",
+                    date: returnData?.date || "",
+                    hour: returnData?.hour || "",
+                    minute: returnData?.minute || "",
+                    notes: `(Return Journey) ${returnData?.notes || ""}`,
+                };
+            } else {
+                console.warn("⚠️ Return journey missing required fields", returnData);
+            }
+
+            const payload = {
                 companyId,
-                mode: formData.booking?.mode || "Transfer",
+                source: "widget",
                 referrer: document.referrer || "Widget",
-                vehicle: finalPayload.selectedVehicle,
-                hourlyOption: formData.booking?.hourlyOption || null,
+                vehicle: formData.vehicle,
                 passenger: finalPayload.passengerDetails || {},
                 voucher: finalPayload.voucher,
                 voucherApplied: !!finalPayload.voucher,
-                primaryJourney: {
-                    ...formData.booking,
-                    fare: finalPayload.fare || 0,
-                    hourlyOption: formData.booking?.hourlyOption || null,
-                },
                 PassengerEmail: finalPayload?.passengerDetails?.email || "",
-            }).unwrap();
+                returnJourneyToggle: formData.booking?.returnJourneyToggle ?? false,
+                mode: formData.booking?.mode || "Transfer",
+                primaryJourney,
+                ...(returnJourney ? { returnJourney } : {}),
+            };
 
-            console.log("Booking saved to MongoDB:", result);
+            console.log("🚀 Final Payload to send:", payload);
+            console.log("🛩️ Final formData.booking.returnBooking", formData.booking?.returnBooking);
+
+            await createBooking(payload).unwrap();
             setStep("success");
         } catch (err) {
-            console.error("Booking save failed:", err);
+            console.error("❌ Booking save failed:", err);
             setError("Failed to save booking. Please try again.");
         }
     };
@@ -73,7 +116,14 @@ const WidgetMain = () => {
                     companyId={companyId}
                     data={formData.booking}
                     onSubmitSuccess={(data) => {
-                        handleDataChange('booking', data);
+                        if (data.returnBooking) {
+                            handleDataChange('booking', {
+                                returnJourneyToggle: true,
+                                returnBooking: data.returnBooking,
+                            });
+                        } else {
+                            handleDataChange('booking', data);
+                        }
                         handleDataChange('pricing', {
                             dropOffPrice: data.dropOffPrice || 0
                         });
@@ -92,9 +142,17 @@ const WidgetMain = () => {
                     totalPrice={formData.pricing.totalPrice}
                     postcodePrice={formData.pricing.postcodePrice}
                     dropOffPrice={formData.pricing.dropOffPrice}
-                    onNext={({ totalPrice, selectedCar }) => {
+                    onNext={({ totalPrice, selectedCar, returnJourneyToggle, returnBooking }) => {
                         handleDataChange('pricing', { totalPrice });
                         handleDataChange('vehicle', selectedCar);
+
+                        handleDataChange('booking', {
+                            ...formData.booking,
+                            returnJourneyToggle,
+                            vehicle: selectedCar,
+                            returnBooking: returnJourneyToggle ? returnBooking : null,
+                        });
+
                         handleStepChange('payment');
                     }}
                 />
@@ -106,7 +164,25 @@ const WidgetMain = () => {
                     fare={formData.pricing.totalPrice}
                     vehicle={formData.vehicle}
                     booking={formData.booking}
-                    onBookNow={handleBookingSubmission}
+                    onBookNow={({ passengerDetails, voucher }) => {
+                        const finalPayload = {
+                            companyId,
+                            referrer: window.location.href,
+                            mode: formData.booking?.mode || "Transfer",
+                            returnJourneyToggle: formData.booking?.returnJourneyToggle || false,
+                            primaryJourney: formData.booking,
+                            returnJourney: formData.booking?.returnJourneyToggle
+                                ? formData.booking?.returnBooking
+                                : undefined,
+                            vehicle: formData.vehicle,
+                            passenger: passengerDetails,
+                            PassengerEmail: passengerDetails.email,
+                            voucher,
+                            voucherApplied: !!voucher,
+                        };
+
+                        handleBookingSubmission(finalPayload);
+                    }}
                 />
             )}
 
