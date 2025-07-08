@@ -44,8 +44,6 @@ const WidgetMain = () => {
                 minute: formData.booking?.minute || "",
             };
 
-            let returnJourney = null;
-
             const returnData = formData.booking?.returnBooking;
 
             const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
@@ -57,8 +55,27 @@ const WidgetMain = () => {
                     return typeof value === "string" ? value.trim() !== "" : value !== null && value !== undefined;
                 });
 
+            // ✅ Submit Primary Journey Booking
+            const primaryPayload = {
+                companyId,
+                source: "widget",
+                referrer: document.referrer || "Widget",
+                vehicle: formData.vehicle,
+                passenger: finalPayload.passenger || {},
+                voucher: finalPayload.voucher,
+                voucherApplied: !!finalPayload.voucher,
+                PassengerEmail: finalPayload?.passengerDetails?.email || "",
+                mode: formData.booking?.mode || "Transfer",
+                returnJourneyToggle: false,
+                primaryJourney,
+            };
+
+            console.log("🚀 Submitting Primary Journey Payload:", primaryPayload);
+            await createBooking(primaryPayload).unwrap();
+
+            // ✅ Submit Return Journey Separately
             if (isReturnValid) {
-                returnJourney = {
+                const returnJourney = {
                     ...returnData,
                     fare: finalPayload.returnBooking?.fare || 0,
                     hourlyOption: isReturnHourly ? returnData?.hourlyOption : null,
@@ -69,29 +86,26 @@ const WidgetMain = () => {
                     minute: returnData?.minute || "",
                     notes: `(Return Journey) ${returnData?.notes || ""}`,
                 };
-            } else {
-                console.warn("⚠️ Return journey missing required fields", returnData);
+
+                const returnPayload = {
+                    companyId,
+                    source: "widget",
+                    referrer: `${document.referrer || "Widget"} (Return Journey)`,
+                    vehicle: formData.vehicle,
+                    passenger: finalPayload.passenger || {},
+                    voucher: finalPayload.voucher,
+                    voucherApplied: !!finalPayload.voucher,
+                    PassengerEmail: finalPayload?.passengerDetails?.email || "",
+                    mode: formData.booking?.mode || "Transfer",
+                    returnJourneyToggle: false,
+                    primaryJourney: returnJourney,
+                };
+
+                console.log("🔁 Submitting Return Journey Payload:", returnPayload);
+                await createBooking(returnPayload).unwrap();
             }
 
-            const payload = {
-                companyId,
-                source: "widget",
-                referrer: document.referrer || "Widget",
-                vehicle: formData.vehicle,
-                passenger: finalPayload.passengerDetails || {},
-                voucher: finalPayload.voucher,
-                voucherApplied: !!finalPayload.voucher,
-                PassengerEmail: finalPayload?.passengerDetails?.email || "",
-                returnJourneyToggle: formData.booking?.returnJourneyToggle ?? false,
-                mode: formData.booking?.mode || "Transfer",
-                primaryJourney,
-                ...(returnJourney ? { returnJourney } : {}),
-            };
-
-            console.log("🚀 Final Payload to send:", payload);
-            console.log("🛩️ Final formData.booking.returnBooking", formData.booking?.returnBooking);
-
-            await createBooking(payload).unwrap();
+            // ✅ Go to success screen
             setStep("success");
         } catch (err) {
             console.error("❌ Booking save failed:", err);
