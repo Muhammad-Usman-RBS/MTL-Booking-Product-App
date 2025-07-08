@@ -1614,46 +1614,46 @@ export const receiptData = [
 // Used
 export const bookingPaymentOptions = [
   {
-    "label": "Pay Now",
-    "value": "Pay Now"
+    label: "Pay Now",
+    value: "Pay Now",
   },
   {
-    "label": "Pay Later",
-    "value": "Pay Later"
+    label: "Pay Later",
+    value: "Pay Later",
   },
   {
-    "label": "Bank Transfer",
-    "value": "Bank Transfer"
+    label: "Bank Transfer",
+    value: "Bank Transfer",
   },
-]
+];
 
 // Used
 export const invoicePaymentOptions = [
   {
-    "label": "Pay Via Debit/Credit Card",
-    "value": "Pay Via Debit/Credit Card"
+    label: "Pay Via Debit/Credit Card",
+    value: "Pay Via Debit/Credit Card",
   },
   {
-    "label": "Cash",
-    "value": "Cash"
+    label: "Cash",
+    value: "Cash",
   },
   {
-    "label": "Bank",
-    "value": "Bank"
+    label: "Bank",
+    value: "Bank",
   },
-]
+];
 
 // Used
 export const yesNoOptions = [
   {
-    "label": "Yes",
-    "value": "Yes"
+    label: "Yes",
+    value: "Yes",
   },
   {
-    "label": "No",
-    "value": "No"
+    label: "No",
+    value: "No",
   },
-]
+];
 
 // New Data
 export const mockJobs = [
@@ -1883,9 +1883,9 @@ export const informationData = [
     title: "Office Hours",
     detail: "Mon - Fri: 9AM - 6PM\nWeekend: 10AM - 4PM",
   },
-]
+];
 
-export const CompanyAdditionalInformation =[
+export const CompanyAdditionalInformation = [
   {
     label: "Contact number",
     placeholder: "+44 208 961 1818",
@@ -1899,11 +1899,7 @@ export const CompanyAdditionalInformation =[
   { label: "Company address", placeholder: "", type: "text" },
   { label: "License number", placeholder: "", type: "text" },
   { label: "License reference link", placeholder: "", type: "text" },
-]
-
-
-
-
+];
 
 export const themes = [
   {
@@ -1932,3 +1928,28 @@ export const themes = [
   },
 ];
 
+export const colorFields = [
+  { key: "bg", label: "Background Color" },
+  { key: "text", label: "Text Color" },
+  { key: "primary", label: "Primary Button Color" },
+  { key: "hover", label: "Hover Color" },
+  { key: "active", label: "Active Color" },
+];
+
+
+
+export const ALL_PERMISSIONS = [
+  "Home",
+  "Users",
+  "Bookings",
+  "Invoices",
+  "Drivers",
+  "Customers",
+  "Company Accounts",
+  "Statements",
+  "Pricing",
+  "Settings",
+  "Widget/API",
+  "Profile",
+  "Logout",
+];

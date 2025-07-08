@@ -42,7 +42,7 @@ const DriverContact = () => {
                     {item.title}
                   </h3>
                   {item.detail.split("\n").map((line, i) => (
-                    <p key={i} className="text-sm text-gray-700 leading-relaxed">
+                    <p key={i} className="text-xs text-gray-700 leading-relaxed">
                       {line}
                     </p>
                   ))}

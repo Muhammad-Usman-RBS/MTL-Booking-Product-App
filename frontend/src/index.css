@@ -211,3 +211,14 @@ p {
   width: 100%;
   box-sizing: border-box;
 }
+
+:root {
+  --topFooterBg: #2A7B9B;
+  --topFooterText: #000000;
+  --menuBg: #57C785;
+  --menuText: #EDDD53;
+  --bgPrimary: #76E070;
+  --bgSecondary: #E070D1;
+  --textPrimary: #1f2937;
+  --textSecondary: #6b7280;
+}

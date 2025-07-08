@@ -179,6 +179,11 @@ const sidebarItems = [
     ],
   },
   {
+    title: "Permissions",
+    route: "/dashboard/permissions",
+    icon: Icons.Lock,
+  },
+  {
     title: "Settings",
     icon: Icons.Settings,
     route: "/dashboard/settings",
@@ -188,6 +193,7 @@ const sidebarItems = [
         route: "/dashboard/settings/general",
         icon: Icons.Sliders,
       },
+    
       {
         title: "Booking",
         route: "/dashboard/settings/booking",

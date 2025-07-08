@@ -1,9 +1,12 @@
 import { create } from "zustand";
 
-const defaultTheme = "theme-dark-1";
+const defaultTheme =
+  typeof window !== "undefined"
+    ? localStorage.getItem("app-theme") || "theme-dark-1"
+    : "theme-dark-1";
 
-// Apply default theme when app loads (just once)
 if (typeof window !== "undefined") {
+  document.body.className = "";
   document.body.classList.add(defaultTheme);
 }
 
@@ -15,8 +18,9 @@ const useUIStore = create((set) => ({
   theme: defaultTheme,
 
   setTheme: (theme) => {
-    document.body.className = ""; // Clear all previous theme classes
-    document.body.classList.add(theme); // Apply selected theme
+    document.body.className = "";
+    document.body.classList.add(theme);
+    localStorage.setItem("app-theme", theme);
     set({ theme });
   },
 }));

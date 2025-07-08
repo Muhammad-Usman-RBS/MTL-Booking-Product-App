@@ -1,7 +1,7 @@
+import mongoose from "mongoose";
 import Company from "../models/Company.js";
 import User from "../models/User.js";
 import sendEmail from "../utils/sendEmail.js";
-import mongoose from "mongoose";
 export const createCompanyAccount = async (req, res) => {
   try {
     const {
@@ -49,6 +49,7 @@ export const createCompanyAccount = async (req, res) => {
     }
 
     const profileImage = req.file?.path || "";
+    const favicon = req.file?.path || "";
 
     // Create company instance
     const newCompany = new Company({
@@ -70,6 +71,7 @@ export const createCompanyAccount = async (req, res) => {
       address,
       invoiceTerms,
       profileImage,
+      favicon,
       clientAdminId: new mongoose.Types.ObjectId(clientAdminId),
       fullName,
       status,
@@ -156,10 +158,21 @@ export const getCompanyById = async (req, res) => {
 
 export const updateCompanyAccount = async (req, res) => {
   try {
-    if (req.file?.path) {
-      req.body.profileImage = req.file.path; // ✅ use the newly uploaded file
+    if (req.files?.profileImage?.[0]) {
+      req.body.profileImage = req.files.profileImage[0].path;
     }
 
+    if (req.files?.favicon?.[0]) {
+      req.body.favicon = req.files.favicon[0].path;
+    }
+    if (req.body.cookieConsent) {
+      if (typeof req.body.cookieConsent === "string") {
+        const parsed = JSON.parse(req.body.cookieConsent);
+        if (parsed && typeof parsed === "object" && parsed.value) {
+          req.body.cookieConsent = parsed.value;
+        }
+      }
+    }
     const updatedCompany = await Company.findByIdAndUpdate(
       req.params.id,
       req.body,

@@ -17,6 +17,7 @@ import {
 } from "../../../redux/api/adminApi";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 import usePasswordToggle from "../../../hooks/usePasswordToggle";
+import { ALL_PERMISSIONS } from "../../../constants/dashboardTabsData/data";
 
 const tabs = ["Active", "Pending", "Suspended", "Deleted"];
 
@@ -270,9 +271,10 @@ const AdminList = () => {
     if (["driver"].includes(role)) {
       return ["Statements", "Bookings", "Drivers", "Settings", "Invoices"];
     } else if (
-      ["clientadmin", "associateadmin", "staffmember", "manager"].includes(role)
+      ["clientadmin", "associateadmin", "staffmember", ].includes(role)
     ) {
       return [
+        "Home",
         "Users",
         "Bookings",
         "Invoices",
@@ -283,8 +285,28 @@ const AdminList = () => {
         "Pricing",
         "Settings",
         "Widget/API",
+        "Profile",
+        "Logout",
+      ];;
+    }
+    else if (["manager"].includes(role)) {
+      return [
+        "Home",
+        "Users",
+        "Bookings",
+        "Invoices",
+        "Drivers",
+        "Customers",
+        "Company Accounts",
+        "Statements",
+        "Pricing",
+        "Settings",
+        "Widget/API",
+        "Profile",
+        "Logout",
       ];
-    } else {
+    }
+    else {
       return [
         "Users",
         "Bookings",

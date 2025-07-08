@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import {  Link, useNavigate } from "react-router-dom";
-import { useFetchAllCompaniesQuery, useSendCompanyEmailMutation, useDeleteCompanyAccountMutation } from "../../../redux/api/companyApi";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  useFetchAllCompaniesQuery,
+  useSendCompanyEmailMutation,
+  useDeleteCompanyAccountMutation,
+} from "../../../redux/api/companyApi";
 import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
@@ -15,7 +19,6 @@ const tabs = ["active", "pending", "suspended", "deleted"];
 
 const CompanyAccountsList = () => {
   const { data: companies = [], refetch } = useFetchAllCompaniesQuery();
-  console.log(companies, "Company Accounts Data"); ;
   const navigate = useNavigate();
   const [sendEmail] = useSendCompanyEmailMutation();
   const [deleteCompany] = useDeleteCompanyAccountMutation();
@@ -50,7 +53,10 @@ const CompanyAccountsList = () => {
   const filteredData = companies.filter(
     (item) =>
       (item.status || "").toLowerCase() === selectedTab.toLowerCase() &&
-      Object.values(item).join(" ").toLowerCase().includes(searchTerm.toLowerCase())
+      Object.values(item)
+        .join(" ")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
   );
 
   const paginatedData =
@@ -71,6 +77,9 @@ const CompanyAccountsList = () => {
 
   const tableData = paginatedData.map((item) => ({
     ...item,
+    createdAt: item.createdAt
+      ? new Date(item.createdAt).toLocaleDateString("en-GB")
+      : "-",
     actions: (
       <div className="flex gap-2">
         <Icons.Eye
@@ -80,7 +89,9 @@ const CompanyAccountsList = () => {
         />
         <Icons.Pencil
           title="Edit"
-          onClick={() => navigate(`/dashboard/company-accounts/edit/${item._id}`)}
+          onClick={() =>
+            navigate(`/dashboard/company-accounts/edit/${item._id}`)
+          }
           className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
         />
         <Icons.Trash
@@ -96,7 +107,9 @@ const CompanyAccountsList = () => {
   }));
 
   const tabCounts = tabs.reduce((acc, tab) => {
-    acc[tab] = companies.filter((item) => (item.status || "").toLowerCase() === tab.toLowerCase()).length;
+    acc[tab] = companies.filter(
+      (item) => (item.status || "").toLowerCase() === tab.toLowerCase()
+    ).length;
     return acc;
   }, {});
 
@@ -140,9 +153,14 @@ const CompanyAccountsList = () => {
                   setSelectedTab(tab);
                   setPage(1);
                 }}
-                className={`pb-2 ${selectedTab === tab ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-600 hover:text-blue-500"}`}
+                className={`pb-2 ${
+                  selectedTab === tab
+                    ? "border-b-2 border-blue-600 text-blue-600"
+                    : "text-gray-600 hover:text-blue-500"
+                }`}
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)} ({tabCounts[tab] || 0})
+                {tab.charAt(0).toUpperCase() + tab.slice(1)} (
+                {tabCounts[tab] || 0})
               </button>
             ))}
           </div>
@@ -164,17 +182,28 @@ const CompanyAccountsList = () => {
             <div className="flex gap-2">
               <button
                 onClick={() =>
-                  downloadPDF("invoiceToDownload", `Invoice-${selectedAccount.companyName}.pdf`)
+                  downloadPDF(
+                    "invoiceToDownload",
+                    `Invoice-${selectedAccount.companyName}.pdf`
+                  )
                 }
                 className="btn btn-reset"
               >
                 Download PDF
               </button>
-              <button onClick={handleConfirmSendEmail} className="btn btn-success">
+              <button
+                onClick={handleConfirmSendEmail}
+                className="btn btn-success"
+              >
                 Send Email
               </button>
 
-              <button onClick={() => setSelectedAccount(null)} className="btn btn-cancel">Close</button>
+              <button
+                onClick={() => setSelectedAccount(null)}
+                className="btn btn-cancel"
+              >
+                Close
+              </button>
             </div>
           </div>
 
@@ -196,8 +225,8 @@ const CompanyAccountsList = () => {
                   selectedAccount.profileImage?.startsWith("http")
                     ? selectedAccount.profileImage
                     : selectedAccount.profileImage
-                      ? `http://localhost:5000/${selectedAccount.profileImage}`
-                      : IMAGES.dummyImg
+                    ? `http://localhost:5000/${selectedAccount.profileImage}`
+                    : IMAGES.dummyImg
                 }
                 style={{
                   width: "96px",
@@ -220,7 +249,10 @@ const CompanyAccountsList = () => {
               <div>
                 <InfoRow label="Company" value={selectedAccount.companyName} />
                 <InfoRow label="Company Email" value={selectedAccount.email} />
-                <InfoRow label="Primary Contact" value={selectedAccount.contactName} />
+                <InfoRow
+                  label="Primary Contact"
+                  value={selectedAccount.contactName}
+                />
                 <InfoRow label="Phone" value={selectedAccount.contact} />
                 <InfoRow label="Website" value={selectedAccount.website} />
                 <InfoRow label="City" value={selectedAccount.city} />
@@ -230,23 +262,44 @@ const CompanyAccountsList = () => {
               </div>
               <div>
                 <InfoRow label="Owner Name" value={selectedAccount.fullName} />
-                <InfoRow label="Designation" value={selectedAccount.designation} />
+                <InfoRow
+                  label="Designation"
+                  value={selectedAccount.designation}
+                />
                 <InfoRow label="Status" value={selectedAccount.status} />
-                <InfoRow label="Passphrase" value={selectedAccount.passphrase} />
+                <InfoRow
+                  label="Passphrase"
+                  value={selectedAccount.passphrase}
+                />
                 <InfoRow label="Due Days" value={selectedAccount.dueDays} />
-                <InfoRow label="Invoice Terms" value={selectedAccount.invoiceTerms} />
-                <InfoRow label="Invoice Payment" value={selectedAccount.invoicePayment} />
+                <InfoRow
+                  label="Invoice Terms"
+                  value={selectedAccount.invoiceTerms}
+                />
+                <InfoRow
+                  label="Invoice Payment"
+                  value={selectedAccount.invoicePayment}
+                />
                 <InfoRow label="Address" value={selectedAccount.address} />
-                <InfoRow label="Booking Payment" value={selectedAccount.bookingPayment} />
+                <InfoRow
+                  label="Booking Payment"
+                  value={selectedAccount.bookingPayment}
+                />
               </div>
             </div>
           </div>
         </div>
       )}
 
-      <CustomModal isOpen={showModal} onClose={() => setShowModal(false)} heading="Send Email">
+      <CustomModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        heading="Send Email"
+      >
         <div className="p-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email:</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Email:
+          </label>
           <input
             type="email"
             value={emailToSend}
@@ -254,7 +307,12 @@ const CompanyAccountsList = () => {
             className="w-full px-3 py-2 border rounded-md"
           />
           <div className="flex justify-end mt-4">
-            <button onClick={() => setShowModal(false)} className="btn btn-success">Send Email</button>
+            <button
+              onClick={() => setShowModal(false)}
+              className="btn btn-success"
+            >
+              Send Email
+            </button>
           </div>
         </div>
       </CustomModal>

@@ -1,45 +1,170 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import PhoneInput from "react-phone-input-2";
+import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
-import PhoneInput from "react-phone-input-2";
-
+import {
+  colorFields,
+  yesNoOptions,
+} from "../../../constants/dashboardTabsData/data";
+import {
+  useFetchAllCompaniesQuery,
+  useUpdateCompanyMutation,
+} from "../../../redux/api/companyApi";
+import useUIStore from "../../../store/useUIStore";
 const SettingsGeneral = () => {
+  const theme = useUIStore((state) => state.theme);
+  const debounceRef = useRef(null);
+
+  const user = useSelector((state) => state.auth.user);
+  const companyId = user?.companyId;
+
+  const { data: allCompanies = [] } = useFetchAllCompaniesQuery(undefined, {
+    skip: !companyId,
+  });
+  const companyData = allCompanies.find((company) => company._id === companyId);
+  const [updateCompany, { isLoading }] = useUpdateCompanyMutation();
   const [logo, setLogo] = useState(null);
   const [favicon, setFavicon] = useState(null);
-
-  const [colors, setColors] = useState({
-    topFooterBg: "#2A7B9B",
-    topFooterText: "#000000",
-    menuBg: "#57C785",
-    menuText: "#EDDD53",
-    bgPrimary: "#76E070",
-    bgSecondary: "#E070D1",
-    textPrimary: "#1f2937",
-    textSecondary: "#6b7280",
+  const [formState, setFormState] = useState({
+    companyName: companyData?.companyName || "",
+    contact: companyData?.contact || "",
+    email: companyData?.email || "",
+    address: companyData?.address || "",
+    cookieConsent: companyData?.cookieConsent || "",
+    tradingName: companyData?.tradingName || "",
+    licenseNo: companyData?.licenseNo || "",
+    licenseReferenceLink: companyData?.licenseReferenceLink || "",
   });
 
+  const getThemeColorVariables = () => {
+    const styles = getComputedStyle(document.body);
+    return {
+      bg: styles.getPropertyValue("--bg").trim(),
+      text: styles.getPropertyValue("--text").trim(),
+      primary: styles.getPropertyValue("--primary").trim(),
+      hover: styles.getPropertyValue("--hover").trim(),
+      active: styles.getPropertyValue("--active").trim(),
+    };
+  };
+  const [colors, setColors] = useState(getThemeColorVariables());
+
   const handleColorChange = (key, value) => {
-    setColors((prev) => ({ ...prev, [key]: value }));
+    const updatedColors = { ...colors, [key]: value };
+    setColors(updatedColors);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(() => {
+      document.body.style.setProperty(`--${key}`, value);
+
+      const overrides = JSON.parse(
+        localStorage.getItem("theme-overrides") || "{}"
+      );
+      overrides[theme] = updatedColors;
+      localStorage.setItem("theme-overrides", JSON.stringify(overrides));
+    }, 300);
   };
+  const handleUpdate = async () => {
+    const formData = new FormData();
 
-  const colorFields = [
-    { key: "topFooterBg", label: "Top Bar & Footer Background Color" },
-    { key: "topFooterText", label: "Top Bar & Footer Text Color" },
-    { key: "menuBg", label: "Menu Background Color" },
-    { key: "menuText", label: "Menu Text Color" },
-    { key: "bgPrimary", label: "Background Color Primary" },
-    { key: "bgSecondary", label: "Background Color Secondary" },
-    { key: "textPrimary", label: "Text Color Primary" },
-    { key: "textSecondary", label: "Text Color Secondary" },
-  ];
+    for (const key in formState) {
+      let value = formState[key];
+      // Handle cookieConsent object conversion
+      if (
+        key === "cookieConsent" &&
+        typeof value === "object" &&
+        value !== null
+      ) {
+        value = value.value || "No";
+      }
+      formData.append(key, value);
+    }
+    if (logo) formData.append("profileImage", logo);
+    if (favicon) formData.append("favicon", favicon);
 
+    try {
+      await updateCompany({ id: companyId, formData }).unwrap();
+      toast.success("Company settings updated successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update company settings");
+    }
+  };
   const handleLogoChange = (e) => {
-    setLogo(URL.createObjectURL(e.target.files[0]));
+    const file = e.target.files[0];
+    if (file) setLogo(file);
+  };
+  const handleFaviconChange = (e) => {
+    const file = e.target.files[0];
+    if (file) setFavicon(file);
   };
 
-  const handleFaviconChange = (e) => {
-    setFavicon(URL.createObjectURL(e.target.files[0]));
+  const handleResetColors = () => {
+    const getDefaultThemeColors = () => {
+      const temp = document.createElement("div");
+      temp.style.display = "none";
+      temp.className = theme;
+      document.body.appendChild(temp);
+
+      const styles = getComputedStyle(temp);
+      const defaultColors = {
+        bg: styles.getPropertyValue("--bg").trim(),
+        text: styles.getPropertyValue("--text").trim(),
+        primary: styles.getPropertyValue("--primary").trim(),
+        hover: styles.getPropertyValue("--hover").trim(),
+        active: styles.getPropertyValue("--active").trim(),
+      };
+
+      document.body.removeChild(temp);
+      return defaultColors;
+    };
+
+    const defaultColors = getDefaultThemeColors();
+
+    setColors(defaultColors);
+
+    Object.entries(defaultColors).forEach(([key, value]) => {
+      document.body.style.setProperty(`--${key}`, value);
+    });
+
+    const overrides = JSON.parse(
+      localStorage.getItem("theme-overrides") || "{}"
+    );
+    delete overrides[theme];
+    localStorage.setItem("theme-overrides", JSON.stringify(overrides));
   };
+
+  useEffect(() => {
+    if (companyData) {
+      setFormState({
+        companyName: companyData.companyName || "",
+        contact: companyData.contact || "",
+        email: companyData.email || "",
+        address: companyData.address || "",
+        cookieConsent: companyData.cookieConsent || "",
+        tradingName: companyData.tradingName || "",
+        licenseNo: companyData.licenseNo || "",
+        licenseReferenceLink: companyData.licenseReferenceLink || "",
+      });
+    }
+  }, [companyData]);
+  useEffect(() => {
+    const overrides = JSON.parse(
+      localStorage.getItem("theme-overrides") || "{}"
+    );
+    const themeOverrides = overrides[theme];
+
+    if (themeOverrides) {
+      setColors(themeOverrides);
+      Object.entries(themeOverrides).forEach(([key, val]) =>
+        document.body.style.setProperty(`--${key}`, val)
+      );
+    } else {
+      setColors(getThemeColorVariables());
+    }
+  }, [theme]);
 
   return (
     <div>
@@ -48,7 +173,9 @@ const SettingsGeneral = () => {
       {/* Language Section */}
       <div className="space-y-4">
         <div>
-          <label className="  text-gray-600 font-semibold  text-lg ">Company Information</label>
+          <label className="  text-gray-600 font-semibold  text-lg ">
+            Company Information
+          </label>
         </div>
 
         <div className="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0">
@@ -57,14 +184,27 @@ const SettingsGeneral = () => {
             <input
               className="custom_input"
               type="text"
-              placeholder="Mega Transfers Limited"
+              value={formState.companyName}
+              onChange={(e) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  companyName: e.target.value,
+                }))
+              }
             />
           </div>
 
           <div className="w-full md:w-1/2">
             <label className="block text-gray-600 mb-2">Contact Number</label>
-            <PhoneInput country={'gb'} inputClass="w-full custom_input" inputStyle={{ width: "100%" }} />
-
+            <PhoneInput
+              country={"gb"}
+              inputClass=" w-full"
+              value={formState.contact}
+              inputStyle={{ width: "100%" }}
+              onChange={(value) =>
+                setFormState((prev) => ({ ...prev, contact: value }))
+              }
+            />
           </div>
         </div>
 
@@ -73,6 +213,10 @@ const SettingsGeneral = () => {
             <label className="block text-gray-600 mb-2">Email address</label>
             <input
               type="email"
+              value={formState.email}
+              onChange={(e) =>
+                setFormState((prev) => ({ ...prev, email: e.target.value }))
+              }
               className="custom_input"
               placeholder="booking@megatransfers.co.uk"
             />
@@ -82,6 +226,10 @@ const SettingsGeneral = () => {
             <label className="block text-gray-600 mb-2">Company address</label>
             <input
               type="text"
+              value={formState.address}
+              onChange={(e) =>
+                setFormState((prev) => ({ ...prev, address: e.target.value }))
+              }
               className="custom_input"
               placeholder=""
             />
@@ -89,24 +237,29 @@ const SettingsGeneral = () => {
         </div>
       </div>
 
-
-
       {/* Branding Section */}
       <div className="space-y-6 mt-4">
-
-
         <div className="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0">
           {/* Logo Upload */}
           <div className="w-full md:w-1/2">
             <label className="block text-gray-600 mb-2">Upload Logo</label>
             <div className="flex items-center space-x-4">
-              <div className="h-24 w-32  border border-dashed border-gray-300 flex items-center justify-center text-xs text-gray-500">
+              <div className="h-24 w-32    flex items-center justify-center text-xs text-gray-500">
                 {logo ? (
-                  <img src={logo} alt="Logo Preview" className="h-full  object-contain" />
+                  <img
+                    src={URL.createObjectURL(logo)}
+                    alt="Logo Preview"
+                    className="h-full object-contain"
+                  />
+                ) : companyData?.profileImage ? (
+                  <img
+                    src={companyData.profileImage}
+                    alt="Current Logo"
+                    className="h-full object-contain"
+                  />
                 ) : (
-                  <div className="w-44 h-24   flex items-center justify-center text-gray-500 text-xs font-light">
-                    No File Uploaded
-                  </div>)}
+                  <div className="...">No File Uploaded</div>
+                )}
               </div>
               <div>
                 <label
@@ -130,13 +283,21 @@ const SettingsGeneral = () => {
           <div className="w-full md:w-1/2">
             <label className="block text-gray-600 mb-2">Upload Favicon</label>
             <div className="flex items-center space-x-4">
-              <div className="h-24 w-32 border border-dashed border-gray-300  flex items-center justify-center text-xs text-gray-500">
+              <div className="h-24 w-32  flex items-center justify-center text-xs text-gray-500">
                 {favicon ? (
-                  <img src={favicon} alt="Favicon Preview" className="h-full object-contain" />
+                  <img
+                    src={URL.createObjectURL(favicon)}
+                    alt="Logo Preview"
+                    className="h-full object-contain"
+                  />
+                ) : companyData?.favicon ? (
+                  <img
+                    src={companyData.favicon}
+                    alt="Current Logo"
+                    className="h-full object-contain"
+                  />
                 ) : (
-                  <div className="w-44 h-24   flex items-center justify-center text-gray-500 text-xs font-light">
-                    No File Uploaded
-                  </div>
+                  <div className="border border-dashed border-gray-300 ">No File Uploaded</div>
                 )}
               </div>
               <div>
@@ -157,23 +318,38 @@ const SettingsGeneral = () => {
             </div>
           </div>
         </div>
-
       </div>
       <hr className="border-gray-300 mt-8 mb-5" />
       {/* Company Info */}
       <div className="mb-4 ">
-
-        <label className="  text-gray-600 font-semibold  text-lg " >Additional Information</label>
+        <label className="  text-gray-600 font-semibold  text-lg ">
+          Additional Information
+        </label>
       </div>
       <div className=" grid grid-cols-2  gap-x-6 gap-y-4">
         <div className="w-full">
           <label className="block text-gray-600 mb-2">Cookie Consent</label>
-          <SelectOption width="full" options={["Yes", "No"]} />
+          <SelectOption
+            width="full"
+            value={formState.cookieConsent}
+            onChange={(val) => {
+              const selectedValue = val.target ? val.target.value : val;
+              setFormState((prev) => ({
+                ...prev,
+                cookieConsent: selectedValue,
+              }));
+            }}
+            options={yesNoOptions}
+          />
         </div>
 
         <div className="w-full">
           <label className="block text-gray-600 mb-2">Trading Name</label>
           <input
+            value={formState.tradingName}
+            onChange={(e) =>
+              setFormState((prev) => ({ ...prev, tradingName: e.target.value }))
+            }
             className="custom_input"
             type="text"
             placeholder=""
@@ -184,14 +360,27 @@ const SettingsGeneral = () => {
           <label className="block text-gray-600 mb-2">License number</label>
           <input
             className="custom_input"
+            value={formState.licenseNo}
+            onChange={(e) =>
+              setFormState((prev) => ({ ...prev, licenseNo: e.target.value }))
+            }
             type="text"
             placeholder=""
           />
         </div>
 
         <div className="w-full">
-          <label className="block text-gray-600 mb-2">License reference link</label>
+          <label className="block text-gray-600 mb-2">
+            License reference link
+          </label>
           <input
+            value={formState.licenseReferenceLink}
+            onChange={(e) =>
+              setFormState((prev) => ({
+                ...prev,
+                licenseReferenceLink: e.target.value,
+              }))
+            }
             className="custom_input"
             type="text"
             placeholder=""
@@ -220,9 +409,17 @@ const SettingsGeneral = () => {
         ))}
       </div>
 
-
-      <div className="text-right mt-8 flex items-center justify-center">
-        <button className="btn btn-reset">UPDATE</button>
+      <div className="text-right mt-8 space-x-3 flex items-center justify-center">
+        <button
+          className="btn btn-reset"
+          onClick={handleUpdate}
+          disabled={isLoading}
+        >
+          {isLoading ? "Updating..." : "UPDATE"}
+        </button>
+        <button className="btn btn-edit" onClick={handleResetColors}>
+          Reset to Default
+        </button>
       </div>
     </div>
   );

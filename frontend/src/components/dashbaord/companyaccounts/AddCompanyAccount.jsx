@@ -4,8 +4,7 @@ import "react-phone-input-2/lib/style.css";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import IMAGES from "../../../assets/images";
-import { BASE_API_URL } from "../../../config";
+import FilePreview from "../../../constants/constantscomponents/FilePreview";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import countries from "../../../constants/constantscomponents/countries";
@@ -26,11 +25,11 @@ const AddCompanyAccount = () => {
   const navigate = useNavigate();
   const isEdit = Boolean(id);
 
-  const [profileImage, setProfileImage] = useState(null);
-  const [file, setFile] = useState(null);
   const [notFound, setNotFound] = useState(false);
+  const [filePreviews, setFilePreviews] = useState({});
 
   const [formData, setFormData] = useState({
+    profileImage: "",
     companyName: "",
     contactName: "",
     email: "",
@@ -56,6 +55,31 @@ const AddCompanyAccount = () => {
     licenseNo: "",
     licenseReferenceLink: "",
   });
+  const handleInputChange = (e) => {
+    const { name, type, files, value } = e.target;
+
+    if (type === "file") {
+      const file = files[0];
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/jpg",
+        "application/pdf",
+      ];
+      if (file && !allowedTypes.includes(file.type)) {
+        toast.error("Only PDF, JPEG, PNG, JPG files are supported.");
+        return;
+      }
+
+      setFormData((prev) => ({ ...prev, [name]: file }));
+      setFilePreviews((prev) => ({
+        ...prev,
+        [name]: file ? URL.createObjectURL(file) : "",
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
 
   const { data: rawClientAdmins = [] } = useFetchClientAdminsQuery();
   const clientAdmins = [
@@ -79,34 +103,29 @@ const AddCompanyAccount = () => {
   const [createCompany] = useCreateCompanyMutation();
   const [updateCompany] = useUpdateCompanyMutation();
 
-  // Set form data if editing
   useEffect(() => {
     if (isEdit && isError) {
       setNotFound(true);
+      return;
     }
 
     if (companyData) {
+      const imagePath = companyData.profileImage?.startsWith("/")
+        ? companyData.profileImage
+        : `${companyData.profileImage}`;
+
       setFormData((prev) => ({
         ...prev,
         ...companyData,
         clientAdminId: companyData.clientAdminId || "",
+        profileImage: "",
       }));
 
-      const imagePath = companyData.profileImage?.startsWith("/")
-        ? companyData.profileImage
-        : `/${companyData.profileImage}`;
-
-      setProfileImage(`${BASE_API_URL}${imagePath}`);
+      setFilePreviews({
+        profileImage: `${imagePath}`,
+      });
     }
   }, [companyData, isEdit, isError]);
-
-  const handleProfileImageChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setProfileImage(URL.createObjectURL(selectedFile));
-    }
-  };
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -120,13 +139,16 @@ const AddCompanyAccount = () => {
 
     try {
       const data = new FormData();
+
       for (const key in formData) {
+        if (key === "profileImage") continue; // ✅ skip to avoid double append
         const value =
           key === "dueDays" ? parseInt(formData[key] || "0") : formData[key];
         data.append(key, value);
       }
-      if (file) {
-        data.append("profileImage", file);
+
+      if (formData.profileImage instanceof File) {
+        data.append("profileImage", formData.profileImage); // ✅ add only once, correctly
       }
 
       if (isEdit) {
@@ -162,27 +184,15 @@ const AddCompanyAccount = () => {
 
       {/* Profile Image Upload */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-        <img
-          src={profileImage || IMAGES.dummyImg}
-          alt="Profile Preview"
-          className="w-24 h-24 rounded-full object-cover border-gray-300 border-2"
+        <FilePreview
+          label=""
+          file={formData.profileImage}
+          previewUrl={filePreviews.profileImage}
+          previewName={filePreviews.profileImage}
+          formDataFile={formData.profileImage}
+          name="profileImage"
+          onChange={handleInputChange}
         />
-        <div>
-          <label className="block font-medium text-sm mb-1">Upload Image</label>
-          <label
-            htmlFor="driver-upload"
-            className="btn btn-edit mt-1 cursor-pointer inline-block"
-          >
-            Choose File
-          </label>
-          <input
-            id="driver-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleProfileImageChange}
-            className="hidden"
-          />
-        </div>
       </div>
 
       {/* Input Fields */}
@@ -257,30 +267,6 @@ const AddCompanyAccount = () => {
           value={formData.passphrase}
           onChange={(e) => handleChange("passphrase", e.target.value)}
         />
-
-        <input
-          className="custom_input"
-          type="text"
-          value={formData.tradingName}
-          onChange={(e) => handleChange("tradingName", e.target.value)}
-          placeholder="Trading Name"
-        />
-
-        <input
-          className="custom_input"
-          type="text"
-          value={formData.licenseNo}
-          onChange={(e) => handleChange("licenseNo", e.target.value)}
-          placeholder="License No.*"
-        />
-
-        <input
-          className="custom_input"
-          type="text"
-          value={formData.licenseReferenceLink}
-          onChange={(e) => handleChange("licenseReferenceLink", e.target.value)}
-          placeholder="License reference link"
-        />
       </div>
 
       {/* Select & TextArea Fields */}
@@ -324,12 +310,6 @@ const AddCompanyAccount = () => {
             options={yesNoOptions}
             value={formData.showLocations}
             onChange={(e) => handleChange("showLocations", e.target.value)}
-          />
-          <SelectOption
-            label="Cookie consent"
-            value={formData.cookieConsent}
-            onChange={(e) => handleChange("cookieConsent", e.target.value)}
-            options={yesNoOptions}
           />
         </div>
 

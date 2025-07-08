@@ -9,7 +9,7 @@ const createSuperAdmin = async () => {
   const allowedPermissions = [
     "Home", "Users", "Bookings", "Invoices", "Drivers", "Customers",
     "Company Accounts", "Statements", "Pricing",
-    "Settings", "Widget/API", "Profile", "Logout"
+    "Settings", "Widget/API", "Profile", "Logout","Permissions"
 ];
 
   if (!existing) {
@@ -20,7 +20,7 @@ const createSuperAdmin = async () => {
       role: 'superadmin',
       permissions: allowedPermissions 
     });
-    console.log('Super Admin Created'); // Confirmation message
+    console.log('Super Admin Created'); 
   }
 };
 

@@ -97,6 +97,7 @@ const Locations = () => {
     : [];
 
   if (isLoading) return <div>Loading locations...</div>;
+  if(!companyId) return <div>No companyId found, contact Admin.</div>;
   if (error) return <div>Error loading locations!</div>;
   return (
     <>

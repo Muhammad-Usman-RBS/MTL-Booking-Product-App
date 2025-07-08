@@ -63,6 +63,7 @@ import ProtectedRoute from './layouts/ProtectedRoute';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ViewNotifications from "./components/dashbaord/settings/ViewNotifications";
+import PermissionsSettings from "./components/dashbaord/settings/PermissionsSettings";
 
 function App() {
   return (
@@ -79,11 +80,13 @@ function App() {
         {/* Role-Specific Dashboards */}
 
         <Route element={<ProtectedRoute />}>
+
           {/* Dashboard Layout with Nested Routes */}
           <Route path="/dashboard" element={<DashboardLayout />}>
             <>
               {/* Home */}
               <Route path="home" index element={<Dashboard />} />
+        <Route path="permissions" element={<PermissionsSettings />} />
 
               {/* Bookings */}
               <Route path="bookings/list" element={<BookingsList />} />

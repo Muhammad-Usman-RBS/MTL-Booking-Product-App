@@ -16,8 +16,14 @@ const authSlice = createSlice({
       state.user = null;
       localStorage.removeItem('user');
     },
+    updateUserPermissions(state, action) {
+      if (state.user) {
+        state.user.permissions = action.payload.permissions;
+        localStorage.setItem('user', JSON.stringify(state.user)); 
+      }
+    },
   },
 });
 
-export const { setUser, clearUser } = authSlice.actions;
+export const { setUser, clearUser , updateUserPermissions  } = authSlice.actions;
 export default authSlice.reducer;
