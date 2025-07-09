@@ -46,7 +46,6 @@ export const createBooking = async (req, res) => {
 
     const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
 
-    // ✅ Only validate required fields based on journey type
     if (!returnJourneyToggle) {
       for (const field of requiredFields) {
         if (!primaryJourney[field]) {
@@ -65,7 +64,7 @@ export const createBooking = async (req, res) => {
       const fields = {};
       Object.keys(journey || {}).forEach((key) => {
         if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
-          fields[key] = journey[key];
+          fields[key] = journey[key] ?? "";
         }
       });
       return fields;
@@ -82,7 +81,7 @@ export const createBooking = async (req, res) => {
     const source = referrer?.toLowerCase()?.includes("widget") ? "widget" : "admin";
 
     const baseVehicleInfo = {
-      vehicleName: vehicle.vehicleName || null,
+      vehicleName: vehicle.vehicleName ?? null,
       passenger: parseInt(vehicle.passenger) || 0,
       childSeat: parseInt(vehicle.childSeat) || 0,
       handLuggage: parseInt(vehicle.handLuggage) || 0,
@@ -90,9 +89,9 @@ export const createBooking = async (req, res) => {
     };
 
     const basePassengerInfo = {
-      name: passenger.name || null,
-      email: passenger.email || null,
-      phone: passenger.phone || null,
+      name: passenger.name ?? null,
+      email: passenger.email ?? null,
+      phone: passenger.phone ?? null,
     };
 
     const returnIsValid =
@@ -113,27 +112,27 @@ export const createBooking = async (req, res) => {
       passenger: basePassengerInfo,
     };
 
-    // ✅ Add primaryJourney if it's a primary booking
+    // ✅ Add primaryJourney
     if (!returnJourneyToggle) {
       bookingPayload.primaryJourney = {
-        pickup: primaryJourney.pickup?.trim() || "",
-        dropoff: primaryJourney.dropoff?.trim() || "",
-        additionalDropoff1: primaryJourney.additionalDropoff1 || null,
-        additionalDropoff2: primaryJourney.additionalDropoff2 || null,
-        pickupDoorNumber: primaryJourney.pickupDoorNumber || null,
-        terminal: primaryJourney.terminal || null,
-        arrivefrom: primaryJourney.arrivefrom || null,
-        flightNumber: primaryJourney.flightNumber || null,
-        pickmeAfter: primaryJourney.pickmeAfter || null,
-        notes: primaryJourney.notes || null,
-        internalNotes: primaryJourney.internalNotes || null,
-        date: primaryJourney.date,
+        pickup: primaryJourney.pickup?.trim() ?? "",
+        dropoff: primaryJourney.dropoff?.trim() ?? "",
+        additionalDropoff1: primaryJourney.additionalDropoff1 ?? null,
+        additionalDropoff2: primaryJourney.additionalDropoff2 ?? null,
+        pickupDoorNumber: primaryJourney.pickupDoorNumber ?? "",
+        terminal: primaryJourney.terminal ?? "",
+        arrivefrom: primaryJourney.arrivefrom ?? "",
+        flightNumber: primaryJourney.flightNumber ?? "",
+        pickmeAfter: primaryJourney.pickmeAfter ?? "",
+        notes: primaryJourney.notes ?? "",
+        internalNotes: primaryJourney.internalNotes ?? "",
+        date: primaryJourney.date ?? "",
         hour: primaryJourney.hour !== undefined ? parseInt(primaryJourney.hour) : null,
         minute: primaryJourney.minute !== undefined ? parseInt(primaryJourney.minute) : null,
-        fare: primaryJourney.fare,
-        hourlyOption: primaryJourney.hourlyOption || null,
-        distanceText: primaryJourney.distanceText || null,
-        durationText: primaryJourney.durationText || null,
+        fare: primaryJourney.fare ?? 0,
+        hourlyOption: primaryJourney.hourlyOption ?? null,
+        distanceText: primaryJourney.distanceText ?? "",
+        durationText: primaryJourney.durationText ?? "",
         voucher: validVoucher,
         voucherApplied: isVoucherApplied,
         ...extractDynamicDropoffFields(primaryJourney),
@@ -143,24 +142,24 @@ export const createBooking = async (req, res) => {
     // ✅ Add returnJourney if valid
     if (returnIsValid) {
       bookingPayload.returnJourney = {
-        pickup: returnJourney.pickup?.trim() || "",
-        dropoff: returnJourney.dropoff?.trim() || "",
-        additionalDropoff1: returnJourney.additionalDropoff1 || null,
-        additionalDropoff2: returnJourney.additionalDropoff2 || null,
-        pickupDoorNumber: returnJourney.pickupDoorNumber || null,
-        terminal: returnJourney.terminal || null,
-        arrivefrom: returnJourney.arrivefrom || null,
-        flightNumber: returnJourney.flightNumber || null,
-        pickmeAfter: returnJourney.pickmeAfter || null,
-        notes: returnJourney.notes || null,
-        internalNotes: returnJourney.internalNotes || null,
-        date: returnJourney.date,
+        pickup: returnJourney.pickup?.trim() ?? "",
+        dropoff: returnJourney.dropoff?.trim() ?? "",
+        additionalDropoff1: returnJourney.additionalDropoff1 ?? null,
+        additionalDropoff2: returnJourney.additionalDropoff2 ?? null,
+        pickupDoorNumber: returnJourney.pickupDoorNumber ?? "",
+        terminal: returnJourney.terminal ?? "",
+        arrivefrom: returnJourney.arrivefrom ?? "",
+        flightNumber: returnJourney.flightNumber ?? "",
+        pickmeAfter: returnJourney.pickmeAfter ?? "",
+        notes: returnJourney.notes ?? "",
+        internalNotes: returnJourney.internalNotes ?? "",
+        date: returnJourney.date ?? "",
         hour: returnJourney.hour !== undefined ? parseInt(returnJourney.hour) : null,
         minute: returnJourney.minute !== undefined ? parseInt(returnJourney.minute) : null,
-        fare: returnJourney.fare || 0,
-        hourlyOption: returnJourney.hourlyOption || null,
-        distanceText: returnJourney.distanceText || null,
-        durationText: returnJourney.durationText || null,
+        fare: returnJourney.fare ?? 0,
+        hourlyOption: returnJourney.hourlyOption ?? null,
+        distanceText: returnJourney.distanceText ?? "",
+        durationText: returnJourney.durationText ?? "",
         ...extractDynamicDropoffFields(returnJourney),
       };
     }
@@ -168,7 +167,6 @@ export const createBooking = async (req, res) => {
     // ✅ Save booking
     const savedBooking = await Booking.create(bookingPayload);
 
-    // ✅ Email sending
     const sanitize = (booking) => {
       const { _id, __v, createdAt, updatedAt, companyId, ...clean } = booking.toObject();
       return clean;
@@ -199,6 +197,150 @@ export const createBooking = async (req, res) => {
       message: "Internal Server Error",
       error: error.message,
     });
+  }
+};
+
+export const submitWidgetForm = async (req, res) => {
+  try {
+    const {
+      companyId,
+      referrer,
+      mode = "Transfer",
+      returnJourneyToggle = false,
+      vehicle,
+      primaryJourney,
+      returnJourney,
+    } = req.body;
+
+    if (!companyId || companyId.length !== 24) {
+      return res.status(400).json({ message: "Invalid or missing companyId" });
+    }
+
+    if (!vehicle?.vehicleName) {
+      return res.status(400).json({ message: "Vehicle name is required" });
+    }
+
+    const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
+    for (const field of requiredFields) {
+      if (!primaryJourney?.[field]) {
+        return res.status(400).json({
+          message: `Missing required field in primaryJourney: ${field}`,
+        });
+      }
+    }
+
+    const dynamicDropoffFields1 = {};
+    Object.keys(primaryJourney || {}).forEach((key) => {
+      if (
+        key.startsWith("dropoff_terminal_") ||
+        key.startsWith("dropoffDoorNumber")
+      ) {
+        dynamicDropoffFields1[key] = primaryJourney[key];
+      }
+    });
+
+    const dynamicDropoffFields2 = {};
+    if (returnJourneyToggle && returnJourney) {
+      Object.keys(returnJourney || {}).forEach((key) => {
+        if (
+          key.startsWith("dropoff_terminal_") ||
+          key.startsWith("dropoffDoorNumber")
+        ) {
+          dynamicDropoffFields2[key] = returnJourney[key];
+        }
+      });
+    }
+
+    if (
+      returnJourneyToggle &&
+      returnJourney &&
+      (isNaN(parseInt(returnJourney.hour)) ||
+        isNaN(parseInt(returnJourney.minute)))
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Invalid return journey time format" });
+    }
+
+    const bookingData = {
+      mode,
+      returnJourneyToggle,
+      companyId,
+      referrer: referrer || "Direct",
+      source: "widget",
+      status: "New",
+      vehicle: {
+        vehicleName: vehicle.vehicleName,
+        passenger: vehicle.passenger || 0,
+        childSeat: vehicle.childSeat || 0,
+        handLuggage: vehicle.handLuggage || 0,
+        checkinLuggage: vehicle.checkinLuggage || 0,
+      },
+      primaryJourney: {
+        pickup: primaryJourney.pickup,
+        dropoff: primaryJourney.dropoff,
+        additionalDropoff1: primaryJourney.additionalDropoff1 || null,
+        additionalDropoff2: primaryJourney.additionalDropoff2 || null,
+        pickupDoorNumber: primaryJourney.pickupDoorNumber ?? null,
+        terminal: primaryJourney.terminal || null,
+        arrivefrom: primaryJourney.arrivefrom || null,
+        flightNumber: primaryJourney.flightNumber || null,
+        pickmeAfter: primaryJourney.pickmeAfter || null,
+        notes: primaryJourney.notes || null,
+        internalNotes: primaryJourney.internalNotes || null,
+        date: primaryJourney.date,
+        hour:
+          primaryJourney.hour !== undefined
+            ? parseInt(primaryJourney.hour)
+            : null,
+        minute:
+          primaryJourney.minute !== undefined
+            ? parseInt(primaryJourney.minute)
+            : null,
+        fare: primaryJourney.fare,
+        hourlyOption: primaryJourney.hourlyOption || null,
+        distanceText: primaryJourney.distanceText || null,
+        durationText: primaryJourney.durationText || null,
+        ...dynamicDropoffFields1,
+      },
+      ...(returnJourneyToggle &&
+        returnJourney && {
+          returnJourney: {
+            pickup: returnJourney.pickup,
+            dropoff: returnJourney.dropoff,
+            additionalDropoff1: returnJourney.additionalDropoff1 || null,
+            additionalDropoff2: returnJourney.additionalDropoff2 || null,
+            pickupDoorNumber: returnJourney.pickupDoorNumber ?? "",
+            terminal: returnJourney.terminal ?? "",
+            arrivefrom: returnJourney.arrivefrom ?? "",
+            flightNumber: returnJourney.flightNumber ?? "",
+            pickmeAfter: returnJourney.pickmeAfter ?? "",
+            notes: returnJourney.notes ?? "",
+            internalNotes: returnJourney.internalNotes ?? "",
+            date: returnJourney.date,
+            hour: parseInt(returnJourney.hour),
+            minute: parseInt(returnJourney.minute),
+            fare: returnJourney.fare,
+            hourlyOption: returnJourney.hourlyOption || null,
+            distanceText: returnJourney.distanceText || null,
+            durationText: returnJourney.durationText || null,
+            ...dynamicDropoffFields2,
+          },
+        }),
+    };
+
+    const booking = await Booking.create(bookingData);
+
+    res.status(201).json({
+      success: true,
+      message: "Booking submitted successfully via widget",
+      booking,
+    });
+  } catch (error) {
+    console.error("Error in submitWidgetForm:", error);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -475,138 +617,139 @@ export const deleteBooking = async (req, res) => {
 };
 
 // Widget Form Submission
-export const submitWidgetForm = async (req, res) => {
-  try {
-    const {
-      companyId,
-      referrer,
-      mode = "Transfer",
-      returnJourneyToggle = false,
-      vehicle,
-      primaryJourney,
-      returnJourney,
-    } = req.body;
+// export const submitWidgetForm = async (req, res) => {
+//   try {
+//     const {
+//       companyId,
+//       referrer,
+//       mode = "Transfer",
+//       returnJourneyToggle = false,
+//       vehicle,
+//       primaryJourney,
+//       returnJourney,
+//     } = req.body;
 
-    if (!companyId || companyId.length !== 24) {
-      return res.status(400).json({ message: "Invalid or missing companyId" });
-    }
+//     if (!companyId || companyId.length !== 24) {
+//       return res.status(400).json({ message: "Invalid or missing companyId" });
+//     }
 
-    if (!vehicle?.vehicleName) {
-      return res.status(400).json({ message: "Vehicle name is required" });
-    }
+//     if (!vehicle?.vehicleName) {
+//       return res.status(400).json({ message: "Vehicle name is required" });
+//     }
 
-    const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
-    for (const field of requiredFields) {
-      if (!primaryJourney?.[field]) {
-        return res.status(400).json({
-          message: `Missing required field in primaryJourney: ${field}`,
-        });
-      }
-    }
+//     const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
+//     for (const field of requiredFields) {
+//       if (!primaryJourney?.[field]) {
+//         return res.status(400).json({
+//           message: `Missing required field in primaryJourney: ${field}`,
+//         });
+//       }
+//     }
 
-    const dynamicDropoffFields1 = {};
-    Object.keys(primaryJourney || {}).forEach((key) => {
-      if (
-        key.startsWith("dropoff_terminal_") ||
-        key.startsWith("dropoffDoorNumber")
-      ) {
-        dynamicDropoffFields1[key] = primaryJourney[key];
-      }
-    });
+//     const dynamicDropoffFields1 = {};
+//     Object.keys(primaryJourney || {}).forEach((key) => {
+//       if (
+//         key.startsWith("dropoff_terminal_") ||
+//         key.startsWith("dropoffDoorNumber")
+//       ) {
+//         dynamicDropoffFields1[key] = primaryJourney[key];
+//       }
+//     });
 
-    // Collect dynamic fields for return journey
-    const dynamicDropoffFields2 = {};
-    if (returnJourneyToggle && returnJourney) {
-      Object.keys(returnJourney || {}).forEach((key) => {
-        if (
-          key.startsWith("dropoff_terminal_") ||
-          key.startsWith("dropoffDoorNumber")
-        ) {
-          dynamicDropoffFields2[key] = returnJourney[key];
-        }
-      });
-    }
+//     // Collect dynamic fields for return journey
+//     const dynamicDropoffFields2 = {};
+//     if (returnJourneyToggle && returnJourney) {
+//       Object.keys(returnJourney || {}).forEach((key) => {
+//         if (
+//           key.startsWith("dropoff_terminal_") ||
+//           key.startsWith("dropoffDoorNumber")
+//         ) {
+//           dynamicDropoffFields2[key] = returnJourney[key];
+//         }
+//       });
+//     }
 
-    if (isNaN(parseInt(returnJourney.hour)) || isNaN(parseInt(returnJourney.minute))) {
-      return res.status(400).json({ message: "Invalid return journey time format" });
-    }
+//     if (isNaN(parseInt(returnJourney.hour)) || isNaN(parseInt(returnJourney.minute))) {
+//       return res.status(400).json({ message: "Invalid return journey time format" });
+//     }
 
-    const bookingData = {
-      mode,
-      returnJourneyToggle,
-      companyId,
-      referrer: referrer || "Direct",
-      source: "widget",
-      status: "New",
-      vehicle: {
-        vehicleName: vehicle.vehicleName,
-        passenger: vehicle.passenger || 0,
-        childSeat: vehicle.childSeat || 0,
-        handLuggage: vehicle.handLuggage || 0,
-        checkinLuggage: vehicle.checkinLuggage || 0,
-      },
-      primaryJourney: {
-        pickup: primaryJourney.pickup,
-        dropoff: primaryJourney.dropoff,
-        additionalDropoff1: primaryJourney.additionalDropoff1 || null,
-        additionalDropoff2: primaryJourney.additionalDropoff2 || null,
-        pickupDoorNumber: primaryJourney.pickupDoorNumber || null,
-        terminal: primaryJourney.terminal || null,
-        arrivefrom: primaryJourney.arrivefrom || null,
-        flightNumber: primaryJourney.flightNumber || null,
-        pickmeAfter: primaryJourney.pickmeAfter || null,
-        notes: primaryJourney.notes || null,
-        internalNotes: primaryJourney.internalNotes || null,
-        date: primaryJourney.date,
-        hour: primaryJourney.hour !== undefined ? parseInt(primaryJourney.hour) : null,
-        minute: primaryJourney.minute !== undefined ? parseInt(primaryJourney.minute) : null,
-        minute: parseInt(primaryJourney.minute),
-        fare: primaryJourney.fare,
-        hourlyOption: primaryJourney.hourlyOption || null,
-        distanceText: primaryJourney.distanceText || null,
-        durationText: primaryJourney.durationText || null,
-        ...dynamicDropoffFields1,
-      },
-      ...(returnJourneyToggle &&
-        returnJourney && {
-        returnJourney: {
-          pickup: returnJourney.pickup,
-          dropoff: returnJourney.dropoff,
-          additionalDropoff1: returnJourney.additionalDropoff1 || null,
-          additionalDropoff2: returnJourney.additionalDropoff2 || null,
-          pickupDoorNumber: returnJourney.pickupDoorNumber || null,
-          terminal: returnJourney.terminal || null,
-          arrivefrom: returnJourney.arrivefrom || null,
-          flightNumber: returnJourney.flightNumber || null,
-          pickmeAfter: returnJourney.pickmeAfter || null,
-          notes: returnJourney.notes || null,
-          internalNotes: returnJourney.internalNotes || null,
-          date: returnJourney.date,
-          hour: parseInt(returnJourney.hour),
-          minute: parseInt(returnJourney.minute),
-          fare: returnJourney.fare,
-          hourlyOption: returnJourney.hourlyOption || null,
-          distanceText: returnJourney.distanceText || null,
-          durationText: returnJourney.durationText || null,
-          ...dynamicDropoffFields2,
-        },
-      }),
-    };
+//     const bookingData = {
+//       mode,
+//       returnJourneyToggle,
+//       companyId,
+//       referrer: referrer || "Direct",
+//       source: "widget",
+//       status: "New",
+//       vehicle: {
+//         vehicleName: vehicle.vehicleName,
+//         passenger: vehicle.passenger || 0,
+//         childSeat: vehicle.childSeat || 0,
+//         handLuggage: vehicle.handLuggage || 0,
+//         checkinLuggage: vehicle.checkinLuggage || 0,
+//       },
+//       primaryJourney: {
+//         pickup: primaryJourney.pickup,
+//         dropoff: primaryJourney.dropoff,
+//         additionalDropoff1: primaryJourney.additionalDropoff1 || null,
+//         additionalDropoff2: primaryJourney.additionalDropoff2 || null,
+//         pickupDoorNumber: primaryJourney.pickupDoorNumber ?? null,
+//         terminal: primaryJourney.terminal || null,
+//         arrivefrom: primaryJourney.arrivefrom || null,
+//         flightNumber: primaryJourney.flightNumber || null,
+//         pickmeAfter: primaryJourney.pickmeAfter || null,
+//         notes: primaryJourney.notes || null,
+//         internalNotes: primaryJourney.internalNotes || null,
+//         date: primaryJourney.date,
+//         hour: primaryJourney.hour !== undefined ? parseInt(primaryJourney.hour) : null,
+//         minute: primaryJourney.minute !== undefined ? parseInt(primaryJourney.minute) : null,
+//         minute: parseInt(primaryJourney.minute),
+//         fare: primaryJourney.fare,
+//         hourlyOption: primaryJourney.hourlyOption || null,
+//         distanceText: primaryJourney.distanceText || null,
+//         durationText: primaryJourney.durationText || null,
+//         ...dynamicDropoffFields1,
+//       },
+//       ...(returnJourneyToggle &&
+//         returnJourney && {
+//         returnJourney: {
+//            ...returnFormData,
+//           pickup: returnJourney.pickup,
+//           dropoff: returnJourney.dropoff,
+//           additionalDropoff1: returnJourney.additionalDropoff1 || null,
+//           additionalDropoff2: returnJourney.additionalDropoff2 || null,
+//           pickupDoorNumber: returnJourney.pickupDoorNumber ?? "",
+//           terminal: returnJourney.terminal ?? "",
+//           arrivefrom: returnJourney.arrivefrom ?? "",
+//           flightNumber: returnJourney.flightNumber ?? "",
+//           pickmeAfter: returnJourney.pickmeAfter ?? "",
+//           notes: returnJourney.notes ?? "",
+//           internalNotes: returnJourney.internalNotes ?? "",
+//           date: returnJourney.date,
+//           hour: parseInt(returnJourney.hour),
+//           minute: parseInt(returnJourney.minute),
+//           fare: returnJourney.fare,
+//           hourlyOption: returnJourney.hourlyOption || null,
+//           distanceText: returnJourney.distanceText || null,
+//           durationText: returnJourney.durationText || null,
+//           ...dynamicDropoffFields2,
+//         },
+//       }),
+//     };
 
-    const booking = await Booking.create(bookingData);
+//     const booking = await Booking.create(bookingData);
 
-    res.status(201).json({
-      success: true,
-      message: "Booking submitted successfully via widget",
-      booking,
-    });
-  } catch (error) {
-    console.error("Error in submitWidgetForm:", error);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
-  }
-};
+//     res.status(201).json({
+//       success: true,
+//       message: "Booking submitted successfully via widget",
+//       booking,
+//     });
+//   } catch (error) {
+//     console.error("Error in submitWidgetForm:", error);
+//     res
+//       .status(500)
+//       .json({ message: "Internal server error", error: error.message });
+//   }
+// };
 
 // Update Booking Status
 export const updateBookingStatus = async (req, res) => {

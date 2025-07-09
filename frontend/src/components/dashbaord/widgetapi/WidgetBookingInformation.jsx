@@ -136,9 +136,9 @@ const WidgetBookingInformation = ({
     return null;
   };
 
-  useEffect(() => {
-    console.log("🧪 returnFormData state updated:", returnFormData);
-  }, [returnFormData]);
+  // useEffect(() => {
+  //   console.log("🧪 returnFormData state updated:", returnFormData);
+  // }, [returnFormData]);
 
   useEffect(() => {
     if (!journeyDateTime || discounts.length === 0) return;
@@ -398,8 +398,14 @@ const WidgetBookingInformation = ({
       date: returnFormData.date || getSafeReturnField("date"),
       hour: returnFormData.hour || getSafeReturnField("hour"),
       minute: returnFormData.minute || getSafeReturnField("minute"),
+      notes: returnFormData.notes || document.querySelector('[name="notes"]')?.value || '',
+      terminal: returnFormData.terminal || document.querySelector('[name="terminal"]')?.value || '',
+      pickupDoorNumber: returnFormData.pickupDoorNumber || document.querySelector('[name="pickupDoorNumber"]')?.value || '',
+      dropoffDoorNumber: returnFormData.dropoffDoorNumber || document.querySelector('[name="dropoffDoorNumber"]')?.value || '',
+      flightNumber: returnFormData.flightNumber || document.querySelector('[name="flightNumber"]')?.value || '',
+      arrivefrom: returnFormData.arrivefrom || document.querySelector('[name="arrivefrom"]')?.value || '',
+      pickmeAfter: returnFormData.pickmeAfter || document.querySelector('[name="pickmeAfter"]')?.value || ''
     };
-
 
     const returnFare = parseFloat((calculatedTotalPrice / 2).toFixed(2));
 
@@ -643,54 +649,6 @@ const WidgetBookingInformation = ({
                 {hourlyError}
               </div>
             )}
-            {/* <CarCardSection
-              carList={(() => {
-                const baseFixedZonePrice = fixedZonePrice || 0;
-                const baseZoneToZonePrice = matchedZoneToZonePrice || 0;
-                const basePostcodePrice = matchedPostcodePrice?.price || 0;
-                const isHourly = formData?.mode === "Hourly";
-
-                return carList.map((car) => {
-                  let price = 0;
-                  let label = "";
-
-                  const raw = car.percentageIncrease ?? 0;
-                  const cleanPercentage = typeof raw === "string"
-                    ? Number(raw.replace("%", ""))
-                    : Number(raw);
-                  const percentage = isNaN(cleanPercentage) ? 0 : cleanPercentage;
-
-                  let base = 0;
-
-                  if (isHourly) {
-                    base = matchedHourlyRate?.[car.vehicleName] || 0;
-                  } else if (fixedZonePrice !== null) {
-                    base = baseFixedZonePrice + (baseFixedZonePrice * (percentage / 100));
-                  } else if (matchedZoneToZonePrice !== null) {
-                    base = baseZoneToZonePrice + (baseZoneToZonePrice * (percentage / 100));
-                  } else if (matchedPostcodePrice) {
-                    base = basePostcodePrice + (basePostcodePrice * (percentage / 100));
-                  } else {
-                    base = getVehiclePriceForDistance(car, actualMiles || 0);
-                  }
-
-                  // Apply surcharge percentage (e.g. 63%)
-                  const surchargeAmount = base * (matchedSurcharge / 100);
-                  price = parseFloat((base + surchargeAmount).toFixed(2));
-
-                  label = `Base: £${base.toFixed(2)} + ${matchedSurcharge}% surcharge = £${price.toFixed(2)}`;
-
-                  return {
-                    ...car,
-                    price,
-                    labelWithBreakdown: label,
-                  };
-                });
-              })()}
-              selectedCarId={selectedCarId}
-              onSelect={setSelectedCarId}
-            /> */}
-
 
             <CarCardSection
               carList={carList.map((car) => {

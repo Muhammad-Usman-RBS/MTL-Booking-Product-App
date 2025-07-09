@@ -35,7 +35,6 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
 
     useEffect(() => {
         if (isReturnForm) {
-            console.log("🟡 returnFormData updated:", returnFormData);
             const stored = localStorage.getItem("bookingForm");
             if (stored) {
                 const prev = JSON.parse(stored);
@@ -92,6 +91,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
         date: '',
         hour: '',
         minute: '',
+        terminal: '',
     });
 
     const [createBooking] = useCreateBookingMutation();
@@ -228,11 +228,21 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                 onSubmitSuccess && onSubmitSuccess({
                     returnBooking: {
                         ...returnFormData,
+                        pickup,
                         dropoff: dropOffs[0],
                         additionalDropoff1: dropOffs[1] || null,
                         additionalDropoff2: dropOffs[2] || null,
-                    },
-                    // returnJourneyToggle: true,
+                        pickupDoorNumber: returnFormData.pickupDoorNumber || null,
+                        dropoffDoorNumber: returnFormData.dropoffDoorNumber || null,
+                        terminal: returnFormData.terminal || null,
+                        arrivefrom: returnFormData.arrivefrom || null,
+                        flightNumber: returnFormData.flightNumber || null,
+                        pickmeAfter: returnFormData.pickmeAfter || null,
+                        notes: returnFormData.notes || '',
+                        date: returnFormData.date,
+                        hour: returnFormData.hour,
+                        minute: returnFormData.minute
+                    }
                 });
             } catch (error) {
                 toast.error("Return journey booking failed.");
@@ -361,8 +371,6 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                 {isReturnForm ? (
                     <>
                         {/* ✅ Return Journey Booking Form */}
-
-                        {/* Pickup Location (disabled) */}
                         <div className="relative">
                             <label className="text-xs font-medium text-gray-400 mb-1 block">Pickup Location</label>
                             <input
@@ -374,6 +382,50 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                                 disabled
                             />
                         </div>
+
+                        {formData.pickup &&
+                            formData.pickup.toLowerCase().includes("airport") && (
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <input
+                                        name="arrivefrom"
+                                        placeholder="Arriving From"
+                                        value={returnFormData.arrivefrom}
+                                        onChange={handleChange}
+                                        className="custom_input"
+                                    />
+                                    <input
+                                        name="pickmeAfter"
+                                        placeholder="Pick Me After"
+                                        value={returnFormData.pickmeAfter}
+                                        onChange={handleChange}
+                                        className="custom_input"
+                                    />
+                                    <input
+                                        name="flightNumber"
+                                        placeholder="Flight No."
+                                        value={returnFormData.flightNumber}
+                                        onChange={handleChange}
+                                        className="custom_input"
+                                    />
+                                </div>
+                            )}
+
+
+                        {/* Location-specific field (if pickup is NOT airport) */}
+                        {formData.pickup &&
+                            !formData.pickup.toLowerCase().includes("airport") && (
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <input
+                                        name="pickupDoorNumber"
+                                        placeholder="Pickup Door No."
+                                        value={returnFormData.pickupDoorNumber || ""}
+                                        onChange={handleChange}
+                                        className="custom_input"
+                                    />
+                                </div>
+                            )}
+
+
 
                         {/* Drop Off(s) (disabled) */}
                         {dropOffs.map((val, idx) => (
@@ -389,30 +441,31 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                             </div>
                         ))}
 
-                        {/* Always show airport-related fields (regardless of pickupType) */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <input
-                                name="arrivefrom"
-                                placeholder="Arriving From"
-                                value={returnFormData.arrivefrom}
-                                onChange={handleChange}
-                                className="custom_input"
-                            />
-                            <input
-                                name="pickmeAfter"
-                                placeholder="Pick Me After"
-                                value={returnFormData.pickmeAfter}
-                                onChange={handleChange}
-                                className="custom_input"
-                            />
-                            <input
-                                name="flightNumber"
-                                placeholder="Flight No."
-                                value={returnFormData.flightNumber}
-                                onChange={handleChange}
-                                className="custom_input"
-                            />
-                        </div>
+                        {/* ✅ Terminal No. shown if any drop-off is an airport */}
+                        {dropOffs.some(loc => loc && loc.toLowerCase().includes("airport")) && (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                                <input
+                                    name="terminal"
+                                    placeholder="Terminal No."
+                                value={returnFormData.terminal || ''}
+                                    onChange={handleChange}
+                                    className="custom_input"
+                                />
+                            </div>
+                        )}
+
+                        {/* ✅ Door No. shown if any drop-off is a location (not an airport) */}
+                        {dropOffs.some(loc => loc && !loc.toLowerCase().includes("airport")) && (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                                <input
+                                    name="dropoffDoorNumber"
+                                    placeholder="Drop Off Door No."
+                                    value={returnFormData.dropoffDoorNumber || ""}
+                                    onChange={handleChange}
+                                    className="custom_input"
+                                />
+                            </div>
+                        )}
 
                         {/* Date & Time */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -540,7 +593,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                         </div>
 
                         {/* Pickup Details */}
-                        {pickupType === "location" && (
+                        {pickupType === "location" && !formData.pickup.toLowerCase().includes("airport") && (
                             <input
                                 name="pickupDoorNumber"
                                 placeholder="Pickup Door No."
@@ -550,7 +603,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                             />
                         )}
 
-                        {pickupType === "airport" && (
+                        {(pickupType === "airport" || formData.pickup.toLowerCase().includes("airport")) && (
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <input
                                     name="arrivefrom"
@@ -613,7 +666,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                                     </ul>
                                 )}
 
-                                {dropOffTypes[idx] === "airport" && (
+                                {(dropOffTypes[idx] === "airport" || dropOffs[idx].toLowerCase().includes("airport")) && (
                                     <input
                                         name={`dropoff_terminal_${idx}`}
                                         value={formData[`dropoff_terminal_${idx}`] || ""}
@@ -623,15 +676,17 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                                     />
                                 )}
 
-                                {dropOffTypes[idx] === "location" && (
-                                    <input
-                                        name={`dropoffDoorNumber${idx}`}
-                                        value={formData[`dropoffDoorNumber${idx}`] || ""}
-                                        placeholder="Drop Off Door No."
-                                        className="custom_input"
-                                        onChange={handleChange}
-                                    />
-                                )}
+                                {dropOffs[idx] &&
+                                    dropOffTypes[idx] !== "airport" &&
+                                    !dropOffs[idx].toLowerCase().includes("airport") && (
+                                        <input
+                                            name={`dropoffDoorNumber${idx}`}
+                                            value={formData[`dropoffDoorNumber${idx}`] || ""}
+                                            placeholder="Drop Off Door No."
+                                            className="custom_input"
+                                            onChange={handleChange}
+                                        />
+                                    )}
 
                                 {idx > 0 && (
                                     <button
@@ -701,7 +756,6 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                             rows={2}
                         />
 
-                        {/* Submit Button (common to both) */}
                         <div className="text-right">
                             <button
                                 type="submit"
