@@ -115,7 +115,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   };
 
   return (
-    <div className="ps-5 pe-5 pt-5">
+    <div className="">
       {!editBookingData?._id && <OutletHeading name="New Booking" />}
       <div className="flex justify-center mb-4">
         {["Transfer", "Hourly"].map((tab) => (

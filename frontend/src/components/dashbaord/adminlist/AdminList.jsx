@@ -274,7 +274,6 @@ const AdminList = () => {
       ["clientadmin", "associateadmin", "staffmember", ].includes(role)
     ) {
       return [
-        "Home",
         "Users",
         "Bookings",
         "Invoices",
@@ -285,13 +284,10 @@ const AdminList = () => {
         "Pricing",
         "Settings",
         "Widget/API",
-        "Profile",
-        "Logout",
       ];;
     }
     else if (["manager"].includes(role)) {
       return [
-        "Home",
         "Users",
         "Bookings",
         "Invoices",
@@ -302,8 +298,6 @@ const AdminList = () => {
         "Pricing",
         "Settings",
         "Widget/API",
-        "Profile",
-        "Logout",
       ];
     }
     else {

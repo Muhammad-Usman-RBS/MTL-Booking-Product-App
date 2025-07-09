@@ -14,12 +14,14 @@ const PermissionsSettings = () => {
   const [updatePermissions, { isLoading }] =
     useUpdateSuperAdminPermissionsMutation();
 
-  useEffect(() => {
-    if (user?.permissions) {
-      setSelectedPermissions(user.permissions);
-      setInitialPermissions(user.permissions);
-    }
-  }, [user]);
+    useEffect(() => {
+      if (user?.permissions) {
+        const permissions = Array.from(new Set([...user.permissions, "Permissions"]));
+        setSelectedPermissions(permissions);
+        setInitialPermissions(permissions);
+      }
+    }, [user]);
+    
 
   const togglePermission = (permission) => {
     if (permission === "Permissions") return;
@@ -36,11 +38,16 @@ const PermissionsSettings = () => {
       (p) => p !== "Permissions"
     );
 
-    if (selectedPermissions.length === ALL_PERMISSIONS.length) {
+    const hasAllPermissions = ALL_PERMISSIONS.every((perm) =>
+      selectedPermissions.includes(perm)
+    );
+    
+    if (hasAllPermissions) {
       setSelectedPermissions(["Permissions"]);
     } else {
       setSelectedPermissions(allPermissions);
     }
+    
   };
 
   const handleUpdateClick = async () => {
