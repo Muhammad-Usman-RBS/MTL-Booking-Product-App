@@ -20,7 +20,7 @@ export const login = async (req, res) => {
 
     }
 
-    // ✅ Check account statusvi
+    // Check account statusvi
     if (user.status !== "Active") {
       return res.status(403).json({ message: `Your account is ${user.status}. Please contact the administrator.` });
     }
@@ -55,7 +55,7 @@ export const login = async (req, res) => {
 
     await user.save();
 
-    // ✅ Include companyId in the token
+    // Include companyId in the token
     res.json({
       _id: user._id,
       email: user.email,

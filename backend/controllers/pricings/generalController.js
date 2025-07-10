@@ -70,7 +70,7 @@ export const updateGeneralPricing = async (req, res) => {
   }
 };
 
-// ✅ PUBLIC API for General Pricing (No authentication required)
+// PUBLIC API for General Pricing (No authentication required)
 export const getGeneralPricingWidget = async (req, res) => {
   try {
     const companyId = req.query.companyId || req.query.company;

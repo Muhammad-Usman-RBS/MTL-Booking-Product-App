@@ -1,6 +1,6 @@
 import Zone from "../../models/pricings/Zone.js";
 
-// ✅ Create Zone
+// Create Zone
 export const createZone = async (req, res) => {
   try {
     const { name, coordinates } = req.body;
@@ -23,7 +23,7 @@ export const createZone = async (req, res) => {
   }
 };
 
-// ✅ Get All Zones
+// Get All Zones
 export const getAllZones = async (req, res) => {
   try {
     const zones = await Zone.find({ companyId: req.user._id }).sort({ createdAt: -1 });
@@ -33,7 +33,7 @@ export const getAllZones = async (req, res) => {
   }
 };
 
-// ✅ Update Zone
+// Update Zone
 export const updateZone = async (req, res) => {
   try {
     const { name, coordinates } = req.body;
@@ -60,7 +60,7 @@ export const updateZone = async (req, res) => {
   }
 };
 
-// ✅ Delete Zone
+// Delete Zone
 export const deleteZone = async (req, res) => {
   try {
     const deletedZone = await Zone.findOneAndDelete({

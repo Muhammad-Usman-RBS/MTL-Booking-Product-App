@@ -31,7 +31,7 @@ export const createCompanyAccount = async (req, res) => {
       licenseReferenceLink,
     } = req.body;
 
-    // ✅ Validate required fields
+    // Validate required fields
     if (!clientAdminId || !mongoose.Types.ObjectId.isValid(clientAdminId)) {
       return res
         .status(400)
@@ -42,7 +42,7 @@ export const createCompanyAccount = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // ✅ Check if clientAdminId exists
+    // Check if clientAdminId exists
     const clientAdmin = await User.findById(clientAdminId);
     if (!clientAdmin) {
       return res.status(404).json({ message: "ClientAdmin not found" });
@@ -81,7 +81,7 @@ export const createCompanyAccount = async (req, res) => {
       licenseReferenceLink,
     });
 
-    // ✅ Save company and update user
+    // Save company and update user
     const savedCompany = await newCompany.save();
 
     await User.findByIdAndUpdate(clientAdminId, {
@@ -121,12 +121,12 @@ export const getAllCompanies = async (req, res) => {
     let companies;
 
     if (currentUser.role === "superadmin") {
-      // ✅ Superadmin sees ALL companies they created via assigned clientAdmins
+      // Superadmin sees ALL companies they created via assigned clientAdmins
       companies = await Company.find({})
         .populate("clientAdminId", "status")
         .sort({ createdAt: -1 });
     } else {
-      // ✅ Clientadmin sees only their own assigned companies
+      // Clientadmin sees only their own assigned companies
       companies = await Company.find({ clientAdminId: currentUser._id })
         .populate("clientAdminId", "status")
         .sort({ createdAt: -1 });

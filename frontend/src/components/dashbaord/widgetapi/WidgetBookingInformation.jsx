@@ -418,7 +418,7 @@ const WidgetBookingInformation = ({
         returnFare: returnFare
       },
       returnBooking: {
-        ...parsedReturn, // ✅ use this instead of returnFormData directly
+        ...parsedReturn, // use this instead of returnFormData directly
         fare: returnFare
       },
     });
@@ -516,7 +516,7 @@ const WidgetBookingInformation = ({
       : base;
 
     const withSurcharge = markupBase + (markupBase * (matchedSurcharge / 100));
-    setSelectedCarFinalPrice(withSurcharge.toFixed(2)); // ✅ update here
+    setSelectedCarFinalPrice(withSurcharge.toFixed(2)); // update here
   }, [
     selectedCarId,
     carList,
@@ -841,7 +841,7 @@ const WidgetBookingInformation = ({
                 setReturnFormData(updated);
                 localStorage.setItem("returnBookingForm", JSON.stringify(updated));
 
-                // ✅ Correct way: update returnBooking directly on root formData
+                // Correct way: update returnBooking directly on root formData
                 setFormData(prev => ({
                   ...prev,
                   returnJourneyToggle: true,

@@ -5,7 +5,7 @@ import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import DeleteModal from "../../../constants/constantscomponents/DeleteModal"; // ✅ import DeleteModal here
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal"; // import DeleteModal here
 import { GoogleMap, LoadScript, DrawingManager, Polygon } from "@react-google-maps/api";
 import { useGetAllZonesQuery, useCreateZoneMutation, useUpdateZoneMutation, useDeleteZoneMutation } from "../../../redux/api/zoneApi";
 import { useLazySearchGooglePlacesQuery, useGetMapKeyQuery } from "../../../redux/api/googleApi";
@@ -24,7 +24,7 @@ const Zones = () => {
   const savedPolygonsRef = useRef([]);
   const [searchInput, setSearchInput] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState([]);
-  const [deleteId, setDeleteId] = useState(null); // ✅ state for delete modal
+  const [deleteId, setDeleteId] = useState(null); // state for delete modal
 
   const { data: zones = [], refetch } = useGetAllZonesQuery();
   const [createZone] = useCreateZoneMutation();

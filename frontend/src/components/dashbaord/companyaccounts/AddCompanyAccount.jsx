@@ -141,14 +141,14 @@ const AddCompanyAccount = () => {
       const data = new FormData();
 
       for (const key in formData) {
-        if (key === "profileImage") continue; // ✅ skip to avoid double append
+        if (key === "profileImage") continue; // skip to avoid double append
         const value =
           key === "dueDays" ? parseInt(formData[key] || "0") : formData[key];
         data.append(key, value);
       }
 
       if (formData.profileImage instanceof File) {
-        data.append("profileImage", formData.profileImage); // ✅ add only once, correctly
+        data.append("profileImage", formData.profileImage); // add only once, correctly
       }
 
       if (isEdit) {

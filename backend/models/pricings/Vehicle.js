@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-// ✅ Define the validation function first
+// Define the validation function first
 function arrayLimit(val) {
     return val.length <= 10;
 }
@@ -26,7 +26,7 @@ const vehicleSchema = new mongoose.Schema({
     priceType: { type: String, default: "Percentage" },
     percentageIncrease: { type: Number, default: 0 },
 
-    // ✅ Features array with limit validation
+    // Features array with limit validation
     features: {
         type: [String],
         validate: [arrayLimit, '{PATH} exceeds the limit of 10'],

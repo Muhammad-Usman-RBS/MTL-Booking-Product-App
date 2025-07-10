@@ -26,19 +26,19 @@ const driverUploadFields = driverUploader.fields([
 
 /* ---------------- DRIVER ROUTES ---------------- */
 
-// ✅ Create Driver (with multiple documents)
+// Create Driver (with multiple documents)
 router.post("/create-driver", driverUploadFields, createDriver);
 
-// ✅ Get All Drivers
+// Get All Drivers
 router.get("/get-all-drivers", getAllDrivers);
 
-// ✅ Get Single Driver
+// Get Single Driver
 router.get("/getDriverById/:id", getDriverById);
 
-// ✅ Delete Driver
+// Delete Driver
 router.delete("/delete-driver/:id", deleteDriverById);
 
-// ✅ Update Driver (with multiple optional document updates)
+// Update Driver (with multiple optional document updates)
 router.put("/update-driver/:id", driverUploadFields, updateDriverById);
 
 export default router;

@@ -7,6 +7,8 @@ import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPrici
 import { useLazyGeocodeQuery } from '../../../redux/api/googleApi';
 import 'react-toastify/dist/ReactToastify.css';
 import SelectOption from '../../../constants/constantscomponents/SelectOption';
+import ReturnForm from './widgetcomponents/ReturnForm';
+import PrimaryForm from './widgetcomponents/PrimaryForm';
 
 const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnForm = false }) => {
     const companyId = parentCompanyId || new URLSearchParams(window.location.search).get('company') || '';
@@ -198,13 +200,13 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
         e.preventDefault();
 
         if (isReturnForm) {
-            // ✅ Return form validation
+            // Return form validation
             if (!returnFormData.date || returnFormData.hour === '' || returnFormData.minute === '') {
                 toast.error("Please fill in date, hour, and minute for the return journey.");
                 return;
             }
 
-            // ✅ Retrieve primary journey from localStorage
+            // Retrieve primary journey from localStorage
             const primaryData = JSON.parse(localStorage.getItem("bookingForm"));
             if (!primaryData) {
                 toast.error("Primary journey data is missing.");
@@ -215,7 +217,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                 ...primaryData,
                 // returnJourneyToggle: true,
                 returnJourney: {
-                    ...returnFormData, // ✅ Includes date, hour, minute properly
+                    ...returnFormData, // Includes date, hour, minute properly
                     dropoff: dropOffs[0],
                     additionalDropoff1: dropOffs[1] || null,
                     additionalDropoff2: dropOffs[2] || null,
@@ -252,7 +254,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
             return;
         }
 
-        // ✅ Primary journey logic
+        // Primary journey logic
         if (!formData.pickup || dropOffs[0].trim() === '') {
             toast.error("Pickup and at least one Drop Off is required.");
             return;
@@ -347,10 +349,10 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
             console.error("Distance API error:", err);
         }
 
-        // ✅ Save to localStorage for return journey
+        // Save to localStorage for return journey
         localStorage.setItem("bookingForm", JSON.stringify(payload));
 
-        // ✅ Trigger success callback
+        // Trigger success callback
         if (onSubmitSuccess) {
             onSubmitSuccess({
                 ...payload,
@@ -364,409 +366,46 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
         <div className="max-w-xl w-full mx-auto mt-6 px-4 sm:px-0">
             <form
                 onSubmit={handleSubmit}
-                className="bg-gradient-to-br from-white via-gray-50 to-gray-100 border border-gray-200 rounded-2xl shadow-md px-5 py-6 space-y-6 text-sm"
+                className="bg-gradient-to-br from-white via-gray-50 to-gray-100 border border-gray-300 rounded-2xl shadow-lg px-6 py-5 space-y-6 text-base text-gray-700 transition duration-300 hover:shadow-xl"
             >
                 <ToastContainer />
-
                 {isReturnForm ? (
-                    <>
-                        {/* ✅ Return Journey Booking Form */}
-                        <div className="relative">
-                            <label className="text-xs font-medium text-gray-400 mb-1 block">Pickup Location</label>
-                            <input
-                                type="text"
-                                name="pickup"
-                                value={formData.pickup}
-                                placeholder="Pickup Location"
-                                className="custom_input bg-gray-300"
-                                disabled
-                            />
-                        </div>
-
-                        {formData.pickup &&
-                            formData.pickup.toLowerCase().includes("airport") && (
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <input
-                                        name="arrivefrom"
-                                        placeholder="Arriving From"
-                                        value={returnFormData.arrivefrom}
-                                        onChange={handleChange}
-                                        className="custom_input"
-                                    />
-                                    <input
-                                        name="pickmeAfter"
-                                        placeholder="Pick Me After"
-                                        value={returnFormData.pickmeAfter}
-                                        onChange={handleChange}
-                                        className="custom_input"
-                                    />
-                                    <input
-                                        name="flightNumber"
-                                        placeholder="Flight No."
-                                        value={returnFormData.flightNumber}
-                                        onChange={handleChange}
-                                        className="custom_input"
-                                    />
-                                </div>
-                            )}
-
-
-                        {/* Location-specific field (if pickup is NOT airport) */}
-                        {formData.pickup &&
-                            !formData.pickup.toLowerCase().includes("airport") && (
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <input
-                                        name="pickupDoorNumber"
-                                        placeholder="Pickup Door No."
-                                        value={returnFormData.pickupDoorNumber || ""}
-                                        onChange={handleChange}
-                                        className="custom_input"
-                                    />
-                                </div>
-                            )}
-
-
-
-                        {/* Drop Off(s) (disabled) */}
-                        {dropOffs.map((val, idx) => (
-                            <div key={idx} className="relative space-y-2">
-                                <label className="text-xs text-gray-600">Drop Off {idx + 1}</label>
-                                <input
-                                    type="text"
-                                    value={val}
-                                    placeholder={`Drop Off ${idx + 1}`}
-                                    className="custom_input bg-gray-300"
-                                    disabled
-                                />
-                            </div>
-                        ))}
-
-                        {/* ✅ Terminal No. shown if any drop-off is an airport */}
-                        {dropOffs.some(loc => loc && loc.toLowerCase().includes("airport")) && (
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-                                <input
-                                    name="terminal"
-                                    placeholder="Terminal No."
-                                value={returnFormData.terminal || ''}
-                                    onChange={handleChange}
-                                    className="custom_input"
-                                />
-                            </div>
-                        )}
-
-                        {/* ✅ Door No. shown if any drop-off is a location (not an airport) */}
-                        {dropOffs.some(loc => loc && !loc.toLowerCase().includes("airport")) && (
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-                                <input
-                                    name="dropoffDoorNumber"
-                                    placeholder="Drop Off Door No."
-                                    value={returnFormData.dropoffDoorNumber || ""}
-                                    onChange={handleChange}
-                                    className="custom_input"
-                                />
-                            </div>
-                        )}
-
-                        {/* Date & Time */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <input
-                                type="date"
-                                name="date"
-                                value={returnFormData.date}
-                                onChange={handleChange}
-                                className="custom_input"
-
-                            />
-                            <select
-                                name="hour"
-                                value={returnFormData.hour}
-                                onChange={handleChange}
-                                className="custom_input"
-                            >
-                                <option value="">HH</option>
-                                {[...Array(24).keys()].map((h) => (
-                                    <option key={h} value={h}>
-                                        {h.toString().padStart(2, "0")}
-                                    </option>
-                                ))}
-                            </select>
-                            <select
-                                name="minute"
-                                value={returnFormData.minute}
-                                onChange={handleChange}
-                                className="custom_input"
-                            >
-                                <option value="">MM</option>
-                                {[...Array(60).keys()].map((m) => (
-                                    <option key={m} value={m}>
-                                        {m.toString().padStart(2, "0")}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Notes */}
-                        <textarea
-                            name="notes"
-                            placeholder="Notes"
-                            className="custom_input"
-                            value={returnFormData.notes}
-                            onChange={handleChange}
-                            rows={2}
-                        />
-                    </>
-
+                    <ReturnForm
+                        formData={formData}
+                        returnFormData={returnFormData}
+                        handleChange={handleChange}
+                        dropOffs={dropOffs}
+                    />
                 ) : (
-                    <>
-                        {/* ✅ Primary Journey Form Tabs */}
-                        <div className="flex justify-center mb-4">
-                            {["Transfer", "Hourly"].map((tab) => (
-                                <button
-                                    key={tab}
-                                    type="button"
-                                    onClick={() => setMode(tab)}
-                                    className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${mode === tab ? "bg-[#f3f4f6] text-dark border border-black" : "bg-[#f3f4f6] text-dark"
-                                        } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
-                                >
-                                    {tab}
-                                </button>
-                            ))}
-                        </div>
-
-                        {mode === "Hourly" && (
-                            <div className="flex justify-center">
-                                <SelectOption
-                                    options={formattedHourlyOptions.map(opt => ({
-                                        label: opt.label,
-                                        value: JSON.stringify(opt.value),
-                                    }))}
-                                    value={JSON.stringify(selectedHourly?.value)}
-                                    onChange={(e) => {
-                                        const selected = formattedHourlyOptions.find(
-                                            opt => JSON.stringify(opt.value) === e.target.value
-                                        );
-                                        setSelectedHourly(selected);
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            hourlyOption: selected,
-                                            originalHourlyOption: selected
-                                        }));
-                                    }}
-                                />
-                            </div>
-                        )}
-
-                        {/* Pickup Location */}
-                        <div className="relative">
-                            <label className="text-xs font-medium text-gray-600 mb-1 block">Pickup Location</label>
-                            <input
-                                type="text"
-                                name="pickup"
-                                placeholder="Enter pickup location"
-                                value={formData.pickup}
-                                onChange={handlePickupChange}
-                                className="custom_input"
-                            />
-                            {pickupSuggestions.length > 0 && (
-                                <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
-                                    <li
-                                        onClick={() => {
-                                            setFormData({ ...formData, pickup: formData.pickup });
-                                            setPickupType("location");
-                                            setPickupSuggestions([]);
-                                        }}
-                                        className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer text-xs border-b"
-                                    >
-                                        ➕ Use: "{formData.pickup}"
-                                    </li>
-                                    {pickupSuggestions.map((sug, idx) => (
-                                        <li
-                                            key={idx}
-                                            onClick={() => handlePickupSelect(sug)}
-                                            className="p-2 hover:bg-gray-100 cursor-pointer text-xs"
-                                        >
-                                            {sug.name} - {sug.formatted_address}
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-
-                        {/* Pickup Details */}
-                        {pickupType === "location" && !formData.pickup.toLowerCase().includes("airport") && (
-                            <input
-                                name="pickupDoorNumber"
-                                placeholder="Pickup Door No."
-                                className="custom_input"
-                                value={formData.pickupDoorNumber}
-                                onChange={handleChange}
-                            />
-                        )}
-
-                        {(pickupType === "airport" || formData.pickup.toLowerCase().includes("airport")) && (
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <input
-                                    name="arrivefrom"
-                                    placeholder="Arriving From"
-                                    value={formData.arrivefrom}
-                                    onChange={handleChange}
-                                    className="custom_input"
-                                />
-                                <input
-                                    name="pickmeAfter"
-                                    placeholder="Pick Me After"
-                                    value={formData.pickmeAfter}
-                                    onChange={handleChange}
-                                    className="custom_input"
-                                />
-                                <input
-                                    name="flightNumber"
-                                    placeholder="Flight No."
-                                    value={formData.flightNumber}
-                                    onChange={handleChange}
-                                    className="custom_input"
-                                />
-                            </div>
-                        )}
-
-                        {/* Drop Offs */}
-                        {dropOffs.map((val, idx) => (
-                            <div key={idx} className="relative space-y-2">
-                                <label className="text-xs text-gray-600">Drop Off {idx + 1}</label>
-                                <input
-                                    type="text"
-                                    value={val}
-                                    placeholder={`Drop Off ${idx + 1}`}
-                                    onChange={(e) => handleDropOffChange(idx, e.target.value)}
-                                    className="custom_input"
-                                />
-                                {dropOffSuggestions.length > 0 && activeDropIndex === idx && (
-                                    <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
-                                        <li
-                                            onClick={() => {
-                                                const updated = [...dropOffs];
-                                                updated[idx] = dropOffs[idx];
-                                                setDropOffs(updated);
-                                                setDropOffTypes((prev) => ({ ...prev, [idx]: "location" }));
-                                                setDropOffSuggestions([]);
-                                            }}
-                                            className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer text-xs border-b"
-                                        >
-                                            ➕ Use: "{dropOffs[idx]}"
-                                        </li>
-                                        {dropOffSuggestions.map((sug, i) => (
-                                            <li
-                                                key={i}
-                                                onClick={() => handleDropOffSelect(idx, sug)}
-                                                className="p-2 hover:bg-gray-100 cursor-pointer text-xs"
-                                            >
-                                                {sug.name} - {sug.formatted_address}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-
-                                {(dropOffTypes[idx] === "airport" || dropOffs[idx].toLowerCase().includes("airport")) && (
-                                    <input
-                                        name={`dropoff_terminal_${idx}`}
-                                        value={formData[`dropoff_terminal_${idx}`] || ""}
-                                        placeholder="Terminal No."
-                                        className="custom_input"
-                                        onChange={handleChange}
-                                    />
-                                )}
-
-                                {dropOffs[idx] &&
-                                    dropOffTypes[idx] !== "airport" &&
-                                    !dropOffs[idx].toLowerCase().includes("airport") && (
-                                        <input
-                                            name={`dropoffDoorNumber${idx}`}
-                                            value={formData[`dropoffDoorNumber${idx}`] || ""}
-                                            placeholder="Drop Off Door No."
-                                            className="custom_input"
-                                            onChange={handleChange}
-                                        />
-                                    )}
-
-                                {idx > 0 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => removeDropOff(idx)}
-                                        className="bg-red-800 p-2 text-xs text-red-600 absolute right-1 top-0"
-                                    >
-                                        &minus;
-                                    </button>
-                                )}
-                            </div>
-                        ))}
-
-                        {dropOffs.length < 3 && (
-                            <button
-                                type="button"
-                                onClick={addDropOff}
-                                className="btn btn-edit text-xs px-4 py-2 w-full sm:w-auto"
-                            >
-                                + Add Drop Off
-                            </button>
-                        )}
-
-                        {/* Date & Time */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <input
-                                type="date"
-                                name="date"
-                                value={formData.date}
-                                onChange={handleChange}
-                                className="custom_input"
-                            />
-                            <select
-                                name="hour"
-                                value={formData.hour}
-                                onChange={handleChange}
-                                className="custom_input"
-                            >
-                                <option value="">HH</option>
-                                {[...Array(24).keys()].map((h) => (
-                                    <option key={h} value={h}>
-                                        {h.toString().padStart(2, "0")}
-                                    </option>
-                                ))}
-                            </select>
-                            <select
-                                name="minute"
-                                value={formData.minute}
-                                onChange={handleChange}
-                                className="custom_input"
-                            >
-                                <option value="">MM</option>
-                                {[...Array(60).keys()].map((m) => (
-                                    <option key={m} value={m}>
-                                        {m.toString().padStart(2, "0")}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <textarea
-                            name="notes"
-                            placeholder="Notes"
-                            className="custom_input"
-                            value={formData.notes}
-                            onChange={handleChange}
-                            rows={2}
-                        />
-
-                        <div className="text-right">
-                            <button
-                                type="submit"
-                                className="bg-amber-500 text-white px-5 py-2 rounded-md text-sm shadow hover:bg-amber-600"
-                            >
-                                GET QUOTE
-                            </button>
-                        </div>
-                    </>
+                    <PrimaryForm
+                        formData={formData}
+                        handleSubmit={handleSubmit}
+                        handlePickupChange={handlePickupChange}
+                        pickupSuggestions={pickupSuggestions}
+                        handlePickupSelect={handlePickupSelect}
+                        pickupType={pickupType}
+                        setPickupType={setPickupType}
+                        dropOffs={dropOffs}
+                        setDropOffs={setDropOffs}
+                        dropOffSuggestions={dropOffSuggestions}
+                        setPickupSuggestions={setPickupSuggestions}
+                        setDropOffSuggestions={setDropOffSuggestions}
+                        activeDropIndex={activeDropIndex}
+                        setDropOffTypes={setDropOffTypes}
+                        handleDropOffChange={handleDropOffChange}
+                        handleDropOffSelect={handleDropOffSelect}
+                        dropOffTypes={dropOffTypes}
+                        removeDropOff={removeDropOff}
+                        addDropOff={addDropOff}
+                        handleChange={handleChange}
+                        setMode={setMode}
+                        mode={mode}
+                        formattedHourlyOptions={formattedHourlyOptions}
+                        selectedHourly={selectedHourly}
+                        setSelectedHourly={setSelectedHourly}
+                        setFormData={setFormData}
+                    />
                 )}
-
             </form>
         </div>
     );

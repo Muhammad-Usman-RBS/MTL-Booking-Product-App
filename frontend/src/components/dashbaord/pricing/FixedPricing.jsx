@@ -117,9 +117,9 @@ const FixedPricing = () => {
         await updateFixedPrice({
           id: item._id,
           pickup: item.pickup,
-          pickupCoordinates: item.pickupCoordinates, // ✅ retain existing coordinates
+          pickupCoordinates: item.pickupCoordinates, // retain existing coordinates
           dropoff: item.dropoff,
-          dropoffCoordinates: item.dropoffCoordinates, // ✅ retain existing coordinates
+          dropoffCoordinates: item.dropoffCoordinates, // retain existing coordinates
           price: updatedPrice,
           direction: item.direction,
         }).unwrap();

@@ -30,15 +30,15 @@ const Login = () => {
     try {
       const data = await loginUser({ email, password }).unwrap();
 
-      // ✅ Save full user data
+      // Save full user data
       localStorage.setItem('user', JSON.stringify(data));
 
-      // ✅ Save token if you use one (optional)
+      // Save token if you use one (optional)
       if (data.token) {
         localStorage.setItem('token', data.token);
       }
 
-      // ✅ Save companyId separately if assigned
+      // Save companyId separately if assigned
       if (data.companyId) {
         localStorage.setItem('companyId', data.companyId);
       }

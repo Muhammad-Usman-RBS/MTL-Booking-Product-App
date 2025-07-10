@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useResetPasswordMutation } from "../../redux/api/userApi"; // ✅ RTK hook
+import { useResetPasswordMutation } from "../../redux/api/userApi"; // RTK hook
 import Icons from "../../assets/icons";
 import usePasswordToggle from "../../hooks/usePasswordToggle";
 
@@ -14,14 +14,14 @@ const ResetPassword = () => {
 
   const email = location.state?.email || "";
 
-  const [resetPassword] = useResetPasswordMutation(); // ✅ RTK Mutation
+  const [resetPassword] = useResetPasswordMutation(); // RTK Mutation
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
     if (!otp || !newPassword) return toast.error("Please fill all fields");
 
     try {
-      await resetPassword({ email, otp, newPassword }).unwrap(); // ✅ Clean RTK way
+      await resetPassword({ email, otp, newPassword }).unwrap(); // Clean RTK way
       toast.success("Password reset successful! You can now log in.");
       navigate("/login");
     } catch (error) {

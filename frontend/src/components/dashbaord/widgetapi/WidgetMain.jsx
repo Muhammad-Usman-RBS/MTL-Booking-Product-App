@@ -54,7 +54,7 @@ const WidgetMain = () => {
                     return typeof value === "string" ? value.trim() !== "" : value !== null && value !== undefined;
                 });
 
-            // ✅ Submit Primary Journey as first booking
+            // Submit Primary Journey as first booking
             const primaryPayload = {
                 companyId,
                 source: "widget",
@@ -72,7 +72,7 @@ const WidgetMain = () => {
             console.log("🚀 Submitting Primary Journey Payload:", primaryPayload);
             await createBooking(primaryPayload).unwrap();
 
-            // ✅ Submit Return Journey as second booking — put data in returnJourney
+            // Submit Return Journey as second booking — put data in returnJourney
             if (isReturnValid) {
                 const returnJourney = {
                     ...returnData,
@@ -83,7 +83,7 @@ const WidgetMain = () => {
                     date: returnData?.date || "",
                     hour: returnData?.hour || "",
                     minute: returnData?.minute || "",
-                    notes: `(Return Journey) ${returnData?.notes || ""}`,
+                    notes: returnData?.notes || "",
                 };
                 const returnPayload = {
                     companyId,
@@ -107,7 +107,7 @@ const WidgetMain = () => {
                         date: returnData?.date || "",
                         hour: returnData?.hour || "",
                         minute: returnData?.minute || "",
-                        notes: `(Return Journey) ${returnData?.notes || ""}`,
+                        notes: returnData?.notes || "",
                     },
                 };
 
@@ -115,7 +115,7 @@ const WidgetMain = () => {
                 await createBooking(returnPayload).unwrap();
             }
 
-            // ✅ Success step
+            // Success step
             setStep("success");
         } catch (err) {
             console.error("❌ Booking save failed:", err);

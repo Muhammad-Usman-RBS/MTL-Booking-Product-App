@@ -1,6 +1,6 @@
 import FixedPrice from "../../models/pricings/PostcodePrice.js";
 
-// ✅ GET ALL Postcode Prices (for Admin Panel - Private API)
+// GET ALL Postcode Prices (for Admin Panel - Private API)
 export const getAllPostcodePrices = async (req, res) => {
     try {
         const companyId = req.user.companyId;
@@ -16,7 +16,7 @@ export const getAllPostcodePrices = async (req, res) => {
     }
 };
 
-// ✅ CREATE Postcode Price
+// CREATE Postcode Price
 export const createPostcodePrice = async (req, res) => {
     try {
         const { pickup, dropoff, price } = req.body;
@@ -38,7 +38,7 @@ export const createPostcodePrice = async (req, res) => {
     }
 };
 
-// ✅ UPDATE Postcode Price
+// UPDATE Postcode Price
 export const updatePostcodePrice = async (req, res) => {
     try {
         const companyId = req.user.companyId;
@@ -63,7 +63,7 @@ export const updatePostcodePrice = async (req, res) => {
     }
 };
 
-// ✅ DELETE Postcode Price
+// DELETE Postcode Price
 export const deletePostcodePrice = async (req, res) => {
     try {
         const companyId = req.user.companyId;
@@ -87,7 +87,7 @@ export const deletePostcodePrice = async (req, res) => {
     }
 };
 
-// ✅ PUBLIC API for Widget (No auth required)
+// PUBLIC API for Widget (No auth required)
 export const getAllPostcodePricesWidget = async (req, res) => {
     try {
         const companyId = req.query.companyId || req.query.company;

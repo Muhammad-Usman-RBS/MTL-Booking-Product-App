@@ -1,6 +1,6 @@
 import FixedPrice from "../../models/pricings/FixedPrice.js";
 
-// ✅ Get All Fixed Prices (Authenticated)
+// Get All Fixed Prices (Authenticated)
 export const getAllFixedPrices = async (req, res) => {
   try {
     const companyId = req.user.companyId;
@@ -16,7 +16,7 @@ export const getAllFixedPrices = async (req, res) => {
   }
 };
 
-// ✅ Create Fixed Price
+// Create Fixed Price
 export const createFixedPrice = async (req, res) => {
   try {
     const { pickup, pickupCoordinates, dropoff, dropoffCoordinates, price, direction } = req.body;
@@ -54,7 +54,7 @@ export const createFixedPrice = async (req, res) => {
   }
 };
 
-// ✅ Update Fixed Price
+// Update Fixed Price
 export const updateFixedPrice = async (req, res) => {
   try {
     const { pickup, pickupCoordinates, dropoff, dropoffCoordinates, price, direction } = req.body;
@@ -87,7 +87,7 @@ export const updateFixedPrice = async (req, res) => {
   }
 };
 
-// ✅ Delete Fixed Price
+// Delete Fixed Price
 export const deleteFixedPrice = async (req, res) => {
   try {
     const companyId = req.user.companyId;
@@ -109,7 +109,7 @@ export const deleteFixedPrice = async (req, res) => {
   }
 };
 
-// ✅ Get Fixed Prices by Company ID (Public Widget)
+// Get Fixed Prices by Company ID (Public Widget)
 export const getFixedPricesByCompanyId = async (req, res) => {
   try {
     const { companyId } = req.query;

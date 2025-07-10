@@ -1,6 +1,6 @@
 import ExtrasPrice from "../../models/pricings/ExtrasPrice.js";
 
-// ✅ Create ExtraPrice
+// Create ExtraPrice
 export const createExtra = async (req, res) => {
   try {
     const { zone, price, coordinates } = req.body;
@@ -37,7 +37,7 @@ export const createExtra = async (req, res) => {
   }
 };
 
-// ✅ Get All Extras
+// Get All Extras
 export const getAllExtras = async (req, res) => {
   try {
     const companyId = req.user.companyId;
@@ -54,7 +54,7 @@ export const getAllExtras = async (req, res) => {
   }
 };
 
-// ✅ Update Extra
+// Update Extra
 export const updateExtra = async (req, res) => {
   try {
     const { zone, price, coordinates } = req.body;
@@ -87,7 +87,7 @@ export const updateExtra = async (req, res) => {
   }
 };
 
-// ✅ Delete Extra
+// Delete Extra
 export const deleteExtra = async (req, res) => {
   try {
     const companyId = req.user.companyId;
@@ -110,7 +110,7 @@ export const deleteExtra = async (req, res) => {
   }
 };
 
-// ✅ Get Extras for Widget (public)
+// Get Extras for Widget (public)
 export const getExtrasByCompanyId = async (req, res) => {
   try {
     const { companyId } = req.query;

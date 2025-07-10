@@ -2,7 +2,7 @@ import User from "../models/User.js";
 import Company from "../models/Company.js";
 import bcrypt from "bcryptjs";
 import DriverProfile from "../models/Driver.js";
-// ✅ SuperAdmin or ClientAdmin Creates User
+// SuperAdmin or ClientAdmin Creates User
 export const createUserBySuperAdmin = async (req, res) => {
   const {
     fullName,
@@ -36,7 +36,7 @@ export const createUserBySuperAdmin = async (req, res) => {
       }
     }
 
-    // ✅ Role assignment rules based on creator's role
+    // Role assignment rules based on creator's role
     if (["clientadmin", "associateadmin"].includes(creator.role)) {
       const allowedRoles = ["staffmember", "driver", "customer"];
       if (creator.role === "clientadmin") allowedRoles.push("associateadmin");
@@ -48,7 +48,7 @@ export const createUserBySuperAdmin = async (req, res) => {
       }
     }
 
-    // ✅ Validate associateAdminLimit only for specific roles
+    // Validate associateAdminLimit only for specific roles
     let parsedLimit;
     if (["clientadmin", "manager"].includes(role)) {
       parsedLimit = parseInt(associateAdminLimit);
@@ -59,7 +59,7 @@ export const createUserBySuperAdmin = async (req, res) => {
       }
     }
 
-    // ✅ Enforce associateadmin creation limits for clientadmin
+    // Enforce associateadmin creation limits for clientadmin
     if (creator.role === "clientadmin" && role === "associateadmin") {
       const associateAdminCount = await User.countDocuments({
         createdBy: creator._id,
@@ -75,7 +75,7 @@ export const createUserBySuperAdmin = async (req, res) => {
       }
     }
 
-    // ✅ Role-based limits
+    // Role-based limits
     if (role === "manager") {
       const count = await User.countDocuments({
         role: "manager",
@@ -112,7 +112,7 @@ export const createUserBySuperAdmin = async (req, res) => {
       }
     }
 
-    // ✅ Permission validation
+    // Permission validation
     const allowedPermissions = [
       "Users",
       "Home",
@@ -156,7 +156,7 @@ export const createUserBySuperAdmin = async (req, res) => {
       });
     }
 
-    // ✅ Create user
+    // Create user
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
@@ -187,7 +187,7 @@ export const createUserBySuperAdmin = async (req, res) => {
   }
 };
 
-// ✅ GET All Users
+// GET All Users
 export const getClientAdmins = async (req, res) => {
   try {
     const { role, companyId, _id: userId } = req.user;
@@ -204,7 +204,7 @@ export const getClientAdmins = async (req, res) => {
         $in: ["clientadmin", "manager", "demo", "driver", "customer"],
       };
     } else if (role === "clientadmin") {
-      // ✅ Get all users created by clientadmin OR by any of their associateadmins
+      // Get all users created by clientadmin OR by any of their associateadmins
       const associateAdmins = await User.find({
         createdBy: userId,
         role: "associateadmin",
@@ -247,7 +247,7 @@ export const getClientAdmins = async (req, res) => {
   }
 };
 
-// ✅ Update User
+// Update User
 export const updateUserBySuperAdmin = async (req, res) => {
   const { id } = req.params;
   const {
@@ -270,7 +270,7 @@ export const updateUserBySuperAdmin = async (req, res) => {
     user.status = status || user.status;
     user.permissions = permissions || user.permissions;
 
-    // ✅ Validate and assign associateAdminLimit
+    // Validate and assign associateAdminLimit
     if (typeof associateAdminLimit !== "undefined") {
       const parsedLimit = parseInt(associateAdminLimit);
       if (["clientadmin", "manager"].includes(role)) {
@@ -317,7 +317,7 @@ export const updateUserBySuperAdmin = async (req, res) => {
   }
 };
 
-// ✅ Delete User
+// Delete User
 export const deleteUserBySuperAdmin = async (req, res) => {
   const { id } = req.params;
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import IMAGES from '../../../assets/images';
 
-// ✅ Single Car Card
+// Single Car Card
 const CarCard = ({ car, isSelected, onSelect }) => {
   const [showDetails, setShowDetails] = useState(false);
 
@@ -20,7 +20,7 @@ const CarCard = ({ car, isSelected, onSelect }) => {
     features = [],
   } = car;
 
-  // ✅ always fallback to placeholder image
+  // always fallback to placeholder image
   const validImage = image ? image : IMAGES.profilecarimg;
 
   return (
@@ -120,7 +120,7 @@ const CarCard = ({ car, isSelected, onSelect }) => {
   );
 };
 
-// ✅ Single Column Section Layout
+// Single Column Section Layout
 const CarCardSection = ({ carList, selectedCarId, onSelect }) => {
   return (
     <div className="grid grid-cols-1">

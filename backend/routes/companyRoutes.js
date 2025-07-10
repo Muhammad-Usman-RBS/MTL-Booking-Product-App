@@ -15,7 +15,7 @@ const companyUploader = getUploader("company");
 const companyPicture = companyUploader.fields([
   { name: "profileImage", maxCount: 1 },
   { name: "favicon", maxCount: 1 },
-]); // ✅ FIX
+]); // FIX
 // COMPANIES CRUD
 router.post(
   "/",

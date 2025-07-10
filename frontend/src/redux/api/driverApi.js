@@ -24,7 +24,7 @@ export const driverApi = apiSlice.injectEndpoints({
     // Get driver by ID
     getDriverById: builder.query({
       query: (id) => ({
-        url: `/driver/getDriverById/${id}`, // ✅ Fixed template literal
+        url: `/driver/getDriverById/${id}`, // Fixed template literal
       }),
       providesTags: (result, error, id) => [{ type: 'Driver', id }],
     }),

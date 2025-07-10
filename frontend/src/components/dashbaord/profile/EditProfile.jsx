@@ -80,7 +80,7 @@ const {
       if (profileImg) formData.append("profileImage", profileImg);
 
       const updatedUser = await updateProfile(formData).unwrap();
-      dispatch(setUser(updatedUser)); // ✅ Redux update
+      dispatch(setUser(updatedUser)); // Redux update
       setPreview(updatedUser.profileImage);
 
       toast.success("Profile updated successfully!");

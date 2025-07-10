@@ -25,7 +25,7 @@
 
     role: {
       type: String,
-      enum: ['superadmin', 'manager', 'clientadmin', 'staffmember', 'associateadmin', 'driver', 'customer', 'demo'], // ✅ Full roles
+      enum: ['superadmin', 'manager', 'clientadmin', 'staffmember', 'associateadmin', 'driver', 'customer', 'demo'], // Full roles
       default: 'customer',
     },
 

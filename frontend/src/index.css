@@ -5,7 +5,12 @@ body {
 }
 
 /* Headings styling */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: 'Poppins', sans-serif;
   font-weight: 600;
 }
@@ -29,6 +34,9 @@ p {
   --dark-grey: #595959;
   --medium-grey: #A6A6A6;
   --dark-black: #1E1E1E;
+
+  /* Product Color */
+  --main-color: #2C9BE6;
 }
 
 .theme-dark-1 {
@@ -85,7 +93,10 @@ p {
   background-color: var(--active);
 }
 
-.bg-theme, .text-theme, .hover-theme, .active-theme {
+.bg-theme,
+.text-theme,
+.hover-theme,
+.active-theme {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -205,20 +216,21 @@ p {
 
 /* Custom Email */
 .custom_input {
-  border: 1px solid #d1d5db;
-  border-radius: 0.25rem;
-  padding: 0.25rem 0.5rem;
+  border: 1px solid #dee0e3;
+  border-radius: 8px;
+  padding: 0.35rem 0.5rem;
   width: 100%;
   box-sizing: border-box;
+  transition: box-shadow 0.2s ease-in-out;
 }
 
-:root {
-  --topFooterBg: #2A7B9B;
-  --topFooterText: #000000;
-  --menuBg: #57C785;
-  --menuText: #EDDD53;
-  --bgPrimary: #76E070;
-  --bgSecondary: #E070D1;
-  --textPrimary: #1f2937;
-  --textSecondary: #6b7280;
+.custom_input:focus {
+  border: 1px solid var(--main-color) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(44, 155, 230, 0.3);
+  /* light blue shadow */
+}
+
+.custom_input::placeholder {
+  font-size: 15px;
 }

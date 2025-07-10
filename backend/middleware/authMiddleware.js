@@ -20,7 +20,7 @@ export const protect = async (req, res, next) => {
       req.user = {
         _id: user._id,
         role: user.role,
-        companyId: user.companyId?.toString(), // ✅ convert ObjectId to string
+        companyId: user.companyId?.toString(), // convert ObjectId to string
         permissions: user.permissions,
         fullName: user.fullName,
         employeeNumber: user.employeeNumber,

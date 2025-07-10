@@ -27,7 +27,7 @@ export const createBooking = async (req, res) => {
       return res.status(400).json({ message: "Invalid or missing companyId" });
     }
 
-    // ✅ Voucher logic
+    // Voucher logic
     let validVoucher = null;
     let isVoucherApplied = false;
 
@@ -100,7 +100,7 @@ export const createBooking = async (req, res) => {
       returnJourney &&
       requiredFields.every((f) => returnJourney[f]);
 
-    // ✅ Build base booking payload
+    // Build base booking payload
     const bookingPayload = {
       bookingId,
       mode,
@@ -113,7 +113,7 @@ export const createBooking = async (req, res) => {
       passenger: basePassengerInfo,
     };
 
-    // ✅ Add primaryJourney
+    // Add primaryJourney
     if (!returnJourneyToggle) {
       bookingPayload.primaryJourney = {
         pickup: primaryJourney.pickup?.trim() ?? "",
@@ -140,7 +140,7 @@ export const createBooking = async (req, res) => {
       };
     }
 
-    // ✅ Add returnJourney if valid
+    // Add returnJourney if valid
     if (returnIsValid) {
       bookingPayload.returnJourney = {
         pickup: returnJourney.pickup?.trim() ?? "",
@@ -165,7 +165,7 @@ export const createBooking = async (req, res) => {
       };
     }
 
-    // ✅ Save booking
+    // Save booking
     const savedBooking = await Booking.create(bookingPayload);
 
     const sanitize = (booking) => {
@@ -356,7 +356,7 @@ export const updateBookingStatus = async (req, res) => {
 
     const updatedBooking = await booking.save();
 
-    // ✅ Driver updated the status
+    // Driver updated the status
     if (currentUser?.role === "driver" && status) {
       const driverProfile = await DriverProfile.findOne({
         "DriverData.employeeNumber": currentUser.employeeNumber,
@@ -404,7 +404,7 @@ export const updateBookingStatus = async (req, res) => {
       }
     }
 
-    // ✅ Client Admin updated the status
+    // Client Admin updated the status
     if (currentUser?.role === "clientadmin" && status) {
       const bookingId = booking.bookingId;
       const statusStyled = `<span style="color: green;">${status}</span>`;
@@ -429,7 +429,7 @@ export const updateBookingStatus = async (req, res) => {
         DriverName: driverName,
       };
 
-      // ✅ Log for debugging
+      // Log for debugging
       console.log("Passenger email:", booking?.passenger?.email);
       console.log("Driver email:", driverEmail);
 

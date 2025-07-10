@@ -86,11 +86,13 @@ import {
   CircleUserRound,
   BellPlus,
   XCircle,
+  Delete,
 } from "lucide-react";
 
 const Icons = {
+  Delete,
   BellPlus,
-  XCircle, 
+  XCircle,
   CircleUserRound,
   ReceiptText,
   PlaneTakeoff,
