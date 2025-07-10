@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import SelectOption from '../../../constants/constantscomponents/SelectOption';
 import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
 import { useCreateBookingMutation } from '../../../redux/api/bookingApi';
 import { useLazySearchGooglePlacesQuery, useLazyGetDistanceQuery } from '../../../redux/api/googleApi';
 import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
 import { useLazyGeocodeQuery } from '../../../redux/api/googleApi';
+import 'react-toastify/dist/ReactToastify.css';
+import SelectOption from '../../../constants/constantscomponents/SelectOption';
 
 const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnForm = false }) => {
     const companyId = parentCompanyId || new URLSearchParams(window.location.search).get('company') || '';

@@ -59,7 +59,7 @@ const WidgetMain = () => {
                 companyId,
                 source: "widget",
                 referrer: document.referrer || "Widget",
-                vehicle: formData.vehicle,
+                vehicle: finalPayload.vehicle,
                 passenger: finalPayload.passenger || {},
                 voucher: finalPayload.voucher,
                 voucherApplied: !!finalPayload.voucher,
@@ -166,9 +166,18 @@ const WidgetMain = () => {
                     totalPrice={formData.pricing.totalPrice}
                     postcodePrice={formData.pricing.postcodePrice}
                     dropOffPrice={formData.pricing.dropOffPrice}
-                    onNext={({ totalPrice, selectedCar, returnJourneyToggle, returnBooking }) => {
+                    onNext={({ totalPrice, selectedCar, returnJourneyToggle, returnBooking, passenger,
+                        childSeat,
+                        handLuggage,
+                        checkinLuggage }) => {
                         handleDataChange('pricing', { totalPrice });
-                        handleDataChange('vehicle', selectedCar);
+                        handleDataChange('vehicle', {
+                            ...selectedCar,
+                            passenger,
+                            childSeat,
+                            handLuggage,
+                            checkinLuggage
+                        });
 
                         handleDataChange('booking', {
                             ...formData.booking,
@@ -188,7 +197,7 @@ const WidgetMain = () => {
                     fare={formData.pricing.totalPrice}
                     vehicle={formData.vehicle}
                     booking={formData.booking}
-                    onBookNow={({ passengerDetails, voucher }) => {
+                    onBookNow={({ passengerDetails, voucher, selectedVehicle }) => {
                         const finalPayload = {
                             companyId,
                             referrer: window.location.href,
@@ -199,13 +208,15 @@ const WidgetMain = () => {
                             returnJourney: formData.booking?.returnJourneyToggle
                                 ? formData.booking?.returnBooking
                                 : undefined,
-                            vehicle: formData.vehicle,
+                            // vehicle: formData.vehicle,
+                            vehicle: selectedVehicle,
                             passenger: passengerDetails,
                             PassengerEmail: passengerDetails.email,
                             voucher,
                             voucherApplied: !!voucher,
                         };
 
+                        handleDataChange("vehicle", selectedVehicle);
                         handleBookingSubmission(finalPayload);
                     }}
                 />

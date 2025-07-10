@@ -1,5 +1,5 @@
 import express from "express";
-import { createBooking, deleteBooking, getAllBookings, updateBooking, submitWidgetForm, updateBookingStatus, getAllPassengers, sendBookingEmail } from "../controllers/bookingController.js";
+import { createBooking, deleteBooking, getAllBookings, updateBooking, updateBookingStatus, getAllPassengers, sendBookingEmail } from "../controllers/bookingController.js";
 import { authorize, protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -15,9 +15,6 @@ router.put("/update-booking/:id", updateBooking);
 
 // Delete a booking by ID
 router.delete("/delete-booking/:id", deleteBooking);
-
-// Submit booking via widget (iframe or embedded form)
-router.post('/submit', submitWidgetForm);
 
 // Update booking status (e.g., confirmed, cancelled)
 router.patch("/:id",protect, updateBookingStatus);

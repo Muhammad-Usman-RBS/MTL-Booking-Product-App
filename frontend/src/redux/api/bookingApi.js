@@ -12,16 +12,6 @@ export const bookingApi = apiSlice.injectEndpoints({
       invalidatesTags: ["Bookings"],
     }),
 
-    // Submit Booking via Widget
-    submitWidgetForm: builder.mutation({
-      query: (payload) => ({
-        url: "/booking/submit",
-        method: "POST",
-        body: payload,
-      }),
-      invalidatesTags: ["Bookings"],
-    }),
-
     // Fetch All Bookings by Company ID
     getAllBookings: builder.query({
       query: (companyId) => ({
@@ -81,7 +71,6 @@ export const bookingApi = apiSlice.injectEndpoints({
 
 export const {
   useCreateBookingMutation,
-  useSubmitWidgetFormMutation,
   useGetAllBookingsQuery,
   useUpdateBookingMutation,
   useDeleteBookingMutation,

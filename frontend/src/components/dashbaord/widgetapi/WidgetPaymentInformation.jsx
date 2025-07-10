@@ -7,27 +7,42 @@ import 'react-phone-input-2/lib/style.css';
 import SelectOption from '../../../constants/constantscomponents/SelectOption';
 import { useGetDiscountsByCompanyIdQuery } from "../../../redux/api/discountApi";
 import { useLazyGetVoucherByCodeQuery } from "../../../redux/api/vouchersApi";
-import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi"; // Import here
 import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
 
 const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, booking = {} }) => {
     const [passengerDetails, setPassengerDetails] = useState({ name: '', email: '', phone: '' });
     const [formData, setFormData] = useState({
         passenger: '',
-        childSeats: '',
+        childSeat: '',
         handLuggage: '',
         checkinLuggage: ''
     });
 
     const [fetchVoucher] = useLazyGetVoucherByCodeQuery();
     const { data: discounts = [] } = useGetDiscountsByCompanyIdQuery(companyId);
-    const { data: allBookings = [] } = useGetAllBookingsQuery();
     const { data: generalPricing } = useGetGeneralPricingPublicQuery(companyId);
 
     const [voucher, setVoucher] = useState('');
     const [companyDiscountPercent, setCompanyDiscountPercent] = useState(0);
     const [voucherDiscountPercent, setVoucherDiscountPercent] = useState(0);
     const [journeyDateTime, setJourneyDateTime] = useState(null);
+
+
+    const generateOptions = (max = 10) => {
+        const result = [{ label: "Select", value: "" }];
+        for (let i = 0; i <= max; i++) {
+            result.push({ label: `${i}`, value: `${i}` });
+        }
+        return result;
+    };
+
+    const parseIntSafe = (val, fallback = 4) =>
+        !isNaN(parseInt(val)) && parseInt(val) >= 0 ? parseInt(val) : fallback;
+
+    const passengerOptions = generateOptions(parseIntSafe(vehicle?.passenger));
+    const childSeatOptions = generateOptions(parseIntSafe(vehicle?.childSeat));
+    const handLuggageOptions = generateOptions(parseIntSafe(vehicle?.handLuggage));
+    const checkinLuggageOptions = generateOptions(parseIntSafe(vehicle?.checkinLuggage));
 
     useEffect(() => {
         if (booking?.date && booking?.hour !== undefined && booking?.minute !== undefined) {
@@ -55,35 +70,28 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
         setCompanyDiscountPercent(activeDiscount?.discountPrice || 0);
     }, [journeyDateTime, discounts]);
 
-    const generateOptions = (max = 10) => {
-        const result = [{ label: "Select", value: "" }];
-        for (let i = 0; i <= max; i++) {
-            result.push({ label: `${i}`, value: `${i}` });
-        }
-        return result;
-    };
-
-    const parseIntSafe = (val, fallback = 4) =>
-        !isNaN(parseInt(val)) && parseInt(val) >= 0 ? parseInt(val) : fallback;
-
-    const passengerOptions = generateOptions(parseIntSafe(vehicle?.passenger));
-    const childSeatOptions = generateOptions(parseIntSafe(vehicle?.childSeat));
-    const handLuggageOptions = generateOptions(parseIntSafe(vehicle?.handLuggage));
-    const checkinLuggageOptions = generateOptions(parseIntSafe(vehicle?.checkinLuggage));
-
     useEffect(() => {
         if (vehicle) {
             setFormData({
-                passenger: String(vehicle?.passenger || ''),
-                childSeats: '',
-                handLuggage: String(vehicle?.handLuggage || ''),
-                checkinLuggage: String(vehicle?.checkinLuggage || '')
+                passenger: vehicle?.passenger ? String(vehicle.passenger) : '',
+                childSeats: '', // Keep empty as user needs to select
+                handLuggage: vehicle?.handLuggage ? String(vehicle.handLuggage) : '',
+                checkinLuggage: vehicle?.checkinLuggage ? String(vehicle.checkinLuggage) : ''
             });
         }
     }, [vehicle]);
 
+
+
     const handleSelectChange = (field) => (e) => {
-        setFormData({ ...formData, [field]: e.target.value });
+        const newValue = e.target.value;
+        setFormData(prev => ({
+            ...prev,
+            [field]: newValue
+        }));
+
+        // Debug log to check if value is being set
+        console.log(`${field} changed to:`, newValue);
     };
 
     const calculateFinalFare = () => {
@@ -107,14 +115,13 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
         return parseFloat(updatedFare.toFixed(2));
     };
 
-
     const finalFare = calculateFinalFare();
 
     const handleSubmit = () => {
         if (!passengerDetails.name || !passengerDetails.email || !passengerDetails.phone) {
             toast.error("Please fill all required passenger details.");
             return;
-        } 
+        }
 
         const payload = {
             passengerDetails,
@@ -123,10 +130,10 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
             voucherApplied: !!voucherDiscountPercent,
             selectedVehicle: {
                 ...vehicle,
-                passenger: formData.passenger,
-                childSeat: formData.childSeats,
-                handLuggage: formData.handLuggage,
-                checkinLuggage: formData.checkinLuggage
+               passenger: Number(formData.passenger) || 0,
+  childSeat: Number(formData.childSeat) || 0,
+  handLuggage: Number(formData.handLuggage) || 0,
+  checkinLuggage: Number(formData.checkinLuggage) || 0
             }
         };
 
@@ -229,7 +236,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
                     <SelectOption label="Passenger" value={formData.passenger} options={passengerOptions} onChange={handleSelectChange('passenger')} />
-                    <SelectOption label="Child Seats" value={formData.childSeats} options={childSeatOptions} onChange={handleSelectChange('childSeats')} />
+                    <SelectOption label="Child Seats" value={formData.childSeat} options={childSeatOptions} onChange={handleSelectChange('childSeat')} />
                     <SelectOption label="Hand Luggage" value={formData.handLuggage} options={handLuggageOptions} onChange={handleSelectChange('handLuggage')} />
                     <SelectOption label="Check-in Luggage" value={formData.checkinLuggage} options={checkinLuggageOptions} onChange={handleSelectChange('checkinLuggage')} />
                 </div>
