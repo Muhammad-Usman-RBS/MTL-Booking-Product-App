@@ -37,6 +37,7 @@ p {
 
   /* Product Color */
   --main-color: #2C9BE6;
+  --success-color: #20a220;
 }
 
 .theme-dark-1 {
@@ -132,13 +133,13 @@ p {
 }
 
 .btn-success {
-  background-color: var(--dark-grey);
+  background-color: var(--success-color);
   color: var(--light-grey);
   box-shadow: 0 0 10px rgba(89, 89, 89, 0.2);
 }
 
 .btn-success:hover {
-  background-color: #3e3e3e;
+  background-color: #046511;
   box-shadow: 0 0 15px rgba(89, 89, 89, 0.4);
 }
 

@@ -1,4 +1,5 @@
-import React from 'react'
+import React from 'react';
+import OutletHeading from "../../../../constants/constantscomponents/OutletHeading";
 
 const ReturnForm = ({
     formData = {},
@@ -8,6 +9,7 @@ const ReturnForm = ({
 }) => {
     return (
         <>
+            <OutletHeading name="Return Journey Details" />
             <div className='space-y-3'>
                 <div className="relative">
                     <label className="text-sm font-medium text-gray-400 mb-1 block">Pickup Location</label>
@@ -50,7 +52,7 @@ const ReturnForm = ({
 
                 {formData.pickup &&
                     !formData.pickup.toLowerCase().includes("airport") && (
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 gap-3">
                             <input
                                 name="pickupDoorNumber"
                                 placeholder="Pickup Door No."
@@ -75,7 +77,7 @@ const ReturnForm = ({
                 ))}
 
                 {dropOffs.some(loc => loc && loc.toLowerCase().includes("airport")) && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                    <div className="grid grid-cols-1 gap-3 mt-3">
                         <input
                             name="terminal"
                             placeholder="Terminal No."
@@ -87,7 +89,7 @@ const ReturnForm = ({
                 )}
 
                 {dropOffs.some(loc => loc && !loc.toLowerCase().includes("airport")) && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                    <div className="grid grid-cols-1 gap-3 mt-3">
                         <input
                             name="dropoffDoorNumber"
                             placeholder="Drop Off Door No."

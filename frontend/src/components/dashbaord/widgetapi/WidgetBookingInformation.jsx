@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Icons from '../../../assets/icons';
-import CarCardSection from './CarCardSection';
+import CarCardSection from './widgetcomponents/CarCardSection';
 import { useGetPublicVehiclesQuery } from '../../../redux/api/vehicleApi';
 import { useLazyGetDistanceQuery } from '../../../redux/api/googleApi';
 import { toast, ToastContainer } from 'react-toastify';
@@ -12,6 +11,9 @@ import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPrici
 import { useGetFixedPricesForWidgetQuery } from '../../../redux/api/fixedPriceApi';
 import { useGetDiscountsByCompanyIdQuery } from '../../../redux/api/discountApi';
 import WidgetBooking from './WidgetBooking';
+import PriceBreakdown from './widgetcomponents/PriceBreakdown';
+import JourneySummaryCard from './widgetcomponents/JourneySummaryCard';
+import ArrowButton from '../../../constants/constantscomponents/ArrowButton';
 
 const WidgetBookingInformation = ({
   companyId: propCompanyId,
@@ -19,8 +21,6 @@ const WidgetBookingInformation = ({
   totalPrice,
   dropOffPrice,
   postcodePrice,
-  meetAndGreet = '10.50',
-  estimatedTax = '15.00'
 }) => {
   const companyId = propCompanyId || new URLSearchParams(window.location.search).get('company') || '';
   const [actualMiles, setActualMiles] = useState(null);
@@ -135,10 +135,6 @@ const WidgetBookingInformation = ({
 
     return null;
   };
-
-  // useEffect(() => {
-  //   console.log("🧪 returnFormData state updated:", returnFormData);
-  // }, [returnFormData]);
 
   useEffect(() => {
     if (!journeyDateTime || discounts.length === 0) return;
@@ -533,115 +529,15 @@ const WidgetBookingInformation = ({
     <>
       <ToastContainer />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="lg:col-span-6 w-full">
-          <div className="bg-gray-50 border border-gray-200 rounded-2xl shadow-md p-6 w-full">
-            <div className="text-center mb-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-1">
-                {formData?.date ? new Date(formData.date).toLocaleDateString('en-UK', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : 'Date not selected'}
-              </h3>
-              <div className="text-xl font-semibold text-gray-900">
-                {formData?.hour && formData?.minute ? `${String(formData.hour).padStart(2, '0')}:${String(formData.minute).padStart(2, '0')} ${formData?.hour < 12 ? 'AM' : 'PM'}` : 'Time not set'}
-                <span className="text-sm text-gray-500">&nbsp;(GMT+1)</span>
-              </div>
-              {matchedSurcharge > 0 && (
-                <div className="flex justify-between border-b border-dashed pb-2">
-                  <span>Surcharge</span>
-                  <span className="font-medium text-gray-900">£{matchedSurcharge.toFixed(2)}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-4 py-3 bg-white border border-gray-100 rounded-xl">
-              <div className="flex items-center gap-2 w-full md:w-auto">
-                <Icons.PlaneTakeoff className="w-8 h-8 text-red-500" />
-                <div>
-                  <p className="font-medium text-sm text-red-800">{formData?.pickup || "Pickup Location"}</p>
-                  <p className="text-xs text-gray-500">{formData?.doorNumber ? `Door No. ${formData.doorNumber}` : "All Terminals"}</p>
-                </div>
-              </div>
-              <div className="text-gray-400 text-2xl hidden md:block">→</div>
-              <div className="flex flex-col items-end gap-2 w-full md:w-auto justify-end text-right">
-                {[formData?.dropoff, formData?.additionalDropoff1, formData?.additionalDropoff2]
-                  .filter(Boolean)
-                  .map((location, index, array) => (
-                    <div key={index} className="flex items-center justify-end gap-2">
-                      <div>
-                        <p className="font-medium text-sm text-green-800">{location}</p>
-                        {index === array.length - 1 && (
-                          <p className="text-xs text-gray-500">
-                            {formData?.arrivefrom ? `From: ${formData.arrivefrom}` : "Destination"}
-                          </p>
-                        )}
-                      </div>
-                      <Icons.PlaneLanding className="w-5 h-5 text-green-500" />
-                    </div>
-                  ))}
-              </div>
-            </div>
-
-            {showReturnBooking && (
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 px-4 py-3 bg-white border border-gray-100 rounded-xl">
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                  <Icons.PlaneTakeoff className="w-8 h-8 text-red-500" />
-                  <div>
-                    <p className="font-medium text-sm text-red-800">{returnFormData?.pickup || "Pickup not set"}</p>
-                    <p className="text-xs text-gray-500">
-                      {returnFormData?.pickupDoorNumber ? `Door No. ${returnFormData.pickupDoorNumber}` : "All Terminals"}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-gray-400 text-2xl hidden md:block">→</div>
-                <div className="flex flex-col items-end gap-2 w-full md:w-auto justify-end text-right">
-                  {[returnFormData?.dropoff, returnFormData?.additionalDropoff1, returnFormData?.additionalDropoff2]
-                    .filter(Boolean)
-                    .map((location, index, array) => (
-                      <div key={index} className="flex items-center justify-end gap-2">
-                        <div>
-                          <p className="font-medium text-sm text-green-800">{location}</p>
-                          {index === array.length - 1 && (
-                            <p className="text-xs text-gray-500">
-                              {returnFormData?.arrivefrom ? `From: ${returnFormData.arrivefrom}` : "Return Destination"}
-                            </p>
-                          )}
-                        </div>
-                        <Icons.PlaneLanding className="w-5 h-5 text-green-500" />
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 text-sm text-gray-600 px-2">
-              {durationText && (
-                <span>
-                  Estimated arrival at&nbsp;
-                  <strong className="text-gray-800">
-                    {formData?.hour && formData?.minute
-                      ? (() => {
-                        const dep = new Date();
-                        dep.setHours(Number(formData.hour));
-                        dep.setMinutes(Number(formData.minute));
-                        const durParts = durationText.split(" ");
-                        let minutes = 0;
-                        for (let i = 0; i < durParts.length; i += 2) {
-                          const val = parseInt(durParts[i]);
-                          const unit = durParts[i + 1];
-                          if (unit.startsWith("hour")) minutes += val * 60;
-                          else if (unit.startsWith("min")) minutes += val;
-                        }
-                        dep.setMinutes(dep.getMinutes() + minutes);
-                        return dep.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
-                      })()
-                      : "-"}
-                  </strong>&nbsp;(GMT+1)
-                </span>
-              )}
-              <div className='flex gap-3 items-center'>
-                {distanceText && (<div className="flex items-center gap-1"><Icons.MapPin className="w-4 h-4 text-blue-500" /><span>{distanceText}</span></div>)}
-                {durationText && (<div className="flex items-center gap-1"><Icons.Clock className="w-4 h-4 text-blue-500" /><span>{durationText}</span></div>)}
-              </div>
-            </div>
-          </div>
+        <div className="lg:col-span-8 w-full">
+          <JourneySummaryCard
+            formData={formData}
+            returnFormData={returnFormData}
+            showReturnBooking={showReturnBooking}
+            matchedSurcharge={matchedSurcharge}
+            durationText={durationText}
+            distanceText={distanceText}
+          />
 
           <div className='mt-6'>
             {hourlyError && (
@@ -670,7 +566,7 @@ const WidgetBookingInformation = ({
 
                 const surchargeAmount = base * (matchedSurcharge / 100);
                 const oneWay = base + surchargeAmount;
-                const totalWithReturn = formData?.returnJourneyToggle ? oneWay * 2 : oneWay;
+                const totalWithReturn = oneWay * 2;
 
                 return {
                   ...car,
@@ -681,148 +577,65 @@ const WidgetBookingInformation = ({
               selectedCarId={selectedCarId}
               onSelect={(id, type) => {
                 setSelectedCarId(id);
-                setSelectedJourneyType(type); // 'oneWay' or 'return'
+                setSelectedJourneyType(type);
+
+                if (type === 'oneWay') {
+                  setShowReturnBooking(false); // ✅ Hide return form when "One Way" selected
+                  setFormData((prev) => ({
+                    ...prev,
+                    returnJourneyToggle: false,
+                    returnBooking: {}, // optional: clear old return form data
+                  }));
+                  setReturnFormData({});
+                }
+              }}
+              triggerReturnJourney={() => {
+                setFormData((prev) => ({
+                  ...prev,
+                  returnJourneyToggle: true,
+                }));
+                setShowReturnBooking(true);
+
+                if (formData?.pickup && formData?.dropoff) {
+                  setReturnFormData({
+                    pickup: formData.dropoff,
+                    dropoff: formData.pickup,
+                    pickupDoorNumber: formData?.dropoffDoorNumber || "",
+                    additionalDropoff1: null,
+                    additionalDropoff2: null,
+                    arrivefrom: "",
+                    date: "",
+                    hour: "",
+                    minute: "",
+                    notes: ""
+                  });
+
+                  // Optional: scroll to return booking section smoothly
+                  setTimeout(() => {
+                    const el = document.getElementById("return-booking-form");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }, 100);
+                }
               }}
             />
-
-            <div className="text-right mt-4">
-              <button
-                onClick={handleSubmitBooking}
-                className="bg-blue-600 text-white font-semibold px-6 py-2 rounded-md shadow hover:bg-blue-700 transition"
-              >
-                Next
-              </button>
-            </div>
           </div>
         </div>
 
-        <div className="lg:col-span-6 w-full space-y-8">
-          <div className="rounded-2xl p-6 bg-white shadow-md border border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-gray-800 font-semibold text-lg">
-                <Icons.ReceiptText className="w-5 h-5 text-blue-500" />
-                <span>Price Breakdown</span>
-              </div>
-              <span className="text-sm text-gray-500">GBP</span>
-            </div>
-            <div className="text-sm text-blue-500">
-              Pricing Mode: <strong>{activePricingMode.toUpperCase()}</strong>
-            </div>
-
-            <div className="space-y-3 text-sm text-gray-700">
-              <div className="flex justify-between border-b border-dashed pb-2">
-                <span>Base Fare</span>
-                <span className="font-medium text-gray-900">£{selectedCarFinalPrice}</span>
-              </div>
-
-              {fixedZonePrice !== null && (
-                <div className="flex justify-between border-b border-dashed pb-2">
-                  <span>Fixed Zone Price</span>
-                  <span className="font-medium text-gray-900">£{fixedZonePrice.toFixed(2)}</span>
-                </div>
-              )}
-
-              {!isHourlyMode && matchedZonePrice !== null && (
-                <div className="flex justify-between border-b border-dashed pb-2">
-                  <span>Zone Toll Price</span>
-                  <span className="font-medium text-gray-900">£{matchedZonePrice.toFixed(2)}</span>
-                </div>
-              )}
-
-              {matchedZoneToZonePrice !== null && (
-                <div className="flex justify-between border-b border-dashed pb-2">
-                  <span>Zone-to-Zone Price</span>
-                  <span className="font-medium text-gray-900">£{matchedZoneToZonePrice.toFixed(2)}</span>
-                </div>
-              )}
-
-              {!isHourlyMode && matchedPostcodePrice && (
-                <div className="flex justify-between border-b border-dashed pb-2">
-                  <span>Postcode Price</span>
-                  <span className="font-medium text-gray-900">£{matchedPostcodePrice.price.toFixed(2)}</span>
-                </div>
-              )}
-
-              {dropOffPrice > 0 && (
-                <div className="flex justify-between border-b border-dashed pb-2">
-                  <span>Additional Drop-Offs</span>
-                  <span className="font-medium text-gray-900">£{dropOffPrice.toFixed(2)}</span>
-                </div>
-              )}
-
-              {(pickupAirportPrice > 0 || dropoffAirportPrice > 0) && (
-                <div className="flex justify-between border-b border-dashed pb-2">
-                  <span>Meet & Greet (Airport)</span>
-                  <span className="font-medium text-gray-900">
-                    £{(pickupAirportPrice + dropoffAirportPrice).toFixed(2)}
-                  </span>
-                </div>
-              )}
-
-              {/* {!isHourlyMode && fixedZonePrice !== null && (
-                <div className="flex justify-between border-b border-dashed pb-2">
-                  <span>Fixed Zone Price</span>
-                  <span className="font-medium text-gray-900">£{fixedZonePrice.toFixed(2)}</span>
-                </div>
-              )} */}
-
-              {!isHourlyMode && matchedZoneToZonePrice !== null && (
-                <div className="flex justify-between border-b border-dashed pb-2">
-                  <span>Zone-to-Zone Price</span>
-                  <span className="font-medium text-gray-900">£{matchedZoneToZonePrice.toFixed(2)}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between pt-2 mt-12 border-t border-gray-300 text-base font-semibold">
-                <span className='flex items-center'>Total {isHourlyMode && (
-                  <div className="ms-2 text-xs font-medium text-blue-600">
-                    (Hourly Package Selected)
-                  </div>
-                )}</span>
-                <span>£{calculatedTotalPrice.toFixed(2)}</span>
-              </div>
-
-            </div>
-          </div>
-
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 flex items-center justify-between">
-            <p className="text-gray-700 font-medium">Add Return Journey?</p>
-            <label className="inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData?.returnJourneyToggle || false}
-                onChange={(e) => {
-                  const isChecked = e.target.checked;
-                  setFormData((prev) => ({
-                    ...prev,
-                    returnJourneyToggle: isChecked,
-                  }));
-                  setShowReturnBooking(isChecked);
-
-                  if (isChecked && formData?.pickup && formData?.dropoff) {
-                    setReturnFormData({
-                      pickup: formData.dropoff,
-                      dropoff: formData.pickup,
-                      pickupDoorNumber: formData.dropoffDoorNumber || "",
-                      additionalDropoff1: null,
-                      additionalDropoff2: null,
-                      arrivefrom: "",
-                      date: "",
-                      hour: "",
-                      minute: "",
-                      notes: ""
-                    });
-                  } else {
-                    setReturnFormData({});
-                  }
-                }}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-400 rounded-full peer peer-checked:bg-blue-600 relative transition-all duration-300">
-                <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 peer-checked:translate-x-full"></div>
-              </div>
-            </label>
-          </div>
+        <div className="lg:col-span-4 w-full space-y-8">
+          <PriceBreakdown
+            activePricingMode={activePricingMode}
+            selectedCarFinalPrice={Number(selectedCarFinalPrice)}
+            fixedZonePrice={fixedZonePrice}
+            matchedZonePrice={matchedZonePrice}
+            matchedZoneToZonePrice={matchedZoneToZonePrice}
+            matchedPostcodePrice={matchedPostcodePrice}
+            dropOffPrice={dropOffPrice}
+            pickupAirportPrice={pickupAirportPrice}
+            matchedSurcharge={matchedSurcharge}
+            dropoffAirportPrice={dropoffAirportPrice}
+            isHourlyMode={isHourlyMode}
+            calculatedTotalPrice={calculatedTotalPrice}
+          />
 
           {showReturnBooking && (
             <WidgetBooking
@@ -850,6 +663,8 @@ const WidgetBookingInformation = ({
               }}
             />
           )}
+
+          <ArrowButton label="Book Now" onClick={handleSubmitBooking} />
 
         </div>
       </div>

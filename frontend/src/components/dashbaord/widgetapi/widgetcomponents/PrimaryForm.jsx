@@ -37,7 +37,7 @@ const PrimaryForm = ({
                         key={tab}
                         type="button"
                         onClick={() => setMode(tab)}
-                        className={`px-6 py-2 font-semibold text-sm border 
+                        className={`px-6 py-2 font-semibold text-sm border cursor-pointer 
                             ${mode === tab
                                 ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
                                 : "bg-[#f9fafb] text-gray-700 border-gray-300"

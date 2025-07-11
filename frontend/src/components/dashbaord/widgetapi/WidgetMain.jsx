@@ -35,7 +35,10 @@ const WidgetMain = () => {
 
             const primaryJourney = {
                 ...formData.booking,
-                fare: formData.pricing.totalPrice / 2 || 0,
+                // fare: formData.pricing.totalPrice / 2 || 0,
+                fare: formData.booking?.returnJourneyToggle
+                    ? formData.pricing.totalPrice / 2
+                    : formData.pricing.totalPrice,
                 hourlyOption: isPrimaryHourly ? formData.booking?.hourlyOption : null,
                 pickup: formData.booking?.pickup || "",
                 dropoff: formData.booking?.dropoff || "",
@@ -69,7 +72,6 @@ const WidgetMain = () => {
                 primaryJourney,
             };
 
-            console.log("🚀 Submitting Primary Journey Payload:", primaryPayload);
             await createBooking(primaryPayload).unwrap();
 
             // Submit Return Journey as second booking — put data in returnJourney
@@ -89,7 +91,7 @@ const WidgetMain = () => {
                     companyId,
                     source: "widget",
                     referrer: `${document.referrer || "Widget"} (Return)`,
-                    vehicle: formData.vehicle,
+                    vehicle: finalPayload.vehicle,
                     passenger: finalPayload.passenger || {},
                     voucher: finalPayload.voucher,
                     voucherApplied: !!finalPayload.voucher,
@@ -100,6 +102,7 @@ const WidgetMain = () => {
                     // 🔁 Actual return data
                     returnJourney: {
                         ...returnData,
+                        vehicle: finalPayload.vehicle,
                         fare: formData.pricing.totalPrice / 2 || 0,
                         hourlyOption: isReturnHourly ? formData.booking?.returnBooking?.hourlyOption : null,
                         pickup: returnData?.pickup || "",
@@ -111,14 +114,12 @@ const WidgetMain = () => {
                     },
                 };
 
-                console.log("🔁 Submitting Return Journey Payload:", returnPayload);
                 await createBooking(returnPayload).unwrap();
             }
 
             // Success step
             setStep("success");
         } catch (err) {
-            console.error("❌ Booking save failed:", err);
             setError("Failed to save booking. Please try again.");
         }
     };
@@ -166,24 +167,17 @@ const WidgetMain = () => {
                     totalPrice={formData.pricing.totalPrice}
                     postcodePrice={formData.pricing.postcodePrice}
                     dropOffPrice={formData.pricing.dropOffPrice}
-                    onNext={({ totalPrice, selectedCar, returnJourneyToggle, returnBooking, passenger,
-                        childSeat,
-                        handLuggage,
-                        checkinLuggage }) => {
+                    onNext={({ totalPrice, selectedCar, returnJourneyToggle, returnBooking }) => {
                         handleDataChange('pricing', { totalPrice });
-                        handleDataChange('vehicle', {
-                            ...selectedCar,
-                            passenger,
-                            childSeat,
-                            handLuggage,
-                            checkinLuggage
-                        });
+                        handleDataChange('vehicle', selectedCar);
 
                         handleDataChange('booking', {
                             ...formData.booking,
                             returnJourneyToggle,
                             vehicle: selectedCar,
-                            returnBooking: returnJourneyToggle ? returnBooking : null,
+                            returnBooking: returnJourneyToggle
+                                ? { ...returnBooking, vehicle: selectedCar }
+                                : null,
                         });
 
                         handleStepChange('payment');

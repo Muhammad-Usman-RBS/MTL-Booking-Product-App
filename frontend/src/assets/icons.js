@@ -87,10 +87,12 @@ import {
   BellPlus,
   XCircle,
   Delete,
+  ChevronsRight,
 } from "lucide-react";
 
 const Icons = {
   Delete,
+  ChevronsRight,
   BellPlus,
   XCircle,
   CircleUserRound,

@@ -6,7 +6,6 @@ import { useLazySearchGooglePlacesQuery, useLazyGetDistanceQuery } from '../../.
 import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
 import { useLazyGeocodeQuery } from '../../../redux/api/googleApi';
 import 'react-toastify/dist/ReactToastify.css';
-import SelectOption from '../../../constants/constantscomponents/SelectOption';
 import ReturnForm from './widgetcomponents/ReturnForm';
 import PrimaryForm from './widgetcomponents/PrimaryForm';
 

@@ -8,6 +8,8 @@ import SelectOption from '../../../constants/constantscomponents/SelectOption';
 import { useGetDiscountsByCompanyIdQuery } from "../../../redux/api/discountApi";
 import { useLazyGetVoucherByCodeQuery } from "../../../redux/api/vouchersApi";
 import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
+import OutletHeading from '../../../constants/constantscomponents/OutletHeading';
+import ArrowButton from '../../../constants/constantscomponents/ArrowButton';
 
 const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, booking = {} }) => {
     const [passengerDetails, setPassengerDetails] = useState({ name: '', email: '', phone: '' });
@@ -71,17 +73,20 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
     }, [journeyDateTime, discounts]);
 
     useEffect(() => {
-        if (vehicle) {
-            setFormData({
-                passenger: vehicle?.passenger ? String(vehicle.passenger) : '',
-                childSeats: '', // Keep empty as user needs to select
-                handLuggage: vehicle?.handLuggage ? String(vehicle.handLuggage) : '',
-                checkinLuggage: vehicle?.checkinLuggage ? String(vehicle.checkinLuggage) : ''
-            });
+        if (!vehicle) return;
+
+        const updatedFormData = {
+            passenger: vehicle?.passenger ? String(vehicle.passenger) : '',
+            childSeat: '',
+            handLuggage: vehicle?.handLuggage ? String(vehicle.handLuggage) : '',
+            checkinLuggage: vehicle?.checkinLuggage ? String(vehicle.checkinLuggage) : ''
+        };
+
+        // Prevent infinite loop: only update if something actually changed
+        if (JSON.stringify(formData) !== JSON.stringify(updatedFormData)) {
+            setFormData(updatedFormData);
         }
     }, [vehicle]);
-
-
 
     const handleSelectChange = (field) => (e) => {
         const newValue = e.target.value;
@@ -89,9 +94,6 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
             ...prev,
             [field]: newValue
         }));
-
-        // Debug log to check if value is being set
-        console.log(`${field} changed to:`, newValue);
     };
 
     const calculateFinalFare = () => {
@@ -100,12 +102,12 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
         const totalDiscount = companyDiscountPercent + voucherDiscountPercent;
         let updatedFare = fare;
 
-        const selectedChildSeats = parseInt(formData.childSeats || '0');
-        const isValidSelection = !isNaN(selectedChildSeats) && selectedChildSeats > 0;
+        const selectedChildSeat = parseInt(formData.childSeat || '0');
+        const isValidSelection = !isNaN(selectedChildSeat) && selectedChildSeat > 0;
         const unitPrice = parseFloat(generalPricing?.childSeatPrice || 0);
 
         if (isValidSelection) {
-            updatedFare += selectedChildSeats * unitPrice;
+            updatedFare += selectedChildSeat * unitPrice;
         }
 
         if (totalDiscount > 0) {
@@ -130,10 +132,10 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
             voucherApplied: !!voucherDiscountPercent,
             selectedVehicle: {
                 ...vehicle,
-               passenger: Number(formData.passenger) || 0,
-  childSeat: Number(formData.childSeat) || 0,
-  handLuggage: Number(formData.handLuggage) || 0,
-  checkinLuggage: Number(formData.checkinLuggage) || 0
+                passenger: Number(formData.passenger) || 0,
+                childSeat: Number(formData.childSeat) || 0,
+                handLuggage: Number(formData.handLuggage) || 0,
+                checkinLuggage: Number(formData.checkinLuggage) || 0
             }
         };
 
@@ -182,165 +184,163 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
     const maxAppliedDiscount = Math.max(companyDiscountPercent, voucherDiscountPercent);
 
     return (
-        <div className="max-w-xl w-full mx-auto mt-6 px-4 sm:px-0">
+        <>
             <ToastContainer />
-
-            {/* Passenger Details */}
-            <div className="bg-white border border-gray-200 rounded-xl shadow p-6 space-y-6 mb-6">
-                <div className="text-2xl font-bold text-gray-800">
-                    BASE FARE: {(fare || 0).toFixed(2)} GBP
-                </div>
-                <h3 className="text-lg font-semibold">Passenger Details:-</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium mb-1">Full Name</label>
-                        <input
-                            type="text"
-                            value={passengerDetails.name}
-                            onChange={(e) => setPassengerDetails({ ...passengerDetails, name: e.target.value })}
-                            className="custom_input"
-                        />
-                    </div>
-                    <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium mb-1">Email Address</label>
-                        <input
-                            type="email"
-                            value={passengerDetails.email}
-                            onChange={(e) => setPassengerDetails({ ...passengerDetails, email: e.target.value })}
-                            className="custom_input"
-                        />
-                    </div>
-                    <div className="sm:col-span-4">
-                        <label className="block text-sm font-medium mb-1">Contact Number</label>
-                        <PhoneInput
-                            country={"pk"}
-                            value={passengerDetails.phone}
-                            onChange={(phone) => setPassengerDetails({ ...passengerDetails, phone })}
-                            inputClass="!w-full !text-sm !py-2 !px-3 !pl-14 !border-gray-300 !rounded"
-                            dropdownClass="!text-sm"
-                            containerClass="!w-full"
-                            buttonClass="!ps-2"
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* Vehicle Info */}
-            <div className="bg-white border border-gray-200 rounded-xl shadow p-6 space-y-6 mb-6">
-                <h3 className="text-lg font-semibold">Vehicle Detail:-</h3>
-                {vehicle?.vehicleName && (
-                    <div className="text-sm text-gray-600 font-medium">
-                        Selected Vehicle:&nbsp;
-                        <span className="text-blue-700 font-semibold">{vehicle.vehicleName}</span>
-                    </div>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-                    <SelectOption label="Passenger" value={formData.passenger} options={passengerOptions} onChange={handleSelectChange('passenger')} />
-                    <SelectOption label="Child Seats" value={formData.childSeat} options={childSeatOptions} onChange={handleSelectChange('childSeat')} />
-                    <SelectOption label="Hand Luggage" value={formData.handLuggage} options={handLuggageOptions} onChange={handleSelectChange('handLuggage')} />
-                    <SelectOption label="Check-in Luggage" value={formData.checkinLuggage} options={checkinLuggageOptions} onChange={handleSelectChange('checkinLuggage')} />
-                </div>
-            </div>
-
-            <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-md p-4">
-                <h4 className="text-sm font-medium text-yellow-800 mb-2 flex items-center gap-2">
-                    <Icons.AlertCircle className="w-4 h-4 text-yellow-600" />
-                    Please Note
-                </h4>
-                <p className="text-sm text-yellow-900">
-                    Child seats must be added for safety reasons.
-                </p>
-            </div>
-
-            {/* Payment Section */}
-            <div className="bg-white border border-gray-300 rounded-xl p-6 shadow-sm mt-6">
-                <h2 className="text-lg font-bold mb-2">Payment:-</h2>
-                <hr className="mb-4" />
-                <div className="text-center mb-4">
-                    {booking?.date && (
-                        <div className="text-sm text-gray-700 mt-2">
-                            Journey Date:&nbsp;
-                            <span className="font-semibold text-gray-900">
-                                {new Date(booking.date).toLocaleDateString("en-GB", {
-                                    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-                                })}
-                            </span>
-                            &nbsp;at&nbsp;
-                            <span className="font-semibold text-gray-900">
-                                {String(booking.hour).padStart(2, '0')}:{String(booking.minute).padStart(2, '0')}
-                            </span>
+            <div className="mx-auto max-w-5xl mt-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white shadow-lg rounded-xl p-6 sm:p-8">
+                    {/* Passenger Details */}
+                    <div className="col-span-6">
+                        <div className="bg-white border border-gray-200 rounded-xl shadow p-6 space-y-6 mb-6">
+                            <OutletHeading name="Passenger Details:-" />
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Full Name</label>
+                                <input
+                                    type="text"
+                                    value={passengerDetails.name}
+                                    onChange={(e) => setPassengerDetails({ ...passengerDetails, name: e.target.value })}
+                                    className="custom_input"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Email Address</label>
+                                <input
+                                    type="email"
+                                    value={passengerDetails.email}
+                                    onChange={(e) => setPassengerDetails({ ...passengerDetails, email: e.target.value })}
+                                    className="custom_input"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Contact Number</label>
+                                <PhoneInput
+                                    country={"pk"}
+                                    value={passengerDetails.phone}
+                                    onChange={(phone) => setPassengerDetails({ ...passengerDetails, phone })}
+                                    inputClass="!w-full !text-sm !py-2 !px-3 !pl-14 !border-gray-300 !rounded"
+                                    dropdownClass="!text-sm"
+                                    containerClass="!w-full"
+                                    buttonClass="!ps-2"
+                                />
+                            </div>
                         </div>
-                    )}
 
-                    <div className="text-2xl font-bold text-gray-800 mt-4">
-                        {((companyDiscountPercent + voucherDiscountPercent) > 0 || parseInt(formData.childSeats || '0') > 0) ? (
-                            <>
-                                <span className="line-through text-red-400 me-2">
-                                    {(fare || 0).toFixed(2)} GBP
-                                </span>
-                                <span className="text-green-600">{finalFare} GBP</span>
-                            </>
-                        ) : (
-                            <>FARE: {finalFare} GBP</>
-                        )}
+                        {/* Payment Section */}
+                        <div className="bg-white border border-gray-300 rounded-xl p-6 shadow-sm mt-6">
+                            <OutletHeading name="Payment:-" />
+                            <div className="text-center mb-4">
+                                {booking?.date && (
+                                    <div className="text-sm text-gray-700 mt-2">
+                                        Journey Date:&nbsp;
+                                        <span className="font-semibold text-gray-900">
+                                            {new Date(booking.date).toLocaleDateString("en-GB", {
+                                                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+                                            })}
+                                        </span>
+                                        &nbsp;at&nbsp;
+                                        <span className="font-semibold text-gray-900">
+                                            {String(booking.hour).padStart(2, '0')}:{String(booking.minute).padStart(2, '0')}
+                                        </span>
+                                    </div>
+                                )}
+
+                                <div className="text-2xl font-bold text-gray-800 mt-4">
+                                    {((companyDiscountPercent + voucherDiscountPercent) > 0 || parseInt(formData.childSeat || '0') > 0) ? (
+                                        <>
+                                            <span className="line-through text-red-400 me-2">
+                                                {(fare || 0).toFixed(2)} GBP
+                                            </span>
+                                            <span className="text-green-600">{finalFare} GBP</span>
+                                        </>
+                                    ) : (
+                                        <>FARE: {finalFare} GBP</>
+                                    )}
+                                </div>
+
+                                {(companyDiscountPercent + voucherDiscountPercent > 0) && (
+                                    <p className="text-sm text-green-600 font-semibold">
+                                        Discount Applied: {companyDiscountPercent + voucherDiscountPercent}% &nbsp;
+                                        <span className="text-xs font-normal text-gray-600">
+                                            ({companyDiscountPercent > 0 && `Company: ${companyDiscountPercent}%`}
+                                            {companyDiscountPercent > 0 && voucherDiscountPercent > 0 && ' + '}
+                                            {voucherDiscountPercent > 0 && `Voucher: ${voucherDiscountPercent}%`})
+                                        </span>
+                                    </p>
+                                )}
+
+                                <button className="btn btn-reset mt-4">
+                                    Pay Via Debit/Credit Card
+                                </button>
+                            </div>
+
+                            {/* Voucher */}
+                            <div className="bg-blue-100 rounded-md p-4 mb-4">
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        value={voucher}
+                                        onChange={(e) => setVoucher(e.target.value)}
+                                        placeholder="Voucher Code"
+                                        className="flex-grow px-3 py-2 rounded border text-sm"
+                                    />
+                                    <button
+                                        onClick={handleVoucherApply}
+                                        className="btn btn-cancel"
+                                    >
+                                        Apply
+                                    </button>
+                                </div>
+                                <p className="text-xs mt-2 text-gray-600">Click "Apply" to update the voucher</p>
+                            </div>
+                            <ArrowButton label="Book Now" onClick={handleSubmit} mainColor="#20a220" />
+                        </div>
                     </div>
 
-                    {(companyDiscountPercent + voucherDiscountPercent > 0) && (
-                        <p className="text-sm text-green-600 font-semibold">
-                            Discount Applied: {companyDiscountPercent + voucherDiscountPercent}% &nbsp;
-                            <span className="text-xs font-normal text-gray-600">
-                                ({companyDiscountPercent > 0 && `Company: ${companyDiscountPercent}%`}
-                                {companyDiscountPercent > 0 && voucherDiscountPercent > 0 && ' + '}
-                                {voucherDiscountPercent > 0 && `Voucher: ${voucherDiscountPercent}%`})
-                            </span>
-                        </p>
-                    )}
+                    {/* Vehicle Info */}
+                    <div className="col-span-6">
+                        <div className="bg-white border border-gray-200 rounded-xl shadow p-6 mb-6">
+                            <OutletHeading name="Vehicle Detail:-" />
 
-                    <div className="text-sm mt-2 text-gray-700">Payment gateway:</div>
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm shadow">
-                        Pay Via Debit/Credit Card
-                    </button>
-                </div>
+                            {vehicle?.vehicleName && (
+                                <div className="text-sm text-gray-600 font-medium">
+                                    Selected Vehicle:&nbsp;
+                                    <span className="text-blue-700 font-semibold">{vehicle.vehicleName}</span>
+                                </div>
+                            )}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                                <SelectOption label="Passenger" value={formData.passenger} options={passengerOptions} onChange={handleSelectChange('passenger')} />
+                                <SelectOption label="Child Seats" value={formData.childSeat} options={childSeatOptions} onChange={handleSelectChange('childSeat')} />
+                                <SelectOption label="Hand Luggage" value={formData.handLuggage} options={handLuggageOptions} onChange={handleSelectChange('handLuggage')} />
+                                <SelectOption label="Check-in Luggage" value={formData.checkinLuggage} options={checkinLuggageOptions} onChange={handleSelectChange('checkinLuggage')} />
+                            </div>
+                        </div>
 
-                {/* Voucher */}
-                <div className="bg-blue-100 rounded-md p-4 mb-4">
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="text"
-                            value={voucher}
-                            onChange={(e) => setVoucher(e.target.value)}
-                            placeholder="Voucher Code"
-                            className="flex-grow px-3 py-2 rounded border text-sm"
-                        />
-                        <button
-                            onClick={handleVoucherApply}
-                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm"
-                        >
-                            Apply
-                        </button>
+                        <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-6 shadow-sm">
+                            <h4 className="text-sm font-semibold text-yellow-800 mb-3 flex items-center gap-2">
+                                <Icons.AlertCircle className="w-5 h-5 text-yellow-600" />
+                                Important Notice
+                            </h4>
+
+                            <p className="text-sm text-yellow-900 mb-3 leading-relaxed">
+                                For your child's safety, please remember to add a child seat when booking.
+                            </p>
+
+                            <div className="bg-yellow-100 border border-yellow-200 rounded-md p-3 text-center mb-3">
+                                <p className="text-xs text-gray-700">
+                                    By clicking <strong>‘BOOK NOW’</strong>, you agree to our{' '}
+                                    <a href="#" className="text-blue-600 underline hover:text-blue-800">Terms and Conditions</a> and{' '}
+                                    <a href="#" className="text-blue-600 underline hover:text-blue-800">Privacy Policy</a>.
+                                </p>
+                            </div>
+
+                            <p className="text-xs text-gray-600 text-center italic">
+                                Note: Additional charges may apply for waiting time, address changes, or extended routes.
+                            </p>
+                        </div>
+
                     </div>
-                    <p className="text-xs mt-2 text-gray-600">Click "Apply" to update the voucher</p>
-                </div>
-
-                <p className="text-xs text-center text-gray-700 mb-3">
-                    By clicking 'BOOK NOW' button you are agreeing to our{' '}
-                    <a href="#" className="text-blue-600 underline">Terms And Conditions</a> &{' '}
-                    <a href="#" className="text-blue-600 underline">Privacy and Security</a>.
-                </p>
-                <p className="text-xs text-center text-gray-600 mb-4">
-                    Additional charges may be applicable for changes in route, wait time, or address.
-                </p>
-
-                <div className="text-center">
-                    <button
-                        onClick={handleSubmit}
-                        className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-md text-sm shadow"
-                    >
-                        BOOK NOW
-                    </button>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

@@ -15,7 +15,7 @@ const SelectOption = ({ options, label, width = "full", value, onChange }) => {
   return (
     <div className={`w-${width}`}>
       {label && (
-        <label className="block mb-2 text-sm font-semibold text-gray-800 dark:text-white">
+        <label className="block mb-2 text-sm text-gray-800 dark:text-white">
           {label}
         </label>
       )}
