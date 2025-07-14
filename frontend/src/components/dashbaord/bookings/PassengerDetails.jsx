@@ -48,7 +48,7 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
 
   return (
     <>
-      <div className="bg-white shadow-lg rounded-2xl border border-gray-200 overflow-hidden mt-8">
+      <div className="bg-white shadow-lg rounded-2xl border border-gray-200 overflow-hidden mt-6">
         <div className="bg-[#0f192d] px-6 py-3">
           <h2 className="text-xl font-bold text-gray-50">Passenger&nbsp;Details:-</h2>
         </div>

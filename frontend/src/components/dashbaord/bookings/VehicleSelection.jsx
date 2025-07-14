@@ -101,12 +101,12 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
 
   return (
     <>
-      <div className="bg-white shadow-lg rounded-2xl border border-gray-200 overflow-visible">
-        <div className="bg-[#0f192d] px-6 py-3">
+     <div className="bg-white shadow-lg rounded-2xl max-w-4xl w-full mx-auto border border-gray-200">
+        <div className="bg-[#0f192d] rounded-t-2xl px-6 py-3">
           <h2 className="text-xl font-bold text-gray-50">Vehicle&nbsp;Details:-</h2>
         </div>
         <div className="p-6 space-y-6">
-          <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex flex-col lg:flex-row gap-6 overflow-visible">
             <div className="flex flex-col items-center w-full lg:w-1/3">
               <div className="bg-white border border-gray-300 rounded-lg shadow-md p-3 mb-4">
                 <img
