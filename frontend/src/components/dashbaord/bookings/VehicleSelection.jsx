@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Users, Baby, Briefcase, Luggage, ChevronDown } from "lucide-react";
+import Icons from "../../../assets/icons";
 import { useGetAllVehiclesQuery } from "../../../redux/api/vehicleApi";
 
 const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingData }) => {
@@ -77,16 +77,16 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
   const IconRow = ({ vehicle }) => (
     <div className="flex flex-wrap gap-2 text-xs text-gray-600 mt-1">
       <span className="flex items-center gap-1">
-        <Users className="w-4 h-4" /> {vehicle.passengers}
+        <Icons.Users className="w-4 h-4" /> {vehicle.passengers}
       </span>
       <span className="flex items-center gap-1">
-        <Baby className="w-4 h-4" /> {vehicle.childSeat}
+        <Icons.Baby className="w-4 h-4" /> {vehicle.childSeat}
       </span>
       <span className="flex items-center gap-1">
-        <Briefcase className="w-4 h-4" /> {vehicle.handLuggage}
+        <Icons.Briefcase className="w-4 h-4" /> {vehicle.handLuggage}
       </span>
       <span className="flex items-center gap-1">
-        <Luggage className="w-4 h-4" /> {vehicle.checkinLuggage}
+        <Icons.Luggage className="w-4 h-4" /> {vehicle.checkinLuggage}
       </span>
     </div>
   );
@@ -101,7 +101,7 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
 
   return (
     <>
-      <div className="bg-white shadow-lg rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="bg-white shadow-lg rounded-2xl border border-gray-200 overflow-visible">
         <div className="bg-[#0f192d] px-6 py-3">
           <h2 className="text-xl font-bold text-gray-50">Vehicle&nbsp;Details:-</h2>
         </div>
@@ -120,24 +120,23 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
                   onClick={toggleDropdown}
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded-md text-left shadow flex justify-between items-center"
                 >
-                  <div className="flex flex-col">
-                    <div className="font-semibold text-sm">{localSelectedVehicle.vehicleName}</div>
-                    <div className="flex gap-4 text-xs text-white mt-1">
+                  <div className="flex flex-col cursor-pointer">
+                    <div className="font-semibold text-sm flex justify-between items-center">{localSelectedVehicle.vehicleName}<Icons.ChevronDown className="ml-3 w-4 h-4 text-white" /></div>
+                    <div className="flex gap-4 text-xs text-white mt-2">
                       <span className="flex items-center gap-1">
-                        <Users className="w-4 h-4" /> {localSelectedVehicle.passengers}
+                        <Icons.Users className="w-4 h-4" /> {localSelectedVehicle.passengers}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Baby className="w-4 h-4" /> {localSelectedVehicle.childSeat}
+                        <Icons.Baby className="w-4 h-4" /> {localSelectedVehicle.childSeat}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Briefcase className="w-4 h-4" /> {localSelectedVehicle.handLuggage}
+                        <Icons.Briefcase className="w-4 h-4" /> {localSelectedVehicle.handLuggage}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Luggage className="w-4 h-4" /> {localSelectedVehicle.checkinLuggage}
+                        <Icons.Luggage className="w-4 h-4" /> {localSelectedVehicle.checkinLuggage}
                       </span>
                     </div>
                   </div>
-                  <ChevronDown className="ml-3 w-4 h-4 text-white" />
                 </button>
 
                 {open && (

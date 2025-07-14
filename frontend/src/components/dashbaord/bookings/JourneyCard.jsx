@@ -105,9 +105,9 @@ const JourneyCard = ({
                             Fare: £{fare?.toFixed(2) || "0.00"}
                         </span>
                         <div className="text-lg text-white">
-                            {/* <span className="text-sm font-normal text-gray-500">
-                            ({selectedVehicle?.vehicleName || "N/A"})
-                        </span> */}
+                            <span className="text-sm font-normal text-gray-500">
+                                ({selectedVehicle?.vehicleName || "N/A"})
+                            </span>
                         </div>
                         {pricingMode === "postcode" &&
                             matchedPostcodePrice?.price &&
