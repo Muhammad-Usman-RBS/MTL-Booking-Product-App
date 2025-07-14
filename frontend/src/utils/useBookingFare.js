@@ -69,9 +69,23 @@ export const useBookingFare = ({
 
   const getZonePrice = (pickup, dropoff) => {
     for (const zone of fixedPrices) {
-      const isPickupInZone = pickup.some((p) => isWithinZone(p, zone.pickupCoordinates));
-      const isDropoffInZone = dropoff.some((d) => isWithinZone(d, zone.dropoffCoordinates));
-      if (isPickupInZone && isDropoffInZone) return zone.price;
+      const pickupInPickupZone = pickup.some((p) => isWithinZone(p, zone.pickupCoordinates));
+      const dropInDropZone = dropoff.some((d) => isWithinZone(d, zone.dropoffCoordinates));
+
+      const dropInPickupZone = dropoff.some((d) => isWithinZone(d, zone.pickupCoordinates));
+      const pickupInDropZone = pickup.some((p) => isWithinZone(p, zone.dropoffCoordinates));
+
+      const direction = zone.direction?.toLowerCase();
+
+      if (direction === 'both ways') {
+        if ((pickupInPickupZone && dropInDropZone) || (dropInPickupZone && pickupInDropZone)) {
+          return zone.price;
+        }
+      } else if (direction === 'one way') {
+        if (pickupInPickupZone && dropInDropZone) {
+          return zone.price;
+        }
+      }
     }
     return null;
   };

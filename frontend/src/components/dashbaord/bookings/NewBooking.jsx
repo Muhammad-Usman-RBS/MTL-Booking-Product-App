@@ -54,7 +54,9 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!companyId || !primaryJourneyData.pickup || !dropOffs1[0]) return toast.error("Missing required fields");
+    if (!companyId || !primaryJourneyData.pickup || !dropOffs1[0]) {
+      return toast.error("Missing required fields");
+    }
 
     const dynamicFields1 = {};
     dropOffs1.forEach((_, i) => {
@@ -68,46 +70,121 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       dynamicFields2[`dropoff_terminal_${i}`] = returnJourneyData[`dropoff_terminal_${i}`] || "";
     });
 
-    const payload = {
-      mode,
-      returnJourneyToggle,
-      companyId,
-      referrer: document.referrer || "manual",
-      vehicle: { vehicleName: selectedVehicle?.vehicleName || "", ...vehicleExtras },
-      passenger: passengerDetails,
-      primaryJourney: {
-        ...primaryJourneyData,
-        dropoff: dropOffs1[0],
-        additionalDropoff1: dropOffs1[1] || null,
-        additionalDropoff2: dropOffs1[2] || null,
-        hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
-        fare: primaryFare,
-        ...dynamicFields1
-      },
-      PassengerEmail: emailNotify.customer ? passengerDetails.email : null,
-      ClientAdminEmail: emailNotify.admin ? userEmail : null
+    const isReverseJourney =
+      returnJourneyToggle &&
+      primaryJourneyData.pickup?.trim() === dropOffs2[0]?.trim() &&
+      dropOffs1[0]?.trim() === returnJourneyData.pickup?.trim();
+
+    // Common vehicle & passenger data
+    const vehicleData = {
+      vehicleName: selectedVehicle?.vehicleName || "",
+      ...vehicleExtras
     };
 
-    if (returnJourneyToggle) {
-      payload.returnJourney = {
-        ...returnJourneyData,
-        dropoff: dropOffs2[0],
-        additionalDropoff1: dropOffs2[1] || null,
-        additionalDropoff2: dropOffs2[2] || null,
-        hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
-        fare: returnFare,
-        ...dynamicFields2
-      };
-    }
+    const passengerData = passengerDetails;
 
     try {
-      if (editBookingData?._id) {
-        await updateBooking({ id: editBookingData._id, updatedData: payload }).unwrap();
-        toast.success("Booking updated successfully.");
-      } else {
+      // -----------------------------
+      // ✅ Case 1: One booking with valid reverse journey
+      // -----------------------------
+      if (returnJourneyToggle && isReverseJourney) {
+        const payload = {
+          mode,
+          returnJourneyToggle: true,
+          companyId,
+          referrer: document.referrer || "manual",
+          vehicle: vehicleData,
+          passenger: passengerData,
+          primaryJourney: {
+            ...primaryJourneyData,
+            dropoff: dropOffs1[0],
+            additionalDropoff1: dropOffs1[1] || null,
+            additionalDropoff2: dropOffs1[2] || null,
+            hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+            fare: primaryFare,
+            ...dynamicFields1
+          },
+          returnJourney: {
+            ...returnJourneyData,
+            dropoff: dropOffs2[0],
+            additionalDropoff1: dropOffs2[1] || null,
+            additionalDropoff2: dropOffs2[2] || null,
+            hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+            fare: returnFare,
+            ...dynamicFields2
+          },
+          PassengerEmail: emailNotify.customer ? passengerDetails.email : null,
+          ClientAdminEmail: emailNotify.admin ? userEmail : null
+        };
+
         await createBooking(payload).unwrap();
-        toast.success("Booking created successfully.");
+        toast.success("Return journey booked with primary journey.");
+        onClose?.();
+        return;
       }
+
+      // -----------------------------
+      // ✅ Case 2: Two separate journeys, but 2nd as returnJourney
+      // -----------------------------
+
+      // Booking 1: Primary Journey
+      const payload1 = {
+        mode,
+        returnJourneyToggle: false,
+        companyId,
+        referrer: document.referrer || "manual",
+        vehicle: vehicleData,
+        passenger: passengerData,
+        primaryJourney: {
+          ...primaryJourneyData,
+          dropoff: dropOffs1[0],
+          additionalDropoff1: dropOffs1[1] || null,
+          additionalDropoff2: dropOffs1[2] || null,
+          hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+          fare: primaryFare,
+          ...dynamicFields1
+        },
+        PassengerEmail: emailNotify.customer ? passengerDetails.email : null,
+        ClientAdminEmail: emailNotify.admin ? userEmail : null
+      };
+
+      await createBooking(payload1).unwrap();
+
+      if (returnJourneyToggle) {
+        // Booking 2: Save second journey inside returnJourney
+        const payload2 = {
+          mode,
+          returnJourneyToggle: true,
+          companyId,
+          referrer: document.referrer || "manual",
+          vehicle: vehicleData,
+          passenger: passengerData,
+          primaryJourney: {
+            ...primaryJourneyData,
+            dropoff: dropOffs1[0],
+            additionalDropoff1: dropOffs1[1] || null,
+            additionalDropoff2: dropOffs1[2] || null,
+            hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+            fare: primaryFare,
+            ...dynamicFields1
+          },
+          returnJourney: {
+            ...returnJourneyData,
+            dropoff: dropOffs2[0],
+            additionalDropoff1: dropOffs2[1] || null,
+            additionalDropoff2: dropOffs2[2] || null,
+            hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+            fare: returnFare,
+            ...dynamicFields2
+          },
+          PassengerEmail: emailNotify.customer ? passengerDetails.email : null,
+          ClientAdminEmail: emailNotify.admin ? userEmail : null
+        };
+
+        await createBooking(payload2).unwrap();
+      }
+
+      toast.success("Two bookings created. Return journey saved inside returnJourney.");
       onClose?.();
     } catch (err) {
       toast.error("Booking failed.");
