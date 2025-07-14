@@ -9,10 +9,10 @@ import {
 
 const General = () => {
   const [formData, setFormData] = useState({
-    pickupAirportPrice: "2",
-    dropoffAirportPrice: "2",
-    minAdditionalDropOff: "10",
-    childSeatPrice: "5",
+    pickupAirportPrice: "0",
+    dropoffAirportPrice: "0",
+    minAdditionalDropOff: "0",
+    childSeatPrice: "0",
     cardPaymentType: "Card",
     cardPaymentAmount: "0",
   });
@@ -23,10 +23,10 @@ const General = () => {
   useEffect(() => {
     if (isSuccess && data) {
       setFormData({
-        pickupAirportPrice: data.pickupAirportPrice || "2",
-        dropoffAirportPrice: data.dropoffAirportPrice || "2",
-        minAdditionalDropOff: data.minAdditionalDropOff || "10",
-        childSeatPrice: data.childSeatPrice || "5",
+        pickupAirportPrice: data.pickupAirportPrice || "0",
+        dropoffAirportPrice: data.dropoffAirportPrice || "0",
+        minAdditionalDropOff: data.minAdditionalDropOff || "0",
+        childSeatPrice: data.childSeatPrice || "0",
         cardPaymentType: data.cardPaymentType || "Card",
         cardPaymentAmount: data.cardPaymentAmount || "0",
       });

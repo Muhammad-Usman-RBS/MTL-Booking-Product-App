@@ -192,8 +192,8 @@ function Navbar() {
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-lg z-50">
-                <div className="border-b">
+              <div className="absolute right-0 mt-2 w-52  bg-white text-gray-800 rounded-lg shadow-lg z-50">
+                <div className="border-b   text- ">
                   <div className="ps-4 pt-4 flex items-center space-x-3">
                     {profileImg &&
                     profileImg !== "" &&
@@ -215,8 +215,8 @@ function Navbar() {
                     </div>
                   </div>
 
-                  <div className="ps-4 pb-2 pt-2">
-                    <p className="text-sm text-gray-600">{email}</p>
+                  <div className="ps-4 py-2 ">
+                    <p className="text-sm  text-gray-600">{email}</p>
                   </div>
                 </div>
 

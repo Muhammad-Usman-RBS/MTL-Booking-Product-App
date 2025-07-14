@@ -6,13 +6,17 @@ export const getGeneralPricing = async (req, res) => {
     const companyId = req.user?.companyId;
 
     if (!companyId) {
-      return res.status(400).json({ message: "Company ID is missing from user data." });
+      return res
+        .status(400)
+        .json({ message: "Company ID is missing from user data." });
     }
 
     const pricing = await GeneralModel.findOne({ type: "general", companyId });
 
     if (!pricing) {
-      return res.status(404).json({ message: "General pricing not found for this company." });
+      return res
+        .status(404)
+        .json({ message: "General pricing not found for this company." });
     }
 
     res.status(200).json(pricing);
@@ -76,19 +80,28 @@ export const getGeneralPricingWidget = async (req, res) => {
     const companyId = req.query.companyId || req.query.company;
 
     if (!companyId || companyId.length !== 24) {
-      return res.status(400).json({ message: "Valid companyId is required in query params" });
+      return res
+        .status(400)
+        .json({ message: "Valid companyId is required in query params" });
     }
 
     // Fetch general pricing for the provided companyId
-    const pricing = await GeneralModel.findOne({ companyId, type: 'general' });
+    const pricing = await GeneralModel.findOne({ companyId, type: "general" });
 
     if (!pricing) {
-      return res.status(404).json({ message: "General pricing not found for this company." });
+      return res
+        .status(404)
+        .json({ message: "General pricing not found for this company." });
     }
 
     // Return the pricing details
     res.status(200).json(pricing);
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch widget general pricing", error: err.message });
+    res
+      .status(500)
+      .json({
+        message: "Failed to fetch widget general pricing",
+        error: err.message,
+      });
   }
 };

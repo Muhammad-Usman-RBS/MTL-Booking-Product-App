@@ -56,7 +56,7 @@ const FixedPricing = () => {
   const handleAddNew = () => {
     setIsNew(true);
     setSelectedItem({
-      direction: "Both Ways",
+      direction: "",
       pickup: null,
       dropoff: null,
       price: 0,
@@ -208,18 +208,17 @@ const FixedPricing = () => {
             <SelectOption
               width="full"
               value={selectedItem?.direction || ""}
-              onChange={(val) =>
+              onChange={(e) =>
                 setSelectedItem({
                   ...selectedItem,
-                  direction: val?.value || val,
+                  direction: e.target.value,
                 })
               }
               options={["One Way", "Both Ways"]}
             />
           </div>
 
-          {/* Pickup */}
-          {/* Pickup */}
+        
           <div>
             <SelectOption
               label="Pick Up"

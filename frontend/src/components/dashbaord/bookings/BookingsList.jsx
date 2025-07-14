@@ -109,7 +109,7 @@ const BookingsList = () => {
   dynamicStatusList.push({ label: "All", count: allBookings.length });
 
   const passengerMap = new Map();
-  allBookings.forEach((booking) => {
+  allBookings .forEach((booking) => {
     const p = booking.passenger;
     if (p && p.name && !passengerMap.has(p.name)) {
       passengerMap.set(p.name, {

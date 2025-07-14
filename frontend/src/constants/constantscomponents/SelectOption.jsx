@@ -27,6 +27,7 @@ const SelectOption = ({ options, label, width = "full", value, onChange }) => {
           onBlur={() => setIsOpen(false)}
           className={selectClass}
         >
+          <option disabled value="">Select</option>
           {Array.isArray(options) && options.map((option, idx) => (
             // <option key={idx} value={option}>
             //   {option}

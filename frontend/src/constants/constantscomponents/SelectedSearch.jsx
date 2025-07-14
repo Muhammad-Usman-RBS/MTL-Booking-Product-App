@@ -41,7 +41,7 @@ const SelectedSearch = ({
             <input
               type="text"
               placeholder="Search"
-              className="w-full px-2 py-1 border rounded text-sm border-gray-300"
+              className="custom_input"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
