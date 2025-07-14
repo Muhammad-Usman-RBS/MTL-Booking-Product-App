@@ -115,85 +115,136 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   };
 
   return (
-    <div className="">
+    <>
       {!editBookingData?._id && <OutletHeading name="New Booking" />}
-      <div className="flex justify-center mb-4">
-        {["Transfer", "Hourly"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setMode(tab)}
-            className={`px-6 py-2 font-medium transition-all cursor-pointer duration-200 ${mode === tab ? "bg-[#f3f4f6] text-dark border border-black" : "bg-[#f3f4f6] text-dark"} ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {mode === "Hourly" && (
-        <div className="flex justify-center">
-          <SelectOption
-            options={hourlyPackages.map((pkg) => ({
-              label: `${pkg.distance} miles ${pkg.hours} hours`,
-              value: JSON.stringify({ distance: pkg.distance, hours: pkg.hours }),
-            }))}
-            value={JSON.stringify(selectedHourly?.value)}
-            onChange={(e) => {
-              const selected = hourlyPackages.find(
-                (pkg) => JSON.stringify({ distance: pkg.distance, hours: pkg.hours }) === e.target.value
-              );
-              setSelectedHourly({
-                label: `${selected.distance} miles ${selected.hours} hours`,
-                value: { distance: selected.distance, hours: selected.hours }
-              });
-            }}
-          />
+      <div className="flex flex-col items-center justify-center mb-6 space-y-4">
+        <div className="flex">
+          {["Transfer", "Hourly"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setMode(tab)}
+              className={`px-6 py-2 font-semibold text-sm border cursor-pointer ${mode === tab
+                ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
+                : "bg-[#f9fafb] text-gray-700 border-gray-300"
+                } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
-      )}
 
-      <JourneyCard
-        title="Journey 1"
-        journeyData={primaryJourneyData}
-        setJourneyData={setPrimaryJourneyData}
-        dropOffs={dropOffs1}
-        setDropOffs={setDropOffs1}
-        fare={primaryFare}
-        pricingMode={primaryFareMode}
-        selectedVehicle={selectedVehicle}
-        mode={mode}
-      />
-
-      <div className="flex items-center mt-6 w-full max-w-4xl mx-auto">
-        <label className="flex items-center cursor-pointer relative">
-          <input
-            type="checkbox"
-            className="sr-only peer"
-            checked={returnJourneyToggle}
-            onChange={(e) => setreturnJourneyToggle(e.target.checked)}
-          />
-          <div className="w-12 h-6 bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-colors duration-300"></div>
-          <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transform peer-checked:translate-x-6 transition-transform duration-300"></div>
-          <span className="ml-4 text-sm font-medium text-gray-800">Return Journey</span>
-        </label>
+        {/* Hourly Dropdown */}
+        {mode === "Hourly" && (
+          <div className="w-full max-w-xs">
+            <SelectOption
+              options={hourlyPackages.map((pkg) => ({
+                label: `${pkg.distance} miles ${pkg.hours} hours`,
+                value: JSON.stringify({
+                  distance: pkg.distance,
+                  hours: pkg.hours,
+                }),
+              }))}
+              value={JSON.stringify(selectedHourly?.value)}
+              onChange={(e) => {
+                const selected = hourlyPackages.find(
+                  (pkg) =>
+                    JSON.stringify({
+                      distance: pkg.distance,
+                      hours: pkg.hours,
+                    }) === e.target.value
+                );
+                setSelectedHourly({
+                  label: `${selected.distance} miles ${selected.hours} hours`,
+                  value: {
+                    distance: selected.distance,
+                    hours: selected.hours,
+                  },
+                });
+              }}
+            />
+          </div>
+        )}
       </div>
 
-      {returnJourneyToggle && (
-        <JourneyCard
-          title="Journey 2"
-          journeyData={returnJourneyData}
-          setJourneyData={setReturnJourneyData}
-          dropOffs={dropOffs2}
-          setDropOffs={setDropOffs2}
-          fare={returnFare}
-          pricingMode={returnFareMode}
-          selectedVehicle={selectedVehicle}
-          mode={mode}
-        />
-      )}
+      <div
+        className={`grid ${returnJourneyToggle ? "lg:grid-cols-12" : "grid-cols-1"
+          } gap-6 `}
+      >
+        <div className={`${returnJourneyToggle ? "col-span-6" : "col-span-12"} flex flex-col items-center`}>
 
-      <VehicleSelection setSelectedVehicle={setSelectedVehicle} setVehicleExtras={setVehicleExtras} editBookingData={editBookingData} />
-      <PassengerDetails passengerDetails={passengerDetails} setPassengerDetails={setPassengerDetails} />
-      <FareSection emailNotify={emailNotify} setEmailNotify={setEmailNotify} handleSubmit={handleSubmit} isLoading={isLoading} editBookingData={editBookingData} />
-    </div>
+          <JourneyCard
+            title="Journey 1"
+            journeyData={primaryJourneyData}
+            setJourneyData={setPrimaryJourneyData}
+            dropOffs={dropOffs1}
+            setDropOffs={setDropOffs1}
+            fare={primaryFare}
+            pricingMode={primaryFareMode}
+            selectedVehicle={selectedVehicle}
+            mode={mode}
+          />
+          <div className="flex items-center mt-6 w-full max-w-4xl mx-auto">
+            <label className="flex items-center cursor-pointer relative">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={returnJourneyToggle}
+                onChange={(e) => setreturnJourneyToggle(e.target.checked)}
+              />
+              <div className="w-12 h-6 bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-colors duration-300"></div>
+              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transform peer-checked:translate-x-6 transition-transform duration-300"></div>
+              <span className="ml-4 text-sm font-medium text-gray-800">Return Journey</span>
+            </label>
+          </div>
+        </div>
+        <div
+          className={`transition-all duration-500 ease-in-out transform ${returnJourneyToggle
+            ? 'opacity-100 translate-x-0 max-h-[2000px]'
+            : 'opacity-0 -translate-x-10 max-h-0 overflow-hidden'
+            } col-span-6`}
+        >
+          {returnJourneyToggle && (
+            <JourneyCard
+              title="Journey 2"
+              journeyData={returnJourneyData}
+              setJourneyData={setReturnJourneyData}
+              dropOffs={dropOffs2}
+              setDropOffs={setDropOffs2}
+              fare={returnFare}
+              pricingMode={returnFareMode}
+              selectedVehicle={selectedVehicle}
+              mode={mode}
+            />
+          )}
+
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 sm:p-8">
+        <div className="col-span-6">
+          <VehicleSelection setSelectedVehicle={setSelectedVehicle} setVehicleExtras={setVehicleExtras} editBookingData={editBookingData} />
+          <PassengerDetails passengerDetails={passengerDetails} setPassengerDetails={setPassengerDetails} />
+        </div>
+
+        <div className="col-span-6">
+          <FareSection emailNotify={emailNotify} setEmailNotify={setEmailNotify} handleSubmit={handleSubmit} isLoading={isLoading} editBookingData={editBookingData} />
+        </div>
+      </div>
+
+      <div className="flex justify-center">
+        <button
+          onClick={handleSubmit}
+          className="btn btn-success font-semibold px-6 py-2 rounded-md shadow transition"
+          disabled={isLoading}
+        >
+          {isLoading
+            ? "Processing..."
+            : editBookingData && editBookingData._id
+              ? "Update Booking"
+              : "Submit Booking"}
+        </button>
+      </div>
+    </>
   );
 };
 

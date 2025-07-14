@@ -13,33 +13,32 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
     checkinLuggage: 0,
   });
 
-  // Default selection on load
   useEffect(() => {
-  if (vehicleOptions.length > 0) {
-    let defaultVehicle = vehicleOptions[0];
+    if (vehicleOptions.length > 0) {
+      let defaultVehicle = vehicleOptions[0];
 
-    // 🛠 If editBookingData is available, match the vehicle by name
-    if (editBookingData?.vehicle?.vehicleName) {
-      const matched = vehicleOptions.find(
-        (v) => v.vehicleName === editBookingData.vehicle.vehicleName
-      );
-      if (matched) defaultVehicle = matched;
+      // 🛠 If editBookingData is available, match the vehicle by name
+      if (editBookingData?.vehicle?.vehicleName) {
+        const matched = vehicleOptions.find(
+          (v) => v.vehicleName === editBookingData.vehicle.vehicleName
+        );
+        if (matched) defaultVehicle = matched;
 
-      // Set extras from editBookingData if available
-      const extras = {
-        passenger: editBookingData.vehicle.passenger ?? 0,
-        childSeat: editBookingData.vehicle.childSeat ?? 0,
-        handLuggage: editBookingData.vehicle.handLuggage ?? 0,
-        checkinLuggage: editBookingData.vehicle.checkinLuggage ?? 0,
-      };
-      setSelections(extras);
-      setVehicleExtras(extras);
+        // Set extras from editBookingData if available
+        const extras = {
+          passenger: editBookingData.vehicle.passenger ?? 0,
+          childSeat: editBookingData.vehicle.childSeat ?? 0,
+          handLuggage: editBookingData.vehicle.handLuggage ?? 0,
+          checkinLuggage: editBookingData.vehicle.checkinLuggage ?? 0,
+        };
+        setSelections(extras);
+        setVehicleExtras(extras);
+      }
+
+      setLocalSelectedVehicle(defaultVehicle);
+      setSelectedVehicle(defaultVehicle);
     }
-
-    setLocalSelectedVehicle(defaultVehicle);
-    setSelectedVehicle(defaultVehicle);
-  }
-}, [vehicleOptions, editBookingData]);
+  }, [vehicleOptions, editBookingData]);
 
 
   const toggleDropdown = () => setOpen((prev) => !prev);
@@ -101,88 +100,89 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
   }
 
   return (
-    <div className="bg-gray-50 border border-gray-200 rounded p-4 w-full max-w-4xl mx-auto mt-6">
-      <h3 className="text-xl font-semibold mb-4">Vehicle:-</h3>
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left Panel */}
-        <div className="flex flex-col items-center w-full lg:w-1/3">
-          <div className="bg-white border border-gray-300 rounded-lg shadow-md p-3 mb-4">
-            <img
-              src={localSelectedVehicle.image}
-              alt={localSelectedVehicle.vehicleName}
-              className="w-28 h-16 object-contain"
-            />
-          </div>
-
-          {/* Dropdown */}
-          <div className="relative w-full">
-            <button
-              onClick={toggleDropdown}
-              className="w-full bg-gray-700 text-white px-4 py-2 rounded-md text-left shadow flex justify-between items-center"
-            >
-              <div className="flex flex-col">
-                <div className="font-semibold text-sm">{localSelectedVehicle.vehicleName}</div>
-                <div className="flex gap-4 text-xs text-white mt-1">
-                  <span className="flex items-center gap-1">
-                    <Users className="w-4 h-4" /> {localSelectedVehicle.passengers}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Baby className="w-4 h-4" /> {localSelectedVehicle.childSeat}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Briefcase className="w-4 h-4" /> {localSelectedVehicle.handLuggage}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Luggage className="w-4 h-4" /> {localSelectedVehicle.checkinLuggage}
-                  </span>
-                </div>
-              </div>
-              <ChevronDown className="ml-3 w-4 h-4 text-white" />
-            </button>
-
-            {open && (
-              <div className="absolute z-50 mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-72 overflow-y-auto">
-                {vehicleOptions.map((vehicle, idx) => (
-                  <button
-                    key={vehicle._id || idx}
-                    onClick={() => selectVehicle(vehicle)}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 transition"
-                  >
-                    <div className="font-medium text-sm text-gray-800">
-                      {vehicle.vehicleName}
-                    </div>
-                    <IconRow vehicle={vehicle} />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+    <>
+      <div className="bg-white shadow-lg rounded-2xl border border-gray-200 overflow-hidden">
+        <div className="bg-[#0f192d] px-6 py-3">
+          <h2 className="text-xl font-bold text-gray-50">Vehicle&nbsp;Details:-</h2>
         </div>
+        <div className="p-6 space-y-6">
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="flex flex-col items-center w-full lg:w-1/3">
+              <div className="bg-white border border-gray-300 rounded-lg shadow-md p-3 mb-4">
+                <img
+                  src={localSelectedVehicle.image}
+                  alt={localSelectedVehicle.vehicleName}
+                  className="w-28 h-16 object-contain"
+                />
+              </div>
+              <div className="relative w-full">
+                <button
+                  onClick={toggleDropdown}
+                  className="w-full bg-gray-700 text-white px-4 py-2 rounded-md text-left shadow flex justify-between items-center"
+                >
+                  <div className="flex flex-col">
+                    <div className="font-semibold text-sm">{localSelectedVehicle.vehicleName}</div>
+                    <div className="flex gap-4 text-xs text-white mt-1">
+                      <span className="flex items-center gap-1">
+                        <Users className="w-4 h-4" /> {localSelectedVehicle.passengers}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Baby className="w-4 h-4" /> {localSelectedVehicle.childSeat}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Briefcase className="w-4 h-4" /> {localSelectedVehicle.handLuggage}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Luggage className="w-4 h-4" /> {localSelectedVehicle.checkinLuggage}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronDown className="ml-3 w-4 h-4 text-white" />
+                </button>
 
-        {/* Right Panel */}
-        <div className="w-full lg:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-          {[
-            { label: "Passenger", key: "passenger", max: localSelectedVehicle.passengers },
-            { label: "Child Seats", key: "childSeat", max: localSelectedVehicle.childSeat },
-            { label: "Hand Luggage", key: "handLuggage", max: localSelectedVehicle.handLuggage },
-            { label: "Check-in Luggage", key: "checkinLuggage", max: localSelectedVehicle.checkinLuggage },
-          ].map(({ label, key, max }) => (
-            <div key={key} className="w-full">
-              <label className="text-sm font-medium block mb-1">{label}</label>
-              <select
-                value={selections[key]}
-                onChange={(e) => handleSelectChange(key, e.target.value)}
-                className="w-full border border-gray-300 rounded px-2 py-2 focus:outline-none focus:ring focus:ring-gray-600"
-              >
-                {[...Array(max + 1).keys()].map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
+                {open && (
+                  <div className="absolute z-50 mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-72 overflow-y-auto">
+                    {vehicleOptions.map((vehicle, idx) => (
+                      <button
+                        key={vehicle._id || idx}
+                        onClick={() => selectVehicle(vehicle)}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 transition"
+                      >
+                        <div className="font-medium text-sm text-gray-800">
+                          {vehicle.vehicleName}
+                        </div>
+                        <IconRow vehicle={vehicle} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          ))}
+            <div className="w-full lg:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+              {[
+                { label: "Passenger", key: "passenger", max: localSelectedVehicle.passengers },
+                { label: "Child Seats", key: "childSeat", max: localSelectedVehicle.childSeat },
+                { label: "Hand Luggage", key: "handLuggage", max: localSelectedVehicle.handLuggage },
+                { label: "Check-in Luggage", key: "checkinLuggage", max: localSelectedVehicle.checkinLuggage },
+              ].map(({ label, key, max }) => (
+                <div key={key} className="w-full">
+                  <label className="text-sm font-medium block mb-1">{label}</label>
+                  <select
+                    value={selections[key]}
+                    onChange={(e) => handleSelectChange(key, e.target.value)}
+                    className="w-full border border-gray-300 rounded px-2 py-2 focus:outline-none focus:ring focus:ring-gray-600"
+                  >
+                    {[...Array(max + 1).keys()].map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

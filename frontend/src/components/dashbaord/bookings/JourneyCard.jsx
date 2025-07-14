@@ -94,234 +94,235 @@ const JourneyCard = ({
     };
 
     return (
-        <div className="bg-white shadow-md rounded-2xl p-4 sm:p-6 max-w-4xl w-full mx-auto border border-gray-200 mt-6 text-sm">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
-                <h3 className="text-lg sm:text-xl font-semibold">{title}:</h3>
-                <div className="flex flex-col sm:items-end">
-                    <div className="btn-edit btn text-sm sm:text-base">
-                        Fare: £{fare?.toFixed(2) || "0.00"} ({selectedVehicle?.vehicleName || "N/A"})
-                    </div>
-
-                    {pricingMode === 'postcode' &&
-                        matchedPostcodePrice?.price &&
-                        selectedVehicle?.percentageRate > 0 && (
-                            <p className="text-xs mt-1 text-gray-600">
-                                Base: £{matchedPostcodePrice.price.toFixed(2)} + {selectedVehicle.percentageRate}% = £{fare?.toFixed(2)}
-                            </p>
-                        )}
-
-                </div>
-            </div>
-            <div className="mb-4">
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Pick Up Date & Time
-                </label>
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <input
-                        type="date"
-                        name="date"
-                        className="custom_input"
-                        value={journeyData.date}
-                        onChange={handleChange}
-                    />
-                    <div className="flex gap-2 w-full sm:w-1/2">
-                        <select
-                            name="hour"
-                            className="custom_input"
-                            value={journeyData.hour}
-                            onChange={handleChange}
-                        >
-                            <option value="">HH</option>
-                            {[...Array(24).keys()].map((h) => (
-                                <option key={h} value={h}>
-                                    {h.toString().padStart(2, "0")}
-                                </option>
-                            ))}
-                        </select>
-                        <select
-                            name="minute"
-                            className="custom_input"
-                            value={journeyData.minute}
-                            onChange={handleChange}
-                        >
-                            <option value="">MM</option>
-                            {[...Array(60).keys()].map((m) => (
-                                <option key={m} value={m}>
-                                    {m.toString().padStart(2, "0")}
-                                </option>
-                            ))}
-                        </select>
+        <>
+            <div className="bg-white shadow-lg rounded-2xl max-w-4xl w-full mx-auto border border-gray-200 overflow-hidden">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4 px-4 py-3 bg-[#101828] rounded-t-xl border border-gray-200">
+                    <h2 className="text-xl font-bold text-[#f5f5f5]">
+                        {title}:-
+                    </h2>
+                    <div className="text-right">
+                        <span class="inline-block px-4 py-1.5 text-base font-semibold text-white border border-white rounded-md bg-transparent">
+                            Fare: £{fare?.toFixed(2) || "0.00"}
+                        </span>
+                        <div className="text-lg text-white">
+                            {/* <span className="text-sm font-normal text-gray-500">
+                            ({selectedVehicle?.vehicleName || "N/A"})
+                        </span> */}
+                        </div>
+                        {pricingMode === "postcode" &&
+                            matchedPostcodePrice?.price &&
+                            selectedVehicle?.percentageRate > 0 && (
+                                <p className="text-xs mt-1 text-gray-600">
+                                    Base: £{matchedPostcodePrice.price.toFixed(2)} +{" "}
+                                    {selectedVehicle.percentageRate}% = £{fare?.toFixed(2)}
+                                </p>
+                            )}
                     </div>
                 </div>
-            </div>
-
-            <div className="relative mb-4">
-                <input
-                    type="text"
-                    name="pickup"
-                    placeholder="Pickup Location"
-                    value={journeyData.pickup}
-                    onChange={handlePickupChange}
-                    className="custom_input"
-                />
-                {pickupSuggestions.length > 0 && (
-                    <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full">
-                        <li
-                            onClick={() => {
-                                setJourneyData({ ...journeyData, pickup: journeyData.pickup });
-                                setPickupType("location");
-                                setPickupSuggestions([]);
-                            }}
-                            className="p-2 text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 cursor-pointer border-b"
-                        >
-                            ➕ Use: "{journeyData.pickup}"
-                        </li>
-                        {pickupSuggestions.map((sug, idx) => (
-                            <li
-                                key={idx}
-                                onClick={() => handlePickupSelect(sug)}
-                                className="p-2 text-xs sm:text-sm hover:bg-gray-100 cursor-pointer"
-                            >
-                                {sug.name} - {sug.formatted_address}
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
-
-            {pickupType === "location" && (
-                <input
-                    name="pickupDoorNumber"
-                    placeholder="Pickup Door No."
-                    className="custom_input mb-4"
-                    value={journeyData.pickupDoorNumber || ""}
-                    onChange={handleChange}
-                />
-            )}
-
-            {pickupType === "airport" && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
-                    <input
-                        name="arrivefrom"
-                        placeholder="Arriving From"
-                        value={journeyData.arrivefrom || ""}
-                        onChange={handleChange}
-                        className="custom_input"
-                    />
-                    <input
-                        name="pickmeAfter"
-                        placeholder="Pick Me After"
-                        value={journeyData.pickmeAfter || ""}
-                        onChange={handleChange}
-                        className="custom_input"
-                    />
-                    <input
-                        name="flightNumber"
-                        placeholder="Flight No."
-                        value={journeyData.flightNumber || ""}
-                        onChange={handleChange}
-                        className="custom_input"
-                    />
-                </div>
-            )}
-
-            {dropOffs.map((val, idx) => (
-                <div
-                    key={idx}
-                    className="relative flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4"
-                >
-                    <input
-                        type="text"
-                        value={val}
-                        placeholder={`Drop Off ${idx + 1}`}
-                        onChange={(e) => handleDropOffChange(idx, e.target.value)}
-                        className="custom_input w-full"
-                    />
-                    {dropOffSuggestions.length > 0 && activeDropIndex === idx && (
-                        <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full top-full left-0 mt-1">
-                            <li
-                                onClick={() => {
-                                    const updated = [...dropOffs];
-                                    updated[idx] = dropOffs[idx];
-                                    setDropOffs(updated);
-                                    setDropOffTypes((prev) => ({ ...prev, [idx]: "location" }));
-                                    setDropOffSuggestions([]);
-                                }}
-                                className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
-                            >
-                                ➕ Use: "{dropOffs[idx]}"
-                            </li>
-                            {dropOffSuggestions.map((sug, i) => (
-                                <li
-                                    key={i}
-                                    onClick={() => handleDropOffSelect(idx, sug)}
-                                    className="p-2 text-xs hover:bg-gray-100 cursor-pointer"
+                <div className="px-6 pb-6 pt-2">
+                    <div className="mb-4">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                            Pick Up Date & Time
+                        </label>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <input
+                                type="date"
+                                name="date"
+                                className="custom_input"
+                                value={journeyData.date}
+                                onChange={handleChange}
+                            />
+                            <div className="flex gap-2 w-full sm:w-1/2">
+                                <select
+                                    name="hour"
+                                    className="custom_input"
+                                    value={journeyData.hour}
+                                    onChange={handleChange}
                                 >
-                                    {sug.name} - {sug.formatted_address}
+                                    <option value="">HH</option>
+                                    {[...Array(24).keys()].map((h) => (
+                                        <option key={h} value={h}>
+                                            {h.toString().padStart(2, "0")}
+                                        </option>
+                                    ))}
+                                </select>
+                                <select
+                                    name="minute"
+                                    className="custom_input"
+                                    value={journeyData.minute}
+                                    onChange={handleChange}
+                                >
+                                    <option value="">MM</option>
+                                    {[...Array(60).keys()].map((m) => (
+                                        <option key={m} value={m}>
+                                            {m.toString().padStart(2, "0")}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="relative mb-4">
+                        <input
+                            type="text"
+                            name="pickup"
+                            placeholder="Pickup Location"
+                            value={journeyData.pickup}
+                            onChange={handlePickupChange}
+                            className="custom_input"
+                        />
+                        {pickupSuggestions.length > 0 && (
+                            <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full">
+                                <li
+                                    onClick={() => {
+                                        setJourneyData({ ...journeyData, pickup: journeyData.pickup });
+                                        setPickupType("location");
+                                        setPickupSuggestions([]);
+                                    }}
+                                    className="p-2 text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 cursor-pointer border-b"
+                                >
+                                    ➕ Use: "{journeyData.pickup}"
                                 </li>
-                            ))}
-                        </ul>
-                    )}
-
-                    {dropOffTypes[idx] === "airport" && (
+                                {pickupSuggestions.map((sug, idx) => (
+                                    <li
+                                        key={idx}
+                                        onClick={() => handlePickupSelect(sug)}
+                                        className="p-2 text-xs sm:text-sm hover:bg-gray-100 cursor-pointer"
+                                    >
+                                        {sug.name} - {sug.formatted_address}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                    {pickupType === "location" && (
                         <input
-                            name={`dropoff_terminal_${idx}`}
-                            value={journeyData[`dropoff_terminal_${idx}`] || ""}
-                            placeholder="Terminal No."
-                            className="custom_input"
+                            name="pickupDoorNumber"
+                            placeholder="Pickup Door No."
+                            className="custom_input mb-4"
+                            value={journeyData.pickupDoorNumber || ""}
                             onChange={handleChange}
                         />
                     )}
-
-                    {dropOffTypes[idx] === "location" && (
-                        <input
-                            name={`dropoffDoorNumber${idx}`}
-                            value={journeyData[`dropoffDoorNumber${idx}`] || ""}
-                            placeholder="Drop Off Door No."
-                            className="custom_input"
-                            onChange={handleChange}
-                        />
+                    {pickupType === "airport" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                            <input
+                                name="arrivefrom"
+                                placeholder="Arriving From"
+                                value={journeyData.arrivefrom || ""}
+                                onChange={handleChange}
+                                className="custom_input"
+                            />
+                            <input
+                                name="pickmeAfter"
+                                placeholder="Pick Me After"
+                                value={journeyData.pickmeAfter || ""}
+                                onChange={handleChange}
+                                className="custom_input"
+                            />
+                            <input
+                                name="flightNumber"
+                                placeholder="Flight No."
+                                value={journeyData.flightNumber || ""}
+                                onChange={handleChange}
+                                className="custom_input"
+                            />
+                        </div>
                     )}
-
-                    {idx > 0 && (
+                    {dropOffs.map((val, idx) => (
+                        <div
+                            key={idx}
+                            className="relative flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4"
+                        >
+                            <input
+                                type="text"
+                                value={val}
+                                placeholder={`Drop Off ${idx + 1}`}
+                                onChange={(e) => handleDropOffChange(idx, e.target.value)}
+                                className="custom_input w-full"
+                            />
+                            {dropOffSuggestions.length > 0 && activeDropIndex === idx && (
+                                <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full top-full left-0 mt-1">
+                                    <li
+                                        onClick={() => {
+                                            const updated = [...dropOffs];
+                                            updated[idx] = dropOffs[idx];
+                                            setDropOffs(updated);
+                                            setDropOffTypes((prev) => ({ ...prev, [idx]: "location" }));
+                                            setDropOffSuggestions([]);
+                                        }}
+                                        className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
+                                    >
+                                        ➕ Use: "{dropOffs[idx]}"
+                                    </li>
+                                    {dropOffSuggestions.map((sug, i) => (
+                                        <li
+                                            key={i}
+                                            onClick={() => handleDropOffSelect(idx, sug)}
+                                            className="p-2 text-xs hover:bg-gray-100 cursor-pointer"
+                                        >
+                                            {sug.name} - {sug.formatted_address}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                            {dropOffTypes[idx] === "airport" && (
+                                <input
+                                    name={`dropoff_terminal_${idx}`}
+                                    value={journeyData[`dropoff_terminal_${idx}`] || ""}
+                                    placeholder="Terminal No."
+                                    className="custom_input"
+                                    onChange={handleChange}
+                                />
+                            )}
+                            {dropOffTypes[idx] === "location" && (
+                                <input
+                                    name={`dropoffDoorNumber${idx}`}
+                                    value={journeyData[`dropoffDoorNumber${idx}`] || ""}
+                                    placeholder="Drop Off Door No."
+                                    className="custom_input"
+                                    onChange={handleChange}
+                                />
+                            )}
+                            {idx > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => removeDropOff(idx)}
+                                    className="btn btn-cancel text-sm px-3 py-1"
+                                >
+                                    &minus;
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                    {dropOffs.length < 3 && (
                         <button
                             type="button"
-                            onClick={() => removeDropOff(idx)}
-                            className="btn btn-cancel text-sm px-3 py-1"
+                            onClick={addDropOff}
+                            className="btn btn-edit w-full sm:w-auto text-sm px-4 py-2 mb-4"
                         >
-                            &minus;
+                            + Add Drop Off
                         </button>
                     )}
+                    <textarea
+                        name="notes"
+                        placeholder="Notes"
+                        rows="2"
+                        className="custom_input mb-2"
+                        value={journeyData.notes}
+                        onChange={handleChange}
+                    />
+                    <textarea
+                        name="internalNotes"
+                        placeholder="Internal Notes"
+                        rows="2"
+                        className="custom_input"
+                        value={journeyData.internalNotes}
+                        onChange={handleChange}
+                    />
                 </div>
-            ))}
-
-            {dropOffs.length < 3 && (
-                <button
-                    type="button"
-                    onClick={addDropOff}
-                    className="btn btn-edit w-full sm:w-auto text-sm px-4 py-2 mb-4"
-                >
-                    + Add Drop Off
-                </button>
-            )}
-
-            <textarea
-                name="notes"
-                placeholder="Notes"
-                rows="2"
-                className="custom_input mb-2"
-                value={journeyData.notes}
-                onChange={handleChange}
-            />
-            <textarea
-                name="internalNotes"
-                placeholder="Internal Notes"
-                rows="2"
-                className="custom_input"
-                value={journeyData.internalNotes}
-                onChange={handleChange}
-            />
-        </div>
+            </div>
+        </>
     );
 };
 
