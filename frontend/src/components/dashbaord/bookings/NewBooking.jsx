@@ -11,6 +11,7 @@ import { useSelector } from "react-redux";
 import { useCreateBookingMutation, useUpdateBookingMutation } from "../../../redux/api/bookingApi";
 import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
 import { useBookingFare } from "../../../utils/useBookingFare";
+import { useGetGeneralPricingPublicQuery } from "../../../redux/api/generalPricingApi";
 
 const NewBooking = ({ editBookingData = null, onClose }) => {
   const user = useSelector((state) => state.auth.user);
@@ -18,6 +19,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const userEmail = user?.email || "";
 
   const { data: hourlyPackages = [] } = useGetAllHourlyRatesQuery(companyId, { skip: !companyId });
+  const { data: generalPricing } = useGetGeneralPricingPublicQuery(companyId, { skip: !companyId });
+
   const [emailNotify, setEmailNotify] = useState({ admin: false, customer: false });
   const [mode, setMode] = useState("Transfer");
   const [returnJourneyToggle, setreturnJourneyToggle] = useState(false);
@@ -34,13 +37,34 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const [createBooking, { isLoading }] = useCreateBookingMutation();
   const [updateBooking] = useUpdateBookingMutation();
 
+  // Calculate additional drop-off pricing manually
+  const extraDropoffPrice = (count) => {
+    const base = 0; // fallback if no generalPricing
+    const rate = generalPricing?.minAdditionalDropOff || base;
+    return Math.max(0, (count - 1)) * rate;
+  };
+
+  // convert primaryJourneyData date + hour + minute to a JS Date
+  const getJourneyDate = (data) => {
+    if (!data.date) return null;
+    const dt = new Date(data.date);
+    dt.setHours(Number(data.hour || 0));
+    dt.setMinutes(Number(data.minute || 0));
+    return dt;
+  };
+
   const { calculatedFare: primaryFare, pricingMode: primaryFareMode, } = useBookingFare({
     companyId,
     pickup: primaryJourneyData.pickup,
     dropoff: dropOffs1[0],
     selectedVehicle,
     mode,
-    selectedHourly
+    selectedHourly,
+    dropOffPrice: extraDropoffPrice(dropOffs1.length),
+    journeyDateTime: getJourneyDate(primaryJourneyData),
+    includeAirportFees: true,
+    includeChildSeat: vehicleExtras.childSeat > 0,
+    childSeatCount: vehicleExtras.childSeat,
   });
 
   const { calculatedFare: returnFare, pricingMode: returnFareMode, } = useBookingFare({
@@ -49,7 +73,12 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     dropoff: dropOffs2[0],
     selectedVehicle,
     mode,
-    selectedHourly
+    selectedHourly,
+    dropOffPrice: extraDropoffPrice(dropOffs2.length),
+    journeyDateTime: getJourneyDate(returnJourneyData),
+    includeAirportFees: true,
+    includeChildSeat: vehicleExtras.childSeat > 0,
+    childSeatCount: vehicleExtras.childSeat,
   });
 
   const handleSubmit = async (e) => {
