@@ -14,6 +14,7 @@
     import settingsRoutes from "./routes/settingsRoutes.js"
     import invoiceRoutes from "./routes/invoiceRoutes.js"
     import PermissionsRoutes from "./routes/PermissionsRoutes.js"
+    
     dotenv.config(); // .env file
     connectDB(); // Connect to the database
 

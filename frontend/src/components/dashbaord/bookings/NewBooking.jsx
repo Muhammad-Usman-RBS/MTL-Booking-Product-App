@@ -297,72 +297,74 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         )}
       </div>
 
-      <div
-        className={`grid ${returnJourneyToggle ? "lg:grid-cols-12" : "grid-cols-1"
-          } gap-6 `}
-      >
-        <div className={`${returnJourneyToggle ? "col-span-6" : "col-span-12"} flex flex-col items-center`}>
-
-          <JourneyCard
-            title="Journey 1"
-            journeyData={primaryJourneyData}
-            setJourneyData={setPrimaryJourneyData}
-            dropOffs={dropOffs1}
-            setDropOffs={setDropOffs1}
-            fare={primaryFare}
-            pricingMode={primaryFareMode}
-            selectedVehicle={selectedVehicle}
-            mode={mode}
-          />
-          <div className="flex items-center mt-6 w-full max-w-4xl mx-auto">
-            <label className="flex items-center cursor-pointer relative">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={returnJourneyToggle}
-                onChange={(e) => setreturnJourneyToggle(e.target.checked)}
-              />
-              <div className="w-12 h-6 bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-colors duration-300"></div>
-              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transform peer-checked:translate-x-6 transition-transform duration-300"></div>
-              <span className="ml-4 text-sm font-medium text-gray-800">Return Journey</span>
-            </label>
-          </div>
-        </div>
-        <div
-          className={`transition-all duration-500 ease-in-out transform ${returnJourneyToggle
-            ? 'opacity-100 translate-x-0 max-h-[2000px]'
-            : 'opacity-0 -translate-x-10 max-h-0 overflow-hidden'
-            } col-span-6`}
-        >
-          {returnJourneyToggle && (
+      <div className="w-full flex flex-col items-center gap-6">
+        <div className={`w-full ${returnJourneyToggle ? "lg:max-w-6xl gap-4" : "lg:max-w-4xl"} flex flex-col lg:flex-row`}>
+          {/* Journey 1 */}
             <JourneyCard
-              title="Journey 2"
-              journeyData={returnJourneyData}
-              setJourneyData={setReturnJourneyData}
-              dropOffs={dropOffs2}
-              setDropOffs={setDropOffs2}
-              fare={returnFare}
-              pricingMode={returnFareMode}
+              title="Journey 1"
+              journeyData={primaryJourneyData}
+              setJourneyData={setPrimaryJourneyData}
+              dropOffs={dropOffs1}
+              setDropOffs={setDropOffs1}
+              fare={primaryFare}
+              pricingMode={primaryFareMode}
               selectedVehicle={selectedVehicle}
               mode={mode}
             />
-          )}
 
+          {/* Journey 2 (conditionally shown) */}
+          {returnJourneyToggle && (
+            <div className="w-full transition-all duration-200 ease-in-out transform">
+              <JourneyCard
+                title="Journey 2"
+                journeyData={returnJourneyData}
+                setJourneyData={setReturnJourneyData}
+                dropOffs={dropOffs2}
+                setDropOffs={setDropOffs2}
+                fare={returnFare}
+                pricingMode={returnFareMode}
+                selectedVehicle={selectedVehicle}
+                mode={mode}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Toggle Switch */}
+        <div className="flex items-center mt-6 mb-6">
+          <label className="flex items-center cursor-pointer relative">
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={returnJourneyToggle}
+              onChange={(e) => setreturnJourneyToggle(e.target.checked)}
+            />
+            <div className="w-12 h-6 bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-colors duration-300"></div>
+            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transform peer-checked:translate-x-6 transition-transform duration-300"></div>
+            <span className="ml-4 text-sm font-medium text-gray-800">Return Journey</span>
+          </label>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 sm:p-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="col-span-6">
-          <VehicleSelection setSelectedVehicle={setSelectedVehicle} setVehicleExtras={setVehicleExtras} editBookingData={editBookingData} />
-          <PassengerDetails passengerDetails={passengerDetails} setPassengerDetails={setPassengerDetails} />
+          <div className="bg-white shadow-lg rounded-2xl border border-gray-200">
+            <div className="bg-[#0f192d] px-6 rounded-t-2xl py-3">
+              <h2 className="text-xl font-bold text-gray-50">Passenger & Vehicle Details:-</h2>
+            </div>
+            <div className="p-6">
+              <PassengerDetails passengerDetails={passengerDetails} setPassengerDetails={setPassengerDetails} />
+              <hr className="mb-6 mt-6 border-gray-300" />
+              <VehicleSelection setSelectedVehicle={setSelectedVehicle} setVehicleExtras={setVehicleExtras} editBookingData={editBookingData} />
+            </div>
+          </div>
         </div>
-
         <div className="col-span-6">
           <FareSection emailNotify={emailNotify} fareDetails={fareDetails} setFareDetails={setFareDetails} setEmailNotify={setEmailNotify} handleSubmit={handleSubmit} isLoading={isLoading} editBookingData={editBookingData} />
         </div>
       </div>
 
-      <div className="flex justify-center">
+      <div className="flex justify-center mt-12">
         <button
           onClick={handleSubmit}
           className="btn btn-success font-semibold px-6 py-2 rounded-md shadow transition"
