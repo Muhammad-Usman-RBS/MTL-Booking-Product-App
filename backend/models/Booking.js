@@ -110,6 +110,27 @@ const BookingSchema = new mongoose.Schema({
   source: { type: String, default: "admin" },
   referrer: { type: String, default: "Manual Entry" },
 
+  paymentMethod: {
+    type: String,
+    enum: ["Cash", "Card", "Payment Link"],
+    default: "Cash",
+  },
+  cardPaymentReference: { type: String, default: null },
+  paymentGateway: { type: String, default: null },
+
+  journeyFare: { type: Number, default: 0 },
+  driverFare: { type: Number, default: 0 },
+  returnJourneyFare: { type: Number, default: 0 },
+  returnDriverFare: { type: Number, default: 0 },
+
+  emailNotifications: {
+    admin: { type: Boolean, default: false },
+    customer: { type: Boolean, default: false },
+  },
+  appNotifications: {
+    customer: { type: Boolean, default: false },
+  }
+
 }, { timestamps: true });
 
 const Booking = mongoose.model("Booking", BookingSchema);

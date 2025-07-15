@@ -81,6 +81,18 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     childSeatCount: vehicleExtras.childSeat,
   });
 
+  const [fareDetails, setFareDetails] = useState({
+    paymentMethod: "Cash",
+    cardPaymentReference: "",
+    paymentGateway: "",
+    journeyFare: 0,
+    driverFare: 0,
+    returnJourneyFare: 0,
+    returnDriverFare: 0,
+    emailNotifications: { admin: false, customer: false },
+    appNotifications: { customer: false }
+  });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!companyId || !primaryJourneyData.pickup || !dropOffs1[0]) {
@@ -104,22 +116,37 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       primaryJourneyData.pickup?.trim() === dropOffs2[0]?.trim() &&
       dropOffs1[0]?.trim() === returnJourneyData.pickup?.trim();
 
-    // Common vehicle & passenger data
     const vehicleData = {
       vehicleName: selectedVehicle?.vehicleName || "",
-      ...vehicleExtras
+      ...vehicleExtras,
     };
 
     const passengerData = passengerDetails;
 
+    // NEW common fare & payment fields
+    const paymentFields = {
+      paymentMethod: fareDetails.paymentMethod,
+      cardPaymentReference: fareDetails.cardPaymentReference,
+      paymentGateway: fareDetails.paymentGateway,
+      journeyFare: parseFloat(fareDetails.journeyFare) || 0,
+      driverFare: parseFloat(fareDetails.driverFare) || 0,
+      returnJourneyFare: parseFloat(fareDetails.returnJourneyFare) || 0,
+      returnDriverFare: parseFloat(fareDetails.returnDriverFare) || 0,
+      emailNotifications: {
+        admin: !!fareDetails.emailNotifications.admin,
+        customer: !!fareDetails.emailNotifications.customer,
+      },
+      appNotifications: {
+        customer: !!fareDetails.appNotifications.customer,
+      },
+    };
+
     try {
-      // -----------------------------
-      // ✅ Case 1: One booking with valid reverse journey
-      // -----------------------------
+      // ✅ Case 1: One booking with reverse journey
       if (returnJourneyToggle && isReverseJourney) {
         const payload = {
           mode,
-          returnJourneyToggle: true,
+          returnJourneyToggle: false,
           companyId,
           referrer: document.referrer || "manual",
           vehicle: vehicleData,
@@ -131,7 +158,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             additionalDropoff2: dropOffs1[2] || null,
             hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
             fare: primaryFare,
-            ...dynamicFields1
+            ...dynamicFields1,
           },
           returnJourney: {
             ...returnJourneyData,
@@ -140,10 +167,11 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             additionalDropoff2: dropOffs2[2] || null,
             hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
             fare: returnFare,
-            ...dynamicFields2
+            ...dynamicFields2,
           },
           PassengerEmail: emailNotify.customer ? passengerDetails.email : null,
-          ClientAdminEmail: emailNotify.admin ? userEmail : null
+          ClientAdminEmail: emailNotify.admin ? userEmail : null,
+          ...paymentFields,
         };
 
         await createBooking(payload).unwrap();
@@ -152,11 +180,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         return;
       }
 
-      // -----------------------------
-      // ✅ Case 2: Two separate journeys, but 2nd as returnJourney
-      // -----------------------------
-
-      // Booking 1: Primary Journey
+      // ✅ Case 2: Primary + second saved as returnJourney
       const payload1 = {
         mode,
         returnJourneyToggle: false,
@@ -171,16 +195,16 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           additionalDropoff2: dropOffs1[2] || null,
           hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
           fare: primaryFare,
-          ...dynamicFields1
+          ...dynamicFields1,
         },
         PassengerEmail: emailNotify.customer ? passengerDetails.email : null,
-        ClientAdminEmail: emailNotify.admin ? userEmail : null
+        ClientAdminEmail: emailNotify.admin ? userEmail : null,
+        ...paymentFields,
       };
 
       await createBooking(payload1).unwrap();
 
       if (returnJourneyToggle) {
-        // Booking 2: Save second journey inside returnJourney
         const payload2 = {
           mode,
           returnJourneyToggle: true,
@@ -195,7 +219,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             additionalDropoff2: dropOffs1[2] || null,
             hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
             fare: primaryFare,
-            ...dynamicFields1
+            ...dynamicFields1,
           },
           returnJourney: {
             ...returnJourneyData,
@@ -204,10 +228,11 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             additionalDropoff2: dropOffs2[2] || null,
             hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
             fare: returnFare,
-            ...dynamicFields2
+            ...dynamicFields2,
           },
           PassengerEmail: emailNotify.customer ? passengerDetails.email : null,
-          ClientAdminEmail: emailNotify.admin ? userEmail : null
+          ClientAdminEmail: emailNotify.admin ? userEmail : null,
+          ...paymentFields,
         };
 
         await createBooking(payload2).unwrap();
@@ -333,7 +358,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         </div>
 
         <div className="col-span-6">
-          <FareSection emailNotify={emailNotify} setEmailNotify={setEmailNotify} handleSubmit={handleSubmit} isLoading={isLoading} editBookingData={editBookingData} />
+          <FareSection emailNotify={emailNotify} fareDetails={fareDetails} setFareDetails={setFareDetails} setEmailNotify={setEmailNotify} handleSubmit={handleSubmit} isLoading={isLoading} editBookingData={editBookingData} />
         </div>
       </div>
 

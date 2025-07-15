@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import debounce from 'lodash.debounce';
-import {
-  useLazyGetDistanceQuery,
-  useLazyGeocodeQuery,
-} from '../redux/api/googleApi';
+import { useLazyGetDistanceQuery, useLazyGeocodeQuery } from '../redux/api/googleApi';
 import { useGetAllHourlyRatesQuery } from '../redux/api/hourlyPricingApi';
 import { useFetchAllPostcodePricesWidgetQuery } from '../redux/api/postcodePriceApi';
 import { useGetFixedPricesForWidgetQuery } from '../redux/api/fixedPriceApi';
@@ -11,9 +8,6 @@ import { useGetAllVehiclesQuery } from '../redux/api/vehicleApi';
 import { useGetGeneralPricingPublicQuery } from '../redux/api/generalPricingApi';
 import { useGetDiscountsByCompanyIdQuery } from '../redux/api/discountApi';
 
-/**
- * Updated hook: Fixed bidirectional pricing for A->B and B->A routes
- */
 export const useBookingFare = ({
   companyId,
   pickup,
@@ -87,7 +81,7 @@ export const useBookingFare = ({
       const dInDrop = dCoords.some((d) => isWithinZone(d, zone.dropoffCoordinates));
       const dInPick = dCoords.some((d) => isWithinZone(d, zone.pickupCoordinates));
       const pInDrop = pCoords.some((p) => isWithinZone(p, zone.dropoffCoordinates));
-      
+
       // Enhanced bidirectional logic
       if (dir === 'both ways' || dir === 'bidirectional') {
         // For bidirectional zones, both A->B and B->A should work
@@ -124,13 +118,13 @@ export const useBookingFare = ({
     if (!pickupPostcode || !dropoffPostcode) return null;
 
     // First try exact match (pickup -> dropoff)
-    let match = postcodePrices.find(p => 
+    let match = postcodePrices.find(p =>
       p.pickup === pickupPostcode && p.dropoff === dropoffPostcode
     );
 
     // If no exact match, try reverse (dropoff -> pickup) for bidirectional pricing
     if (!match) {
-      match = postcodePrices.find(p => 
+      match = postcodePrices.find(p =>
         p.pickup === dropoffPostcode && p.dropoff === pickupPostcode
       );
     }
@@ -202,7 +196,7 @@ export const useBookingFare = ({
       } else {
         // Enhanced postcode pricing with bidirectional support
         const postcodePrice = findPostcodePrice(pp, dp, selectedVehicle.vehicleName);
-        
+
         if (postcodePrice !== null) {
           baseFare = postcodePrice;
           modeUsed = 'postcode';
@@ -218,7 +212,7 @@ export const useBookingFare = ({
             modeUsed = 'mileage';
           }
         }
-        
+
         // Apply vehicle markup
         baseFare += (baseFare * markupPct) / 100;
       }

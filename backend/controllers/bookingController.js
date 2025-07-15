@@ -21,6 +21,17 @@ export const createBooking = async (req, res) => {
       ClientAdminEmail,
       voucher,
       voucherApplied,
+
+      // New fields
+      paymentMethod = "Cash",
+      cardPaymentReference = null,
+      paymentGateway = null,
+      journeyFare = 0,
+      driverFare = 0,
+      returnJourneyFare = 0,
+      returnDriverFare = 0,
+      emailNotifications = {},
+      appNotifications = {},
     } = req.body;
 
     if (!companyId || typeof companyId !== "string" || companyId.length !== 24) {
@@ -111,6 +122,22 @@ export const createBooking = async (req, res) => {
       status: "New",
       vehicle: baseVehicleInfo,
       passenger: basePassengerInfo,
+
+      // New fields
+      paymentMethod,
+      cardPaymentReference,
+      paymentGateway,
+      journeyFare: Number(journeyFare) || 0,
+      driverFare: Number(driverFare) || 0,
+      returnJourneyFare: Number(returnJourneyFare) || 0,
+      returnDriverFare: Number(returnDriverFare) || 0,
+      emailNotifications: {
+        admin: !!emailNotifications.admin,
+        customer: !!emailNotifications.customer,
+      },
+      appNotifications: {
+        customer: !!appNotifications.customer,
+      },
     };
 
     // Add primaryJourney
