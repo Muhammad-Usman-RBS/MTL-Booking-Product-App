@@ -106,8 +106,9 @@ const FareSection = ({
 
         <hr className="mb-7 mt-2 border-gray-300" />
 
-        <div className="flex flex-wrap justify-center gap-6">
-          <div className="bg-gray-100 border border-gray-300 rounded-xl px-6 py-5 shadow-md w-[250px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
+          {/* Email Notifications */}
+          <div className="bg-gray-100 border border-gray-300 rounded-xl px-6 py-5 shadow-md">
             <h4 className="text-lg font-semibold text-blue-800 mb-3 border-b pb-1">
               Email
             </h4>
@@ -137,7 +138,8 @@ const FareSection = ({
             </div>
           </div>
 
-          <div className="bg-gray-100 border border-gray-300 rounded-xl px-6 py-5 shadow-md w-[250px]">
+          {/* App Notifications */}
+          <div className="bg-gray-100 border border-gray-300 rounded-xl px-6 py-5 shadow-md">
             <h4 className="text-lg font-semibold text-teal-800 mb-3 border-b pb-1">
               Notification
             </h4>
@@ -156,6 +158,7 @@ const FareSection = ({
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );

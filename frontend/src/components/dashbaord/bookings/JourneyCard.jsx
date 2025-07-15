@@ -124,7 +124,7 @@ const JourneyCard = ({
                     <div className="px-4 sm:px-6 pb-6 pt-2">
                         {/* Date + Time */}
                         <div className="mb-4">
-                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                            <label className="block text-xs mt-4 font-medium text-gray-600 mb-1">
                                 Pick Up Date & Time
                             </label>
                             <div className="flex flex-col sm:flex-row gap-3">
