@@ -4,9 +4,12 @@ import { invoicesData } from "../../../constants/dashboardTabsData/data";
 import InvoiceDetails from "./InvoiceDetails";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import { useGetAllInvoicesQuery } from "../../../redux/api/invoiceApi";
 
 const InvoicesList = () => {
   const [search, setSearch] = useState("");
+  const { data, isLoading, isError } = useGetAllInvoicesQuery();
+const invoices = data?.invoices || [];
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
   const [expandedInvoice, setExpandedInvoice] = useState(null);
@@ -14,16 +17,20 @@ const InvoicesList = () => {
   const handleInvoiceClick = (invoiceNo) => {
     setExpandedInvoice((prev) => (prev === invoiceNo ? null : invoiceNo));
   };
-
-  const filteredData = invoicesData.filter((item) => {
+  const filteredData = invoices.filter((invoice) => {
     const query = search.toLowerCase();
+  
+    const invoiceNo = invoice.invoiceNumber?.toLowerCase() || "";
+    const customerName = invoice.customers?.[0]?.name?.toLowerCase() || "";
+    const account = invoice.companyId?.toString() || "";
+  
     return (
-      item.invoiceNo.toLowerCase().includes(query) ||
-      item.customer.toLowerCase().includes(query) ||
-      item.account.toLowerCase().includes(query)
+      invoiceNo.includes(query) ||
+      customerName.includes(query) ||
+      account.includes(query)
     );
   });
-
+  
   const totalPages =
     perPage === "All" ? 1 : Math.ceil(filteredData.length / perPage);
 
@@ -45,30 +52,52 @@ const InvoicesList = () => {
     perPage === "All"
       ? filteredData
       : filteredData.slice((page - 1) * perPage, page * perPage)
-  ).map((item) => ({
-    ...item,
-    invoiceNo: (
-      <span
-        className="text-blue-600 font-medium hover:underline cursor-pointer"
-        onClick={() => handleInvoiceClick(item.invoiceNo)}
-      >
-        {item.invoiceNo}
-      </span>
-    ),
-    amount: `£${item.amount}`,
-    status: (
-      <span
-        className={`px-2 py-1 text-xs font-semibold rounded-full ${item.status === "Paid"
-          ? "bg-green-500 text-white"
-          : item.status === "Unpaid"
-            ? "bg-gray-500 text-white"
-            : "bg-black text-white"
+  ).map((invoice) => {
+    const invoiceNo = invoice.invoiceNumber || "-";
+    const customerName = invoice.customers?.[0]?.name || "-";
+    const account = invoice.companyId || "-";
+    const date = new Date(invoice.createdAt).toLocaleDateString() || "-";
+    const dueDate = invoice.dueDate
+      ? new Date(invoice.dueDate).toLocaleDateString()
+      : "-";
+    const amount = invoice.items?.reduce((sum, item) => sum + item.totalAmount, 0) || 0;
+    const status =
+      invoice.items?.some((item) => item.status === "unpaid")
+        ? "Unpaid"
+        : "Paid";
+  
+    return {
+      invoiceNo: (
+        <span
+          className="text-blue-600 font-medium hover:underline cursor-pointer"
+          onClick={() => handleInvoiceClick(invoiceNo)}
+        >
+          {invoiceNo}
+        </span>
+      ),
+      customer: customerName,
+      account,
+      date,
+      dueDate,
+      amount: `£${amount.toFixed(2)}`,
+      status: (
+        <span
+          className={`px-2 py-1 text-xs font-semibold rounded-full ${
+            status === "Paid"
+              ? "bg-green-500 text-white"
+              : status === "Unpaid"
+              ? "bg-gray-500 text-white"
+              : "bg-black text-white"
           }`}
-      >
-        {item.status}
-      </span>
-    ),
-  }));
+        >
+          {status}
+        </span>
+      ),
+    };
+  });
+
+  if (isLoading) return <p>Loading invoices...</p>;
+if (isError) return <p>Failed to load invoices.</p>;
 
   const exportTableData = (
     perPage === "All"
@@ -109,9 +138,9 @@ const InvoicesList = () => {
 
 
       {expandedInvoice && (
-        <InvoiceDetails
-          item={invoicesData.find((i) => i.invoiceNo === expandedInvoice)}
-        />
+      <InvoiceDetails
+      item={invoices.find((i) => i.invoiceNumber === expandedInvoice)}
+    />
       )}
     </div>
   );

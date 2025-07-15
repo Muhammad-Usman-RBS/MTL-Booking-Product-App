@@ -10,9 +10,13 @@ import Icons from "../../../assets/icons";
 import { Link } from "react-router-dom";
 
 const InvoiceDetails = ({ item }) => {
+  console.log("InvoiceDetails item:", item);
+
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [recipient, setRecipient] = useState(item?.email || "");
-  const [subject, setSubject] = useState(`Invoice ${item?.invoiceNo} created`);
+  const [subject, setSubject] = useState(
+    `Invoice ${item?.invoiceNumber} created`
+  );
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(item?.status || "UnPaid");
   const [selectedStatus, setSelectedStatus] = useState(status);
@@ -21,18 +25,26 @@ const InvoiceDetails = ({ item }) => {
 
   if (!item) return null;
 
-  const invoiceUrl = `https://www.megatransfers.com/invoice.php?key=S3wy2dBNrKaemCfLDlqGJHnkA10&id=${item.id}`;
+  const invoiceUrl = `https://www.megatransfers.com/invoice.php?key=S3wy2dBNrKaemCfLDlqGJHnkA10&id=${item?._id}`;
 
-  const handleDownload = (item) => {
+  const handleDownload = () => {
     setTimeout(() => {
-      downloadPDF("invoiceToDownload", `Invoice-${item.invoiceNo}.pdf`);
+      downloadPDF("invoiceToDownload", `Invoice-${item?.invoiceNumber}.pdf`);
     }, 500);
   };
 
   const openModal = () => {
-    const msg = `Dear ${item.customer}\n\nWe have prepared the following invoice for you: # <b>${item.invoiceNo}</b>\n\nInvoice status: ${status}\n\nYou can view the invoice on the following link: <a href='${invoiceUrl}' target='_blank'>${item.invoiceNo}</a>\n\nPlease contact us for more information.\n\nKind Regards,\n\n${item.company.name}`;
-    setRecipient(item.email);
-    setSubject(`Invoice ${item.invoiceNo} created`);
+    const msg = `Dear ${
+      item?.customers?.[0]?.name || "Customer"
+    }\n\nWe have prepared the following invoice for you: # <b>${
+      item?.invoiceNumber
+    }</b>\n\nInvoice status: ${status}\n\nYou can view the invoice on the following link: <a href='${invoiceUrl}' target='_blank'>${
+      item?.invoiceNumber
+    }</a>\n\nPlease contact us for more information.\n\nKind Regards,\n\n${
+      item?.company?.name
+    }`;
+    setRecipient(item?.email);
+    setSubject(`Invoice ${item?.invoiceNumber} created`);
     setMessage(msg);
     setShowEmailModal(true);
   };
@@ -49,7 +61,6 @@ const InvoiceDetails = ({ item }) => {
 
   return (
     <>
-
       <div>
         <div className="flex flex-wrap gap-2 sm:gap-3 mb-3 mt-8">
           {/* Edit Button */}
@@ -108,29 +119,41 @@ const InvoiceDetails = ({ item }) => {
                 alt="Logo"
                 className="company-logo"
               />
-              <p className="company-name">{item.company.name}</p>
-              <p>{item.company.address}</p>
-              <p>VAT: {item.company.vat}</p>
-              <a href={`mailto:${item.company.email}`} className="email-link">
-                {item.company.email}
+              <p className="company-name">{item?.company?.name}</p>
+              <p>{item?.company?.address}</p>
+              <p>VAT: {item?.company?.vat}</p>
+              <a href={`mailto:${item?.company?.email}`} className="email-link">
+                {item?.company?.email}
               </a>
-              <p>{item.company.phone}</p>
+              <p>{item?.company?.phone}</p>
             </div>
 
             <div className="invoice-info">
               <h2 className="invoice-title">INVOICE</h2>
-              <p className="invoice-no">#{item.invoiceNo}</p>
-              <p className={`status ${status === "Paid" ? "paid" : "unpaid"}`}>
-                {status}
+              <p className="invoice-no">#{item?.invoiceNumber}</p>
+              <p>
+                Invoice Date: {new Date(item?.createdAt).toLocaleDateString()}
               </p>
-              <p>Invoice Date: {item.date}</p>
-              <p>Due Date: {item.dueDate}</p>
-              <p className="bill-to">Bill To</p>
-              <p>{item.customer}</p>
-              <a href={`mailto:${item.email}`} className="email-link">
-                {item.email}
-              </a>
-              <p>{item.phone}</p>
+              <p>
+                Due Date:{" "}
+                {item?.dueDate
+                  ? new Date(item.dueDate).toLocaleDateString()
+                  : "-"}
+              </p>
+              <div className="bill-to">
+                <p>
+                  <strong>Customers:</strong>
+                </p>
+                {item.customers.map((cust, idx) => (
+                  <p key={idx}>
+                    {cust.name} –{" "}
+                    <a href={`mailto:${cust.email}`}>{cust.email}</a>
+                    {cust.phone ? `, ${cust.phone}` : ""}
+                  </p>
+                ))}
+              </div>
+
+              <p>{item?.phone}</p>
             </div>
           </div>
 
@@ -145,32 +168,38 @@ const InvoiceDetails = ({ item }) => {
                 </tr>
               </thead>
               <tbody>
-                {item.rides.map((ride, index) => (
-                  <tr key={index}>
+                {item.items.map((ride, index) => (
+                  <tr key={ride.bookingId || index}>
                     <td>{index + 1}</td>
                     <td>
-                      <div>
-                        <strong>
-                          {ride.number} - {ride.passenger}
-                        </strong>
-                        <p className="sub-info">Pickup: {ride.pickup}</p>
-                        <p className="sub-info">Drop off: {ride.drop}</p>
-                        <p className="sub-info">Date & Time: {ride.datetime}</p>
-                      </div>
+                      {ride.bookingId}
+                      <br />
+                      <small>
+                        Pickup: {ride.pickup}, Dropoff: {ride.dropoff}
+                      </small>
                     </td>
                     <td>{ride.tax}</td>
-                    <td>£{ride.amount}</td>
+                    <td>£{ride.totalAmount.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
           <div className="totals">
-            <p>Sub Total: £{item.subtotal}</p>
-            <p>Discount: £{item.discount}</p>
-            <p>Deposit: £{item.deposit}</p>
-            <p className="balance">Balance Due: £{item.balanceDue}</p>
+            <p>
+              Sub Total: £
+              {item.items.reduce((acc, i) => acc + i.fare, 0).toFixed(2)}
+            </p>
+            <p>
+              Total Tax: £
+              {item.items
+                .reduce((acc, i) => acc + (i.totalAmount - i.fare), 0)
+                .toFixed(2)}
+            </p>
+            <p className="balance">
+              Grand Total: £
+              {item.items.reduce((acc, i) => acc + i.totalAmount, 0).toFixed(2)}
+            </p>
           </div>
 
           <div className="invoice-notes">

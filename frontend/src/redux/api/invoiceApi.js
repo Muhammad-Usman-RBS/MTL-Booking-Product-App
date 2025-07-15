@@ -10,7 +10,11 @@ export const invoiceApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Invoices"],
     }),
+    getAllInvoices: builder.query({
+        query: () => "/invoice/get-all-invoices",
+        providesTags: ["Invoices"],
+      }),
   }),
 });
 
-export const { useCreateInvoiceMutation } = invoiceApi;
+export const { useCreateInvoiceMutation  , useGetAllInvoicesQuery } = invoiceApi;

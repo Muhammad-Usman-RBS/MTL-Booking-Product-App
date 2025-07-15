@@ -55,3 +55,18 @@ export const createInvoice = async (req, res) => {
     }
   };
   
+
+
+  export const getAllInvoices = async (req, res) => {
+    try {
+      const user = req.user; // assuming user is authenticated and attached
+  
+      // Fetch all invoices for the user's company
+      const invoices = await Invoice.find({ companyId: user.companyId }).sort({ createdAt: -1 });
+  
+      return res.status(200).json({ invoices });
+    } catch (error) {
+      console.error("Get all invoices error:", error);
+      return res.status(500).json({ error: "Failed to fetch invoices." });
+    }
+  };

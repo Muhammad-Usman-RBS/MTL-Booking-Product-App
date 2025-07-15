@@ -1,10 +1,17 @@
 import mongoose from "mongoose";
+const CustomerSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    phone: { type: String },
+  },
+  { _id: false } // Disable _id for customer subdocuments
+);
 
 const InvoiceItemSchema = new mongoose.Schema(
   {
     bookingId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Booking",
+      type: String, // ✅ store the custom bookingId
       required: true,
     },
     pickup: { type: String, required: true },
@@ -41,17 +48,9 @@ const InvoiceSchema = new mongoose.Schema(
       required: true,
     },
 
-    customers: [
-        {
-          name: { type: String, required: true },
-          email: { type: String, required: true },
-          phone: { type: String },
-        }
-      ],
+    customers: [CustomerSchema],
 
     items: [InvoiceItemSchema],
-
-   
   },
   { timestamps: true }
 );
