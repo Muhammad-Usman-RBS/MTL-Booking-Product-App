@@ -13,7 +13,7 @@ const WidgetAPI = () => {
         <div>
             <div className="mb-6">
                 <OutletHeading name="🔌 Widget / API Integration" />
-                <p className="text-gray-600 mt-1 text-sm sm:text-base ps-2">
+                <p className="text-[var(--dark-gray)] mt-1 text-sm sm:text-base ps-2">
                     Use the following iframe code to embed your booking form on any
                     website.
                 </p>

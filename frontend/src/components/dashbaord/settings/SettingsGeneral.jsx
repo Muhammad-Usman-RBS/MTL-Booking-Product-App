@@ -173,14 +173,14 @@ const SettingsGeneral = () => {
       {/* Language Section */}
       <div className="space-y-4">
         <div>
-          <label className="  text-gray-600 font-semibold  text-lg ">
+          <label className="  text-[var(--dark-gray)] font-semibold  text-lg ">
             Company Information
           </label>
         </div>
 
         <div className="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0">
           <div className="w-full md:w-1/2">
-            <label className="block text-gray-600 mb-2">Company name</label>
+            <label className="block text-[var(--dark-gray)] mb-2">Company name</label>
             <input
               className="custom_input"
               type="text"
@@ -195,7 +195,7 @@ const SettingsGeneral = () => {
           </div>
 
           <div className="w-full md:w-1/2">
-            <label className="block text-gray-600 mb-2">Contact Number</label>
+            <label className="block text-[var(--dark-gray)] mb-2">Contact Number</label>
             <PhoneInput
               country={"gb"}
               inputClass=" w-full"
@@ -210,7 +210,7 @@ const SettingsGeneral = () => {
 
         <div className="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0">
           <div className="w-full md:w-1/2">
-            <label className="block text-gray-600 mb-2">Email address</label>
+            <label className="block text-[var(--dark-gray)] mb-2">Email address</label>
             <input
               type="email"
               value={formState.email}
@@ -223,7 +223,7 @@ const SettingsGeneral = () => {
           </div>
 
           <div className="w-full md:w-1/2">
-            <label className="block text-gray-600 mb-2">Company address</label>
+            <label className="block text-[var(--dark-gray)] mb-2">Company address</label>
             <input
               type="text"
               value={formState.address}
@@ -242,7 +242,7 @@ const SettingsGeneral = () => {
         <div className="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0">
           {/* Logo Upload */}
           <div className="w-full md:w-1/2">
-            <label className="block text-gray-600 mb-2">Upload Logo</label>
+            <label className="block text-[var(--dark-gray)] mb-2">Upload Logo</label>
             <div className="flex items-center space-x-4">
               <div className="h-24 w-32    flex items-center justify-center text-xs text-gray-500">
                 {logo ? (
@@ -281,7 +281,7 @@ const SettingsGeneral = () => {
 
           {/* Favicon Upload */}
           <div className="w-full md:w-1/2">
-            <label className="block text-gray-600 mb-2">Upload Favicon</label>
+            <label className="block text-[var(--dark-gray)] mb-2">Upload Favicon</label>
             <div className="flex items-center space-x-4">
               <div className="h-24 w-32  flex items-center justify-center text-xs text-gray-500">
                 {favicon ? (
@@ -322,13 +322,13 @@ const SettingsGeneral = () => {
       <hr className="border-gray-300 mt-8 mb-5" />
       {/* Company Info */}
       <div className="mb-4 ">
-        <label className="  text-gray-600 font-semibold  text-lg ">
+        <label className="  text-[var(--dark-gray)] font-semibold  text-lg ">
           Additional Information
         </label>
       </div>
       <div className=" grid grid-cols-2  gap-x-6 gap-y-4">
         <div className="w-full">
-          <label className="block text-gray-600 mb-2">Cookie Consent</label>
+          <label className="block text-[var(--dark-gray)] mb-2">Cookie Consent</label>
           <SelectOption
             width="full"
             value={formState.cookieConsent}
@@ -344,7 +344,7 @@ const SettingsGeneral = () => {
         </div>
 
         <div className="w-full">
-          <label className="block text-gray-600 mb-2">Trading Name</label>
+          <label className="block text-[var(--dark-gray)] mb-2">Trading Name</label>
           <input
             value={formState.tradingName}
             onChange={(e) =>
@@ -357,7 +357,7 @@ const SettingsGeneral = () => {
         </div>
 
         <div className="w-full">
-          <label className="block text-gray-600 mb-2">License number</label>
+          <label className="block text-[var(--dark-gray)] mb-2">License number</label>
           <input
             className="custom_input"
             value={formState.licenseNo}
@@ -370,7 +370,7 @@ const SettingsGeneral = () => {
         </div>
 
         <div className="w-full">
-          <label className="block text-gray-600 mb-2">
+          <label className="block text-[var(--dark-gray)] mb-2">
             License reference link
           </label>
           <input
@@ -391,12 +391,12 @@ const SettingsGeneral = () => {
 
       {/* Theme Colors */}
       <div className="space-y-4  mb-8">
-        <h2 className=" text-gray-600 font-semibold  text-lg ">Theme Colors</h2>
+        <h2 className=" text-[var(--dark-gray)] font-semibold  text-lg ">Theme Colors</h2>
 
         {colorFields.map(({ key, label }) => (
           <div
             key={key}
-            className="flex flex-col md:flex-row text-gray-600 items-center justify-between"
+            className="flex flex-col md:flex-row text-[var(--dark-gray)] items-center justify-between"
           >
             <label className="font-medium">{label}</label>
             <input

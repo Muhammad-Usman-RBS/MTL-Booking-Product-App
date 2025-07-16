@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import Company from "../models/Company.js";
 import bcrypt from "bcryptjs";
-import DriverProfile from "../models/Driver.js";
+import driver from "../models/Driver.js";
 // SuperAdmin or ClientAdmin Creates User
 export const createUserBySuperAdmin = async (req, res) => {
   const {

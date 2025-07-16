@@ -242,13 +242,13 @@ const AdminList = () => {
         <Icons.Pencil
           title="Edit"
           onClick={() => handleEditModal(item)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-gray-300 cursor-pointer"
         />
         {selectedTab === "Deleted" && (
           <Icons.Trash
             title="Delete"
             onClick={() => handleDeleteClick(item._id)}
-            className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+            className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-gray-300 cursor-pointer"
           />
         )}
       </div>
@@ -367,7 +367,7 @@ const AdminList = () => {
                 className={`pb-2 whitespace-nowrap transition-all duration-200 ${
                   selectedTab === tab
                     ? "border-b-2 border-blue-600 text-blue-600"
-                    : "text-gray-600 hover:text-blue-500"
+                    : "text-[var(--dark-gray)] hover:text-blue-500"
                 }`}
               >
                 {tab} ({tabCounts[tab] || 0})

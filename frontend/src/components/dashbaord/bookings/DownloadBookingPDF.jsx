@@ -54,7 +54,7 @@ const DownloadBookingPDF = ({ data, filename = "Bookings-Report" }) => {
   return (
     <button
       onClick={downloadPDF}
-      className="bg-gray-600 text-white p-2 rounded"
+      className="bg-[var(--dark-gray)] text-white p-2 rounded"
     >
       <Icons.Download size={16} />
     </button>

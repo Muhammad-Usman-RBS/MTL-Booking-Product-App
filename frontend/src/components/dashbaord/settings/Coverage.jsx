@@ -93,7 +93,7 @@ const Coverage = () => {
         <Icons.Pencil
           title="Edit"
           onClick={() => handleEdit({ ...entry, originalValue: entry.value })}
-          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-gray-300 cursor-pointer"
         />
         <Icons.Trash
           title="Delete"
@@ -101,7 +101,7 @@ const Coverage = () => {
             setCoverageToDelete(entry);
             setShowDeleteModal(true);
           }}
-          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-gray-600 border border-gray-300 cursor-pointer"
+          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-gray-300 cursor-pointer"
         />
       </div>
     ),

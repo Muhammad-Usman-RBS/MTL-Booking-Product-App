@@ -28,6 +28,7 @@
     }));
 
     app.use('/api/auth', authRoutes);
+    app.use('/api/driver', driverRoutes);
     app.use('/api/invoice', invoiceRoutes);
     app.use("/api/superadmin", PermissionsRoutes);
     app.use('/api/companies', companyRoutes);
@@ -35,7 +36,6 @@
     app.use('/api/settings', settingsRoutes);
     app.use('/api/booking', bookingRoutes);
     app.use('/api/google', googleRoutes);
-    app.use('/api/driver', driverRoutes);
 
     app.use('/api', userRoutes);
 

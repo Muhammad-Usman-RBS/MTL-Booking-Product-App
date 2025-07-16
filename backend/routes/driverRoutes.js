@@ -7,6 +7,7 @@ import {
   deleteDriverById,
   updateDriverById
 } from "../controllers/driverController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 const driverUploader = getUploader('driver'); // 📂 MTL-BOOKING-APP/driver
@@ -30,7 +31,7 @@ const driverUploadFields = driverUploader.fields([
 router.post("/create-driver", driverUploadFields, createDriver);
 
 // Get All Drivers
-router.get("/get-all-drivers", getAllDrivers);
+router.get("/get-all-drivers",protect ,getAllDrivers);
 
 // Get Single Driver
 router.get("/getDriverById/:id", getDriverById);

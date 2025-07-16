@@ -68,14 +68,14 @@ const CustomersList = () => {
     actions: (
       <div className="flex gap-2">
         <Icons.Eye
-          className="w-8 h-8 rounded-md hover:bg-blue-600 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
+          className="w-8 h-8 rounded-md hover:bg-blue-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2"
           onClick={() => setSelectedCustomer(item)}
         />
         <Icons.Pencil
-          className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
+          className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2"
           onClick={() => setEditCustomer(item)}
         />
-        <Icons.X className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2" />
+        <Icons.X className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2" />
       </div>
     ),
   }));
@@ -102,7 +102,7 @@ const CustomersList = () => {
               className={`pb-2 whitespace-nowrap transition-all duration-200 ${
                 activeTab === tab
                   ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-blue-500"
+                  : "text-[var(--dark-gray)] hover:text-blue-500"
               }`}
             >
               {tab} ({customersData.filter((c) => c.status === tab).length})

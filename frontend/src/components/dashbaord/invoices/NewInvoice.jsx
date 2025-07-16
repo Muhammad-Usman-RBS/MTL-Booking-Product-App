@@ -28,6 +28,8 @@ const NewInvoice = () => {
   const [selectedStatus, setSelectedStatus] = useState(["All"]);
   const [endDate, setEndDate] = useState(new Date());
   const [selectedCustomers, setSelectedCustomers] = useState([]);
+  const [isDateRangeChanged, setIsDateRangeChanged] = useState(false);
+
   const [selectedAccounts, setSelectedAccounts] = useState([]);
   const { data: bookingData } = useGetAllBookingsQuery(user?.companyId);
   const allBookings = bookingData?.bookings || [];
@@ -39,6 +41,19 @@ const NewInvoice = () => {
     return createdAt >= start && createdAt <= end;
   });
 
+  useEffect(() => {
+    const [initialFirst, initialLast] = getFirstAndLastDay(0);
+
+    // Ensure startDate and endDate are Date objects
+    const startDateObj =
+      startDate instanceof Date ? startDate : new Date(startDate);
+    const endDateObj = endDate instanceof Date ? endDate : new Date(endDate);
+
+    const isDateChanged =
+      startDateObj.getTime() !== initialFirst.getTime() ||
+      endDateObj.getTime() !== initialLast.getTime();
+    setIsDateRangeChanged(isDateChanged);
+  }, [startDate, endDate]);
   const passengerNames = Array.from(
     new Set(allBookings.map((b) => b.passenger?.name).filter(Boolean))
   ).sort();
@@ -51,10 +66,19 @@ const NewInvoice = () => {
     })),
   ];
   const customerFilteredBookings = filteredBookings.filter((b) => {
-    // Only show data if specific customers are selected (not "All" or empty)
-    if (selectedCustomers.length === 0 || selectedCustomers.includes("All")) {
-      return false; // Don't show any data when no specific filter is applied
+    // If date range is changed and no customers selected, show all date-filtered data
+    if (selectedCustomers.length === 0 && isDateRangeChanged) {
+      return true;
     }
+    // If no customers selected and date range is default, don't show any data
+    if (selectedCustomers.length === 0) {
+      return false;
+    }
+    // If "All" is selected, show all data (already date filtered)
+    if (selectedCustomers.includes("All")) {
+      return true;
+    }
+    // Otherwise, filter by selected customers
     return selectedCustomers.includes(b.passenger?.name);
   });
 
@@ -83,8 +107,9 @@ const NewInvoice = () => {
     { label: "Drop Off", key: "dropOff" },
     { label: "Passenger", key: "passenger" },
     { label: "Date & Time", key: "date" },
-    { label: "Tax", key: "tax" },
     { label: "Fare", key: "fare" },
+    { label: "Tax", key: "tax" },
+    { label: "Total Amount", key: "totalAmount" },
   ];
   const handleCustomerSelection = (newSelection) => {
     const wasAllSelected = selectedCustomers.includes("All");
@@ -180,21 +205,19 @@ const NewInvoice = () => {
   if (customerFilteredBookings.length === 0) {
     tableData = [
       {
-        checkbox: (
-          <div className="flex items-center justify-center w-full text-gray-500 py-4">
+        customRow: true,
+        content: (
+          <td
+            colSpan={tableHeaders.length}
+            className="text-center py-2.5 text-[var(--dark-gray)] font-semibold text-md"
+          >
             Apply filtration to see bookings
-          </div>
+          </td>
         ),
-        bookingId: "",
-        pickUp: "",
-        dropOff: "",
-        passenger: "",
-        date: "",
-        tax: "",
-        fare: "",
       },
     ];
-  } else {
+  }
+   else {
     tableData = customerFilteredBookings.map((item) => ({
       checkbox: (
         <input
@@ -210,11 +233,16 @@ const NewInvoice = () => {
         />
       ),
       bookingId: item.bookingId || "-",
+      totalAmount: (() => {
+        const fare = item.returnJourney?.fare || item.primaryJourney?.fare || 0;
+        const taxType = bookingTaxes[item._id] || "No Tax";
+        return taxType === "Tax" ? (fare * 1.2).toFixed(2) : fare.toFixed(2);
+      })(),
       pickUp: item.primaryJourney?.pickup || "-",
       dropOff: item.primaryJourney?.dropoff || "-",
       tax: (
         <SelectOption
-          width="w-full md:w-32"
+          width="w-full md:w-24"
           options={["No Tax", "Tax"]}
           value={bookingTaxes[item._id] || "No Tax"}
           onChange={(e) => {
@@ -246,7 +274,7 @@ const NewInvoice = () => {
     <div>
       <OutletHeading name="Create New Invoice" />
 
-      <div className="flex flex-col   gap-4">
+      <div className="flex    gap-4">
         {/* Filter Section */}
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full">
           <div className="w-full sm:w-64">
@@ -267,11 +295,7 @@ const NewInvoice = () => {
               showCount={false}
             />
           </div>
-        </div>
-
-        {/* Button Section */}
-        <div className="flex gap-2 w-full sm:w-auto ">
-          <div className="flex   space-x-2">
+          <div className="flex  mb-1   ">
             <div className="w-full sm:w-64">
               <SelectOption
                 options={["No Tax", "Tax"]}
@@ -292,8 +316,20 @@ const NewInvoice = () => {
             </div>
           </div>
         </div>
+        {selectedRows.length > 0 && (
+          <div className=" flex whitespace-nowrap justify-end">
+            <button
+              onClick={handleCreateInvoice}
+              disabled={isCreating}
+              className="btn btn-primary"
+            >
+              {isCreating ? "Creating..." : `Create Invoice `}
+            </button>
+          </div>
+        )}
       </div>
-      <div className=" mt-4">
+      <div >
+        
         <CustomTable
           showSearch={false}
           showRefresh={false}
@@ -301,19 +337,6 @@ const NewInvoice = () => {
           tableData={tableData}
         />
       </div>
-      {selectedRows.length > 0 && (
-        <div className="mt-4 flex justify-end">
-          <button
-            onClick={handleCreateInvoice}
-            disabled={isCreating}
-            className="btn btn-primary"
-          >
-            {isCreating
-              ? "Creating..."
-              : `Create Invoice (${selectedRows.length} selected)`}
-          </button>
-        </div>
-      )}
     </div>
   );
 };

@@ -13,6 +13,7 @@ import {
 import { toast } from "react-toastify";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import { useSelector } from "react-redux";
+import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
 
 const tabOptions = ["Active", "Suspended", "Pending", "Deleted"];
 
@@ -110,7 +111,12 @@ const DriverList = () => {
     documents: item.documents,
   }));
 
-  const tableData = paginatedData.map((driver, index) => ({
+  const tableData = !filteredData.length
+  ? EmptyTableMessage({
+      message: "No drivers found. Create a new driver.",
+      colSpan: tableHeaders.length,
+    })
+  : paginatedData.map((driver, index) => ({
     index:
       (page - 1) * (perPage === "All" ? filteredData.length : perPage) +
       index +
@@ -124,14 +130,14 @@ const DriverList = () => {
     actions: (
       <div className="flex gap-2">
         <Icons.Eye
-          className="w-8 h-8 rounded-md hover:bg-blue-600 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
+          className="w-8 h-8 rounded-md hover:bg-blue-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2"
           onClick={() => setSelectedDriver(driver._id)}
         />
         <Link to={`/dashboard/drivers/edit/${driver._id}`}>
-          <Icons.Pencil className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2" />
+          <Icons.Pencil className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2" />
         </Link>
         <Icons.Send
-          className="w-8 h-8 rounded-md hover:bg-blue-500 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
+          className="w-8 h-8 rounded-md hover:bg-blue-500 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2"
           onClick={() => handleSendEmail(driver)}
         />
         {user?.role !== "driver" && (
@@ -140,7 +146,7 @@ const DriverList = () => {
               setdriverToDelete(driver);
               setShowDeleteModal(true);
             }}
-            className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
+            className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2"
           />
         )}
       </div>
@@ -169,7 +175,7 @@ const DriverList = () => {
           className={`pb-2 whitespace-nowrap transition-all duration-200 ${
             activeTab === tab
               ? "border-b-2 border-blue-600 text-blue-600"
-              : "text-gray-600 hover:text-blue-500"
+              : "text-[var(--dark-gray)] hover:text-blue-500"
           }`}
         >
           {tab} (

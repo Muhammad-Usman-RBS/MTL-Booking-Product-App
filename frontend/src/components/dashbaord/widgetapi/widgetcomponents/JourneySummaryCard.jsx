@@ -84,7 +84,7 @@ const JourneySummaryCard = ({
             )}
 
             {/* distance / duration strip */}
-            <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 text-sm text-gray-600 px-2">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 text-sm text-[var(--dark-gray)] px-2">
                 {durationText && (
                     <span>
                         Estimated arrival at&nbsp;

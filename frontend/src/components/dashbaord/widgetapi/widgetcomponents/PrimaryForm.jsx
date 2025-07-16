@@ -73,7 +73,7 @@ const PrimaryForm = ({
             )}
 
             <div className="relative">
-                <label className="text-sm font-medium text-gray-600 mb-1 block">Pickup Location</label>
+                <label className="text-sm font-medium text-[var(--dark-gray)] mb-1 block">Pickup Location</label>
                 <input
                     type="text"
                     name="pickup"
@@ -145,7 +145,7 @@ const PrimaryForm = ({
 
             {dropOffs.map((val, idx) => (
                 <div key={idx} className="relative space-y-2">
-                    <label className="text-sm text-gray-600">Drop Off Location</label>
+                    <label className="text-sm text-[var(--dark-gray)]">Drop Off Location</label>
                     <input
                         type="text"
                         value={val}

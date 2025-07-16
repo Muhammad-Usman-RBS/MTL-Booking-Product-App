@@ -56,14 +56,14 @@ const CarCard = ({
                   e.stopPropagation();
                   setShowDetails((p) => !p);
                 }}
-                className="text-gray-600 flex items-center cursor-pointer hover:text-gray-800"
+                className="text-[var(--dark-gray)] flex items-center cursor-pointer hover:text-gray-800"
               >
                 Properties
                 {showDetails ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </button>
             </div>
 
-            <div className="mt-2 text-sm text-gray-600 flex gap-6 flex-wrap">
+            <div className="mt-2 text-sm text-[var(--dark-gray)] flex gap-6 flex-wrap">
               <span>{passengers} Passengers</span>
               <span>{handLuggage} Small Luggage</span>
               <span>{childSeat} Child Seat</span>

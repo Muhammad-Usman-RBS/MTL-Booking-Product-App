@@ -216,7 +216,7 @@ function Navbar() {
                   </div>
 
                   <div className="ps-4 py-2 ">
-                    <p className="text-sm  text-gray-600">{email}</p>
+                    <p className="text-sm  text-[var(--dark-gray)]">{email}</p>
                   </div>
                 </div>
 
@@ -312,7 +312,7 @@ function Navbar() {
                                 </span>
                               </div>
                             </div>
-                            <p className="text-xs text-gray-600 mt-1 line-clamp-1 ">
+                            <p className="text-xs text-[var(--dark-gray)] mt-1 line-clamp-1 ">
                               {data?.status === "Completed" ? (
                                 <>
                                   Driver{" "}

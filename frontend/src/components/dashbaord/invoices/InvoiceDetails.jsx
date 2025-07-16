@@ -1,26 +1,60 @@
 import React, { useState } from "react";
 import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 import IMAGES from "../../../assets/images";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import InvoiceEmailModal from "./InvoiceEmailModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import Icons from "../../../assets/icons";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { useGetCompanyByIdQuery } from "../../../redux/api/companyApi";
+import { useUpdateInvoiceMutation } from "../../../redux/api/invoiceApi";
 
 const InvoiceDetails = ({ item }) => {
-  console.log("InvoiceDetails item:", item);
-
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [recipient, setRecipient] = useState(item?.email || "");
   const [subject, setSubject] = useState(
     `Invoice ${item?.invoiceNumber} created`
   );
+  const [updateInvoice] = useUpdateInvoiceMutation();
+
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(item?.status || "UnPaid");
   const [selectedStatus, setSelectedStatus] = useState(status);
 
+  const user = useSelector((state) => state.auth.user);
+  const companyId = user?.companyId;
+
+  const {
+    data: companyData,
+    isLoading: companyLoading,
+    isError: companyError,
+  } = useGetCompanyByIdQuery(companyId, { skip: !companyId });
+  // Add this right after the useGetCompanyByIdQuery hook
+  const company = companyData || {};
+  const handleStatusUpdate = async () => {
+    try {
+      await updateInvoice({
+        id: item._id,
+        data: { status: selectedStatus },
+      }).unwrap();
+      setStatus(selectedStatus);
+      toast.success(`Status updated to "${selectedStatus}"`);
+    } catch (error) {
+      console.error("Status update failed:", error);
+      toast.error("Failed to update invoice status.");
+    }
+  };
+  
+  // Add loading and error handling
+  if (companyLoading) {
+    console.log("Loading company data...");
+  }
+
+  if (companyError) {
+    console.log("Error fetching company:", companyError);
+  }
   const statusOption = ["Paid", "UnPaid"];
 
   if (!item) return null;
@@ -54,10 +88,6 @@ const InvoiceDetails = ({ item }) => {
     setShowEmailModal(false);
   };
 
-  const handleStatusUpdate = () => {
-    setStatus(selectedStatus);
-    toast.success(`Status updated to "${selectedStatus}"`);
-  };
 
   return (
     <>
@@ -73,7 +103,7 @@ const InvoiceDetails = ({ item }) => {
           {/* Download Button */}
           <button
             onClick={handleDownload}
-            className="p-2.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition"
+            className="p-2.5 bg-[var(--dark-gray)] text-white rounded-md hover:bg-gray-700 transition"
           >
             <Icons.Download size={16} />
           </button>
@@ -102,12 +132,16 @@ const InvoiceDetails = ({ item }) => {
               />
             </div>
             <button
-              onClick={handleStatusUpdate}
-              className="p-2.5 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition"
-            >
-              <Icons.Check size={16} />
-            </button>
-          </div>
+  onClick={handleStatusUpdate}
+  disabled={status === selectedStatus}
+  className={`p-2.5 text-white rounded-md transition ${
+    status === selectedStatus
+      ? "bg-gray-400 cursor-not-allowed"
+      : "bg-emerald-500 hover:bg-emerald-600"
+  }`}
+>
+  <Icons.Check size={16} />
+</button>          </div>
         </div>
 
         {/* Invoice Display */}
@@ -119,13 +153,21 @@ const InvoiceDetails = ({ item }) => {
                 alt="Logo"
                 className="company-logo"
               />
-              <p className="company-name">{item?.company?.name}</p>
-              <p>{item?.company?.address}</p>
-              <p>VAT: {item?.company?.vat}</p>
-              <a href={`mailto:${item?.company?.email}`} className="email-link">
-                {item?.company?.email}
+              <p className="company-name">{company.companyName}</p>
+              <p >VAT Number - 442612419              </p>
+
+              <p>
+                {[company.address, company.city, company.state, company.zip]
+                  .filter(Boolean)
+                  .join(", ")}
+              </p>
+              <p>Website: {company.website}</p>
+
+              <a href={`mailto:${company.email}`} className="email-link">
+                {company.email}
               </a>
-              <p>{item?.company?.phone}</p>
+
+              <p>Contact: {company.contactName || company.contact}</p>
             </div>
 
             <div className="invoice-info">
@@ -135,21 +177,26 @@ const InvoiceDetails = ({ item }) => {
                 Invoice Date: {new Date(item?.createdAt).toLocaleDateString()}
               </p>
               <p>
-                Due Date:{" "}
-                {item?.dueDate
-                  ? new Date(item.dueDate).toLocaleDateString()
-                  : "-"}
-              </p>
+  Due Date:
+  {item?.items?.[0]?.date
+    ? new Date(item.items[0].date).toLocaleDateString()
+    : "-"}
+</p>
+
               <div className="bill-to">
                 <p>
-                  <strong>Customers:</strong>
+                  <strong>Bill To</strong>
                 </p>
                 {item.customers.map((cust, idx) => (
-                  <p key={idx}>
-                    {cust.name} –{" "}
+                  <div className=" flex flex-col font-medium" key={idx}>
+                    <span>
+                      {cust.name} 
+                      </span>
                     <a href={`mailto:${cust.email}`}>{cust.email}</a>
-                    {cust.phone ? `, ${cust.phone}` : ""}
-                  </p>
+                   <span>
+                    {cust.phone ? `${cust.phone}` : ""}
+                    </span> 
+                  </div>
                 ))}
               </div>
 

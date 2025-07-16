@@ -259,7 +259,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                 {(companyDiscountPercent + voucherDiscountPercent > 0) && (
                                     <p className="text-sm text-green-600 font-semibold">
                                         Discount Applied: {companyDiscountPercent + voucherDiscountPercent}% &nbsp;
-                                        <span className="text-xs font-normal text-gray-600">
+                                        <span className="text-xs font-normal text-[var(--dark-gray)]">
                                             ({companyDiscountPercent > 0 && `Company: ${companyDiscountPercent}%`}
                                             {companyDiscountPercent > 0 && voucherDiscountPercent > 0 && ' + '}
                                             {voucherDiscountPercent > 0 && `Voucher: ${voucherDiscountPercent}%`})
@@ -289,7 +289,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                         Apply
                                     </button>
                                 </div>
-                                <p className="text-xs mt-2 text-gray-600">Click "Apply" to update the voucher</p>
+                                <p className="text-xs mt-2 text-[var(--dark-gray)]">Click "Apply" to update the voucher</p>
                             </div>
                             <ArrowButton label="Book Now" onClick={handleSubmit} mainColor="#20a220" />
                         </div>
@@ -301,7 +301,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                             <OutletHeading name="Vehicle Detail:-" />
 
                             {vehicle?.vehicleName && (
-                                <div className="text-sm text-gray-600 font-medium">
+                                <div className="text-sm text-[var(--dark-gray)] font-medium">
                                     Selected Vehicle:&nbsp;
                                     <span className="text-blue-700 font-semibold">{vehicle.vehicleName}</span>
                                 </div>
@@ -332,7 +332,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                 </p>
                             </div>
 
-                            <p className="text-xs text-gray-600 text-center italic">
+                            <p className="text-xs text-[var(--dark-gray)] text-center italic">
                                 Note: Additional charges may apply for waiting time, address changes, or extended routes.
                             </p>
                         </div>

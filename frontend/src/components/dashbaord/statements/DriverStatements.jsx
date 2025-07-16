@@ -83,18 +83,18 @@ const DriverStatements = () => {
     actions: (
       <div className="flex gap-2">
         <Icons.Eye
-          className="w-8 h-8 rounded-md hover:bg-blue-600 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
+          className="w-8 h-8 rounded-md hover:bg-blue-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2"
           onClick={() => setViewModalData(item)}
         />
         <Icons.Download
           onClick={() => handleDownload(item)}
-          className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
+          className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2"
         />
         <Icons.Send
-          className="w-8 h-8 rounded-md hover:bg-blue-500 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2"
+          className="w-8 h-8 rounded-md hover:bg-blue-500 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2"
           onClick={() => handleSendEmail(item)}
         />
-        <Icons.X className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-gray-600 cursor-pointer border border-gray-300 p-2" />
+        <Icons.X className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2" />
       </div>
     ),
   }));

@@ -19,7 +19,7 @@ const NotFound = () => {
           Page Not Found <Icons.Wrench className="w-7 h-7" />
         </h2>
 
-        <p className="text-sm md:text-lg text-gray-600">
+        <p className="text-sm md:text-lg text-[var(--dark-gray)]">
           Oops! The page you're looking for doesn't exist or has been moved.
           <br />
           Our development team is actively working on building this page.

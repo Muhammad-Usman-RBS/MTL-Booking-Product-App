@@ -235,7 +235,7 @@ const WidgetMain = () => {
                             </svg>
                         </div>
                         <h2 className="text-3xl font-extrabold text-green-700">Booking Confirmed!</h2>
-                        <p className="mt-4 text-gray-600 text-base">
+                        <p className="mt-4 text-[var(--dark-gray)] text-base">
                             Thank you for choosing us. We’ve received your booking and will contact you shortly.
                         </p>
                         <div className="mt-6">

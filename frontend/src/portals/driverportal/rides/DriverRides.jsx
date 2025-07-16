@@ -129,7 +129,7 @@ const DriverRides = () => {
 const StatCard = ({ title, value, icon, subtitle }) => (
   <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-200">
     <div className="flex items-center justify-between mb-2">
-      <h3 className="text-sm font-medium text-gray-600">{title}</h3>
+      <h3 className="text-sm font-medium text-[var(--dark-gray)]">{title}</h3>
       <div className="text-gray-800">{icon}</div>
     </div>
     <p className="text-2xl font-bold text-black">{value}</p>

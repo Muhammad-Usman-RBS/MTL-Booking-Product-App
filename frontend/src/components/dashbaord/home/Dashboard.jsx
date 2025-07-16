@@ -131,7 +131,7 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 p-4 text-sm">
                   {labels.map((label, idx) => (
                     <div key={idx} className="min-w-0 break-words">
-                      <p className="text-gray-600 whitespace-nowrap">{label}</p>
+                      <p className="text-[var(--dark-gray)] whitespace-nowrap">{label}</p>
                       <p className="font-bold whitespace-nowrap">
                         {section.values[idx]}
                       </p>

@@ -38,7 +38,7 @@ const DriverContact = () => {
                   {item.icon}
                 </div>
                 <div className="flex-1 space-y-1">
-                  <h3 className="font-semibold text-gray-600 sm:text-lg">
+                  <h3 className="font-semibold text-[var(--dark-gray)] sm:text-lg">
                     {item.title}
                   </h3>
                   {item.detail.split("\n").map((line, i) => (

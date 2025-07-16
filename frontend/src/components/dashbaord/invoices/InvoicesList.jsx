@@ -5,6 +5,7 @@ import InvoiceDetails from "./InvoiceDetails";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import { useGetAllInvoicesQuery } from "../../../redux/api/invoiceApi";
+import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
 
 const InvoicesList = () => {
   const [search, setSearch] = useState("");
@@ -48,53 +49,57 @@ const invoices = data?.invoices || [];
     { label: "Status", key: "status" },
   ];
 
-  const tableData = (
-    perPage === "All"
-      ? filteredData
-      : filteredData.slice((page - 1) * perPage, page * perPage)
-  ).map((invoice) => {
-    const invoiceNo = invoice.invoiceNumber || "-";
-    const customerName = invoice.customers?.[0]?.name || "-";
-    const account = invoice.companyId || "-";
-    const date = new Date(invoice.createdAt).toLocaleDateString() || "-";
-    const dueDate = invoice.dueDate
-      ? new Date(invoice.dueDate).toLocaleDateString()
-      : "-";
-    const amount = invoice.items?.reduce((sum, item) => sum + item.totalAmount, 0) || 0;
-    const status =
-      invoice.items?.some((item) => item.status === "unpaid")
+  const paginatedInvoices =
+  perPage === "All"
+    ? filteredData
+    : filteredData.slice((page - 1) * perPage, page * perPage);
+
+const tableData = !filteredData.length
+  ? EmptyTableMessage({
+      message: "No invoices available. Create a new one.",
+      colSpan: tableHeaders.length,
+    })
+  : paginatedInvoices.map((invoice) => {
+      const invoiceNo = invoice.invoiceNumber || "-";
+      const customerName = invoice.customers?.[0]?.name || "-";
+      const account = invoice.companyId || "-";
+      const date = new Date(invoice.createdAt).toLocaleDateString() || "-";
+      const dueDate = invoice.dueDate
+        ? new Date(invoice.dueDate).toLocaleDateString()
+        : "-";
+      const amount =
+        invoice.items?.reduce((sum, item) => sum + item.totalAmount, 0) || 0;
+      const status = invoice.items?.some((item) => item.status === "unpaid")
         ? "Unpaid"
         : "Paid";
-  
-    return {
-      invoiceNo: (
-        <span
-          className="text-blue-600 font-medium hover:underline cursor-pointer"
-          onClick={() => handleInvoiceClick(invoiceNo)}
-        >
-          {invoiceNo}
-        </span>
-      ),
-      customer: customerName,
-      account,
-      date,
-      dueDate,
-      amount: `£${amount.toFixed(2)}`,
-      status: (
-        <span
-          className={`px-2 py-1 text-xs font-semibold rounded-full ${
-            status === "Paid"
-              ? "bg-green-500 text-white"
-              : status === "Unpaid"
-              ? "bg-gray-500 text-white"
-              : "bg-black text-white"
-          }`}
-        >
-          {status}
-        </span>
-      ),
-    };
-  });
+
+      return {
+        invoiceNo: (
+          <span
+            className="text-blue-600 font-medium hover:underline cursor-pointer"
+            onClick={() => handleInvoiceClick(invoiceNo)}
+          >
+            {invoiceNo}
+          </span>
+        ),
+        customer: customerName,
+        account,
+        date,
+        dueDate,
+        amount: `£${amount.toFixed(2)}`,
+        status: (
+          <span
+            className={`px-2 py-1 text-xs font-semibold rounded-full ${
+              status === "Paid"
+                ? "bg-green-500 text-white"
+                : "bg-gray-500 text-white"
+            }`}
+          >
+            {status}
+          </span>
+        ),
+      };
+    });
 
   if (isLoading) return <p>Loading invoices...</p>;
 if (isError) return <p>Failed to load invoices.</p>;

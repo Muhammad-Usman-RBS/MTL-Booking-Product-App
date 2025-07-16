@@ -140,7 +140,7 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
       <div className="p-4 space-y-4 text-sm text-gray-800 w-full max-w-full">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block font-semibold text-gray-600 mb-1">
+            <label className="block font-semibold text-[var(--dark-gray)] mb-1">
               Distance:
             </label>
             <p className="bg-gray-100 px-3 py-1.5 rounded">
@@ -150,7 +150,7 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
             </p>
           </div>
           <div>
-            <label className="block font-semibold text-gray-600 mb-1">
+            <label className="block font-semibold text-[var(--dark-gray)] mb-1">
               Fare:
             </label>
             <input type="number" className="custom_input" />
@@ -241,14 +241,14 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
         </div>
 
         <div>
-          <label className="block font-semibold text-gray-600 mb-1">
+          <label className="block font-semibold text-[var(--dark-gray)] mb-1">
             Driver Notes:
             <span className="italic text-red-500 underline">Empty</span>
           </label>
         </div>
         <hr />
         <div>
-          <label className="block font-semibold text-gray-600 mb-2">
+          <label className="block font-semibold text-[var(--dark-gray)] mb-2">
             Alerts
           </label>
           <div className="flex gap-4">

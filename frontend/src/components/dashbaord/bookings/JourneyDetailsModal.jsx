@@ -280,7 +280,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
               {viewData?.payment || "Card Payment"}
             </span>
           </div>
-          <div className="text-gray-600 mt-2 text-xs">
+          <div className="text-[var(--dark-gray)] mt-2 text-xs">
             Approx. Distance:{" "}
             {convertKmToMiles(viewData?.primaryJourney?.distanceText)}
           </div>

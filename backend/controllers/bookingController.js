@@ -1,6 +1,6 @@
 import Booking from "../models/Booking.js";
 import sendEmail from "../utils/sendEmail.js";
-import DriverProfile from "../models/Driver.js";
+import driver from "../models/Driver.js";
 import User from "../models/User.js";
 import mongoose from "mongoose";
 import Voucher from "../models/pricings/Voucher.js";
@@ -365,7 +365,7 @@ export const updateBookingStatus = async (req, res) => {
     }
 
     if (Array.isArray(driverIds)) {
-      const fullDriverDocs = await DriverProfile.find({
+      const fullDriverDocs = await driver.find({
         _id: { $in: driverIds },
       }).lean();
       booking.drivers = fullDriverDocs;
@@ -385,19 +385,19 @@ export const updateBookingStatus = async (req, res) => {
 
     // Driver updated the status
     if (currentUser?.role === "driver" && status) {
-      const driverProfile = await DriverProfile.findOne({
+      const driver = await driver.findOne({
         "DriverData.employeeNumber": currentUser.employeeNumber,
         companyId: currentUser.companyId,
       }).lean();
 
-      if (driverProfile) {
+      if (driver) {
         const clientAdmin = await User.findOne({
           companyId: currentUser.companyId,
           role: "clientadmin",
         }).lean();
 
         const statusStyled = `<span style="color: green;">${status}</span>`;
-        const driverName = `"${driverProfile?.DriverData?.firstName || ""} ${driverProfile?.DriverData?.surName || ""
+        const driverName = `"${driver?.DriverData?.firstName || ""} ${driver?.DriverData?.surName || ""
           }"`.trim();
         const bookingId = booking.bookingId;
 
@@ -437,18 +437,18 @@ export const updateBookingStatus = async (req, res) => {
       const statusStyled = `<span style="color: green;">${status}</span>`;
 
       const firstDriverId = booking.drivers?.[0]?._id || booking.drivers?.[0];
-      const assignedDriverProfile = mongoose.Types.ObjectId.isValid(
+      const assigneddriver = mongoose.Types.ObjectId.isValid(
         firstDriverId
       )
-        ? await DriverProfile.findById(firstDriverId).lean()
+        ? await driver.findById(firstDriverId).lean()
         : null;
 
-      const driverName = assignedDriverProfile
-        ? `"${assignedDriverProfile.DriverData.firstName || ""} ${assignedDriverProfile.DriverData.surName || ""
+      const driverName = assigneddriver
+        ? `"${assigneddriver.DriverData.firstName || ""} ${assigneddriver.DriverData.surName || ""
           }"`.trim()
         : `"Assigned Driver"`;
 
-      const driverEmail = assignedDriverProfile?.DriverData?.email;
+      const driverEmail = assigneddriver?.DriverData?.email;
 
       const data = {
         BookingId: bookingId,

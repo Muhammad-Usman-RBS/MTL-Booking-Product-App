@@ -75,7 +75,7 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
   };
 
   const IconRow = ({ vehicle }) => (
-    <div className="flex flex-wrap gap-2 text-xs text-gray-600 mt-1">
+    <div className="flex flex-wrap gap-2 text-xs text-[var(--dark-gray)] mt-1">
       <span className="flex items-center gap-1">
         <Icons.Users className="w-4 h-4" /> {vehicle.passengers}
       </span>
@@ -147,7 +147,7 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
                       className="w-full text-left px-4 py-3 hover:bg-gray-100 transition"
                     >
                       <div className="font-medium text-sm text-gray-800">{vehicle.vehicleName}</div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2 text-xs text-gray-600">
+                      <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2 text-xs text-[var(--dark-gray)]">
                         <span className="flex items-center gap-1">
                           <Icons.Users className="w-4 h-4" /> {vehicle.passengers}
                         </span>

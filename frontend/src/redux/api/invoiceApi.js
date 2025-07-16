@@ -14,7 +14,16 @@ export const invoiceApi = apiSlice.injectEndpoints({
         query: () => "/invoice/get-all-invoices",
         providesTags: ["Invoices"],
       }),
+      updateInvoice: builder.mutation({
+        query: ({ invoiceData, id }) => ({
+          url: `/invoice/update-invoice/${id}`,
+          method: "PUT",
+          body: invoiceData,
+        }),
+        invalidatesTags: ["Invoices"],
+      })
+      
   }),
 });
 
-export const { useCreateInvoiceMutation  , useGetAllInvoicesQuery } = invoiceApi;
+export const { useCreateInvoiceMutation  , useGetAllInvoicesQuery , useUpdateInvoiceMutation } = invoiceApi;

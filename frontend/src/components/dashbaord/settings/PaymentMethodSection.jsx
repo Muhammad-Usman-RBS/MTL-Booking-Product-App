@@ -47,7 +47,7 @@ const PaymentMethodSection = ({
                             idx
                         ) => (
                             <div>
-                                <div key={idx} className="flex rounded-t-md justify-between items-center text-sm font-semibold text-gray-600 bg-gray-300 px-3 py-2 border-b border-gray-300">
+                                <div key={idx} className="flex rounded-t-md justify-between items-center text-sm font-semibold text-[var(--dark-gray)] bg-gray-300 px-3 py-2 border-b border-gray-300">
                                     <span>{label}</span>
                                     {copyable && (
                                         <button className="flex items-center cursor-pointer text-sm gap-1">

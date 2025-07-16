@@ -116,7 +116,7 @@ const DriverEarnings = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">Total Earnings</h3>
+            <h3 className="text-sm font-medium text-[var(--dark-gray)]">Total Earnings</h3>
             <Icons.DollarSign className="w-5 h-5 text-gray-400" />
           </div>
           <p className="text-2xl font-bold text-black">${totalEarnings.toFixed(2)}</p>
@@ -125,7 +125,7 @@ const DriverEarnings = () => {
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">Average Per Job</h3>
+            <h3 className="text-sm font-medium text-[var(--dark-gray)]">Average Per Job</h3>
             <Icons.TrendingUp className="w-5 h-5 text-gray-400" />
           </div>
           <p className="text-2xl font-bold text-black">${averagePerJob.toFixed(2)}</p>
@@ -134,7 +134,7 @@ const DriverEarnings = () => {
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">Total Services</h3>
+            <h3 className="text-sm font-medium text-[var(--dark-gray)]">Total Services</h3>
             <Icons.Eye className="w-5 h-5 text-gray-400" />
           </div>
           <p className="text-2xl font-bold text-black">{totalTrips}</p>
@@ -143,7 +143,7 @@ const DriverEarnings = () => {
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-600">Distance Covered</h3>
+            <h3 className="text-sm font-medium text-[var(--dark-gray)]">Distance Covered</h3>
             <Icons.Calendar className="w-5 h-5 text-gray-400" />
           </div>
           <p className="text-2xl font-bold text-black">{totalDistance} km</p>

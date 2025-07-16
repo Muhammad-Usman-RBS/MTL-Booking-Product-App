@@ -119,7 +119,10 @@ export const createDriver = async (req, res) => {
 
 export const getAllDrivers = async (req, res) => {
     try {
-        const {companyId} = req.query
+        const companyId = req?.user?.companyId
+        if (!companyId) {
+            return res.status(401).json({ success: false, message: "Unauthorized or missing company" });
+          }
         const drivers = await Driver.find({companyId});
         res.status(200).json({ success: true, drivers });
     } catch (error) {

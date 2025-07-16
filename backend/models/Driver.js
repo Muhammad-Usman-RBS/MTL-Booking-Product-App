@@ -57,4 +57,4 @@ const DriverProfileSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-export default mongoose.model("DriverProfile", DriverProfileSchema)
+export default mongoose.model("driver", DriverProfileSchema)

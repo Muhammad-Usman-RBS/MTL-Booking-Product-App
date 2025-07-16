@@ -65,7 +65,7 @@ const ReturnForm = ({
 
                 {dropOffs.map((val, idx) => (
                     <div key={idx} className="relative space-y-2">
-                        <label className="text-sm text-gray-600">Drop Off {idx + 1}</label>
+                        <label className="text-sm text-[var(--dark-gray)]">Drop Off {idx + 1}</label>
                         <input
                             type="text"
                             value={val}

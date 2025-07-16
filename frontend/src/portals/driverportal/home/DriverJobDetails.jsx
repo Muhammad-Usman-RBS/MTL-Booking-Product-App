@@ -9,7 +9,7 @@ const JobDetails = () => {
   if (!job) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-xl text-gray-600">Job not found.</p>
+        <p className="text-xl text-[var(--dark-gray)]">Job not found.</p>
       </div>
     );
   }
@@ -28,7 +28,7 @@ const JobDetails = () => {
               </h1>
               <div className="flex items-center space-x-1">
                 <Icons.Star className="h-4 w-4 text-yellow-400 fill-current" />
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-[var(--dark-gray)]">
                   {job.customerRating} rating
                 </span>
               </div>
@@ -116,7 +116,7 @@ const JobDetails = () => {
           </h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600">Total Payment</span>
+              <span className="text-[var(--dark-gray)]">Total Payment</span>
               <span className="text-lg font-semibold text-gray-900">
                 ${job.totalPayment}
               </span>

@@ -35,7 +35,7 @@
 //                 >
 //                   {notification.title}
 //                 </h4>
-//                 <p className="text-sm text-gray-600 mt-1">
+//                 <p className="text-sm text-[var(--dark-gray)] mt-1">
 //                   {notification.message}
 //                 </p>
 //                 <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">

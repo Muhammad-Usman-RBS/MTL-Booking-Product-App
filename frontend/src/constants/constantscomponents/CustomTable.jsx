@@ -32,7 +32,7 @@
     };
 
     const getSortIcon = (key) => (
-      <Icons.ArrowDownUp className="inline w-4 h-4 ml-4 text-gray-600" />
+      <Icons.ArrowDownUp className="inline w-4 h-4 ml-4 text-[var(--dark-gray)]" />
     );
 
     const filteredData = tableData.filter((item) => {
@@ -120,41 +120,41 @@
               </tr>
             </thead>
             <tbody>
-              {paginatedData.map((item, rowIdx) => (
-                // <tr
-                //   key={rowIdx}
-                //   className="odd:bg-gray-50 even:bg-[#EDEDED] border-b border-gray-300 hover:bg-[#CFE2FF] transition"
-                // >
-                <tr
-                key={item._id || rowIdx}
-                onClick={
-                  setSelectedRow
-                    ? () =>
-                        setSelectedRow(selectedRow === item._id ? null : item._id)
-                    : undefined
-                }
-                className={`border-b border-gray-300 hover:bg-[#CFE2FF] transition ${
-                  setSelectedRow ? "cursor-pointer " : ""
-                } ${
-                  setSelectedRow && selectedRow === item._id
-                    ? "bg-[#CFE2FF] text-white"
-                    : rowIdx % 2 === 0
-                    ? "bg-gray-50"
-                    : "bg-[#EDEDED]"
-                }`}
-              >
-              
-                  {tableHeaders.map((col, colIdx) => (
-                    <td
-                      key={colIdx}
-                      className="px-2 py-2 text-sm text-gray-700 text-left align-middle break-words"
-                    >
-                      {item[col.key] ?? "-"}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
+            {paginatedData.length === 1 && paginatedData[0].customRow ? (
+  paginatedData[0].content
+) : (
+
+    paginatedData.map((item, rowIdx) => (
+      <tr
+        key={item._id || rowIdx}
+        onClick={
+          setSelectedRow
+            ? () => setSelectedRow(selectedRow === item._id ? null : item._id)
+            : undefined
+        }
+        className={`border-b border-gray-300 hover:bg-[#CFE2FF] transition ${
+          setSelectedRow ? "cursor-pointer " : ""
+        } ${
+          setSelectedRow && selectedRow === item._id
+            ? "bg-[#CFE2FF] text-white"
+            : rowIdx % 2 === 0
+            ? "bg-gray-50"
+            : "bg-[#EDEDED]"
+        }`}
+      >
+        {tableHeaders.map((col, colIdx) => (
+          <td
+            key={colIdx}
+            className="px-2 py-2 text-sm text-gray-700 text-left align-middle break-words"
+          >
+            {item[col.key] ?? "-"}
+          </td>
+        ))}
+      </tr>
+    ))
+  )}
+</tbody>
+
           </table>
         </div>
 
@@ -195,7 +195,7 @@
                 }}
                 className="border w-16 text-center py-1 px-2 rounded border-gray-300"
               />
-              <span className="text-gray-600">of {totalPages}</span>
+              <span className="text-[var(--dark-gray)]">of {totalPages}</span>
 
               <button
                 className="btn btn-reset"

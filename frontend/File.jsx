@@ -223,7 +223,7 @@ const CustomTable = ({ searchQuery, filters, nowLoad }) => {
   if (!loading && !error && rows.length === 0) {
     return (
       <>
-        <div className="p-6 text-center text-gray-600">
+        <div className="p-6 text-center text-[var(--dark-gray)]">
           For now there is no record available for your store — please reload after 20 mins!
         </div>
         {/* <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-6 px-4 w-full">

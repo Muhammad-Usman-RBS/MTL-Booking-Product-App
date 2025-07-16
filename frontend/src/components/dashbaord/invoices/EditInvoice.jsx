@@ -42,7 +42,7 @@ const InvoicePage = () => {
 
       <div className="p-2 md:p-6 max-w-6xl mx-auto bg-gradient-to-b from-gray-50 to-white shadow-md rounded-3xl">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4">
-          <h1 className="text-xl font-extrabold text-gray-600 pt-3 pb-3">
+          <h1 className="text-xl font-extrabold text-[var(--dark-gray)] pt-3 pb-3">
             Invoice #INV-000001
           </h1>
           <Link to="/dashboard/invoices/list">
@@ -160,7 +160,7 @@ const InvoicePage = () => {
 
           <p className="mt-4 flex justify-end items-center gap-2">
             <span className="text-gray-700">Discount:</span>
-            <Icons.IndianRupee size={16} className="text-gray-600" />
+            <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" />
             <input
               type="text"
               className="border border-gray-300 rounded-lg p-1 w-24 text-right"
@@ -170,7 +170,7 @@ const InvoicePage = () => {
 
           <p className="mt-2 flex justify-end items-center gap-2">
             <span className="text-gray-700">Deposit:</span>
-            <Icons.IndianRupee size={16} className="text-gray-600" />
+            <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" />
             <input
               type="text"
               className="border border-gray-300 rounded-lg p-1 w-24 text-right"
