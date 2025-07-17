@@ -79,7 +79,7 @@ const BookingsList = () => {
 
   useEffect(() => {
     if (driversData?.drivers?.length > 0) {
-      setAssignedDrivers(driversData.drivers); 
+      setAssignedDrivers(driversData.drivers);
 
     }
   }, [driversData]);
@@ -109,7 +109,7 @@ const BookingsList = () => {
   dynamicStatusList.push({ label: "All", count: allBookings.length });
 
   const passengerMap = new Map();
-  allBookings .forEach((booking) => {
+  allBookings.forEach((booking) => {
     const p = booking.passenger;
     if (p && p.name && !passengerMap.has(p.name)) {
       passengerMap.set(p.name, {
@@ -294,7 +294,13 @@ const BookingsList = () => {
       <CustomModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        heading="Edit Booking"
+        heading={
+          editBookingData?.__copyMode
+            ? "Copy Booking"
+            : editBookingData?._id
+              ? "Edit Booking"
+              : "New Booking"
+        }
       >
         <NewBooking
           editBookingData={editBookingData}

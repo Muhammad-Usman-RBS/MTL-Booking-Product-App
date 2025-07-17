@@ -91,8 +91,8 @@ const BookingsTable = ({
       !Array.isArray(selectedDrivers) || selectedDrivers.length === 0
         ? true
         : Array.isArray(b.drivers)
-        ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
-        : false;
+          ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
+          : false;
 
     const dateTime =
       !startDate || !endDate ? true : createdAt >= start && createdAt <= end;
@@ -240,9 +240,8 @@ const BookingsTable = ({
   const formatVehicle = (v) =>
     !v || typeof v !== "object"
       ? "-"
-      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${
-          v.handLuggage || 0
-        } | ${v.checkinLuggage || 0}`;
+      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${v.handLuggage || 0
+      } | ${v.checkinLuggage || 0}`;
 
   const formatPassenger = (p) =>
     !p || typeof p !== "object"
@@ -329,13 +328,15 @@ const BookingsTable = ({
             row[key] = item.vehicle?.vehicleName || "-";
             break;
           case "payment":
-            row[key] = item.payment || "-";
+            row[key] = item.paymentMethod || "-";
             break;
           case "fare":
-            row[key] = item.fare || "-";
+            row[key] = item.returnJourney
+              ? item.returnJourney?.fare || "-"
+              : item.primaryJourney?.fare || "-";
             break;
           case "drFare":
-            row[key] = item.drFare || "-";
+            row[key] = item.driverFare || "-";
             break;
           case "driver":
             row[key] =
@@ -450,7 +451,24 @@ const BookingsTable = ({
                               setShowDeleteModal(true);
                             } else if (action === "Copy Booking") {
                               const copied = { ...item };
+
+                              // Remove database identifiers
                               delete copied._id;
+                              if (copied.passenger?._id) delete copied.passenger._id;
+                              if (copied.vehicle?._id) delete copied.vehicle._id;
+                              if (copied.primaryJourney?._id) delete copied.primaryJourney._id;
+                              if (copied.returnJourney?._id) delete copied.returnJourney._id;
+
+                              copied.bookingId = "";
+                              copied.status = "Pending";
+                              copied.statusAudit = [];
+                              copied.createdAt = new Date().toISOString();
+                              copied.drivers = [];
+
+                              // Mark this as copy mode
+                              copied.__copyMode = true;
+                              copied.__copyMode = true; 
+
                               setEditBookingData(copied);
                               setShowEditModal(true);
                             }
@@ -481,27 +499,29 @@ const BookingsTable = ({
     pickUp: item.primaryJourney?.pickup || "-",
     dropOff: item.primaryJourney?.dropoff || "-",
     vehicle: formatVehicle(item.vehicle),
-    payment: item.payment || "-",
-    fare: item.fare || "-",
-    drFare: item.drFare || "-",
+    payment: item.paymentMethod || "-",
+    fare: item.returnJourney
+      ? item.returnJourney?.fare || "-"
+      : item.primaryJourney?.fare || "-",
+    drFare: item.driverFare || "-",
     driver:
       Array.isArray(item.drivers) && assignedDrivers.length > 0
         ? item.drivers
-            .map((driverId) => {
-              const driverIdToMatch =
-                typeof driverId === "object" ? driverId._id : driverId;
-              const matchedDriver = assignedDrivers.find(
-                (d) =>
-                  d && d._id && d._id.toString() === driverIdToMatch?.toString()
-              );
-              return (
-                matchedDriver?.DriverData?.firstName ||
-                matchedDriver?.DriverData?.name ||
-                matchedDriver?.name ||
-                "Unnamed"
-              );
-            })
-            .join(", ")
+          .map((driverId) => {
+            const driverIdToMatch =
+              typeof driverId === "object" ? driverId._id : driverId;
+            const matchedDriver = assignedDrivers.find(
+              (d) =>
+                d && d._id && d._id.toString() === driverIdToMatch?.toString()
+            );
+            return (
+              matchedDriver?.DriverData?.firstName ||
+              matchedDriver?.DriverData?.name ||
+              matchedDriver?.name ||
+              "Unnamed"
+            );
+          })
+          .join(", ")
         : "-",
     status: item.statusAudit?.at(-1)?.status || item.status || "-",
   }));

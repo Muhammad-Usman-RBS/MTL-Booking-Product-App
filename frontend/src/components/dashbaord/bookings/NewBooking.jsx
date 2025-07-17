@@ -17,6 +17,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
   const userEmail = user?.email || "";
+  const isCopyMode = !!editBookingData?.__copyMode;
 
   const { data: hourlyPackages = [] } = useGetAllHourlyRatesQuery(companyId, { skip: !companyId });
   const { data: generalPricing } = useGetGeneralPricingPublicQuery(companyId, { skip: !companyId });
@@ -95,8 +96,66 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     appNotifications: { customer: false }
   });
 
+  useEffect(() => {
+    if (editBookingData) {
+      const journey = editBookingData.primaryJourney || {};
+
+      setPrimaryJourneyData({
+        pickup: journey.pickup || "",
+        dropoff: journey.dropoff || "",
+        date: journey.date || "",
+        hour: journey.hour?.toString().padStart(2, '0') || "",
+        minute: journey.minute?.toString().padStart(2, '0') || "",
+        notes: journey.notes || "",
+        internalNotes: journey.internalNotes || "",
+        arrivefrom: journey.arrivefrom || "",
+        flightNumber: journey.flightNumber || "",
+        pickmeAfter: journey.pickmeAfter || "",
+        pickupDoorNumber: journey.pickupDoorNumber || "",
+        terminal: journey.terminal || "",
+        distanceText: journey.distanceText || "",
+        durationText: journey.durationText || "",
+      });
+
+      setDropOffs1([
+        journey.dropoff || "",
+        journey.additionalDropoff1 || "",
+        journey.additionalDropoff2 || "",
+      ].filter(Boolean));
+
+      setPassengerDetails({
+        name: editBookingData.passenger?.name || "",
+        email: editBookingData.passenger?.email || "",
+        phone: editBookingData.passenger?.phone || "",
+      });
+
+      setSelectedVehicle(editBookingData.vehicle || null);
+
+      setVehicleExtras({
+        passenger: editBookingData.vehicle?.passenger || 0,
+        childSeat: editBookingData.vehicle?.childSeat || 0,
+        handLuggage: editBookingData.vehicle?.handLuggage || 0,
+        checkinLuggage: editBookingData.vehicle?.checkinLuggage || 0,
+      });
+
+      setFareDetails((prev) => ({
+        ...prev,
+        paymentMethod: editBookingData.paymentMethod || "Cash",
+        cardPaymentReference: editBookingData.cardPaymentReference || "",
+        paymentGateway: editBookingData.paymentGateway || "",
+        journeyFare: editBookingData.journeyFare || 0,
+        driverFare: editBookingData.driverFare || 0,
+        returnJourneyFare: editBookingData.returnJourneyFare || 0,
+        returnDriverFare: editBookingData.returnDriverFare || 0,
+      }));
+
+      setreturnJourneyToggle(!!editBookingData.returnJourneyToggle);
+    }
+  }, [editBookingData]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!companyId || !primaryJourneyData.pickup || !dropOffs1[0]) {
       return toast.error("Missing required fields");
     }
@@ -113,11 +172,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       dynamicFields2[`dropoff_terminal_${i}`] = returnJourneyData[`dropoff_terminal_${i}`] || "";
     });
 
-    const isReverseJourney =
-      returnJourneyToggle &&
-      primaryJourneyData.pickup?.trim() === dropOffs2[0]?.trim() &&
-      dropOffs1[0]?.trim() === returnJourneyData.pickup?.trim();
-
     const vehicleData = {
       vehicleName: selectedVehicle?.vehicleName || "",
       ...vehicleExtras,
@@ -125,7 +179,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
     const passengerData = passengerDetails;
 
-    // NEW common fare & payment fields
     const paymentFields = {
       paymentMethod: fareDetails.paymentMethod,
       cardPaymentReference: fareDetails.cardPaymentReference,
@@ -143,75 +196,72 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       },
     };
 
-    try {
-      // ✅ Case 2: Primary + second saved as returnJourney
-      const payload1 = {
-        mode,
-        returnJourneyToggle: false,
-        companyId,
-        referrer: document.referrer || "manual",
-        vehicle: vehicleData,
-        passenger: passengerData,
-        primaryJourney: {
-          ...primaryJourneyData,
-          dropoff: dropOffs1[0],
-          additionalDropoff1: dropOffs1[1] || null,
-          additionalDropoff2: dropOffs1[2] || null,
+    const bookingPayload = {
+      mode,
+      returnJourneyToggle,
+      companyId,
+      referrer: document.referrer || "manual",
+      vehicle: vehicleData,
+      passenger: passengerData,
+      paymentMethod: paymentFields.paymentMethod,
+      cardPaymentReference: paymentFields.cardPaymentReference,
+      paymentGateway: paymentFields.paymentGateway,
+      journeyFare: paymentFields.journeyFare,
+      driverFare: paymentFields.driverFare,
+      returnJourneyFare: paymentFields.returnJourneyFare,
+      returnDriverFare: paymentFields.returnDriverFare,
+      emailNotifications: paymentFields.emailNotifications,
+      appNotifications: paymentFields.appNotifications,
+      primaryJourney: {
+        ...primaryJourneyData,
+        dropoff: dropOffs1[0],
+        additionalDropoff1: dropOffs1[1] || null,
+        additionalDropoff2: dropOffs1[2] || null,
+        hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+        fare: primaryFare,
+        ...dynamicFields1,
+      },
+      returnJourney: returnJourneyToggle
+        ? {
+          ...returnJourneyData,
+          dropoff: dropOffs2[0],
+          additionalDropoff1: dropOffs2[1] || null,
+          additionalDropoff2: dropOffs2[2] || null,
           hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
-          fare: primaryFare,
-          ...dynamicFields1,
-        },
-        PassengerEmail: emailNotify.customer ? passengerDetails.email : null,
-        ClientAdminEmail: emailNotify.admin ? userEmail : null,
-        ...paymentFields,
-      };
+          fare: returnFare,
+          ...dynamicFields2,
+        }
+        : undefined,
+      PassengerEmail: emailNotify.customer ? passengerDetails.email : null,
+      ClientAdminEmail: emailNotify.admin ? userEmail : null,
+    };
 
-      await createBooking(payload1).unwrap();
+    try {
+      if (editBookingData && editBookingData._id) {
+        // 🟢 UPDATE BOOKING
+        await updateBooking({
+          id: editBookingData._id,
+          updatedData: { bookingData: bookingPayload },
+        }).unwrap();
 
-      if (returnJourneyToggle) {
-        const payload2 = {
-          mode,
-          returnJourneyToggle: true,
-          companyId,
-          referrer: document.referrer || "manual",
-          vehicle: vehicleData,
-          passenger: passengerData,
-          primaryJourney: {
-            ...primaryJourneyData,
-            dropoff: dropOffs1[0],
-            additionalDropoff1: dropOffs1[1] || null,
-            additionalDropoff2: dropOffs1[2] || null,
-            hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
-            fare: primaryFare,
-            ...dynamicFields1,
-          },
-          returnJourney: {
-            ...returnJourneyData,
-            dropoff: dropOffs2[0],
-            additionalDropoff1: dropOffs2[1] || null,
-            additionalDropoff2: dropOffs2[2] || null,
-            hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
-            fare: returnFare,
-            ...dynamicFields2,
-          },
-          PassengerEmail: emailNotify.customer ? passengerDetails.email : null,
-          ClientAdminEmail: emailNotify.admin ? userEmail : null,
-          ...paymentFields,
-        };
-
-        await createBooking(payload2).unwrap();
+        toast.success("Booking updated successfully");
+      } else {
+        // 🆕 CREATE BOOKING
+        await createBooking(bookingPayload).unwrap();
+        toast.success("Booking created successfully");
       }
 
-      toast.success("Two bookings created. Return journey saved inside returnJourney.");
       onClose?.();
     } catch (err) {
-      toast.error("Booking failed.");
+      toast.error("Booking operation failed.");
     }
   };
 
   return (
     <>
-      {!editBookingData?._id && <OutletHeading name="New Booking" />}
+      {!editBookingData && (
+        <OutletHeading name="New Booking" />
+      )}
       <div className="flex flex-col items-center justify-center mb-6 space-y-4">
         <div className="flex">
           {["Transfer", "Hourly"].map((tab) => (
@@ -245,22 +295,29 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
                   hours: pkg.hours,
                 }),
               }))}
-              value={JSON.stringify(selectedHourly?.value)}
+              value={selectedHourly ? JSON.stringify(selectedHourly.value) : ""}
               onChange={(e) => {
-                const selected = hourlyPackages.find(
-                  (pkg) =>
-                    JSON.stringify({
-                      distance: pkg.distance,
-                      hours: pkg.hours,
-                    }) === e.target.value
-                );
-                setSelectedHourly({
-                  label: `${selected.distance} miles ${selected.hours} hours`,
-                  value: {
-                    distance: selected.distance,
-                    hours: selected.hours,
-                  },
-                });
+                const selectedValue = e.target.value;
+                if (!selectedValue) {
+                  setSelectedHourly(null); // Reset to default
+                } else {
+                  const selected = hourlyPackages.find(
+                    (pkg) =>
+                      JSON.stringify({
+                        distance: pkg.distance,
+                        hours: pkg.hours,
+                      }) === selectedValue
+                  );
+                  if (selected) {
+                    setSelectedHourly({
+                      label: `${selected.distance} miles ${selected.hours} hours`,
+                      value: {
+                        distance: selected.distance,
+                        hours: selected.hours,
+                      },
+                    });
+                  }
+                }
               }}
             />
           </div>
@@ -315,8 +372,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           </label>
         </div>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div
+        className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${editBookingData?._id || editBookingData?.__copyMode ? "px-6" : ""
+          }`}
+      >
         <div className="col-span-6">
           <div className="bg-white shadow-lg rounded-2xl border border-gray-200">
             <div className="bg-[#0f192d] px-6 rounded-t-2xl py-3">

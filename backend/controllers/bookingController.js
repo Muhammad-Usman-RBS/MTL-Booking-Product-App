@@ -256,72 +256,181 @@ export const getAllBookings = async (req, res) => {
 export const updateBooking = async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedData = req.body;
+    const {
+      bookingData = {},
+      PassengerEmail,
+      ClientAdminEmail,
+    } = req.body;
 
     if (!id || id.length !== 24) {
       return res.status(400).json({ message: "Invalid booking ID" });
     }
 
-    // Optional: Validate required fields in primaryJourney
+    const {
+      mode = "Transfer",
+      returnJourneyToggle,
+      companyId,
+      referrer = "Manual Entry",
+      vehicle = {},
+      passenger = {},
+      primaryJourney = {},
+      returnJourney = {},
+      paymentMethod = "Cash",
+      cardPaymentReference = null,
+      paymentGateway = null,
+      journeyFare = 0,
+      driverFare = 0,
+      returnJourneyFare = 0,
+      returnDriverFare = 0,
+      emailNotifications = {},
+      appNotifications = {},
+      voucher,
+      voucherApplied,
+    } = bookingData;
+
+    if (!companyId || companyId.length !== 24) {
+      return res.status(400).json({ message: "Invalid or missing companyId" });
+    }
+
     const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
+
+    const returnIsValid = returnJourneyToggle &&
+      returnJourney &&
+      requiredFields.every((f) => returnJourney[f]);
+
+    const journeyToValidate = returnJourneyToggle ? returnJourney : primaryJourney;
+
     for (const field of requiredFields) {
-      if (!updatedData?.primaryJourney?.[field]) {
-        return res.status(400).json({
-          message: `Missing required field in primaryJourney: ${field}`,
-        });
+      if (!journeyToValidate[field]) {
+        return res.status(400).json({ message: `Missing field in ${returnJourneyToggle ? "returnJourney" : "primaryJourney"}: ${field}` });
       }
     }
 
-    // Sanitize or validate dynamic dropoff fields if needed
-    const cleanDynamicFields = (journey = {}) => {
-      const dynamicFields = {};
+    const extractDynamicDropoffFields = (journey = {}) => {
+      const fields = {};
       Object.keys(journey).forEach((key) => {
-        if (
-          key.startsWith("dropoffDoorNumber") ||
-          key.startsWith("dropoff_terminal_")
-        ) {
-          dynamicFields[key] = journey[key];
+        if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
+          fields[key] = journey[key] ?? "";
         }
       });
-      return dynamicFields;
+      return fields;
     };
 
-    if (updatedData.primaryJourney) {
-      updatedData.primaryJourney = {
-        ...updatedData.primaryJourney,
-        ...cleanDynamicFields(updatedData.primaryJourney),
-      };
-    }
-    if (updatedData.returnJourney) {
-      updatedData.returnJourney = {
-        ...updatedData.returnJourney,
-        ...cleanDynamicFields(updatedData.returnJourney),
-      };
-    }
-
-    const booking = await Booking.findByIdAndUpdate(
-      id,
-      {
-        ...updatedData,
-        ...(updatedData.driverIds && { drivers: updatedData.driverIds }),
+    const updatedPayload = {
+      mode,
+      returnJourneyToggle: !!returnJourneyToggle,
+      companyId,
+      referrer,
+      vehicle: {
+        vehicleName: vehicle.vehicleName ?? null,
+        passenger: parseInt(vehicle.passenger) || 0,
+        childSeat: parseInt(vehicle.childSeat) || 0,
+        handLuggage: parseInt(vehicle.handLuggage) || 0,
+        checkinLuggage: parseInt(vehicle.checkinLuggage) || 0,
       },
-      { new: true }
-    ).populate("drivers");
+      passenger: {
+        name: passenger.name ?? null,
+        email: passenger.email ?? null,
+        phone: passenger.phone ?? null,
+      },
+      paymentMethod,
+      cardPaymentReference,
+      paymentGateway,
+      journeyFare: Number(journeyFare),
+      driverFare: Number(driverFare),
+      returnJourneyFare: Number(returnJourneyFare),
+      returnDriverFare: Number(returnDriverFare),
+      emailNotifications: {
+        admin: !!emailNotifications.admin,
+        customer: !!emailNotifications.customer,
+      },
+      appNotifications: {
+        customer: !!appNotifications.customer,
+      },
+      primaryJourney: {
+        pickup: primaryJourney.pickup?.trim() ?? "",
+        dropoff: primaryJourney.dropoff?.trim() ?? "",
+        additionalDropoff1: primaryJourney.additionalDropoff1 ?? null,
+        additionalDropoff2: primaryJourney.additionalDropoff2 ?? null,
+        pickupDoorNumber: primaryJourney.pickupDoorNumber ?? "",
+        terminal: primaryJourney.terminal ?? "",
+        arrivefrom: primaryJourney.arrivefrom ?? "",
+        flightNumber: primaryJourney.flightNumber ?? "",
+        pickmeAfter: primaryJourney.pickmeAfter ?? "",
+        notes: primaryJourney.notes ?? "",
+        internalNotes: primaryJourney.internalNotes ?? "",
+        date: primaryJourney.date ?? "",
+        hour: primaryJourney.hour !== undefined ? parseInt(primaryJourney.hour) : null,
+        minute: primaryJourney.minute !== undefined ? parseInt(primaryJourney.minute) : null,
+        fare: primaryJourney.fare ?? 0,
+        hourlyOption: primaryJourney.hourlyOption ?? null,
+        distanceText: primaryJourney.distanceText ?? "",
+        durationText: primaryJourney.durationText ?? "",
+        voucher,
+        voucherApplied,
+        ...extractDynamicDropoffFields(primaryJourney),
+      },
+    };
 
-    if (!booking) {
+    if (returnIsValid) {
+      updatedPayload.returnJourney = {
+        pickup: returnJourney.pickup?.trim() ?? "",
+        dropoff: returnJourney.dropoff?.trim() ?? "",
+        additionalDropoff1: returnJourney.additionalDropoff1 ?? null,
+        additionalDropoff2: returnJourney.additionalDropoff2 ?? null,
+        pickupDoorNumber: returnJourney.pickupDoorNumber ?? "",
+        terminal: returnJourney.terminal ?? "",
+        arrivefrom: returnJourney.arrivefrom ?? "",
+        flightNumber: returnJourney.flightNumber ?? "",
+        pickmeAfter: returnJourney.pickmeAfter ?? "",
+        notes: returnJourney.notes ?? "",
+        internalNotes: returnJourney.internalNotes ?? "",
+        date: returnJourney.date ?? "",
+        hour: returnJourney.hour !== undefined ? parseInt(returnJourney.hour) : null,
+        minute: returnJourney.minute !== undefined ? parseInt(returnJourney.minute) : null,
+        fare: returnJourney.fare ?? 0,
+        hourlyOption: returnJourney.hourlyOption ?? null,
+        distanceText: returnJourney.distanceText ?? "",
+        durationText: returnJourney.durationText ?? "",
+        ...extractDynamicDropoffFields(returnJourney),
+      };
+    }
+
+    const updatedBooking = await Booking.findByIdAndUpdate(id, updatedPayload, { new: true });
+
+    if (!updatedBooking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    res.status(200).json({
+    const sanitize = (booking) => {
+      const { _id, __v, createdAt, updatedAt, companyId, ...clean } = booking.toObject();
+      return clean;
+    };
+
+    const emailData = {
+      title: "Booking Updated",
+      data: { Booking: sanitize(updatedBooking) },
+    };
+
+    if (PassengerEmail) {
+      await sendEmail(PassengerEmail, "Your Booking Was Updated", emailData);
+    }
+
+    if (ClientAdminEmail) {
+      await sendEmail(ClientAdminEmail, "Booking Updated", emailData);
+    }
+
+    return res.status(200).json({
       success: true,
       message: "Booking updated successfully",
-      booking,
+      booking: sanitize(updatedBooking),
     });
   } catch (error) {
     console.error("❌ Error in updateBooking:", error);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 };
 
