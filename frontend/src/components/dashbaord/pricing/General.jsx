@@ -23,12 +23,12 @@ const General = () => {
   useEffect(() => {
     if (isSuccess && data) {
       setFormData({
-        pickupAirportPrice: data.pickupAirportPrice || "0",
-        dropoffAirportPrice: data.dropoffAirportPrice || "0",
-        minAdditionalDropOff: data.minAdditionalDropOff || "0",
-        childSeatPrice: data.childSeatPrice || "0",
+        pickupAirportPrice: data.pickupAirportPrice ?? "",
+        dropoffAirportPrice: data.dropoffAirportPrice ?? "",
+        minAdditionalDropOff: data.minAdditionalDropOff ?? "",
+        childSeatPrice: data.childSeatPrice ?? "",
         cardPaymentType: data.cardPaymentType || "Card",
-        cardPaymentAmount: data.cardPaymentAmount || "0",
+        cardPaymentAmount: data.cardPaymentAmount ?? "",
       });
     } else if (isError) {
       toast.error("Failed to fetch pricing.");

@@ -134,6 +134,7 @@ const NewInvoice = () => {
       return;
     }
 
+    // Group bookings by customer
     const grouped = {};
 
     selectedBookings.forEach((booking) => {
@@ -157,43 +158,44 @@ const NewInvoice = () => {
       grouped[uniqueKey].bookings.push(booking);
     });
 
-    const customers = Object.values(grouped).map((entry) => entry.customer);
-
-    const items = Object.values(grouped).flatMap((entry) =>
-      entry.bookings.map((booking) => {
-        const fare =
-          booking.returnJourney?.fare || booking.primaryJourney?.fare || 0;
-        const taxType = bookingTaxes[booking._id] || "No Tax";
-        const totalAmount = taxType === "Tax" ? fare * 1.2 : fare;
-        return {
-          bookingId: booking.bookingId,
-          pickup: booking.primaryJourney?.pickup || "-",
-          dropoff: booking.primaryJourney?.dropoff || "-",
-          date: booking.createdAt,
-          fare,
-          tax: taxType,
-          totalAmount,
-          status: "unpaid",
-        };
-      })
-    );
-
-    const payload = {
-      invoiceNumber: "",
-      companyId: user.companyId,
-      customers,
-      items,
-    };
-
     try {
-      await createInvoice(payload).unwrap();
+      for (const entry of Object.values(grouped)) {
+        const { customer, bookings } = entry;
 
-      toast.success("Invoice Created Successfully");
+        const items = bookings.map((booking) => {
+          const fare =
+            booking.returnJourney?.fare || booking.primaryJourney?.fare || 0;
+          const taxType = bookingTaxes[booking._id] || "No Tax";
+          const totalAmount = taxType === "Tax" ? fare * 1.2 : fare;
+          return {
+            bookingId: booking.bookingId,
+            pickup: booking.primaryJourney?.pickup || "-",
+            dropoff: booking.primaryJourney?.dropoff || "-",
+            date: booking.createdAt,
+            fare,
+            tax: taxType,
+            totalAmount,
+            status: "unpaid",
+          };
+        });
+
+        const payload = {
+          invoiceNumber: "",
+          companyId: user.companyId,
+          customer,
+          items,
+        };
+
+        await createInvoice(payload).unwrap();
+      }
+
+      toast.success("Invoices Created Successfully");
     } catch (err) {
       console.error("Invoice creation failed", err);
-      toast.error("Failed to create invoice");
+      toast.error("Failed to create invoices");
     }
   };
+
   useEffect(() => {
     const [first, last] = getFirstAndLastDay(0);
     setStartDate(first);
@@ -216,8 +218,7 @@ const NewInvoice = () => {
         ),
       },
     ];
-  }
-   else {
+  } else {
     tableData = customerFilteredBookings.map((item) => ({
       checkbox: (
         <input
@@ -328,8 +329,7 @@ const NewInvoice = () => {
           </div>
         )}
       </div>
-      <div >
-        
+      <div>
         <CustomTable
           showSearch={false}
           showRefresh={false}

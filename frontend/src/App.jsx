@@ -98,7 +98,7 @@ function App() {
               {/* Invoices */}
               <Route path="invoices/list" element={<InvoicesList />} />
               <Route path="invoices/new" element={<NewInvoice />} />
-              <Route path="invoices/edit" element={<EditInvoice />} />
+              <Route path="invoices/edit/:id" element={<EditInvoice />} />
 
               {/* Drivers */}
               <Route path="drivers/list" element={<DriverList />} />

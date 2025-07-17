@@ -10,23 +10,13 @@ const ProtectedRoute = () => {
   const location = useLocation();
   const currentPath = location.pathname;
   const token = localStorage.getItem("token");
-  
   useEffect(() => {
-    const redirectToLogin = () => {
+    if (!token || isTokenExpired(token)) {
       localStorage.clear();
       window.location.replace("/login");
-    };
-  
-    if (!token || isTokenExpired(token)) {
-      redirectToLogin();
-  
-      
-      window.addEventListener
     }
-  }, [currentPath, token]);
-  
-
-   const authorizedSidebarItems = sidebarItems.filter((item) =>
+  }, [currentPath]);
+  const authorizedSidebarItems = sidebarItems.filter((item) =>
     userPermissions.includes(item.title)
   );
 

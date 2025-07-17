@@ -209,7 +209,7 @@ const VehiclePricing = () => {
               <input
                 type={key === "vehicleName" ? "text" : "number"}
                 className="custom_input"
-                value={selectedAccount?.[key] || ""}
+                value={selectedAccount?.[key] ?? ""}
                 onChange={(e) =>
                   setSelectedAccount({
                     ...selectedAccount,

@@ -219,7 +219,7 @@ const HourlyPackages = () => {
               <input
                 type="number"
                 name={name}
-                value={formData[name] || ""}
+                value={formData[name] ?? ""}
                 onChange={handleInputChange}
                 className="custom_input"
                 required

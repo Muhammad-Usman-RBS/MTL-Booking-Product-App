@@ -20,7 +20,7 @@ const InvoiceDetails = ({ item }) => {
   const [updateInvoice] = useUpdateInvoiceMutation();
 
   const [message, setMessage] = useState("");
-  const [status, setStatus] = useState(item?.status || "UnPaid");
+  const [status, setStatus] = useState(item?.status);
   const [selectedStatus, setSelectedStatus] = useState(status);
 
   const user = useSelector((state) => state.auth.user);
@@ -31,31 +31,21 @@ const InvoiceDetails = ({ item }) => {
     isLoading: companyLoading,
     isError: companyError,
   } = useGetCompanyByIdQuery(companyId, { skip: !companyId });
-  // Add this right after the useGetCompanyByIdQuery hook
   const company = companyData || {};
   const handleStatusUpdate = async () => {
     try {
       await updateInvoice({
         id: item._id,
-        data: { status: selectedStatus },
+        invoiceData: { status: selectedStatus },
       }).unwrap();
       setStatus(selectedStatus);
       toast.success(`Status updated to "${selectedStatus}"`);
     } catch (error) {
-      console.error("Status update failed:", error);
       toast.error("Failed to update invoice status.");
     }
   };
-  
-  // Add loading and error handling
-  if (companyLoading) {
-    console.log("Loading company data...");
-  }
 
-  if (companyError) {
-    console.log("Error fetching company:", companyError);
-  }
-  const statusOption = ["Paid", "UnPaid"];
+  const statusOption = ["paid", "unpaid"];
 
   if (!item) return null;
 
@@ -88,14 +78,13 @@ const InvoiceDetails = ({ item }) => {
     setShowEmailModal(false);
   };
 
-
   return (
     <>
       <div>
         <div className="flex flex-wrap gap-2 sm:gap-3 mb-3 mt-8">
           {/* Edit Button */}
-          <Link to="/dashboard/edit-invoice">
-            <button className="p-2.5 py-3 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition">
+          <Link to={`/dashboard/invoices/edit/${item._id}`}>
+          <button className="p-2.5 py-3 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition">
               <Icons.SquarePen size={16} />
             </button>
           </Link>
@@ -132,16 +121,17 @@ const InvoiceDetails = ({ item }) => {
               />
             </div>
             <button
-  onClick={handleStatusUpdate}
-  disabled={status === selectedStatus}
-  className={`p-2.5 text-white rounded-md transition ${
-    status === selectedStatus
-      ? "bg-gray-400 cursor-not-allowed"
-      : "bg-emerald-500 hover:bg-emerald-600"
-  }`}
->
-  <Icons.Check size={16} />
-</button>          </div>
+              onClick={handleStatusUpdate}
+              disabled={status === selectedStatus}
+              className={`p-2.5 text-white rounded-md transition ${
+                status === selectedStatus
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-emerald-500 hover:bg-emerald-600"
+              }`}
+            >
+              <Icons.Check size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Invoice Display */}
@@ -154,7 +144,7 @@ const InvoiceDetails = ({ item }) => {
                 className="company-logo"
               />
               <p className="company-name">{company.companyName}</p>
-              <p >VAT Number - 442612419              </p>
+              <p>VAT Number - 442612419 </p>
 
               <p>
                 {[company.address, company.city, company.state, company.zip]
@@ -167,17 +157,27 @@ const InvoiceDetails = ({ item }) => {
                 {company.email}
               </a>
 
-              <p>Contact: {company.contactName || company.contact}</p>
+              <p>Contact: {company.contactName}</p>
             </div>
 
             <div className="invoice-info">
               <h2 className="invoice-title">INVOICE</h2>
+              <p
+                className={`px-2 py-1 inline-block text-white rounded ${
+                  item?.status === "paid" ? "bg-green-600" : "bg-gray-500"
+                }`}
+              >
+                {item?.status}
+              </p>
               <p className="invoice-no">#{item?.invoiceNumber}</p>
               <p>
                 Invoice Date: {new Date(item?.createdAt).toLocaleDateString()}
               </p>
               <p>
-  Due Date:
+  Invoice Date: {new Date(item?.createdAt).toLocaleDateString()}
+</p>
+<p>
+  Due Date: 
   {item?.items?.[0]?.date
     ? new Date(item.items[0].date).toLocaleDateString()
     : "-"}
@@ -187,17 +187,13 @@ const InvoiceDetails = ({ item }) => {
                 <p>
                   <strong>Bill To</strong>
                 </p>
-                {item.customers.map((cust, idx) => (
-                  <div className=" flex flex-col font-medium" key={idx}>
-                    <span>
-                      {cust.name} 
-                      </span>
-                    <a href={`mailto:${cust.email}`}>{cust.email}</a>
-                   <span>
-                    {cust.phone ? `${cust.phone}` : ""}
-                    </span> 
-                  </div>
-                ))}
+                <div className="flex flex-col font-medium">
+                  <span>{item.customer?.name}</span>
+                  <a href={`mailto:${item.customer?.email}`}>
+                    {item.customer?.email}
+                  </a>
+                  <span>{item.customer?.phone || ""}</span>
+                </div>
               </div>
 
               <p>{item?.phone}</p>

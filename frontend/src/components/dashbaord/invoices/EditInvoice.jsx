@@ -1,16 +1,71 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import {
+  useGetInvoiceByIdQuery,
+  useUpdateInvoiceMutation,
+} from "../../../redux/api/invoiceApi";
+import { toast } from "react-toastify";
 
 const InvoicePage = () => {
+  const { id } = useParams();
+  const [updateInvoice] = useUpdateInvoiceMutation();
+  const { data: invoiceData, isLoading } = useGetInvoiceByIdQuery(id);
+console.log(invoiceData)
   const [selectAll, setSelectAll] = useState(false);
   const [checkedItems, setCheckedItems] = useState({
     item1: false,
     item2: false,
   });
-
+  const [billTo, setBillTo] = useState("");
+  const [notes, setNotes] = useState("");
+  const [discount, setDiscount] = useState("0.00");
+  const [deposit, setDeposit] = useState("0.00");
+  const [dueDate, setDueDate] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState("");
+  useEffect(() => {
+    if (invoiceData?.invoice) {
+      const invoice = invoiceData.invoice;
+  
+      const customerText = `${invoice.customer?.name || ""}\n${
+        invoice.customer?.email || ""
+      }\n${invoice.customer?.phone || ""}`;
+      setBillTo(customerText);
+  
+      // Set invoice date from createdAt
+      setInvoiceDate(invoice.createdAt?.split("T")[0] || "");
+  
+      // Set due date from first item date
+      setDueDate(invoice.items?.[0]?.date?.split("T")[0] || "");
+  
+      setNotes(invoice.notes || "");
+  
+      const item1 = invoice.items[0];
+      const item2 = invoice.items[1];
+  
+      if (item1) {
+        setItem1Details(
+          `${item1.bookingId} - ${invoice.customer?.name || ""}\nPickup: ${
+            item1.pickup
+          }\n\nDrop off: ${item1.dropoff}`
+        );
+      }
+  
+      if (item2) {
+        setItem2Details(
+          `${item2.bookingId} - ${invoice.customer?.name || ""}\nPickup: ${
+            item2.pickup
+          }\n\nDrop off: ${item2.dropoff}`
+        );
+      }
+  
+      setDiscount(invoice.discount?.toFixed(2) || "0.00");
+      setDeposit(invoice.deposit?.toFixed(2) || "0.00");
+    }
+  }, [invoiceData]);
+  
   const [item1Details, setItem1Details] = useState(
     `22122323 - Erin Leahy\nPickup: London Stansted Airport (STN)\n\nDrop off: 32 The Bishops Ave, London N2 0BA, UK`
   );
@@ -57,7 +112,8 @@ const InvoicePage = () => {
           <textarea
             className="custom_input"
             rows={3}
-            defaultValue={`Cabhit\nranaw43500@khaxan.com\n+447930844247`}
+            value={billTo}
+            onChange={(e) => setBillTo(e.target.value)}
           />
         </div>
 
@@ -69,7 +125,8 @@ const InvoicePage = () => {
             <input
               type="date"
               className="custom_input"
-              defaultValue="2023-01-04"
+              value={invoiceDate}
+              onChange={(e) => setInvoiceDate(e.target.value)}
             />
           </div>
           <div>
@@ -79,7 +136,8 @@ const InvoicePage = () => {
             <input
               type="date"
               className="custom_input"
-              defaultValue="2023-01-11"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
             />
           </div>
         </div>
@@ -146,7 +204,7 @@ const InvoicePage = () => {
                 <input
                   type="text"
                   className="custom_input"
-                  defaultValue={i === 1 ? "92.00" : "0.00"}
+                  defaultValue={i === 1 ? "90.00" : "0.00"}
                 />
               </div>
             </div>
@@ -154,46 +212,121 @@ const InvoicePage = () => {
         </div>
 
         <div className="text-right mb-6 text-gray-800">
-          <p>
-            Sub Total: <strong className="text-blue-800">£92.00</strong>
-          </p>
+  {/* Sub Total */}
+  <p>
+    Sub Total: <strong className="text-blue-800">
+      £
+      {invoiceData?.invoice?.items
+        ?.reduce((acc, item) => acc + (item.fare || 0), 0)
+        .toFixed(2)}
+    </strong>
+  </p>
 
-          <p className="mt-4 flex justify-end items-center gap-2">
-            <span className="text-gray-700">Discount:</span>
-            <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" />
-            <input
-              type="text"
-              className="border border-gray-300 rounded-lg p-1 w-24 text-right"
-              defaultValue="0.00"
-            />
-          </p>
+  {/* Discount */}
+  <p className="mt-4 flex justify-end items-center gap-2">
+    <span className="text-gray-700">Discount:</span>
+    <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" />
+    <input
+      type="text"
+      className="border border-gray-300 rounded-lg p-1 w-24 text-right"
+      value={discount}
+      onChange={(e) => setDiscount(e.target.value)}
+    />
+  </p>
 
-          <p className="mt-2 flex justify-end items-center gap-2">
-            <span className="text-gray-700">Deposit:</span>
-            <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" />
-            <input
-              type="text"
-              className="border border-gray-300 rounded-lg p-1 w-24 text-right"
-              defaultValue="0.00"
-            />
-          </p>
+  {/* Deposit */}
+  <p className="mt-2 flex justify-end items-center gap-2">
+    <span className="text-gray-700">Deposit:</span>
+    <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" />
+    <input
+      type="text"
+      className="border border-gray-300 rounded-lg p-1 w-24 text-right"
+      value={deposit}
+      onChange={(e) => setDeposit(e.target.value)}
+    />
+  </p>
 
-          <p className="mt-4 text-xl font-bold text-blue-800">Total: £92.00</p>
-        </div>
+  {/* Grand Total */}
+  <p className="mt-4 text-xl font-bold text-blue-800">
+    Total: £
+    {(
+      invoiceData?.invoice?.items?.reduce((acc, item) => acc + (item.fare || 0), 0) -
+      parseFloat(discount || 0) +
+      parseFloat(deposit || 0)
+    ).toFixed(2)}
+  </p>
+</div>
 
         <div className="bg-white p-2 md:p-6 rounded-2xl shadow mb-6 border">
           <label className="block font-bold text-gray-700 mb-2 text-lg">
             Notes
           </label>
           <textarea
-            className="custom_input"
-            rows={3}
-            defaultValue="T&Cs apply. Please call for detail"
-          />
+  className="custom_input"
+  rows={3}
+  value={notes}
+  onChange={(e) => setNotes(e.target.value)}
+/>
+
         </div>
 
         <div className="text-right">
-          <button className="btn btn-success">Save</button>
+          <button
+            className="btn btn-success"
+            onClick={async () => {
+              try {
+                const items = [item1Details, item2Details].map((text) => {
+                  const lines = text.split("\n").filter(Boolean);
+                  const bookingLine = lines[0] || "";
+                  const pickupLine = lines[1] || "";
+                  const dropoffLine = lines[3] || "";
+                
+                  const bookingId = bookingLine.split(" - ")[0]?.trim() || "";
+                  const pickup = pickupLine.replace("Pickup: ", "").trim();
+                  const dropoff = dropoffLine.replace("Drop off: ", "").trim();
+                
+                  return {
+                    bookingId,
+                    pickup,
+                    dropoff,
+                    totalAmount: 0,
+                    tax: "No Tax",
+                    fare: 0,
+                    date: new Date(),
+                  };
+                });
+                
+            
+                const [name = "", email = "", phone = ""] = billTo.split("\n");
+            
+                await updateInvoice({
+                  id,
+                  invoiceData: {
+                    customer: {
+                      name: name.trim(),
+                      email: email.trim(),
+                      phone: phone.trim(),
+                    },
+                    invoiceDate,
+                    dueDate,
+                    items,
+                    notes,
+                    discount: parseFloat(discount),
+                    deposit: parseFloat(deposit),
+                    status: "unpaid",
+                  },
+                }).unwrap();
+            
+                toast.success("Invoice updated successfully!");
+              } catch (err) {
+                console.error(err);
+                toast.error("Failed to update invoice");
+              }
+            }}
+            
+          >
+            Save
+          </button>
         </div>
       </div>
     </>

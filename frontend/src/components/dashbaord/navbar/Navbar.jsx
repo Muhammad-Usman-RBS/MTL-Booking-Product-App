@@ -23,7 +23,7 @@ function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-    const [readNotifications, setReadNotifications] = useState(new Set());
+  const [readNotifications, setReadNotifications] = useState(new Set());
 
   const [showJourneyModal, setShowJourneyModal] = useState(false);
   const [selectedJourneyData, setSelectedJourneyData] = useState(null);
@@ -111,18 +111,20 @@ function Navbar() {
 
   useEffect(() => {
     if (!user?.companyId) return;
-
-    
   }, [refetchBookings, user?.companyId]);
   return (
     <>
-      <nav className="bg-theme text-theme z-20 relative p-4 flex flex-wrap justify-between items-center gap-2 sm:gap-4">
-        <button onClick={toggleSidebar} className=" cursor-pointer">
+      <nav className="bg-theme text-theme z-20 relative p-4 flex  justify-between items-start gap-2 sm:gap-4">
+        <div className=" flex  space-x-2">
+          <button onClick={toggleSidebar} className=" cursor-pointer">
           <Icons.Menu className="size-6 text-theme" />
         </button>
 
-        <h1 className="text-xl hidden lg:block  font-bold uppercase">Admin Panel</h1>
-        <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-wrap">
+        <h1 className="text-xl hidden lg:block  font-bold uppercase">
+          Admin Panel
+        </h1>
+          </div>
+      <div className="flex items-center  justify-end gap-2 sm:gap-4 flex-wrap">
           <div className="relative">
             <button
               onClick={() => setIsThemeOpen(!isThemeOpen)}
@@ -181,6 +183,7 @@ function Navbar() {
               </div>
             )}
           </div>
+            <div className="flex lg:flex-row md:flex-row sm:flex-row xs flex-row-reverse">
 
           <div className="relative">
             <button
@@ -239,21 +242,20 @@ function Navbar() {
           >
             <Icons.BellPlus className="size-5" />
             <div>
-              { userBookings?.length >= 1&& 
-              <>
-
-                <span className="absolute -top-2 right-0 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
-                {(userBookings?.length ) - readNotifications.size}
-              </span>
-              </>
-              }
+              {userBookings?.length >= 1 && (
+                <>
+                  <span className="absolute -top-2 right-0 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
+                    {userBookings?.length - readNotifications.size}
+                  </span>
+                </>
+              )}
             </div>
 
             {showTooltip && (
               <div
                 onMouseEnter={handleMouseEnterTooltip}
                 onMouseLeave={handleMouseLeave}
-                className="bg-white absolute border-gray-300 border-[1.5px] top-12 right-0  text-black z-[999] w-96 max-h-96 overflow-hidden"
+                className="bg-white absolute border-gray-300 border-[1.5px] top-12 right-0  text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden"
               >
                 <div className="border-b px-4 py-3 text-theme bg-theme">
                   <div className="flex items-center justify-between">
@@ -329,28 +331,28 @@ function Navbar() {
                               )}
                             </p>
                             <div className=" flex items-center mt-2 justify-between">
-                                <div className="flex items-center">
-                                  <Icons.Clock className="w-3 h-3 text-gray-400" />
-                                  <span className="text-xs text-gray-500">
-                                    {getTimeAgo(data.createdAt)}
-                                  </span>
-                                </div>
-                                <div>
-                                  {!readNotifications.has(data._id) && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setReadNotifications(
-                                          (prev) => new Set([...prev, data._id])
-                                        );
-                                      }}
-                                      className=" text-xs px-2 py-1 text-black cursor-pointer"
-                                    >
-                                      Mark as read
-                                    </button>
-                                  )}
-                                </div>
+                              <div className="flex items-center">
+                                <Icons.Clock className="w-3 h-3 text-gray-400" />
+                                <span className="text-xs text-gray-500">
+                                  {getTimeAgo(data.createdAt)}
+                                </span>
                               </div>
+                              <div>
+                                {!readNotifications.has(data._id) && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setReadNotifications(
+                                        (prev) => new Set([...prev, data._id])
+                                      );
+                                    }}
+                                    className=" text-xs px-2 py-1 text-black cursor-pointer"
+                                  >
+                                    Mark as read
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -371,6 +373,8 @@ function Navbar() {
               </div>
             )}
           </div>
+          </div>
+
         </div>
       </nav>
 

@@ -22,26 +22,18 @@ const generateInvoiceNumber = async () => {
 export const createInvoice = async (req, res) => {
   try {
     const user = req.user;
-    const { items, customers } = req.body;
+    const { items, customer } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: "Invoice items are required." });
     }
-
-    if (!customers || !Array.isArray(customers) || customers.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "At least one customer is required." });
-    }
-
-    const total = items.reduce((acc, item) => acc + item.totalAmount, 0);
 
     const invoiceNumber = await generateInvoiceNumber();
 
     const newInvoice = new Invoice({
       invoiceNumber,
       companyId: user.companyId,
-      customers, // ✅ updated
+      customer, // ✅ updated
       items,
     });
 
@@ -57,6 +49,26 @@ export const createInvoice = async (req, res) => {
   }
 };
 
+export const getInvoiceById = async (req, res) => {
+  try {
+    const user = req.user;
+    const { id } = req.params;
+ 
+    const invoice = await Invoice.findOne({
+      _id: id,
+      companyId: user.companyId,
+    });
+ 
+    if (!invoice) {
+      return res.status(404).json({ error: "Invoice not found." });
+    }
+ 
+    return res.status(200).json({ invoice });
+  } catch (error) {
+    console.error("Get invoice by ID error:", error);
+    return res.status(500).json({ error: "Failed to fetch invoice." });
+  }
+ };
 export const getAllInvoices = async (req, res) => {
   try {
     const user = req.user; // assuming user is authenticated and attached
@@ -76,7 +88,7 @@ export const updateInvoice = async (req, res) => {
   try {
     const user = req.user;
     const { id } = req.params;
-    const { customers, items, status, notes } = req.body;
+    const {  items, status, notes } = req.body;
 
     const invoice = await Invoice.findOne({
       _id: id,
@@ -87,7 +99,6 @@ export const updateInvoice = async (req, res) => {
       return res.status(404).json({ error: "Invoice not found." });
     }
 
-    if (customers && Array.isArray(customers)) invoice.customers = customers;
     if (items && Array.isArray(items)) invoice.items = items;
     if (status) invoice.status = status;
     if (notes) invoice.notes = notes;
