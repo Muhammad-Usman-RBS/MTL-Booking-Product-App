@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLazyGetDistanceQuery, useLazyGeocodeQuery } from "../redux/api/googleApi";
 import { useGetAllHourlyRatesQuery } from "../redux/api/hourlyPricingApi";
 import { useFetchAllPostcodePricesWidgetQuery } from "../redux/api/postcodePriceApi";
-import { useGetFixedPricesForWidgetQuery } from "../redux/api/fixedPriceApi";
+import { useGetFixedPricesForWidgetQuery, useGetExtrasForWidgetQuery } from "../redux/api/fixedPriceApi";
 import { useGetAllVehiclesQuery } from "../redux/api/vehicleApi";
 import { useGetGeneralPricingPublicQuery } from "../redux/api/generalPricingApi";
 import { useGetDiscountsByCompanyIdQuery } from "../redux/api/discountApi";
@@ -30,6 +30,7 @@ export const useBookingFare = ({
   const { data: allVehicles = [] } = useGetAllVehiclesQuery();
   const { data: generalPricing = {} } = useGetGeneralPricingPublicQuery(companyId, { skip: !companyId });
   const { data: discounts = [] } = useGetDiscountsByCompanyIdQuery(companyId, { skip: !companyId });
+  const { data: extrasPricing = [] } = useGetExtrasForWidgetQuery(companyId, { skip: !companyId, });
 
   const [distanceText, setDistanceText] = useState('');
   const [durationText, setDurationText] = useState('');
@@ -67,6 +68,15 @@ export const useBookingFare = ({
     return total;
   };
 
+  const getZoneEntryFee = (pickupCoord, dropoffCoord) => {
+    const matchedZone = extrasPricing.find((zone) =>
+      isWithinZone(pickupCoord, zone.coordinates)
+    ) || extrasPricing.find((zone) =>
+      isWithinZone(dropoffCoord, zone.coordinates)
+    );
+    return matchedZone?.price || 0;
+  };
+
   const isWithinZone = (point, zone) => {
     if (!point || !zone || zone.length < 4) return false;
     const lats = zone.map(c => c.lat);
@@ -79,20 +89,22 @@ export const useBookingFare = ({
     );
   };
 
-  const getZonePrice = (pickup, dropoff) => {
+  const getZonePrice = (pickupCoord, dropoffCoord) => {
     for (const zone of fixedPrices) {
-      const direction = zone.direction?.toLowerCase();
-      const pickupInPickupZone = pickup.some(p => isWithinZone(p, zone.pickupCoordinates));
-      const dropInDropZone = dropoff.some(d => isWithinZone(d, zone.dropoffCoordinates));
-      const dropInPickupZone = dropoff.some(d => isWithinZone(d, zone.pickupCoordinates));
-      const pickupInDropZone = pickup.some(p => isWithinZone(p, zone.dropoffCoordinates));
+      const direction = (zone.direction || '').toLowerCase();
+
+      const pickupInPickupZone = isWithinZone(pickupCoord, zone.pickupCoordinates);
+      const dropoffInDropoffZone = isWithinZone(dropoffCoord, zone.dropoffCoordinates);
+
+      const pickupInDropoffZone = isWithinZone(pickupCoord, zone.dropoffCoordinates);
+      const dropoffInPickupZone = isWithinZone(dropoffCoord, zone.pickupCoordinates);
 
       if (direction === 'both ways') {
-        if ((pickupInPickupZone && dropInDropZone) || (dropInPickupZone && pickupInDropZone)) {
+        if ((pickupInPickupZone && dropoffInDropoffZone) || (pickupInDropoffZone && dropoffInPickupZone)) {
           return zone.price;
         }
       } else if (direction === 'one way') {
-        if (pickupInPickupZone && dropInDropZone) {
+        if (pickupInPickupZone && dropoffInDropoffZone) {
           return zone.price;
         }
       }
@@ -148,6 +160,7 @@ export const useBookingFare = ({
 
       let baseFare = 0;
       let pricing = '';
+      let extraZoneFee = 0;
       const vehicleName = selectedVehicle?.vehicleName;
       const matchedVehicle = allVehicles.find(v => v.vehicleName === vehicleName);
       const markupPercent = parseFloat(matchedVehicle?.percentageIncrease || 0);
@@ -161,9 +174,8 @@ export const useBookingFare = ({
       } else {
         const postcodeMatch = postcodePrices.find(
           (p) =>
-            ((p.pickup === pickupPostcode && p.dropoff === dropoffPostcode) ||
-              (p.pickup === dropoffPostcode && p.dropoff === pickupPostcode)) &&
-            p.vehicleRates?.[vehicleName] !== undefined
+          ((p.pickup === pickupPostcode && p.dropoff === dropoffPostcode) ||
+            (p.pickup === dropoffPostcode && p.dropoff === pickupPostcode))
         );
         if (mode === "Hourly") {
           const selected = hourlyRates.find(
@@ -172,18 +184,25 @@ export const useBookingFare = ({
           baseFare = selected?.vehicleRates?.[selectedVehicle.vehicleName] || 0;
           pricing = 'hourly';
         } else if (postcodeMatch) {
-          baseFare = postcodeMatch.vehicleRates[vehicleName];
+          baseFare = postcodeMatch.vehicleRates?.[vehicleName] ?? postcodeMatch.price;
           pricing = 'postcode';
         } else {
-          const zonePrice = getZonePrice([pickupCoord], [dropoffCoord]);
+          const zonePrice = getZonePrice(pickupCoord, dropoffCoord);
+
           if (zonePrice !== null) {
             baseFare = zonePrice;
             pricing = 'zone';
+            extraZoneFee = getZoneEntryFee(pickupCoord, dropoffCoord);
           } else {
             baseFare = getVehiclePriceForDistance(selectedVehicle, totalMiles);
             pricing = 'mileage';
           }
         }
+      }
+
+      if (!pickupCoord || !dropoffCoord) {
+        toast.error("Unable to get coordinates for pickup or dropoff location.");
+        return;
       }
 
       const markupAmount = (baseFare * markupPercent) / 100;
@@ -195,7 +214,7 @@ export const useBookingFare = ({
 
       const childSeatUnitPrice = includeChildSeat ? parseFloat(generalPricing?.childSeatPrice || 0) : 0;
       const totalChildSeatCharge = includeChildSeat ? childSeatCount * childSeatUnitPrice : 0;
-      finalFare += dropOffPrice + totalChildSeatCharge + zoneFee;
+      finalFare += dropOffPrice + totalChildSeatCharge + zoneFee + extraZoneFee;
 
       const breakdownDetails = {
         baseFare: parseFloat(baseFare.toFixed(2)),
@@ -206,6 +225,7 @@ export const useBookingFare = ({
         childSeatCount,
         totalChildSeatCharge: parseFloat(totalChildSeatCharge.toFixed(2)),
         zoneFee,
+        zoneEntryFee: parseFloat(extraZoneFee.toFixed(2)), // ➕ add this
         surchargePercentage: surchargePercent,
         surchargeAmount: parseFloat(surchargeAmount.toFixed(2)),
         total: parseFloat(finalFare.toFixed(2)),
