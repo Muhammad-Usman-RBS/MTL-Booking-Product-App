@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import debounce from 'lodash.debounce';
-import { useLazyGetDistanceQuery, useLazyGeocodeQuery } from '../redux/api/googleApi';
-import { useGetAllHourlyRatesQuery } from '../redux/api/hourlyPricingApi';
-import { useFetchAllPostcodePricesWidgetQuery } from '../redux/api/postcodePriceApi';
-import { useGetFixedPricesForWidgetQuery } from '../redux/api/fixedPriceApi';
-import { useGetAllVehiclesQuery } from '../redux/api/vehicleApi';
-import { useGetGeneralPricingPublicQuery } from '../redux/api/generalPricingApi';
-import { useGetDiscountsByCompanyIdQuery } from '../redux/api/discountApi';
+import { useEffect, useState } from 'react';
+import { useLazyGetDistanceQuery, useLazyGeocodeQuery } from "../redux/api/googleApi";
+import { useGetAllHourlyRatesQuery } from "../redux/api/hourlyPricingApi";
+import { useFetchAllPostcodePricesWidgetQuery } from "../redux/api/postcodePriceApi";
+import { useGetFixedPricesForWidgetQuery } from "../redux/api/fixedPriceApi";
+import { useGetAllVehiclesQuery } from "../redux/api/vehicleApi";
+import { useGetGeneralPricingPublicQuery } from "../redux/api/generalPricingApi";
+import { useGetDiscountsByCompanyIdQuery } from "../redux/api/discountApi";
+import { toast } from "react-toastify";
 
 export const useBookingFare = ({
   companyId,
@@ -15,56 +15,62 @@ export const useBookingFare = ({
   selectedVehicle,
   mode,
   selectedHourly,
-  journeyDateTime = null,
   dropOffPrice = 0,
-  includeAirportFees = false,
   includeChildSeat = false,
   childSeatCount = 0,
+  zoneFee = 0,
+  journeyDateTime = null
 }) => {
-  /* ────────────────────── API hooks ────────────────────── */
   const [triggerGeocode] = useLazyGeocodeQuery();
   const [triggerDistance] = useLazyGetDistanceQuery();
 
-  const { data: postcodePrices = [] } = useFetchAllPostcodePricesWidgetQuery(companyId, {
-    skip: !companyId,
-  });
-  const { data: fixedPrices = [] } = useGetFixedPricesForWidgetQuery(companyId, {
-    skip: !companyId,
-  });
-  const { data: generalPricing } = useGetGeneralPricingPublicQuery(companyId, {
-    skip: !companyId,
-  });
-  const { data: discounts = [] } = useGetDiscountsByCompanyIdQuery(companyId, {
-    skip: !companyId,
-  });
-  const { data: hourlyRates = [] } = useGetAllHourlyRatesQuery(companyId, {
-    skip: !companyId,
-  });
+  const { data: hourlyRates = [] } = useGetAllHourlyRatesQuery(companyId, { skip: !companyId });
+  const { data: postcodePrices = [] } = useFetchAllPostcodePricesWidgetQuery(companyId, { skip: !companyId });
+  const { data: fixedPrices = [] } = useGetFixedPricesForWidgetQuery(companyId, { skip: !companyId });
   const { data: allVehicles = [] } = useGetAllVehiclesQuery();
+  const { data: generalPricing = {} } = useGetGeneralPricingPublicQuery(companyId, { skip: !companyId });
+  const { data: discounts = [] } = useGetDiscountsByCompanyIdQuery(companyId, { skip: !companyId });
 
-  /* ────────────────────── local state ────────────────────── */
   const [distanceText, setDistanceText] = useState('');
   const [durationText, setDurationText] = useState('');
   const [miles, setMiles] = useState(0);
   const [pickupCoords, setPickupCoords] = useState([]);
   const [dropoffCoords, setDropoffCoords] = useState([]);
-
   const [calculatedFare, setCalculatedFare] = useState(0);
   const [pricingMode, setPricingMode] = useState('');
   const [breakdown, setBreakdown] = useState({});
+  const [hourlyError, setHourlyError] = useState('');
 
-  /* ────────────────────── helpers ────────────────────── */
-  const extractPostcode = (address) =>
-    address?.match(/\b[A-Z]{1,2}\d{1,2}[A-Z]?\b/i)?.[0]?.toUpperCase() || null;
+  const extractPostcode = (address) => {
+    const match = address?.match(/\b[A-Z]{1,2}\d{1,2}[A-Z]?\b/i);
+    return match ? match[0].toUpperCase() : null;
+  };
 
-  const isValidAddress = (str) => /[a-zA-Z]{3,}/.test(str) && str.length > 5;
+  const getLatLng = async (address) => {
+    if (!address) return null;
+    const res = await triggerGeocode(address).unwrap();
+    return res?.location || null;
+  };
 
-  const isAirport = (txt) => txt?.toLowerCase().includes('airport');
+  const getVehiclePriceForDistance = (vehicle, miles) => {
+    if (!vehicle?.slabs || !Array.isArray(vehicle.slabs)) return 0;
+    let total = 0;
+    let remaining = miles;
+    const slabs = [...vehicle.slabs].sort((a, b) => a.from - b.from);
+    for (const slab of slabs) {
+      if (remaining <= 0) break;
+      const slabDistance = slab.to - slab.from;
+      const useMiles = Math.min(remaining, slabDistance);
+      total += useMiles * (slab.pricePerMile || 0);
+      remaining -= useMiles;
+    }
+    return total;
+  };
 
   const isWithinZone = (point, zone) => {
-    if (!point || !zone?.length) return false;
-    const lats = zone.map((c) => c.lat);
-    const lngs = zone.map((c) => c.lng);
+    if (!point || !zone || zone.length < 4) return false;
+    const lats = zone.map(c => c.lat);
+    const lngs = zone.map(c => c.lng);
     return (
       point.lat >= Math.min(...lats) &&
       point.lat <= Math.max(...lats) &&
@@ -73,24 +79,20 @@ export const useBookingFare = ({
     );
   };
 
-  // Fixed bidirectional zone pricing
-  const getZonePrice = (pCoords, dCoords) => {
+  const getZonePrice = (pickup, dropoff) => {
     for (const zone of fixedPrices) {
-      const dir = zone.direction?.toLowerCase();
-      const pInPick = pCoords.some((p) => isWithinZone(p, zone.pickupCoordinates));
-      const dInDrop = dCoords.some((d) => isWithinZone(d, zone.dropoffCoordinates));
-      const dInPick = dCoords.some((d) => isWithinZone(d, zone.pickupCoordinates));
-      const pInDrop = pCoords.some((p) => isWithinZone(p, zone.dropoffCoordinates));
+      const direction = zone.direction?.toLowerCase();
+      const pickupInPickupZone = pickup.some(p => isWithinZone(p, zone.pickupCoordinates));
+      const dropInDropZone = dropoff.some(d => isWithinZone(d, zone.dropoffCoordinates));
+      const dropInPickupZone = dropoff.some(d => isWithinZone(d, zone.pickupCoordinates));
+      const pickupInDropZone = pickup.some(p => isWithinZone(p, zone.dropoffCoordinates));
 
-      // Enhanced bidirectional logic
-      if (dir === 'both ways' || dir === 'bidirectional') {
-        // For bidirectional zones, both A->B and B->A should work
-        if ((pInPick && dInDrop) || (pInDrop && dInPick)) {
+      if (direction === 'both ways') {
+        if ((pickupInPickupZone && dropInDropZone) || (dropInPickupZone && pickupInDropZone)) {
           return zone.price;
         }
-      } else if (dir === 'one way') {
-        // For one-way zones, only A->B works
-        if (pInPick && dInDrop) {
+      } else if (direction === 'one way') {
+        if (pickupInPickupZone && dropInDropZone) {
           return zone.price;
         }
       }
@@ -98,221 +100,159 @@ export const useBookingFare = ({
     return null;
   };
 
-  const getVehiclePriceForDistance = (vehicle, mi) => {
-    if (!vehicle?.slabs?.length) return 0;
-    const slabs = [...vehicle.slabs].sort((a, b) => a.from - b.from);
-    let total = 0,
-      remain = mi;
-    for (const slab of slabs) {
-      if (remain <= 0) break;
-      const span = slab.to - slab.from;
-      const used = Math.min(remain, span);
-      total += used * (slab.pricePerMile || 0);
-      remain -= used;
+  const getValidDynamicPricing = () => {
+    if (!Array.isArray(discounts) || !journeyDateTime) return 0;
+    for (let item of discounts) {
+      const from = new Date(item.fromDate);
+      const to = new Date(item.toDate);
+      if (item.status === "Active" && from <= journeyDateTime && to >= journeyDateTime) {
+        if (item.category === "Surcharge" && item.surchargePrice > 0) return item.surchargePrice;
+        if (item.category === "Discount" && item.discountPrice > 0) return -item.discountPrice;
+      }
     }
-    return total;
+    return 0;
   };
 
-  // Enhanced postcode matching with better bidirectional support
-  const findPostcodePrice = (pickupPostcode, dropoffPostcode, vehicleName) => {
-    if (!pickupPostcode || !dropoffPostcode) return null;
+  useEffect(() => {
+    const calculateFare = async () => {
+      if (!pickup || !dropoff || !selectedVehicle) return;
 
-    // First try exact match (pickup -> dropoff)
-    let match = postcodePrices.find(p =>
-      p.pickup === pickupPostcode && p.dropoff === dropoffPostcode
-    );
+      const origin = pickup.includes(" - ") ? pickup.split(" - ").pop().trim() : pickup;
+      const destination = dropoff.includes(" - ") ? dropoff.split(" - ").pop().trim() : dropoff;
+      const pickupPostcode = extractPostcode(pickup);
+      const dropoffPostcode = extractPostcode(dropoff);
+      const isAirportJourney = pickup.toLowerCase().includes('airport') || dropoff.toLowerCase().includes('airport');
+      const flatAirportFee = isAirportJourney ? 20 : 0;
 
-    // If no exact match, try reverse (dropoff -> pickup) for bidirectional pricing
-    if (!match) {
-      match = postcodePrices.find(p =>
-        p.pickup === dropoffPostcode && p.dropoff === pickupPostcode
-      );
-    }
-
-    if (match) {
-      // Return vehicle-specific rate or general price
-      return match.vehicleRates?.[vehicleName] || match.price || 0;
-    }
-
-    return null;
-  };
-
-  /* ────────────────────── duplicate‑call guard ────────────────────── */
-  const lastLookup = useRef({ pickup: '', dropoff: '' });
-
-  /* ────────────────────── core calculation (debounced) ────────────────────── */
-  const calculateFare = useCallback(
-    debounce(async (pick, drop) => {
-      /* Prevent double fetch for identical addresses */
-      if (
-        pick === lastLookup.current.pickup &&
-        drop === lastLookup.current.dropoff
-      )
-        return;
-      lastLookup.current = { pickup: pick, dropoff: drop };
-
-      const origin = pick.split(' - ').pop().trim();
-      const destination = drop.split(' - ').pop().trim();
-      const pp = extractPostcode(pick);
-      const dp = extractPostcode(drop);
-
-      /* ── coordinate look‑ups ── */
-      const [pCoord, dCoord] = await Promise.all([
-        triggerGeocode(origin).unwrap().then((r) => r?.location ?? null),
-        triggerGeocode(destination).unwrap().then((r) => r?.location ?? null),
+      const [pickupCoord, dropoffCoord] = await Promise.all([
+        getLatLng(origin),
+        getLatLng(destination)
       ]);
-      setPickupCoords([pCoord]);
-      setDropoffCoords([dCoord]);
+      setPickupCoords([pickupCoord]);
+      setDropoffCoords([dropoffCoord]);
 
-      /* ── distance look‑up ── */
       const distRes = await triggerDistance({ origin, destination }).unwrap();
-      const dText = distRes?.distanceText ?? '';
-      const tText = distRes?.durationText ?? '';
-      setDistanceText(dText);
-      setDurationText(tText);
+      const distText = distRes?.distanceText || "";
+      const durText = distRes?.durationText || "";
+      setDistanceText(distText);
+      setDurationText(durText);
 
-      const mi = dText.includes('km')
-        ? +(parseFloat(dText) * 0.621371).toFixed(2)
-        : +(parseFloat(dText) || 0);
-      setMiles(mi);
-
-      /* ── base‑fare calc ── */
-      const vehicleCfg = allVehicles.find(
-        (v) => v.vehicleName === selectedVehicle?.vehicleName,
-      ) || { percentageIncrease: 0 };
-      const markupPct = +vehicleCfg.percentageIncrease;
+      let totalMiles = 0;
+      if (distText.includes("km")) {
+        const km = parseFloat(distText.replace("km", "").trim());
+        totalMiles = parseFloat((km * 0.621371).toFixed(2));
+      } else if (distText.includes("mi")) {
+        totalMiles = parseFloat(distText.replace("mi", "").trim());
+      }
+      setMiles(totalMiles);
 
       let baseFare = 0;
-      let modeUsed = '';
+      let pricing = '';
+      const vehicleName = selectedVehicle?.vehicleName;
+      const matchedVehicle = allVehicles.find(v => v.vehicleName === vehicleName);
+      const markupPercent = parseFloat(matchedVehicle?.percentageIncrease || 0);
 
-      if (mode === 'Hourly') {
-        const match = hourlyRates.find(
-          (r) =>
-            r.distance === selectedHourly?.value?.distance &&
-            r.hours === selectedHourly?.value?.hours,
+      if (mode === "Hourly") {
+        const selected = hourlyRates.find(
+          (r) => r.distance === selectedHourly?.value?.distance && r.hours === selectedHourly?.value?.hours
         );
-        baseFare = match?.vehicleRates?.[selectedVehicle.vehicleName] || 0;
-        modeUsed = 'hourly';
+        baseFare = selected?.vehicleRates?.[selectedVehicle.vehicleName] || 0;
+        pricing = 'hourly';
       } else {
-        // Enhanced postcode pricing with bidirectional support
-        const postcodePrice = findPostcodePrice(pp, dp, selectedVehicle.vehicleName);
-
-        if (postcodePrice !== null) {
-          baseFare = postcodePrice;
-          modeUsed = 'postcode';
+        const postcodeMatch = postcodePrices.find(
+          (p) =>
+            ((p.pickup === pickupPostcode && p.dropoff === dropoffPostcode) ||
+              (p.pickup === dropoffPostcode && p.dropoff === pickupPostcode)) &&
+            p.vehicleRates?.[vehicleName] !== undefined
+        );
+        if (mode === "Hourly") {
+          const selected = hourlyRates.find(
+            (r) => r.distance === selectedHourly?.value?.distance && r.hours === selectedHourly?.value?.hours
+          );
+          baseFare = selected?.vehicleRates?.[selectedVehicle.vehicleName] || 0;
+          pricing = 'hourly';
+        } else if (postcodeMatch) {
+          baseFare = postcodeMatch.vehicleRates[vehicleName];
+          pricing = 'postcode';
         } else {
-          // Check zone pricing (already has bidirectional support)
-          const zPrice = getZonePrice([pCoord], [dCoord]);
-          if (zPrice) {
-            baseFare = zPrice;
-            modeUsed = 'zone';
+          const zonePrice = getZonePrice([pickupCoord], [dropoffCoord]);
+          if (zonePrice !== null) {
+            baseFare = zonePrice;
+            pricing = 'zone';
           } else {
-            // Fall back to mileage-based pricing
-            baseFare = getVehiclePriceForDistance(selectedVehicle, mi);
-            modeUsed = 'mileage';
+            baseFare = getVehiclePriceForDistance(selectedVehicle, totalMiles);
+            pricing = 'mileage';
           }
         }
-
-        // Apply vehicle markup
-        baseFare += (baseFare * markupPct) / 100;
       }
 
-      /* ── optional fees ── */
-      const airportPickupFee =
-        includeAirportFees && isAirport(pick) ? generalPricing?.pickupAirportPrice || 0 : 0;
-      const airportDropoffFee =
-        includeAirportFees && isAirport(drop) ? generalPricing?.dropoffAirportPrice || 0 : 0;
-      const childSeatFee = includeChildSeat
-        ? (generalPricing?.childSeatPrice || 0) * childSeatCount
-        : 0;
+      const markupAmount = (baseFare * markupPercent) / 100;
+      let finalFare = baseFare + markupAmount + flatAirportFee;
 
-      /* ── discount / surcharge ── */
-      let surchargeVal = 0,
-        discountVal = 0;
+      const surchargePercent = getValidDynamicPricing();
+      const surchargeAmount = (surchargePercent / 100) * baseFare;
+      finalFare += surchargeAmount;
 
-      if (discounts?.length && journeyDateTime) {
-        const discount = discounts.find(
-          (d) =>
-            d.status === 'Active' &&
-            d.category === 'Discount' &&
-            new Date(d.fromDate) <= journeyDateTime &&
-            new Date(d.toDate) >= journeyDateTime,
-        );
-        const surcharge = discounts.find(
-          (d) =>
-            d.status === 'Active' &&
-            d.category === 'Surcharge' &&
-            new Date(d.fromDate) <= journeyDateTime &&
-            new Date(d.toDate) >= journeyDateTime,
-        );
+      const childSeatUnitPrice = includeChildSeat ? parseFloat(generalPricing?.childSeatPrice || 0) : 0;
+      const totalChildSeatCharge = includeChildSeat ? childSeatCount * childSeatUnitPrice : 0;
+      finalFare += dropOffPrice + totalChildSeatCharge + zoneFee;
 
-        if (discount?.discountPrice) {
-          discountVal = (baseFare * parseFloat(discount.discountPrice)) / 100;
-        }
-        if (surcharge?.surchargePrice) {
-          surchargeVal = (baseFare * parseFloat(surcharge.surchargePrice)) / 100;
-        }
-      }
+      const breakdownDetails = {
+        baseFare: parseFloat(baseFare.toFixed(2)),
+        markupAmount: parseFloat(markupAmount.toFixed(2)),
+        airportFee: flatAirportFee,
+        dropOffPrice,
+        childSeatUnitPrice: parseFloat(childSeatUnitPrice.toFixed(2)),
+        childSeatCount,
+        totalChildSeatCharge: parseFloat(totalChildSeatCharge.toFixed(2)),
+        zoneFee,
+        surchargePercentage: surchargePercent,
+        surchargeAmount: parseFloat(surchargeAmount.toFixed(2)),
+        total: parseFloat(finalFare.toFixed(2)),
+        pricingMode: pricing,
+        distanceText: distText,
+        durationText: durText
+      };
 
-      /* ── final total ── */
-      const total =
-        baseFare +
-        dropOffPrice +
-        airportPickupFee +
-        airportDropoffFee +
-        childSeatFee +
-        surchargeVal -
-        discountVal;
+      setCalculatedFare(breakdownDetails.total);
+      setPricingMode(pricing);
+      setBreakdown(breakdownDetails);
+    };
 
-      setCalculatedFare(+total.toFixed(2));
-      setPricingMode(modeUsed);
-      setBreakdown({
-        baseFare: +baseFare.toFixed(2),
-        dropOffPrice: +dropOffPrice.toFixed(2),
-        airportPickupFee: +airportPickupFee.toFixed(2),
-        airportDropoffFee: +airportDropoffFee.toFixed(2),
-        childSeatFee: +childSeatFee.toFixed(2),
-        surchargeVal: +surchargeVal.toFixed(2),
-        discountVal: +discountVal.toFixed(2),
-        pricingMode: modeUsed,
-        distanceText: dText,
-        durationText: tText,
-      });
-    }, 600), // 600 ms debounce
-    [
-      allVehicles,
-      childSeatCount,
-      discounts,
-      fixedPrices,
-      generalPricing,
-      hourlyRates,
-      includeAirportFees,
-      includeChildSeat,
-      mode,
-      postcodePrices,
-      selectedHourly,
-      selectedVehicle,
-      triggerDistance,
-      triggerGeocode,
-      journeyDateTime,
-      dropOffPrice,
-    ],
-  );
+    calculateFare();
+  }, [
+    pickup,
+    dropoff,
+    selectedVehicle,
+    selectedHourly,
+    mode,
+    dropOffPrice,
+    includeChildSeat,
+    childSeatCount,
+    generalPricing,
+    zoneFee,
+    hourlyRates,
+    postcodePrices,
+    fixedPrices,
+    allVehicles,
+    discounts,
+    journeyDateTime
+  ]);
 
-  /* ────────────────────── orchestrator effect ────────────────────── */
+  // ✅ Hourly Error Logic
   useEffect(() => {
-    if (
-      !selectedVehicle ||
-      !isValidAddress(pickup) ||
-      !isValidAddress(dropoff)
-    )
-      return;
+    if (mode === "Hourly" && selectedHourly?.value?.distance && miles) {
+      const original = selectedHourly.value;
+      const actualMiles = miles;
 
-    calculateFare(pickup, dropoff);
-  }, [pickup, dropoff, calculateFare, selectedVehicle]);
-
-  /* ────────────────────── cleanup (cancel debounce) ────────────────────── */
-  useEffect(() => () => calculateFare.cancel(), [calculateFare]);
+      if (actualMiles > Number(original.distance)) {
+        const warningMsg = `You've selected ${original.distance} miles for ${original.hours} hours, but your trip is ${actualMiles} miles. Prices are shown for your selected package. Extra charges may apply.`;
+        setHourlyError(warningMsg);
+      } else {
+        setHourlyError('');
+      }
+    }
+  }, [mode, selectedHourly, miles]);
 
   return {
     calculatedFare,
@@ -323,5 +263,6 @@ export const useBookingFare = ({
     miles,
     pickupCoords,
     dropoffCoords,
+    hourlyError // ✅ returned to render in your component
   };
 };

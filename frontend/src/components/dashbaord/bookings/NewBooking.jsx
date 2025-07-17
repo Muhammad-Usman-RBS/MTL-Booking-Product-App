@@ -53,7 +53,9 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     return dt;
   };
 
-  const { calculatedFare: primaryFare, pricingMode: primaryFareMode, } = useBookingFare({
+  const journeyDateTime = getJourneyDate(primaryJourneyData);
+
+  const { calculatedFare: primaryFare, pricingMode: primaryFareMode, hourlyError: hourlyError } = useBookingFare({
     companyId,
     pickup: primaryJourneyData.pickup,
     dropoff: dropOffs1[0],
@@ -61,7 +63,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     mode,
     selectedHourly,
     dropOffPrice: extraDropoffPrice(dropOffs1.length),
-    journeyDateTime: getJourneyDate(primaryJourneyData),
+    journeyDateTime,
     includeAirportFees: true,
     includeChildSeat: vehicleExtras.childSeat > 0,
     childSeatCount: vehicleExtras.childSeat,
@@ -75,7 +77,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     mode,
     selectedHourly,
     dropOffPrice: extraDropoffPrice(dropOffs2.length),
-    journeyDateTime: getJourneyDate(returnJourneyData),
+    journeyDateTime,
     includeAirportFees: true,
     includeChildSeat: vehicleExtras.childSeat > 0,
     childSeatCount: vehicleExtras.childSeat,
@@ -142,44 +144,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     };
 
     try {
-      // ✅ Case 1: One booking with reverse journey
-      if (returnJourneyToggle && isReverseJourney) {
-        const payload = {
-          mode,
-          returnJourneyToggle: false,
-          companyId,
-          referrer: document.referrer || "manual",
-          vehicle: vehicleData,
-          passenger: passengerData,
-          primaryJourney: {
-            ...primaryJourneyData,
-            dropoff: dropOffs1[0],
-            additionalDropoff1: dropOffs1[1] || null,
-            additionalDropoff2: dropOffs1[2] || null,
-            hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
-            fare: primaryFare,
-            ...dynamicFields1,
-          },
-          returnJourney: {
-            ...returnJourneyData,
-            dropoff: dropOffs2[0],
-            additionalDropoff1: dropOffs2[1] || null,
-            additionalDropoff2: dropOffs2[2] || null,
-            hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
-            fare: returnFare,
-            ...dynamicFields2,
-          },
-          PassengerEmail: emailNotify.customer ? passengerDetails.email : null,
-          ClientAdminEmail: emailNotify.admin ? userEmail : null,
-          ...paymentFields,
-        };
-
-        await createBooking(payload).unwrap();
-        toast.success("Return journey booked with primary journey.");
-        onClose?.();
-        return;
-      }
-
       // ✅ Case 2: Primary + second saved as returnJourney
       const payload1 = {
         mode,
@@ -264,6 +228,12 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           ))}
         </div>
 
+        {mode === "Hourly" && hourlyError && (
+          <div className="text-sm text-red-600 text-center max-w-2xl mb-4">
+            {hourlyError}
+          </div>
+        )}
+
         {/* Hourly Dropdown */}
         {mode === "Hourly" && (
           <div className="w-full max-w-xs">
@@ -300,17 +270,17 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       <div className="w-full flex flex-col items-center gap-6">
         <div className={`w-full ${returnJourneyToggle ? "lg:max-w-6xl gap-4" : "lg:max-w-4xl"} flex flex-col lg:flex-row`}>
           {/* Journey 1 */}
-            <JourneyCard
-              title="Journey 1"
-              journeyData={primaryJourneyData}
-              setJourneyData={setPrimaryJourneyData}
-              dropOffs={dropOffs1}
-              setDropOffs={setDropOffs1}
-              fare={primaryFare}
-              pricingMode={primaryFareMode}
-              selectedVehicle={selectedVehicle}
-              mode={mode}
-            />
+          <JourneyCard
+            title="Journey 1"
+            journeyData={primaryJourneyData}
+            setJourneyData={setPrimaryJourneyData}
+            dropOffs={dropOffs1}
+            setDropOffs={setDropOffs1}
+            fare={primaryFare}
+            pricingMode={primaryFareMode}
+            selectedVehicle={selectedVehicle}
+            mode={mode}
+          />
 
           {/* Journey 2 (conditionally shown) */}
           {returnJourneyToggle && (
