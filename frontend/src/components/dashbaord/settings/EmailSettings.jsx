@@ -30,7 +30,7 @@ const EmailSettings = () => {
               </label>
               <input
                 type="email"
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
                 value={formData.fromEmail}
                 readOnly
               />
@@ -42,7 +42,7 @@ const EmailSettings = () => {
               </label>
               <input
                 type="text"
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
                 value={formData.fromName}
                 readOnly
               />
@@ -73,7 +73,7 @@ const EmailSettings = () => {
               </label>
               <input
                 type="text"
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
                 value={formData.smtpHost}
                 readOnly
               />
@@ -85,7 +85,7 @@ const EmailSettings = () => {
               </label>
               <input
                 type="text"
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
                 value={formData.smtpPort}
                 readOnly
               />
@@ -109,7 +109,7 @@ const EmailSettings = () => {
               </label>
               <input
                 type="email"
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
                 value={formData.smtpUsername}
                 readOnly
               />
@@ -123,7 +123,7 @@ const EmailSettings = () => {
 
               <input
     type={passwordType}
-    className="w-full border border-gray-300 rounded px-3 py-2"
+    className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
                 placeholder="********"
                 readOnly
               />
@@ -153,7 +153,7 @@ const EmailSettings = () => {
               <label className="block text-sm font-medium mb-1">Send To</label>
               <input
                 type="email"
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
                 placeholder="Recipient Email"
               />
             </div>

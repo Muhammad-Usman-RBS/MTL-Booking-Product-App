@@ -165,12 +165,12 @@ const Zones = () => {
         <Icons.Pencil
           title="Edit"
           onClick={() => handleEdit(zone)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-gray-300 cursor-pointer"
+          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
         />
         <Icons.Trash
           title="Delete"
           onClick={() => handleDelete(zone._id)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-gray-300 cursor-pointer"
+          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
         />
       </div>
     ),
@@ -211,7 +211,7 @@ const Zones = () => {
                       placeholder="Search location"
                       value={searchInput}
                       onChange={(e) => handleSearchChange(e.target.value)}
-                      className="bg-white px-4 py-2 rounded-md border border-gray-300 shadow w-full"
+                      className="bg-white px-4 py-2 rounded-md border border-[var(--light-gray)] shadow w-full"
                     />
                     {searchSuggestions.length > 0 && (
                       <ul className="bg-white border rounded shadow mt-1 max-h-60 overflow-y-auto">

@@ -30,7 +30,7 @@ const SocialMedia = () => {
             type="text"
             value={whatsapp}
             onChange={(e) => setWhatsapp(e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2"
+            className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
             placeholder="+447..."
           />
         </div>
@@ -43,7 +43,7 @@ const SocialMedia = () => {
             type="text"
             value={facebook}
             onChange={(e) => setFacebook(e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2"
+            className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
             placeholder="Facebook URL"
           />
         </div>
@@ -56,7 +56,7 @@ const SocialMedia = () => {
             type="text"
             value={twitter}
             onChange={(e) => setTwitter(e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2"
+            className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
             placeholder="Twitter URL"
           />
         </div>
@@ -69,7 +69,7 @@ const SocialMedia = () => {
             type="text"
             value={tripadvisor}
             onChange={(e) => setTripadvisor(e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2"
+            className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
             placeholder="TripAdvisor URL"
           />
         </div>

@@ -170,7 +170,7 @@ const BookingCalendar = () => {
                         <select
                             value={selectedStatus}
                             onChange={(e) => setSelectedStatus(e.target.value)}
-                            className="w-full md:w-auto px-4 py-2 rounded-lg border border-gray-300 bg-white shadow-sm focus:ring-2 focus:ring-purple-500"
+                            className="w-full md:w-auto px-4 py-2 rounded-lg border border-[var(--light-gray)] bg-white shadow-sm focus:ring-2 focus:ring-purple-500"
                         >
                             <option value="All">All Status</option>
                             {Object.keys(statusColors).map((status) => (

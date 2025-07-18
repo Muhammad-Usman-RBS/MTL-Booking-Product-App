@@ -14,19 +14,19 @@ import {
 import InvoiceEmailModal from "./InvoiceEmailModal";
 
 const InvoiceDetails = ({ item }) => {
+  const user = useSelector((state) => state.auth.user);
+  const companyId = user?.companyId;
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [recipient, setRecipient] = useState(item?.customer?.email || "");
   const [subject, setSubject] = useState(
     `Invoice ${item?.invoiceNumber} created`
   );
+
   const [updateInvoice] = useUpdateInvoiceMutation();
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(item?.status);
   const [selectedStatus, setSelectedStatus] = useState(status);
   const [sendInvoiceEmail] = useSendInvoiceEmailMutation();
-
-  const user = useSelector((state) => state.auth.user);
-  const companyId = user?.companyId;
 
   const { data: companyData } = useGetCompanyByIdQuery(companyId, {
     skip: !companyId,
@@ -45,7 +45,7 @@ const InvoiceDetails = ({ item }) => {
     }
   };
 
-  const statusOption = ["paid", "unpaid"];
+  const statusOption = ["Paid", "Unpaid"];
 
   if (!item) return null;
 
@@ -55,16 +55,18 @@ const InvoiceDetails = ({ item }) => {
   }/dashboard/invoices/edit/${item?._id}`;
 
   const handleDownload = () => {
-    setTimeout(() => {
-      const element = document.getElementById("invoiceToDownload");
-      if (!element) {
-        toast.error("Invoice element not found!");
-        return;
-      }
+    const element = document.getElementById("invoiceToDownload");
 
+    element.classList.add("pdf-mode");
+
+    setTimeout(() => {
       void element.offsetHeight;
 
       downloadPDF("invoiceToDownload", `Invoice-${item?.invoiceNumber}.pdf`);
+
+      setTimeout(() => {
+        element.classList.remove("pdf-mode");
+      }, 500);
     }, 500);
   };
 
@@ -84,6 +86,8 @@ const InvoiceDetails = ({ item }) => {
   };
 
   const handleSendEmail = async () => {
+    const toastId = toast.loading("Sending Email...");
+
     try {
       await sendInvoiceEmail({
         recipient,
@@ -92,11 +96,20 @@ const InvoiceDetails = ({ item }) => {
         invoiceId: item._id,
       }).unwrap();
 
-      toast.success("Email sent successfully!");
+      toast.update(toastId, {
+        render: "Email sent successfully!",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+      });
       setShowEmailModal(false);
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to send invoice email.");
+      toast.update(toastId, {
+        render: "Failed to send invoice email.",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+      });
     }
   };
 
@@ -117,7 +130,7 @@ const InvoiceDetails = ({ item }) => {
           {/* Mail Button */}
           <button
             onClick={openModal}
-            className="p-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+            className="p-2.5 cursor-pointer bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
           >
             <Icons.Mail size={16} />
           </button>
@@ -149,75 +162,38 @@ const InvoiceDetails = ({ item }) => {
         </div>
 
         {/* Invoice Display */}
-        <div
-          id="invoiceToDownload"
-          style={{
-            padding: "16px",
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-            background: "#F1EFEF",
-            fontSize: "14px",
-            marginTop: "16px",
-            maxWidth: "100%",
-            boxSizing: "border-box",
-            position: "relative",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "space-between",
-              marginBottom: "20px",
-              gap: "24px",
-            }}
-          >
+        <div id="invoiceToDownload" className="invoice-container">
+          <div className="invoice-header">
             <div className="company-info">
               <img
                 src={IMAGES.dashboardLargeLogo}
                 alt="Logo"
-                style={{ height: "40px", marginBottom: "8px" }}
+                className="company-logo"
               />
-              <p style={{ fontWeight: "600" }}>{company.companyName}</p>
-              <p>VAT Number - 442612419 </p>
+              <p className="company-name">{company.companyName}</p>
+              <p>VAT Number - 442612419</p>
               <p>
                 {[company.address, company.city, company.state, company.zip]
                   .filter(Boolean)
                   .join(", ")}
               </p>
               <p>Website: {company.website}</p>
-              <a
-                href={`mailto:${company.email}`}
-                style={{
-                  color: "#2563eb",
-                  textDecoration: "none",
-                  wordBreak: "break-word",
-                }}
-              >
+              <a href={`mailto:${company.email}`} className="email-link">
                 {company.email}
               </a>
               <p>Contact: {company.contactName}</p>
             </div>
 
             <div className="invoice-info">
-              <h2 style={{ fontSize: "20px", fontWeight: "bold" }}>INVOICE</h2>
+              <h2 className="invoice-title">INVOICE</h2>
               <p
-                style={{
-                  padding: "3px 10px",
-                  display: "inline-block",
-                  color: "#fff",
-                  fontSize: "12px",
-                  borderRadius: "40px",
-                  backgroundColor:
-                    item?.status === "paid" ? "#15803d" : "#6b7280",
-                }}
+                className={`invoice-status ${
+                  status.toLowerCase() === "paid" ? "paid" : ""
+                }`}
               >
-                {item?.status}
+                {status}
               </p>
-              <p style={{ color: "#6b7280" }}>#{item?.invoiceNumber}</p>
-              <p>
-                Invoice Date: {new Date(item?.createdAt).toLocaleDateString()}
-              </p>
+              <p className="invoice-no">#{item?.invoiceNumber}</p>
               <p>
                 Invoice Date: {new Date(item?.createdAt).toLocaleDateString()}
               </p>
@@ -228,126 +204,63 @@ const InvoiceDetails = ({ item }) => {
                   : "-"}
               </p>
 
-              <div style={{ fontWeight: "bold", marginTop: "10px" }}>
+              <div className="bill-to">
                 <p>
                   <strong>Bill To</strong>
                 </p>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    fontWeight: "500",
-                  }}
-                >
+                <div>
                   <span>{item.customer?.name}</span>
-                  <a href={`mailto:${item.customer?.email}`}>
+
+                  <a
+                    href={`mailto:${item.customer?.email}`}
+                    className="email-link"
+                  >
                     {item.customer?.email}
                   </a>
-                  <span>{item.customer?.phone || ""}</span>
+                  <span>+{item.customer?.phone || ""}</span>
                 </div>
               </div>
               <p>{item?.phone}</p>
             </div>
           </div>
 
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                marginTop: "12px",
-              }}
-            >
+          <div className="table-wrapper">
+            <table className="invoice-table">
               <thead>
-                <tr style={{ background: "black", color: "white" }}>
-                  <th
-                    style={{
-                      padding: "8px",
-                      border: "1px solid #ddd",
-                      textAlign: "left",
-                    }}
-                  >
-                    #
-                  </th>
-                  <th
-                    style={{
-                      padding: "8px",
-                      border: "1px solid #ddd",
-                      textAlign: "left",
-                    }}
-                  >
-                    Item
-                  </th>
-                  <th
-                    style={{
-                      padding: "8px",
-                      border: "1px solid #ddd",
-                      textAlign: "left",
-                    }}
-                  >
-                    Tax
-                  </th>
-                  <th
-                    style={{
-                      padding: "8px",
-                      border: "1px solid #ddd",
-                      textAlign: "left",
-                    }}
-                  >
-                    Amount
-                  </th>
+                <tr>
+                  <th>#</th>
+                  <th>Item</th>
+                  <th>Tax</th>
+                  <th>Amount</th>
                 </tr>
               </thead>
               <tbody>
                 {item.items.map((ride, index) => (
                   <tr key={ride.bookingId || index}>
-                    <td
-                      style={{
-                        padding: "8px",
-                        border: "1px solid #ddd",
-                        verticalAlign: "top",
-                      }}
-                    >
-                      {index + 1}
-                    </td>
-                    <td
-                      style={{
-                        padding: "8px",
-                        border: "1px solid #ddd",
-                        verticalAlign: "top",
-                      }}
-                    >
+                    <td>{index + 1}</td>
+                    <td>
                       {ride.bookingId}
                       <br />
                       <small>
                         Pickup: {ride.pickup}, Dropoff: {ride.dropoff}
                       </small>
                     </td>
-                    <td
-                      style={{
-                        padding: "8px",
-                        border: "1px solid #ddd",
-                        verticalAlign: "top",
-                      }}
-                    >
-                      {ride.tax}
+                    <td className="nowrap">
+                      {(() => {
+                        const taxAmount = ride.totalAmount - ride.fare;
+                        const taxPercent = (taxAmount / ride.fare) * 100;
+                        if (!ride.fare || taxAmount <= 0) return "No Tax";
+                        return `${taxPercent.toFixed(0)}%`;
+                      })()}
                     </td>
-                    <td
-                      style={{
-                        padding: "8px",
-                        border: "1px solid #ddd",
-                        verticalAlign: "top",
-                      }}
-                    >
-                      £{ride.totalAmount.toFixed(2)}
-                    </td>
+                    <td>£{ride.totalAmount.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <div style={{ textAlign: "right", marginTop: "16px" }}>
+          <div className="totals">
             <p>
               Sub Total: £
               {item.items.reduce((acc, i) => acc + i.fare, 0).toFixed(2)}
@@ -358,23 +271,15 @@ const InvoiceDetails = ({ item }) => {
                 .reduce((acc, i) => acc + (i.totalAmount - i.fare), 0)
                 .toFixed(2)}
             </p>
-            <p style={{ fontWeight: "bold" }}>
+            <p className="balance">
               Grand Total: £
               {item.items.reduce((acc, i) => acc + i.totalAmount, 0).toFixed(2)}
             </p>
           </div>
 
-          <div
-            style={{
-              marginTop: "16px",
-              borderTop: "1px solid #ccc",
-              paddingTop: "8px",
-            }}
-          >
-            <p style={{ fontWeight: "600" }}>Notes</p>
-            <p style={{ color: "#4b5563", fontSize: "13px" }}>
-              T&Cs apply. Please call for detail.
-            </p>
+          <div className="invoice-notes">
+            <p className="notes-title">Notes</p>
+            <p className="notes-text">T&Cs apply. Please call for detail.</p>
           </div>
         </div>
       </div>
@@ -398,23 +303,5 @@ const InvoiceDetails = ({ item }) => {
   );
 };
 
-// Table Styles
-const thStyle = {
-  padding: "8px",
-  border: "1px solid #ccc",
-  textAlign: "left",
-};
-
-const tdStyle = {
-  padding: "8px",
-  border: "1px solid #ccc",
-  verticalAlign: "top",
-};
-
-const subInfoStyle = {
-  color: "#6B7280",
-  fontSize: "12px",
-  margin: 0,
-};
 
 export default InvoiceDetails;

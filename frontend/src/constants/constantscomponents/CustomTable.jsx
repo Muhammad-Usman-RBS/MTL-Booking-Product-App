@@ -74,7 +74,7 @@
               <input
                 type="text"
                 placeholder="Search"
-                className="border rounded border-gray-300 px-3 py-1 w-full sm:w-60"
+                className="border rounded border-[var(--light-gray)] px-3 py-1 w-full sm:w-60"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -84,7 +84,7 @@
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
             {showRefresh && (
               <button
-                className="border py-2 px-3 rounded cursor-pointer border-gray-300"
+                className="border py-2 px-3 rounded cursor-pointer border-[var(--light-gray)]"
                 onClick={() => window.location.reload()}
                 title="Reload"
               >
@@ -132,7 +132,7 @@
             ? () => setSelectedRow(selectedRow === item._id ? null : item._id)
             : undefined
         }
-        className={`border-b border-gray-300 hover:bg-[#CFE2FF] transition ${
+        className={`border-b border-[var(--light-gray)] hover:bg-[#CFE2FF] transition ${
           setSelectedRow ? "cursor-pointer " : ""
         } ${
           setSelectedRow && selectedRow === item._id
@@ -193,7 +193,7 @@
                   const newPage = Number(e.target.value);
                   if (newPage >= 1 && newPage <= totalPages) setPage(newPage);
                 }}
-                className="border w-16 text-center py-1 px-2 rounded border-gray-300"
+                className="border w-16 text-center py-1 px-2 rounded border-[var(--light-gray)]"
               />
               <span className="text-[var(--dark-gray)]">of {totalPages}</span>
 
@@ -206,7 +206,7 @@
               </button>
 
               <select
-                className="border py-1 px-3 rounded border-gray-300"
+                className="border py-1 px-3 rounded border-[var(--light-gray)]"
                 value={perPage}
                 onChange={(e) => {
                   const value =

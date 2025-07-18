@@ -216,7 +216,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                     country={"pk"}
                                     value={passengerDetails.phone}
                                     onChange={(phone) => setPassengerDetails({ ...passengerDetails, phone })}
-                                    inputClass="!w-full !text-sm !py-2 !px-3 !pl-14 !border-gray-300 !rounded"
+                                    inputClass="!w-full !text-sm !py-2 !px-3 !pl-14 !border-[var(--light-gray)] !rounded"
                                     dropdownClass="!text-sm"
                                     containerClass="!w-full"
                                     buttonClass="!ps-2"
@@ -225,7 +225,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                         </div>
 
                         {/* Payment Section */}
-                        <div className="bg-white border border-gray-300 rounded-xl p-6 shadow-sm mt-6">
+                        <div className="bg-white border border-[var(--light-gray)] rounded-xl p-6 shadow-sm mt-6">
                             <OutletHeading name="Payment:-" />
                             <div className="text-center mb-4">
                                 {booking?.date && (

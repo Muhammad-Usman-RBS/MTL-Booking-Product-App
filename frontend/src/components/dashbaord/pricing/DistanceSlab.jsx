@@ -198,7 +198,7 @@ const DistanceSlab = () => {
           <Icons.Trash
             title="Delete"
             onClick={() => handleDelete(idx)}
-            className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-gray-300 cursor-pointer"
+            className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
           />
         </div>
       ),

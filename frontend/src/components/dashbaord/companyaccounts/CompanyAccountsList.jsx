@@ -85,14 +85,14 @@ const CompanyAccountsList = () => {
         <Icons.Eye
           title="View"
           onClick={() => setSelectedAccount(item)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-blue-600 hover:text-white text-[var(--dark-gray)] border border-gray-300 cursor-pointer"
+          className="w-8 h-8 p-2 rounded-md hover:bg-blue-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
         />
         <Icons.Pencil
           title="Edit"
           onClick={() =>
             navigate(`/dashboard/company-accounts/edit/${item._id}`)
           }
-          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-gray-300 cursor-pointer"
+          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
         />
         <Icons.Trash
           title="Delete"
@@ -100,7 +100,7 @@ const CompanyAccountsList = () => {
             setAccountToDelete(item);
             setShowDeleteModal(true);
           }}
-          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-gray-300 cursor-pointer"
+          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
         />
       </div>
     ),

@@ -1,14 +1,14 @@
 /* Invoice CSS PDF Design */
-/* .invoice-container {
+.invoice-container {
   padding: 16px;
   border: 1px solid #ccc;
   border-radius: 8px;
-  background: #F1EFEF;
+  background: #f1efef;
   font-size: 14px;
   margin-top: 16px;
   max-width: 100%;
   box-sizing: border-box;
-  position: relative; 
+  position: relative;
 }
 
 .invoice-header {
@@ -19,12 +19,16 @@
   gap: 24px;
 }
 
+.invoice-info {
+  text-align: right;
+}
 .company-logo {
   height: 40px;
   margin-bottom: 8px;
 }
 
 .company-name {
+  margin: 10px 0px;
   font-weight: 600;
 }
 
@@ -50,10 +54,18 @@
 }
 
 .bill-to {
+  display: flex;
+  flex-direction: column;
   font-weight: bold;
   margin-top: 10px;
+  gap: 0px;
 }
 
+.bill-to div {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+}
 .email-link {
   color: #2563eb;
   text-decoration: none;
@@ -111,4 +123,50 @@
 .notes-text {
   color: #4b5563;
   font-size: 13px;
-} */
+}
+
+/* ------------------------------- */
+/* Status Badge – Web & PDF Modes */
+/* ------------------------------- */
+
+/* Default web style */
+.invoice-status {
+  margin: 10px 0px;
+  padding: 6px 14px;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  border-radius: 10px;
+  text-align: center;
+  min-width: 60px;
+  text-transform: capitalize;
+  background-color: var(--medium-grey);
+}
+.invoice-status.paid {
+  background-color: var(--success-color);
+  color: #ffffff;
+}
+.invoice-container.pdf-mode .invoice-status.paid {
+  background-color: transparent !important;
+  font-size: small;
+  text-align: right;
+  border: transparent;
+}
+
+.invoice-container.pdf-mode .invoice-status.Unpaid {
+  color: #dc2626 !important;
+  font-size: small;
+  text-align: right;
+
+}
+
+.invoice-container.pdf-mode .invoice-status {
+  padding: 0;
+  background-color: transparent !important;
+  color: var(--primary-dark-red);
+  font-size: small;
+  border: transparent;
+  text-align: right;
+
+}

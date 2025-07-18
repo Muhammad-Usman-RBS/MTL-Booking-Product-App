@@ -183,7 +183,7 @@ const InvoicePage = () => {
           parseFloat(deposit) !== original.deposit
             ? parseFloat(deposit)
             : undefined,
-        status: "unpaid", // Always set to unpaid on update
+        status,
       };
 
       // Remove undefined values
@@ -214,7 +214,7 @@ const InvoicePage = () => {
       <OutletHeading name="Edit Invoice" />
 
       <div className="p-2 md:p-6 max-w-6xl mx-auto bg-gradient-to-b from-gray-50 to-white shadow-md rounded-3xl">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 border-b  border-[var(--light-gray)] pb-2">
           <h1 className="text-xl font-extrabold text-[var(--dark-gray)] pt-3 pb-3">
             Invoice #{invoiceData?.invoice?.invoiceNumber || "Loading..."}
           </h1>
@@ -223,7 +223,7 @@ const InvoicePage = () => {
           </Link>
         </div>
 
-        <div className="bg-white p-2 md:p-6 rounded-2xl shadow mb-6 border">
+        <div className="bg-white p-2 md:p-6 rounded-2xl shadow mb-4 border  border-[var(--light-gray)]">
           <label className="block font-bold text-gray-700 mb-2 text-lg">
             Bill To
           </label>
@@ -260,7 +260,7 @@ const InvoicePage = () => {
           </div>
         </div>
 
-        <div className="bg-white p-2 md:p-6 rounded-2xl shadow mb-6 border">
+        <div className="bg-white p-2 md:p-6 rounded-2xl shadow mb-4  border-[var(--light-gray)] border">
           {/* Top Row: Select All & Global Apply */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div className="flex items-center gap-3 text-blue-800 font-semibold">
@@ -329,13 +329,12 @@ const InvoicePage = () => {
           {/* Each Item Block */}
           {itemDetails.map((details, index) => {
             const taxApplied = itemTaxes[index] === "Tax";
-            const rawAmount = parseFloat(itemAmounts[index]) || 0;
             const adjustedAmount = parseFloat(itemAmounts[index]) || 0;
 
             return (
               <div
                 key={index}
-                className="flex flex-col md:flex-row gap-4 items-start md:items-center border-t pt-4 mt-4"
+                className="flex flex-col md:flex-row gap-4 items-start md:items-center  border-[var(--light-gray)] border-t pt-4 mt-4"
               >
                 {/* Checkbox */}
                 <div className="flex items-center gap-3">
@@ -351,7 +350,7 @@ const InvoicePage = () => {
                 <div className="flex-1 w-full text-sm text-gray-700">
                   <textarea
                     rows={3}
-                    className="w-full border border-gray-300 rounded-lg p-2"
+                    className="w-full border border-[var(--light-gray)] rounded-lg p-2"
                     value={details}
                     onChange={(e) => {
                       const newDetails = [...itemDetails];
@@ -413,11 +412,11 @@ const InvoicePage = () => {
           })}
         </div>
 
-        <div className="text-right mb-6 text-gray-800">
+        <div className="text-right  mb-4 text-gray-800">
           {/* Sub Total */}
           <p>
-            Sub Total:{" "}
-            <strong className="text-blue-800">
+            Sub Total:
+            <strong className="text-blue-800 ml-1">
               £
               {invoiceData?.invoice?.items?.reduce(
                 (acc, item) => acc + (item.fare || 0),
@@ -432,7 +431,7 @@ const InvoicePage = () => {
             <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" />
             <input
               type="text"
-              className="border border-gray-300 rounded-lg p-1 w-24 text-right"
+              className="border border-[var(--light-gray)] rounded-lg p-1 w-24 text-right"
               value={discount}
               onChange={(e) => setDiscount(e.target.value)}
             />
@@ -444,14 +443,14 @@ const InvoicePage = () => {
             <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" />
             <input
               type="text"
-              className="border border-gray-300 rounded-lg p-1 w-24 text-right"
+              className="border border-[var(--light-gray)] rounded-lg p-1 w-24 text-right"
               value={deposit}
               onChange={(e) => setDeposit(e.target.value)}
             />
           </p>
 
           {/* Grand Total */}
-          <p className="mt-4 text-xl font-bold text-blue-800">
+          <p className="mt-3 text-xl font-bold text-blue-800">
             Total: £
             {(
               itemAmounts.reduce((sum, amt) => sum + parseFloat(amt || 0), 0) -
@@ -461,8 +460,8 @@ const InvoicePage = () => {
           </p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl shadow mb-6 border">
-          <ol className="grid list-decimal grid-cols-1 md:grid-cols-2 gap-6 list-inside">
+        <div className="bg-white p-4 rounded-2xl shadow mb-6  border-[var(--light-gray)] border">
+          <ul className="grid  grid-cols-1 md:grid-cols-2 gap-6 list-inside">
             {itemDetails.map((_, index) => {
               const bookingId =
                 invoiceData?.invoice?.items?.[index]?.bookingId ||
@@ -471,20 +470,26 @@ const InvoicePage = () => {
               return (
                 <li
                   key={index}
-                  className="border rounded-xl p-4 space-y-4 shadow-sm"
+                  className="border  border-[var(--light-gray)] rounded-xl p-4 space-y-2 shadow-sm"
                 >
-                  <p className="text-sm font-semibold text-gray-800">
-                    Booking ID:{" "}
-                    <span className="text-blue-700">{bookingId}</span>
-                  </p>
+                  <div className="flex items-center justify-between mb-3 gap-1">
+                    <span className="font-semibold text-gray-800">
+                      {index + 1}.
+                    </span>
+                    <span className="text-md font-semibold text-gray-800">
+                      Booking ID: 
+                      <span className="ml-1 text-blue-700">{bookingId}</span>
+                    </span>
+                  </div>
 
                   {/* Notes */}
-                  <div>
-                    <label className="block font-bold text-gray-800 mb-1">
-                      Notes
+                  <div className="flex items-center gap-2 w-full">
+                    <label className="block text-sm font-bold  text-gray-800 ">
+                      Notes:
                     </label>
-                    <textarea
-                      className="w-full border border-gray-300 rounded-lg p-2 text-sm h-20"
+
+                    <input
+                      className="custom_input  "
                       value={itemNotes[index] || ""}
                       onChange={(e) => {
                         setItemNotes((prev) => ({
@@ -497,12 +502,13 @@ const InvoicePage = () => {
                   </div>
 
                   {/* Internal Notes */}
-                  <div>
-                    <label className="block font-bold text-gray-800 mb-1">
-                      Internal Notes
+                  <div className="flex items-center gap-2 w-full">
+                    <label className="block whitespace-nowrap text-sm font-bold  text-gray-800">
+                      Internal Notes:
                     </label>
-                    <textarea
-                      className="w-full border border-gray-300 rounded-lg p-2 text-sm h-20"
+
+                    <input
+                      className="custom_input"
                       value={itemInternalNotes[index] || ""}
                       onChange={(e) => {
                         setItemInternalNotes((prev) => ({
@@ -516,7 +522,7 @@ const InvoicePage = () => {
                 </li>
               );
             })}
-          </ol>
+          </ul>
         </div>
 
         <div className="text-right">

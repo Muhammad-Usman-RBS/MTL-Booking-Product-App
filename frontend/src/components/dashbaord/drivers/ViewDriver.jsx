@@ -42,7 +42,7 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
     if (!fileUrl) {
       return (
         <div className="flex flex-col items-center">
-          <div className="w-40 h-28 flex items-center justify-center border-2 border-gray-300 bg-gray-100">
+          <div className="w-40 h-28 flex items-center justify-center border-2 border-[var(--light-gray)] bg-gray-100">
             <p className="text-sm text-gray-500">No file</p>
           </div>
           <p className="mt-2 text-sm font-medium">{label}</p>
@@ -59,11 +59,11 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
           <img
             src={fileUrl}
             alt={label}
-            className="w-40 h-28 object-cover border-2 border-gray-300"
+            className="w-40 h-28 object-cover border-2 border-[var(--light-gray)]"
           />
         ) : (
           isPdf && (
-            <div className="w-40 h-28 flex flex-col items-center justify-center border-2 border-gray-300 bg-gray-100">
+            <div className="w-40 h-28 flex flex-col items-center justify-center border-2 border-[var(--light-gray)] bg-gray-100">
               <Icons.FileText className="size-8 text-red-800" />
               {fileName && (
                 <p className="text-xs text-gray-500 mt-3 px-2 text-center break-words w-full">

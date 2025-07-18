@@ -40,7 +40,7 @@ const PrimaryForm = ({
                         className={`px-6 py-2 font-semibold text-sm border cursor-pointer 
                             ${mode === tab
                                 ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
-                                : "bg-[#f9fafb] text-gray-700 border-gray-300"
+                                : "bg-[#f9fafb] text-gray-700 border-[var(--light-gray)]"
                             } 
                             ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
                     >

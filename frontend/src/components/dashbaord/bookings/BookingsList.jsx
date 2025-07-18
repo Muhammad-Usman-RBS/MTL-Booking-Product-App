@@ -283,7 +283,7 @@ const BookingsList = () => {
                 type="checkbox"
                 checked={!!selectedColumns[key]}
                 onChange={(e) => handleColumnChange(key, e.target.checked)}
-                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                className="w-4 h-4 text-indigo-600 border-[var(--light-gray)] rounded focus:ring-indigo-500"
               />
               <span className="text-sm text-gray-800">{key}</span>
             </label>

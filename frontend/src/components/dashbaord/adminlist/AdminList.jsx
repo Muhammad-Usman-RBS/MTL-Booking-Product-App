@@ -222,7 +222,7 @@ const AdminList = () => {
                 case "Deleted":
                   return "bg-red-100 text-red-700 border-red-300 hover:bg-red-200";
                 default:
-                  return "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200";
+                  return "bg-gray-100 text-gray-700 border-[var(--light-gray)] hover:bg-gray-200";
               }
             };
 
@@ -242,13 +242,13 @@ const AdminList = () => {
         <Icons.Pencil
           title="Edit"
           onClick={() => handleEditModal(item)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-gray-300 cursor-pointer"
+          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
         />
         {selectedTab === "Deleted" && (
           <Icons.Trash
             title="Delete"
             onClick={() => handleDeleteClick(item._id)}
-            className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-gray-300 cursor-pointer"
+            className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
           />
         )}
       </div>

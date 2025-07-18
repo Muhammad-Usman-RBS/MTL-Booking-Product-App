@@ -9,7 +9,7 @@ const ViewCustomer = ({ customer, onClose }) => {
           <img
             src={customer?.profile || "/default-user.png"}
             alt="Profile"
-            className="w-24 h-24 rounded-full border border-gray-300"
+            className="w-24 h-24 rounded-full border border-[var(--light-gray)]"
           />
         </div>
 

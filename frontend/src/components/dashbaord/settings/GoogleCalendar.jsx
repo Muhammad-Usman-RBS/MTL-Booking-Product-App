@@ -30,7 +30,7 @@ const GoogleCalendar = () => {
           type="text"
           value={calendarId}
           onChange={(e) => setCalendarId(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2"
+          className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
           placeholder="Enter Google Calendar ID"
         />
       </div>
@@ -43,7 +43,7 @@ const GoogleCalendar = () => {
           rows={10}
           value={calendarJSON}
           onChange={(e) => setCalendarJSON(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2 font-mono text-sm"
+          className="w-full border border-[var(--light-gray)] rounded px-3 py-2 font-mono text-sm"
           placeholder="Paste Google Calendar service account JSON here"
         />
       </div>

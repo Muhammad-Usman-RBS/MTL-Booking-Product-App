@@ -104,7 +104,7 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
       <div>
         <div className="flex flex-col lg:flex-row gap-6 overflow-visible">
           <div className="flex flex-col items-center w-full lg:w-1/3">
-            <div className="bg-white border border-gray-300 rounded-lg shadow-md p-3 mb-4">
+            <div className="bg-white border border-[var(--light-gray)] rounded-lg shadow-md p-3 mb-4">
               <img
                 src={localSelectedVehicle.image}
                 alt={localSelectedVehicle.vehicleName}
@@ -139,7 +139,7 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
               </button>
 
               {open && (
-                <div className="absolute z-50 mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-72 overflow-y-auto sm:max-h-80">
+                <div className="absolute z-50 mt-2 w-full bg-white border border-[var(--light-gray)] rounded-md shadow-lg max-h-72 overflow-y-auto sm:max-h-80">
                   {vehicleOptions.map((vehicle, idx) => (
                     <button
                       key={vehicle._id || idx}
@@ -180,7 +180,7 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
                 <select
                   value={selections[key]}
                   onChange={(e) => handleSelectChange(key, e.target.value)}
-                  className="w-full border border-gray-300 rounded px-2 py-2 focus:outline-none focus:ring focus:ring-gray-600"
+                  className="w-full border border-[var(--light-gray)] rounded px-2 py-2 focus:outline-none focus:ring focus:ring-gray-600"
                 >
                   {[...Array(max + 1).keys()].map((n) => (
                     <option key={n} value={n}>{n}</option>

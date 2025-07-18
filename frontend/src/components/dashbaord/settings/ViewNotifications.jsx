@@ -18,7 +18,7 @@
 //     <div>
 //       <OutletHeading name="Notifications" />
 
-//       <div className="border border-gray-300">
+//       <div className="border border-[var(--light-gray)]">
 //         {notifications.map((notification) => (
 //           <div
 //             key={notification.id}

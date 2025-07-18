@@ -13,7 +13,7 @@ const DashboardLayout = () => {
           <main className="flex-1 overflow-y-auto p-4">
             <Outlet />
           </main>
-          <footer className="bg-theme text-theme text-sm p-4 border-t border-gray-300 text-center">
+          <footer className="bg-theme text-theme text-sm p-4 border-t border-[var(--light-gray)] text-center">
             © {new Date().getFullYear()} MTL Booking App. All rights reserved.
           </footer>
         </div>

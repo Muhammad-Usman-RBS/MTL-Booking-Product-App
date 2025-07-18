@@ -68,7 +68,7 @@ const PriceBreakdown = ({
                 </div>
             )}
 
-            <div className="flex justify-between pt-2 mt-12 border-t border-gray-300 text-base font-semibold">
+            <div className="flex justify-between pt-2 mt-12 border-t border-[var(--light-gray)] text-base font-semibold">
                 <span className="flex items-center">
                     Total
                     {isHourlyMode && (

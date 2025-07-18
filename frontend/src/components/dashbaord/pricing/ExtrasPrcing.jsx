@@ -99,12 +99,12 @@ const ExtrasPricing = () => {
                 <Icons.Pencil
                     title="Edit"
                     onClick={() => handleEdit(item)}
-                    className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-gray-300 cursor-pointer"
+                    className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
                 />
                 <Icons.Trash
                     title="Delete"
                     onClick={() => setDeleteItemId(item._id)}
-                    className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-gray-300 cursor-pointer"
+                    className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
                 />
             </div>
         ),
@@ -172,7 +172,7 @@ const ExtrasPricing = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Zone Entry Charge</label>
                         <input
                             type="number"
-                            className="custom_input rounded-lg border border-gray-300 shadow-sm"
+                            className="custom_input rounded-lg border border-[var(--light-gray)] shadow-sm"
                             value={selectedItem?.price}
                             onChange={(e) =>
                                 setSelectedItem({

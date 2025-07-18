@@ -57,7 +57,7 @@ const BookingSettings = () => {
           </label>
           <input
             type="text"
-            className="w-full border border-gray-300 rounded px-3 py-1"
+            className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
             defaultValue="3"
           />
         </div>
@@ -68,7 +68,7 @@ const BookingSettings = () => {
           </label>
           <input
             type="text"
-            className="w-full border border-gray-300 rounded px-3 py-1"
+            className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
           />
         </div>
 
@@ -78,7 +78,7 @@ const BookingSettings = () => {
           </label>
           <input
             type="text"
-            className="w-full border border-gray-300 rounded px-3 py-1"
+            className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
           />
         </div>
 
@@ -88,7 +88,7 @@ const BookingSettings = () => {
           </label>
           <input
             type="text"
-            className="w-full border border-gray-300 rounded px-3 py-1"
+            className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
           />
         </div>
 
@@ -98,7 +98,7 @@ const BookingSettings = () => {
           </label>
           <input
             type="text"
-            className="w-full border border-gray-300 rounded px-3 py-1"
+            className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
           />
         </div>
 
@@ -108,7 +108,7 @@ const BookingSettings = () => {
           </label>
           <input
             type="text"
-            className="w-full border border-gray-300 rounded px-3 py-1"
+            className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
           />
         </div>
 
@@ -144,7 +144,7 @@ const BookingSettings = () => {
           <label className="block text-sm font-medium mb-1">Order prefix</label>
           <input
             type="text"
-            className="w-full border border-gray-300 rounded px-3 py-1"
+            className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
           />
         </div>
 
@@ -155,7 +155,7 @@ const BookingSettings = () => {
         ].map((label) => (
           <div key={label}>
             <label className="block text-sm font-medium mb-1">{label}</label>
-            <select className="w-full border border-gray-300 rounded px-3 py-1">
+            <select className="w-full border border-[var(--light-gray)] rounded px-3 py-1">
               <option>Yes</option>
               <option>No</option>
             </select>
@@ -163,7 +163,7 @@ const BookingSettings = () => {
         ))}
         <div>
           <label className="block text-sm font-medium mb-1">Route</label>
-          <select className="w-full border border-gray-300 rounded px-3 py-1">
+          <select className="w-full border border-[var(--light-gray)] rounded px-3 py-1">
             <option>Shortest Duration</option>
             <option>Shortest Distance</option>
           </select>
@@ -178,10 +178,10 @@ const BookingSettings = () => {
             <div className="flex gap-2">
               <input
                 type="text"
-                className="w-full border border-gray-300 rounded px-3 py-1"
+                className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
                 defaultValue={value}
               />
-              <select className="border border-gray-300 rounded px-2">
+              <select className="border border-[var(--light-gray)] rounded px-2">
                 <option>{unit}</option>
               </select>
             </div>
@@ -192,7 +192,7 @@ const BookingSettings = () => {
           <label className="block text-sm font-medium mb-1">
             Cancel Booking Terms
           </label>
-          <textarea className="w-full border border-gray-300 rounded px-3 py-2"></textarea>
+          <textarea className="w-full border border-[var(--light-gray)] rounded px-3 py-2"></textarea>
         </div>
 
         <div className="md:col-span-2">

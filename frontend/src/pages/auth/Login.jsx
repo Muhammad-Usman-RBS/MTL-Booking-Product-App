@@ -78,7 +78,7 @@ const Login = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="xyz@gmail.com"
-          className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+          className="w-full px-4 py-2 bg-gray-50 border border-[var(--light-gray)] rounded-lg placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
         />
       </div>
       <div className="relative">
@@ -91,7 +91,7 @@ const Login = () => {
     value={password}
     onChange={(e) => setPassword(e.target.value)}
     placeholder="********"
-    className="w-full px-4 py-2 pr-10 pt-2.5 bg-gray-50 border border-gray-300 rounded-lg placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+    className="w-full px-4 py-2 pr-10 pt-2.5 bg-gray-50 border border-[var(--light-gray)] rounded-lg placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
   />
    <span
       className="absolute top-1/2 right-3 transform translate-y-1/4 cursor-pointer text-gray-500"

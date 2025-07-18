@@ -19,13 +19,13 @@ const Dashboard = () => {
     {
       title: "Bookings Scheduled",
       values: [0, 11, 11, "0.00", "1,565.95", "1,565.95", "0.00", "1,565.95"],
-      borderColor: "border-gray-300", 
+      borderColor: "border-[var(--light-gray)]", 
       bg: "bg-[#2A7B9B]",
     },
     {
       title: "Bookings Received",
       values: [0, 1, 1, "0.00", "78.76", "78.76", "0.00", "78.76"],
-      borderColor: "border-gray-300",
+      borderColor: "border-[var(--light-gray)]",
       bg: "bg-[#57C785]",
     },
     {
@@ -40,7 +40,7 @@ const Dashboard = () => {
         "758,958.68",
         "354,966.65",
       ],
-      borderColor: "border-gray-300",
+      borderColor: "border-[var(--light-gray)]",
       bg: "bg-[#C75957]",
     },
     {
@@ -55,7 +55,7 @@ const Dashboard = () => {
         "745,700.15",
         "339,032.50",
       ],
-      borderColor: "border-gray-300",
+      borderColor: "border-[var(--light-gray)]",
       bg: "bg-[#576FC7]",
     },
     {
@@ -70,7 +70,7 @@ const Dashboard = () => {
         "13,258.53",
         "15,934.15",
       ],
-      borderColor: "border-gray-300",
+      borderColor: "border-[var(--light-gray)]",
       bg: "bg-[#57B4C7]",
     },
   ];

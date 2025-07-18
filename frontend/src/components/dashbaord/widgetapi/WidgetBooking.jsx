@@ -365,7 +365,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
         <div className="max-w-xl w-full mx-auto mt-6 px-4 sm:px-0">
             <form
                 onSubmit={handleSubmit}
-                className="bg-gradient-to-br from-white via-gray-50 to-gray-100 border border-gray-300 rounded-2xl shadow-lg px-6 py-5 space-y-6 text-base text-gray-700 transition duration-300 hover:shadow-xl"
+                className="bg-gradient-to-br from-white via-gray-50 to-gray-100 border border-[var(--light-gray)] rounded-2xl shadow-lg px-6 py-5 space-y-6 text-base text-gray-700 transition duration-300 hover:shadow-xl"
             >
                 <ToastContainer />
                 {isReturnForm ? (

@@ -60,7 +60,7 @@ const DriverRegistrationConfig = () => {
           <input
             type="text"
             defaultValue="jpeg,jpg,png,pdf"
-            className="border border-gray-300 rounded px-2 py-1 w-1/2"
+            className="border border-[var(--light-gray)] rounded px-2 py-1 w-1/2"
           />
         </div>
 
@@ -69,7 +69,7 @@ const DriverRegistrationConfig = () => {
           <input
             type="text"
             defaultValue="jpeg,jpg,png,pdf"
-            className="border border-gray-300 rounded px-2 py-1 w-1/2"
+            className="border border-[var(--light-gray)] rounded px-2 py-1 w-1/2"
           />
         </div>
 
@@ -79,7 +79,7 @@ const DriverRegistrationConfig = () => {
             <input
               type="number"
               defaultValue={15}
-              className="border border-gray-300 rounded px-2 py-1 w-20"
+              className="border border-[var(--light-gray)] rounded px-2 py-1 w-20"
             />
             <span className="ml-2">MB</span>
           </div>

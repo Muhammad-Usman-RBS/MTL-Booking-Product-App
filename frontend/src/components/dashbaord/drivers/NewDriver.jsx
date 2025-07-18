@@ -226,7 +226,7 @@ const NewDriver = () => {
     <div>
       <div
         className={`${
-          isEdit ? "border-gray-300 border-b" : ""
+          isEdit ? "border-[var(--light-gray)] border-b" : ""
         } flex items-center justify-between mb-6`}
       >
         <OutletHeading name={isEdit ? "Edit Driver" : "Add Driver"} />

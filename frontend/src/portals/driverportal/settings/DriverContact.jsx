@@ -58,7 +58,7 @@ const DriverContact = () => {
         </div>
 
         <div className="lg:col-span-3 w-full">
-          <div className="bg-white rounded-md p-6 border border-gray-300 w-full">
+          <div className="bg-white rounded-md p-6 border border-[var(--light-gray)] w-full">
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-4">

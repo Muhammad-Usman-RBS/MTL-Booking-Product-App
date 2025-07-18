@@ -21,7 +21,7 @@ const CronJob = () => {
               type="text"
               value="wget -q -O- https://www.megatransfers.com/cron/"
               readOnly
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+              className="w-full border border-[var(--light-gray)] rounded px-3 py-2 text-sm"
             />
           </div>
           <button className="text-green-600 text-sm mt-2">
@@ -37,7 +37,7 @@ const CronJob = () => {
             type="text"
             value="*/1 * * * *"
             readOnly
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm mt-1"
+            className="w-full border border-[var(--light-gray)] rounded px-3 py-2 text-sm mt-1"
           />
         </div>
 

@@ -125,9 +125,9 @@ const General = () => {
               name="minAdditionalDropOff"
               value={formData.minAdditionalDropOff}
               onChange={handleChange}
-              className="w-full border border-gray-300 px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-[var(--light-gray)] px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <span className="px-4 flex items-center border border-l-0 border-gray-300 bg-gray-100 rounded-r-md">
+            <span className="px-4 flex items-center border border-l-0 border-[var(--light-gray)] bg-gray-100 rounded-r-md">
               GBP
             </span>
           </div>
@@ -144,9 +144,9 @@ const General = () => {
               name="childSeatPrice"
               value={formData.childSeatPrice}
               onChange={handleChange}
-              className="w-full border border-gray-300 px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-[var(--light-gray)] px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <span className="px-4 flex items-center border border-l-0 border-gray-300 bg-gray-100 rounded-r-md">
+            <span className="px-4 flex items-center border border-l-0 border-[var(--light-gray)] bg-gray-100 rounded-r-md">
               GBP
             </span>
           </div>
@@ -161,7 +161,7 @@ const General = () => {
               name="invoiceTaxPercent"
               value={formData.invoiceTaxPercent}
               onChange={handleChange}
-              className="w-full border border-gray-300 px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-[var(--light-gray)] px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
@@ -191,9 +191,9 @@ const General = () => {
                 name="cardPaymentAmount"
                 value={formData.cardPaymentAmount}
                 onChange={handleChange}
-                className="w-full border border-gray-300 px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-[var(--light-gray)] px-4 py-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <span className="px-4 flex items-center border border-l-0 border-gray-300 bg-gray-100 rounded-r-md">
+              <span className="px-4 flex items-center border border-l-0 border-[var(--light-gray)] bg-gray-100 rounded-r-md">
                 %
               </span>
             </div>

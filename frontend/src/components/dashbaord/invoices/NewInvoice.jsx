@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
-import SelectedSearch from "../../../constants/constantscomponents/SelectedSearch";
-import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import CustomTable from "../../../constants/constantscomponents/CustomTable";
-import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import SelectOption from "../../../constants/constantscomponents/SelectOption";
-import { useCreateInvoiceMutation } from "../../../redux/api/invoiceApi";
 import { toast } from "react-toastify";
+import CustomTable from "../../../constants/constantscomponents/CustomTable";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
+import SelectedSearch from "../../../constants/constantscomponents/SelectedSearch";
+import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import { useGetGeneralPricingPublicQuery } from "../../../redux/api/generalPricingApi";
+import { useCreateInvoiceMutation } from "../../../redux/api/invoiceApi";
 
 const getFirstAndLastDay = (offset = 0) => {
   const now = new Date();
@@ -190,7 +190,7 @@ const NewInvoice = () => {
             fare,
             tax: taxType,
             totalAmount,
-            status: "unpaid",
+            status: "Unpaid",
             notes: journeyNotes,
             source: source,
             internalNotes: internalNotes,
@@ -302,7 +302,7 @@ const NewInvoice = () => {
     if (taxPercent > 0 && customerFilteredBookings.length > 0) {
       const updated = {};
       customerFilteredBookings.forEach((b) => {
-        updated[b._id] = "No Tax"; 
+        updated[b._id] = "No Tax";
       });
       setBookingTaxes(updated);
     }

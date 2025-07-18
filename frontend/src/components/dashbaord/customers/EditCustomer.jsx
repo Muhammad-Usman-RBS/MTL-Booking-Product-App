@@ -32,7 +32,7 @@ const EditCustomer = ({ customer, onClose }) => {
           <img
             src={formData?.profile || "/default-user.png"}
             alt="Profile"
-            className="w-24 h-24 rounded-full border border-gray-300"
+            className="w-24 h-24 rounded-full border border-[var(--light-gray)]"
           />
 
           <label className="flex items-center gap-2 mt-2">

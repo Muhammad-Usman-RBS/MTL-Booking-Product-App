@@ -85,7 +85,7 @@ const PermissionsSettings = () => {
         </button>
       </div>
 
-      <hr className="mb-6 border-gray-300" />
+      <hr className="mb-6 border-[var(--light-gray)]" />
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
         {ALL_PERMISSIONS.map((perm) => (

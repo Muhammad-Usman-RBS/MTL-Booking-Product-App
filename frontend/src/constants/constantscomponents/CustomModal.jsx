@@ -9,7 +9,7 @@ const CustomModal = ({ isOpen, onClose, heading, children }) => {
       onClick={onClose}
     >
       <div
-        className="w-auto max-h-[90vh] bg-white rounded-2xl border border-gray-300 overflow-hidden"
+        className="w-auto max-h-[90vh] bg-white rounded-2xl border border-[var(--light-gray)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center bg-theme border-b border-gray-200 p-3">

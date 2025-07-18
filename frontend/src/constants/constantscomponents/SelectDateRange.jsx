@@ -75,7 +75,7 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
   return (
     <div className="relative inline-block w-full">
       <div
-        className="flex items-center gap-2 border border-gray-300 px-2 py-[6px] bg-white rounded cursor-pointer"
+        className="flex items-center gap-2 border border-[var(--light-gray)] px-2 py-[6px] bg-white rounded cursor-pointer"
         onClick={() => setDropdownOpen(!dropdownOpen)}
       >
         <Icons.CalendarDays className="w-4 h-4 text-black" />
@@ -90,7 +90,7 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
       </div>
 
       {dropdownOpen && (
-        <div className="absolute mt-1 w-full bg-white border border-gray-300 rounded shadow-md z-10 p-2 space-y-1">
+        <div className="absolute mt-1 w-full bg-white border border-[var(--light-gray)] rounded shadow-md z-10 p-2 space-y-1">
           {ranges.map((r) => (
             <div
               key={r.label}

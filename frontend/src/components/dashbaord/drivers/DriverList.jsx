@@ -130,14 +130,14 @@ const DriverList = () => {
     actions: (
       <div className="flex gap-2">
         <Icons.Eye
-          className="w-8 h-8 rounded-md hover:bg-blue-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2"
+          className="w-8 h-8 rounded-md hover:bg-blue-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
           onClick={() => setSelectedDriver(driver._id)}
         />
         <Link to={`/dashboard/drivers/edit/${driver._id}`}>
-          <Icons.Pencil className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2" />
+          <Icons.Pencil className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2" />
         </Link>
         <Icons.Send
-          className="w-8 h-8 rounded-md hover:bg-blue-500 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2"
+          className="w-8 h-8 rounded-md hover:bg-blue-500 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
           onClick={() => handleSendEmail(driver)}
         />
         {user?.role !== "driver" && (
@@ -146,7 +146,7 @@ const DriverList = () => {
               setdriverToDelete(driver);
               setShowDeleteModal(true);
             }}
-            className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2"
+            className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
           />
         )}
       </div>

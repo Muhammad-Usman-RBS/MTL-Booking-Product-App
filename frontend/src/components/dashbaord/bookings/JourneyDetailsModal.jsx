@@ -125,7 +125,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 border border-gray-300 px-2 py-1.5 rounded text-sm"
+              className="flex-1 border border-[var(--light-gray)] px-2 py-1.5 rounded text-sm"
               placeholder="Enter email"
             />
           </div>
@@ -192,7 +192,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                   {viewData?.primaryJourney?.pickupDoorNumber || "—"}
                 </div>
               </div>
-              <hr className="text-gray-300 my-2" />
+              <hr className="text-[var(--light-gray)] my-2" />
             </div>
             <div>
               <strong>Drop Off:</strong>
@@ -206,7 +206,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                   {viewData?.primaryJourney?.dropoffDoorNumber0 || "—"}
                 </div>
               </div>
-              <hr className="text-gray-300 my-2" />
+              <hr className="text-[var(--light-gray)] my-2" />
             </div>
           </div>
 
@@ -229,7 +229,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                     {viewData?.passenger?.phone || "N/A"}
                   </div>
                 </div>
-                <hr className="text-gray-300 my-2" />
+                <hr className="text-[var(--light-gray)] my-2" />
               </div>
             )}
 
@@ -257,7 +257,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                   {viewData?.vehicle?.checkinLuggage || 0}
                 </div>
               </div>
-              <hr className="text-gray-300 my-2" />
+              <hr className="text-[var(--light-gray)] my-2" />
             </div>
 
             <div>
@@ -265,7 +265,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
               <div className="ml-4 mt-1 italic text-gray-500">
                 {viewData?.primaryJourney?.notes || "None"}
               </div>
-              <hr className="text-gray-300 my-2" />
+              <hr className="text-[var(--light-gray)] my-2" />
             </div>
           </div>
         </div>
@@ -286,7 +286,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 bg-gray-100 border-t border-gray-300 p-3 rounded-md">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 bg-gray-100 border-t border-[var(--light-gray)] p-3 rounded-md">
           <span className="text-gray-700 font-medium text-sm">
             This booking has been&nbsp;
             <span className="text-green-600 font-semibold">

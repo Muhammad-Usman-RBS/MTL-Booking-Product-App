@@ -211,7 +211,7 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
                 <img
                   src={driver.UploadedData?.driverPicture || IMAGES.dummyImg}
                   alt={driver.name}
-                  className="w-10 h-10 rounded-full object-cover border border-gray-300"
+                  className="w-10 h-10 rounded-full object-cover border border-[var(--light-gray)]"
                 />
                 <div className="flex-1">
                   <p className="font-medium text-gray-800">

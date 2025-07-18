@@ -186,7 +186,7 @@ const DriverGeneration = ({ setShowGeneration }) => {
       ) : (
         <>
           <div className="flex justify-center mt-4">
-            <p className="text-center py-2 border border-gray-300 w-64">
+            <p className="text-center py-2 border border-[var(--light-gray)] w-64">
               No Statements
             </p>
           </div>

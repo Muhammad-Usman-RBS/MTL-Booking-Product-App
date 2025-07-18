@@ -22,12 +22,27 @@ const InvoicesList = () => {
   const [deleteInvoiceById] = useDeleteInvoiceByIdMutation();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteInvoiceId, setDeleteInvoiceId] = useState(null);
+  const [scrollToInvoice, setScrollToInvoice] = useState(false);
+
   const handleInvoiceClick = (invoiceNo) => {
     setExpandedInvoice((prev) => (prev === invoiceNo ? null : invoiceNo));
+    setScrollToInvoice(true); 
   };
+  useEffect(() => {
+    if (scrollToInvoice) {
+      const timeout = setTimeout(() => {
+        const target = document.getElementById("invoiceToDownload");
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        setScrollToInvoice(false); 
+      }, 100); 
+
+      return () => clearTimeout(timeout);
+    }
+  }, [expandedInvoice, scrollToInvoice]);
   const filteredData = invoices.filter((invoice) => {
     const query = search.toLowerCase();
-
     const invoiceNo = invoice.invoiceNumber?.toLowerCase() || "";
     const customerName = invoice.customer?.name || "-";
     const source = invoice.items?.[0]?.source || "-";
@@ -94,26 +109,26 @@ const InvoicesList = () => {
           dueDate,
           amount: `£${amount.toFixed(2)}`,
           status: (
-            <span
-              className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                status === "paid"
-                  ? "bg-green-700 text-white"
-                  : "bg-gray-500 text-white"
+            <p
+              className={`px-4 py-1.5 max-w-20 text-center w-full text-xs tracking-widest rounded-md ${
+                status === "Paid"
+                  ? "bg-[var(--success-color)] text-white "
+                  : "bg-[var(--medium-grey)] text-white"
               }`}
             >
               {status}
-            </span>
+            </p>
           ),
           actions: (
             <>
               <div>
                 <div className="flex gap-2">
                   <Link to={`/dashboard/invoices/edit/${invoice._id}`}>
-                    <Icons.SquarePen className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2" />
+                    <Icons.SquarePen className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2" />
                   </Link>
                   <Icons.Trash
                     onClick={() => handleDeleteClick(invoice._id)}
-                    className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2"
+                    className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
                   />
                 </div>
               </div>

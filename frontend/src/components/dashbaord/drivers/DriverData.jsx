@@ -246,7 +246,7 @@ const DriverData = ({
           onChange={handleInputChange}
         />
       </div>
-      <hr className="mb-12 mt-12 border-gray-300" />
+      <hr className="mb-12 mt-12 border-[var(--light-gray)]" />
     </>
   );
 };

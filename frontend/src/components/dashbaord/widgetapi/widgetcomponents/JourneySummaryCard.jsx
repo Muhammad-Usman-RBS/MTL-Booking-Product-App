@@ -131,7 +131,7 @@ const JourneyRow = ({
         </div>
 
         {/* Arrow separator */}
-        <div className="text-gray-300 text-3xl hidden md:block select-none">→</div>
+        <div className="text-[var(--light-gray)] text-3xl hidden md:block select-none">→</div>
 
         {/* Dropoff section */}
         <div className="flex flex-col items-end gap-3 w-full md:w-auto min-w-[220px] justify-end text-right">

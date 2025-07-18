@@ -19,7 +19,7 @@ const InvoiceEmailModal = ({
           type="email"
           value={recipient}
           onChange={onChangeRecipient}
-          className="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+          className="mt-1 w-full border border-[var(--light-gray)] rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
 
@@ -31,7 +31,7 @@ const InvoiceEmailModal = ({
           type="text"
           value={subject}
           onChange={onChangeSubject}
-          className="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+          className="mt-1 w-full border border-[var(--light-gray)] rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
 
@@ -43,7 +43,7 @@ const InvoiceEmailModal = ({
           rows={8}
           value={message}
           onChange={onChangeMessage}
-          className="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm font-mono whitespace-pre-wrap focus:ring-blue-500 focus:border-blue-500"
+          className="mt-1 w-full border border-[var(--light-gray)] rounded px-3 py-2 text-sm font-mono whitespace-pre-wrap focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
 

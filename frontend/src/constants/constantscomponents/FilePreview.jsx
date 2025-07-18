@@ -42,7 +42,7 @@ const FilePreview = ({
 
     // Render PDF preview box
     const renderPdfPreview = () => (
-        <div className="w-36 h-24 flex flex-col items-center justify-center border-gray-300 border-2 bg-gray-100">
+        <div className="w-36 h-24 flex flex-col items-center justify-center border-[var(--light-gray)] border-2 bg-gray-100">
             <Icons.FileText className="w-10 h-10 text-red-600" />
             <p className="text-xs text-black mt-1 px-2 text-center break-all">
                 {fileName || "PDF File"}
@@ -55,13 +55,13 @@ const FilePreview = ({
         <img
             src={fileUrl}
             alt={fileName}
-            className="w-36 h-36 object-cover border-gray-300 border-2"
+            className="w-36 h-36 object-cover border-[var(--light-gray)] border-2"
         />
     );
 
     // Render no file uploaded box
     const renderNoFile = () => (
-        <div className="w-36 h-36 border border-dashed border-gray-300 flex items-center justify-center text-gray-500 text-xs font-light">
+        <div className="w-36 h-36 border border-dashed border-[var(--light-gray)] flex items-center justify-center text-gray-500 text-xs font-light">
             No File Uploaded
         </div>
     );

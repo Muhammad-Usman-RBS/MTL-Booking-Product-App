@@ -10,7 +10,7 @@ const PaymentMethodSection = ({
     fields,
 }) => {
     return (
-        <div className="border border-gray-300 rounded-t-lg overflow-hidden">
+        <div className="border border-[var(--light-gray)] rounded-t-lg overflow-hidden">
             <div className="bg-theme text-theme px-4 py-3 flex  justify-between items-center">
                 <div className="flex items-center gap-2 ">
                     <div className="relative">
@@ -18,7 +18,7 @@ const PaymentMethodSection = ({
                             type="checkbox"
                             checked={checked}
                             onChange={() => setChecked(!checked)}
-                            className="w-3 h-3 accent-white mt-2 bg-white border-2 border-gray-300 rounded cursor-pointer transform transition-transform hover:scale-110"
+                            className="w-3 h-3 accent-white mt-2 bg-white border-2 border-[var(--light-gray)] rounded cursor-pointer transform transition-transform hover:scale-110"
                         />
                     </div>
                     <span className="font-thin lg:text-md text-sm break-words leading-tight">
@@ -47,7 +47,7 @@ const PaymentMethodSection = ({
                             idx
                         ) => (
                             <div>
-                                <div key={idx} className="flex rounded-t-md justify-between items-center text-sm font-semibold text-[var(--dark-gray)] bg-gray-300 px-3 py-2 border-b border-gray-300">
+                                <div key={idx} className="flex rounded-t-md justify-between items-center text-sm font-semibold text-[var(--dark-gray)] bg-gray-300 px-3 py-2 border-b border-[var(--light-gray)]">
                                     <span>{label}</span>
                                     {copyable && (
                                         <button className="flex items-center cursor-pointer text-sm gap-1">
@@ -61,7 +61,7 @@ const PaymentMethodSection = ({
                                     <input
                                         type="text"
                                         defaultValue={value}
-                                        className="w-full px-3 text-sm py-2 text-gray-800 bg-white border border-gray-300 focus:outline-none"
+                                        className="w-full px-3 text-sm py-2 text-gray-800 bg-white border border-[var(--light-gray)] focus:outline-none"
                                     />
                                 </div>
                             </div>

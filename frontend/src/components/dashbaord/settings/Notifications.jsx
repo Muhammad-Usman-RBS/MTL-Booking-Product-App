@@ -19,7 +19,7 @@ const Notifications = () => {
           Enable Notifications
         </label>
         <select
-          className="w-full border border-gray-300 rounded px-3 py-2"
+          className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
           value={notificationsEnabled}
           onChange={(e) => setNotificationsEnabled(e.target.value)}
         >
@@ -39,7 +39,7 @@ const Notifications = () => {
             type="text"
             value={serverKey}
             onChange={(e) => setServerKey(e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2"
+            className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
             placeholder="Enter Server Key"
           />
         </div>
@@ -52,7 +52,7 @@ const Notifications = () => {
             value={firebaseConfig}
             onChange={(e) => setFirebaseConfig(e.target.value)}
             rows={8}
-            className="w-full border border-gray-300 rounded px-3 py-2 font-mono text-sm"
+            className="w-full border border-[var(--light-gray)] rounded px-3 py-2 font-mono text-sm"
           />
         </div>
       </div>

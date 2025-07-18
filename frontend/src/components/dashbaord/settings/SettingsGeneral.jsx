@@ -297,7 +297,7 @@ const SettingsGeneral = () => {
                     className="h-full object-contain"
                   />
                 ) : (
-                  <div className="border border-dashed border-gray-300 ">No File Uploaded</div>
+                  <div className="border border-dashed border-[var(--light-gray)] ">No File Uploaded</div>
                 )}
               </div>
               <div>
@@ -319,7 +319,7 @@ const SettingsGeneral = () => {
           </div>
         </div>
       </div>
-      <hr className="border-gray-300 mt-8 mb-5" />
+      <hr className="border-[var(--light-gray)] mt-8 mb-5" />
       {/* Company Info */}
       <div className="mb-4 ">
         <label className="  text-[var(--dark-gray)] font-semibold  text-lg ">
@@ -387,7 +387,7 @@ const SettingsGeneral = () => {
           />
         </div>
       </div>
-      <hr className="border-gray-300 mt-8 mb-6" />
+      <hr className="border-[var(--light-gray)] mt-8 mb-6" />
 
       {/* Theme Colors */}
       <div className="space-y-4  mb-8">

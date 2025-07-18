@@ -111,7 +111,7 @@ const {
         <img
           src={preview || IMAGES.dummyImg}
           alt="Profile-Preview"
-          className="w-22 h-22 rounded-full object-cover border border-gray-300"
+          className="w-22 h-22 rounded-full object-cover border border-[var(--light-gray)]"
         />
 
         <div>

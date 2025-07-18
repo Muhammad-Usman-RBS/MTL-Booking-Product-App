@@ -412,7 +412,7 @@ const CustomTable = ({ searchQuery, filters, nowLoad }) => {
                 onClick={() => setCurrentPage(idx + 1)}
                 className={`w-8 h-8 rounded border text-sm font-semibold ${currentPage === idx + 1
                   ? 'border-[#000000] text-[#000000]'
-                  : 'border-gray-300 text-[#637381]'
+                  : 'border-[var(--light-gray)] text-[#637381]'
                   }`}
               >
                 {idx + 1}

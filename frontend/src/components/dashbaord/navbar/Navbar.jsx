@@ -128,7 +128,7 @@ function Navbar() {
           <div className="relative">
             <button
               onClick={() => setIsThemeOpen(!isThemeOpen)}
-              className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white border border-gray-300 text-sm shadow-md text-black hover:bg-gray-100 transition duration-200"
+              className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white border border-[var(--light-gray)] text-sm shadow-md text-black hover:bg-gray-100 transition duration-200"
             >
               <span className="text-lg">🎨</span>
               <span>Select Theme</span>
@@ -188,7 +188,7 @@ function Navbar() {
           <div className="relative">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm shadow-md text-black hover:bg-gray-100 transition duration-200"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[var(--light-gray)] text-sm shadow-md text-black hover:bg-gray-100 transition duration-200"
             >
               <Icons.User className="w-4 h-4 text-dark" />
               <span>User</span>
@@ -255,7 +255,7 @@ function Navbar() {
               <div
                 onMouseEnter={handleMouseEnterTooltip}
                 onMouseLeave={handleMouseLeave}
-                className="bg-white absolute border-gray-300 border-[1.5px] top-12 right-0  text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden"
+                className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 right-0  text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden"
               >
                 <div className="border-b px-4 py-3 text-theme bg-theme">
                   <div className="flex items-center justify-between">

@@ -103,7 +103,7 @@ export const updateInvoice = async (req, res) => {
 
     const invoice = await Invoice.findOne({
       _id: id,
-      companyId: user.companyId,
+      companyId: user.companyId,  
     });
 
     if (!invoice) {

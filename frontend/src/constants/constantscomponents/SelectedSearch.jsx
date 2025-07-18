@@ -28,7 +28,7 @@ const SelectedSearch = ({
     <div className="relative inline-block text-left w-full">
       <button
         onClick={() => setDropdownOpen(!dropdownOpen)}
-        className="border px-3 py-1 rounded bg-white cursor-pointer border-gray-300 w-full text-left"
+        className="border px-3 py-1 rounded bg-white cursor-pointer border-[var(--light-gray)] w-full text-left"
       >
         {selected.length === 0
           ? placeholder || "Select"
@@ -36,8 +36,8 @@ const SelectedSearch = ({
       </button>
 
       {dropdownOpen && (
-        <div className="absolute z-10 mt-2 bg-white border rounded border-gray-300 shadow-md max-h-72 overflow-y-auto w-full">
-          <div className="p-2 border-b border-gray-300">
+        <div className="absolute z-10 mt-2 bg-white border rounded border-[var(--light-gray)] shadow-md max-h-72 overflow-y-auto w-full">
+          <div className="p-2 border-b border-[var(--light-gray)]">
             <input
               type="text"
               placeholder="Search"
