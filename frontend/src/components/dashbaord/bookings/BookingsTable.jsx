@@ -467,7 +467,7 @@ const BookingsTable = ({
 
                               // Mark this as copy mode
                               copied.__copyMode = true;
-                              copied.__copyMode = true; 
+                              copied.__copyMode = true;
 
                               setEditBookingData(copied);
                               setShowEditModal(true);

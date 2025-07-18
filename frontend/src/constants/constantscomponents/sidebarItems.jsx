@@ -21,6 +21,11 @@ const sidebarItems = [
         route: "/dashboard/bookings/new",
         icon: Icons.PlusCircle,
       },
+      {
+        title: "Booking Calendar",
+        route: "/dashboard/bookings/calendar",
+        icon: Icons.CalendarDays,
+      }
     ],
   },
   {
@@ -193,7 +198,7 @@ const sidebarItems = [
         route: "/dashboard/settings/general",
         icon: Icons.Sliders,
       },
-    
+
       {
         title: "Booking",
         route: "/dashboard/settings/booking",

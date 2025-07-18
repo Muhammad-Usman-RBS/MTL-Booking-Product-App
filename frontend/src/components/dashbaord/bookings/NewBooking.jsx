@@ -160,17 +160,17 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       return toast.error("Missing required fields");
     }
 
-    const dynamicFields1 = {};
-    dropOffs1.forEach((_, i) => {
-      dynamicFields1[`dropoffDoorNumber${i}`] = primaryJourneyData[`dropoffDoorNumber${i}`] || "";
-      dynamicFields1[`dropoff_terminal_${i}`] = primaryJourneyData[`dropoff_terminal_${i}`] || "";
-    });
+    const buildDynamicFields = (dropOffs, journeyData) => {
+      const dynamic = {};
+      dropOffs.forEach((_, i) => {
+        dynamic[`dropoffDoorNumber${i}`] = journeyData[`dropoffDoorNumber${i}`] || "";
+        dynamic[`dropoff_terminal_${i}`] = journeyData[`dropoff_terminal_${i}`] || "";
+      });
+      return dynamic;
+    };
 
-    const dynamicFields2 = {};
-    dropOffs2.forEach((_, i) => {
-      dynamicFields2[`dropoffDoorNumber${i}`] = returnJourneyData[`dropoffDoorNumber${i}`] || "";
-      dynamicFields2[`dropoff_terminal_${i}`] = returnJourneyData[`dropoff_terminal_${i}`] || "";
-    });
+    const dynamicFields1 = buildDynamicFields(dropOffs1, primaryJourneyData);
+    const dynamicFields2 = buildDynamicFields(dropOffs2, returnJourneyData);
 
     const vehicleData = {
       vehicleName: selectedVehicle?.vehicleName || "",
@@ -196,9 +196,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       },
     };
 
-    const bookingPayload = {
+    const basePayload = {
       mode,
-      returnJourneyToggle,
       companyId,
       referrer: document.referrer || "manual",
       vehicle: vehicleData,
@@ -206,53 +205,70 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       paymentMethod: paymentFields.paymentMethod,
       cardPaymentReference: paymentFields.cardPaymentReference,
       paymentGateway: paymentFields.paymentGateway,
-      journeyFare: paymentFields.journeyFare,
-      driverFare: paymentFields.driverFare,
-      returnJourneyFare: paymentFields.returnJourneyFare,
-      returnDriverFare: paymentFields.returnDriverFare,
       emailNotifications: paymentFields.emailNotifications,
       appNotifications: paymentFields.appNotifications,
-      primaryJourney: {
-        ...primaryJourneyData,
-        dropoff: dropOffs1[0],
-        additionalDropoff1: dropOffs1[1] || null,
-        additionalDropoff2: dropOffs1[2] || null,
-        hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
-        fare: primaryFare,
-        ...dynamicFields1,
-      },
-      returnJourney: returnJourneyToggle
-        ? {
-          ...returnJourneyData,
-          dropoff: dropOffs2[0],
-          additionalDropoff1: dropOffs2[1] || null,
-          additionalDropoff2: dropOffs2[2] || null,
-          hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
-          fare: returnFare,
-          ...dynamicFields2,
-        }
-        : undefined,
       PassengerEmail: emailNotify.customer ? passengerDetails.email : null,
       ClientAdminEmail: emailNotify.admin ? userEmail : null,
     };
 
     try {
-      if (editBookingData && editBookingData._id) {
-        // 🟢 UPDATE BOOKING
+      // 🔹 1. Primary Journey Booking
+      const primaryPayload = {
+        ...basePayload,
+        journeyFare: paymentFields.journeyFare,
+        driverFare: paymentFields.driverFare,
+        primaryJourney: {
+          ...primaryJourneyData,
+          dropoff: dropOffs1[0],
+          additionalDropoff1: dropOffs1[1] || null,
+          additionalDropoff2: dropOffs1[2] || null,
+          hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+          fare: primaryFare,
+          ...dynamicFields1,
+        },
+      };
+
+      if (editBookingData && editBookingData._id && !editBookingData.__copyMode) {
+        // Editing existing booking
         await updateBooking({
           id: editBookingData._id,
-          updatedData: { bookingData: bookingPayload },
+          updatedData: { bookingData: primaryPayload },
         }).unwrap();
-
-        toast.success("Booking updated successfully");
+        toast.success("Primary booking updated successfully");
       } else {
-        // 🆕 CREATE BOOKING
-        await createBooking(bookingPayload).unwrap();
-        toast.success("Booking created successfully");
+        // Copy or fresh booking
+        await createBooking(primaryPayload).unwrap();
+        toast.success("Primary booking created successfully");
+      }
+
+      // 🔁 2. Return Journey Booking (if toggled)
+      if (returnJourneyToggle && dropOffs2[0]) {
+        const returnPayload = {
+          ...basePayload,
+          journeyFare: paymentFields.returnJourneyFare,
+          driverFare: paymentFields.returnDriverFare,
+          returnJourney: {
+            ...returnJourneyData,
+            dropoff: dropOffs2[0],
+            additionalDropoff1: dropOffs2[1] || null,
+            additionalDropoff2: dropOffs2[2] || null,
+            hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+            fare: returnFare,
+            ...dynamicFields2,
+          },
+          returnJourneyToggle: true, // required by backend to trigger return journey validation
+        };
+
+        // 🔥 Important fix: remove accidental primaryJourney key
+        delete returnPayload.primaryJourney;
+
+        await createBooking(returnPayload).unwrap();
+        toast.success("Return journey booking created successfully");
       }
 
       onClose?.();
     } catch (err) {
+      console.error(err);
       toast.error("Booking operation failed.");
     }
   };

@@ -64,6 +64,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ViewNotifications from "./components/dashbaord/settings/ViewNotifications";
 import PermissionsSettings from "./components/dashbaord/settings/PermissionsSettings";
+import BookingCalendar from "./components/dashbaord/bookings/BookingCalendar";
 
 function App() {
   return (
@@ -86,11 +87,12 @@ function App() {
             <>
               {/* Home */}
               <Route path="home" index element={<Dashboard />} />
-        <Route path="permissions" element={<PermissionsSettings />} />
+              <Route path="permissions" element={<PermissionsSettings />} />
 
               {/* Bookings */}
               <Route path="bookings/list" element={<BookingsList />} />
               <Route path="bookings/new" element={<NewBooking />} />
+              <Route path="bookings/calendar" element={<BookingCalendar />} />
 
               {/* Users/Admin List */}
               <Route path="admin-list" element={<AdminList />} />
