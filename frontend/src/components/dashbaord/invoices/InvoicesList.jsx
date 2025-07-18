@@ -1,20 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { invoicesData } from "../../../constants/dashboardTabsData/data";
 import InvoiceDetails from "./InvoiceDetails";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import { useGetAllInvoicesQuery } from "../../../redux/api/invoiceApi";
+import {
+  useDeleteInvoiceByIdMutation,
+  useGetAllInvoicesQuery,
+} from "../../../redux/api/invoiceApi";
 import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
+import Icons from "../../../assets/icons";
+import { toast } from "react-toastify";
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 
 const InvoicesList = () => {
   const [search, setSearch] = useState("");
-  const { data, isLoading, isError } = useGetAllInvoicesQuery();
+  const { data, isLoading, isError, refetch } = useGetAllInvoicesQuery();
   const invoices = data?.invoices || [];
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
   const [expandedInvoice, setExpandedInvoice] = useState(null);
-
+  const [deleteInvoiceById] = useDeleteInvoiceByIdMutation();
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteInvoiceId, setDeleteInvoiceId] = useState(null);
   const handleInvoiceClick = (invoiceNo) => {
     setExpandedInvoice((prev) => (prev === invoiceNo ? null : invoiceNo));
   };
@@ -23,12 +30,12 @@ const InvoicesList = () => {
 
     const invoiceNo = invoice.invoiceNumber?.toLowerCase() || "";
     const customerName = invoice.customer?.name || "-";
-    const account = invoice.companyId?.toString() || "";
+    const source = invoice.items?.[0]?.source || "-";
 
     return (
       invoiceNo.includes(query) ||
       customerName.includes(query) ||
-      account.includes(query)
+      source.includes(query)
     );
   });
 
@@ -42,11 +49,12 @@ const InvoicesList = () => {
   const tableHeaders = [
     { label: "Invoice", key: "invoiceNo" },
     { label: "Customer", key: "customer" },
-    { label: "Account", key: "account" },
+    { label: "Account", key: "source" },
     { label: "Date", key: "date" },
     { label: "Due Date", key: "dueDate" },
     { label: "Amount", key: "amount" },
     { label: "Status", key: "status" },
+    { label: "Actions", key: "actions" },
   ];
 
   const paginatedInvoices =
@@ -61,15 +69,15 @@ const InvoicesList = () => {
       })
     : paginatedInvoices.map((invoice) => {
         const invoiceNo = invoice.invoiceNumber || "-";
-        const customerName = invoice.customers?.[0]?.name || "-";
-        const account = invoice.companyId || "-";
-        const date = new Date(invoice.createdAt).toLocaleDateString() || "-";
-        const dueDate = invoice.dueDate
-          ? new Date(invoice.dueDate).toLocaleDateString()
+        const customerName = invoice.customer?.name || "-";
+        const source = invoice.items?.[0]?.source || "-";
+        const date = new Date(invoice.invoiceDate).toLocaleDateString() || "-";
+        const dueDate = invoice.items?.[0]?.date
+          ? new Date(invoice.items[0].date).toLocaleDateString()
           : "-";
         const amount =
           invoice.items?.reduce((sum, item) => sum + item.totalAmount, 0) || 0;
-        const status = invoice.status ;
+        const status = invoice.status;
 
         return {
           invoiceNo: (
@@ -81,7 +89,7 @@ const InvoicesList = () => {
             </span>
           ),
           customer: customerName,
-          account,
+          source,
           date,
           dueDate,
           amount: `£${amount.toFixed(2)}`,
@@ -89,12 +97,27 @@ const InvoicesList = () => {
             <span
               className={`px-2 py-1 text-xs font-semibold rounded-full ${
                 status === "paid"
-                  ? "bg-green-500 text-white"
+                  ? "bg-green-700 text-white"
                   : "bg-gray-500 text-white"
               }`}
             >
               {status}
             </span>
+          ),
+          actions: (
+            <>
+              <div>
+                <div className="flex gap-2">
+                  <Link to={`/dashboard/invoices/edit/${invoice._id}`}>
+                    <Icons.SquarePen className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2" />
+                  </Link>
+                  <Icons.Trash
+                    onClick={() => handleDeleteClick(invoice._id)}
+                    className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-gray-300 p-2"
+                  />
+                </div>
+              </div>
+            </>
           ),
         };
       });
@@ -116,33 +139,66 @@ const InvoicesList = () => {
     status: item.status,
   }));
 
+  const handleDeleteClick = (id) => {
+    setDeleteInvoiceId(id);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      if (deleteInvoiceId) {
+        await deleteInvoiceById(deleteInvoiceId);
+        toast.success("Invoice Deleted Successfully");
+        refetch();
+      }
+    } catch (error) {
+      console.error("Error deleting invoice", error);
+      toast.error("Failed to delete invoice");
+    } finally {
+      setDeleteModalOpen(false);
+      setDeleteInvoiceId(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setDeleteInvoiceId(null);
+  };
   return (
-    <div>
-      <OutletHeading name="Invoices List" />
+    <>
+      <div>
+        <OutletHeading name="Invoices List" />
 
-      <Link to="/dashboard/invoices/new" className="w-full sm:w-auto">
-        <button className="btn btn-reset flex items-center gap-2 w-full mb-3 sm:w-auto justify-center">
-          Create New Invoice
-        </button>
-      </Link>
+        <Link to="/dashboard/invoices/new" className="w-full sm:w-auto">
+          <button className="btn btn-reset flex items-center gap-2 w-full mb-3 sm:w-auto justify-center">
+            Create New Invoice
+          </button>
+        </Link>
 
-      <CustomTable
-        tableHeaders={tableHeaders}
-        tableData={tableData}
-        exportTableData={exportTableData}
-        showSearch={true}
-        showRefresh={true}
-        showDownload={true}
-        showPagination={true}
-        showSorting={true}
-      />
-
-      {expandedInvoice && (
-        <InvoiceDetails
-          item={invoices.find((i) => i.invoiceNumber === expandedInvoice)}
+        <CustomTable
+          tableHeaders={tableHeaders}
+          tableData={tableData}
+          exportTableData={exportTableData}
+          showSearch={true}
+          showRefresh={true}
+          showDownload={true}
+          showPagination={true}
+          showSorting={true}
         />
-      )}
-    </div>
+
+        {expandedInvoice && (
+          <InvoiceDetails
+            item={invoices.find((i) => i.invoiceNumber === expandedInvoice)}
+          />
+        )}
+      </div>
+
+      <DeleteModal
+        isOpen={deleteModalOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={cancelDelete}
+      />
+    </>
   );
 };
 

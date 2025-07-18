@@ -29,6 +29,20 @@ export const invoiceApi = apiSlice.injectEndpoints({
       }),
       providesTags: [ "Invoices"],
      }),
+     deleteInvoiceById: builder.mutation({
+      query: (id) => ({
+        url: `/invoice/delete-invoice/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Invoices"],
+    }),
+    sendInvoiceEmail: builder.mutation({
+      query: (emailData) => ({
+        url: "/invoice/send-invoice-email",
+        method: "POST",
+        body: emailData,
+      }),
+      }),
   }),
 });
 
@@ -37,4 +51,6 @@ export const {
   useGetAllInvoicesQuery,
   useUpdateInvoiceMutation,
   useGetInvoiceByIdQuery,
+  useDeleteInvoiceByIdMutation,
+  useSendInvoiceEmailMutation
 } = invoiceApi;

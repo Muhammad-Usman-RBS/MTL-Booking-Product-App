@@ -18,11 +18,16 @@ const InvoiceItemSchema = new mongoose.Schema(
     dropoff: { type: String, required: true },
     date: { type: Date, required: true },
     fare: { type: Number, required: true },
+    notes: { type: String },
+    internalNotes: { type: String },
+    
+
     tax: {
       type: String,
       enum: ["No Tax", "Tax"],
       default: "No Tax",
     },
+    source: { type: String },
     totalAmount: { type: Number, required: true },
   },
   { _id: false }
@@ -47,7 +52,12 @@ const InvoiceSchema = new mongoose.Schema(
       default: "unpaid",
     },
     customer: CustomerSchema,
-
+    invoiceDate: {
+      type: Date,
+      default: Date.now,
+    },
+    discount: Number,
+    deposit: Number,
     items: [InvoiceItemSchema],
   },
   { timestamps: true }

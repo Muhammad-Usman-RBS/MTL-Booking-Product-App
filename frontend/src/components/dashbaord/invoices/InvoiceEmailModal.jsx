@@ -10,7 +10,7 @@ const InvoiceEmailModal = ({
   onSend,
 }) => {
   return (
-    <div className="space-y-4 w-96">
+    <div className="space-y-4 p-3 w-96">
       <div>
         <label className="block text-sm font-medium text-gray-700">
           Recipient:

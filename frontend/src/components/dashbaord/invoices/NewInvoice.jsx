@@ -8,6 +8,7 @@ import { useSelector } from "react-redux";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { useCreateInvoiceMutation } from "../../../redux/api/invoiceApi";
 import { toast } from "react-toastify";
+import { useGetGeneralPricingPublicQuery } from "../../../redux/api/generalPricingApi";
 
 const getFirstAndLastDay = (offset = 0) => {
   const now = new Date();
@@ -18,19 +19,27 @@ const getFirstAndLastDay = (offset = 0) => {
 
 const NewInvoice = () => {
   const user = useSelector((state) => state.auth.user);
+  const companyId = user?.companyId;
   const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
+  const { data: generalPricingData } = useGetGeneralPricingPublicQuery(
+    companyId,
+    {
+      skip: !companyId,
+    }
+  );
   const [selectedRows, setSelectedRows] = useState([]);
   const [globalTaxSelection, setGlobalTaxSelection] = useState("No Tax");
   const [bookingTaxes, setBookingTaxes] = useState({});
 
   const [startDate, setStartDate] = useState(new Date());
 
-  const [selectedStatus, setSelectedStatus] = useState(["All"]);
   const [endDate, setEndDate] = useState(new Date());
   const [selectedCustomers, setSelectedCustomers] = useState([]);
   const [isDateRangeChanged, setIsDateRangeChanged] = useState(false);
 
-  const [selectedAccounts, setSelectedAccounts] = useState([]);
+  const taxPercent = parseFloat(generalPricingData?.invoiceTaxPercent || 0);
+  const taxMultiplier = 1 + taxPercent / 100;
+
   const { data: bookingData } = useGetAllBookingsQuery(user?.companyId);
   const allBookings = bookingData?.bookings || [];
   const filteredBookings = allBookings.filter((b) => {
@@ -164,9 +173,15 @@ const NewInvoice = () => {
 
         const items = bookings.map((booking) => {
           const fare =
-            booking.returnJourney?.fare || booking.primaryJourney?.fare || 0;
+            booking.returnJourney?.fare || booking.primaryJourney?.fare;
           const taxType = bookingTaxes[booking._id] || "No Tax";
-          const totalAmount = taxType === "Tax" ? fare * 1.2 : fare;
+          const totalAmount = taxType === "Tax" ? fare * taxMultiplier : fare;
+          const journeyNotes =
+            booking.returnJourney?.notes || booking.primaryJourney?.notes || "";
+          const internalNotes =
+            booking.returnJourney?.internalNotes ||
+            booking.primaryJourney?.internalNotes;
+          const source = booking?.source;
           return {
             bookingId: booking.bookingId,
             pickup: booking.primaryJourney?.pickup || "-",
@@ -176,6 +191,9 @@ const NewInvoice = () => {
             tax: taxType,
             totalAmount,
             status: "unpaid",
+            notes: journeyNotes,
+            source: source,
+            internalNotes: internalNotes,
           };
         });
 
@@ -233,11 +251,14 @@ const NewInvoice = () => {
           }}
         />
       ),
+
       bookingId: item.bookingId || "-",
       totalAmount: (() => {
         const fare = item.returnJourney?.fare || item.primaryJourney?.fare || 0;
         const taxType = bookingTaxes[item._id] || "No Tax";
-        return taxType === "Tax" ? (fare * 1.2).toFixed(2) : fare.toFixed(2);
+        return taxType === "Tax"
+          ? (fare * taxMultiplier).toFixed(2)
+          : fare.toFixed(2);
       })(),
       pickUp: item.primaryJourney?.pickup || "-",
       dropOff: item.primaryJourney?.dropoff || "-",
@@ -270,6 +291,22 @@ const NewInvoice = () => {
       ),
     }));
   }
+  useEffect(() => {
+    if (
+      !generalPricingData?.invoiceTaxPercent ||
+      Object.keys(bookingTaxes).length > 0
+    )
+      return;
+
+    const taxPercent = parseFloat(generalPricingData.invoiceTaxPercent);
+    if (taxPercent > 0 && customerFilteredBookings.length > 0) {
+      const updated = {};
+      customerFilteredBookings.forEach((b) => {
+        updated[b._id] = "No Tax"; 
+      });
+      setBookingTaxes(updated);
+    }
+  }, [generalPricingData, customerFilteredBookings, bookingTaxes]);
 
   return (
     <div>

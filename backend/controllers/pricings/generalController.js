@@ -11,16 +11,26 @@ export const getGeneralPricing = async (req, res) => {
         .json({ message: "Company ID is missing from user data." });
     }
 
-    const pricing = await GeneralModel.findOne({ type: "general", companyId });
+    let pricing = await GeneralModel.findOne({ type: "general", companyId });
 
     if (!pricing) {
-      return res
-        .status(404)
-        .json({ message: "General pricing not found for this company." });
+      pricing = await GeneralModel.create({
+        type: "general",
+        companyId,
+        updatedBy: req.user?._id,
+        pickupAirportPrice: 0,
+        dropoffAirportPrice: 0,
+        minAdditionalDropOff: 10,
+        childSeatPrice: 5,
+        invoiceTaxPercent: "20",
+        cardPaymentType: "Card",
+        cardPaymentAmount: 0,
+      });
     }
 
     res.status(200).json(pricing);
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: "Failed to fetch pricing", error });
   }
 };
@@ -42,6 +52,7 @@ export const updateGeneralPricing = async (req, res) => {
       childSeatPrice,
       cardPaymentType,
       cardPaymentAmount,
+      invoiceTaxPercent,
     } = req.body;
 
     const data = {
@@ -54,6 +65,7 @@ export const updateGeneralPricing = async (req, res) => {
       childSeatPrice,
       cardPaymentType,
       cardPaymentAmount,
+      invoiceTaxPercent,
     };
 
     let pricing = await GeneralModel.findOne({ type: "general", companyId });
@@ -70,6 +82,8 @@ export const updateGeneralPricing = async (req, res) => {
 
     res.status(200).json(pricing);
   } catch (error) {
+    console.log(error)
+
     res.status(500).json({ message: "Failed to update pricing", error });
   }
 };
@@ -97,11 +111,11 @@ export const getGeneralPricingWidget = async (req, res) => {
     // Return the pricing details
     res.status(200).json(pricing);
   } catch (err) {
-    res
-      .status(500)
-      .json({
-        message: "Failed to fetch widget general pricing",
-        error: err.message,
-      });
+    console.log(err)
+
+    res.status(500).json({
+      message: "Failed to fetch widget general pricing",
+      error: err.message,
+    });
   }
 };

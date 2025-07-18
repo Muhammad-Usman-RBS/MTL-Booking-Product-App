@@ -8,78 +8,196 @@ import {
   useUpdateInvoiceMutation,
 } from "../../../redux/api/invoiceApi";
 import { toast } from "react-toastify";
+import { useGetGeneralPricingPublicQuery } from "../../../redux/api/generalPricingApi";
+import { useSelector } from "react-redux";
 
 const InvoicePage = () => {
   const { id } = useParams();
+  const user = useSelector((state) => state?.auth?.user);
+  const companyId = user?.companyId;
   const [updateInvoice] = useUpdateInvoiceMutation();
-  const { data: invoiceData, isLoading } = useGetInvoiceByIdQuery(id);
-console.log(invoiceData)
+  const { data: invoiceData } = useGetInvoiceByIdQuery(id);
+  const { data: generalPricingData } = useGetGeneralPricingPublicQuery(
+    companyId,
+    { skip: !companyId }
+  );
   const [selectAll, setSelectAll] = useState(false);
-  const [checkedItems, setCheckedItems] = useState({
-    item1: false,
-    item2: false,
-  });
+  const [checkedItems, setCheckedItems] = useState({});
+  const [itemDetails, setItemDetails] = useState([]);
   const [billTo, setBillTo] = useState("");
   const [notes, setNotes] = useState("");
   const [discount, setDiscount] = useState("0.00");
   const [deposit, setDeposit] = useState("0.00");
   const [dueDate, setDueDate] = useState("");
   const [invoiceDate, setInvoiceDate] = useState("");
+  const [globalTaxSelection, setGlobalTaxSelection] = useState("No Tax");
+  const [itemTaxes, setItemTaxes] = useState({});
+  const [itemAmounts, setItemAmounts] = useState([]);
+  const [itemNotes, setItemNotes] = useState({});
+  const [itemInternalNotes, setItemInternalNotes] = useState({});
+  const [taxPercent, setTaxPercent] = useState(0);
+
   useEffect(() => {
     if (invoiceData?.invoice) {
       const invoice = invoiceData.invoice;
-  
+
       const customerText = `${invoice.customer?.name || ""}\n${
         invoice.customer?.email || ""
       }\n${invoice.customer?.phone || ""}`;
       setBillTo(customerText);
-  
-      // Set invoice date from createdAt
-      setInvoiceDate(invoice.createdAt?.split("T")[0] || "");
-  
-      // Set due date from first item date
+      const fetchedTaxPercent =
+        parseFloat(generalPricingData?.invoiceTaxPercent) || 0;
+      setTaxPercent(fetchedTaxPercent);
+
+      setInvoiceDate(
+        invoice.invoiceDate?.split("T")[0] ||
+          invoice.createdAt?.split("T")[0] ||
+          ""
+      );
+
       setDueDate(invoice.items?.[0]?.date?.split("T")[0] || "");
-  
+
+      let taxPercent = 0;
+      if (generalPricingData?.invoiceTaxPercent) {
+        taxPercent = parseFloat(generalPricingData.invoiceTaxPercent);
+      }
+
+      const adjustedItemAmounts =
+        invoice.items?.map((item) => {
+          const fare = item.fare || 0;
+          return item.tax === "Tax" ? fare * (1 + taxPercent / 100) : fare;
+        }) || [];
+
+      setItemAmounts(adjustedItemAmounts);
+
       setNotes(invoice.notes || "");
-  
-      const item1 = invoice.items[0];
-      const item2 = invoice.items[1];
-  
-      if (item1) {
-        setItem1Details(
-          `${item1.bookingId} - ${invoice.customer?.name || ""}\nPickup: ${
-            item1.pickup
-          }\n\nDrop off: ${item1.dropoff}`
-        );
-      }
-  
-      if (item2) {
-        setItem2Details(
-          `${item2.bookingId} - ${invoice.customer?.name || ""}\nPickup: ${
-            item2.pickup
-          }\n\nDrop off: ${item2.dropoff}`
-        );
-      }
-  
-      setDiscount(invoice.discount?.toFixed(2) || "0.00");
-      setDeposit(invoice.deposit?.toFixed(2) || "0.00");
+
+      const details =
+        invoice.items?.map(
+          (item) =>
+            `${item.bookingId} - ${invoice.customer?.name || ""}\nPickup: ${
+              item.pickup
+            }\n\nDrop off: ${item.dropoff}`
+        ) || [];
+      setItemDetails(details);
+
+      // Initialize all item-related states
+      const initialItemTaxes = {};
+      const initialItemNotes = {};
+      const initialItemInternalNotes = {};
+
+      invoice.items?.forEach((item, index) => {
+        initialItemTaxes[index] = item.tax || "No Tax";
+        initialItemNotes[index] = item.notes || "";
+        initialItemInternalNotes[index] = item.internalNotes || "";
+      });
+
+      setItemTaxes(initialItemTaxes);
+      setItemNotes(initialItemNotes);
+      setItemInternalNotes(initialItemInternalNotes);
+
+      setDiscount(invoice.discount || "0.00");
+      setDeposit(invoice.deposit || "0.00");
     }
-  }, [invoiceData]);
-  
-  const [item1Details, setItem1Details] = useState(
-    `22122323 - Erin Leahy\nPickup: London Stansted Airport (STN)\n\nDrop off: 32 The Bishops Ave, London N2 0BA, UK`
-  );
-  const [item2Details, setItem2Details] = useState(
-    `22122649 - Peter Griffitl\nPickup: Tring Station Car Park, Station Road, Tring, Tring Station\n\nDrop off: London Coliseum, St Martin`
-  );
+  }, [invoiceData, generalPricingData]);
 
   const handleSelectAll = () => {
     const newValue = !selectAll;
     setSelectAll(newValue);
-    setCheckedItems({
-      item1: newValue,
-      item2: newValue,
+    const updated = {};
+    itemDetails.forEach((_, index) => {
+      updated[`item${index}`] = newValue;
     });
+    setCheckedItems(updated);
+  };
+  const handleSave = async () => {
+    try {
+      if (!invoiceData?.invoice) return toast.error("No invoice data found.");
+
+      const originalItems = invoiceData.invoice.items || [];
+      const items = itemDetails.map((text, index) => {
+        const lines = text.split("\n").filter(Boolean);
+        const bookingLine = lines[0] || "";
+        const pickupLine = lines[1] || "";
+        const dropoffLine = lines[3] || "";
+
+        const bookingId = bookingLine.split(" - ")[0]?.trim() || "";
+        const pickup = pickupLine.replace("Pickup: ", "").trim();
+        const dropoff = dropoffLine.replace("Drop off: ", "").trim();
+
+        const original = originalItems[index] || {};
+
+        return {
+          bookingId: bookingId || original.bookingId || "",
+          pickup: pickup || original.pickup || "",
+          dropoff: dropoff || original.dropoff || "",
+          totalAmount:
+            parseFloat(itemAmounts[index]) || original.totalAmount || 0,
+          tax: itemTaxes[index] || original.tax || "No Tax",
+          fare: original.fare || 0,
+          date: dueDate ? new Date(dueDate) : original.date || new Date(),
+          notes: itemNotes[index] || original.notes || "",
+          internalNotes:
+            itemInternalNotes[index] || original.internalNotes || "",
+        };
+      });
+
+      const hasMissingDropoff = items.some((item) => !item.dropoff);
+      if (hasMissingDropoff) {
+        toast.error("Dropoff address is required for all items.");
+        return;
+      }
+
+      const [name = "", email = "", phone = ""] = billTo.split("\n");
+      const original = invoiceData.invoice;
+
+      const updatePayload = {
+        invoiceDate:
+          invoiceDate !== original.createdAt?.split("T")[0]
+            ? invoiceDate
+            : undefined,
+        dueDate:
+          dueDate !== original.items?.[0]?.date?.split("T")[0]
+            ? dueDate
+            : undefined,
+        items:
+          JSON.stringify(items) !== JSON.stringify(original.items)
+            ? items
+            : undefined,
+        customer:
+          name.trim() !== original.customer?.name ||
+          email.trim() !== original.customer?.email ||
+          phone.trim() !== original.customer?.phone
+            ? {
+                name: name.trim(),
+                email: email.trim(),
+                phone: phone.trim(),
+              }
+            : undefined,
+        notes: notes !== original.notes ? notes : undefined,
+        discount:
+          parseFloat(discount) !== original.discount
+            ? parseFloat(discount)
+            : undefined,
+        deposit:
+          parseFloat(deposit) !== original.deposit
+            ? parseFloat(deposit)
+            : undefined,
+        status: "unpaid", // Always set to unpaid on update
+      };
+
+      // Remove undefined values
+      Object.keys(updatePayload).forEach(
+        (key) => updatePayload[key] === undefined && delete updatePayload[key]
+      );
+
+      await updateInvoice({ id, invoiceData: updatePayload }).unwrap();
+
+      toast.success("Invoice updated successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update invoice");
+    }
   };
 
   const handleCheckboxChange = (item) => {
@@ -98,7 +216,7 @@ console.log(invoiceData)
       <div className="p-2 md:p-6 max-w-6xl mx-auto bg-gradient-to-b from-gray-50 to-white shadow-md rounded-3xl">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4">
           <h1 className="text-xl font-extrabold text-[var(--dark-gray)] pt-3 pb-3">
-            Invoice #INV-000001
+            Invoice #{invoiceData?.invoice?.invoiceNumber || "Loading..."}
           </h1>
           <Link to="/dashboard/invoices/list">
             <button className="btn btn-reset">Back to Invoices</button>
@@ -155,176 +273,254 @@ console.log(invoiceData)
               <span>Select All</span>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              <p className="text-sm my-auto text-gray-500">
+                Current Tax Rate: <strong>{taxPercent}%</strong>
+              </p>
+
               <SelectOption
                 width="w-full md:w-32"
                 options={["No Tax", "Tax"]}
+                value={globalTaxSelection}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setGlobalTaxSelection(value);
+
+                  let anyChecked = false;
+                  const updatedTaxes = { ...itemTaxes };
+                  const updatedAmounts = [...itemAmounts];
+                  const taxRate = 1 + taxPercent / 100;
+
+                  Object.keys(checkedItems).forEach((key) => {
+                    if (checkedItems[key]) {
+                      const itemIndex = parseInt(key.replace("item", ""));
+                      const currentAmount =
+                        parseFloat(itemAmounts[itemIndex]) || 0;
+
+                      // Reverse existing tax if necessary
+                      const wasTaxed = itemTaxes[itemIndex] === "Tax";
+                      let baseAmount = currentAmount;
+
+                      if (wasTaxed && value === "No Tax") {
+                        baseAmount = currentAmount / taxRate;
+                      } else if (!wasTaxed && value === "Tax") {
+                        baseAmount = currentAmount * taxRate;
+                      }
+
+                      updatedTaxes[itemIndex] = value;
+                      updatedAmounts[itemIndex] = baseAmount;
+                      anyChecked = true;
+                    }
+                  });
+
+                  if (anyChecked) {
+                    setItemTaxes(updatedTaxes);
+                    setItemAmounts(updatedAmounts);
+                    toast.success(`Applied "${value}" to selected bookings.`);
+                  } else {
+                    toast.warn(
+                      "No rows selected. Please select bookings to apply tax."
+                    );
+                  }
+                }}
               />
-              <button className="btn btn-reset w-full sm:w-auto">Apply</button>
             </div>
           </div>
 
           {/* Each Item Block */}
-          {[1, 2].map((i) => (
-            <div
-              key={i}
-              className="flex flex-col md:flex-row gap-4 items-start md:items-center border-t pt-4 mt-4"
-            >
-              {/* Checkbox */}
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={checkedItems[`item${i}`]}
-                  onChange={() => handleCheckboxChange(`item${i}`)}
-                  className="accent-blue-600"
-                />
-              </div>
+          {itemDetails.map((details, index) => {
+            const taxApplied = itemTaxes[index] === "Tax";
+            const rawAmount = parseFloat(itemAmounts[index]) || 0;
+            const adjustedAmount = parseFloat(itemAmounts[index]) || 0;
 
-              {/* Textarea */}
-              <div className="flex-1 w-full text-sm text-gray-700">
-                <textarea
-                  rows={3}
-                  className="w-full border border-gray-300 rounded-lg p-2"
-                  value={i === 1 ? item1Details : item2Details}
-                  onChange={(e) =>
-                    i === 1
-                      ? setItem1Details(e.target.value)
-                      : setItem2Details(e.target.value)
-                  }
-                />
-              </div>
+            return (
+              <div
+                key={index}
+                className="flex flex-col md:flex-row gap-4 items-start md:items-center border-t pt-4 mt-4"
+              >
+                {/* Checkbox */}
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={checkedItems[`item${index}`] || false}
+                    onChange={() => handleCheckboxChange(`item${index}`)}
+                    className="accent-blue-600"
+                  />
+                </div>
 
-              {/* Tax Dropdown */}
-              <SelectOption
-                width="w-full md:w-32"
-                options={["No Tax", "Tax"]}
-              />
+                {/* Booking details */}
+                <div className="flex-1 w-full text-sm text-gray-700">
+                  <textarea
+                    rows={3}
+                    className="w-full border border-gray-300 rounded-lg p-2"
+                    value={details}
+                    onChange={(e) => {
+                      const newDetails = [...itemDetails];
+                      newDetails[index] = e.target.value;
+                      setItemDetails(newDetails);
+                    }}
+                  />
+                  {taxApplied && (
+                    <p className="text-green-600 text-xs mt-1 font-semibold">
+                      Tax is already applied (included in total).
+                    </p>
+                  )}
+                </div>
 
-              {/* Price Input */}
-              <div className="w-full md:w-32">
-                <input
-                  type="text"
-                  className="custom_input"
-                  defaultValue={i === 1 ? "90.00" : "0.00"}
+                <SelectOption
+                  width="w-full md:w-32"
+                  options={["No Tax", "Tax"]}
+                  value={itemTaxes[index] || "No Tax"}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const updatedTaxes = { ...itemTaxes, [index]: value };
+
+                    const updatedAmounts = [...itemAmounts];
+                    const currentAmount = parseFloat(itemAmounts[index]) || 0;
+
+                    const taxRate = 1 + taxPercent / 100;
+
+                    if (value === "No Tax" && itemTaxes[index] === "Tax") {
+                      updatedAmounts[index] = currentAmount / taxRate;
+                    } else if (
+                      value === "Tax" &&
+                      itemTaxes[index] === "No Tax"
+                    ) {
+                      updatedAmounts[index] = currentAmount * taxRate;
+                    }
+
+                    setItemTaxes(updatedTaxes);
+                    setItemAmounts(updatedAmounts);
+                    toast.success(
+                      `Updated tax for item ${index + 1} to "${value}"`
+                    );
+                  }}
                 />
+
+                <div className="w-full md:w-32">
+                  <input
+                    type="text"
+                    className="custom_input"
+                    value={parseFloat(adjustedAmount || 0).toFixed(2)}
+                    onChange={(e) => {
+                      const updated = [...itemAmounts];
+                      updated[index] = e.target.value;
+                      setItemAmounts(updated);
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="text-right mb-6 text-gray-800">
-  {/* Sub Total */}
-  <p>
-    Sub Total: <strong className="text-blue-800">
-      £
-      {invoiceData?.invoice?.items
-        ?.reduce((acc, item) => acc + (item.fare || 0), 0)
-        .toFixed(2)}
-    </strong>
-  </p>
+          {/* Sub Total */}
+          <p>
+            Sub Total:{" "}
+            <strong className="text-blue-800">
+              £
+              {invoiceData?.invoice?.items?.reduce(
+                (acc, item) => acc + (item.fare || 0),
+                0
+              )}
+            </strong>
+          </p>
 
-  {/* Discount */}
-  <p className="mt-4 flex justify-end items-center gap-2">
-    <span className="text-gray-700">Discount:</span>
-    <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" />
-    <input
-      type="text"
-      className="border border-gray-300 rounded-lg p-1 w-24 text-right"
-      value={discount}
-      onChange={(e) => setDiscount(e.target.value)}
-    />
-  </p>
+          {/* Discount */}
+          <p className="mt-4 flex justify-end items-center gap-2">
+            <span className="text-gray-700">Discount:</span>
+            <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" />
+            <input
+              type="text"
+              className="border border-gray-300 rounded-lg p-1 w-24 text-right"
+              value={discount}
+              onChange={(e) => setDiscount(e.target.value)}
+            />
+          </p>
 
-  {/* Deposit */}
-  <p className="mt-2 flex justify-end items-center gap-2">
-    <span className="text-gray-700">Deposit:</span>
-    <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" />
-    <input
-      type="text"
-      className="border border-gray-300 rounded-lg p-1 w-24 text-right"
-      value={deposit}
-      onChange={(e) => setDeposit(e.target.value)}
-    />
-  </p>
+          {/* Deposit */}
+          <p className="mt-2 flex justify-end items-center gap-2">
+            <span className="text-gray-700">Deposit:</span>
+            <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" />
+            <input
+              type="text"
+              className="border border-gray-300 rounded-lg p-1 w-24 text-right"
+              value={deposit}
+              onChange={(e) => setDeposit(e.target.value)}
+            />
+          </p>
 
-  {/* Grand Total */}
-  <p className="mt-4 text-xl font-bold text-blue-800">
-    Total: £
-    {(
-      invoiceData?.invoice?.items?.reduce((acc, item) => acc + (item.fare || 0), 0) -
-      parseFloat(discount || 0) +
-      parseFloat(deposit || 0)
-    ).toFixed(2)}
-  </p>
-</div>
+          {/* Grand Total */}
+          <p className="mt-4 text-xl font-bold text-blue-800">
+            Total: £
+            {(
+              itemAmounts.reduce((sum, amt) => sum + parseFloat(amt || 0), 0) -
+              parseFloat(discount || 0) +
+              parseFloat(deposit || 0)
+            ).toFixed(2)}
+          </p>
+        </div>
 
-        <div className="bg-white p-2 md:p-6 rounded-2xl shadow mb-6 border">
-          <label className="block font-bold text-gray-700 mb-2 text-lg">
-            Notes
-          </label>
-          <textarea
-  className="custom_input"
-  rows={3}
-  value={notes}
-  onChange={(e) => setNotes(e.target.value)}
-/>
+        <div className="bg-white p-4 rounded-2xl shadow mb-6 border">
+          <ol className="grid list-decimal grid-cols-1 md:grid-cols-2 gap-6 list-inside">
+            {itemDetails.map((_, index) => {
+              const bookingId =
+                invoiceData?.invoice?.items?.[index]?.bookingId ||
+                `#${index + 1}`;
 
+              return (
+                <li
+                  key={index}
+                  className="border rounded-xl p-4 space-y-4 shadow-sm"
+                >
+                  <p className="text-sm font-semibold text-gray-800">
+                    Booking ID:{" "}
+                    <span className="text-blue-700">{bookingId}</span>
+                  </p>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="block font-bold text-gray-800 mb-1">
+                      Notes
+                    </label>
+                    <textarea
+                      className="w-full border border-gray-300 rounded-lg p-2 text-sm h-20"
+                      value={itemNotes[index] || ""}
+                      onChange={(e) => {
+                        setItemNotes((prev) => ({
+                          ...prev,
+                          [index]: e.target.value,
+                        }));
+                      }}
+                      placeholder="Enter note..."
+                    />
+                  </div>
+
+                  {/* Internal Notes */}
+                  <div>
+                    <label className="block font-bold text-gray-800 mb-1">
+                      Internal Notes
+                    </label>
+                    <textarea
+                      className="w-full border border-gray-300 rounded-lg p-2 text-sm h-20"
+                      value={itemInternalNotes[index] || ""}
+                      onChange={(e) => {
+                        setItemInternalNotes((prev) => ({
+                          ...prev,
+                          [index]: e.target.value,
+                        }));
+                      }}
+                      placeholder="Enter internal note..."
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
         </div>
 
         <div className="text-right">
-          <button
-            className="btn btn-success"
-            onClick={async () => {
-              try {
-                const items = [item1Details, item2Details].map((text) => {
-                  const lines = text.split("\n").filter(Boolean);
-                  const bookingLine = lines[0] || "";
-                  const pickupLine = lines[1] || "";
-                  const dropoffLine = lines[3] || "";
-                
-                  const bookingId = bookingLine.split(" - ")[0]?.trim() || "";
-                  const pickup = pickupLine.replace("Pickup: ", "").trim();
-                  const dropoff = dropoffLine.replace("Drop off: ", "").trim();
-                
-                  return {
-                    bookingId,
-                    pickup,
-                    dropoff,
-                    totalAmount: 0,
-                    tax: "No Tax",
-                    fare: 0,
-                    date: new Date(),
-                  };
-                });
-                
-            
-                const [name = "", email = "", phone = ""] = billTo.split("\n");
-            
-                await updateInvoice({
-                  id,
-                  invoiceData: {
-                    customer: {
-                      name: name.trim(),
-                      email: email.trim(),
-                      phone: phone.trim(),
-                    },
-                    invoiceDate,
-                    dueDate,
-                    items,
-                    notes,
-                    discount: parseFloat(discount),
-                    deposit: parseFloat(deposit),
-                    status: "unpaid",
-                  },
-                }).unwrap();
-            
-                toast.success("Invoice updated successfully!");
-              } catch (err) {
-                console.error(err);
-                toast.error("Failed to update invoice");
-              }
-            }}
-            
-          >
+          <button className="btn btn-success" onClick={handleSave}>
             Save
           </button>
         </div>

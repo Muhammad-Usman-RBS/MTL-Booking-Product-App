@@ -25,11 +25,18 @@ const HourlyPackages = () => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
 
-  const [addHourlyPackage, { isLoading: adding }] = useAddHourlyPackageMutation();
-  const [updateHourlyPackage, { isLoading: updating }] = useUpdateHourlyPackageMutation();
+  const [addHourlyPackage, { isLoading: adding }] =
+    useAddHourlyPackageMutation();
+  const [updateHourlyPackage, { isLoading: updating }] =
+    useUpdateHourlyPackageMutation();
   const [deleteHourlyPackage] = useDeleteHourlyPackageMutation();
 
-  const { data: rawData = [], isLoading: loading, error, refetch } = useGetAllHourlyRatesQuery(companyId, {
+  const {
+    data: rawData = [],
+    isLoading: loading,
+    error,
+    refetch,
+  } = useGetAllHourlyRatesQuery(companyId, {
     skip: !companyId,
   });
 
@@ -51,9 +58,10 @@ const HourlyPackages = () => {
     };
 
     vehicles.forEach((v) => {
-      row[v.vehicleName] = item.vehicleRates?.[v.vehicleName]
-        ? `£${item.vehicleRates[v.vehicleName]}`
-        : "-";
+      row[v.vehicleName] =
+        item.vehicleRates?.[v.vehicleName] !== undefined
+          ? `£${item.vehicleRates[v.vehicleName]}`
+          : "-";
     });
 
     row.actions = (
@@ -81,7 +89,7 @@ const HourlyPackages = () => {
     };
 
     vehicles.forEach((v) => {
-      updatedForm[v.vehicleName] = item.vehicleRates?.[v.vehicleName] || "";
+      updatedForm[v.vehicleName] = item.vehicleRates?.[v.vehicleName] ?? "";
     });
 
     setFormData(updatedForm);
@@ -143,12 +151,15 @@ const HourlyPackages = () => {
     };
 
     vehicles.forEach((v) => {
-      payload[v.vehicleName] = parseFloat(formData[v.vehicleName]) || 0;
+      payload[v.vehicleName] = parseFloat(formData[v.vehicleName]) ?? "";
     });
 
     try {
       if (editingId) {
-        await updateHourlyPackage({ id: editingId, updatedData: payload }).unwrap();
+        await updateHourlyPackage({
+          id: editingId,
+          updatedData: payload,
+        }).unwrap();
         toast.success("Package updated successfully");
       } else {
         await addHourlyPackage(payload).unwrap();
@@ -214,12 +225,13 @@ const HourlyPackages = () => {
           ].map(({ label, name }, idx) => (
             <div key={name}>
               <label className="block text-sm font-medium text-gray-700">
-                {label}{idx >= 2 ? " (£)" : ""}
+                {label}
+                {idx >= 2 ? " (£)" : ""}
               </label>
               <input
                 type="number"
                 name={name}
-                value={formData[name] ?? ""}
+                value={formData[name] !== undefined ? formData[name] : ""}
                 onChange={handleInputChange}
                 className="custom_input"
                 required
@@ -230,15 +242,22 @@ const HourlyPackages = () => {
           {formError && <p className="text-red-600">{formError}</p>}
 
           <div className="flex justify-end space-x-3 pt-2">
-            <button type="submit" className="btn btn-reset" disabled={adding || updating}>
+            <button
+              type="submit"
+              className="btn btn-reset"
+              disabled={adding || updating}
+            >
               {editingId ? "Update" : "Create"}
             </button>
-            <button type="button" onClick={handleCloseModal} className="btn btn-cancel">
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              className="btn btn-cancel"
+            >
               Cancel
             </button>
           </div>
         </form>
-
       </CustomModal>
 
       <DeleteModal
