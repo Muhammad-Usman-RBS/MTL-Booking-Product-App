@@ -292,20 +292,6 @@ export const updateBooking = async (req, res) => {
       return res.status(400).json({ message: "Invalid or missing companyId" });
     }
 
-    const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
-
-    const returnIsValid = returnJourneyToggle &&
-      returnJourney &&
-      requiredFields.every((f) => returnJourney[f]);
-
-    const journeyToValidate = returnJourneyToggle ? returnJourney : primaryJourney;
-
-    for (const field of requiredFields) {
-      if (!journeyToValidate[field]) {
-        return res.status(400).json({ message: `Missing field in ${returnJourneyToggle ? "returnJourney" : "primaryJourney"}: ${field}` });
-      }
-    }
-
     const extractDynamicDropoffFields = (journey = {}) => {
       const fields = {};
       Object.keys(journey).forEach((key) => {
@@ -347,7 +333,38 @@ export const updateBooking = async (req, res) => {
       appNotifications: {
         customer: !!appNotifications.customer,
       },
-      primaryJourney: {
+    };
+
+    // ✅ Add returnJourney if returnJourneyToggle is true
+    if (returnJourneyToggle) {
+      updatedPayload.returnJourney = {
+        pickup: returnJourney.pickup?.trim() ?? "",
+        dropoff: returnJourney.dropoff?.trim() ?? "",
+        additionalDropoff1: returnJourney.additionalDropoff1 ?? null,
+        additionalDropoff2: returnJourney.additionalDropoff2 ?? null,
+        pickupDoorNumber: returnJourney.pickupDoorNumber ?? "",
+        terminal: returnJourney.terminal ?? "",
+        arrivefrom: returnJourney.arrivefrom ?? "",
+        flightNumber: returnJourney.flightNumber ?? "",
+        pickmeAfter: returnJourney.pickmeAfter ?? "",
+        notes: returnJourney.notes ?? "",
+        internalNotes: returnJourney.internalNotes ?? "",
+        date: returnJourney.date ?? "",
+        hour: returnJourney.hour !== undefined ? parseInt(returnJourney.hour) : null,
+        minute: returnJourney.minute !== undefined ? parseInt(returnJourney.minute) : null,
+        fare: returnJourney.fare ?? 0,
+        hourlyOption: returnJourney.hourlyOption ?? null,
+        distanceText: returnJourney.distanceText ?? "",
+        durationText: returnJourney.durationText ?? "",
+        voucher,
+        voucherApplied,
+        ...extractDynamicDropoffFields(returnJourney),
+      };
+    }
+
+    // ✅ Only add primaryJourney if not editing return only
+    if (!returnJourneyToggle || (primaryJourney?.pickup && primaryJourney?.dropoff)) {
+      updatedPayload.primaryJourney = {
         pickup: primaryJourney.pickup?.trim() ?? "",
         dropoff: primaryJourney.dropoff?.trim() ?? "",
         additionalDropoff1: primaryJourney.additionalDropoff1 ?? null,
@@ -369,33 +386,10 @@ export const updateBooking = async (req, res) => {
         voucher,
         voucherApplied,
         ...extractDynamicDropoffFields(primaryJourney),
-      },
-    };
-
-    if (returnIsValid) {
-      updatedPayload.returnJourney = {
-        pickup: returnJourney.pickup?.trim() ?? "",
-        dropoff: returnJourney.dropoff?.trim() ?? "",
-        additionalDropoff1: returnJourney.additionalDropoff1 ?? null,
-        additionalDropoff2: returnJourney.additionalDropoff2 ?? null,
-        pickupDoorNumber: returnJourney.pickupDoorNumber ?? "",
-        terminal: returnJourney.terminal ?? "",
-        arrivefrom: returnJourney.arrivefrom ?? "",
-        flightNumber: returnJourney.flightNumber ?? "",
-        pickmeAfter: returnJourney.pickmeAfter ?? "",
-        notes: returnJourney.notes ?? "",
-        internalNotes: returnJourney.internalNotes ?? "",
-        date: returnJourney.date ?? "",
-        hour: returnJourney.hour !== undefined ? parseInt(returnJourney.hour) : null,
-        minute: returnJourney.minute !== undefined ? parseInt(returnJourney.minute) : null,
-        fare: returnJourney.fare ?? 0,
-        hourlyOption: returnJourney.hourlyOption ?? null,
-        distanceText: returnJourney.distanceText ?? "",
-        durationText: returnJourney.durationText ?? "",
-        ...extractDynamicDropoffFields(returnJourney),
       };
     }
 
+    // 🔄 Save to DB
     const updatedBooking = await Booking.findByIdAndUpdate(id, updatedPayload, { new: true });
 
     if (!updatedBooking) {

@@ -55,6 +55,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   };
 
   const journeyDateTime = getJourneyDate(primaryJourneyData);
+  // const isReturnJourney = !!editBookingData?.__editReturn || !!editBookingData?.__copyReturn;
+  const isReturnJourney = !!editBookingData?.__editReturn || !!editBookingData?.__copyReturn || returnJourneyToggle;
 
   const { calculatedFare: primaryFare, pricingMode: primaryFareMode, hourlyError: hourlyError } = useBookingFare({
     companyId,
@@ -97,74 +99,107 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   });
 
   useEffect(() => {
-    if (editBookingData) {
-      const journey = editBookingData.primaryJourney || {};
+    if (!editBookingData) return;
 
-      setPrimaryJourneyData({
-        pickup: journey.pickup || "",
-        dropoff: journey.dropoff || "",
-        date: journey.date || "",
-        hour: journey.hour?.toString().padStart(2, '0') || "",
-        minute: journey.minute?.toString().padStart(2, '0') || "",
-        notes: journey.notes || "",
-        internalNotes: journey.internalNotes || "",
-        arrivefrom: journey.arrivefrom || "",
-        flightNumber: journey.flightNumber || "",
-        pickmeAfter: journey.pickmeAfter || "",
-        pickupDoorNumber: journey.pickupDoorNumber || "",
-        terminal: journey.terminal || "",
-        distanceText: journey.distanceText || "",
-        durationText: journey.durationText || "",
-      });
+    const isReturnJourneyEdit = editBookingData.__editReturn || editBookingData.__copyReturn;
+    setreturnJourneyToggle(isReturnJourneyEdit);
 
-      setDropOffs1([
-        journey.dropoff || "",
-        journey.additionalDropoff1 || "",
-        journey.additionalDropoff2 || "",
-      ].filter(Boolean));
+    const journeyData = isReturnJourneyEdit
+      ? editBookingData.returnJourney || {}
+      : editBookingData.primaryJourney || {};
 
-      setPassengerDetails({
-        name: editBookingData.passenger?.name || "",
-        email: editBookingData.passenger?.email || "",
-        phone: editBookingData.passenger?.phone || "",
-      });
+    const dropOffList = [
+      journeyData.dropoff || "",
+      journeyData.additionalDropoff1 || "",
+      journeyData.additionalDropoff2 || "",
+    ].filter(Boolean);
 
-      setSelectedVehicle(editBookingData.vehicle || null);
+    const journeyState = {
+      pickup: journeyData.pickup || "",
+      dropoff: journeyData.dropoff || "",
+      date: journeyData.date?.slice(0, 10) || "",
+      hour: journeyData.hour?.toString().padStart(2, '0') || "",
+      minute: journeyData.minute?.toString().padStart(2, '0') || "",
+      notes: journeyData.notes || "",
+      internalNotes: journeyData.internalNotes || "",
+      arrivefrom: journeyData.arrivefrom || "",
+      flightNumber: journeyData.flightNumber || "",
+      pickmeAfter: journeyData.pickmeAfter || "",
+      fare: journeyData.fare || "",
+      pickupDoorNumber: journeyData.pickupDoorNumber || "",
+      terminal: journeyData.terminal || "",
+      distanceText: journeyData.distanceText || "",
+      durationText: journeyData.durationText || "",
+    };
 
-      setVehicleExtras({
-        passenger: editBookingData.vehicle?.passenger || 0,
-        childSeat: editBookingData.vehicle?.childSeat || 0,
-        handLuggage: editBookingData.vehicle?.handLuggage || 0,
-        checkinLuggage: editBookingData.vehicle?.checkinLuggage || 0,
-      });
-
-      setFareDetails((prev) => ({
-        ...prev,
-        paymentMethod: editBookingData.paymentMethod || "Cash",
-        cardPaymentReference: editBookingData.cardPaymentReference || "",
-        paymentGateway: editBookingData.paymentGateway || "",
-        journeyFare: editBookingData.journeyFare || 0,
-        driverFare: editBookingData.driverFare || 0,
-        returnJourneyFare: editBookingData.returnJourneyFare || 0,
-        returnDriverFare: editBookingData.returnDriverFare || 0,
-      }));
-
-      setreturnJourneyToggle(!!editBookingData.returnJourneyToggle);
+    if (isReturnJourneyEdit) {
+      setReturnJourneyData(journeyState);
+      setDropOffs2(dropOffList);
+    } else {
+      setPrimaryJourneyData(journeyState);
+      setDropOffs1(dropOffList);
     }
+
+    // Shared Fields
+    setPassengerDetails({
+      name: editBookingData.passenger?.name || "",
+      email: editBookingData.passenger?.email || "",
+      phone: editBookingData.passenger?.phone || "",
+    });
+
+    setSelectedVehicle(editBookingData.vehicle || null);
+
+    setVehicleExtras({
+      passenger: editBookingData.vehicle?.passenger || 0,
+      childSeat: editBookingData.vehicle?.childSeat || 0,
+      handLuggage: editBookingData.vehicle?.handLuggage || 0,
+      checkinLuggage: editBookingData.vehicle?.checkinLuggage || 0,
+    });
+
+    setFareDetails((prev) => ({
+      ...prev,
+      paymentMethod: editBookingData.paymentMethod || "Cash",
+      cardPaymentReference: editBookingData.cardPaymentReference || "",
+      paymentGateway: editBookingData.paymentGateway || "",
+      journeyFare: editBookingData.journeyFare || 0,
+      driverFare: editBookingData.driverFare || 0,
+      returnJourneyFare: editBookingData.returnJourneyFare || 0,
+      returnDriverFare: editBookingData.returnDriverFare || 0,
+      emailNotifications: {
+        admin: editBookingData?.emailNotifications?.admin || false,
+        customer: editBookingData?.emailNotifications?.customer || false,
+      },
+      appNotifications: {
+        customer: editBookingData?.appNotifications?.customer || false,
+      },
+    }));
   }, [editBookingData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!companyId || !primaryJourneyData.pickup || !dropOffs1[0]) {
-      return toast.error("Missing required fields");
+    const isReturnJourney = !!editBookingData?.__editReturn || !!editBookingData?.__copyReturn;
+    const isEditing = !!editBookingData?._id && !editBookingData?.__copyMode;
+
+    if (!companyId) {
+      return toast.error("Missing company ID");
+    }
+
+    if (isReturnJourney) {
+      if (!returnJourneyData?.pickup || !dropOffs2[0]) {
+        return toast.error("Missing return journey fields");
+      }
+    } else {
+      if (!primaryJourneyData?.pickup || !dropOffs1[0]) {
+        return toast.error("Missing primary journey fields");
+      }
     }
 
     const buildDynamicFields = (dropOffs, journeyData) => {
       const dynamic = {};
       dropOffs.forEach((_, i) => {
-        dynamic[`dropoffDoorNumber${i}`] = journeyData[`dropoffDoorNumber${i}`] || "";
-        dynamic[`dropoff_terminal_${i}`] = journeyData[`dropoff_terminal_${i}`] || "";
+        dynamic[`dropoffDoorNumber${i}`] = journeyData?.[`dropoffDoorNumber${i}`] || "";
+        dynamic[`dropoff_terminal_${i}`] = journeyData?.[`dropoff_terminal_${i}`] || "";
       });
       return dynamic;
     };
@@ -177,8 +212,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       ...vehicleExtras,
     };
 
-    const passengerData = passengerDetails;
-
     const paymentFields = {
       paymentMethod: fareDetails.paymentMethod,
       cardPaymentReference: fareDetails.cardPaymentReference,
@@ -188,11 +221,11 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       returnJourneyFare: parseFloat(fareDetails.returnJourneyFare) || 0,
       returnDriverFare: parseFloat(fareDetails.returnDriverFare) || 0,
       emailNotifications: {
-        admin: !!fareDetails.emailNotifications.admin,
-        customer: !!fareDetails.emailNotifications.customer,
+        admin: !!fareDetails?.emailNotifications?.admin,
+        customer: !!fareDetails?.emailNotifications?.customer,
       },
       appNotifications: {
-        customer: !!fareDetails.appNotifications.customer,
+        customer: !!fareDetails?.appNotifications?.customer,
       },
     };
 
@@ -201,7 +234,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       companyId,
       referrer: document.referrer || "manual",
       vehicle: vehicleData,
-      passenger: passengerData,
+      passenger: passengerDetails,
       paymentMethod: paymentFields.paymentMethod,
       cardPaymentReference: paymentFields.cardPaymentReference,
       paymentGateway: paymentFields.paymentGateway,
@@ -212,42 +245,17 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     };
 
     try {
-      // 🔹 1. Primary Journey Booking
-      const primaryPayload = {
-        ...basePayload,
-        journeyFare: paymentFields.journeyFare,
-        driverFare: paymentFields.driverFare,
-        primaryJourney: {
-          ...primaryJourneyData,
-          dropoff: dropOffs1[0],
-          additionalDropoff1: dropOffs1[1] || null,
-          additionalDropoff2: dropOffs1[2] || null,
-          hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
-          fare: primaryFare,
-          ...dynamicFields1,
-        },
-      };
-
-      if (editBookingData && editBookingData._id && !editBookingData.__copyMode) {
-        // Editing existing booking
-        await updateBooking({
-          id: editBookingData._id,
-          updatedData: { bookingData: primaryPayload },
-        }).unwrap();
-        toast.success("Primary booking updated successfully");
-      } else {
-        // Copy or fresh booking
-        await createBooking(primaryPayload).unwrap();
-        toast.success("Primary booking created successfully");
-      }
-
-      // 🔁 2. Return Journey Booking (if toggled)
-      if (returnJourneyToggle && dropOffs2[0]) {
-        const returnPayload = {
+      if (isEditing) {
+        const updatePayload = {
           ...basePayload,
-          journeyFare: paymentFields.returnJourneyFare,
-          driverFare: paymentFields.returnDriverFare,
-          returnJourney: {
+          journeyFare: isReturnJourney ? paymentFields.returnJourneyFare : paymentFields.journeyFare,
+          driverFare: isReturnJourney ? paymentFields.returnDriverFare : paymentFields.driverFare,
+          returnDriverFare: isReturnJourney ? paymentFields.returnDriverFare : paymentFields.returnDriverFare,
+          returnJourneyFare: isReturnJourney ? paymentFields.returnJourneyFare : paymentFields.returnJourneyFare,
+        };
+
+        if (isReturnJourney) {
+          updatePayload.returnJourney = {
             ...returnJourneyData,
             dropoff: dropOffs2[0],
             additionalDropoff1: dropOffs2[1] || null,
@@ -255,15 +263,74 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
             fare: returnFare,
             ...dynamicFields2,
+          };
+          updatePayload.returnJourneyToggle = true;
+        } else {
+          updatePayload.primaryJourney = {
+            ...primaryJourneyData,
+            dropoff: dropOffs1[0],
+            additionalDropoff1: dropOffs1[1] || null,
+            additionalDropoff2: dropOffs1[2] || null,
+            hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+            fare: primaryFare,
+            ...dynamicFields1,
+          };
+        }
+
+        await updateBooking({
+          id: editBookingData._id,
+          updatedData: { bookingData: updatePayload },
+        }).unwrap();
+
+        toast.success(`${isReturnJourney ? "Return" : "Primary"} booking updated successfully`);
+      }
+
+      // ✅ CREATE MODE (Copy or New)
+      else {
+        // ➤ 1. Create primary booking
+        const primaryPayload = {
+          ...basePayload,
+          journeyFare: paymentFields.journeyFare,
+          driverFare: paymentFields.driverFare,
+          primaryJourney: {
+            ...primaryJourneyData,
+            dropoff: dropOffs1[0],
+            additionalDropoff1: dropOffs1[1] || null,
+            additionalDropoff2: dropOffs1[2] || null,
+            hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+            fare: primaryFare,
+            ...dynamicFields1,
           },
-          returnJourneyToggle: true, // required by backend to trigger return journey validation
         };
 
-        // 🔥 Important fix: remove accidental primaryJourney key
-        delete returnPayload.primaryJourney;
+        await createBooking(primaryPayload).unwrap();
+        toast.success("Primary booking created successfully");
 
-        await createBooking(returnPayload).unwrap();
-        toast.success("Return journey booking created successfully");
+        // ➤ 2. Create return booking if toggle is ON
+        if (returnJourneyToggle && dropOffs2[0]) {
+          const returnPayload = {
+            ...basePayload,
+            journeyFare: paymentFields.returnJourneyFare,
+            driverFare: paymentFields.returnDriverFare,
+            returnJourneyFare: paymentFields.returnJourneyFare,
+            returnDriverFare: paymentFields.returnDriverFare,
+            returnJourney: {
+              ...returnJourneyData,
+              dropoff: dropOffs2[0],
+              additionalDropoff1: dropOffs2[1] || null,
+              additionalDropoff2: dropOffs2[2] || null,
+              hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+              fare: returnFare,
+              ...dynamicFields2,
+            },
+            returnJourneyToggle: true,
+          };
+
+          delete returnPayload.primaryJourney;
+
+          await createBooking(returnPayload).unwrap();
+          toast.success("Return journey booking created successfully");
+        }
       }
 
       onClose?.();
@@ -272,6 +339,9 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       toast.error("Booking operation failed.");
     }
   };
+
+  // Add here:
+  const isEditing = !!editBookingData?._id || !!editBookingData?.__copyMode;
 
   return (
     <>
@@ -343,20 +413,21 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       <div className="w-full flex flex-col items-center gap-6">
         <div className={`w-full ${returnJourneyToggle ? "lg:max-w-6xl gap-4" : "lg:max-w-4xl"} flex flex-col lg:flex-row`}>
           {/* Journey 1 */}
-          <JourneyCard
-            title="Journey 1"
-            journeyData={primaryJourneyData}
-            setJourneyData={setPrimaryJourneyData}
-            dropOffs={dropOffs1}
-            setDropOffs={setDropOffs1}
-            fare={primaryFare}
-            pricingMode={primaryFareMode}
-            selectedVehicle={selectedVehicle}
-            mode={mode}
-          />
-
+          {(!isEditing || !isReturnJourney || returnJourneyToggle) && (
+            <JourneyCard
+              title="Journey 1"
+              journeyData={primaryJourneyData}
+              setJourneyData={setPrimaryJourneyData}
+              dropOffs={dropOffs1}
+              setDropOffs={setDropOffs1}
+              fare={editBookingData?.primaryJourney?.fare || primaryFare}
+              pricingMode={primaryFareMode}
+              selectedVehicle={selectedVehicle}
+              mode={mode}
+            />
+          )}
           {/* Journey 2 (conditionally shown) */}
-          {returnJourneyToggle && (
+          {(isReturnJourney || (!isEditing && returnJourneyToggle)) && (
             <div className="w-full transition-all duration-200 ease-in-out transform">
               <JourneyCard
                 title="Journey 2"
@@ -364,7 +435,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
                 setJourneyData={setReturnJourneyData}
                 dropOffs={dropOffs2}
                 setDropOffs={setDropOffs2}
-                fare={returnFare}
+               fare={editBookingData?.returnJourney?.fare || returnFare}
                 pricingMode={returnFareMode}
                 selectedVehicle={selectedVehicle}
                 mode={mode}

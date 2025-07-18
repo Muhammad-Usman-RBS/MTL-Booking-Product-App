@@ -132,32 +132,47 @@ const JourneyCard = ({
                                     type="date"
                                     name="date"
                                     className="custom_input w-full"
-                                    value={journeyData.date}
+                                    value={journeyData.date?.slice(0, 10) || ""}
                                     onChange={handleChange}
                                 />
                                 <div className="flex gap-2 w-full sm:w-1/2">
                                     <select
                                         name="hour"
                                         className="custom_input w-full"
-                                        value={journeyData.hour}
-                                        onChange={handleChange}
+                                        value={journeyData.hour?.toString().padStart(2, "0") || ""}
+                                        onChange={(e) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "hour",
+                                                    value: e.target.value.padStart(2, "0"),
+                                                },
+                                            })
+                                        }
                                     >
                                         <option value="">HH</option>
                                         {[...Array(24).keys()].map((h) => (
-                                            <option key={h} value={h}>
+                                            <option key={h} value={h.toString().padStart(2, "0")}>
                                                 {h.toString().padStart(2, "0")}
                                             </option>
                                         ))}
                                     </select>
+
                                     <select
                                         name="minute"
                                         className="custom_input w-full"
-                                        value={journeyData.minute}
-                                        onChange={handleChange}
+                                        value={journeyData.minute?.toString().padStart(2, "0") || ""}
+                                        onChange={(e) =>
+                                            handleChange({
+                                                target: {
+                                                    name: "minute",
+                                                    value: e.target.value.padStart(2, "0"),
+                                                },
+                                            })
+                                        }
                                     >
                                         <option value="">MM</option>
                                         {[...Array(60).keys()].map((m) => (
-                                            <option key={m} value={m}>
+                                            <option key={m} value={m.toString().padStart(2, "0")}>
                                                 {m.toString().padStart(2, "0")}
                                             </option>
                                         ))}
@@ -165,6 +180,7 @@ const JourneyCard = ({
                                 </div>
                             </div>
                         </div>
+
 
                         {/* Pickup Location */}
                         <div className="relative mb-4">

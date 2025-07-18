@@ -444,7 +444,12 @@ const BookingsTable = ({
                               openAuditModal(item.statusAudit);
                             else if (action === "View") openViewModal(item);
                             else if (action === "Edit") {
-                              setEditBookingData(item);
+                              const editedData = { ...item };
+
+                              // Set flag to identify return journey mode
+                              editedData.__editReturn = !!item.returnJourney;
+
+                              setEditBookingData(editedData);
                               setShowEditModal(true);
                             } else if (action === "Delete") {
                               setSelectedDeleteId(item._id);
@@ -452,7 +457,7 @@ const BookingsTable = ({
                             } else if (action === "Copy Booking") {
                               const copied = { ...item };
 
-                              // Remove database identifiers
+                              // Clean IDs
                               delete copied._id;
                               if (copied.passenger?._id) delete copied.passenger._id;
                               if (copied.vehicle?._id) delete copied.vehicle._id;
@@ -465,9 +470,16 @@ const BookingsTable = ({
                               copied.createdAt = new Date().toISOString();
                               copied.drivers = [];
 
-                              // Mark this as copy mode
                               copied.__copyMode = true;
-                              copied.__copyMode = true;
+
+                              // ✅ If copying a return booking, convert it to primary for correct form behavior
+                              if (item.returnJourney) {
+                                copied.primaryJourney = { ...item.returnJourney };
+                                delete copied.returnJourney;
+                                copied.__copyReturn = false;
+                              } else {
+                                copied.__copyReturn = false;
+                              }
 
                               setEditBookingData(copied);
                               setShowEditModal(true);
