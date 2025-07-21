@@ -562,7 +562,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       <div className="w-full flex flex-col items-center gap-6">
         <div className={`w-full ${returnJourneyToggle ? "lg:max-w-6xl gap-4" : "lg:max-w-4xl"} flex flex-col lg:flex-row`}>
           {/* Journey 1 */}
-          {(!isEditing || !isReturnJourney || returnJourneyToggle) && (
+          {/* {(!isEditing || !isReturnJourney || returnJourneyToggle) && ( */}
+          {(!isEditing && !returnJourneyToggle) ||
+            (isEditing && !isReturnJourney) ||
+            (!isEditing && returnJourneyToggle) ? (
             <JourneyCard
               title="Journey 1"
               journeyData={primaryJourneyData}
@@ -575,9 +578,9 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
               selectedVehicle={selectedVehicle}
               mode={mode}
             />
-          )}
+          ) : null}
           {/* Journey 2 (conditionally shown) */}
-          {(isReturnJourney || (!isEditing && returnJourneyToggle)) && (
+          {(isEditing && isReturnJourney) || (!isEditing && returnJourneyToggle) ? (
             <div className="w-full transition-all duration-200 ease-in-out transform">
               <JourneyCard
                 title="Journey 2"
@@ -592,7 +595,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
                 mode={mode}
               />
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Toggle Switch */}

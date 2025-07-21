@@ -30,9 +30,8 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
     const [voucherDiscountPercent, setVoucherDiscountPercent] = useState(0);
     const [journeyDateTime, setJourneyDateTime] = useState(null);
 
-
     const generateOptions = (max = 10) => {
-        const result = [{ label: "Select", value: "" }];
+        const result = [];
         for (let i = 0; i <= max; i++) {
             result.push({ label: `${i}`, value: `${i}` });
         }
