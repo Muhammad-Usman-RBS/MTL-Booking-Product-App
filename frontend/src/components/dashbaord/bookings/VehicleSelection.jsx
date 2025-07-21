@@ -2,7 +2,11 @@ import React, { useEffect, useState } from "react";
 import Icons from "../../../assets/icons";
 import { useGetAllVehiclesQuery } from "../../../redux/api/vehicleApi";
 
-const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingData }) => {
+const VehicleSelection = ({
+  setSelectedVehicle,
+  setVehicleExtras,
+  editBookingData,
+}) => {
   const { data: vehicleOptions = [], isLoading } = useGetAllVehiclesQuery();
   const [localSelectedVehicle, setLocalSelectedVehicle] = useState(null);
   const [open, setOpen] = useState(false);
@@ -39,7 +43,6 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
       setSelectedVehicle(defaultVehicle);
     }
   }, [vehicleOptions, editBookingData]);
-
 
   const toggleDropdown = () => setOpen((prev) => !prev);
 
@@ -105,11 +108,15 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
         <div className="flex flex-col lg:flex-row gap-6 overflow-visible">
           <div className="flex flex-col items-center w-full lg:w-1/3">
             <div className="bg-white border border-[var(--light-gray)] rounded-lg shadow-md p-3 mb-4">
-              <img
-                src={localSelectedVehicle.image}
-                alt={localSelectedVehicle.vehicleName}
-                className="h-18 object-contain"
-              />
+              {localSelectedVehicle.image ? (
+                <img
+                  src={localSelectedVehicle.image}
+                  alt={localSelectedVehicle.vehicleName}
+                  className="h-18 object-contain"
+                />
+              ) : (
+                <span className="text-sm">No File uploaded</span>
+              )}
             </div>
             <div className="relative w-full">
               <button
@@ -121,18 +128,22 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
                     {localSelectedVehicle.vehicleName}
                     <Icons.ChevronDown className="ml-3 w-4 h-4 text-white" />
                   </div>
-                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-white mt-2">
+                  <div className="grid grid-cols-12 grid-rows-1 lg:grid-cols-2 lg:grid-rows-2 gap-x-4 gap-y-2 text-xs text-white mt-2">
                     <span className="flex items-center gap-1">
-                      <Icons.Users className="w-4 h-4" /> {localSelectedVehicle.passengers}
+                      <Icons.Users className="w-4 h-4" />
+                      {localSelectedVehicle.passengers}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Icons.Baby className="w-4 h-4" /> {localSelectedVehicle.childSeat}
+                      <Icons.Baby className="w-4 h-4" />
+                      {localSelectedVehicle.childSeat}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Icons.Briefcase className="w-4 h-4" /> {localSelectedVehicle.handLuggage}
+                      <Icons.Briefcase className="w-4 h-4" />
+                      {localSelectedVehicle.handLuggage}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Icons.Luggage className="w-4 h-4" /> {localSelectedVehicle.checkinLuggage}
+                      <Icons.Luggage className="w-4 h-4" />
+                      {localSelectedVehicle.checkinLuggage}
                     </span>
                   </div>
                 </div>
@@ -146,19 +157,24 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
                       onClick={() => selectVehicle(vehicle)}
                       className="w-full text-left px-4 py-3 hover:bg-gray-100 transition"
                     >
-                      <div className="font-medium text-sm text-gray-800">{vehicle.vehicleName}</div>
+                      <div className="font-medium text-sm text-gray-800">
+                        {vehicle.vehicleName}
+                      </div>
                       <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2 text-xs text-[var(--dark-gray)]">
                         <span className="flex items-center gap-1">
-                          <Icons.Users className="w-4 h-4" /> {vehicle.passengers}
+                          <Icons.Users className="w-4 h-4" />
+                          {vehicle.passengers}
                         </span>
                         <span className="flex items-center gap-1">
                           <Icons.Baby className="w-4 h-4" /> {vehicle.childSeat}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Icons.Briefcase className="w-4 h-4" /> {vehicle.handLuggage}
+                          <Icons.Briefcase className="w-4 h-4" />
+                          {vehicle.handLuggage}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Icons.Luggage className="w-4 h-4" /> {vehicle.checkinLuggage}
+                          <Icons.Luggage className="w-4 h-4" />
+                          {vehicle.checkinLuggage}
                         </span>
                       </div>
                     </button>
@@ -166,24 +182,43 @@ const VehicleSelection = ({ setSelectedVehicle, setVehicleExtras, editBookingDat
                 </div>
               )}
             </div>
-
           </div>
           <div className="w-full lg:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
             {[
-              { label: "Passenger", key: "passenger", max: localSelectedVehicle.passengers },
-              { label: "Child Seats", key: "childSeat", max: localSelectedVehicle.childSeat },
-              { label: "Hand Luggage", key: "handLuggage", max: localSelectedVehicle.handLuggage },
-              { label: "Check-in Luggage", key: "checkinLuggage", max: localSelectedVehicle.checkinLuggage },
+              {
+                label: "Passenger",
+                key: "passenger",
+                max: localSelectedVehicle.passengers,
+              },
+              {
+                label: "Child Seats",
+                key: "childSeat",
+                max: localSelectedVehicle.childSeat,
+              },
+              {
+                label: "Hand Luggage",
+                key: "handLuggage",
+                max: localSelectedVehicle.handLuggage,
+              },
+              {
+                label: "Check-in Luggage",
+                key: "checkinLuggage",
+                max: localSelectedVehicle.checkinLuggage,
+              },
             ].map(({ label, key, max }) => (
               <div key={key} className="w-full">
-                <label className="text-sm font-medium block mb-1">{label}</label>
+                <label className="text-sm font-medium block mb-1">
+                  {label}
+                </label>
                 <select
                   value={selections[key]}
                   onChange={(e) => handleSelectChange(key, e.target.value)}
                   className="w-full border border-[var(--light-gray)] rounded px-2 py-2 focus:outline-none focus:ring focus:ring-gray-600"
                 >
                   {[...Array(max + 1).keys()].map((n) => (
-                    <option key={n} value={n}>{n}</option>
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
                   ))}
                 </select>
               </div>

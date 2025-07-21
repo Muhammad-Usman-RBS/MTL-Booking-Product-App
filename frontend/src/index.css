@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 body {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
 }
 
 /* Headings styling */
@@ -11,7 +11,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   font-weight: 600;
 }
 
@@ -23,30 +23,28 @@ p {
 
 /* Theme Colours */
 :root {
-  --primary-dark-red: #BA090A;
+  --primary-dark-red: #ba090a;
   --deep-red: #930000;
-  --navy-blue: #0D1758;
-  --dark-blue: #22333B;
-  --light-blue: #A5D8DD;
+  --navy-blue: #0d1758;
+  --dark-blue: #22333b;
+  --light-blue: #a5d8dd;
   --light-gray: #cecece;
   --alert-red: #dc2626;
-  --cream: #EAE0D5;
+  --cream: #eae0d5;
   --dark-grey: #595959;
   --medium-grey: #afafaf;
-  --dark-black: #1E1E1E;
-   --dark-gray: #4B5563;
+  --dark-black: #1e1e1e;
+  --dark-gray: #4b5563;
 
   /* Product Color */
-  --main-color: #2C9BE6;
+  --main-color: #2c9be6;
   --success-color: #20a220;
-
-
 }
 
 .theme-dark-1 {
-  --bg: #07384D;
-  --text: #F1EFEF;
-  --primary: #01F5FE;
+  --bg: #07384d;
+  --text: #f1efef;
+  --primary: #01f5fe;
   --hover: #003353;
   --active: #064f7c;
   --scroll-thumb: rgba(0, 0, 0, 0.3);
@@ -54,9 +52,9 @@ p {
 }
 
 .theme-dark-2 {
-  --bg: #1E1E1E;
-  --text: #F1EFEF;
-  --primary: #BA090A;
+  --bg: #1e1e1e;
+  --text: #f1efef;
+  --primary: #ba090a;
   --hover: #930000;
   --active: #930000;
   --scroll-thumb: rgba(0, 0, 0, 0.3);
@@ -65,7 +63,7 @@ p {
 
 .theme-light-1 {
   --bg: #f5f9fa;
-  --text: #1E1E1E;
+  --text: #1e1e1e;
   --primary: #a5d8dd;
   --hover: #a5d8dd;
   --active: #a5d8dd;
@@ -140,7 +138,7 @@ p {
   color: white;
   box-shadow: 0 0 10px rgba(89, 89, 89, 0.2);
 }
-.nowrap { 
+.nowrap {
   white-space: nowrap;
 }
 .btn-success:hover {
@@ -150,7 +148,7 @@ p {
 
 .btn-cancel {
   background-color: var(--primary-dark-red);
-  color: var(--light-grey);
+  color: white;
   box-shadow: 0 0 10px rgba(186, 9, 10, 0.2);
 }
 
@@ -217,7 +215,8 @@ p {
 /* Firefox Scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--scroll-thumb, rgba(0, 0, 0, 0.3)) var(--scroll-track, transparent);
+  scrollbar-color: var(--scroll-thumb, rgba(0, 0, 0, 0.3))
+    var(--scroll-track, transparent);
 }
 
 /* Custom Email */
