@@ -275,7 +275,7 @@ export const updateBooking = async (req, res) => {
       passenger = {},
       primaryJourney = {},
       returnJourney = {},
-      paymentMethod = "Cash",
+      paymentMethod,
       cardPaymentReference = null,
       paymentGateway = null,
       journeyFare = 0,

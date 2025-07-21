@@ -24,8 +24,10 @@ const defaultColumns = {
   dropOff: true,
   vehicle: true,
   payment: true,
-  fare: true,
-  drFare: true,
+  journeyFare: true,
+  driverFare: true,
+  returnJourneyFare: true,
+  returnDriverFare: true,
   driver: true,
   status: true,
   actions: true,
@@ -158,9 +160,14 @@ const BookingsList = () => {
     setShowDriverModal(true);
   };
 
+  // const [selectedColumns, setSelectedColumns] = useState(() => {
+  //   const saved = localStorage.getItem("selectedColumns");
+  //   return saved ? JSON.parse(saved) : defaultColumns;
+  // });
   const [selectedColumns, setSelectedColumns] = useState(() => {
     const saved = localStorage.getItem("selectedColumns");
-    return saved ? JSON.parse(saved) : defaultColumns;
+    const parsed = saved ? JSON.parse(saved) : {};
+    return { ...defaultColumns, ...parsed }; // Ensures all new columns are present
   });
 
   const handleColumnChange = (key, value) => {

@@ -50,8 +50,10 @@ const BookingsTable = ({
     { label: "Date & Time", key: "date" },
     { label: "Vehicle", key: "vehicle" },
     { label: "Payment", key: "payment" },
-    { label: "Fare", key: "fare" },
-    { label: "DR Fare", key: "drFare" },
+    { label: "Journey Fare", key: "journeyFare" },
+    { label: "Driver Fare", key: "driverFare" },
+    { label: "Return Fare", key: "returnJourneyFare" },
+    { label: "Return DR Fare", key: "returnDriverFare" },
     { label: "Driver", key: "driver" },
     { label: "Status", key: "status" },
     { label: "Actions", key: "actions" },
@@ -297,7 +299,6 @@ const BookingsTable = ({
               </div>
             );
             break;
-
           case "dropOff":
             const dropoffLocation = item.returnJourney
               ? item.returnJourney?.dropoff || "-"
@@ -323,20 +324,23 @@ const BookingsTable = ({
               </div>
             );
             break;
-
           case "vehicle":
             row[key] = item.vehicle?.vehicleName || "-";
             break;
           case "payment":
             row[key] = item.paymentMethod || "-";
             break;
-          case "fare":
-            row[key] = item.returnJourney
-              ? item.returnJourney?.fare || "-"
-              : item.primaryJourney?.fare || "-";
+          case "journeyFare":
+            row[key] = item.journeyFare !== undefined ? item.journeyFare : "-";
             break;
-          case "drFare":
-            row[key] = item.driverFare || "-";
+          case "driverFare":
+            row[key] = item.driverFare !== undefined ? item.driverFare : "-";
+            break;
+          case "returnJourneyFare":
+            row[key] = item.returnJourneyFare !== undefined ? item.returnJourneyFare : "-";
+            break;
+          case "returnDriverFare":
+            row[key] = item.returnDriverFare !== undefined ? item.returnDriverFare : "-";
             break;
           case "driver":
             row[key] =
@@ -512,10 +516,13 @@ const BookingsTable = ({
     dropOff: item.primaryJourney?.dropoff || "-",
     vehicle: formatVehicle(item.vehicle),
     payment: item.paymentMethod || "-",
-    fare: item.returnJourney
-      ? item.returnJourney?.fare || "-"
-      : item.primaryJourney?.fare || "-",
-    drFare: item.driverFare || "-",
+    // fare: item.returnJourney
+    //   ? item.returnJourney?.fare || "-"
+    //   : item.primaryJourney?.fare || "-",
+    journeyFare: item.journeyFare !== undefined ? item.journeyFare : "-",
+    driverFare: item.driverFare !== undefined ? item.driverFare : "-",
+    returnJourneyFare: item.returnJourneyFare !== undefined ? item.returnJourneyFare : "-",
+    returnDriverFare: item.returnDriverFare !== undefined ? item.returnDriverFare : "-",
     driver:
       Array.isArray(item.drivers) && assignedDrivers.length > 0
         ? item.drivers

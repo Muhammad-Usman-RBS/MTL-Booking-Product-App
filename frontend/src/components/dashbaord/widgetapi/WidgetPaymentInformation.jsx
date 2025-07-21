@@ -17,7 +17,8 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
         passenger: '',
         childSeat: '',
         handLuggage: '',
-        checkinLuggage: ''
+        checkinLuggage: '',
+        paymentMethod: ''
     });
 
     const [fetchVoucher] = useLazyGetVoucherByCodeQuery();
@@ -130,6 +131,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
             fare: finalFare,
             voucher,
             voucherApplied: !!voucherDiscountPercent,
+            paymentMethod: formData.paymentMethod,
             selectedVehicle: {
                 ...vehicle,
                 passenger: Number(formData.passenger) || 0,
@@ -267,9 +269,21 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                     </p>
                                 )}
 
-                                <button className="btn btn-reset mt-4">
-                                    Pay Via Debit/Credit Card
-                                </button>
+                                <SelectOption
+                                    label="Payment Method"
+                                    value={formData.paymentMethod}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({ ...prev, paymentMethod: e.target.value }))
+                                    }
+                                    options={[
+                                        { label: "Select", value: "" },
+                                        { label: "Payment Link", value: "Payment Link" },
+                                        { label: "Card", value: "Card" },
+                                        { label: "Cash", value: "Cash" },
+                                        { label: "Invoice", value: "Invoice" },
+                                        { label: "Paypal", value: "Paypal" },
+                                    ]}
+                                />
                             </div>
 
                             {/* Voucher */}

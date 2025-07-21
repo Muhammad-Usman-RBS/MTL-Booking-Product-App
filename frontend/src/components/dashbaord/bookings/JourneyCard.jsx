@@ -104,11 +104,11 @@ const JourneyCard = ({
                             <span className="inline-block px-4 py-1.5 text-base font-semibold text-white border border-white rounded-md bg-transparent">
                                 Fare: £{fare?.toFixed(2) || "0.00"}
                             </span>
-                            <div className="text-sm text-white mt-1">
+                            {/* <div className="text-sm text-white mt-1">
                                 <span className="text-xs font-normal text-gray-300">
                                     ({selectedVehicle?.vehicleName || "N/A"})
                                 </span>
-                            </div>
+                            </div> */}
                             {pricingMode === "postcode" &&
                                 matchedPostcodePrice?.price &&
                                 selectedVehicle?.percentageRate > 0 && (
@@ -139,7 +139,12 @@ const JourneyCard = ({
                                     <select
                                         name="hour"
                                         className="custom_input w-full"
-                                        value={journeyData.hour?.toString().padStart(2, "0") || ""}
+                                        // value={journeyData.hour?.toString().padStart(2, "0") || ""}
+                                        value={
+                                            journeyData.hour === "" || journeyData.hour === undefined
+                                                ? ""
+                                                : journeyData.hour.toString().padStart(2, "0")
+                                        }
                                         onChange={(e) =>
                                             handleChange({
                                                 target: {
@@ -160,7 +165,12 @@ const JourneyCard = ({
                                     <select
                                         name="minute"
                                         className="custom_input w-full"
-                                        value={journeyData.minute?.toString().padStart(2, "0") || ""}
+                                        // value={journeyData.minute?.toString().padStart(2, "0") || ""}
+                                        value={
+                                            journeyData.minute === "" || journeyData.minute === undefined
+                                                ? ""
+                                                : journeyData.minute.toString().padStart(2, "0")
+                                        }
                                         onChange={(e) =>
                                             handleChange({
                                                 target: {

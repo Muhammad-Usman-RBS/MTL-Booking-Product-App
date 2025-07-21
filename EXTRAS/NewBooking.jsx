@@ -18,14 +18,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const companyId = user?.companyId;
   const userEmail = user?.email || "";
   const isCopyMode = !!editBookingData?.__copyMode;
-
-  // Track if locations have been changed from original values
-  const [hasChangedPrimaryLocations, setHasChangedPrimaryLocations] = useState(false);
-  const [hasChangedReturnLocations, setHasChangedReturnLocations] = useState(false);
-
-  // Store original location values for comparison
-  const [originalPrimaryLocations, setOriginalPrimaryLocations] = useState(null);
-  const [originalReturnLocations, setOriginalReturnLocations] = useState(null);
+  const hasUpdatedPrimaryFareOnce = React.useRef(false);
+  const hasUpdatedReturnFareOnce = React.useRef(false);
 
   const { data: hourlyPackages = [] } = useGetAllHourlyRatesQuery(companyId, { skip: !companyId });
   const { data: generalPricing } = useGetGeneralPricingPublicQuery(companyId, { skip: !companyId });
@@ -64,11 +58,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   };
 
   const journeyDateTime = getJourneyDate(primaryJourneyData);
+  // const isReturnJourney = !!editBookingData?.__editReturn || !!editBookingData?.__copyReturn;
   const isReturnJourney = !!editBookingData?.__editReturn || !!editBookingData?.__copyReturn || returnJourneyToggle;
-
-  // Only calculate new fare if locations have been changed or it's a new booking
-  const shouldCalculatePrimaryFare = !editBookingData || hasChangedPrimaryLocations;
-  const shouldCalculateReturnFare = !editBookingData || hasChangedReturnLocations;
 
   const { calculatedFare: primaryFare, pricingMode: primaryFareMode, hourlyError: hourlyError } = useBookingFare({
     companyId,
@@ -82,7 +73,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     includeAirportFees: true,
     includeChildSeat: vehicleExtras.childSeat > 0,
     childSeatCount: vehicleExtras.childSeat,
-    enabled: shouldCalculatePrimaryFare, // Only calculate if needed
   });
 
   const { calculatedFare: returnFare, pricingMode: returnFareMode, } = useBookingFare({
@@ -97,52 +87,19 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     includeAirportFees: true,
     includeChildSeat: vehicleExtras.childSeat > 0,
     childSeatCount: vehicleExtras.childSeat,
-    enabled: shouldCalculateReturnFare, // Only calculate if needed
   });
 
   const [fareDetails, setFareDetails] = useState({
-    paymentMethod,
+    paymentMethod: "Cash",
     cardPaymentReference: "",
     paymentGateway: "",
-    journeyFare: "",
-    driverFare: "",
-    returnJourneyFare: "",
-    returnDriverFare: "",
+    journeyFare: 0,
+    driverFare: 0,
+    returnJourneyFare: 0,
+    returnDriverFare: 0,
     emailNotifications: { admin: false, customer: false },
     appNotifications: { customer: false }
   });
-
-  // Function to check if locations have changed
-  const checkPrimaryLocationsChanged = () => {
-    if (!originalPrimaryLocations) return false;
-
-    return (
-      originalPrimaryLocations.pickup !== primaryJourneyData.pickup ||
-      JSON.stringify(originalPrimaryLocations.dropOffs) !== JSON.stringify(dropOffs1)
-    );
-  };
-
-  const checkReturnLocationsChanged = () => {
-    if (!originalReturnLocations) return false;
-
-    return (
-      originalReturnLocations.pickup !== returnJourneyData.pickup ||
-      JSON.stringify(originalReturnLocations.dropOffs) !== JSON.stringify(dropOffs2)
-    );
-  };
-
-  // Watch for location changes
-  useEffect(() => {
-    if (originalPrimaryLocations) {
-      setHasChangedPrimaryLocations(checkPrimaryLocationsChanged());
-    }
-  }, [primaryJourneyData.pickup, dropOffs1]);
-
-  useEffect(() => {
-    if (originalReturnLocations) {
-      setHasChangedReturnLocations(checkReturnLocationsChanged());
-    }
-  }, [returnJourneyData.pickup, dropOffs2]);
 
   useEffect(() => {
     if (!editBookingData) return;
@@ -185,53 +142,9 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     if (isReturnJourneyEdit) {
       setReturnJourneyData(journeyState);
       setDropOffs2(dropOffList);
-      // Store original return locations
-      setOriginalReturnLocations({
-        pickup: journeyState.pickup,
-        dropOffs: [...dropOffList]
-      });
     } else {
       setPrimaryJourneyData(journeyState);
       setDropOffs1(dropOffList);
-      // Store original primary locations
-      setOriginalPrimaryLocations({
-        pickup: journeyState.pickup,
-        dropOffs: [...dropOffList]
-      });
-    }
-
-    // Also set both journeys if it's a copy mode with return journey
-    if (cloned.returnJourney && !isReturnJourneyEdit) {
-      const returnJourneyState = {
-        pickup: cloned.returnJourney.pickup || "",
-        dropoff: cloned.returnJourney.dropoff || "",
-        date: cloned.returnJourney.date?.slice(0, 10) || "",
-        hour: cloned.returnJourney.hour?.toString().padStart(2, "0") || "",
-        minute: cloned.returnJourney.minute?.toString().padStart(2, "0") || "",
-        notes: cloned.returnJourney.notes || "",
-        internalNotes: cloned.returnJourney.internalNotes || "",
-        arrivefrom: cloned.returnJourney.arrivefrom || "",
-        flightNumber: cloned.returnJourney.flightNumber || "",
-        pickmeAfter: cloned.returnJourney.pickmeAfter || "",
-        fare: cloned.returnJourney.fare || "",
-        pickupDoorNumber: cloned.returnJourney.pickupDoorNumber || "",
-        terminal: cloned.returnJourney.terminal || "",
-        distanceText: cloned.returnJourney.distanceText || "",
-        durationText: cloned.returnJourney.durationText || "",
-      };
-
-      const returnDropOffList = [
-        cloned.returnJourney.dropoff || "",
-        cloned.returnJourney.additionalDropoff1 || "",
-        cloned.returnJourney.additionalDropoff2 || "",
-      ].filter(Boolean);
-
-      setReturnJourneyData(returnJourneyState);
-      setDropOffs2(returnDropOffList);
-      setOriginalReturnLocations({
-        pickup: returnJourneyState.pickup,
-        dropOffs: [...returnDropOffList]
-      });
     }
 
     setPassengerDetails({
@@ -251,7 +164,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
     setFareDetails((prev) => ({
       ...prev,
-      paymentMethod: cloned.paymentMethod || "",
+      paymentMethod: cloned.paymentMethod || "Cash",
       cardPaymentReference: cloned.cardPaymentReference || "",
       paymentGateway: cloned.paymentGateway || "",
       journeyFare: cloned.journeyFare || 0,
@@ -268,9 +181,9 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     }));
   }, [editBookingData]);
 
-  // Update local edit data with new calculated fares only when locations change
+  // For primary journey fare update
   useEffect(() => {
-    if (localEditData?.primaryJourney && hasChangedPrimaryLocations && primaryFare) {
+    if (localEditData?.primaryJourney && hasUpdatedPrimaryFareOnce.current) {
       setLocalEditData((prev) => ({
         ...prev,
         primaryJourney: {
@@ -278,11 +191,14 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           fare: primaryFare,
         },
       }));
+    } else {
+      hasUpdatedPrimaryFareOnce.current = true;
     }
-  }, [primaryFare, hasChangedPrimaryLocations]);
+  }, [primaryFare]);
 
+  // For return journey fare update
   useEffect(() => {
-    if (localEditData?.returnJourney && hasChangedReturnLocations && returnFare) {
+    if (localEditData?.returnJourney && hasUpdatedReturnFareOnce.current) {
       setLocalEditData((prev) => ({
         ...prev,
         returnJourney: {
@@ -290,41 +206,12 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           fare: returnFare,
         },
       }));
+    } else {
+      hasUpdatedReturnFareOnce.current = true;
     }
-  }, [returnFare, hasChangedReturnLocations]);
+  }, [returnFare]);
 
-  // Custom wrapper for setPrimaryJourneyData to track changes
-  const handlePrimaryJourneyDataChange = (newData) => {
-    setPrimaryJourneyData(newData);
-  };
 
-  // Custom wrapper for setReturnJourneyData to track changes
-  const handleReturnJourneyDataChange = (newData) => {
-    setReturnJourneyData(newData);
-  };
-
-  // Custom wrapper for setDropOffs1 to track changes
-  const handleDropOffs1Change = (newDropOffs) => {
-    setDropOffs1(newDropOffs);
-  };
-
-  // Custom wrapper for setDropOffs2 to track changes
-  const handleDropOffs2Change = (newDropOffs) => {
-    setDropOffs2(newDropOffs);
-  };
-
-  // Get the display fare (original if not changed, calculated if changed)
-  const getDisplayPrimaryFare = () => {
-    if (!editBookingData) return primaryFare;
-    if (hasChangedPrimaryLocations) return primaryFare;
-    return localEditData?.primaryJourney?.fare || primaryFare;
-  };
-
-  const getDisplayReturnFare = () => {
-    if (!editBookingData) return returnFare;
-    if (hasChangedReturnLocations) return returnFare;
-    return localEditData?.returnJourney?.fare || returnFare;
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -399,10 +286,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       if (isEditing) {
         const updatePayload = {
           ...basePayload,
-          journeyFare: paymentFields.journeyFare,
-          driverFare: paymentFields.driverFare,
-          returnJourneyFare: paymentFields.returnJourneyFare,
-          returnDriverFare: paymentFields.returnDriverFare,
+          journeyFare: isReturnJourney ? paymentFields.returnJourneyFare : paymentFields.journeyFare,
+          driverFare: isReturnJourney ? paymentFields.returnDriverFare : paymentFields.driverFare,
+          returnDriverFare: isReturnJourney ? paymentFields.returnDriverFare : paymentFields.returnDriverFare,
+          returnJourneyFare: isReturnJourney ? paymentFields.returnJourneyFare : paymentFields.returnJourneyFare,
         };
 
         if (isReturnJourney) {
@@ -412,7 +299,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             additionalDropoff1: dropOffs2[1] || null,
             additionalDropoff2: dropOffs2[2] || null,
             hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
-            fare: getDisplayReturnFare(),
+            fare: returnFare,
             ...dynamicFields2,
           };
           updatePayload.returnJourneyToggle = true;
@@ -423,7 +310,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             additionalDropoff1: dropOffs1[1] || null,
             additionalDropoff2: dropOffs1[2] || null,
             hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
-            fare: getDisplayPrimaryFare(),
+            fare: primaryFare,
             ...dynamicFields1,
           };
         }
@@ -441,15 +328,15 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         // ➤ 1. Create primary booking
         const primaryPayload = {
           ...basePayload,
-          journeyFare: parseFloat(fareDetails.journeyFare) || 0,
-          driverFare: parseFloat(fareDetails.driverFare) || 0,
+          journeyFare: paymentFields.journeyFare,
+          driverFare: paymentFields.driverFare,
           primaryJourney: {
             ...primaryJourneyData,
             dropoff: dropOffs1[0],
             additionalDropoff1: dropOffs1[1] || null,
             additionalDropoff2: dropOffs1[2] || null,
             hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
-            fare: getDisplayPrimaryFare(),
+            fare: primaryFare,
             ...dynamicFields1,
           },
         };
@@ -461,15 +348,17 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         if (returnJourneyToggle && dropOffs2[0]) {
           const returnPayload = {
             ...basePayload,
-            returnJourneyFare: parseFloat(fareDetails.returnJourneyFare) || 0,
-            returnDriverFare: parseFloat(fareDetails.returnDriverFare) || 0,
+            journeyFare: paymentFields.returnJourneyFare,
+            driverFare: paymentFields.returnDriverFare,
+            returnJourneyFare: paymentFields.returnJourneyFare,
+            returnDriverFare: paymentFields.returnDriverFare,
             returnJourney: {
               ...returnJourneyData,
               dropoff: dropOffs2[0],
               additionalDropoff1: dropOffs2[1] || null,
               additionalDropoff2: dropOffs2[2] || null,
               hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
-              fare: getDisplayReturnFare(),
+              fare: returnFare,
               ...dynamicFields2,
             },
             returnJourneyToggle: true,
@@ -566,11 +455,11 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             <JourneyCard
               title="Journey 1"
               journeyData={primaryJourneyData}
-              setJourneyData={handlePrimaryJourneyDataChange}
+              setJourneyData={setPrimaryJourneyData}
               dropOffs={dropOffs1}
-              setDropOffs={handleDropOffs1Change}
+              setDropOffs={setDropOffs1}
               editBookingData={localEditData}
-              fare={getDisplayPrimaryFare()}
+              fare={localEditData?.primaryJourney?.fare || primaryFare}
               pricingMode={primaryFareMode}
               selectedVehicle={selectedVehicle}
               mode={mode}
@@ -582,11 +471,11 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
               <JourneyCard
                 title="Journey 2"
                 journeyData={returnJourneyData}
-                setJourneyData={handleReturnJourneyDataChange}
+                setJourneyData={setReturnJourneyData}
                 dropOffs={dropOffs2}
-                setDropOffs={handleDropOffs2Change}
+                setDropOffs={setDropOffs2}
                 editBookingData={localEditData}
-                fare={getDisplayReturnFare()}
+                fare={localEditData?.returnJourney?.fare || primaryFare}
                 pricingMode={returnFareMode}
                 selectedVehicle={selectedVehicle}
                 mode={mode}
@@ -627,7 +516,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           </div>
         </div>
         <div className="col-span-6">
-          <FareSection returnJourneyToggle={returnJourneyToggle} fareDetails={fareDetails} setFareDetails={setFareDetails} setEmailNotify={setEmailNotify} handleSubmit={handleSubmit} isLoading={isLoading} editBookingData={editBookingData} />
+          <FareSection emailNotify={emailNotify} fareDetails={fareDetails} setFareDetails={setFareDetails} setEmailNotify={setEmailNotify} handleSubmit={handleSubmit} isLoading={isLoading} editBookingData={editBookingData} />
         </div>
       </div>
 

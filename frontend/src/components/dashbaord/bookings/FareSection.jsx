@@ -6,8 +6,7 @@ import React from "react";
 const FareSection = ({
   fareDetails,
   setFareDetails,
-  emailNotify,
-  setEmailNotify,
+  returnJourneyToggle,
 }) => {
   const handleFareChange = (key, value) => {
     setFareDetails((prev) => ({ ...prev, [key]: value }));
@@ -53,7 +52,7 @@ const FareSection = ({
         )}
 
         <div className="flex flex-wrap items-center gap-4">
-          {["Cash", "Card", "Payment Link"].map((method) => (
+          {["Cash", "Card", "Payment Link", "Invoice", "Paypal"].map((method) => (
             <label
               key={method}
               className="flex items-center cursor-pointer gap-2"
@@ -77,8 +76,11 @@ const FareSection = ({
           {[
             { key: "journeyFare", label: "Journey Fare" },
             { key: "driverFare", label: "Driver Fare" },
-            { key: "returnJourneyFare", label: "Return Journey Fare" },
-            { key: "returnDriverFare", label: "Return Driver Fare" },
+            ...(returnJourneyToggle
+              ? [
+                { key: "returnJourneyFare", label: "Return Journey Fare" },
+                { key: "returnDriverFare", label: "Return Driver Fare" },
+              ] : []),
           ].map((item) => (
             <div
               key={item.key}
@@ -93,7 +95,7 @@ const FareSection = ({
                   className="custom_input"
                   value={fareDetails[item.key]}
                   onChange={(e) =>
-                    handleFareChange(item.key, parseFloat(e.target.value) || 0)
+                    handleFareChange(item.key, parseFloat(e.target.value) ?? "")
                   }
                 />
                 <span className="bg-gray-200 border border-[var(--light-gray)] px-3 py-1 rounded-r text-gray-700 font-medium">

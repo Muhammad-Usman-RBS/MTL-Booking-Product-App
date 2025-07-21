@@ -70,6 +70,7 @@ const WidgetMain = () => {
                 mode: formData.booking?.mode || "Transfer",
                 returnJourneyToggle: false,
                 primaryJourney,
+                paymentMethod: finalPayload.paymentMethod,
             };
 
             await createBooking(primaryPayload).unwrap();
@@ -191,9 +192,10 @@ const WidgetMain = () => {
                     fare={formData.pricing.totalPrice}
                     vehicle={formData.vehicle}
                     booking={formData.booking}
-                    onBookNow={({ passengerDetails, voucher, selectedVehicle }) => {
+                    onBookNow={({ passengerDetails, voucher, paymentMethod, selectedVehicle }) => {
                         const finalPayload = {
                             companyId,
+                            paymentMethod,
                             referrer: window.location.href,
                             fare: formData.pricing.totalPrice,
                             mode: formData.booking?.mode || "Transfer",
@@ -211,6 +213,7 @@ const WidgetMain = () => {
                         };
 
                         handleDataChange("vehicle", selectedVehicle);
+                        handleDataChange("payment", { paymentMethod });
                         handleBookingSubmission(finalPayload);
                     }}
                 />
