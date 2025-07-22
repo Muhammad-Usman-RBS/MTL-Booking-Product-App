@@ -1,13 +1,82 @@
-import React, { useState } from "react";
-import Icons from "../../../assets/icons";
+import React, { useState, useMemo } from "react";
+import { useSelector } from "react-redux";
+import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
+import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
+
 import AvailableJobs from "./AvailableJobs";
 import DriverScheduledJobs from "./DriverScheduledJobs";
-import { mockJobs } from "../../../constants/dashboardTabsData/data";
-import { Link } from "react-router-dom";
 
 const DriverPortalHome = () => {
-  const [activeSection, setActiveSection] = useState("Available");
-  const [jobs, setJobs] = useState(mockJobs);
+  const user = useSelector((state) => state.auth.user);
+  const companyId = user?.companyId;
+
+  const {
+    data: bookingsData = {},
+    isLoading: bookingsLoading,
+    isError: bookingsError,
+  } = useGetAllBookingsQuery(companyId, { skip: !companyId });
+
+  const {
+    data: driversData,
+    isLoading: driversLoading,
+    isError: driversError,
+  } = useGetAllDriversQuery(companyId, {
+    skip: !companyId,
+  });
+
+  const bookings = bookingsData?.bookings || [];
+
+  // Normalize and categorize jobs
+  const driverJobs = useMemo(() => {
+    if (
+      !Array.isArray(bookings) ||
+      !Array.isArray(driversData?.drivers) ||
+      !user?.employeeNumber
+    ) {
+      return [];
+    }
+
+    return bookings
+      .filter((booking) => {
+        if (
+          booking.companyId !== companyId ||
+          !Array.isArray(booking.drivers)
+        ) {
+          return false;
+        }
+
+        return booking.drivers.some((driverId) => {
+          const id = typeof driverId === "object" ? driverId._id : driverId;
+          const driver = driversData.drivers.find((d) => d._id === id);
+          return driver?.DriverData?.employeeNumber === user.employeeNumber;
+        });
+      })
+      .map((job) => ({
+        _id: job._id,
+        customerName: job.passenger?.name || "Unnamed Passenger",
+        pickupLocation: job.primaryJourney?.pickup || "Unknown",
+        dropLocation: job.primaryJourney?.dropoff || "Unknown",
+        extraGuidance: job.primaryJourney?.notes || "",
+        estimatedTime: job.primaryJourney?.durationText || "Unknown",
+        distance: job.primaryJourney?.distanceText || "Unknown",
+        driverFare: job.driverFare || 0,
+        status: job.status === "Scheduled" ? "scheduled" : "available",
+      }));
+  }, [bookings, driversData?.drivers, user?.employeeNumber, companyId]);
+
+  const [jobs, setJobs] = useState([]);
+
+  // Sync jobs once loaded
+  React.useEffect(() => {
+    if (
+      !bookingsLoading &&
+      !driversLoading &&
+      !bookingsError &&
+      !driversError
+    ) {
+      setJobs(driverJobs);
+    }
+  }, [driverJobs, bookingsLoading, driversLoading]);
 
   const availableJobs = jobs.filter((job) => job.status === "available");
   const scheduledJobs = jobs.filter((job) => job.status === "scheduled");
@@ -15,133 +84,28 @@ const DriverPortalHome = () => {
   const handleAccept = (jobId) => {
     setJobs((prevJobs) =>
       prevJobs.map((job) =>
-        job.id === jobId ? { ...job, status: "scheduled" } : job
+        job._id === jobId ? { ...job, status: "scheduled" } : job
       )
     );
   };
 
   const handleReject = (jobId) => {
-    setJobs((prevJobs) => prevJobs.filter((job) => job.id !== jobId));
+    setJobs((prevJobs) => prevJobs.filter((job) => job._id !== jobId));
   };
 
-  const JobCard = ({ job, showActions = true }) => {
-    const cardContent = (
-      <div className="mb-5 border border-gray-200 rounded-md p-5 ">
-        <div className="flex justify-between items-start mb-4 ">
-          <div className="flex items-center space-x-3 ">
-            <div className="bg-gray-100 p-2 rounded-xl">
-              <Icons.User size={20} className="text-black" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-800">
-                {job.customerName}
-              </h3>
-              <div className="flex items-center space-x-1 mt-1">
-                <Icons.Star size={14} className="text-black fill-current" />
-                <span className="text-slate-600 text-sm font-medium">
-                  {job.customerRating}
-                </span>
-              </div>
-            </div>
-          </div>
-          {!showActions && (
-            <span className="text-black bg-gray-100 text-xs font-medium px-3 py-1 rounded-full ">
-              Accepted
-            </span>
-          )}
-        </div>
+  const [activeSection, setActiveSection] = useState("Available");
 
-        <div className="space-y-3 mb-4">
-          <div className="flex items-start space-x-3">
-            <div className="bg-gray-100 p-1.5 rounded-lg">
-              <Icons.MapPin size={16} className="text-black" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-700 mb-1">
-                Pickup
-              </p>
-              <p className="text-slate-600 text-sm">{job.pickupLocation}</p>
-            </div>
-          </div>
-
-          <div className="flex items-start space-x-3">
-            <div className="bg-gray-100 p-1.5 rounded-lg">
-              <Icons.Navigation size={16} className="text-black" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-700 mb-1">
-                Drop-off
-              </p>
-              <p className="text-slate-600 text-sm">{job.dropLocation}</p>
-            </div>
-          </div>
-
-          {job.extraGuidance && (
-            <div className=" border  rounded-md p-3">
-              <p className="text-sm font-semibold text-black mb-1">
-                Special Instructions
-              </p>
-              <p className="text-black text-xs">{job.extraGuidance}</p>
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-between items-center mb-4 bg-slate-50 rounded-xl p-3">
-          <div className="flex items-center space-x-1">
-            <Icons.Clock size={16} className="text-black" />
-            <span className="text-slate-700 text-sm font-medium">
-              {job.estimatedTime}
-            </span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <Icons.Navigation size={16} className="text-black" />
-            <span className="text-slate-700 text-sm font-medium">
-              {job.distance}
-            </span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <Icons.DollarSign size={18} className="text-gray-700" />
-            <span className="text-lg font-bold text-gray-700">
-              ${job.driverFare}
-            </span>
-          </div>
-        </div>
-
-        {showActions && (
-          <div className="flex space-x-3">
-            <button
-              onClick={() => handleAccept(job.id)}
-              className="btn btn-success"
-            >
-              <span>Accept</span>
-            </button>
-            <button
-              onClick={() => handleReject(job.id)}
-              className="btn btn-cancel"
-            >
-              <span>Decline</span>
-            </button>
-          </div>
-        )}
-      </div>
-    );
-
-    return showActions ? (
-      cardContent
-    ) : (
-      <Link to={`/dashboard/drivers/jobs/${job.id}`}>{cardContent}</Link>
-    );
-  };
+  if (bookingsLoading || driversLoading) return <div>Loading bookings...</div>;
+  if (bookingsError || driversError) return <div>Error loading bookings.</div>;
 
   return (
     <div>
-      <div className="flex space-x-3 mb-8">
+      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mb-8">
         <button
           onClick={() => setActiveSection("Available")}
-          className={`${activeSection === "Available"
-            ? "btn btn-reset"
-            : "btn btn-primary"
-            }`}
+          className={`${
+            activeSection === "Available" ? "btn btn-reset" : "btn btn-primary"
+          }`}
         >
           <span>Available Jobs</span>
           {availableJobs.length > 0 && (
@@ -153,10 +117,9 @@ const DriverPortalHome = () => {
 
         <button
           onClick={() => setActiveSection("Scheduled")}
-          className={`${activeSection === "Scheduled"
-            ? "btn btn-reset"
-            : "btn btn-primary"
-            }`}
+          className={`${
+            activeSection === "Scheduled" ? "btn btn-reset" : "btn btn-primary"
+          }`}
         >
           <span>Scheduled</span>
           {scheduledJobs.length > 0 && (
@@ -167,7 +130,7 @@ const DriverPortalHome = () => {
         </button>
       </div>
 
-      <div className="h-[600px]  overflow-y-auto">
+      <div className="h-[600px] md:h-auto overflow-y-auto">
         <div
           className={`${activeSection === "Available" ? "block" : "hidden"}`}
         >
@@ -175,14 +138,13 @@ const DriverPortalHome = () => {
             jobs={availableJobs}
             onAccept={handleAccept}
             onReject={handleReject}
-            JobCard={JobCard}
           />
         </div>
 
         <div
           className={`${activeSection === "Scheduled" ? "block" : "hidden"}`}
         >
-          <DriverScheduledJobs jobs={scheduledJobs} JobCard={JobCard} />
+          <DriverScheduledJobs jobs={scheduledJobs} />
         </div>
       </div>
     </div>

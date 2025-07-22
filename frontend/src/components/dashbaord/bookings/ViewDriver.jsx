@@ -1,4 +1,4 @@
-import React, {  useState } from "react";
+import React, { useState } from "react";
 import IMAGES from "../../../assets/images";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 import { useSelector } from "react-redux";
@@ -30,7 +30,7 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   const selectedBooking = allBookings.find(
     (booking) => booking._id === selectedRow
   );
-    const bookingVehicleType =
+  const bookingVehicleType =
     selectedBooking?.vehicle?.vehicleName?.trim().toLowerCase() || "";
   const filteredDriver = (drivers?.drivers || []).filter((driver) => {
     const name = driver?.DriverData?.firstName?.toLowerCase() || "";
@@ -57,6 +57,12 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
     isLoading && <p>Loading drivers...</p>;
   }
   const handleSendEmail = async () => {
+    console.log("companyId:", companyId);
+    if (!companyId) {
+      toast.error("Company ID is missing. Please log in again.");
+      return;
+    }
+  
     const booking = allBookings.find((b) => b._id === selectedRow);
   
     if (!booking?._id) {
@@ -72,11 +78,16 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
     try {
       const { _id, createdAt, updatedAt, __v, ...restBookingData } = booking;
   
+      // Wrap the data in bookingData property to match backend expectation
       await updateBooking({
         id: booking._id,
         updatedData: {
-          ...restBookingData,
-          drivers: selectedDrivers.map((driver) => driver._id),
+          
+          bookingData: {
+            ...restBookingData,
+            
+            drivers: selectedDrivers.map((driver) => driver._id),
+          },
         },
       }).unwrap();
   
@@ -86,7 +97,7 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   
       toast.success("Booking updated with selected drivers.");
     } catch (err) {
-      console.error("Booking update failed:", err);
+      console.error("Booking update failed:", err.message);
       toast.error("Failed to update booking with drivers");
     }
   
@@ -95,7 +106,9 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
         const email = driver?.DriverData?.email;
         if (!email) {
           toast.warning(
-            `${driver?.DriverData?.firstName || "Driver"} has no email. Skipped.`
+            `${
+              driver?.DriverData?.firstName || "Driver"
+            } has no email. Skipped.`
           );
           continue;
         }
@@ -121,7 +134,6 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
       onDriversUpdate(selectedRow, selectedDrivers);
     }
   };
-  
 
   const convertKmToMiles = (text) => {
     if (!text || typeof text !== "string") return "—";
@@ -134,7 +146,6 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
     return text;
   };
 
- 
   return (
     <>
       <div className="p-4 space-y-4 text-sm text-gray-800 w-full max-w-full">
@@ -144,16 +155,22 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
               Distance:
             </label>
             <p className="bg-gray-100 px-3 py-1.5 rounded">
-            {/* {convertKmToMiles(viewData?.primaryJourney?.distanceText)} */}
-            {convertKmToMiles(selectedBooking?.primaryJourney?.distanceText) || "Select a booking"}
-
+              {/* {convertKmToMiles(viewData?.primaryJourney?.distanceText)} */}
+              {convertKmToMiles(
+                selectedBooking?.primaryJourney?.distanceText
+              ) || "Select a booking"}
             </p>
           </div>
           <div>
             <label className="block font-semibold text-[var(--dark-gray)] mb-1">
               Fare:
             </label>
-            <input type="number" className="custom_input" />
+            <input
+              type="number"
+              className="custom_input"
+              value={selectedBooking?.driverFare || ""}
+              readOnly
+            />
           </div>
         </div>
 

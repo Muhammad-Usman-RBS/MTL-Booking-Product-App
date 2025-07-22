@@ -121,8 +121,7 @@
             </thead>
             <tbody>
             {paginatedData.length === 1 && paginatedData[0].customRow ? (
-  paginatedData[0].content
-) : (
+  <tr>{paginatedData[0].content}</tr>) : (
 
     paginatedData.map((item, rowIdx) => (
       <tr

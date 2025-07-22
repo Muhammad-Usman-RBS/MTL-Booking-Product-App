@@ -114,17 +114,30 @@ function Navbar() {
   }, [refetchBookings, user?.companyId]);
   return (
     <>
-      <nav className="bg-theme text-theme z-20 relative p-4 flex  justify-between items-start gap-2 sm:gap-4">
-        <div className=" flex  space-x-2">
+      <nav className="bg-theme text-theme z-20 relative p-[17.2px] flex  justify-between items-start gap-2 sm:gap-4">
+        <div className=" flex mt-1.5  space-x-2">
           <button onClick={toggleSidebar} className=" cursor-pointer">
-          <Icons.Menu className="size-6 text-theme" />
-        </button>
+            <Icons.Menu className="size-6 text-theme" />
+          </button>
 
-        <h1 className="text-xl hidden lg:block  font-bold uppercase">
-          Admin Panel
-        </h1>
-          </div>
-      <div className="flex items-center  justify-end gap-2 sm:gap-4 flex-wrap">
+          <h1 className="text-xl hidden lg:block font-bold uppercase">
+            {[
+              "clientadmin",
+              "superadmin",
+              "manager",
+              "demo",
+              "associate admin",
+              "staffmember",
+            ].includes(user?.role)
+              ? "Admin Panel"
+              : user?.role === "driver"
+              ? "Driver Portal"
+              : user?.role === "customer"
+              ? "Customer Portal"
+              : "Portal"}
+          </h1>
+        </div>
+        <div className="flex items-center  justify-end gap-2 sm:gap-4 flex-wrap">
           <div className="relative">
             <button
               onClick={() => setIsThemeOpen(!isThemeOpen)}
@@ -183,198 +196,198 @@ function Navbar() {
               </div>
             )}
           </div>
-            <div className="flex lg:flex-row md:flex-row sm:flex-row xs flex-row-reverse">
+          <div className="flex lg:flex-row md:flex-row sm:flex-row xs flex-row-reverse">
+            <div className="relative">
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[var(--light-gray)] text-sm shadow-md text-black hover:bg-gray-100 transition duration-200"
+              >
+                <Icons.User className="w-4 h-4 text-dark" />
+                <span>User</span>
+              </button>
 
-          <div className="relative">
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[var(--light-gray)] text-sm shadow-md text-black hover:bg-gray-100 transition duration-200"
-            >
-              <Icons.User className="w-4 h-4 text-dark" />
-              <span>User</span>
-            </button>
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-lg z-50">
+                  <div className="border-b   text- ">
+                    <div className="ps-4 pt-4 flex items-center space-x-3">
+                      {profileImg &&
+                      profileImg !== "" &&
+                      profileImg !== "default" ? (
+                        <img
+                          src={profileImg}
+                          alt="Profile"
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <img
+                          src={IMAGES.dummyImg}
+                          alt="Default"
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      )}
+                      <div>
+                        <p className="font-semibold">{displayName}</p>
+                      </div>
+                    </div>
 
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-lg z-50">
-                <div className="border-b   text- ">
-                  <div className="ps-4 pt-4 flex items-center space-x-3">
-                    {profileImg &&
-                    profileImg !== "" &&
-                    profileImg !== "default" ? (
-                      <img
-                        src={profileImg}
-                        alt="Profile"
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                    ) : (
-                      <img
-                        src={IMAGES.dummyImg}
-                        alt="Default"
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                    )}
-                    <div>
-                      <p className="font-semibold">{displayName}</p>
+                    <div className="ps-4 py-2 ">
+                      <p className="text-sm truncate  text-[var(--dark-gray)]">
+                        {email}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="ps-4 py-2 ">
-                    <p className="text-sm  text-[var(--dark-gray)]">{email}</p>
-                  </div>
+                  <ul className="py-2">
+                    <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                      <Link to="/dashboard/profile">Profile</Link>
+                    </li>
+                    <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                      <Link to="/dashboard/logout">Logout</Link>
+                    </li>
+                  </ul>
                 </div>
-
-                <ul className="py-2">
-                  <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                    <Link to="/dashboard/profile">Profile</Link>
-                  </li>
-                  <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                    <Link to="/dashboard/logout">Logout</Link>
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
-
-          <div
-            className="cursor-pointer relative hover:bg-white/30 backdrop-blur-md p-2 rounded-full"
-            onClick={() => setShowTooltip(true)}
-            onMouseLeave={handleMouseLeave}
-          >
-            <Icons.BellPlus className="size-5" />
-            <div>
-              {userBookings?.length >= 1 && (
-                <>
-                  <span className="absolute -top-2 right-0 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
-                    {userBookings?.length - readNotifications.size}
-                  </span>
-                </>
               )}
             </div>
 
-            {showTooltip && (
-              <div
-                onMouseEnter={handleMouseEnterTooltip}
-                onMouseLeave={handleMouseLeave}
-                className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 right-0  text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden"
-              >
-                <div className="border-b px-4 py-3 text-theme bg-theme">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">Notifications</h3>
-                    </div>
-                    <button
-                      onClick={() =>
-                        setReadNotifications(
-                          new Set(userBookings.map((b) => b._id))
-                        )
-                      }
-                      className="text-sm "
-                    >
-                      Mark all as read
-                    </button>
-                  </div>
-                </div>
-                {(!Array.isArray(userBookings) ||
-                  userBookings.length === 0) && (
-                  <div className="px-4 py-3 text-gray-500 text-sm">
-                    No new notifications
-                  </div>
+            <div
+              className="cursor-pointer relative hover:bg-white/30 backdrop-blur-md p-2 ml-1 rounded-full"
+              onClick={() => setShowTooltip(true)}
+              onMouseLeave={handleMouseLeave}
+            >
+              <Icons.BellPlus className="size-5" />
+              <div>
+                {userBookings?.length >= 1 && (
+                  <>
+                    <span className="absolute -top-2 right-0 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
+                      {userBookings?.length - readNotifications.size}
+                    </span>
+                  </>
                 )}
-                {/* Notifications List */}
-                <div className="max-h-64 overflow-y-auto">
-                  {Array.isArray(userBookings) &&
-                    userBookings.map((data) => (
-                      <div
-                        key={data._id}
-                        onClick={() => {
-                          setReadNotifications(
-                            (prev) => new Set([...prev, data._id])
-                          );
+              </div>
 
-                          setSelectedJourneyData(data);
-                          setShowJourneyModal(true);
-                          setShowTooltip(false);
-                          navigate("/dashboard/bookings/list");
-                        }}
-                        className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${
-                          readNotifications.has(data._id)
-                            ? "bg-gray-50 opacity-60"
-                            : "bg-white"
-                        }`}
+              {showTooltip && (
+                <div
+                  onMouseEnter={handleMouseEnterTooltip}
+                  onMouseLeave={handleMouseLeave}
+                  className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 right-0  text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden"
+                >
+                  <div className="border-b px-4 py-3 text-theme bg-theme">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">Notifications</h3>
+                      </div>
+                      <button
+                        onClick={() =>
+                          setReadNotifications(
+                            new Set(userBookings.map((b) => b._id))
+                          )
+                        }
+                        className="text-sm "
                       >
-                        <div className="flex items-start gap-3">
-                          <div className={`flex-1 `}>
-                            <div className="flex items-start justify-between">
-                              <h4 className={`text-sm   text-gray-700`}>
-                                {data.status}
-                              </h4>
-                              <div>
-                                <span className="text-xs text-gray-700">
-                                  #{data.bookingId}
-                                </span>
+                        Mark all as read
+                      </button>
+                    </div>
+                  </div>
+                  {(!Array.isArray(userBookings) ||
+                    userBookings.length === 0) && (
+                    <div className="px-4 py-3 text-gray-500 text-sm">
+                      No new notifications
+                    </div>
+                  )}
+                  {/* Notifications List */}
+                  <div className="max-h-64 overflow-y-auto">
+                    {Array.isArray(userBookings) &&
+                      userBookings.map((data) => (
+                        <div
+                          key={data._id}
+                          onClick={() => {
+                            setReadNotifications(
+                              (prev) => new Set([...prev, data._id])
+                            );
+
+                            setSelectedJourneyData(data);
+                            setShowJourneyModal(true);
+                            setShowTooltip(false);
+                            navigate("/dashboard/bookings/list");
+                          }}
+                          className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${
+                            readNotifications.has(data._id)
+                              ? "bg-gray-50 opacity-60"
+                              : "bg-white"
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`flex-1 `}>
+                              <div className="flex items-start justify-between">
+                                <h4 className={`text-sm   text-gray-700`}>
+                                  {data.status}
+                                </h4>
+                                <div>
+                                  <span className="text-xs text-gray-700">
+                                    #{data.bookingId}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                            <p className="text-xs text-[var(--dark-gray)] mt-1 line-clamp-1 ">
-                              {data?.status === "Completed" ? (
-                                <>
-                                  Driver{" "}
-                                  <span className="font-semibold">
-                                    {getAssignedDriverName(data)}
-                                  </span>{" "}
-                                  has completed the journey
-                                </>
-                              ) : (
-                                <>
-                                  {data?.primaryJourney?.pickup} -
-                                  {data?.primaryJourney?.dropoff}
-                                </>
-                              )}
-                            </p>
-                            <div className=" flex items-center mt-2 justify-between">
-                              <div className="flex items-center">
-                                <Icons.Clock className="w-3 h-3 text-gray-400" />
-                                <span className="text-xs text-gray-500">
-                                  {getTimeAgo(data.createdAt)}
-                                </span>
-                              </div>
-                              <div>
-                                {!readNotifications.has(data._id) && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setReadNotifications(
-                                        (prev) => new Set([...prev, data._id])
-                                      );
-                                    }}
-                                    className=" text-xs px-2 py-1 text-black cursor-pointer"
-                                  >
-                                    Mark as read
-                                  </button>
+                              <p className="text-xs text-[var(--dark-gray)] mt-1 line-clamp-1 ">
+                                {data?.status === "Completed" ? (
+                                  <>
+                                    Driver{" "}
+                                    <span className="font-semibold">
+                                      {getAssignedDriverName(data)}
+                                    </span>{" "}
+                                    has completed the journey
+                                  </>
+                                ) : (
+                                  <>
+                                    {data?.primaryJourney?.pickup} -
+                                    {data?.primaryJourney?.dropoff}
+                                  </>
                                 )}
+                              </p>
+                              <div className=" flex items-center mt-2 justify-between">
+                                <div className="flex items-center">
+                                  <Icons.Clock className="w-3 h-3 text-gray-400" />
+                                  <span className="text-xs text-gray-500">
+                                    {getTimeAgo(data.createdAt)}
+                                  </span>
+                                </div>
+                                <div>
+                                  {!readNotifications.has(data._id) && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setReadNotifications(
+                                          (prev) => new Set([...prev, data._id])
+                                        );
+                                      }}
+                                      className=" text-xs px-2 py-1 text-black cursor-pointer"
+                                    >
+                                      Mark as read
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                </div>
+                      ))}
+                  </div>
 
-                {/* Footer */}
-                <div className="px-4 py-3 text-theme bg-theme border-t">
-                  <Link
-                    onClick={() => setShowTooltip(false)}
-                    to="/dashboard/settings/notifications"
-                    className="w-full text-center text-sm  font-medium flex items-center justify-center gap-2"
-                  >
-                    <Icons.Eye className="w-4 h-4" />
-                    View All Notifications
-                  </Link>
+                  {/* Footer */}
+                  <div className="px-4 py-3 text-theme bg-theme border-t">
+                    <Link
+                      onClick={() => setShowTooltip(false)}
+                      to="/dashboard/settings/notifications"
+                      className="w-full text-center text-sm  font-medium flex items-center justify-center gap-2"
+                    >
+                      <Icons.Eye className="w-4 h-4" />
+                      View All Notifications
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-          </div>
-
         </div>
       </nav>
 
