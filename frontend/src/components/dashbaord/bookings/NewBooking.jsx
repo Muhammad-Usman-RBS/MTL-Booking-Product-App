@@ -70,35 +70,46 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const shouldCalculatePrimaryFare = !editBookingData || hasChangedPrimaryLocations;
   const shouldCalculateReturnFare = !editBookingData || hasChangedReturnLocations;
 
-  const { calculatedFare: primaryFare, pricingMode: primaryFareMode, hourlyError: hourlyError } = useBookingFare({
-    companyId,
-    pickup: primaryJourneyData.pickup,
-    dropoff: dropOffs1[0],
-    selectedVehicle,
-    mode,
-    selectedHourly,
-    dropOffPrice: extraDropoffPrice(dropOffs1.length),
-    journeyDateTime,
-    includeAirportFees: true,
-    includeChildSeat: vehicleExtras.childSeat > 0,
-    childSeatCount: vehicleExtras.childSeat,
-    enabled: shouldCalculatePrimaryFare, // Only calculate if needed
-  });
+  const { calculatedFare: primaryFare,
+    pricingMode: primaryFareMode,
+    hourlyError: hourlyError,
+    distanceText: primaryDistanceText,
+    durationText: primaryDurationText, } = useBookingFare({
+      companyId,
+      pickup: primaryJourneyData.pickup,
+      dropoff: dropOffs1[0],
+      selectedVehicle,
+      mode,
+      selectedHourly,
+      dropOffPrice: extraDropoffPrice(dropOffs1.length),
+      distanceText: primaryDistanceText,
+      durationText: primaryDurationText,
+      journeyDateTime,
+      includeAirportFees: true,
+      includeChildSeat: vehicleExtras.childSeat > 0,
+      childSeatCount: vehicleExtras.childSeat,
+      enabled: shouldCalculatePrimaryFare, // Only calculate if needed
+    });
 
-  const { calculatedFare: returnFare, pricingMode: returnFareMode, } = useBookingFare({
-    companyId,
-    pickup: returnJourneyData.pickup,
-    dropoff: dropOffs2[0],
-    selectedVehicle,
-    mode,
-    selectedHourly,
-    dropOffPrice: extraDropoffPrice(dropOffs2.length),
-    journeyDateTime,
-    includeAirportFees: true,
-    includeChildSeat: vehicleExtras.childSeat > 0,
-    childSeatCount: vehicleExtras.childSeat,
-    enabled: shouldCalculateReturnFare, // Only calculate if needed
-  });
+  const { calculatedFare: returnFare,
+    distanceText: returnDistanceText,
+    durationText: returnDurationText,
+    pricingMode: returnFareMode, } = useBookingFare({
+      companyId,
+      pickup: returnJourneyData.pickup,
+      dropoff: dropOffs2[0],
+      selectedVehicle,
+      mode,
+      selectedHourly,
+      dropOffPrice: extraDropoffPrice(dropOffs2.length),
+      journeyDateTime,
+      distanceText: returnDistanceText,
+      durationText: returnDurationText,
+      includeAirportFees: true,
+      includeChildSeat: vehicleExtras.childSeat > 0,
+      childSeatCount: vehicleExtras.childSeat,
+      enabled: shouldCalculateReturnFare, // Only calculate if needed
+    });
 
   const [fareDetails, setFareDetails] = useState({
     paymentMethod: "",
@@ -448,6 +459,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             dropoff: dropOffs1[0],
             additionalDropoff1: dropOffs1[1] || null,
             additionalDropoff2: dropOffs1[2] || null,
+            distanceText: primaryDistanceText,
+            durationText: primaryDurationText,
             hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
             fare: getDisplayPrimaryFare(),
             ...dynamicFields1,
@@ -468,6 +481,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
               dropoff: dropOffs2[0],
               additionalDropoff1: dropOffs2[1] || null,
               additionalDropoff2: dropOffs2[2] || null,
+              distanceText: returnDistanceText,
+              durationText: returnDurationText,
               hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
               fare: getDisplayReturnFare(),
               ...dynamicFields2,

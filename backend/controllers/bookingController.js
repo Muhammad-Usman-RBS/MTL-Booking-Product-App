@@ -389,6 +389,10 @@ export const updateBooking = async (req, res) => {
       };
     }
 
+    if (bookingData.drivers) {
+      updatedPayload.drivers = bookingData.drivers;
+    }
+
     // 🔄 Save to DB
     const updatedBooking = await Booking.findByIdAndUpdate(id, updatedPayload, { new: true });
 
