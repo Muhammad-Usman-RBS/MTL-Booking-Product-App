@@ -22,7 +22,7 @@ import { ALL_PERMISSIONS } from "../../../constants/dashboardTabsData/data";
 const tabs = ["Active", "Pending", "Suspended", "Deleted"];
 
 const AdminList = () => {
-       const { type: passwordType, visible:passwordVisible , toggleVisibility: toggleVisibility } = usePasswordToggle();
+  const { type: passwordType, visible: passwordVisible, toggleVisibility: toggleVisibility } = usePasswordToggle();
   const user = useSelector((state) => state.auth.user);
   const { data: adminsListData = [], refetch } = useFetchClientAdminsQuery();
   const { data: driversList = [] } = useGetAllDriversQuery(user?.companyId, {
@@ -42,10 +42,49 @@ const AdminList = () => {
   const [showModal, setShowModal] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState(null);
+  const [googleConnected, setGoogleConnected] = useState(false);
 
   useEffect(() => {
     refetch();
   }, []);
+
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const isGoogleConnected = params.get("googleConnected") === "true";
+
+  if (isGoogleConnected) {
+    const cached = localStorage.getItem("pendingClientAdmin");
+
+    if (cached) {
+      const parsedAccount = JSON.parse(cached);
+      localStorage.removeItem("pendingClientAdmin");
+
+      toast.success("Google Calendar connected");
+      setGoogleConnected(true);
+      setSelectedAccount(parsedAccount);  // hydrate state
+    }
+
+    const cleanUrl = window.location.origin + window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+}, []);
+useEffect(() => {
+  if (googleConnected && selectedAccount && !selectedAccount._id) {
+    // Now that selectedAccount is hydrated, create the user
+    handleSaveAfterGoogle();
+  }
+}, [googleConnected, selectedAccount]);
+
+
+const handleSaveAfterGoogle = async () => {
+  if (!selectedAccount) {
+    toast.error("User info missing. Please try again.");
+    return;
+  }
+
+  console.log("Creating user after Google:", selectedAccount);
+  await handleSave(); // reuse your existing handler
+};
 
   const handleStatusChange = async (adminId, newStatus) => {
     try {
@@ -85,6 +124,8 @@ const AdminList = () => {
   };
 
   const handleSave = async () => {
+    console.log("Creating/updating user...", selectedAccount);
+
     if (user?.role === "demo") {
       toast.error("Demo accounts are not allowed to create users.");
       return;
@@ -98,9 +139,7 @@ const AdminList = () => {
       const currentCount = adminsListData.filter(
         (a) =>
           a.status !== "Deleted" &&
-          ["associateadmin", "staffmember", "driver", "customer"].includes(
-            a.role
-          ) &&
+          ["associateadmin", "staffmember", "driver", "customer"].includes(a.role) &&
           a.createdBy === user._id
       ).length;
 
@@ -110,6 +149,18 @@ const AdminList = () => {
         toast.error(`Limit reached: Only ${allowed} associateadmins allowed.`);
         return;
       }
+    }
+
+    // ✅ Redirect for Google Auth if role is clientadmin and not yet connected
+    if (selectedAccount?.role === "clientadmin" && !googleConnected) {
+      // Store selectedAccount in localStorage
+      localStorage.setItem("pendingClientAdmin", JSON.stringify(selectedAccount));
+
+      const currentUrl = window.location.href.split("?")[0]; // remove query params
+      const redirectUri = encodeURIComponent(currentUrl);
+      const authUrl = `${import.meta.env.VITE_API_BASE_URL}/google/auth/google?redirectUri=${redirectUri}&email=${selectedAccount?.email}&role=${selectedAccount?.role}`;
+      window.location.href = authUrl;
+      return;
     }
 
     try {
@@ -141,6 +192,7 @@ const AdminList = () => {
       toast.error(err?.data?.message || "Operation failed");
     }
   };
+
 
   const handleDeleteClick = (adminId) => {
     setDeleteUserId(adminId);
@@ -271,7 +323,7 @@ const AdminList = () => {
     if (["driver"].includes(role)) {
       return ["Statements", "Bookings", "Drivers", "Settings", "Invoices"];
     } else if (
-      ["clientadmin", "associateadmin", "staffmember", ].includes(role)
+      ["clientadmin", "associateadmin", "staffmember",].includes(role)
     ) {
       return [
         "Users",
@@ -364,11 +416,10 @@ const AdminList = () => {
                   setSelectedTab(tab);
                   setPage(1);
                 }}
-                className={`pb-2 whitespace-nowrap transition-all duration-200 ${
-                  selectedTab === tab
-                    ? "border-b-2 border-blue-600 text-blue-600"
-                    : "text-[var(--dark-gray)] hover:text-blue-500"
-                }`}
+                className={`pb-2 whitespace-nowrap transition-all duration-200 ${selectedTab === tab
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-[var(--dark-gray)] hover:text-blue-500"
+                  }`}
               >
                 {tab} ({tabCounts[tab] || 0})
               </button>
@@ -415,7 +466,7 @@ const AdminList = () => {
               })
             }
           />
-            {selectedAccount?.role === "driver" && (
+          {selectedAccount?.role === "driver" && (
             <div className="lg:w-[33.4rem] w-[15rem]">
 
               <SelectOption
@@ -441,16 +492,15 @@ const AdminList = () => {
                   value: driver._id,
                 }))}
               />
-              </div>
-            )}
+            </div>
+          )}
           <input
             placeholder="Email"
             type="email"
-            className={`custom_input ${
-              selectedAccount?.role === "driver"
-                ? "bg-gray-100 cursor-not-allowed opacity-70"
-                : ""
-            }`}
+            className={`custom_input ${selectedAccount?.role === "driver"
+              ? "bg-gray-100 cursor-not-allowed opacity-70"
+              : ""
+              }`}
             readOnly={selectedAccount?.role === "driver"}
             value={selectedAccount?.email || ""}
             onChange={(e) =>
@@ -459,25 +509,36 @@ const AdminList = () => {
           />
           <div className="relative">
 
-          <input
-            placeholder="Password"
-            type={passwordType}
-            className="custom_input"
-            value={selectedAccount?.password || ""}
-            onChange={(e) =>
-              setSelectedAccount({
-                ...selectedAccount,
-                password: e.target.value,
-              })
-            }
+            <input
+              placeholder="Password"
+              type={passwordType}
+              className="custom_input"
+              value={selectedAccount?.password || ""}
+              onChange={(e) =>
+                setSelectedAccount({
+                  ...selectedAccount,
+                  password: e.target.value,
+                })
+              }
             />
-              <span
-                             className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500"
-                             onClick={toggleVisibility}
-                              >
-                                {passwordVisible ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
-                              </span>
-            </div>
+            <span
+              className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500"
+              onClick={toggleVisibility}
+            >
+              {passwordVisible ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
+            </span>
+          </div>
+          {/* {selectedAccount?.role === "clientadmin" && (
+            <button
+              type="button"
+              className="btn btn-edit mt-2"
+              onClick={() =>
+                window.location.href = `${import.meta.env.VITE_API_BASE_URL}/google/auth/google`
+              }
+            >
+              Connect Google Calendar
+            </button>
+          )} */}
           {["clientadmin", "manager"].includes(selectedAccount?.role) && (
             <SelectOption
               label="Associate Admin Limit"
@@ -503,68 +564,68 @@ const AdminList = () => {
             }
             options={tabs}
           />
-             <div className="bg-gray-50 p-4 rounded-lg">
-  <div className="flex justify-between items-center mb-4">
-    <h3 className="text-sm font-medium text-gray-700">Permissions</h3>
-    <button
-      className="btn btn-edit"
-      onClick={() => {
-        const allPermissions = getAvailablePermissions(
-          selectedAccount?.role
-        );
-        const allSelected = allPermissions.every((perm) =>
-          selectedAccount?.permissions?.includes(perm)
-        );
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-sm font-medium text-gray-700">Permissions</h3>
+              <button
+                className="btn btn-edit"
+                onClick={() => {
+                  const allPermissions = getAvailablePermissions(
+                    selectedAccount?.role
+                  );
+                  const allSelected = allPermissions.every((perm) =>
+                    selectedAccount?.permissions?.includes(perm)
+                  );
 
-        setSelectedAccount({
-          ...selectedAccount,
-          permissions: allSelected ? [] : allPermissions,
-        });
-      }}
-    >
-      {getAvailablePermissions(selectedAccount?.role).every((perm) =>
-        selectedAccount?.permissions?.includes(perm)
-      )
-        ? "Unselect All"
-        : "Select All"}
-    </button>
-  </div>
-  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-    {getAvailablePermissions(selectedAccount?.role).map((perm) => (
-      <label key={perm} className="flex items-center  gap-2 p-2 bg-white rounded-md border border-gray-200 hover:bg-gray-50 cursor-pointer">
-        <input
-          type="checkbox"
-          className="text-blue-600 focus:ring-blue-500 rounded"
-          checked={selectedAccount?.permissions?.includes(perm)}
-          onChange={(e) => {
-            const updated = e.target.checked
-              ? [...(selectedAccount.permissions || []), perm]
-              : selectedAccount.permissions.filter((p) => p !== perm);
-            setSelectedAccount({
-              ...selectedAccount,
-              permissions: updated,
-            });
-          }}
-        />
-        <span className="text-sm  text-gray-700">{perm}</span>
-      </label>
-    ))}
-  </div>
-</div>
-<div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
-  <button
-    className="btn btn-reset"
-    onClick={() => setShowModal(false)}
-  >
-    Cancel
-  </button>
-  <button 
-    className="btn btn-success"
-    onClick={handleSave}
-  >
-    {selectedAccount?._id ? "Update User" : "Create User"}
-  </button>
-</div>
+                  setSelectedAccount({
+                    ...selectedAccount,
+                    permissions: allSelected ? [] : allPermissions,
+                  });
+                }}
+              >
+                {getAvailablePermissions(selectedAccount?.role).every((perm) =>
+                  selectedAccount?.permissions?.includes(perm)
+                )
+                  ? "Unselect All"
+                  : "Select All"}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {getAvailablePermissions(selectedAccount?.role).map((perm) => (
+                <label key={perm} className="flex items-center  gap-2 p-2 bg-white rounded-md border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="text-blue-600 focus:ring-blue-500 rounded"
+                    checked={selectedAccount?.permissions?.includes(perm)}
+                    onChange={(e) => {
+                      const updated = e.target.checked
+                        ? [...(selectedAccount.permissions || []), perm]
+                        : selectedAccount.permissions.filter((p) => p !== perm);
+                      setSelectedAccount({
+                        ...selectedAccount,
+                        permissions: updated,
+                      });
+                    }}
+                  />
+                  <span className="text-sm  text-gray-700">{perm}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+            <button
+              className="btn btn-reset"
+              onClick={() => setShowModal(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-success"
+              onClick={handleSave}
+            >
+              {selectedAccount?._id ? "Update User" : "Create User"}
+            </button>
+          </div>
         </div>
       </CustomModal>
 

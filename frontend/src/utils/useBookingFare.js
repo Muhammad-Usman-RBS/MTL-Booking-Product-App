@@ -25,6 +25,7 @@ export const useBookingFare = ({
   zoneFee = 0,
   journeyDateTime = null
 }) => {
+  const hasErrorShown = useRef(false);
   const [triggerGeocode] = useLazyGeocodeQuery();
   const [triggerDistance] = useLazyGetDistanceQuery();
 
@@ -50,6 +51,10 @@ export const useBookingFare = ({
   const [breakdown, setBreakdown] = useState({});
   const [hourlyError, setHourlyError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const isValidAddress = (address) => {
+    return typeof address === 'string' && address.trim().length > 5 && /[a-zA-Z0-9]/.test(address);
+  };
 
   // Memoize helper functions to prevent recreating them on every render
   const extractPostcode = useCallback((address) => {
@@ -200,7 +205,13 @@ export const useBookingFare = ({
   // Debounced calculation function
   const calculateFare = useCallback(async () => {
     // Prevent multiple simultaneous calculations
-    if (isCalculating.current || !pickup || !dropoff || !selectedVehicle) {
+    if (isCalculating.current || !pickup || !dropoff || !selectedVehicle) return;
+
+    if (!isValidAddress(pickup) || !isValidAddress(dropoff)) {
+      if (!hasErrorShown.current) {
+        toast.error("Invalid address entered. Please use a complete location.");
+        hasErrorShown.current = true;
+      }
       return;
     }
 
@@ -229,7 +240,10 @@ export const useBookingFare = ({
       ]);
 
       if (!pickupCoord || !dropoffCoord || !distRes) {
-        toast.error("Unable to get location data. Please check your addresses.");
+        if (!hasErrorShown.current) {
+          toast.error("Unable to get location data. Please check your addresses.");
+          hasErrorShown.current = true;
+        }
         return;
       }
 
@@ -319,7 +333,7 @@ export const useBookingFare = ({
       setCalculatedFare(breakdownDetails.total);
       setPricingMode(pricing);
       setBreakdown(breakdownDetails);
-
+      hasErrorShown.current = false;
     } catch (error) {
       console.error('Fare calculation error:', error);
       toast.error("Error calculating fare. Please try again.");

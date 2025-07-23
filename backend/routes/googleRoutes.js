@@ -1,6 +1,16 @@
 import express from "express";
 import fetch from "node-fetch";
+import { google } from "googleapis";
+import User from "../models/User.js";
+
 const router = express.Router();
+
+// ✅ Initialize oAuth2Client here
+const oAuth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI
+);
 
 // Local Airport Terminal Data
 const airportTerminals = {
@@ -273,6 +283,83 @@ router.get("/geocode", async (req, res) => {
   } catch (error) {
     console.error("Geocode API error:", error);
     res.status(500).json({ error: "Failed to geocode address" });
+  }
+});
+
+// GOOGLE CALENDER API
+// GOOGLE CALENDAR AUTH INIT
+router.get("/auth/google", (req, res) => {
+  try {
+    const { redirectUri, email, role } = req.query;
+
+    const statePayload = Buffer.from(
+      JSON.stringify({ redirectUri, email, role })
+    ).toString("base64");
+
+    const url = oAuth2Client.generateAuthUrl({
+      access_type: "offline",
+      prompt: "consent",
+      scope: [
+        "https://www.googleapis.com/auth/calendar",
+        "https://www.googleapis.com/auth/userinfo.email",
+      ],
+      state: statePayload, // 👈 pass email, role, and redirect
+    });
+
+    res.redirect(url);
+  } catch (error) {
+    console.error("Error generating auth URL:", error);
+    res.status(500).send("Failed to initiate Google OAuth.");
+  }
+});
+
+// GOOGLE CALENDER API
+router.get("/auth/google/callback", async (req, res) => {
+  try {
+    const { code, state } = req.query;
+
+    // Decode passed state
+    const { redirectUri, email, role } = JSON.parse(
+      Buffer.from(state, "base64").toString()
+    );
+
+    const { tokens } = await oAuth2Client.getToken(code);
+    oAuth2Client.setCredentials(tokens);
+
+    const oauth2 = google.oauth2({ version: "v2", auth: oAuth2Client });
+    const { data: userInfo } = await oauth2.userinfo.get();
+
+    // Use passed email or fetched Google email
+    const userEmail = email || userInfo.email;
+
+    // ✅ Fetch existing user to preserve old refresh_token
+    const existingUser = await User.findOne({ email: userEmail, role });
+    if (!existingUser) {
+      return res.status(404).send("❌ User not found to attach calendar.");
+    }
+
+    // ✅ Preserve old refresh_token if not returned again
+    const access_token = tokens.access_token;
+    const refresh_token = tokens.refresh_token || existingUser.googleCalendar?.refresh_token;
+
+    if (!refresh_token) {
+      return res.status(400).send("❌ Missing refresh_token. Please reconnect Google Calendar.");
+    }
+
+    // ✅ Update user with new tokens
+    existingUser.googleCalendar = {
+      access_token,
+      refresh_token,
+      calendarId: "primary",
+    };
+
+    await existingUser.save();
+
+    // ✅ Redirect to frontend with connected flag
+    return res.redirect(`${redirectUri}?googleConnected=true`);
+  } catch (error) {
+    console.error("Google callback error:", error);
+    res.status(500).send("❌ Failed to connect Google Calendar.");
   }
 });
 

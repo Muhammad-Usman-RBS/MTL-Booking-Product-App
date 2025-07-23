@@ -13,6 +13,7 @@ export const createUserBySuperAdmin = async (req, res) => {
     permissions,
     associateAdminLimit,
     employeeNumber,
+    googleCalendar
   } = req.body;
 
   try {
@@ -175,176 +176,183 @@ export const createUserBySuperAdmin = async (req, res) => {
         creator.role === "superadmin" && role === "clientadmin"
           ? null
           : creator.companyId,
-    });
-
-    res.status(201).json({
-      message: "User created successfully",
-      user: newUser,
-    });
-  } catch (error) {
-    console.error("Create User Error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// GET All Users
-export const getClientAdmins = async (req, res) => {
-  try {
-    const { role, companyId, _id: userId } = req.user;
-    let query = {};
-
-    if (role === "superadmin") {
-      query.$or = [
-        { role: { $in: ["clientadmin", "manager", "demo"] } },
-        { role: { $in: ["driver", "customer"] }, companyId: null },
-      ];
-    } else if (role === "manager") {
-      query.companyId = companyId;
-      query.role = {
-        $in: ["clientadmin", "manager", "demo", "driver", "customer"],
-      };
-    } else if (role === "clientadmin") {
-      // Get all users created by clientadmin OR by any of their associateadmins
-      const associateAdmins = await User.find({
-        createdBy: userId,
-        role: "associateadmin",
-      });
-      const associateAdminIds = associateAdmins.map((user) => user._id);
-
-      query = {
-        createdBy: userId, // only direct creations
-        role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
-      };
-    } else if (role === "associateadmin") {
-      query = {
-        $or: [
-          { createdBy: userId },
-          { _id: userId }, // So they can also see their own record
-        ],
-        role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
-      };
-    } else {
-      return res.status(403).json({ message: "Unauthorized access" });
-    }
-
-    const users = await User.find(query);
-
-    return res.status(200).json(
-      users.map((user) => ({
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        permissions: user.permissions,
-        status: user.status,
-        companyId: user.companyId,
-        associateAdminLimit: user.associateAdminLimit,
-      }))
-    );
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).json({ message: "Failed to fetch users" });
-  }
-};
-
-// Update User
-export const updateUserBySuperAdmin = async (req, res) => {
-  const { id } = req.params;
-  const {
-    fullName,
-    email,
-    password,
-    role,
-    status,
-    permissions,
-    associateAdminLimit,
-  } = req.body;
-
-  try {
-    const user = await User.findById(id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    user.fullName = fullName || user.fullName;
-    user.email = email || user.email;
-    user.role = role || user.role;
-    user.status = status || user.status;
-    user.permissions = permissions || user.permissions;
-
-    // Validate and assign associateAdminLimit
-    if (typeof associateAdminLimit !== "undefined") {
-      const parsedLimit = parseInt(associateAdminLimit);
-      if (["clientadmin", "manager"].includes(role)) {
-        if (![5, 10, 15].includes(parsedLimit)) {
-          return res.status(400).json({
-            message: "associateAdminLimit must be one of 5, 7, or 10",
-          });
+      ...(googleCalendar && {
+        googleCalendar: {
+          access_token: googleCalendar.access_token,
+          refresh_token: googleCalendar.refresh_token,
+          calendarId: googleCalendar.calendarId || "primary",
         }
-        user.associateAdminLimit = parsedLimit;
+        }),
+      });
+
+      res.status(201).json({
+        message: "User created successfully",
+        user: newUser,
+      });
+    } catch (error) {
+      console.error("Create User Error:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  };
+
+  // GET All Users
+  export const getClientAdmins = async (req, res) => {
+    try {
+      const { role, companyId, _id: userId } = req.user;
+      let query = {};
+
+      if (role === "superadmin") {
+        query.$or = [
+          { role: { $in: ["clientadmin", "manager", "demo"] } },
+          { role: { $in: ["driver", "customer"] }, companyId: null },
+        ];
+      } else if (role === "manager") {
+        query.companyId = companyId;
+        query.role = {
+          $in: ["clientadmin", "manager", "demo", "driver", "customer"],
+        };
+      } else if (role === "clientadmin") {
+        // Get all users created by clientadmin OR by any of their associateadmins
+        const associateAdmins = await User.find({
+          createdBy: userId,
+          role: "associateadmin",
+        });
+        const associateAdminIds = associateAdmins.map((user) => user._id);
+
+        query = {
+          createdBy: userId, // only direct creations
+          role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
+        };
+      } else if (role === "associateadmin") {
+        query = {
+          $or: [
+            { createdBy: userId },
+            { _id: userId }, // So they can also see their own record
+          ],
+          role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
+        };
       } else {
-        user.associateAdminLimit = undefined;
+        return res.status(403).json({ message: "Unauthorized access" });
       }
-    }
 
-    if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      user.password = hashedPassword;
-    }
+      const users = await User.find(query);
 
-    await user.save();
-
-    if (user.role === "clientadmin") {
-      await Company.updateMany(
-        { clientAdminId: user._id },
-        { $set: { status: user.status } }
+      return res.status(200).json(
+        users.map((user) => ({
+          _id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+          permissions: user.permissions,
+          status: user.status,
+          companyId: user.companyId,
+          associateAdminLimit: user.associateAdminLimit,
+        }))
       );
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
     }
+  };
 
-    res.status(200).json({
-      message: "User updated successfully",
-      user: {
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        permissions: user.permissions,
-        status: user.status,
-        associateAdminLimit: user.associateAdminLimit,
-      },
-    });
-  } catch (error) {
-    console.error("Update user error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
+  // Update User
+  export const updateUserBySuperAdmin = async (req, res) => {
+    const { id } = req.params;
+    const {
+      fullName,
+      email,
+      password,
+      role,
+      status,
+      permissions,
+      associateAdminLimit,
+    } = req.body;
 
-// Delete User
-export const deleteUserBySuperAdmin = async (req, res) => {
-  const { id } = req.params;
+    try {
+      const user = await User.findById(id);
+      if (!user) return res.status(404).json({ message: "User not found" });
 
-  try {
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      user.fullName = fullName || user.fullName;
+      user.email = email || user.email;
+      user.role = role || user.role;
+      user.status = status || user.status;
+      user.permissions = permissions || user.permissions;
+
+      // Validate and assign associateAdminLimit
+      if (typeof associateAdminLimit !== "undefined") {
+        const parsedLimit = parseInt(associateAdminLimit);
+        if (["clientadmin", "manager"].includes(role)) {
+          if (![5, 10, 15].includes(parsedLimit)) {
+            return res.status(400).json({
+              message: "associateAdminLimit must be one of 5, 7, or 10",
+            });
+          }
+          user.associateAdminLimit = parsedLimit;
+        } else {
+          user.associateAdminLimit = undefined;
+        }
+      }
+
+      if (password) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user.password = hashedPassword;
+      }
+
+      await user.save();
+
+      if (user.role === "clientadmin") {
+        await Company.updateMany(
+          { clientAdminId: user._id },
+          { $set: { status: user.status } }
+        );
+      }
+
+      res.status(200).json({
+        message: "User updated successfully",
+        user: {
+          _id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+          permissions: user.permissions,
+          status: user.status,
+          associateAdminLimit: user.associateAdminLimit,
+        },
+      });
+    } catch (error) {
+      console.error("Update user error:", error);
+      res.status(500).json({ message: "Server error" });
     }
+  };
 
-    await User.findByIdAndDelete(id);
-    res.status(200).json({ message: "User deleted successfully" });
-  } catch (error) {
-    console.error("Delete user error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
+  // Delete User
+  export const deleteUserBySuperAdmin = async (req, res) => {
+    const { id } = req.params;
 
-// Get AlL USERS(REGARDLESS OF ROLE)
-export const getAllUsers = async (req , res) => {
-  try {
-    const users= await User.find({
-      status: { $ne: "Deleted" },
-      role: { $ne: "superadmin" }, // Exclude superadmin
-    }).select("-password -__v");
-res.status(200).json(users);
-  } catch (error) {
-    console.error("Error fetching all users:", error);
-    res.status(500).json({ message: "Failed to fetch users" });
+    try {
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      await User.findByIdAndDelete(id);
+      res.status(200).json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  };
+
+  // Get AlL USERS(REGARDLESS OF ROLE)
+  export const getAllUsers = async (req, res) => {
+    try {
+      const users = await User.find({
+        status: { $ne: "Deleted" },
+        role: { $ne: "superadmin" }, // Exclude superadmin
+      }).select("-password -__v");
+      res.status(200).json(users);
+    } catch (error) {
+      console.error("Error fetching all users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
   }
-}

@@ -4,6 +4,7 @@ import driver from "../models/Driver.js";
 import User from "../models/User.js";
 import mongoose from "mongoose";
 import Voucher from "../models/pricings/Voucher.js";
+import { createEventOnGoogleCalendar } from "../utils/calendarService.js";
 
 // Craete Booking (Dashboard/Widget)
 export const createBooking = async (req, res) => {
@@ -194,6 +195,15 @@ export const createBooking = async (req, res) => {
 
     // Save booking
     const savedBooking = await Booking.create(bookingPayload);
+
+    const clientAdmin = await User.findOne({
+      companyId,
+      role: "clientadmin",
+    }).lean();
+
+    if (clientAdmin?.googleCalendar?.access_token) {
+      await createEventOnGoogleCalendar({ booking: savedBooking, clientAdmin });
+    }
 
     const sanitize = (booking) => {
       const { _id, __v, createdAt, updatedAt, companyId, ...clean } = booking.toObject();
