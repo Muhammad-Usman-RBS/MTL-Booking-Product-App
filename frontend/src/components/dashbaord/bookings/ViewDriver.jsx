@@ -8,7 +8,10 @@ import {
   useUpdateBookingMutation,
 } from "../../../redux/api/bookingApi";
 import { toast } from "react-toastify";
+import { useCreateNotificationMutation } from "../../../redux/api/notificationApi";
 const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
+  const [createNotification] = useCreateNotificationMutation();
+
   const [updateBooking] = useUpdateBookingMutation();
 
   const [selectedDrivers, setSelectedDrivers] = useState([]);
@@ -62,45 +65,44 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
       toast.error("Company ID is missing. Please log in again.");
       return;
     }
-  
+
     const booking = allBookings.find((b) => b._id === selectedRow);
-  
+
     if (!booking?._id) {
       toast.error("Please select a booking first.");
       return;
     }
-  
+
     if (selectedDrivers.length === 0) {
       toast.info("Please select at least one driver.");
       return;
     }
-  
+
     try {
       const { _id, createdAt, updatedAt, __v, ...restBookingData } = booking;
-  
+
       // Wrap the data in bookingData property to match backend expectation
       await updateBooking({
         id: booking._id,
         updatedData: {
-          
           bookingData: {
             ...restBookingData,
-            
+
             drivers: selectedDrivers.map((driver) => driver._id),
           },
         },
       }).unwrap();
-  
+
       if (typeof refetchBookings === "function") {
         refetchBookings();
       }
-  
+
       toast.success("Booking updated with selected drivers.");
     } catch (err) {
       console.error("Booking update failed:", err.message);
       toast.error("Failed to update booking with drivers");
     }
-  
+
     if (sendEmailChecked) {
       for (const driver of selectedDrivers) {
         const email = driver?.DriverData?.email;
@@ -112,12 +114,12 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
           );
           continue;
         }
-  
+
         const payload = {
           bookingId: booking._id,
           email,
         };
-  
+
         try {
           await sendBookingEmail(payload).unwrap();
           toast.success(`Email sent to ${driver.DriverData?.firstName}`);
@@ -127,9 +129,40 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
         }
       }
     }
-  
+    for (const driver of selectedDrivers) {
+      const { DriverData } = driver;
+
+      if (!DriverData?.employeeNumber) {
+        toast.warning(
+          `${
+            DriverData?.firstName || "Driver"
+          } has no employee number. Skipped.`
+        );
+        continue;
+      }
+      const notificationPayload = {
+        employeeNumber: DriverData.employeeNumber,
+        bookingId: booking.bookingId,
+        status: booking.status,
+        primaryJourney: {
+          pickup: booking?.primaryJourney?.pickup ||  booking?.returnJourney?.pickup ,
+          dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff ,
+        },
+        bookingSentAt: new Date(),
+        createdBy: user?._id,
+        companyId,
+      };
+      try {
+        await createNotification(notificationPayload).unwrap();
+        toast.success(`Notification sent to ${DriverData?.firstName}`);
+      } catch (error) {
+        console.error("Notification error:", error);
+        toast.error(`Failed to notify ${DriverData?.firstName}`);
+      }
+    }
+
     setShowDriverModal(false);
-  
+
     if (onDriversUpdate) {
       onDriversUpdate(selectedRow, selectedDrivers);
     }

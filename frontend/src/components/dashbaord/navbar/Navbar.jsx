@@ -5,10 +5,14 @@ import Icons from "../../../assets/icons";
 import IMAGES from "../../../assets/images";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { themes } from "../../../constants/dashboardTabsData/data";
-import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
-import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
+import {
+  useGetUserNotificationsQuery,
+  useMarkAllAsReadMutation,
+  useMarkAsReadMutation,
+} from "../../../redux/api/notificationApi";
 import useUIStore from "../../../store/useUIStore";
 import JourneyDetailsModal from "../bookings/JourneyDetailsModal";
+import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 
 function Navbar() {
   const TimeRef = useRef(null);
@@ -23,33 +27,18 @@ function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [readNotifications, setReadNotifications] = useState(new Set());
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
 
+  const [markAsRead] = useMarkAsReadMutation();
+  const [markAllAsRead] = useMarkAllAsReadMutation();
   const [showJourneyModal, setShowJourneyModal] = useState(false);
-  const [selectedJourneyData, setSelectedJourneyData] = useState(null);
-  const { data: bookingData, refetch: refetchBookings } =
-    useGetAllBookingsQuery(user?.companyId, { skip: !user?.companyId });
-  const { data: driversData } = useGetAllDriversQuery(user?.companyId, {
-    skip: !user?.companyId,
-  });
-  const userBookings = React.useMemo(() => {
-    if (
-      !bookingData?.bookings ||
-      !driversData?.drivers ||
-      !user?.employeeNumber
-    )
-      return [];
+  const { data: bookings } = useGetAllBookingsQuery(user?.companyId);
 
-    return bookingData.bookings.filter((booking) => {
-      if (!Array.isArray(booking.drivers)) return false;
-
-      return booking.drivers.some((driverId) => {
-        const id = typeof driverId === "object" ? driverId._id : driverId;
-        const driver = driversData.drivers.find((d) => d._id === id);
-        return driver?.DriverData?.employeeNumber === user.employeeNumber;
-      });
+  const { data: notifications = [], refetch: refetchNotifications } =
+    useGetUserNotificationsQuery(user?.employeeNumber, {
+      skip: !user?.employeeNumber,
     });
-  }, [bookingData?.bookings, driversData?.drivers, user?.employeeNumber]);
+
   const [customTheme, setCustomTheme] = useState({
     bg: "#ffffff",
     text: "#000000",
@@ -71,20 +60,10 @@ function Navbar() {
       TimeRef.current = null;
     }
   };
-  const getAssignedDriverName = (booking) => {
-    if (!driversData?.drivers || !Array.isArray(booking?.drivers)) return null;
-
-    const driverId = booking.drivers[0]?._id || booking.drivers[0];
-    const matchedDriver = driversData.drivers.find(
-      (driver) => driver._id === driverId
-    );
-
-    return matchedDriver
-      ? `${matchedDriver.DriverData?.firstName || "Unknown"} ${
-          matchedDriver.DriverData?.surName || ""
-        }`
-      : "Unknown Driver";
-  };
+  const bookingList = bookings?.bookings || [];
+  const selectedBooking = bookingList.find(
+    (booking) => booking.bookingId === selectedBookingId
+  );
 
   const getTimeAgo = (timestamp) => {
     const now = new Date();
@@ -111,7 +90,7 @@ function Navbar() {
 
   useEffect(() => {
     if (!user?.companyId) return;
-  }, [refetchBookings, user?.companyId]);
+  }, [user?.companyId]);
   return (
     <>
       <nav className="bg-theme text-theme z-20 relative p-[17.2px] flex  justify-between items-start gap-2 sm:gap-4">
@@ -250,18 +229,16 @@ function Navbar() {
             </div>
 
             <div
-              className="cursor-pointer relative hover:bg-white/30 backdrop-blur-md p-2 ml-1 rounded-full"
+              className="cursor-pointer lg:mt-0 mt-2 relative hover:bg-white/30 backdrop-blur-md p-2 mx-1 rounded-full"
               onClick={() => setShowTooltip(true)}
               onMouseLeave={handleMouseLeave}
             >
               <Icons.BellPlus className="size-5" />
               <div>
-                {userBookings?.length >= 1 && (
-                  <>
-                    <span className="absolute -top-2 right-0 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
-                      {userBookings?.length - readNotifications.size}
-                    </span>
-                  </>
+                {notifications.length >= 1 && (
+                  <span className="absolute -top-2 right-0 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
+                    {notifications.filter((n) => !n.isRead).length}
+                  </span>
                 )}
               </div>
 
@@ -269,7 +246,7 @@ function Navbar() {
                 <div
                   onMouseEnter={handleMouseEnterTooltip}
                   onMouseLeave={handleMouseLeave}
-                  className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 right-0  text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden"
+                  className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 lg:right-0 -right-1/2   text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden"
                 >
                   <div className="border-b px-4 py-3 text-theme bg-theme">
                     <div className="flex items-center justify-between">
@@ -277,90 +254,89 @@ function Navbar() {
                         <h3 className="font-semibold">Notifications</h3>
                       </div>
                       <button
-                        onClick={() =>
-                          setReadNotifications(
-                            new Set(userBookings.map((b) => b._id))
-                          )
-                        }
-                        className="text-sm "
+                        onClick={async () => {
+                          try {
+                            await markAllAsRead(user.employeeNumber);
+
+                            refetchNotifications();
+                          } catch (err) {
+                            console.error(
+                              "Error marking all notifications as read:",
+                              err
+                            );
+                          }
+                        }}
+                        className="text-sm"
                       >
                         Mark all as read
                       </button>
                     </div>
                   </div>
-                  {(!Array.isArray(userBookings) ||
-                    userBookings.length === 0) && (
+                  {(!Array.isArray(notifications) ||
+                    notifications.length === 0) && (
                     <div className="px-4 py-3 text-gray-500 text-sm">
                       No new notifications
                     </div>
                   )}
                   {/* Notifications List */}
                   <div className="max-h-64 overflow-y-auto">
-                    {Array.isArray(userBookings) &&
-                      userBookings.map((data) => (
+                    {Array.isArray(notifications) &&
+                      notifications.map((data) => (
                         <div
                           key={data._id}
                           onClick={() => {
-                            setReadNotifications(
-                              (prev) => new Set([...prev, data._id])
-                            );
-
-                            setSelectedJourneyData(data);
+                            setSelectedBookingId(data.bookingId);
                             setShowJourneyModal(true);
                             setShowTooltip(false);
                             navigate("/dashboard/bookings/list");
                           }}
                           className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${
-                            readNotifications.has(data._id)
-                              ? "bg-gray-50 opacity-60"
-                              : "bg-white"
+                            data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
                           }`}
                         >
                           <div className="flex items-start gap-3">
                             <div className={`flex-1 `}>
                               <div className="flex items-start justify-between">
-                                <h4 className={`text-sm   text-gray-700`}>
-                                  {data.status}
+                                <h4 className={`text-sm text-gray-700`}>
+                                  {data.status || "New Notification"}
                                 </h4>
                                 <div>
                                   <span className="text-xs text-gray-700">
-                                    #{data.bookingId}
+                                    #{data.bookingId || "—"}
                                   </span>
                                 </div>
                               </div>
                               <p className="text-xs text-[var(--dark-gray)] mt-1 line-clamp-1 ">
-                                {data?.status === "Completed" ? (
-                                  <>
-                                    Driver{" "}
-                                    <span className="font-semibold">
-                                      {getAssignedDriverName(data)}
-                                    </span>{" "}
-                                    has completed the journey
-                                  </>
-                                ) : (
-                                  <>
-                                    {data?.primaryJourney?.pickup} -
-                                    {data?.primaryJourney?.dropoff}
-                                  </>
-                                )}
+                                {data?.primaryJourney?.pickup ||
+                                  data?.returnJourney?.pickup}
                               </p>
-                              <div className=" flex items-center mt-2 justify-between">
-                                <div className="flex items-center">
+                              <div className="flex items-center mt-2 justify-between">
+                                <div className="flex items-center space-x-1">
                                   <Icons.Clock className="w-3 h-3 text-gray-400" />
                                   <span className="text-xs text-gray-500">
-                                    {getTimeAgo(data.createdAt)}
+                                    {getTimeAgo(data.bookingSentAt)}
                                   </span>
                                 </div>
                                 <div>
-                                  {!readNotifications.has(data._id) && (
+                                  {!data.isRead && (
                                     <button
-                                      onClick={(e) => {
+                                      onClick={async (e) => {
                                         e.stopPropagation();
-                                        setReadNotifications(
-                                          (prev) => new Set([...prev, data._id])
-                                        );
+                                        try {
+                                          await markAsRead(data._id);
+                                          refetchNotifications();
+                                          setReadNotifications(
+                                            (prev) =>
+                                              new Set([...prev, data._id])
+                                          );
+                                        } catch (err) {
+                                          console.error(
+                                            "Error marking notification as read:",
+                                            err
+                                          );
+                                        }
                                       }}
-                                      className=" text-xs px-2 py-1 text-black cursor-pointer"
+                                      className="text-xs px-2 py-1 text-black cursor-pointer"
                                     >
                                       Mark as read
                                     </button>
@@ -450,7 +426,7 @@ function Navbar() {
         onClose={() => setShowJourneyModal(false)}
         heading="Journey Details"
       >
-        <JourneyDetailsModal viewData={selectedJourneyData} />
+        <JourneyDetailsModal viewData={selectedBooking} />
       </CustomModal>
     </>
   );

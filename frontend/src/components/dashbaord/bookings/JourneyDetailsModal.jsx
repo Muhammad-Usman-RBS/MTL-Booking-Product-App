@@ -6,6 +6,7 @@ import html2canvas from "html2canvas";
 import PDFContent from "./PDFContent";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import Icons from "../../../assets/icons";
 
 const JourneyDetailsModal = ({ viewData = {} }) => {
   const [sendBookingEmail, { isLoading: isSending }] =
@@ -96,20 +97,50 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
     }
     return text;
   };
+  const formatDateTime = (dateStr, hour, minute) => {
+    if (!dateStr || !hour || !minute) return null;
+
+    const dateObj = new Date(dateStr);
+    dateObj.setHours(Number(hour), Number(minute));
+
+    return dateObj.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const pickupTime =
     viewData?.primaryJourney?.date && viewData?.primaryJourney?.hour
-      ? `${viewData?.primaryJourney?.date} ${viewData?.primaryJourney?.hour}:${viewData?.primaryJourney?.minute}`
+      ? formatDateTime(
+          viewData.primaryJourney.date,
+          viewData.primaryJourney.hour,
+          viewData.primaryJourney.minute
+        )
+      : viewData?.returnJourneyToggle &&
+        viewData?.returnJourney?.date &&
+        viewData?.returnJourney?.hour
+      ? formatDateTime(
+          viewData.returnJourney.date,
+          viewData.returnJourney.hour,
+          viewData.returnJourney.minute
+        )
       : "N/A";
 
   return (
     <>
       <div
-        className="max-w-5xl w-full mx-auto space-y-5 p-5"
+        className="max-w-3xl w-full mx-auto space-y-5 p-5"
         id="pdf-container"
       >
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+        <div
+          className={`${
+            loggedInUser.role === "driver" ? "hidden" : "flex"
+          } flex-col md:flex-row md:items-center gap-3 md:gap-4`}
+        >
           <SelectOption
             options={["Send Customer", "Send Client Admin"]}
             value={selectedType}
@@ -141,24 +172,8 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
               onClick={downloadPDF}
               className="border px-4 py-1.5 rounded text-gray-700 hover:bg-gray-100 text-sm"
             >
-              📥
+              <Icons.Download size={20} />
             </button>
-          </div>
-        </div>
-
-        {/* Notes */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="bg-yellow-100 border border-yellow-300 p-3 rounded-md text-xs">
-            <strong className="text-gray-700">Internal Notes:</strong>
-            <span className="italic text-red-600">
-              {viewData?.primaryJourney?.internalNotes || "Empty"}
-            </span>
-          </div>
-          <div className="bg-yellow-100 border border-yellow-300 p-3 rounded-md text-xs">
-            <strong className="text-gray-700">Driver Notes:</strong>
-            <span className="italic text-red-600">
-              {viewData?.driverNotes || "Empty"}
-            </span>
           </div>
         </div>
 
@@ -175,7 +190,8 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                 : "N/A"}
             </div>
             <div>
-              <strong>Payment Reference:</strong> {viewData?.payment || "N/A"}
+              <strong>Payment Reference:</strong>{" "}
+              {viewData?.paymentMethod || "N/A"}
             </div>
             <div>
               <strong>Pick Up:</strong>
@@ -185,11 +201,17 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                 </div>
                 <div>
                   <strong>Address:</strong>{" "}
-                  {viewData?.primaryJourney?.pickup || "N/A"}
+                  {viewData?.primaryJourney?.pickup ||
+                    (viewData?.returnJourneyToggle &&
+                      viewData?.returnJourney?.pickup) ||
+                    "N/A"}
                 </div>
                 <div>
                   <strong>Door No.:</strong>{" "}
-                  {viewData?.primaryJourney?.pickupDoorNumber || "—"}
+                  {viewData?.primaryJourney?.pickupDoorNumber ||
+                    (viewData?.returnJourneyToggle &&
+                      viewData?.returnJourney?.pickupDoorNumber) ||
+                    "—"}{" "}
                 </div>
               </div>
               <hr className="text-[var(--light-gray)] my-2" />
@@ -199,11 +221,17 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
               <div className="ml-4 mt-1 space-y-1">
                 <div>
                   <strong>Address:</strong>{" "}
-                  {viewData?.primaryJourney?.dropoff || "N/A"}
+                  {viewData?.primaryJourney?.dropoff ||
+                    (viewData?.returnJourneyToggle &&
+                      viewData?.returnJourney?.dropoff) ||
+                    "N/A"}
                 </div>
                 <div>
-                  <strong>Door No.:</strong>{" "}
-                  {viewData?.primaryJourney?.dropoffDoorNumber0 || "—"}
+                  <strong>Door No.:</strong> <strong>Door No.:</strong>{" "}
+                  {viewData?.primaryJourney?.dropoffDoorNumber0 ||
+                    (viewData?.returnJourneyToggle &&
+                      viewData?.returnJourney?.dropoffDoorNumber0) ||
+                    "—"}{" "}
                 </div>
               </div>
               <hr className="text-[var(--light-gray)] my-2" />
@@ -263,7 +291,10 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             <div>
               <strong>Special Notes:</strong>
               <div className="ml-4 mt-1 italic text-gray-500">
-                {viewData?.primaryJourney?.notes || "None"}
+                {viewData?.primaryJourney?.notes ||
+                  (viewData?.returnJourneyToggle &&
+                    viewData?.returnJourney?.notes) ||
+                  "None"}{" "}
               </div>
               <hr className="text-[var(--light-gray)] my-2" />
             </div>
@@ -274,7 +305,15 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
           <div className="btn btn-primary text-sm px-5 py-1.5">
             Fare:{" "}
             <span className="text-base">
-              {viewData?.primaryJourney?.fare || 0} GBP
+              {loggedInUser.role === "driver" ? (
+                <>{viewData?.driverFare || viewData?.returnDriverFare} GBP</>
+              ) : (
+                <>
+                  {viewData?.primaryJourney?.fare ||
+                    viewData?.returnJourneyFare}{" "}
+                  GBP
+                </>
+              )}
             </span>
             <span className="text-xs ml-1">
               {viewData?.payment || "Card Payment"}
@@ -282,7 +321,11 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
           </div>
           <div className="text-[var(--dark-gray)] mt-2 text-xs">
             Approx. Distance:{" "}
-            {convertKmToMiles(viewData?.primaryJourney?.distanceText)}
+            {convertKmToMiles(
+              viewData?.primaryJourney?.distanceText ||
+                (viewData?.returnJourneyToggle &&
+                  viewData?.returnJourney?.distanceText)
+            )}
           </div>
         </div>
 
@@ -293,7 +336,6 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
               {viewData?.status || "Pending"}
             </span>
           </span>
-          <button className="btn btn-edit text-sm px-5 py-1.5">REJECT</button>
         </div>
       </div>
 

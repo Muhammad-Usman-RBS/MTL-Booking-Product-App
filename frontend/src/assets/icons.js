@@ -88,9 +88,11 @@ import {
   XCircle,
   Delete,
   ChevronsRight,
+  Info,
 } from "lucide-react";
 
 const Icons = {
+  Info,
   Delete,
   ChevronsRight,
   BellPlus,

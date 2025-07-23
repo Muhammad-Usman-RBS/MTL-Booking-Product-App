@@ -14,6 +14,7 @@
     import settingsRoutes from "./routes/settingsRoutes.js"
     import invoiceRoutes from "./routes/invoiceRoutes.js"
     import PermissionsRoutes from "./routes/PermissionsRoutes.js"
+    import NotificationRoutes from "./routes/notificationRoutes.js"
     
     dotenv.config(); // .env file
     connectDB(); // Connect to the database
@@ -36,6 +37,7 @@
     app.use('/api/settings', settingsRoutes);
     app.use('/api/booking', bookingRoutes);
     app.use('/api/google', googleRoutes);
+    app.use('/api/notification', NotificationRoutes);
 
     app.use('/api', userRoutes);
 

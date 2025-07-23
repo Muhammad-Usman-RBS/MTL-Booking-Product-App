@@ -1,120 +1,152 @@
 import React from "react";
+
 import Icons from "../../../assets/icons";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
 const AvailableJobs = ({ jobs, onAccept, onReject }) => {
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <OutletHeading name={"Available Jobs"} />
-      </div>
-
+    <div className="w-full">
       {jobs.length > 0 ? (
-        <div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {jobs.map((job) => (
             <div
               key={job._id}
-              className="mb-5 border border-gray-200 rounded-md p-3 sm:p-5"
+              className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
             >
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 space-y-2 sm:space-y-0">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-gray-100 p-2 rounded-xl">
-                    <Icons.User size={20} className="text-black" />
+              {/* Header */}
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Icons.User size={22} />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-800">
-                      {job.customerName}
-                    </h3>
-                  </div>
+                  <h3 className="font-semibold whitespace-nowrap text-[var(--dark-gray)] text-lg">
+                    {job.customerName}
+                  </h3>
                 </div>
               </div>
 
-              <div className="space-y-3 mb-4">
-                <div className="flex items-start space-x-3 w-full">
-                  <div className="bg-gray-100 p-1.5 rounded-lg">
-                    <Icons.MapPin size={20} className="text-black" />
+              {/* Content */}
+              <div className="p-6 space-y-4">
+                {/* Pickup Location */}
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-gray-100  rounded-lg flex items-center justify-center mt-0.5">
+                    <Icons.MapPin size={16} />
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700 mb-1">
-                      Pickup
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                      Pickup Location
                     </p>
-                    <p className="text-slate-600 text-sm">
+                    <p className="text-sm text-gray-900 font-medium">
                       {job.pickupLocation}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-3 w-full">
-                  <div className="bg-gray-100 p-1.5 rounded-lg">
-                    <Icons.Navigation size={20} className="text-black" />
+                {/* Drop-off Location */}
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-gray-100  rounded-lg flex items-center justify-center mt-0.5">
+                    <Icons.Navigation size={16} />
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700 mb-1">
-                      Drop-off
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                      Drop-off Location
                     </p>
-                    <p className="text-slate-600 text-sm break-words">
+                    <p className="text-sm text-gray-900 font-medium break-words">
                       {job.dropLocation}
                     </p>
                   </div>
                 </div>
 
+                {/* Extra Guidance */}
                 {job.extraGuidance && (
-                  <div className="rounded-md p-3">
-                    <p className="text-sm font-semibold text-black mb-1">
-                      Notes
-                    </p>
-                    <p className="text-black text-xs">{job.extraGuidance}</p>
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center mt-0.5">
+                      <Icons.FileText size={16} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                        Notes
+                      </p>
+                      <p className="text-sm text-gray-900">
+                        {job.extraGuidance}
+                      </p>
+                    </div>
                   </div>
                 )}
+
+                {/* Job Details */}
+                <div className="bg-gray-100 rounded-lg py-4 px-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Time */}
+                  <div className="grid grid-rows-2 lg:items-start  lg:text-left text-center">
+                    <div className="flex items-center lg:justify-start justify-center gap-1">
+                      <Icons.Clock size={14} className="text-gray-500" />
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Time
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {job.estimatedTime}
+                    </p>
+                  </div>
+
+                  {/* Distance */}
+                  <div className="grid grid-rows-2 items-center text-center ">
+                    <div className="flex items-center justify-center gap-1">
+                      <Icons.Navigation size={14} />
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Distance
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {job.distance}
+                    </p>
+                  </div>
+
+                  {/* Fare */}
+                  <div className="grid grid-rows-2 sm:items-end items-center lg:text-end text-center">
+                    <div className="flex items-center sm:justify-end justify-center gap-1">
+                      <Icons.DollarSign size={14} />
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Fare
+                      </span>
+                    </div>
+                    <p className="text-sm font-bold text-gray-900">
+                      £{job.driverFare}
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-0 sm:flex sm:justify-between sm:items-center mb-4 bg-slate-50 rounded-xl p-3">
-                <div className="flex items-center justify-center sm:justify-start space-x-1">
-                  <Icons.Clock size={16} className="text-black" />
-                  <span className="text-slate-700 text-sm font-medium">
-                    {job.estimatedTime}
-                  </span>
+              {/* Actions */}
+              <div className="px-6 pb-6">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => onReject(job._id)}
+                    className="btn btn-cancel"
+                  >
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => onAccept(job._id)}
+                    className="btn btn-success"
+                  >
+                    Accept
+                  </button>
                 </div>
-                <div className="flex items-center justify-center sm:justify-start space-x-1">
-                  <Icons.Navigation size={16} className="text-black" />
-                  <span className="text-slate-700 text-sm font-medium">
-                    {job.distance}
-                  </span>
-                </div>
-                <div className="flex items-center justify-center sm:justify-start space-x-1">
-                  <span className="text-lg font-bold text-gray-700">
-                    £{job.driverFare}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex space-x-2 justify-end">
-                <button
-                  onClick={() => onReject(job._id)}
-                  className="btn btn-cancel"
-                >
-                  Reject
-                </button>
-                <button
-                  onClick={() => onAccept(job._id)}
-                  className="btn btn-primary"
-                >
-                  Accept
-                </button>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="text-center">
-          <div className="bg-slate-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-            <Icons.MapPin size={28} className="text-slate-400" />
+        <div className="text-center py-16">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Icons.MapPin size={24} className="text-gray-400" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-700 mb-2">
-            No available jobs
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            No Available Jobs
           </h3>
-          <p className="text-slate-500 text-sm">
-            New ride requests will appear here
+          <p className="text-gray-500 text-sm max-w-sm mx-auto">
+            New booking assignments will appear here when admin assigns them to
+            you.
           </p>
         </div>
       )}

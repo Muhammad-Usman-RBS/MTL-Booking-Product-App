@@ -15,38 +15,42 @@ import ViewDriver from "./ViewDriver";
 import NewBooking from "./NewBooking";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 
-const defaultColumns = {
-  bookingType: true,
-  bookingId: true,
-  passenger: true,
-  date: true,
-  pickUp: true,
-  dropOff: true,
-  vehicle: true,
-  payment: true,
-  journeyFare: true,
-  driverFare: true,
-  returnJourneyFare: true,
-  returnDriverFare: true,
-  driver: true,
-  status: true,
-  actions: true,
-};
-
-const ALL_STATUSES = [
-  "New",
-  "Accepted",
-  "On Route",
-  "At Location",
-  "Ride Started",
-  "Late Cancel",
-  "No Show",
-  "Completed",
-  "Cancel",
-  "Reject",
-];
-
 const BookingsList = () => {
+  const user = useSelector((state) => state.auth.user);
+  const defaultColumns = {
+    bookingType: true,
+    bookingId: true,
+    passenger: true,
+    date: true,
+    pickUp: true,
+    dropOff: true,
+    vehicle: true,
+    payment: true,
+    journeyFare: true,
+    driverFare: true,
+    returnJourneyFare: true,
+    returnDriverFare: true,
+    driver: true,
+    status: true,
+    actions: true,
+  };
+
+  if (user?.role === "driver") {
+    defaultColumns.journeyFare = false;
+    defaultColumns.returnJourneyFare = false;
+  }
+  const ALL_STATUSES = [
+    "New",
+    "Accepted",
+    "On Route",
+    "At Location",
+    "Ride Started",
+    "Late Cancel",
+    "No Show",
+    "Completed",
+    "Cancel",
+    "Reject",
+  ];
   const [selectedRow, setSelectedRow] = useState(null);
   const [assignedDrivers, setAssignedDrivers] = useState([]);
 
@@ -73,16 +77,15 @@ const BookingsList = () => {
   );
 
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.auth.user);
   const { data: companyData } = useGetCompanyByIdQuery(user?.companyId);
   const { data: bookingData } = useGetAllBookingsQuery(user?.companyId);
-  const { data: driversData, isLoading } =
-    useGetAllDriversQuery(user?.companyId);
+  const { data: driversData, isLoading } = useGetAllDriversQuery(
+    user?.companyId
+  );
 
   useEffect(() => {
     if (driversData?.drivers?.length > 0) {
       setAssignedDrivers(driversData.drivers);
-
     }
   }, [driversData]);
   const allBookings = bookingData?.bookings || [];
@@ -167,7 +170,14 @@ const BookingsList = () => {
   const [selectedColumns, setSelectedColumns] = useState(() => {
     const saved = localStorage.getItem("selectedColumns");
     const parsed = saved ? JSON.parse(saved) : {};
-    return { ...defaultColumns, ...parsed }; // Ensures all new columns are present
+    const merged = { ...defaultColumns, ...parsed };
+
+    if (user?.role === "driver") {
+      merged.journeyFare = false;
+      merged.returnJourneyFare = false;
+    }
+
+    return merged;
   });
 
   const handleColumnChange = (key, value) => {
@@ -196,7 +206,6 @@ const BookingsList = () => {
         setSelectedPassengers={setSelectedPassengers}
         selectedVehicleTypes={selectedVehicleTypes}
         setSelectedVehicleTypes={setSelectedVehicleTypes}
-
         startDate={startDate}
         setStartDate={setStartDate}
         endDate={endDate}
@@ -289,9 +298,14 @@ const BookingsList = () => {
               <input
                 type="checkbox"
                 checked={!!selectedColumns[key]}
+                disabled={
+                  user?.role === "driver" &&
+                  (key === "journeyFare" || key === "returnJourneyFare")
+                }
                 onChange={(e) => handleColumnChange(key, e.target.checked)}
                 className="w-4 h-4 text-indigo-600 border-[var(--light-gray)] rounded focus:ring-indigo-500"
               />
+
               <span className="text-sm text-gray-800">{key}</span>
             </label>
           ))}
@@ -305,8 +319,8 @@ const BookingsList = () => {
           editBookingData?.__copyMode
             ? "Copy Booking"
             : editBookingData?._id
-              ? "Edit Booking"
-              : "New Booking"
+            ? "Edit Booking"
+            : "New Booking"
         }
       >
         <NewBooking
