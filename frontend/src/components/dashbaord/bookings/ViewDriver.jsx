@@ -2,13 +2,11 @@ import React, { useState } from "react";
 import IMAGES from "../../../assets/images";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 import { useSelector } from "react-redux";
-import {
-  useGetAllBookingsQuery,
-  useSendBookingEmailMutation,
-  useUpdateBookingMutation,
-} from "../../../redux/api/bookingApi";
+import { useGetAllBookingsQuery, useSendBookingEmailMutation, useUpdateBookingMutation } from "../../../redux/api/bookingApi";
 import { toast } from "react-toastify";
+import { useAdminGetAllDriversQuery } from "../../../redux/api/adminApi";
 import { useCreateNotificationMutation } from "../../../redux/api/notificationApi";
+
 const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   const [createNotification] = useCreateNotificationMutation();
 
@@ -27,9 +25,13 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   const { data: drivers = [], isLoading } = useGetAllDriversQuery(companyId, {
     skip: !companyId,
   });
+
   const { data: bookingData, refetch: refetchBookings } =
     useGetAllBookingsQuery(companyId);
+
+  const { data: allUsers = [], isLoading: isAllUsersLoading } = useAdminGetAllDriversQuery();
   const allBookings = bookingData?.bookings || [];
+
   const selectedBooking = allBookings.find(
     (booking) => booking._id === selectedRow
   );
@@ -47,10 +49,10 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
 
     const matchesVehicle = showMatching
       ? vehicleTypes.some(
-          (type) =>
-            typeof type === "string" &&
-            type.trim().toLowerCase() === bookingVehicleType
-        )
+        (type) =>
+          typeof type === "string" &&
+          type.trim().toLowerCase() === bookingVehicleType
+      )
       : true;
 
     return matchesSearch && matchesVehicle;
@@ -59,8 +61,10 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   {
     isLoading && <p>Loading drivers...</p>;
   }
+
   const handleSendEmail = async () => {
     console.log("companyId:", companyId);
+
     if (!companyId) {
       toast.error("Company ID is missing. Please log in again.");
       return;
@@ -78,16 +82,36 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
       return;
     }
 
+    // ✅ Check all selected drivers have valid user accounts (and role "driver")
+    for (const driver of selectedDrivers) {
+      const driverEmail = driver?.DriverData?.email?.toLowerCase().trim();
+
+      const matchedUser = (allUsers?.drivers || []).find(
+        (user) =>
+          user.email?.toLowerCase().trim() === driverEmail &&
+          user.role?.toLowerCase() === "driver"
+      );
+
+      if (!driverEmail || !matchedUser) {
+        console.log("DEBUG FAIL: Driver Email = ", driverEmail);
+        console.log("DEBUG USERS:", allUsers?.drivers?.map(u => ({
+          email: u.email,
+          role: u.role
+        })));
+        toast.error(`${driver?.DriverData?.firstName || "Driver"} has no valid user account or driver role. Assignment blocked.`);
+        return; // 🔴 This correctly exits the entire function now
+      }
+    }
+
+    // ✅ OUTSIDE the loop: now we safely update the booking
     try {
       const { _id, createdAt, updatedAt, __v, ...restBookingData } = booking;
 
-      // Wrap the data in bookingData property to match backend expectation
       await updateBooking({
         id: booking._id,
         updatedData: {
           bookingData: {
             ...restBookingData,
-
             drivers: selectedDrivers.map((driver) => driver._id),
           },
         },
@@ -100,18 +124,16 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
       toast.success("Booking updated with selected drivers.");
     } catch (err) {
       console.error("Booking update failed:", err.message);
-      toast.error("Failed to update booking with drivers");
+      toast.error("Failed to update booking with drivers.");
+      return;
     }
 
+    // ✅ Send email alerts if checked
     if (sendEmailChecked) {
       for (const driver of selectedDrivers) {
         const email = driver?.DriverData?.email;
         if (!email) {
-          toast.warning(
-            `${
-              driver?.DriverData?.firstName || "Driver"
-            } has no email. Skipped.`
-          );
+          toast.warning(`${driver?.DriverData?.firstName || "Driver"} has no email. Skipped.`);
           continue;
         }
 
@@ -129,29 +151,29 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
         }
       }
     }
+
+    // ✅ Create notifications
     for (const driver of selectedDrivers) {
       const { DriverData } = driver;
 
       if (!DriverData?.employeeNumber) {
-        toast.warning(
-          `${
-            DriverData?.firstName || "Driver"
-          } has no employee number. Skipped.`
-        );
+        toast.warning(`${DriverData?.firstName || "Driver"} has no employee number. Skipped.`);
         continue;
       }
+
       const notificationPayload = {
         employeeNumber: DriverData.employeeNumber,
         bookingId: booking.bookingId,
         status: booking.status,
         primaryJourney: {
-          pickup: booking?.primaryJourney?.pickup ||  booking?.returnJourney?.pickup ,
-          dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff ,
+          pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup,
+          dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff,
         },
         bookingSentAt: new Date(),
         createdBy: user?._id,
         companyId,
       };
+
       try {
         await createNotification(notificationPayload).unwrap();
         toast.success(`Notification sent to ${DriverData?.firstName}`);
@@ -161,12 +183,14 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
       }
     }
 
+    // ✅ Final cleanup
     setShowDriverModal(false);
 
     if (onDriversUpdate) {
       onDriversUpdate(selectedRow, selectedDrivers);
     }
   };
+
 
   const convertKmToMiles = (text) => {
     if (!text || typeof text !== "string") return "—";

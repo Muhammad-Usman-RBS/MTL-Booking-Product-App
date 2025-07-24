@@ -1,4 +1,3 @@
-// src/redux/api/adminApi.js
 import { apiSlice } from '../apiSlice';
 
 export const adminApi = apiSlice.injectEndpoints({
@@ -11,12 +10,31 @@ export const adminApi = apiSlice.injectEndpoints({
       }),
       providesTags: ["ClientAdmins"],
     }),
+
     getAllUsers: builder.query({
       query: () => ({
         url: "get-All-Users",
         method: "GET",
       }),
       providesTags: ["Users"]
+    }),
+
+    // Get all drivers
+    adminGetAllDrivers: builder.query({
+      query: () => ({
+        url: "/get-all-drivers",
+        method: "GET",
+      }),
+      providesTags: ["Drivers"],
+    }),
+
+    // Get all customers
+    getAllCustomers: builder.query({
+      query: () => ({
+        url: "/get-all-customers",
+        method: "GET",
+      }),
+      providesTags: ["Customers"],
     }),
 
     // Create new client admin
@@ -61,10 +79,12 @@ export const adminApi = apiSlice.injectEndpoints({
 });
 
 export const {
-  useGetAllUsersQuery ,
+  useGetAllUsersQuery,
   useFetchClientAdminsQuery,
   useCreateClientAdminMutation,
   useUpdateClientAdminMutation,
   useDeleteClientAdminMutation,
   useUpdateClientAdminStatusMutation,
+  useAdminGetAllDriversQuery,
+  useGetAllCustomersQuery,
 } = adminApi;

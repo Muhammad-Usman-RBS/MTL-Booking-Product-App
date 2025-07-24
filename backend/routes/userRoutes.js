@@ -1,5 +1,5 @@
 import express from 'express';
-import { createUserBySuperAdmin, getClientAdmins, updateUserBySuperAdmin, deleteUserBySuperAdmin, getAllUsers } from '../controllers/userController.js';
+import { createUserBySuperAdmin, getClientAdmins, updateUserBySuperAdmin, deleteUserBySuperAdmin, getAllUsers, getAllDrivers, getAllCustomers } from '../controllers/userController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -16,5 +16,11 @@ router.put('/create-clientadmin/:id', protect, authorize('superadmin', 'clientad
 
 // Delete user by ID
 router.delete('/create-clientadmin/:id', protect, authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'), deleteUserBySuperAdmin);
+
+// GET All Users with Role = "driver"
+router.get("/get-all-drivers", protect, authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'), getAllDrivers);
+
+// GET All Users with Role = "customer"
+router.get("/get-all-customers", protect, authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'), getAllCustomers);
 
 export default router;
