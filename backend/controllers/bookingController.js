@@ -1,7 +1,8 @@
 import Booking from "../models/Booking.js";
 import sendEmail from "../utils/sendEmail.js";
-import driver from "../models/Driver.js";
+import driverModel from "../models/Driver.js";
 import User from "../models/User.js";
+import Job from "../models/Job.js";
 import mongoose from "mongoose";
 import Voucher from "../models/pricings/Voucher.js";
 import { createEventOnGoogleCalendar } from "../utils/calendarService.js";
@@ -476,19 +477,24 @@ export const updateBookingStatus = async (req, res) => {
       return res.status(400).json({ message: "Invalid booking ID" });
     }
 
+    // Fetch the booking by ID
     const booking = await Booking.findById(id);
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
+    // Update the booking status
+    booking.status = status === "Late Cancel" ? "Late Cancel" : status;
+
+    // Optionally, update driver details if needed
     if (Array.isArray(driverIds)) {
-      const fullDriverDocs = await driver.find({
+      const fullDriverDocs = await driverModel.find({
         _id: { $in: driverIds },
       }).lean();
       booking.drivers = fullDriverDocs;
     }
 
-    booking.status = status;
+    // Add status to statusAudit for logging purposes
     booking.statusAudit = [
       ...(booking.statusAudit || []),
       {
@@ -498,11 +504,12 @@ export const updateBookingStatus = async (req, res) => {
       },
     ];
 
+    // Save the updated booking
     const updatedBooking = await booking.save();
 
     // Driver updated the status
     if (currentUser?.role === "driver" && status) {
-      const driver = await driver.findOne({
+      const driver = await driverModel.findOne({
         "DriverData.employeeNumber": currentUser.employeeNumber,
         companyId: currentUser.companyId,
       }).lean();
@@ -514,8 +521,7 @@ export const updateBookingStatus = async (req, res) => {
         }).lean();
 
         const statusStyled = `<span style="color: green;">${status}</span>`;
-        const driverName = `"${driver?.DriverData?.firstName || ""} ${driver?.DriverData?.surName || ""
-          }"`.trim();
+        const driverName = `"${driver?.DriverData?.firstName || ""} ${driver?.DriverData?.surName || ""}"`.trim();
         const bookingId = booking.bookingId;
 
         const title = `Driver ${driverName} changed the status to ${statusStyled} for booking #${bookingId}`;
@@ -554,18 +560,15 @@ export const updateBookingStatus = async (req, res) => {
       const statusStyled = `<span style="color: green;">${status}</span>`;
 
       const firstDriverId = booking.drivers?.[0]?._id || booking.drivers?.[0];
-      const assigneddriver = mongoose.Types.ObjectId.isValid(
-        firstDriverId
-      )
-        ? await driver.findById(firstDriverId).lean()
+      const assignedDriver = mongoose.Types.ObjectId.isValid(firstDriverId)
+        ? await driverModel.findById(firstDriverId).lean()
         : null;
 
-      const driverName = assigneddriver
-        ? `"${assigneddriver.DriverData.firstName || ""} ${assigneddriver.DriverData.surName || ""
-          }"`.trim()
+      const driverName = assignedDriver
+        ? `"${assignedDriver.DriverData.firstName || ""} ${assignedDriver.DriverData.surName || ""}"`.trim()
         : `"Assigned Driver"`;
 
-      const driverEmail = assigneddriver?.DriverData?.email;
+      const driverEmail = assignedDriver?.DriverData?.email;
 
       const data = {
         BookingId: bookingId,
@@ -573,10 +576,7 @@ export const updateBookingStatus = async (req, res) => {
         DriverName: driverName,
       };
 
-      // Log for debugging
-      console.log("Passenger email:", booking?.passenger?.email);
-      console.log("Driver email:", driverEmail);
-
+      // Send email notifications for the passenger and driver
       if (booking?.passenger?.email) {
         await sendEmail(
           booking.passenger.email,
@@ -601,9 +601,7 @@ export const updateBookingStatus = async (req, res) => {
     res.status(200).json({ success: true, booking: updatedBooking });
   } catch (err) {
     console.error("Error updating status:", err);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: err.message });
+    res.status(500).json({ message: "Internal server error", error: err.message });
   }
 };
 
@@ -697,3 +695,4 @@ export const sendBookingEmail = async (req, res) => {
     res.status(500).json({ message: "Failed to send booking email." });
   }
 };
+

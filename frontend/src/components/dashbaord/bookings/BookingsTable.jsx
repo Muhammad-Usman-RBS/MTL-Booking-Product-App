@@ -5,11 +5,8 @@ import { GripHorizontal } from "lucide-react";
 import SelectStatus from "./SelectStatus";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import {
-  useGetAllBookingsQuery,
-  useDeleteBookingMutation,
-  useUpdateBookingStatusMutation,
-} from "../../../redux/api/bookingApi";
+import { useGetAllBookingsQuery, useDeleteBookingMutation, useUpdateBookingStatusMutation } from "../../../redux/api/bookingApi";
+import { useGetAllJobsQuery, useUpdateJobStatusMutation } from "../../../redux/api/jobsApi"
 import Icons from "../../../assets/icons";
 import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
 
@@ -40,10 +37,9 @@ const BookingsTable = ({
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
   const [tooltip, setTooltip] = useState({ show: false, text: "", x: 0, y: 0 });
-  const tabs = ["Active", "Deleted"];
-  const [selectedTab, setSelectedTab] = useState("Active");
   const [page, setPage] = useState(1);
   const [isDeletedTab, setIsDeletedTab] = useState(false);
+  const [updateJobStatus] = useUpdateJobStatusMutation();
 
   const allHeaders = [
     { label: "Booking Id", key: "bookingId" },
@@ -66,37 +62,64 @@ const BookingsTable = ({
   const tableHeaders =
     user?.role === "driver"
       ? allHeaders.filter(
-          (header) =>
-            header.key !== "journeyFare" && header.key !== "returnJourneyFare"
-        )
+        (header) =>
+          header.key !== "journeyFare" && header.key !== "returnJourneyFare"
+      )
       : allHeaders;
-  const filteredTableHeaders = tableHeaders.filter((header) => {
-    if (isDeletedTab && header.key === "status") return false;
-    return selectedColumns[header.key];
-  });
+
   const emptyTableRows = EmptyTableMessage({
     message: "No data to show, create booking",
     colSpan: tableHeaders.length,
   });
-  const { data, isLoading, error, refetch } = useGetAllBookingsQuery(companyId);
+  const isDriver = user?.role === "driver";
+
+  const {
+    data: bookingData = {},
+    isLoading: isBookingsLoading,
+    error: bookingsError,
+    refetch: refetchBookings,
+  } = useGetAllBookingsQuery(companyId, { skip: !companyId || isDriver });
+
+  const {
+    data: jobData = {},
+    isLoading: isJobsLoading,
+    error: jobsError,
+    refetch: refetchJobs,
+  } = useGetAllJobsQuery(companyId, { skip: !companyId || !isDriver });
+
+  const refetch = isDriver ? refetchJobs : refetchBookings;
   const [deleteBooking] = useDeleteBookingMutation();
   const [updateBookingStatus] = useUpdateBookingStatusMutation();
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedDeleteId, setSelectedDeleteId] = useState(null);
 
-  const bookings = (data?.bookings || []).filter(
-    (b) => b?.companyId?.toString() === companyId?.toString()
-  );
+  let bookings = [];
+
+  if (!isDriver) {
+    bookings = (bookingData?.bookings || []).filter(
+      (b) => b?.companyId?.toString() === companyId?.toString()
+    );
+
+    if (user?.role === "customer" && user?.email) {
+      bookings = bookings.filter((b) => b?.passenger?.email === user.email);
+    }
+  } else {
+    bookings = (jobData?.jobs || [])
+      .filter((j) => j.driverId === user._id || j.driverId?._id === user._id)
+      .map((j) => {
+        const b = j.bookingId;
+        return {
+          ...b,
+          jobId: j._id,
+          jobStatus: j.jobStatus,
+        };
+      });
+  }
 
   let filteredBookings = bookings.filter((b) => {
     // First filter by tab (Active/Deleted)
-    const tabMatch =
-      selectedTab === "Active"
-        ? b.status !== "Deleted"
-        : b.status === "Deleted";
-
-    if (!tabMatch) return false;
+    if (b.status === "Deleted") return false;
 
     const createdAt = new Date(b.createdAt);
     const start = new Date(startDate);
@@ -117,8 +140,8 @@ const BookingsTable = ({
       !Array.isArray(selectedDrivers) || selectedDrivers.length === 0
         ? true
         : Array.isArray(b.drivers)
-        ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
-        : false;
+          ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
+          : false;
 
     const dateTime =
       !startDate || !endDate ? true : createdAt >= start && createdAt <= end;
@@ -127,6 +150,7 @@ const BookingsTable = ({
 
     return result;
   });
+
   if (user?.role === "driver" && user?.employeeNumber) {
     filteredBookings = filteredBookings.filter((booking) => {
       if (!Array.isArray(booking.drivers)) return false;
@@ -138,6 +162,7 @@ const BookingsTable = ({
       });
     });
   }
+
   filteredBookings.sort((a, b) => {
     let aMatch = 0;
     let bMatch = 0;
@@ -145,6 +170,29 @@ const BookingsTable = ({
     if (selectedVehicleTypes.includes(b.vehicle?.vehicleName)) bMatch++;
     return bMatch - aMatch;
   });
+
+  const hasPrimary = filteredBookings.some(b => {
+    const type = b.returnJourney ? "Return" : "Primary";
+    return type === "Primary";
+  });
+
+  const hasReturn = filteredBookings.some(b => {
+    const type = b.returnJourney ? "Return" : "Primary";
+    return type === "Return";
+  });
+
+  const filteredTableHeaders = tableHeaders.filter((header) => {
+    const key = header.key;
+
+    if (isDeletedTab && key === "status") return false;
+    if (!selectedColumns[key]) return false;
+
+    if (!hasPrimary && (key === "journeyFare" || key === "driverFare")) return false;
+    if (!hasReturn && (key === "returnJourneyFare" || key === "returnDriverFare")) return false;
+
+    return true;
+  });
+
   useEffect(() => {
     async function handleKeyDown(event) {
       if (event.key === "Escape") {
@@ -155,6 +203,18 @@ const BookingsTable = ({
         setShowDeleteModal(false);
         setSelectedActionRow(null);
       }
+
+      const updateStatus = async (id, status) => {
+        if (isDriver) {
+          await updateJobStatus({ jobId: id, jobStatus: status }).unwrap();
+        } else {
+          await updateBookingStatus({
+            id,
+            status,
+            updatedBy: `${user.role} | ${user.fullName}`,
+          }).unwrap();
+        }
+      };
 
       if (isAnyModalOpen || selectedRow == null) return;
       const selectedBooking = filteredBookings.find(
@@ -207,13 +267,11 @@ const BookingsTable = ({
           return;
         }
 
-
-
         if (key === "e") {
           if (user?.role === "driver") {
             toast.info("Drivers are not allowed to edit bookings");
             return;
-          }  if   (isDeletedTab) {
+          } if (isDeletedTab) {
             toast.info("This action is disabled in the Deleted tab.");
             return;
           }
@@ -279,14 +337,111 @@ const BookingsTable = ({
   const formatVehicle = (v) =>
     !v || typeof v !== "object"
       ? "-"
-      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${
-          v.handLuggage || 0
-        } | ${v.checkinLuggage || 0}`;
+      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${v.handLuggage || 0
+      } | ${v.checkinLuggage || 0}`;
 
   const formatPassenger = (p) =>
     !p || typeof p !== "object"
       ? "-"
       : `${p.name || "N/A"} | ${p.email || 0} | ${p.phone || 0}`;
+
+  const formatDriver = (item) => {
+    // Get the list of all drivers and cancelled drivers
+    const allDriversRaw = item?.drivers || [];
+    const cancelledDriversRaw = item?.cancelledDrivers || [];
+
+    // Process cancelled drivers (ensure we handle both object and string IDs)
+    const cancelledDrivers = cancelledDriversRaw.map((id) =>
+      typeof id === "object" ? id._id?.toString() : id?.toString()
+    );
+
+    // Filter out valid drivers (those that are not cancelled)
+    const validDrivers = allDriversRaw.filter((driverId) => {
+      const id = typeof driverId === "object" ? driverId._id : driverId;
+      return id && !cancelledDrivers.includes(id.toString());
+    });
+
+    // ✅ Handle "Rejected" job status
+    if (item.jobStatus === "Rejected") {
+      // Get the driver name for rejected job (even if the driver is still in the system)
+      const driverName =
+        validDrivers.length > 0
+          ? validDrivers
+            .map((driverId) => {
+              const driverIdToMatch = typeof driverId === "object" ? driverId._id : driverId;
+              const matchedDriver = assignedDrivers?.find(
+                (d) => d?._id?.toString() === driverIdToMatch?.toString()
+              );
+              return matchedDriver?.DriverData?.firstName ||
+                matchedDriver?.DriverData?.name ||
+                matchedDriver?.name ||
+                "Unnamed Driver";
+            })
+            .join(", ")
+          : "No driver assigned"; // In case no driver is valid
+
+      // Use the rejection note or default to "No reason provided"
+      const rejectionNote = item.driverRejectionNote || "No reason provided";
+
+      return (
+        <div className="text-red-500 italic">
+          <div className="font-medium">{driverName} - Rejected</div>
+          <div className="text-xs text-gray-500 mt-1 break-words max-w-[200px]">
+            {rejectionNote}
+          </div>
+        </div>
+      );
+    }
+
+    // ✅ Handle case when no drivers are assigned
+    if (validDrivers.length === 0) {
+      return (
+        <div
+          onClick={() => {
+            setSelectedRow(item._id);
+            openDriverModal(item);
+          }}
+          className="text-gray-400 italic cursor-pointer hover:underline"
+        >
+          No driver assigned
+        </div>
+      );
+    }
+
+    // ✅ Display assigned drivers (normal case)
+    return validDrivers.map((driverId, i) => {
+      const driverIdToMatch =
+        typeof driverId === "object" ? driverId._id : driverId;
+      const matchedDriver = assignedDrivers?.find(
+        (d) => d?._id?.toString() === driverIdToMatch?.toString()
+      );
+
+      // Set the driver's name from the matched driver data
+      let driverName = "Unnamed";
+      if (matchedDriver) {
+        driverName =
+          matchedDriver?.DriverData?.firstName ||
+          matchedDriver?.DriverData?.name ||
+          matchedDriver?.name ||
+          "Unnamed";
+      } else if (typeof driverId === "object" && driverId.name) {
+        driverName = driverId.name;
+      }
+
+      return (
+        <div
+          key={i}
+          onClick={() => {
+            setSelectedRow(item._id);
+            openDriverModal(item);
+          }}
+          className="text-sm text-gray-700 space-y-0.5 cursor-pointer hover:text-blue-600 transition-colors"
+        >
+          {driverName}
+        </div>
+      );
+    });
+  };
 
   let tableData = [];
   if (!bookings || bookings.length === 0 || filteredBookings.length === 0) {
@@ -385,72 +540,30 @@ const BookingsTable = ({
               item.returnDriverFare !== undefined ? item.returnDriverFare : "-";
             break;
           case "driver":
-            row[key] =
-              Array.isArray(item.drivers) && item.drivers.length > 0 ? (
-                <div
-                  onClick={() => {
-                    setSelectedRow(item._id);
-                    openDriverModal(item);
-                  }}
-                  className="text-sm text-gray-700 space-y-0.5 cursor-pointer"
-                >
-                  {item.drivers.map((driverId, i) => {
-                    const driversArray = assignedDrivers;
-
-                    const driverIdToMatch =
-                      typeof driverId === "object" ? driverId._id : driverId;
-
-                    const matchedDriver =
-                      Array.isArray(driversArray) &&
-                      driversArray.find((d) => {
-                        if (!d || !d._id) return false;
-                        return d._id.toString() === driverIdToMatch?.toString();
-                      });
-
-                    let driverName = "Unnamed";
-                    if (matchedDriver) {
-                      driverName =
-                        matchedDriver.DriverData?.firstName || "Unnamed";
-                    } else if (typeof driverId === "object" && driverId.name) {
-                      driverName =
-                        driverId.name ||
-                        driverId.firstName ||
-                        driverId.fullName ||
-                        "Unnamed";
-                    }
-
-                    return <div key={i}>{driverName}</div>;
-                  })}
-                </div>
-              ) : (
-                <button
-                  className="cursor-pointer"
-                  onClick={() => {
-                    setSelectedRow(item._id);
-                    openDriverModal(item);
-                  }}
-                >
-                  <Icons.CircleUserRound />
-                </button>
-              );
-
+            row[key] = formatDriver(item);
             break;
           case "status":
             row[key] = (
               <SelectStatus
-                value={item.status || "No Show"}
+                value={isDriver ? item.jobStatus || "New" : item.status || "No Show"}
                 onChange={async (newStatus) => {
                   try {
-                    await updateBookingStatus({
-                      id: item._id,
+                    if (isDriver) {
+                      await updateJobStatus({
+                        jobId: item.jobId,
+                        jobStatus: newStatus,
+                      }).unwrap();
+                    } else {
+                      await updateBookingStatus({
+                        id: item._id,
+                        status: newStatus,
+                        updatedBy: `${user.role} | ${user.fullName}`,
+                      }).unwrap();
+                    }
 
-                      status: newStatus,
-                      updatedBy: `${user.role} | ${user.fullName}`,
-                    }).unwrap();
                     toast.success("Status updated");
                     refetch();
                   } catch (err) {
-                    console.error("Status update failed:", err);
                     toast.error("Failed to update status");
                   }
                 }}
@@ -500,84 +613,76 @@ const BookingsTable = ({
                       {actionMenuItems
                         .filter((action) => {
                           if (user?.role === "driver") {
-                            return (
-                              action === "View" || action === "Status Audit"
-                            );
+                            return action === "View" || action === "Status Audit";
                           }
                           return true;
                         })
                         .map((action, i) => (
                           <button
                             key={i}
-                            onClick={() => {
-                              if (action === "Status Audit")
-                                openAuditModal(item.statusAudit);
-                              else if (action === "View") openViewModal(item);
-                              else if (action === "Edit") {
-                                const editedData = { ...item };
+                            onClick={async () => {
+                              try {
+                                if (action === "Status Audit") {
+                                  openAuditModal(item.statusAudit);
+                                } else if (action === "View") {
+                                  openViewModal(item);
+                                } else if (action === "Edit") {
+                                  if (user?.role === "driver") {
+                                    toast.info("Drivers cannot edit bookings");
+                                    return;
+                                  }
 
-                                // Set flag to identify return journey mode
-                                editedData.__editReturn = !!item.returnJourney;
+                                  const editedData = { ...item };
+                                  editedData.__editReturn = !!item.returnJourney;
+                                  setEditBookingData(editedData);
+                                  setShowEditModal(true);
+                                } else if (action === "Delete") {
+                                  if (isDeletedTab) {
+                                    // Permanent delete
+                                    setSelectedDeleteId(item._id);
+                                    setShowDeleteModal(true);
+                                  } else {
+                                    // Soft delete
+                                    await updateBookingStatus({
+                                      id: item._id,
+                                      status: "Deleted",
+                                      updatedBy: `${user.role} | ${user.fullName}`,
+                                    }).unwrap();
+                                    toast.success("Booking moved to deleted");
+                                    refetch();
+                                    setSelectedActionRow(null);
+                                  }
+                                } else if (action === "Copy Booking") {
+                                  const copied = { ...item };
 
-                                setEditBookingData(editedData);
-                                setShowEditModal(true);
-                              } else if (action === "Delete") {
-                                if (isDeletedTab) {
-                                  // Permanently delete if in deleted tab
-                                  setSelectedDeleteId(item._id);
-                                  setShowDeleteModal(true);
-                                } else {
-                                  // Soft delete - update status to "Deleted"
-                                  updateBookingStatus({
-                                    id: item._id,
-                                    status: "Deleted",
-                                    updatedBy: `${user.role} | ${user.fullName}`,
-                                  })
-                                    .unwrap()
-                                    .then(() => {
-                                      toast.success("Booking moved to deleted");
-                                      refetch();
-                                      setSelectedActionRow(null);
-                                    })
-                                    .catch((err) => {
-                                      toast.error("Failed to delete booking");
-                                    });
+                                  // Remove IDs
+                                  delete copied._id;
+                                  if (copied.passenger?._id) delete copied.passenger._id;
+                                  if (copied.vehicle?._id) delete copied.vehicle._id;
+                                  if (copied.primaryJourney?._id) delete copied.primaryJourney._id;
+                                  if (copied.returnJourney?._id) delete copied.returnJourney._id;
+
+                                  copied.bookingId = "";
+                                  copied.status = "Pending";
+                                  copied.statusAudit = [];
+                                  copied.createdAt = new Date().toISOString();
+                                  copied.drivers = [];
+                                  copied.__copyMode = true;
+
+                                  if (item.returnJourney) {
+                                    copied.primaryJourney = { ...item.returnJourney };
+                                    delete copied.returnJourney;
+                                    copied.__copyReturn = false;
+                                  } else {
+                                    copied.__copyReturn = false;
+                                  }
+
+                                  setEditBookingData(copied);
+                                  setShowEditModal(true);
                                 }
-                              } else if (action === "Copy Booking") {
-                                const copied = { ...item };
-
-                                // Clean IDs
-                                delete copied._id;
-                                if (copied.passenger?._id)
-                                  delete copied.passenger._id;
-                                if (copied.vehicle?._id)
-                                  delete copied.vehicle._id;
-                                if (copied.primaryJourney?._id)
-                                  delete copied.primaryJourney._id;
-                                if (copied.returnJourney?._id)
-                                  delete copied.returnJourney._id;
-
-                                copied.bookingId = "";
-                                copied.status = "Pending";
-                                copied.statusAudit = [];
-                                copied.createdAt = new Date().toISOString();
-                                copied.drivers = [];
-
-                                copied.__copyMode = true;
-
-                                // ✅ If copying a return booking, convert it to primary for correct form behavior
-                                if (item.returnJourney) {
-                                  copied.primaryJourney = {
-                                    ...item.returnJourney,
-                                  };
-                                  delete copied.returnJourney;
-                                  copied.__copyReturn = false;
-                                } else {
-                                  copied.__copyReturn = false;
-                                }
-
-                                setEditBookingData(copied);
-                                setShowEditModal(true);
+                              } catch (err) {
+                                toast.error("Action failed");
+                                console.error(err);
                               }
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
@@ -598,16 +703,7 @@ const BookingsTable = ({
       return row;
     });
   }
-  const tabCounts = tabs.reduce((acc, tab) => {
-    if (tab === "Active") {
-      acc[tab] =
-        bookings?.filter((item) => item.status !== "Deleted").length || 0;
-    } else if (tab === "Deleted") {
-      acc[tab] =
-        bookings?.filter((item) => item.status === "Deleted").length || 0;
-    }
-    return acc;
-  }, {});
+
   const exportTableData = filteredBookings.map((item) => {
     const base = {
       bookingId: item.bookingId,
@@ -621,27 +717,42 @@ const BookingsTable = ({
       driverFare: item.driverFare !== undefined ? item.driverFare : "-",
       returnDriverFare:
         item.returnDriverFare !== undefined ? item.returnDriverFare : "-",
-      driver:
-        Array.isArray(item.drivers) && assignedDrivers.length > 0
-          ? item.drivers
-              .map((driverId) => {
-                const driverIdToMatch =
-                  typeof driverId === "object" ? driverId._id : driverId;
+      // In BookingsTable.js, replace the driver field in exportTableData with this:
+
+      driver: Array.isArray(item.drivers)
+        ? item.drivers
+          .map((driver) => {
+            // Handle new structure where driver is an object with name/driverInfo
+            if (typeof driver === "object") {
+              if (driver.name) {
+                return driver.name;
+              } else if (driver.driverInfo?.firstName) {
+                return driver.driverInfo.firstName;
+              } else if (driver.driverId) {
+                // Try to match with assignedDrivers using driverId
                 const matchedDriver = assignedDrivers.find(
-                  (d) =>
-                    d &&
-                    d._id &&
-                    d._id.toString() === driverIdToMatch?.toString()
+                  (d) => d?._id?.toString() === driver.driverId?.toString()
                 );
-                return (
-                  matchedDriver?.DriverData?.firstName ||
+                return matchedDriver?.DriverData?.firstName ||
                   matchedDriver?.DriverData?.name ||
                   matchedDriver?.name ||
-                  "Unnamed"
-                );
-              })
-              .join(", ")
-          : "-",
+                  "Unnamed";
+              }
+            } else {
+              // Legacy structure - try to match with assignedDrivers
+              const driverId = driver;
+              const matchedDriver = assignedDrivers.find(
+                (d) => d?._id?.toString() === driverId?.toString()
+              );
+              return matchedDriver?.DriverData?.firstName ||
+                matchedDriver?.DriverData?.name ||
+                matchedDriver?.name ||
+                "Unnamed";
+            }
+            return "Unnamed";
+          })
+          .join(", ")
+        : "-",
       status: item.statusAudit?.at(-1)?.status || item.status || "-",
     };
 
@@ -669,7 +780,7 @@ const BookingsTable = ({
     );
   }
 
-  if (isLoading) {
+  if (isDriver ? isJobsLoading : isBookingsLoading) {
     return (
       <CustomTable
         tableHeaders={tableHeaders.filter(
@@ -685,27 +796,6 @@ const BookingsTable = ({
   }
   return (
     <>
-      <div className="w-full overflow-x-auto mb-4 mt-4">
-        <div className="flex gap-4 text-sm font-medium border-b min-w-max sm:text-base px-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setSelectedTab(tab);
-                setIsDeletedTab(tab === "Deleted");
-                setPage(1);
-              }}
-              className={`pb-2 whitespace-nowrap transition-all duration-200 ${
-                selectedTab === tab
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-[var(--dark-gray)] hover:text-blue-500"
-              }`}
-            >
-              {tab} ({tabCounts[tab] || 0})
-            </button>
-          ))}
-        </div>
-      </div>
       <CustomTable
         tableHeaders={filteredTableHeaders}
         tableData={tableData}

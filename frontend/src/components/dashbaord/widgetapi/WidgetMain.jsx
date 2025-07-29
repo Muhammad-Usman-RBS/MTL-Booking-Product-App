@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import WidgetBooking from './WidgetBooking';
 import WidgetBookingInformation from './WidgetBookingInformation';
 import WidgetPaymentInformation from './WidgetPaymentInformation';
 import { useCreateBookingMutation } from '../../../redux/api/bookingApi';
 
 const WidgetMain = () => {
+    const navigate = useNavigate();
+
     const [step, setStep] = useState('form');
     const [companyId, setCompanyId] = useState('');
     const [error, setError] = useState('');
@@ -73,6 +76,12 @@ const WidgetMain = () => {
                 paymentMethod: finalPayload.paymentMethod,
             };
 
+            // Assign fares
+            if (primaryPayload.source === "widget") {
+                primaryPayload.journeyFare = primaryJourney.fare || 0;
+                primaryPayload.driverFare = primaryJourney.fare || 0;
+            }
+
             await createBooking(primaryPayload).unwrap();
 
             // Submit Return Journey as second booking — put data in returnJourney
@@ -114,6 +123,12 @@ const WidgetMain = () => {
                         notes: returnData?.notes || "",
                     },
                 };
+
+                // Assign return fares
+                if (returnPayload.source === "widget") {
+                    returnPayload.returnJourneyFare = returnPayload.returnJourney.fare || 0;
+                    returnPayload.returnDriverFare = returnPayload.returnJourney.fare || 0;
+                }
 
                 await createBooking(returnPayload).unwrap();
             }
@@ -213,7 +228,11 @@ const WidgetMain = () => {
                         };
 
                         handleDataChange("vehicle", selectedVehicle);
-                        handleDataChange("payment", { paymentMethod });
+                        // handleDataChange("payment", { paymentMethod });
+                        handleDataChange("payment", {
+                            paymentMethod,
+                            passengerDetails: passengerDetails,
+                        });
                         handleBookingSubmission(finalPayload);
                     }}
                 />
@@ -241,13 +260,31 @@ const WidgetMain = () => {
                         <p className="mt-4 text-[var(--dark-gray)] text-base">
                             Thank you for choosing us. We’ve received your booking and will contact you shortly.
                         </p>
-                        <div className="mt-6">
-                            <a
-                                href="/"
+
+                        <p className="mt-2 text-[var(--dark-gray)] text-base">
+                            If you would like to view your portal, please click the button below.
+                        </p>
+
+                        <div className="mt-6 flex flex-col sm:flex-row gap-4">
+                            <button
+                                to="/"
                                 className="inline-block px-6 py-3 text-white bg-green-600 hover:bg-green-700 rounded-full font-medium transition"
                             >
                                 Return to Home
-                            </a>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    navigate("/add-customer", {
+                                        state: {
+                                            email: formData?.payment?.passengerDetails?.email || ""
+                                        }
+                                    });
+                                }}
+                                className="inline-block px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-full font-medium transition"
+                            >
+                                View Your Portal
+                            </button>
+
                         </div>
                     </div>
                 </div>

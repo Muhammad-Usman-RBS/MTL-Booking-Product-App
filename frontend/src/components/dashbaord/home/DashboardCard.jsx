@@ -4,13 +4,12 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { useGetAllUsersQuery } from "../../../redux/api/adminApi";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 
-
 const COLORS = ["#4ade80", "#facc15", "#f87171"];
 
 const SuperAdminCard = () => {
   const user = useSelector((state) => state?.auth?.user);
-  const {data: AllBookings} = useGetAllBookingsQuery(user?.companyId , {skip: !user?.companyId})
-  const { data: AllUsers , refetch } = useGetAllUsersQuery( );
+  const { data: AllBookings } = useGetAllBookingsQuery(user?.companyId, { skip: !user?.companyId })
+  const { data: AllUsers, refetch } = useGetAllUsersQuery();
   const filteredClientAdmin = AllUsers?.filter(
     (user) => user?.role === "clientadmin"
   );
@@ -37,7 +36,7 @@ const SuperAdminCard = () => {
   );
 
   const pieData = [
-    { name: "Completed", value:  100} ,
+    { name: "Completed", value: 100 },
     { name: "On Route", value: 100 },
     { name: "Cancelled", value: 100 },
   ];
@@ -89,49 +88,51 @@ const SuperAdminCard = () => {
     if (!card.role) return true;
     return card.role.includes(user?.role);
   });
-  useEffect(()=> {
+  useEffect(() => {
     refetch();
 
-  } , [refetch]);
+  }, [refetch]);
   return (
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {filteredCardData.map((card, index) => (
-          <div
-          key={index}
-            className={`${card.color} rounded-lg p-4 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition`}
-          >
-         <p className="text-sm text-gray-700 break-words text-center">{card.title}</p>
-         <p className="text-xl font-bold text-gray-900 mt-1 text-center">{card.value}</p>
-          </div>
-        ))}
-      </div>
-      <div className="bg-white rounded-xl shadow-md p-4 w-full">
-      <span className="text-gray-800 lg:text-md text-sm font-semibold">Rides Status</span>
-      <ResponsiveContainer width="100%" height={250}>
-      <PieChart>
-            <Pie
-              data={pieData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={90}
-              fill="#8884d8"
-              label
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {filteredCardData.map((card, index) => (
+            <div
+              key={index}
+              className={`${card.color} rounded-lg p-4 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition`}
             >
-              {pieData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
-              ))}
-            </Pie>
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
+              <p className="text-sm text-gray-700 break-words text-center">{card.title}</p>
+              <p className="text-xl font-bold text-gray-900 mt-1 text-center">{card.value}</p>
+            </div>
+          ))}
+        </div>
+        <div className="bg-white rounded-xl shadow-md p-4 w-full">
+          <span className="text-gray-800 lg:text-md text-sm font-semibold">Rides Status</span>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={90}
+                fill="#8884d8"
+                label
+              >
+                {pieData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

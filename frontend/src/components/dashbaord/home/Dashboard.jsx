@@ -4,9 +4,10 @@ import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 import RoleCards from "./DashboardCard";
 import DriverPortalHome from "../../../portals/driverportal/home/DriverPortalHome";
 import { useSelector } from "react-redux";
+import CustomerCard from "./CustomerCard";
 
 const Dashboard = () => {
-  const user = useSelector((state)=>state.auth.user)
+  const user = useSelector((state) => state.auth.user)
 
   const [startDate, setStartDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -19,7 +20,7 @@ const Dashboard = () => {
     {
       title: "Bookings Scheduled",
       values: [0, 11, 11, "0.00", "1,565.95", "1,565.95", "0.00", "1,565.95"],
-      borderColor: "border-[var(--light-gray)]", 
+      borderColor: "border-[var(--light-gray)]",
       bg: "bg-[#2A7B9B]",
     },
     {
@@ -89,7 +90,13 @@ const Dashboard = () => {
   return (
     <>
       <OutletHeading name="Stats" />
-      {user.role === "driver" ? <DriverPortalHome /> :
+      {user.role === "driver" ? (
+        <DriverPortalHome />
+      ) : user.role === "customer" ? (
+        <>
+          <CustomerCard />
+        </>
+      ) :
         <div className="space-y-6 max-w-full">
           {/* Filter Box */}
           <div className="bg-gray-100 rounded p-4">

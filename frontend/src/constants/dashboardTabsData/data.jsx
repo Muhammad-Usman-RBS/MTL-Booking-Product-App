@@ -2,18 +2,6 @@ import React from "react";
 import IMAGES from "../../assets/images";
 import Icons from "../../assets/icons";
 
-// export const statusList = [
-//   { label: "Scheduled", count: 41 },
-//   { label: "Pending", count: 0 },
-//   { label: "Payment Pending", count: 20 },
-//   { label: "No Show", count: 177 },
-//   { label: "Completed", count: 7389 },
-//   { label: "Cancelled", count: 193 },
-//   { label: "Rejected", count: 0 },
-//   { label: "Deleted", count: 0 },
-//   { label: "All", count: 7820 },
-// ];
-
 export const itemsPerPageOptions = [1, 2, 3, 40, "All"];
 
 export const sampleData = [

@@ -25,6 +25,11 @@ const sidebarItems = [
         title: "Booking Calendar",
         route: "/dashboard/bookings/calendar",
         icon: Icons.CalendarDays,
+      },
+      {
+        title: "Deleted Booking",
+        route: "/dashboard/bookings/deleted-booking",
+        icon: Icons.Delete,
       }
     ],
   },
@@ -134,6 +139,18 @@ const sidebarItems = [
     title: "Users",
     icon: Icons.Users,
     route: "/dashboard/admin-list",
+    subTabs: [
+      {
+        title: "Admin List",
+        icon: Icons.Users,
+        route: "/dashboard/admin-list",
+      },
+      {
+        title: "New  User",
+        icon: Icons.User,
+        route: "/dashboard/admin-list/create-admin-user",
+      },
+    ],
   },
   {
     title: "Pricing",

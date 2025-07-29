@@ -12,6 +12,7 @@ import EditProfile from "./components/dashbaord/profile/EditProfile";
 import Logout from "./components/dashbaord/Logout";
 import BookingsList from "./components/dashbaord/bookings/BookingsList";
 import NewBooking from "./components/dashbaord/bookings/NewBooking";
+import DeletedBookings from "./components/dashbaord/bookings/DeletedBookings";
 import InvoicesList from "./components/dashbaord/invoices/InvoicesList";
 import NewInvoice from "./components/dashbaord/invoices/NewInvoice";
 import EditInvoice from "./components/dashbaord/invoices/EditInvoice";
@@ -23,6 +24,7 @@ import AddCompanyAccount from "./components/dashbaord/companyaccounts/AddCompany
 import CompanyAccountsList from "./components/dashbaord/companyaccounts/CompanyAccountsList";
 import CustomersList from "./components/dashbaord/customers/CustomersList";
 import AdminList from "./components/dashbaord/adminlist/AdminList";
+import NewAdminUser from "./components/dashbaord/adminlist/NewAdminUser";
 
 import General from "./components/dashbaord/pricing/General";
 import VehiclePricing from "./components/dashbaord/pricing/VehiclePricing";
@@ -58,13 +60,14 @@ import DriverRides from "./portals/driverportal/rides/DriverRides";
 import DriverJobDetails from "./portals/driverportal/home/DriverJobDetails";
 import TermsCondition from "./portals/driverportal/settings/TermsandConditions";
 import DriverContact from "./portals/driverportal/settings/DriverContact";
+import ViewNotifications from "./components/dashbaord/settings/ViewNotifications";
+import PermissionsSettings from "./components/dashbaord/settings/PermissionsSettings";
+import BookingCalendar from "./components/dashbaord/bookings/BookingCalendar";
+import AddCustomer from "./components/dashbaord/widgetapi/AddCustomer";
 
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import ViewNotifications from "./components/dashbaord/settings/ViewNotifications";
-import PermissionsSettings from "./components/dashbaord/settings/PermissionsSettings";
-import BookingCalendar from "./components/dashbaord/bookings/BookingCalendar";
 
 function App() {
   return (
@@ -79,9 +82,10 @@ function App() {
 
         <Route path="/widget-form" element={<WidgetMain />} />
         {/* Role-Specific Dashboards */}
+        <Route path="/add-customer" element={<AddCustomer />} />
 
         <Route element={<ProtectedRoute />}>
-
+          {/* Create Customer For Widget */}
           {/* Dashboard Layout with Nested Routes */}
           <Route path="/dashboard" element={<DashboardLayout />}>
             <>
@@ -93,9 +97,12 @@ function App() {
               <Route path="bookings/list" element={<BookingsList />} />
               <Route path="bookings/new" element={<NewBooking />} />
               <Route path="bookings/calendar" element={<BookingCalendar />} />
+              <Route path="bookings/deleted-booking" element={<DeletedBookings />} />
 
               {/* Users/Admin List */}
               <Route path="admin-list" element={<AdminList />} />
+              <Route path="admin-list/create-admin-user" element={<NewAdminUser />} />
+              <Route path="admin-list/edit/:id" element={<NewAdminUser />} />
 
               {/* Invoices */}
               <Route path="invoices/list" element={<InvoicesList />} />

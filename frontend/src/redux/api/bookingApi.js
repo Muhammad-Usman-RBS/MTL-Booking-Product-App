@@ -66,6 +66,16 @@ export const bookingApi = apiSlice.injectEndpoints({
       }),
     }),
 
+    // Restore or Permanently Delete Booking
+    restoreOrDeleteBooking: builder.mutation({
+      query: ({ id, action, updatedBy }) => ({
+        url: `/booking/restore-or-delete/${id}`,
+        method: "PUT",
+        body: { action, updatedBy },
+      }),
+      invalidatesTags: ["Bookings"],
+    }),
+
   }),
 });
 
@@ -77,4 +87,5 @@ export const {
   useUpdateBookingStatusMutation,
   useGetAllPassengersQuery,
   useSendBookingEmailMutation,
+  useRestoreOrDeleteBookingMutation,
 } = bookingApi;
