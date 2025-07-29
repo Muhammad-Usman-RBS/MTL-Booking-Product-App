@@ -36,7 +36,11 @@ export const createBooking = async (req, res) => {
       appNotifications = {},
     } = req.body;
 
-    if (!companyId || typeof companyId !== "string" || companyId.length !== 24) {
+    if (
+      !companyId ||
+      typeof companyId !== "string" ||
+      companyId.length !== 24
+    ) {
       return res.status(400).json({ message: "Invalid or missing companyId" });
     }
 
@@ -51,7 +55,12 @@ export const createBooking = async (req, res) => {
       });
 
       const today = new Date();
-      if (v && new Date(v.validity) >= today && v.used < v.quantity && v.status === "Active") {
+      if (
+        v &&
+        new Date(v.validity) >= today &&
+        v.used < v.quantity &&
+        v.status === "Active"
+      ) {
         validVoucher = v.voucher;
         isVoucherApplied = true;
         await Voucher.findByIdAndUpdate(v._id, { $inc: { used: 1 } });
@@ -63,13 +72,17 @@ export const createBooking = async (req, res) => {
     if (!returnJourneyToggle) {
       for (const field of requiredFields) {
         if (!primaryJourney[field]) {
-          return res.status(400).json({ message: `Missing field in primaryJourney: ${field}` });
+          return res
+            .status(400)
+            .json({ message: `Missing field in primaryJourney: ${field}` });
         }
       }
     } else {
       for (const field of requiredFields) {
         if (!returnJourney[field]) {
-          return res.status(400).json({ message: `Missing field in returnJourney: ${field}` });
+          return res
+            .status(400)
+            .json({ message: `Missing field in returnJourney: ${field}` });
         }
       }
     }
@@ -77,7 +90,10 @@ export const createBooking = async (req, res) => {
     const extractDynamicDropoffFields = (journey) => {
       const fields = {};
       Object.keys(journey || {}).forEach((key) => {
-        if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
+        if (
+          key.startsWith("dropoff_terminal_") ||
+          key.startsWith("dropoffDoorNumber")
+        ) {
           fields[key] = journey[key] ?? "";
         }
       });
@@ -85,14 +101,18 @@ export const createBooking = async (req, res) => {
     };
 
     const generateNextBookingId = async () => {
-      const lastBooking = await Booking.findOne().sort({ bookingId: -1 }).limit(1);
+      const lastBooking = await Booking.findOne()
+        .sort({ bookingId: -1 })
+        .limit(1);
       return lastBooking?.bookingId
         ? (parseInt(lastBooking.bookingId, 10) + 1).toString()
         : "50301";
     };
 
     const bookingId = await generateNextBookingId();
-    const source = req.body.source || (referrer?.toLowerCase()?.includes("widget") ? "widget" : "admin");
+    const source =
+      req.body.source ||
+      (referrer?.toLowerCase()?.includes("widget") ? "widget" : "admin");
 
     const baseVehicleInfo = {
       vehicleName: vehicle.vehicleName ?? null,
@@ -157,8 +177,14 @@ export const createBooking = async (req, res) => {
         notes: primaryJourney.notes ?? "",
         internalNotes: primaryJourney.internalNotes ?? "",
         date: primaryJourney.date ?? "",
-        hour: primaryJourney.hour !== undefined ? parseInt(primaryJourney.hour) : null,
-        minute: primaryJourney.minute !== undefined ? parseInt(primaryJourney.minute) : null,
+        hour:
+          primaryJourney.hour !== undefined
+            ? parseInt(primaryJourney.hour)
+            : null,
+        minute:
+          primaryJourney.minute !== undefined
+            ? parseInt(primaryJourney.minute)
+            : null,
         fare: primaryJourney.fare ?? 0,
         hourlyOption: primaryJourney.hourlyOption ?? null,
         distanceText: primaryJourney.distanceText ?? "",
@@ -184,8 +210,14 @@ export const createBooking = async (req, res) => {
         notes: returnJourney.notes ?? "",
         internalNotes: returnJourney.internalNotes ?? "",
         date: returnJourney.date ?? "",
-        hour: returnJourney.hour !== undefined ? parseInt(returnJourney.hour) : null,
-        minute: returnJourney.minute !== undefined ? parseInt(returnJourney.minute) : null,
+        hour:
+          returnJourney.hour !== undefined
+            ? parseInt(returnJourney.hour)
+            : null,
+        minute:
+          returnJourney.minute !== undefined
+            ? parseInt(returnJourney.minute)
+            : null,
         fare: returnJourney.fare ?? 0,
         hourlyOption: returnJourney.hourlyOption ?? null,
         distanceText: returnJourney.distanceText ?? "",
@@ -207,7 +239,8 @@ export const createBooking = async (req, res) => {
     }
 
     const sanitize = (booking) => {
-      const { _id, __v, createdAt, updatedAt, companyId, ...clean } = booking.toObject();
+      const { _id, __v, createdAt, updatedAt, companyId, ...clean } =
+        booking.toObject();
       return clean;
     };
 
@@ -267,11 +300,7 @@ export const getAllBookings = async (req, res) => {
 export const updateBooking = async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      bookingData = {},
-      PassengerEmail,
-      ClientAdminEmail,
-    } = req.body;
+    const { bookingData = {}, PassengerEmail, ClientAdminEmail } = req.body;
 
     if (!id || id.length !== 24) {
       return res.status(400).json({ message: "Invalid booking ID" });
@@ -306,7 +335,10 @@ export const updateBooking = async (req, res) => {
     const extractDynamicDropoffFields = (journey = {}) => {
       const fields = {};
       Object.keys(journey).forEach((key) => {
-        if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
+        if (
+          key.startsWith("dropoff_terminal_") ||
+          key.startsWith("dropoffDoorNumber")
+        ) {
           fields[key] = journey[key] ?? "";
         }
       });
@@ -361,8 +393,14 @@ export const updateBooking = async (req, res) => {
         notes: returnJourney.notes ?? "",
         internalNotes: returnJourney.internalNotes ?? "",
         date: returnJourney.date ?? "",
-        hour: returnJourney.hour !== undefined ? parseInt(returnJourney.hour) : null,
-        minute: returnJourney.minute !== undefined ? parseInt(returnJourney.minute) : null,
+        hour:
+          returnJourney.hour !== undefined
+            ? parseInt(returnJourney.hour)
+            : null,
+        minute:
+          returnJourney.minute !== undefined
+            ? parseInt(returnJourney.minute)
+            : null,
         fare: returnJourney.fare ?? 0,
         hourlyOption: returnJourney.hourlyOption ?? null,
         distanceText: returnJourney.distanceText ?? "",
@@ -374,7 +412,10 @@ export const updateBooking = async (req, res) => {
     }
 
     // ✅ Only add primaryJourney if not editing return only
-    if (!returnJourneyToggle || (primaryJourney?.pickup && primaryJourney?.dropoff)) {
+    if (
+      !returnJourneyToggle ||
+      (primaryJourney?.pickup && primaryJourney?.dropoff)
+    ) {
       updatedPayload.primaryJourney = {
         pickup: primaryJourney.pickup?.trim() ?? "",
         dropoff: primaryJourney.dropoff?.trim() ?? "",
@@ -388,8 +429,14 @@ export const updateBooking = async (req, res) => {
         notes: primaryJourney.notes ?? "",
         internalNotes: primaryJourney.internalNotes ?? "",
         date: primaryJourney.date ?? "",
-        hour: primaryJourney.hour !== undefined ? parseInt(primaryJourney.hour) : null,
-        minute: primaryJourney.minute !== undefined ? parseInt(primaryJourney.minute) : null,
+        hour:
+          primaryJourney.hour !== undefined
+            ? parseInt(primaryJourney.hour)
+            : null,
+        minute:
+          primaryJourney.minute !== undefined
+            ? parseInt(primaryJourney.minute)
+            : null,
         fare: primaryJourney.fare ?? 0,
         hourlyOption: primaryJourney.hourlyOption ?? null,
         distanceText: primaryJourney.distanceText ?? "",
@@ -405,14 +452,17 @@ export const updateBooking = async (req, res) => {
     }
 
     // 🔄 Save to DB
-    const updatedBooking = await Booking.findByIdAndUpdate(id, updatedPayload, { new: true });
+    const updatedBooking = await Booking.findByIdAndUpdate(id, updatedPayload, {
+      new: true,
+    });
 
     if (!updatedBooking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
     const sanitize = (booking) => {
-      const { _id, __v, createdAt, updatedAt, companyId, ...clean } = booking.toObject();
+      const { _id, __v, createdAt, updatedAt, companyId, ...clean } =
+        booking.toObject();
       return clean;
     };
 
@@ -443,15 +493,34 @@ export const updateBooking = async (req, res) => {
   }
 };
 
-// Delete Booking by ID
 export const deleteBooking = async (req, res) => {
   try {
     const { id } = req.params;
-    const booking = await Booking.findByIdAndDelete(id);
+    const booking = await Booking.findById(id);
 
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
+
+    if (booking.googleCalendarEventId) {
+      try {
+        const clientAdmin = await User.findOne({
+          companyId: booking.companyId,
+          role: "clientadmin",
+        }).lean();
+
+        if (clientAdmin?.googleCalendar?.access_token) {
+          await deleteEventFromGoogleCalendar({
+            eventId: booking.googleCalendarEventId,
+            clientAdmin: clientAdmin,
+          });
+        }
+      } catch (calendarError) {
+        console.error("Error deleting from Google Calendar:", calendarError);
+      }
+    }
+
+    await Booking.findByIdAndDelete(id);
 
     res.status(200).json({
       success: true,
@@ -488,9 +557,11 @@ export const updateBookingStatus = async (req, res) => {
 
     // Optionally, update driver details if needed
     if (Array.isArray(driverIds)) {
-      const fullDriverDocs = await driverModel.find({
-        _id: { $in: driverIds },
-      }).lean();
+      const fullDriverDocs = await driverModel
+        .find({
+          _id: { $in: driverIds },
+        })
+        .lean();
       booking.drivers = fullDriverDocs;
     }
 
@@ -509,10 +580,12 @@ export const updateBookingStatus = async (req, res) => {
 
     // Driver updated the status
     if (currentUser?.role === "driver" && status) {
-      const driver = await driverModel.findOne({
-        "DriverData.employeeNumber": currentUser.employeeNumber,
-        companyId: currentUser.companyId,
-      }).lean();
+      const driver = await driverModel
+        .findOne({
+          "DriverData.employeeNumber": currentUser.employeeNumber,
+          companyId: currentUser.companyId,
+        })
+        .lean();
 
       if (driver) {
         const clientAdmin = await User.findOne({
@@ -521,7 +594,9 @@ export const updateBookingStatus = async (req, res) => {
         }).lean();
 
         const statusStyled = `<span style="color: green;">${status}</span>`;
-        const driverName = `"${driver?.DriverData?.firstName || ""} ${driver?.DriverData?.surName || ""}"`.trim();
+        const driverName = `"${driver?.DriverData?.firstName || ""} ${
+          driver?.DriverData?.surName || ""
+        }"`.trim();
         const bookingId = booking.bookingId;
 
         const title = `Driver ${driverName} changed the status to ${statusStyled} for booking #${bookingId}`;
@@ -565,7 +640,9 @@ export const updateBookingStatus = async (req, res) => {
         : null;
 
       const driverName = assignedDriver
-        ? `"${assignedDriver.DriverData.firstName || ""} ${assignedDriver.DriverData.surName || ""}"`.trim()
+        ? `"${assignedDriver.DriverData.firstName || ""} ${
+            assignedDriver.DriverData.surName || ""
+          }"`.trim()
         : `"Assigned Driver"`;
 
       const driverEmail = assignedDriver?.DriverData?.email;
@@ -601,7 +678,9 @@ export const updateBookingStatus = async (req, res) => {
     res.status(200).json({ success: true, booking: updatedBooking });
   } catch (err) {
     console.error("Error updating status:", err);
-    res.status(500).json({ message: "Internal server error", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
 };
 
@@ -695,4 +774,3 @@ export const sendBookingEmail = async (req, res) => {
     res.status(500).json({ message: "Failed to send booking email." });
   }
 };
-
