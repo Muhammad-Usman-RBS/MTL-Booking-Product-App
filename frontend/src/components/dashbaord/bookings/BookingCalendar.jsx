@@ -13,7 +13,6 @@ import { useSelector } from "react-redux";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 
-// Gradient-based status colors
 const statusColors = {
     "New": {
         bg: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)", // Indigo-Violet
@@ -163,7 +162,7 @@ const BookingCalendar = () => {
     return (
         <div className="min-h-screen">
             <div className="max-w-7xl mx-auto w-full">
-                <OutletHeading name="Admins List" />
+                <OutletHeading name="Booking Calendar" />
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
 
                     <div className="flex items-center space-x-3 w-full md:w-auto">
@@ -181,14 +180,14 @@ const BookingCalendar = () => {
                         </select>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-9 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4  xl:grid-cols-9  space-x-1">
                         {Object.entries(statusColors).map(([status, colors]) => (
                             <div key={status} className="flex items-center space-x-2">
                                 <div
-                                    className="w-4 h-4 rounded-full border-2 shadow-sm"
+                                    className="w-4 h-4 rounded-full  border-2 shadow-sm"
                                     style={{ background: colors.bg, borderColor: colors.border }}
                                 />
-                                <span className="text-sm font-medium text-gray-700">{status}</span>
+                                <span className="text-sm   font-medium text-gray-700">{status}</span>
                             </div>
                         ))}
                     </div>

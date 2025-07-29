@@ -204,8 +204,8 @@ function Navbar() {
                           className="w-12 h-12 rounded-full object-cover"
                         />
                       )}
-                      <div>
-                        <p className="font-semibold">{displayName}</p>
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate ">{displayName}</p>
                       </div>
                     </div>
 

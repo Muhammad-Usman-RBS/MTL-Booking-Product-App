@@ -47,7 +47,7 @@ const NewCustomer = ({ isOpen, onClose }) => {
 
   return (
     <CustomModal isOpen={isOpen} onClose={onClose} heading="Add New Customer">
-      <div className="text-sm px-4 pb-4 pt-4">
+      <div className="text-sm w-96 px-4 pb-4 pt-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
           {preview ? (
             <img

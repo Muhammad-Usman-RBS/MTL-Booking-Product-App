@@ -45,12 +45,19 @@ export const googleApi = apiSlice.injectEndpoints({
         params: { address },
       }),
     }),
-
+    sendGoogleAuthLink: builder.mutation({
+      query: ({ email, role }) => ({
+        url: "/google/send-google-auth-link",  
+        method: "POST",
+        body: { email, role },
+      }),
+  }),
   }),
   overrideExisting: false,
 });
 
 export const {
+  useSendGoogleAuthLinkMutation,
   useSearchGooglePlacesQuery,
   useLazySearchGooglePlacesQuery,
   useGetDistanceQuery,

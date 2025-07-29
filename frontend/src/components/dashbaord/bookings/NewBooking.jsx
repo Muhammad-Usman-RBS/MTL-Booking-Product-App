@@ -108,7 +108,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     });
 
   const [fareDetails, setFareDetails] = useState({
-    paymentMethod: "",
+    paymentMethod: "Cash",
     cardPaymentReference: "",
     paymentGateway: "",
     journeyFare: "",
