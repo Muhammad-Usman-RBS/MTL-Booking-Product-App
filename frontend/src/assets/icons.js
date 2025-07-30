@@ -89,10 +89,12 @@ import {
   Delete,
   ChevronsRight,
   Info,
+  Building2,
 } from "lucide-react";
 
 const Icons = {
   Info,
+  Building2,
   Delete,
   ChevronsRight,
   BellPlus,

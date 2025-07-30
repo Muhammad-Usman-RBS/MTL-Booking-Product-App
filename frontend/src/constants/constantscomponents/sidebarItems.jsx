@@ -48,11 +48,6 @@ const sidebarItems = [
         route: "/dashboard/invoices/new",
         icon: Icons.FilePlus,
       },
-      {
-        title: "Edit Invoice",
-        route: "/dashboard/invoices/edit",
-        icon: Icons.SquarePen,
-      },
     ],
   },
   {
@@ -115,6 +110,11 @@ const sidebarItems = [
         title: "Add Account",
         route: "/dashboard/company-accounts/new",
         icon: Icons.PlusCircle,
+      },
+      {
+        title: "View Company",
+        route: "/dashboard/view-company",
+        icon: Icons.Building2,
       },
     ],
   },

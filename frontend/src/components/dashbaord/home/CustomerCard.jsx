@@ -16,14 +16,16 @@ const CustomerCard = () => {
 
     const allDrivers = driversData?.drivers || [];
 
-    useEffect(() => {
-        if (data?.bookings) {
-            const userBookings = data.bookings.filter(
-                (b) => b?.passenger?.email === user.email
-            );
-            setBookings(userBookings);
-        }
-    }, [data, user.email]);
+useEffect(() => {
+    if (data?.bookings) {
+        console.log("API Bookings:", data.bookings);
+        const userBookings = data.bookings.filter(
+            (b) => b?.passenger?.email === user.email
+        );
+        console.log("Filtered Bookings for User:", userBookings);
+        setBookings(userBookings);
+    }
+}, [data, user.email]);
 
     useEffect(() => {
         if (error) toast.error('Failed to load bookings');

@@ -64,6 +64,7 @@ import ViewNotifications from "./components/dashbaord/settings/ViewNotifications
 import PermissionsSettings from "./components/dashbaord/settings/PermissionsSettings";
 import BookingCalendar from "./components/dashbaord/bookings/BookingCalendar";
 import AddCustomer from "./components/dashbaord/widgetapi/AddCustomer";
+import ViewCompany from "./components/dashbaord/companyaccounts/ViewCompany";
 
 import ProtectedRoute from './layouts/ProtectedRoute';
 import ProtectedAddCustomer from "./layouts/ProtectedAddCustomer";
@@ -130,8 +131,25 @@ function App() {
 
               {/* Company Accounts */}
               <Route path="company-accounts/list" element={<CompanyAccountsList />} />
+              <Route
+                path="view-company"
+                element={
+                  <ProtectedRoute allowedRoles={["customer"]}>
+                    <ViewCompany />
+                  </ProtectedRoute>
+                }
+              />
+
               <Route path="company-accounts/new" element={<AddCompanyAccount />} />
               <Route path="company-accounts/edit/:id" element={<AddCompanyAccount />} />
+              <Route
+                path="view-company"
+                element={
+                  <ProtectedRoute allowedRoles={["customer"]}>
+                    <ViewCompany />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Pricing */}
               <Route path="pricing/general" element={<General />} />
