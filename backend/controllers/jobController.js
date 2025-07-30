@@ -1,6 +1,6 @@
 import Job from "../models/Job.js";
 import Booking from "../models/Booking.js";
-import Driver from "../models/Driver.js";
+import driver from "../models/Driver.js";
 import mongoose from "mongoose";
 
 // ✅ POST: Create a new job
@@ -19,7 +19,6 @@ export const createJob = async (req, res) => {
       companyId,
       jobStatus: "New",
     });
-
     const savedJob = await newJob.save();
 
     return res.status(201).json({
@@ -38,33 +37,29 @@ export const createJob = async (req, res) => {
 
 // ✅ GET: All jobs for a company with embedded booking details
 export const getAllJobs = async (req, res) => {
+  console.log("api called");
   try {
-    const { companyId } = req.query;
-
+    const companyId = req?.user?.companyId;
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Invalid or missing companyId" });
     }
 
-    const jobs = await Job.find({ companyId })
-      .populate("driverId")
-      .lean();
+    const jobs = await Job.find({ companyId }).populate("driverId").lean();
 
-    const enrichedJobs = await Promise.all(
-      jobs.map(async (job) => {
-        const booking = await Booking.findById(job.bookingId).lean();
-        return {
-          ...job,
-          booking: booking || {},
-          primaryJourney: booking?.primaryJourney || {},
-          returnJourney: booking?.returnJourney || {}, // Ensure returnJourney is included
-        };
-      })
-    );
+    if (!jobs || jobs.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No jobs found for this company" });
+    }
 
-    return res.status(200).json({ success: true, jobs: enrichedJobs });
+    return res
+      .status(200)
+      .json({ success: true, message: "Jobs fetched successfully", jobs });
   } catch (err) {
     console.error("Error fetching all jobs:", err);
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
   }
 };
 
@@ -101,7 +96,9 @@ export const getDriverJobs = async (req, res) => {
     return res.status(200).json({ success: true, jobs: enrichedJobs });
   } catch (err) {
     console.error("🔥 Error in getDriverJobs:", err);
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
   }
 };
 
@@ -139,15 +136,18 @@ export const updateJobStatus = async (req, res) => {
     // Return response with updated job details, and driver's info (for rejected jobs)
     return res.status(200).json({
       success: true,
-      message: jobStatus === "Rejected"
-        ? "Job status updated to Rejected"
-        : "Job status updated",
+      message:
+        jobStatus === "Rejected"
+          ? "Job status updated to Rejected"
+          : "Job status updated",
       job,
-      driver: job.driverId,  // Return the driver's details
+      driver: job.driverId, // Return the driver's details
       driverRejectionNote: job.driverRejectionNote, // Return the rejection note if it's set
     });
   } catch (err) {
     console.error("Error updating job status:", err);
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
   }
 };

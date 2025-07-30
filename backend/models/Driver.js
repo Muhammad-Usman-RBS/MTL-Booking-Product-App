@@ -61,7 +61,7 @@ const DriverProfileSchema = new mongoose.Schema({
 });
 
 // Register model with the name 'Driver' (case-sensitive)
-export default mongoose.model("Driver", DriverProfileSchema);
+export default mongoose.model("driver", DriverProfileSchema);
 
 
 

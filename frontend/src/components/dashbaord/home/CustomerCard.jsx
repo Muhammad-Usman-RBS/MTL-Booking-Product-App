@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useGetAllBookingsQuery } from '../../../redux/api/bookingApi';
 import { useGetAllDriversQuery } from '../../../redux/api/driverApi';
+import { statusColors } from '../../../constants/dashboardTabsData/data';
 
 const CustomerCard = () => {
     const user = useSelector((state) => state.auth.user);
@@ -28,18 +29,7 @@ const CustomerCard = () => {
         if (error) toast.error('Failed to load bookings');
     }, [error]);
 
-    const statusColors = {
-        New: { bg: '#E0E7FF', text: '#3730A3' },
-        Accepted: { bg: '#CCFBF1', text: '#0F766E' },
-        'On Route': { bg: '#FEF9C3', text: '#92400E' },
-        'At Location': { bg: '#DBEAFE', text: '#1D4ED8' },
-        'Ride Started': { bg: '#E0F2FE', text: '#0284C7' },
-        'Late Cancel': { bg: '#FECACA', text: '#B91C1C' },
-        'No Show': { bg: '#E9D5FF', text: '#7E22CE' },
-        Completed: { bg: '#DCFCE7', text: '#15803D' },
-        Cancel: { bg: '#E5E7EB', text: '#374151' },
-        Deleted: { bg: '#F3F4F6', text: '#6B7280' },
-    };
+
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6 p-6">

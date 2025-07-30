@@ -535,6 +535,61 @@ export const deleteBooking = async (req, res) => {
   }
 };
 
+const sendEmailsAsync = async (
+  clientAdminEmail,
+  passengerEmail,
+  driverEmail,
+  driverName,
+  status,
+  bookingId
+) => {
+  const emailPromises = [];
+
+  // Send email to client admin
+  if (clientAdminEmail) {
+    const clientAdminEmailPromise = sendEmail(
+      clientAdminEmail,
+      "Booking Status Updated",
+      {
+        title: `Driver ${driverName} changed the status to ${status} for booking #${bookingId}`,
+        subtitle: `Booking status changed by driver ${driverName} to ${status}`,
+        data: { BookingId: bookingId, Status: status, DriverName: driverName },
+      }
+    );
+    emailPromises.push(clientAdminEmailPromise);
+  }
+
+  // Send email to passenger
+  if (passengerEmail) {
+    const passengerEmailPromise = sendEmail(
+      passengerEmail,
+      "Your Ride Status Has Been Updated",
+      {
+        title: `Your Ride Status Has Been Updated by Driver ${driverName}`,
+        subtitle: `Booking status changed to ${status} by driver ${driverName}`,
+        data: { BookingId: bookingId, Status: status, DriverName: driverName },
+      }
+    );
+    emailPromises.push(passengerEmailPromise);
+  }
+
+  // Send email to the driver
+  if (driverEmail) {
+    const driverEmailPromise = sendEmail(
+      driverEmail,
+      "Ride Status Updated by Admin",
+      {
+        title: `Booking #${bookingId} Status Updated`,
+        subtitle: `Admin changed your assigned ride status to ${status}.`,
+        data: { BookingId: bookingId, Status: status, DriverName: driverName },
+      }
+    );
+    emailPromises.push(driverEmailPromise);
+  }
+
+  // Wait for all email promises to finish in parallel
+  await Promise.all(emailPromises);
+};
 // Update Booking Status
 export const updateBookingStatus = async (req, res) => {
   try {
@@ -607,25 +662,14 @@ export const updateBookingStatus = async (req, res) => {
           DriverName: driverName,
         };
 
-        if (clientAdmin?.email) {
-          await sendEmail(clientAdmin.email, "Booking Status Updated", {
-            title,
-            subtitle,
-            data,
-          });
-        }
-
-        if (booking?.passenger?.email) {
-          await sendEmail(
-            booking.passenger.email,
-            "Your Ride Status Has Been Updated",
-            {
-              title: `Your Ride Status Has Been Updated by Driver ${driverName}`,
-              subtitle,
-              data,
-            }
-          );
-        }
+        await sendEmailsAsync(
+          clientAdmin?.email,
+          booking?.passenger?.email,
+          driver?.DriverData?.email,
+          driverName,
+          statusStyled,
+          bookingId
+        );
       }
     }
 

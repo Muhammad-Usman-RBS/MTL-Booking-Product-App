@@ -89,7 +89,7 @@ const Dashboard = () => {
 
   return (
     <>
-      <OutletHeading name="Stats" />
+      <OutletHeading name={ user?.role === 'driver' ? "Assigned Bookings" :"Stats"} />
       {user.role === "driver" ? (
         <DriverPortalHome />
       ) : user.role === "customer" ? (

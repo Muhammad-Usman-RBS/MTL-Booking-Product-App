@@ -5,10 +5,18 @@ import { GripHorizontal } from "lucide-react";
 import SelectStatus from "./SelectStatus";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import { useGetAllBookingsQuery, useDeleteBookingMutation, useUpdateBookingStatusMutation } from "../../../redux/api/bookingApi";
-import { useGetAllJobsQuery, useUpdateJobStatusMutation } from "../../../redux/api/jobsApi"
+import {
+  useGetAllBookingsQuery,
+  useDeleteBookingMutation,
+  useUpdateBookingStatusMutation,
+} from "../../../redux/api/bookingApi";
+import {
+  useGetAllJobsQuery,
+  useUpdateJobStatusMutation,
+} from "../../../redux/api/jobsApi";
 import Icons from "../../../assets/icons";
 import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
+import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 
 const BookingsTable = ({
   assignedDrivers,
@@ -62,9 +70,9 @@ const BookingsTable = ({
   const tableHeaders =
     user?.role === "driver"
       ? allHeaders.filter(
-        (header) =>
-          header.key !== "journeyFare" && header.key !== "returnJourneyFare"
-      )
+          (header) =>
+            header.key !== "journeyFare" && header.key !== "returnJourneyFare"
+        )
       : allHeaders;
 
   const emptyTableRows = EmptyTableMessage({
@@ -83,9 +91,11 @@ const BookingsTable = ({
   const {
     data: jobData = {},
     isLoading: isJobsLoading,
-    error: jobsError,
     refetch: refetchJobs,
-  } = useGetAllJobsQuery(companyId, { skip: !companyId || !isDriver });
+  } = useGetAllJobsQuery(companyId, { skip: !companyId });
+  const { data: driversData = {}, isLoading: isDriversLoading } =
+    useGetAllDriversQuery({ skip: !companyId });
+  console.log("jobData", jobData);
 
   const refetch = isDriver ? refetchJobs : refetchBookings;
   const [deleteBooking] = useDeleteBookingMutation();
@@ -104,6 +114,34 @@ const BookingsTable = ({
     if (user?.role === "customer" && user?.email) {
       bookings = bookings.filter((b) => b?.passenger?.email === user.email);
     }
+
+    // Merge job data with bookings for non-driver users
+    const jobs = (jobData?.jobs || []).filter(
+      (j) => j.companyId?.toString() === companyId?.toString()
+    );
+
+    bookings = bookings.map((booking) => {
+      // Find matching jobs for this booking
+      const matchingJobs = jobs.filter(
+        (job) => job.bookingId?.toString() === booking._id?.toString()
+      );
+
+      if (matchingJobs.length > 0) {
+        // Get the latest job status
+        const latestJob = matchingJobs.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        )[0];
+        return {
+          ...booking,
+          jobId: latestJob._id,
+          jobStatus: latestJob.jobStatus,
+          driverRejectionNote: latestJob.driverRejectionNote,
+          assignedDriverId: latestJob.driverId,
+        };
+      }
+
+      return booking;
+    });
   } else {
     bookings = (jobData?.jobs || [])
       .filter((j) => j.driverId === user._id || j.driverId?._id === user._id)
@@ -113,6 +151,7 @@ const BookingsTable = ({
           ...b,
           jobId: j._id,
           jobStatus: j.jobStatus,
+          driverRejectionNote: j.driverRejectionNote,
         };
       });
   }
@@ -140,8 +179,8 @@ const BookingsTable = ({
       !Array.isArray(selectedDrivers) || selectedDrivers.length === 0
         ? true
         : Array.isArray(b.drivers)
-          ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
-          : false;
+        ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
+        : false;
 
     const dateTime =
       !startDate || !endDate ? true : createdAt >= start && createdAt <= end;
@@ -171,12 +210,12 @@ const BookingsTable = ({
     return bMatch - aMatch;
   });
 
-  const hasPrimary = filteredBookings.some(b => {
+  const hasPrimary = filteredBookings.some((b) => {
     const type = b.returnJourney ? "Return" : "Primary";
     return type === "Primary";
   });
 
-  const hasReturn = filteredBookings.some(b => {
+  const hasReturn = filteredBookings.some((b) => {
     const type = b.returnJourney ? "Return" : "Primary";
     return type === "Return";
   });
@@ -187,8 +226,13 @@ const BookingsTable = ({
     if (isDeletedTab && key === "status") return false;
     if (!selectedColumns[key]) return false;
 
-    if (!hasPrimary && (key === "journeyFare" || key === "driverFare")) return false;
-    if (!hasReturn && (key === "returnJourneyFare" || key === "returnDriverFare")) return false;
+    if (!hasPrimary && (key === "journeyFare" || key === "driverFare"))
+      return false;
+    if (
+      !hasReturn &&
+      (key === "returnJourneyFare" || key === "returnDriverFare")
+    )
+      return false;
 
     return true;
   });
@@ -271,7 +315,8 @@ const BookingsTable = ({
           if (user?.role === "driver") {
             toast.info("Drivers are not allowed to edit bookings");
             return;
-          } if (isDeletedTab) {
+          }
+          if (isDeletedTab) {
             toast.info("This action is disabled in the Deleted tab.");
             return;
           }
@@ -337,112 +382,65 @@ const BookingsTable = ({
   const formatVehicle = (v) =>
     !v || typeof v !== "object"
       ? "-"
-      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${v.handLuggage || 0
-      } | ${v.checkinLuggage || 0}`;
+      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${
+          v.handLuggage || 0
+        } | ${v.checkinLuggage || 0}`;
 
   const formatPassenger = (p) =>
     !p || typeof p !== "object"
       ? "-"
       : `${p.name || "N/A"} | ${p.email || 0} | ${p.phone || 0}`;
-
   const formatDriver = (item) => {
-    // Get the list of all drivers and cancelled drivers
-    const allDriversRaw = item?.drivers || [];
-    const cancelledDriversRaw = item?.cancelledDrivers || [];
+    const allDrivers = driversData?.drivers || [];
 
-    // Process cancelled drivers (ensure we handle both object and string IDs)
-    const cancelledDrivers = cancelledDriversRaw.map((id) =>
-      typeof id === "object" ? id._id?.toString() : id?.toString()
-    );
-
-    // Filter out valid drivers (those that are not cancelled)
-    const validDrivers = allDriversRaw.filter((driverId) => {
-      const id = typeof driverId === "object" ? driverId._id : driverId;
-      return id && !cancelledDrivers.includes(id.toString());
-    });
-
-    // ✅ Handle "Rejected" job status
+    // Check if the job is rejected
     if (item.jobStatus === "Rejected") {
-      // Get the driver name for rejected job (even if the driver is still in the system)
-      const driverName =
-        validDrivers.length > 0
-          ? validDrivers
-            .map((driverId) => {
-              const driverIdToMatch = typeof driverId === "object" ? driverId._id : driverId;
-              const matchedDriver = assignedDrivers?.find(
-                (d) => d?._id?.toString() === driverIdToMatch?.toString()
-              );
-              return matchedDriver?.DriverData?.firstName ||
-                matchedDriver?.DriverData?.name ||
-                matchedDriver?.name ||
-                "Unnamed Driver";
-            })
-            .join(", ")
-          : "No driver assigned"; // In case no driver is valid
+      let driverName = "Unknown Driver";
 
-      // Use the rejection note or default to "No reason provided"
-      const rejectionNote = item.driverRejectionNote || "No reason provided";
+      if (item.assignedDriverId) {
+        // Find driver by the assigned driver ID from job
+        const driver = allDrivers.find(
+          (d) =>
+            d._id?.toString() === item.assignedDriverId?.toString() &&
+            d.companyId?.toString() === companyId?.toString()
+        );
+        driverName = driver?.fullName || driver?.name || "Unknown Driver";
+      } else if (item.drivers && item.drivers.length > 0) {
+        // Fallback to existing drivers array
+        driverName = item.drivers
+          .map((driver) => driver.name || "Unnamed Driver")
+          .join(", ");
+      }
 
       return (
-        <div className="text-red-500 italic">
+        <div
+          onClick={() => openDriverModal(item)}
+          className="text-red-500 italic"
+        >
           <div className="font-medium">{driverName} - Rejected</div>
-          <div className="text-xs text-gray-500 mt-1 break-words max-w-[200px]">
-            {rejectionNote}
+          <div className="text-xs hover:underline text-gray-500 mt-1">
+            Click here to Select Driver
           </div>
         </div>
       );
     }
 
-    // ✅ Handle case when no drivers are assigned
-    if (validDrivers.length === 0) {
+    const drivers = item.drivers || [];
+    if (drivers.length === 0) {
       return (
-        <div
-          onClick={() => {
-            setSelectedRow(item._id);
-            openDriverModal(item);
-          }}
-          className="text-gray-400 italic cursor-pointer hover:underline"
-        >
-          No driver assigned
-        </div>
+        <span className="text-[var(--dark-grey)]">
+          <Icons.CircleUserRound onClick={() => openDriverModal(item)} />
+        </span>
       );
     }
 
-    // ✅ Display assigned drivers (normal case)
-    return validDrivers.map((driverId, i) => {
-      const driverIdToMatch =
-        typeof driverId === "object" ? driverId._id : driverId;
-      const matchedDriver = assignedDrivers?.find(
-        (d) => d?._id?.toString() === driverIdToMatch?.toString()
-      );
-
-      // Set the driver's name from the matched driver data
-      let driverName = "Unnamed";
-      if (matchedDriver) {
-        driverName =
-          matchedDriver?.DriverData?.firstName ||
-          matchedDriver?.DriverData?.name ||
-          matchedDriver?.name ||
-          "Unnamed";
-      } else if (typeof driverId === "object" && driverId.name) {
-        driverName = driverId.name;
-      }
-
-      return (
-        <div
-          key={i}
-          onClick={() => {
-            setSelectedRow(item._id);
-            openDriverModal(item);
-          }}
-          className="text-sm text-gray-700 space-y-0.5 cursor-pointer hover:text-blue-600 transition-colors"
-        >
-          {driverName}
-        </div>
-      );
-    });
+    // Return the name of the assigned driver(s)
+    return drivers.map((driver, i) => (
+      <div key={i} className="text-sm text-gray-700">
+        {driver.name || "Unnamed Driver"}
+      </div>
+    ));
   };
-
   let tableData = [];
   if (!bookings || bookings.length === 0 || filteredBookings.length === 0) {
     tableData = emptyTableRows;
@@ -545,7 +543,9 @@ const BookingsTable = ({
           case "status":
             row[key] = (
               <SelectStatus
-                value={isDriver ? item.jobStatus || "New" : item.status || "No Show"}
+                value={
+                  isDriver ? item.jobStatus || "New" : item.status || "No Show"
+                }
                 onChange={async (newStatus) => {
                   try {
                     if (isDriver) {
@@ -613,7 +613,9 @@ const BookingsTable = ({
                       {actionMenuItems
                         .filter((action) => {
                           if (user?.role === "driver") {
-                            return action === "View" || action === "Status Audit";
+                            return (
+                              action === "View" || action === "Status Audit"
+                            );
                           }
                           return true;
                         })
@@ -633,7 +635,8 @@ const BookingsTable = ({
                                   }
 
                                   const editedData = { ...item };
-                                  editedData.__editReturn = !!item.returnJourney;
+                                  editedData.__editReturn =
+                                    !!item.returnJourney;
                                   setEditBookingData(editedData);
                                   setShowEditModal(true);
                                 } else if (action === "Delete") {
@@ -657,10 +660,14 @@ const BookingsTable = ({
 
                                   // Remove IDs
                                   delete copied._id;
-                                  if (copied.passenger?._id) delete copied.passenger._id;
-                                  if (copied.vehicle?._id) delete copied.vehicle._id;
-                                  if (copied.primaryJourney?._id) delete copied.primaryJourney._id;
-                                  if (copied.returnJourney?._id) delete copied.returnJourney._id;
+                                  if (copied.passenger?._id)
+                                    delete copied.passenger._id;
+                                  if (copied.vehicle?._id)
+                                    delete copied.vehicle._id;
+                                  if (copied.primaryJourney?._id)
+                                    delete copied.primaryJourney._id;
+                                  if (copied.returnJourney?._id)
+                                    delete copied.returnJourney._id;
 
                                   copied.bookingId = "";
                                   copied.status = "Pending";
@@ -670,7 +677,9 @@ const BookingsTable = ({
                                   copied.__copyMode = true;
 
                                   if (item.returnJourney) {
-                                    copied.primaryJourney = { ...item.returnJourney };
+                                    copied.primaryJourney = {
+                                      ...item.returnJourney,
+                                    };
                                     delete copied.returnJourney;
                                     copied.__copyReturn = false;
                                   } else {
@@ -721,37 +730,41 @@ const BookingsTable = ({
 
       driver: Array.isArray(item.drivers)
         ? item.drivers
-          .map((driver) => {
-            // Handle new structure where driver is an object with name/driverInfo
-            if (typeof driver === "object") {
-              if (driver.name) {
-                return driver.name;
-              } else if (driver.driverInfo?.firstName) {
-                return driver.driverInfo.firstName;
-              } else if (driver.driverId) {
-                // Try to match with assignedDrivers using driverId
+            .map((driver) => {
+              // Handle new structure where driver is an object with name/driverInfo
+              if (typeof driver === "object") {
+                if (driver.name) {
+                  return driver.name;
+                } else if (driver.driverInfo?.firstName) {
+                  return driver.driverInfo.firstName;
+                } else if (driver.driverId) {
+                  // Try to match with assignedDrivers using driverId
+                  const matchedDriver = assignedDrivers.find(
+                    (d) => d?._id?.toString() === driver.driverId?.toString()
+                  );
+                  return (
+                    matchedDriver?.DriverData?.firstName ||
+                    matchedDriver?.DriverData?.name ||
+                    matchedDriver?.name ||
+                    "Unnamed"
+                  );
+                }
+              } else {
+                // Legacy structure - try to match with assignedDrivers
+                const driverId = driver;
                 const matchedDriver = assignedDrivers.find(
-                  (d) => d?._id?.toString() === driver.driverId?.toString()
+                  (d) => d?._id?.toString() === driverId?.toString()
                 );
-                return matchedDriver?.DriverData?.firstName ||
+                return (
+                  matchedDriver?.DriverData?.firstName ||
                   matchedDriver?.DriverData?.name ||
                   matchedDriver?.name ||
-                  "Unnamed";
+                  "Unnamed"
+                );
               }
-            } else {
-              // Legacy structure - try to match with assignedDrivers
-              const driverId = driver;
-              const matchedDriver = assignedDrivers.find(
-                (d) => d?._id?.toString() === driverId?.toString()
-              );
-              return matchedDriver?.DriverData?.firstName ||
-                matchedDriver?.DriverData?.name ||
-                matchedDriver?.name ||
-                "Unnamed";
-            }
-            return "Unnamed";
-          })
-          .join(", ")
+              return "Unnamed";
+            })
+            .join(", ")
         : "-",
       status: item.statusAudit?.at(-1)?.status || item.status || "-",
     };
