@@ -212,8 +212,20 @@ export const getClientAdmins = async (req, res) => {
       query.role = {
         $in: ["clientadmin", "manager", "demo", "driver", "customer"],
       };
+      // } else if (role === "clientadmin") {
+      //   // Get all users created by clientadmin OR by any of their associateadmins
+      //   const associateAdmins = await User.find({
+      //     createdBy: userId,
+      //     role: "associateadmin",
+      //   });
+      //   const associateAdminIds = associateAdmins.map((user) => user._id);
+
+      //   query = {
+      //     createdBy: userId, // only direct creations
+      //     role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
+      //   };
+      // }
     } else if (role === "clientadmin") {
-      // Get all users created by clientadmin OR by any of their associateadmins
       const associateAdmins = await User.find({
         createdBy: userId,
         role: "associateadmin",
@@ -221,7 +233,11 @@ export const getClientAdmins = async (req, res) => {
       const associateAdminIds = associateAdmins.map((user) => user._id);
 
       query = {
-        createdBy: userId, // only direct creations
+        $or: [
+          { createdBy: userId },
+          { createdBy: { $in: associateAdminIds } },
+          { role: "customer", companyId: companyId, createdBy: null } // 👈 include widget-based customers
+        ],
         role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
       };
     } else if (role === "associateadmin") {
@@ -277,7 +293,21 @@ export const updateUserBySuperAdmin = async (req, res) => {
     user.email = email || user.email;
     user.role = role || user.role;
     user.status = status || user.status;
-    user.permissions = permissions || user.permissions;
+    // user.permissions = permissions || user.permissions;
+    const defaultPermissions = ["Home", "Profile", "Logout"];
+
+    if (permissions && Array.isArray(permissions)) {
+      // Ensure default permissions are preserved
+      const finalPermissions = [
+        ...new Set([...defaultPermissions, ...permissions]),
+      ];
+      user.permissions = finalPermissions;
+    } else if (permissions !== undefined) {
+      // If permissions are explicitly sent as something invalid
+      return res.status(400).json({
+        message: "Permissions must be an array of strings",
+      });
+    }
 
     // Validate and assign associateAdminLimit
     if (typeof associateAdminLimit !== "undefined") {
@@ -393,5 +423,51 @@ export const getAllCustomers = async (req, res) => {
   } catch (error) {
     console.error("Error fetching customers:", error);
     res.status(500).json({ message: "Failed to fetch customers" });
+  }
+};
+
+// Widget-based public customer creation
+export const createCustomerViaWidget = async (req, res) => {
+  const { fullName, email, password, companyId } = req.body;
+
+  if (!fullName || !email || !password || !companyId) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  try {
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(409).json({ message: "Email already registered" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await User.create({
+      fullName,
+      email,
+      password: hashedPassword,
+      role: "customer",
+      status: "Active",
+      permissions: ["Home", "Profile", "Logout"],
+      createdBy: null, // since this is a widget
+      companyId,
+      associateAdminLimit: 0,
+    });
+
+    res.status(201).json({
+      message: "Customer created successfully",
+      user: {
+        _id: newUser._id,
+        fullName: newUser.fullName,
+        email: newUser.email,
+        role: newUser.role,
+        status: newUser.status,
+        companyId: newUser.companyId,
+        associateAdminLimit: newUser.associateAdminLimit,
+      },
+    });
+  } catch (error) {
+    console.error("Widget Customer Creation Error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

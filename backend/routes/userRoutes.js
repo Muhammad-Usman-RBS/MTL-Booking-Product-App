@@ -1,11 +1,11 @@
 import express from 'express';
-import { createUserBySuperAdmin, getClientAdmins, updateUserBySuperAdmin, deleteUserBySuperAdmin, getAllUsers, getAllDrivers, getAllCustomers } from '../controllers/userController.js';
+import { createUserBySuperAdmin, getClientAdmins, updateUserBySuperAdmin, deleteUserBySuperAdmin, getAllUsers, getAllDrivers, getAllCustomers, createCustomerViaWidget } from '../controllers/userController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // Create user (clientadmin, staffmember, driver, etc.)
-router.post('/create-clientadmin', protect, authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'), createUserBySuperAdmin);
+router.post('/create-clientadmin', protect, authorize('superadmin', 'clientadmin', 'manager', 'associateadmin', 'customer'), createUserBySuperAdmin);
 
 // Get users based on role and company scope
 router.get('/create-clientadmin', protect, authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'), getClientAdmins);
@@ -22,5 +22,8 @@ router.get("/get-all-drivers", protect, authorize('superadmin', 'clientadmin', '
 
 // GET All Users with Role = "customer"
 router.get("/get-all-customers", protect, authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'), getAllCustomers);
+
+// PUBLIC route for customer creation via widget
+router.post("/create-customer", createCustomerViaWidget);
 
 export default router;

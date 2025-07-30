@@ -1,19 +1,19 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Icons from "../../../assets/icons";
 import usePasswordToggle from "../../../hooks/usePasswordToggle";
-import { useCreateClientAdminMutation } from "../../../redux/api/adminApi";
+import { useCreateCustomerViaWidgetMutation } from "../../../redux/api/adminApi";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const AddCustomer = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const passedEmail = location.state?.email || "";
 
-    const user = useSelector((state) => state.auth.user);
-    const [createAdmin] = useCreateClientAdminMutation();
+    const passedEmail = location.state?.email || "";
+    const passedCompanyId = location.state?.companyId || ""; // ✅ Get companyId from widget
+
+    const [createCustomer] = useCreateCustomerViaWidgetMutation();
 
     const { type: passwordType, visible: passwordVisible, toggleVisibility } =
         usePasswordToggle();
@@ -22,9 +22,6 @@ const AddCustomer = () => {
         fullName: "",
         email: passedEmail,
         password: "",
-        role: "customer",
-        status: "Active",
-        permissions: [],
     });
 
     const handleSave = async () => {
@@ -33,14 +30,18 @@ const AddCustomer = () => {
             return;
         }
 
+        if (!passedCompanyId) {
+            toast.error("Company ID is missing. Please contact support.");
+            return;
+        }
+
         try {
             const payload = {
                 ...formData,
-                companyId: user?.companyId || user?._id,
-                createdBy: user?._id,
+                companyId: passedCompanyId, // ✅ Pass to API
             };
 
-            await createAdmin(payload).unwrap();
+            await createCustomer(payload).unwrap();
             toast.success("Customer created successfully");
 
             setTimeout(() => {
@@ -74,6 +75,9 @@ const AddCustomer = () => {
                     className={`custom_input mb-4 w-full ${passedEmail ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                     disabled={!!passedEmail}
                     value={formData.email}
+                    onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                    }
                 />
 
                 <div className="relative mb-6">

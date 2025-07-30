@@ -133,6 +133,10 @@ const WidgetMain = () => {
                 await createBooking(returnPayload).unwrap();
             }
 
+            // ✅ Success logic
+            localStorage.setItem("isWidgetFormFilled", "true"); // <-- ADD THIS
+            setStep("success");
+
             // Success step
             setStep("success");
         } catch (err) {
@@ -276,7 +280,8 @@ const WidgetMain = () => {
                                 onClick={() => {
                                     navigate("/add-customer", {
                                         state: {
-                                            email: formData?.payment?.passengerDetails?.email || ""
+                                            email: formData?.payment?.passengerDetails?.email || "",
+                                            companyId: companyId,
                                         }
                                     });
                                 }}

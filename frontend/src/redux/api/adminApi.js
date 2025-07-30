@@ -75,6 +75,16 @@ export const adminApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["ClientAdmins"],
     }),
+
+    // Creaye Customer Via Widget
+    createCustomerViaWidget: builder.mutation({
+      query: (payload) => ({
+        url: "/create-customer",
+        method: "POST",
+        body: payload,
+      }),
+    }),
+
   }),
 });
 
@@ -87,4 +97,5 @@ export const {
   useUpdateClientAdminStatusMutation,
   useAdminGetAllDriversQuery,
   useGetAllCustomersQuery,
+  useCreateCustomerViaWidgetMutation,
 } = adminApi;

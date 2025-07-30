@@ -66,6 +66,7 @@ import BookingCalendar from "./components/dashbaord/bookings/BookingCalendar";
 import AddCustomer from "./components/dashbaord/widgetapi/AddCustomer";
 
 import ProtectedRoute from './layouts/ProtectedRoute';
+import ProtectedAddCustomer from "./layouts/ProtectedAddCustomer";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -82,7 +83,14 @@ function App() {
 
         <Route path="/widget-form" element={<WidgetMain />} />
         {/* Role-Specific Dashboards */}
-        <Route path="/add-customer" element={<AddCustomer />} />
+        <Route
+          path="/add-customer"
+          element={
+            <ProtectedAddCustomer>
+              <AddCustomer />
+            </ProtectedAddCustomer>
+          }
+        />
 
         <Route element={<ProtectedRoute />}>
           {/* Create Customer For Widget */}
