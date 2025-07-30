@@ -1923,9 +1923,6 @@ export const colorFields = [
   { key: "hover", label: "Hover Color" },
   { key: "active", label: "Active Color" },
 ];
-
-
-
 export const ALL_PERMISSIONS = [
   "Home",
   "Users",
@@ -1942,17 +1939,16 @@ export const ALL_PERMISSIONS = [
   "Logout",
 ];
 
-
-
-    export const statusColors = {
-        New: { bg: '#E0E7FF', text: '#3730A3' },
-        Accepted: { bg: '#CCFBF1', text: '#0F766E' },
-        'On Route': { bg: '#FEF9C3', text: '#92400E' },
-        'At Location': { bg: '#DBEAFE', text: '#1D4ED8' },
-        'Ride Started': { bg: '#E0F2FE', text: '#0284C7' },
-        'Late Cancel': { bg: '#FECACA', text: '#B91C1C' },
-        'No Show': { bg: '#E9D5FF', text: '#7E22CE' },
-        Completed: { bg: '#DCFCE7', text: '#15803D' },
-        Cancel: { bg: '#E5E7EB', text: '#374151' },
-        Deleted: { bg: '#F3F4F6', text: '#6B7280' },
-    };
+export const statusColors = {
+  New: { bg: "#E0E7FF", text: "#3730A3" },
+  Accepted: { bg: "#CCFBF1", text: "#0F766E" },
+  "On Route": { bg: "#FEF9C3", text: "#92400E" },
+  "At Location": { bg: "#DBEAFE", text: "#1D4ED8" },
+  "Ride Started": { bg: "#E0F2FE", text: "#0284C7" },
+  "Late Cancel": { bg: "#FECACA", text: "#B91C1C" },
+  "No Show": { bg: "#E9D5FF", text: "#7E22CE" },
+  Completed: { bg: "#DCFCE7", text: "#15803D" },
+  Cancel: { bg: "#E5E7EB", text: "#374151" },
+  Deleted: { bg: "#F3F4F6", text: "#6B7280" },
+  Rejected: { bg: "var(--alert-red)", text: "#FFFFFF" },
+};

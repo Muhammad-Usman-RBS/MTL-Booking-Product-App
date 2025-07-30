@@ -55,8 +55,10 @@ const DriverPortalHome = () => {
 
   const jobs = data?.jobs || [];
 
-  const filteredJobs = jobs.filter((job) => job.jobStatus !== "Rejected");
-
+  const filteredJobs = jobs;
+  const isReturnJourney = filteredJobs.some(
+    (job) => job.returnJourneyToggle === true
+  );
   const handleJobAction = async (jobId, status) => {
     setLoadingJobId(jobId);
 
@@ -122,7 +124,17 @@ const DriverPortalHome = () => {
       setLoadingJobId(null);
     }
   };
-
+  console.log("fileredJobs", filteredJobs);
+  const convertKmToMiles = (text) => {
+    if (!text || typeof text !== "string") return "—";
+    if (text.includes("km")) {
+      const km = parseFloat(text.replace("km", "").trim());
+      if (!isNaN(km)) {
+        return `${(km * 0.621371).toFixed(2)} miles`;
+      }
+    }
+    return text;
+  };
   return (
     <div>
       {filteredJobs.length === 0 ? (
@@ -163,32 +175,205 @@ const DriverPortalHome = () => {
                     </span>
                   </div>
 
-                  <hr className="mb-5 border-gray-200" />
+                  <hr className="mb-3 border-gray-200" />
 
                   {/* Info Section */}
                   <div className="space-y-4 text-sm text-gray-700">
-                    <div className="flex space-y-2 justify-between flex-wrap">
+                    <div className="flex justify-between flex-wrap">
+                      <span>
+                        <strong className="mr-1">Booking Type:</strong>
+                        {isReturnJourney ? "Return" : "Primary" || "—"}
+                      </span>
+                      <span>
+                        <strong className="mr-1">Distance:</strong>
+                        {booking?.returnJourneyToggle
+                          ? convertKmToMiles(
+                              booking?.returnJourney?.distanceText
+                            )
+                          : convertKmToMiles(
+                              booking?.primaryJourney?.distanceText
+                            ) || "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between flex-wrap">
+                      <span>
+                        <strong className="mr-1">Payment:</strong>
+                        {booking.paymentMethod || "—"}
+                      </span>
+                      <span>
+                        <strong>Driver Fare:</strong> £
+                        {isReturnJourney
+                          ? booking.returnDriverFare
+                          : booking.driverFare || "—"}
+                      </span>
+                    </div>
+                    <div >
                       <span>
                         <strong>Pickup:</strong> {journey.pickup || "—"}
                       </span>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 py-3">
+                        {isReturnJourney ? (
+                          booking?.returnJourney?.pickupDoorNumber
+                        ) : booking?.primaryJourney?.pickupDoorNumber ? (
+                          <div>
+                            <strong>Pickup Door :</strong>
+                            {isReturnJourney
+                              ? booking.returnJourney.pickupDoorNumber
+                              : booking.primaryJourney.pickupDoorNumber}
+                          </div>
+                        ) : null}
+
+                        {isReturnJourney ? (
+                          booking?.returnJourney?.terminal
+                        ) : booking?.primaryJourney?.terminal ? (
+                          <div>
+                            <strong>Pickup Terminal:</strong>
+                            {isReturnJourney
+                              ? booking.returnJourney.terminal
+                              : booking.primaryJourney.terminal}
+                          </div>
+                        ) : null}
+                        {isReturnJourney ? (
+                          booking?.returnJourney?.arrivefrom
+                        ) : booking?.primaryJourney?.arrivefrom ? (
+                          <div>
+                            <strong>Arriving From:</strong>
+                            {isReturnJourney
+                              ? booking.returnJourney.arrivefrom
+                              : booking.primaryJourney.arrivefrom}
+                          </div>
+                        ) : null}
+
+                        {isReturnJourney ? (
+                          booking?.returnJourney?.flightNumber
+                        ) : booking?.primaryJourney?.flightNumber ? (
+                          <div>
+                            <strong>Flight Number:</strong>
+                            {isReturnJourney
+                              ? booking.returnJourney.flightNumber
+                              : booking.primaryJourney.flightNumber}
+                          </div>
+                        ) : null}
+
+                        {isReturnJourney ? (
+                          booking?.returnJourney?.pickmeAfter
+                        ) : booking?.primaryJourney?.pickmeAfter ? (
+                          <div>
+                            <strong>Pick Me After:</strong>
+                            {isReturnJourney
+                              ? booking.returnJourney.pickmeAfter
+                              : booking.primaryJourney.pickmeAfter}
+                          </div>
+                        ) : null}
+                      </div>
                       <span>
                         <strong>Dropoff:</strong> {journey.dropoff || "—"}
                       </span>
                     </div>
-
-                    <div className="flex justify-between flex-wrap">
-                      <span>
-                        <strong>Driver Fare:</strong> £
-                        {booking.driverFare || booking.returnDriverFare || "—"}
-                      </span>
-                      <span>
-                        <strong>Driver Fare:</strong> £
-                        {booking.driverFare || booking.returnDriverFare || "—"}
-                      </span>
-                    </div>
                   </div>
                 </div>
-                <div className="mt-4">
+                <div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm text-gray-700">
+                    {isReturnJourney ? (
+                      booking?.returnJourney?.dropoffDoorNumber0
+                    ) : booking?.primaryJourney?.dropoffDoorNumber0 ? (
+                      <div>
+                        <strong>Dropoff Door #1:</strong>
+                        {isReturnJourney
+                          ? booking.returnJourney.dropoffDoorNumber0
+                          : booking.primaryJourney.dropoffDoorNumber0}
+                      </div>
+                    ) : null}
+
+                    {isReturnJourney ? (
+                      booking?.returnJourney?.dropoffDoorNumber1
+                    ) : booking?.primaryJourney?.dropoffDoorNumber1 ? (
+                      <div>
+                        <strong>Dropoff Door #2:</strong>
+                        {isReturnJourney
+                          ? booking.returnJourney.dropoffDoorNumber1
+                          : booking.primaryJourney.dropoffDoorNumber1}
+                      </div>
+                    ) : null}
+
+                    {isReturnJourney ? (
+                      booking?.returnJourney?.dropoffDoorNumber2
+                    ) : booking?.primaryJourney?.dropoffDoorNumber2 ? (
+                      <div>
+                        <strong>Dropoff Door #3:</strong>
+                        {isReturnJourney
+                          ? booking.returnJourney.dropoffDoorNumber2
+                          : booking.primaryJourney.dropoffDoorNumber2}
+                      </div>
+                    ) : null}
+
+                    {isReturnJourney ? (
+                      booking?.returnJourney?.additionalDropoff1
+                    ) : booking?.primaryJourney?.additionalDropoff1 ? (
+                      <div>
+                        <strong>Additional Dropoff 1:</strong>
+                        {isReturnJourney
+                          ? booking.returnJourney.additionalDropoff1
+                          : booking.primaryJourney.additionalDropoff1}
+                      </div>
+                    ) : null}
+
+                    {isReturnJourney ? (
+                      booking?.returnJourney?.additionalDropoff2
+                    ) : booking?.primaryJourney?.additionalDropoff2 ? (
+                      <div>
+                        <strong>Additional Dropoff 2:</strong>
+                        {isReturnJourney
+                          ? booking.returnJourney.additionalDropoff2
+                          : booking.primaryJourney.additionalDropoff2}
+                      </div>
+                    ) : null}
+
+                    {isReturnJourney ? (
+                      booking?.returnJourney?.dropoff_terminal_0
+                    ) : booking?.primaryJourney?.dropoff_terminal_0 ? (
+                      <div>
+                        <strong>Dropoff Terminal 1:</strong>
+                        {isReturnJourney
+                          ? booking.returnJourney.dropoff_terminal_0
+                          : booking.primaryJourney.dropoff_terminal_0}
+                      </div>
+                    ) : null}
+
+                    {isReturnJourney ? (
+                      booking?.returnJourney?.dropoff_terminal_1
+                    ) : booking?.primaryJourney?.dropoff_terminal_1 ? (
+                      <div>
+                        <strong>Dropoff Terminal 2:</strong>
+                        {isReturnJourney
+                          ? booking.returnJourney.dropoff_terminal_1
+                          : booking.primaryJourney.dropoff_terminal_1}
+                      </div>
+                    ) : null}
+
+                    {isReturnJourney ? (
+                      booking?.returnJourney?.dropoff_terminal_2
+                    ) : booking?.primaryJourney?.dropoff_terminal_2 ? (
+                      <div>
+                        <strong>Dropoff Terminal 3:</strong>
+                        {isReturnJourney
+                          ? booking.returnJourney.dropoff_terminal_2
+                          : booking.primaryJourney.dropoff_terminal_2}
+                      </div>
+                    ) : null}
+
+                    {booking?.notes && (
+                      <div className="md:col-span-2">
+                        <strong>Notes:</strong> {booking.notes}
+                      </div>
+                    )}
+                    {booking?.internalNotes && (
+                      <div className="md:col-span-2">
+                        <strong>Internal Notes:</strong> {booking.internalNotes}
+                      </div>
+                    )}
+                  </div>
+
                   <strong className="block mb-1 text-lg mt-4 font-bold text-[var(--dark-gray)]">
                     Passenger Details
                   </strong>
@@ -200,11 +385,11 @@ const DriverPortalHome = () => {
                             <strong>Name:</strong> {booking.passenger.name}
                           </div>
                           <div>
-                            <strong>Contact:</strong>{" "}
+                            <strong>Contact:</strong>
                             {booking.passenger.phone || "N/A"}
                           </div>
                           <div>
-                            <strong>Email:</strong>{" "}
+                            <strong>Email:</strong>
                             {booking.passenger.email || "N/A"}
                           </div>
                         </div>
@@ -215,63 +400,64 @@ const DriverPortalHome = () => {
                       </span>
                     )
                   ) : (
-                    <span className="text-gray-500">
+                    <div className="bg-gray-50 p-3 mt-3 text-sm rounded-lg border border-gray-200 shadow-sm">
                       Passenger details will be shown after accepting job
-                    </span>
+                    </div>
                   )}
                 </div>
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-                  {/* Action Area */}
-                  {rejectedJobId === job._id ? (
-                    <div className="text-red-600  text-sm">
-                      The booking was rejected
-                    </div>
-                  ) : currentStatus === "New" ? (
-                    <div className="flex gap-3 pt-2">
-                      <button
-                        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                        onClick={() => handleJobAction(job._id, "Accepted")}
-                      >
-                        Accept
-                      </button>
-                      <button
-                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                        onClick={() => handleJobAction(job._id, "Rejected")}
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  ) : currentStatus === "Accepted" ||
-                    currentStatus === "In Progress" ? (
-                    <>
-                      <div className="flex items-end justify-between w-full ">
-                        <div className="w-1/3 pr-4">
-                          <SelectOption
-                            label="Current Job Status"
-                            value={statusMap[booking._id] || job.jobStatus}
-                            onChange={(e) =>
-                              handleStatusChange(booking._id, e.target.value)
-                            }
-                            options={statusOptions.map((status) => ({
-                              value: status,
-                              label: status,
-                            }))}
-                          />
-                          {loadingJobId === job._id && (
-                            <div className="flex items-center mt-2 text-blue-600">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                              Updating status...
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-sm text-gray-500  text-right w-2/3">
-                          <strong className="mr-1">Booking Date:</strong>
-
-                          {new Date(journey.date).toLocaleString() || "—"}
-                        </div>
+                <hr className="mt-12 mb-2 border-[var(--light-gray)]" />
+                <div className="flex justify-between items-end  gap-4">
+                  {/* Left Section */}
+                  <div className="w-2/3">
+                    {(statusMap[job._id] || job.jobStatus) === "Rejected" ? (
+                      <div className="text-red-600 font-semibold text-sm">
+                        The Job has been rejected
                       </div>
-                    </>
-                  ) : null}
+                    ) : currentStatus === "New" ? (
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                          onClick={() => handleJobAction(job._id, "Accepted")}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                          onClick={() => handleJobAction(job._id, "Rejected")}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    ) : currentStatus === "Accepted" ||
+                      currentStatus === "In Progress" ? (
+                      <div>
+                        <SelectOption
+                          label="Current Job Status"
+                          value={statusMap[booking._id] || job.jobStatus}
+                          onChange={(e) =>
+                            handleStatusChange(booking._id, e.target.value)
+                          }
+                          options={statusOptions.map((status) => ({
+                            value: status,
+                            label: status,
+                          }))}
+                        />
+                        {loadingJobId === job._id && (
+                          <div className="flex items-center mt-2 text-blue-600">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                            Updating status...
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* Right Section */}
+                  <div className="w-full text-right text-sm text-gray-500">
+                    <strong className="mr-1">Booking Date:</strong>
+                    {new Date(journey.date).toLocaleDateString() || "—"},
+                    {journey.hour}:{journey.minute}
+                  </div>
                 </div>
               </div>
             );
