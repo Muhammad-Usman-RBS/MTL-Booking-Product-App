@@ -5,20 +5,24 @@ import { useGetAllPassengersQuery } from "../../../redux/api/bookingApi";
 
 const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
   const [selectedPassenger, setSelectedPassenger] = useState("");
-
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const { data, isLoading, isError } = useGetAllPassengersQuery();
   const passengers = data?.passengers || [];
 
   const buildDisplayValue = (p) => {
-    return `${p.name || "Unnamed"} (${p.email || "No Email"})[br]${p.phone || "No Phone"}`;
+    return `${p.name || "Unnamed"} (${p.email || "No Email"}) +${
+      p.phone || "No Phone"
+    }`;
   };
+  const filteredPassengers = passengers.filter((p) =>
+    buildDisplayValue(p).toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleSelect = (value) => {
     setSelectedPassenger(value);
 
-    const passenger = passengers.find(
-      (p) => buildDisplayValue(p) === value
-    );
+    const passenger = passengers.find((p) => buildDisplayValue(p) === value);
 
     if (passenger) {
       setPassengerDetails({
@@ -49,44 +53,97 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
   return (
     <>
       <div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Select Passenger</label>
-          <select
-            value={selectedPassenger}
-            onChange={(e) => handleSelect(e.target.value)}
-            className="custom_input"
-            disabled={isLoading || isError}
+        <div className="relative">
+          <div
+            className="custom_input cursor-pointer flex justify-between items-center"
+            onClick={() =>
+              !isLoading && !isError && setIsDropdownOpen(!isDropdownOpen)
+            }
           >
-            <option value="">None</option>
-            {isLoading && <option disabled>Loading...</option>}
-            {isError && <option disabled>Error loading passengers</option>}
-            {passengers.map((p, idx) => (
-              <option key={idx} value={buildDisplayValue(p)}>
-                {`${p.name || "Unnamed"} (${p.email || "No Email"}) [br] ${p.phone || "No Phone"}`}
-              </option>
-            ))}
-          </select>
+            <span
+              className={selectedPassenger ? "text-black" : "text-gray-400"}
+            >
+              {selectedPassenger || "None"}
+            </span>
+          </div>
+
+          {isDropdownOpen && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+              <div className="p-2 border-b">
+                <input
+                  type="text"
+                  placeholder="Search passengers..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+              </div>
+              <div className="max-h-48 overflow-y-auto">
+                {isLoading && (
+                  <div className="px-3 py-2 text-gray-500 text-sm">
+                    Loading...
+                  </div>
+                )}
+                {isError && (
+                  <div className="px-3 py-2 text-red-500 text-sm">
+                    Error loading passengers
+                  </div>
+                )}
+                {filteredPassengers.length === 0 && !isLoading && !isError && (
+                  <div className="px-3 py-2 text-gray-500 text-sm">
+                    No passengers found
+                  </div>
+                )}
+                {filteredPassengers.map((p, idx) => (
+                  <div
+                    key={idx}
+                    className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm border-b border-gray-100 last:border-b-0"
+                    onClick={() => {
+                      handleSelect(buildDisplayValue(p));
+                      setIsDropdownOpen(false);
+                      setSearchTerm("");
+                    }}
+                  >
+                    {`${p.name || "Unnamed"} (${p.email || "No Email"}) +${
+                      p.phone || "No Phone"
+                    }`}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 mt-4 lg:grid-cols-2 gap-4">
           <div className="col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Full Name
+            </label>
             <input
               type="text"
               value={passengerDetails.name}
               onChange={(e) =>
-                setPassengerDetails({ ...passengerDetails, name: e.target.value })
+                setPassengerDetails({
+                  ...passengerDetails,
+                  name: e.target.value,
+                })
               }
               placeholder="Enter full name"
               className="custom_input"
             />
           </div>
           <div className="col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address
+            </label>
             <input
               type="email"
               value={passengerDetails.email}
               onChange={(e) =>
-                setPassengerDetails({ ...passengerDetails, email: e.target.value })
+                setPassengerDetails({
+                  ...passengerDetails,
+                  email: e.target.value,
+                })
               }
               placeholder="name@example.com"
               className="custom_input"
@@ -94,7 +151,9 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
           </div>
         </div>
         <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Contact Number
+          </label>
           <PhoneInput
             country={"gb"}
             value={passengerDetails.phone}

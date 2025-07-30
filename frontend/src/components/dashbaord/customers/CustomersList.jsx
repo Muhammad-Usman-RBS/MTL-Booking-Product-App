@@ -13,6 +13,7 @@ import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
+import { Link } from "react-router-dom";
 
 const tabOptions = ["Active", "Suspended", "Pending", "Deleted"];
 
@@ -115,26 +116,13 @@ const CustomersList = () => {
         })
       : paginatedData.map((customer, index) => ({
           index:
-            (page - 1) * (perPage === "All" ? filteredData.length : Number(perPage)) +
+            (page - 1) *
+              (perPage === "All" ? filteredData.length : Number(perPage)) +
             index +
             1,
           name: customer?.name || "N/A",
           email: customer?.email || "N/A",
-          status: (
-            <span
-              className={`px-2 py-1 rounded-full text-sm font-semibold ${
-                customer?.status === "Active"
-                  ? "bg-green-100 text-green-700"
-                  : customer?.status === "Suspended"
-                  ? "bg-yellow-100 text-yellow-700"
-                  : customer?.status === "Deleted"
-                  ? "bg-red-100 text-red-700"
-                  : "bg-gray-100 text-gray-700"
-              }`}
-            >
-              {customer?.status}
-            </span>
-          ),
+          status: <span>{customer?.status}</span>,
           actions: (
             <div className="flex gap-2">
               {customer.status === "Active" && (
@@ -156,7 +144,7 @@ const CustomersList = () => {
               {customer.status !== "Active" && (
                 <button
                   onClick={() => handleStatusChange(customer._id, "Active")}
-                  className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                  className="tab tab-success"
                 >
                   Active
                 </button>
@@ -164,7 +152,7 @@ const CustomersList = () => {
               {customer.status !== "Suspended" && (
                 <button
                   onClick={() => handleStatusChange(customer._id, "Suspended")}
-                  className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                  className="tab-suspended tab"
                 >
                   Suspend
                 </button>
@@ -172,20 +160,32 @@ const CustomersList = () => {
               {customer.status !== "Deleted" ? (
                 <button
                   onClick={() => handleStatusChange(customer._id, "Deleted")}
-                  className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                  className="tab tab-danger"
                 >
                   Delete
                 </button>
               ) : (
-                <button
-                  onClick={() => {
-                    setCustomerToDelete(customer);
-                    setShowDeleteModal(true);
-                  }}
-                  className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                >
-                  Permanently Delete
-                </button>
+                <>
+                  <Link to={`/dashboard/customers/edit/${customer._id}`}>
+                    <Icons.Pencil
+                      title="Edit"
+                      className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
+                    />
+                  </Link>
+
+                  <span
+                    onClick={() => {
+                      setShowDeleteModal(true);
+                      setCustomerToDelete(customer);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Icons.Trash
+                      title="Delete"
+                      className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)]"
+                    />
+                  </span>
+                </>
               )}
             </div>
           ),
@@ -222,8 +222,7 @@ const CustomersList = () => {
                     : "text-[var(--dark-gray)] hover:text-blue-500"
                 }`}
               >
-                {tab} (
-                {allCustomers.filter((c) => c?.status === tab).length})
+                {tab} ({allCustomers.filter((c) => c?.status === tab).length})
               </button>
             ))}
           </div>

@@ -13,8 +13,8 @@ import FilePreview from "../../../constants/constantscomponents/FilePreview";
 import { useSelector } from "react-redux";
 
 const NewDriver = () => {
-  const user = useSelector((state)=> state?.auth?.user)
-    const companyId = user?.companyId
+  const user = useSelector((state) => state?.auth?.user);
+  const companyId = user?.companyId;
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
@@ -87,12 +87,12 @@ const NewDriver = () => {
     } catch (error) {
       console.error("Error creating driver:", error);
       const errorMessage =
-      error?.data?.message ||
-      error?.error ||
-      "Something went wrong while creating the driver";
-  
-    toast.error(errorMessage);
-  }    
+        error?.data?.message ||
+        error?.error ||
+        "Something went wrong while creating the driver";
+
+      toast.error(errorMessage);
+    }
   };
   const handleInputChange = (e, index = null, field = null) => {
     const { name, type, files, value } = e.target;
@@ -227,7 +227,7 @@ const NewDriver = () => {
       <div
         className={`${
           isEdit ? "border-[var(--light-gray)] border-b" : ""
-        } flex items-center justify-between mb-6`}
+        } flex items-center justify-between `}
       >
         <OutletHeading name={isEdit ? "Edit Driver" : "Add Driver"} />
 
@@ -235,6 +235,7 @@ const NewDriver = () => {
           <button className="btn btn-primary ">← Back to Driver List</button>
         </Link>
       </div>
+      <hr className="mb-6 border-[var(--light-gray)]" />
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* PROFILE PICTURE */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
@@ -253,7 +254,7 @@ const NewDriver = () => {
         {/* DRIVER SECTION */}
 
         <DriverData
-        user={user}
+          user={user}
           handleAddAvailability={handleAddAvailability}
           handleInputChange={handleInputChange}
           formData={formData}

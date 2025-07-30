@@ -122,11 +122,11 @@ const AdminList = () => {
             const getButtonStyle = (status) => {
               switch (status) {
                 case "Active":
-                  return "bg-green-100 text-green-700 border-green-300 hover:bg-green-200";
+                  return "tab-success ";
                 case "Suspended":
-                  return "bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200";
+                  return " tab-suspended ";
                 case "Deleted":
-                  return "bg-red-100 text-red-700 border-red-300 hover:bg-red-200";
+                  return "tab-danger ";
                 default:
                   return "bg-gray-100 text-gray-700 border-[var(--light-gray)] hover:bg-gray-200";
               }
@@ -136,7 +136,7 @@ const AdminList = () => {
               <button
                 key={status}
                 onClick={() => handleStatusChange(item._id, status)}
-                className={`px-3 py-1 text-xs rounded-md border font-medium transition ${getButtonStyle(
+                className={` tab ${getButtonStyle(
                   status
                 )}`}
               >

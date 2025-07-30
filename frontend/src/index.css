@@ -23,6 +23,8 @@ p {
 
 /* Theme Colours */
 :root {
+  --white: #ffffff;
+  --black: #000000;
   --primary-dark-red: #ba090a;
   --deep-red: #930000;
   --navy-blue: #0d1758;
@@ -115,7 +117,54 @@ p {
   font-size: 16px;
   transition: all 0.3s ease;
 }
+.tab {
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: CerebriSans-Regular, -apple-system, system-ui, Roboto, sans-serif;
+  font-size: 14px;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid var(--light-gray);
+  background-color: transparent;
+  color: var(--dark-gray);
+  transition: all 0.3s ease;
+}
 
+.tab-danger {
+  background-color: #fee2e2; /* bg-red-100 */
+  color: #b91c1c; /* text-red-700 */
+  border: 1px solid #fca5a5; /* border-red-300 */
+}
+
+.tab-danger:hover {
+  background-color: #fecaca; /* hover:bg-red-200 */
+  border-color: #fecaca;
+}
+
+.tab-success {
+  background-color: #dcfce7; /* bg-green-100 */
+  color: #15803d; /* text-green-700 */
+  border: 1px solid #86efac; /* border-green-300 */
+}
+
+.tab-success:hover {
+  background-color: #bbf7d0; /* hover:bg-green-200 */
+  border-color: #bbf7d0;
+}
+.tab-suspended {
+  background-color: #fef9c3; /* bg-yellow-100 */
+  color: #a16207; /* text-yellow-700 */
+  border: 1px solid #fcd34d; /* border-yellow-300 */
+}
+
+.tab-suspended:hover {
+  background-color: #fef08a; /* hover:bg-yellow-200 */
+  border-color: #fef08a;
+}
 @media screen and (max-width: 576px) {
   .btn {
     font-size: 12px;

@@ -265,12 +265,15 @@ const NewAdminUser = () => {
   else if (user?.role === "demo")
     roleOptions = ["staffmember", "driver", "customer"];
 
-  // Set initial role
   useEffect(() => {
-    if (roleOptions.length > 0 && !selectedAccount.role) {
+    if (
+      actualMode === "create" &&
+      roleOptions.length > 0 &&
+      !selectedAccount.role
+    ) {
       setSelectedAccount((prev) => ({ ...prev, role: roleOptions[0] }));
     }
-  }, [roleOptions]);
+  }, [roleOptions, actualMode]);
 
   const getAvailablePermissions = (role) => {
     if (["driver"].includes(role)) {
@@ -336,11 +339,19 @@ const NewAdminUser = () => {
 
   return (
     <div>
-      <OutletHeading name={actualMode === "edit" ? "Edit User" : "New User"} />
+      <div
+        className={`${
+          isEdit ? "border-[var(--light-gray)] border-b" : ""
+        } flex items-center justify-between `}
+      >
+        <OutletHeading name={actualMode ? "Edit User" : "Add User"} />
 
-      <Link to="/dashboard/admin-list">
-        <button className="btn btn-reset mb-5">← Back to Admin List</button>
-      </Link>
+        <Link to="/dashboard/admin-list" className="mb-4">
+          <button className="btn btn-primary ">← Back to Users List</button>
+        </Link>
+      </div>
+      <hr className="mb-6 border-[var(--light-gray)]" />
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         <div className="md:col-span-1">
           <SelectOption

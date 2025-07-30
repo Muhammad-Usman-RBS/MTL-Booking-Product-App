@@ -142,7 +142,7 @@ const sidebarItems = [
     subTabs: [
       {
         title: "Admin List",
-        icon: Icons.Users,
+        icon: Icons.List,
         route: "/dashboard/admin-list",
       },
       {
