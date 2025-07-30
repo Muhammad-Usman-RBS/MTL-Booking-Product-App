@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import FilePreview from "../../../constants/constantscomponents/FilePreview";
@@ -118,11 +118,10 @@ const AddCompanyAccount = () => {
         ...prev,
         ...companyData,
         clientAdminId: companyData.clientAdminId || "",
-        profileImage: "",
       }));
 
       setFilePreviews({
-        profileImage: `${imagePath}`,
+        profileImage: imagePath,
       });
     }
   }, [companyData, isEdit, isError]);
@@ -178,11 +177,19 @@ const AddCompanyAccount = () => {
 
   return (
     <div>
-      <OutletHeading
-        name={isEdit ? "Edit Company Account" : "Add Company Account"}
-      />
+      <div
+        className={`${
+          isEdit ? "border-[var(--light-gray)] border-b" : ""
+        } flex items-center justify-between `}
+      >
+        <OutletHeading
+          name={isEdit ? "Edit Company Account" : "Add Company Account"}
+        />
 
-      {/* Profile Image Upload */}
+        <Link to="/dashboard/company-accounts/list" className="mb-4">
+          <button className="btn btn-primary ">← Back to  List</button>
+        </Link>
+      </div>
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
         <FilePreview
           label=""

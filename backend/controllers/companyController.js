@@ -47,9 +47,8 @@ export const createCompanyAccount = async (req, res) => {
     if (!clientAdmin) {
       return res.status(404).json({ message: "ClientAdmin not found" });
     }
-
-    const profileImage = req.file?.path || "";
-    const favicon = req.file?.path || "";
+    const profileImage = req.files?.profileImage?.[0]?.path || "";
+    const favicon = req.files?.favicon?.[0]?.path || "";
 
     // Create company instance
     const newCompany = new Company({

@@ -136,9 +136,15 @@ const InvoicePage = () => {
           tax: itemTaxes[index] || original.tax || "No Tax",
           fare: original.fare || 0,
           date: dueDate ? new Date(dueDate) : original.date || new Date(),
-          notes: itemNotes[index] || original.notes || "",
+          notes:
+            itemNotes[index]?.trim() === ""
+              ? null
+              : itemNotes[index] || original.notes || null,
+
           internalNotes:
-            itemInternalNotes[index] || original.internalNotes || "",
+            itemInternalNotes[index]?.trim() === ""
+              ? null
+              : itemInternalNotes[index] || original.internalNotes || null,
         };
       });
 
@@ -477,7 +483,7 @@ const InvoicePage = () => {
                       {index + 1}.
                     </span>
                     <span className="text-md font-semibold text-gray-800">
-                      Booking ID: 
+                      Booking ID:
                       <span className="ml-1 text-blue-700">{bookingId}</span>
                     </span>
                   </div>

@@ -18,7 +18,11 @@
   margin-bottom: 20px;
   gap: 24px;
 }
-
+.invoice-container.pdf-mode .invoice-dates {
+  text-align: right;
+  font-size: small;
+  margin-top: 4px;
+}
 .invoice-info {
   text-align: right;
 }
@@ -158,7 +162,6 @@
   color: #dc2626 !important;
   font-size: small;
   text-align: right;
-
 }
 
 .invoice-container.pdf-mode .invoice-status {
@@ -168,5 +171,23 @@
   font-size: small;
   border: transparent;
   text-align: right;
-
 }
+.invoice-container.pdf-mode .invoice-header {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.invoice-container.pdf-mode .company-info {
+  display: table-cell;
+  width: 50%;
+  vertical-align: top;
+}
+
+.invoice-container.pdf-mode .invoice-info {
+  display: table-cell;
+  width: 50%;
+  vertical-align: top;
+  text-align: right;
+}
+  

@@ -194,16 +194,17 @@ const InvoiceDetails = ({ item }) => {
                 {status}
               </p>
               <p className="invoice-no">#{item?.invoiceNumber}</p>
-              <p>
-                Invoice Date: {new Date(item?.createdAt).toLocaleDateString()}
-              </p>
-              <p>
-                Due Date:{" "}
-                {item?.items?.[0]?.date
-                  ? new Date(item.items[0].date).toLocaleDateString()
-                  : "-"}
-              </p>
-
+              <div className="invoice-dates">
+                <p>
+                  Invoice Date: {new Date(item?.createdAt).toLocaleDateString()}
+                </p>
+                <p>
+                  Due Date:{" "}
+                  {item?.items?.[0]?.date
+                    ? new Date(item.items[0].date).toLocaleDateString()
+                    : "-"}
+                </p>
+              </div>
               <div className="bill-to">
                 <p>
                   <strong>Bill To</strong>
@@ -302,6 +303,5 @@ const InvoiceDetails = ({ item }) => {
     </>
   );
 };
-
 
 export default InvoiceDetails;
