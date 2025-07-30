@@ -31,432 +31,221 @@ const DriverPortalHome = () => {
   const [updateJobStatus] = useUpdateJobStatusMutation();
   const [updateBookingStatus] = useUpdateBookingStatusMutation();
   const [loadingJobId, setLoadingJobId] = useState(null);
-  const [statusMap, setStatusMap] = useState({}); // Track status changes
+  const [statusMap, setStatusMap] = useState({});
   const [rejectedJobId, setRejectedJobId] = useState(null);
-  if (isLoading)
-    return (
-      <div className="p-4">
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2">Loading your bookings...</span>
-        </div>
-      </div>
-    );
 
-  if (error)
-    return (
-      <div className="p-4">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          Error loading bookings:
-          {error?.data?.message || error.message || "Unknown error"}
-        </div>
-      </div>
-    );
+  const convertKmToMiles = (text) => {
+    if (!text || typeof text !== "string") return "—";
+    if (text.includes("km")) {
+      const km = parseFloat(text.replace("km", "").trim());
+      if (!isNaN(km)) return `${(km * 0.621371).toFixed(2)} miles`;
+    }
+    return text;
+  };
 
-  const jobs = data?.jobs || [];
-
-  const filteredJobs = jobs;
-  const isReturnJourney = filteredJobs.some(
-    (job) => job.returnJourneyToggle === true
-  );
   const handleJobAction = async (jobId, status) => {
     setLoadingJobId(jobId);
-
     try {
       const result = await updateJobStatus({ jobId, jobStatus: status });
-
-      if (result.error) {
-        throw new Error(
-          result.error.data?.message || "Failed to update job status"
-        );
-      }
-      if (status === "Rejected") {
-        setRejectedJobId(jobId);
-      }
+      if (result.error) throw new Error(result.error.data?.message || "Failed to update job status");
+      if (status === "Rejected") setRejectedJobId(jobId);
       toast.success(`Job status updated to "${status}" successfully!`);
-
       await refetch();
     } catch (err) {
-      console.error("Error updating job status:", err);
       toast.error(err.message || "Failed to update job status");
     } finally {
       setLoadingJobId(null);
     }
   };
+
   const handleStatusChange = (jobId, newStatus) => {
-    // Update status in statusMap
     setStatusMap((prevState) => ({
       ...prevState,
-      [jobId]: newStatus, // Update status map for the specific job
+      [jobId]: newStatus,
     }));
 
-    // Update the status for booking/job at the backend
-    handleBookingAction(jobId, newStatus);
+    handleBookingAction(jobId, newStatus); // 🔴 HERE
   };
+
   const handleBookingAction = async (bookingId, status) => {
     setLoadingJobId(bookingId);
-
     try {
-      const result = await updateBookingStatus({
-        id: bookingId,
-        status: status,
-        updatedBy: user._id,
-      });
-
-      if (result.error) {
-        throw new Error(
-          result.error.data?.message || "Failed to update booking status"
-        );
-      }
-
+      const result = await updateBookingStatus({ id: bookingId, status, updatedBy: user._id });
+      if (result.error) throw new Error(result.error.data?.message || "Failed to update booking status");
       toast.success(`Booking status updated to "${status}" successfully!`);
-
-      setStatusMap((prevState) => ({
-        ...prevState,
-        [bookingId]: status,
-      }));
-
+      setStatusMap((prevState) => ({ ...prevState, [bookingId]: status }));
       await refetch();
     } catch (err) {
-      console.error("Error updating booking status:", err);
       toast.error(err.message || "Failed to update booking status");
     } finally {
       setLoadingJobId(null);
     }
   };
-  console.log("fileredJobs", filteredJobs);
-  const convertKmToMiles = (text) => {
-    if (!text || typeof text !== "string") return "—";
-    if (text.includes("km")) {
-      const km = parseFloat(text.replace("km", "").trim());
-      if (!isNaN(km)) {
-        return `${(km * 0.621371).toFixed(2)} miles`;
-      }
-    }
-    return text;
-  };
+
+  if (isLoading) {
+    return (
+      <div className="p-4 flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-b-2 border-blue-600 rounded-full"></div>
+        <span className="ml-2">Loading your bookings...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          Error loading bookings: {error?.data?.message || error.message || "Unknown error"}
+        </div>
+      </div>
+    );
+  }
+
+  const jobs = data?.jobs || [];
+
   return (
-    <div>
-      {filteredJobs.length === 0 ? (
+    <div className="container mx-auto px-4">
+      {jobs.length === 0 ? (
         <div className="col-span-full text-center text-lg font-medium text-gray-500">
           No bookings assigned to you yet.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
-          {filteredJobs.map((job) => {
+        <div className="grid grid-cols-1 gap-6">
+          {jobs.map((job) => {
             const booking = job.booking || {};
-            const journey =
-              booking.primaryJourney || booking.returnJourney || {};
+            const isReturnJourney = booking?.returnJourneyToggle === true;
+            const journey = isReturnJourney ? booking?.returnJourney || {} : booking?.primaryJourney || {};
             const currentStatus = statusMap[job._id] || job.jobStatus;
 
             return (
               <div
                 key={job._id}
-                className={`bg-white rounded-2xl p-6 border border-gray-100 flex flex-col justify-between`}
+                className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg w-full transition-transform hover:scale-[1.01]"
               >
-                <div>
-                  {/* Header */}
-                  <div className="flex justify-between items-start mb-4">
-                    <h2 className="text-lg font-bold text-[var(--dark-gray)]">
-                      Booking ID: {booking.bookingId || "—"}
-                    </h2>
-                    <span
-                      className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{
-                        backgroundColor:
-                          statusColors[statusMap[booking._id] || job.jobStatus]
-                            ?.bg,
-                        color:
-                          statusColors[statusMap[booking._id] || job.jobStatus]
-                            ?.text,
-                      }}
-                    >
-                      {statusMap[booking._id] || job.jobStatus}
-                    </span>
-                  </div>
-
-                  <hr className="mb-3 border-gray-200" />
-
-                  {/* Info Section */}
-                  <div className="space-y-4 text-sm text-gray-700">
-                    <div className="flex justify-between flex-wrap">
-                      <span>
-                        <strong className="mr-1">Booking Type:</strong>
-                        {isReturnJourney ? "Return" : "Primary" || "—"}
-                      </span>
-                      <span>
-                        <strong className="mr-1">Distance:</strong>
-                        {booking?.returnJourneyToggle
-                          ? convertKmToMiles(
-                              booking?.returnJourney?.distanceText
-                            )
-                          : convertKmToMiles(
-                              booking?.primaryJourney?.distanceText
-                            ) || "—"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between flex-wrap">
-                      <span>
-                        <strong className="mr-1">Payment:</strong>
-                        {booking.paymentMethod || "—"}
-                      </span>
-                      <span>
-                        <strong>Driver Fare:</strong> £
-                        {isReturnJourney
-                          ? booking.returnDriverFare
-                          : booking.driverFare || "—"}
-                      </span>
-                    </div>
-                    <div >
-                      <span>
-                        <strong>Pickup:</strong> {journey.pickup || "—"}
-                      </span>
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 py-3">
-                        {isReturnJourney ? (
-                          booking?.returnJourney?.pickupDoorNumber
-                        ) : booking?.primaryJourney?.pickupDoorNumber ? (
-                          <div>
-                            <strong>Pickup Door :</strong>
-                            {isReturnJourney
-                              ? booking.returnJourney.pickupDoorNumber
-                              : booking.primaryJourney.pickupDoorNumber}
-                          </div>
-                        ) : null}
-
-                        {isReturnJourney ? (
-                          booking?.returnJourney?.terminal
-                        ) : booking?.primaryJourney?.terminal ? (
-                          <div>
-                            <strong>Pickup Terminal:</strong>
-                            {isReturnJourney
-                              ? booking.returnJourney.terminal
-                              : booking.primaryJourney.terminal}
-                          </div>
-                        ) : null}
-                        {isReturnJourney ? (
-                          booking?.returnJourney?.arrivefrom
-                        ) : booking?.primaryJourney?.arrivefrom ? (
-                          <div>
-                            <strong>Arriving From:</strong>
-                            {isReturnJourney
-                              ? booking.returnJourney.arrivefrom
-                              : booking.primaryJourney.arrivefrom}
-                          </div>
-                        ) : null}
-
-                        {isReturnJourney ? (
-                          booking?.returnJourney?.flightNumber
-                        ) : booking?.primaryJourney?.flightNumber ? (
-                          <div>
-                            <strong>Flight Number:</strong>
-                            {isReturnJourney
-                              ? booking.returnJourney.flightNumber
-                              : booking.primaryJourney.flightNumber}
-                          </div>
-                        ) : null}
-
-                        {isReturnJourney ? (
-                          booking?.returnJourney?.pickmeAfter
-                        ) : booking?.primaryJourney?.pickmeAfter ? (
-                          <div>
-                            <strong>Pick Me After:</strong>
-                            {isReturnJourney
-                              ? booking.returnJourney.pickmeAfter
-                              : booking.primaryJourney.pickmeAfter}
-                          </div>
-                        ) : null}
-                      </div>
-                      <span>
-                        <strong>Dropoff:</strong> {journey.dropoff || "—"}
-                      </span>
-                    </div>
-                  </div>
+                {/* HEADER */}
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-xl font-bold text-[var(--dark-gray)]">
+                    Booking ID: {booking.bookingId || "—"}
+                  </h2>
+                  <span
+                    className="px-3 py-1 rounded-full text-xs font-semibold"
+                    style={{
+                      backgroundColor: statusColors[currentStatus]?.bg,
+                      color: statusColors[currentStatus]?.text,
+                    }}
+                  >
+                    {currentStatus}
+                  </span>
                 </div>
-                <div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm text-gray-700">
-                    {isReturnJourney ? (
-                      booking?.returnJourney?.dropoffDoorNumber0
-                    ) : booking?.primaryJourney?.dropoffDoorNumber0 ? (
-                      <div>
-                        <strong>Dropoff Door #1:</strong>
-                        {isReturnJourney
-                          ? booking.returnJourney.dropoffDoorNumber0
-                          : booking.primaryJourney.dropoffDoorNumber0}
-                      </div>
-                    ) : null}
 
-                    {isReturnJourney ? (
-                      booking?.returnJourney?.dropoffDoorNumber1
-                    ) : booking?.primaryJourney?.dropoffDoorNumber1 ? (
-                      <div>
-                        <strong>Dropoff Door #2:</strong>
-                        {isReturnJourney
-                          ? booking.returnJourney.dropoffDoorNumber1
-                          : booking.primaryJourney.dropoffDoorNumber1}
-                      </div>
-                    ) : null}
+                <hr className="mb-3 border-gray-300" />
 
-                    {isReturnJourney ? (
-                      booking?.returnJourney?.dropoffDoorNumber2
-                    ) : booking?.primaryJourney?.dropoffDoorNumber2 ? (
-                      <div>
-                        <strong>Dropoff Door #3:</strong>
-                        {isReturnJourney
-                          ? booking.returnJourney.dropoffDoorNumber2
-                          : booking.primaryJourney.dropoffDoorNumber2}
+                {/* JOURNEY DETAILS */}
+                <div className="space-y-4 text-sm text-gray-700">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2">Pickup</h3>
+                      <p className="pb-4"><strong>Location:</strong> {journey.pickup || "—"}</p>
+                      {journey?.pickupDoorNumber && <p><strong>Pickup Door:</strong> {journey.pickupDoorNumber}</p>}
+                      {journey?.terminal && <p><strong>Pickup Terminal:</strong> {journey.terminal}</p>}
+                      {journey?.arrivefrom && <p><strong>Arriving From:</strong> {journey.arrivefrom}</p>}
+                      {journey?.flightNumber && <p><strong>Flight Number:</strong> {journey.flightNumber}</p>}
+                      {journey?.pickmeAfter && <p><strong>Pick Me After:</strong> {journey.pickmeAfter}</p>}
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2">Dropoff</h3>
+                      <p><strong>Location:</strong> {journey.dropoff || "—"}</p>
+                      <div className="mt-4 text-sm text-gray-700">
+                        {["dropoffDoorNumber0", "dropoffDoorNumber1", "dropoffDoorNumber2"].map((key, i) => (
+                          journey?.[key] && <div key={key}><strong>Dropoff Door #{i + 1}:</strong> {journey[key]}</div>
+                        ))}
+                        {["additionalDropoff1", "additionalDropoff2"].map((key) => (
+                          journey?.[key] && <div key={key}><strong>{key.replace("additional", "Additional")}:</strong> {journey[key]}</div>
+                        ))}
+                        {["dropoff_terminal_0", "dropoff_terminal_1", "dropoff_terminal_2"].map((key, i) => (
+                          journey?.[key] && <div key={key}><strong>Dropoff Terminal {i + 1}:</strong> {journey[key]}</div>
+                        ))}
+                        {booking?.notes && <div className="md:col-span-2"><strong>Notes:</strong> {booking.notes}</div>}
+                        {booking?.internalNotes && <div className="md:col-span-2"><strong>Internal Notes:</strong> {booking.internalNotes}</div>}
                       </div>
-                    ) : null}
-
-                    {isReturnJourney ? (
-                      booking?.returnJourney?.additionalDropoff1
-                    ) : booking?.primaryJourney?.additionalDropoff1 ? (
-                      <div>
-                        <strong>Additional Dropoff 1:</strong>
-                        {isReturnJourney
-                          ? booking.returnJourney.additionalDropoff1
-                          : booking.primaryJourney.additionalDropoff1}
-                      </div>
-                    ) : null}
-
-                    {isReturnJourney ? (
-                      booking?.returnJourney?.additionalDropoff2
-                    ) : booking?.primaryJourney?.additionalDropoff2 ? (
-                      <div>
-                        <strong>Additional Dropoff 2:</strong>
-                        {isReturnJourney
-                          ? booking.returnJourney.additionalDropoff2
-                          : booking.primaryJourney.additionalDropoff2}
-                      </div>
-                    ) : null}
-
-                    {isReturnJourney ? (
-                      booking?.returnJourney?.dropoff_terminal_0
-                    ) : booking?.primaryJourney?.dropoff_terminal_0 ? (
-                      <div>
-                        <strong>Dropoff Terminal 1:</strong>
-                        {isReturnJourney
-                          ? booking.returnJourney.dropoff_terminal_0
-                          : booking.primaryJourney.dropoff_terminal_0}
-                      </div>
-                    ) : null}
-
-                    {isReturnJourney ? (
-                      booking?.returnJourney?.dropoff_terminal_1
-                    ) : booking?.primaryJourney?.dropoff_terminal_1 ? (
-                      <div>
-                        <strong>Dropoff Terminal 2:</strong>
-                        {isReturnJourney
-                          ? booking.returnJourney.dropoff_terminal_1
-                          : booking.primaryJourney.dropoff_terminal_1}
-                      </div>
-                    ) : null}
-
-                    {isReturnJourney ? (
-                      booking?.returnJourney?.dropoff_terminal_2
-                    ) : booking?.primaryJourney?.dropoff_terminal_2 ? (
-                      <div>
-                        <strong>Dropoff Terminal 3:</strong>
-                        {isReturnJourney
-                          ? booking.returnJourney.dropoff_terminal_2
-                          : booking.primaryJourney.dropoff_terminal_2}
-                      </div>
-                    ) : null}
-
-                    {booking?.notes && (
-                      <div className="md:col-span-2">
-                        <strong>Notes:</strong> {booking.notes}
-                      </div>
-                    )}
-                    {booking?.internalNotes && (
-                      <div className="md:col-span-2">
-                        <strong>Internal Notes:</strong> {booking.internalNotes}
-                      </div>
-                    )}
+                    </div>
                   </div>
 
-                  <strong className="block mb-1 text-lg mt-4 font-bold text-[var(--dark-gray)]">
-                    Passenger Details
-                  </strong>
-                  {(statusMap[job._id] || job.jobStatus) === "Accepted" ? (
-                    booking?.passenger ? (
-                      <div className="space-y-3">
-                        <div className="bg-gray-50 p-3 text-sm rounded-lg border border-gray-200 shadow-sm">
-                          <div>
-                            <strong>Name:</strong> {booking.passenger.name}
-                          </div>
-                          <div>
-                            <strong>Contact:</strong>
-                            {booking.passenger.phone || "N/A"}
-                          </div>
-                          <div>
-                            <strong>Email:</strong>
-                            {booking.passenger.email || "N/A"}
-                          </div>
-                        </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+
+                  {/* Booking Details */}
+                  <div>
+                    <strong className="block mb-3 text-lg font-bold text-[var(--dark-gray)]">Booking Details:</strong>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <strong className="mr-1 text-[var(--dark-gray)]">Booking Type:</strong>
+                        {isReturnJourney ? "Return" : "Primary"}
+                      </div>
+                      <div>
+                        <strong className="mr-1 text-[var(--dark-gray)]">Distance:</strong>
+                        {convertKmToMiles(journey?.distanceText) || "—"}
+                      </div>
+                      <div>
+                        <strong className="mr-1 text-[var(--dark-gray)]">Payment:</strong>
+                        {booking.paymentMethod || "—"}
+                      </div>
+                      <div>
+                        <strong className="text-[var(--dark-gray)]">Driver Fare:</strong> £
+                        {isReturnJourney ? booking.returnDriverFare : booking.driverFare || "—"}
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <strong className="block mb-3 text-lg font-bold text-[var(--dark-gray)]">Passenger Details:</strong>
+                    {currentStatus === "Accepted" && booking?.passenger ? (
+                      <div className="text-sm space-y-2">
+                        <div><strong className="text-[var(--dark-gray)]">Name:</strong> {booking.passenger.name}</div>
+                        <div><strong className="text-[var(--dark-gray)]">Contact:</strong> {booking.passenger.phone || "N/A"}</div>
+                        <div><strong className="text-[var(--dark-gray)]">Email:</strong> {booking.passenger.email || "N/A"}</div>
                       </div>
                     ) : (
-                      <span className="text-gray-500">
-                        No passenger data available
-                      </span>
-                    )
-                  ) : (
-                    <div className="bg-gray-50 p-3 mt-3 text-sm rounded-lg border border-gray-200 shadow-sm">
-                      Passenger details will be shown after accepting job
-                    </div>
-                  )}
-                </div>
-                <hr className="mt-12 mb-2 border-[var(--light-gray)]" />
-                <div className="flex justify-between items-end  gap-4">
-                  {/* Left Section */}
-                  <div className="w-2/3">
-                    {(statusMap[job._id] || job.jobStatus) === "Rejected" ? (
-                      <div className="text-red-600 font-semibold text-sm">
-                        The Job has been rejected
+                      <div className="text-sm">
+                        Passenger details will be shown after accepting job
                       </div>
+                    )}
+                  </div>
+
+                </div>
+
+                {/* ACTIONS */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mt-4">
+                  <div className="w-full md:w-2/3">
+                    {currentStatus === "Rejected" ? (
+                      <div className="text-red-600 font-semibold text-sm">The Job has been rejected</div>
                     ) : currentStatus === "New" ? (
                       <div className="flex gap-3 pt-2">
-                        <button
-                          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                          onClick={() => handleJobAction(job._id, "Accepted")}
-                        >
-                          Accept
-                        </button>
-                        <button
-                          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                          onClick={() => handleJobAction(job._id, "Rejected")}
-                        >
-                          Reject
-                        </button>
+                        <button className="btn btn-success" onClick={() => handleJobAction(job._id, "Accepted")}>Accept</button>
+                        <button className="btn btn-cancel" onClick={() => handleJobAction(job._id, "Rejected")}>Reject</button>
                       </div>
-                    ) : currentStatus === "Accepted" ||
-                      currentStatus === "In Progress" ? (
+                    ) : (
                       <div>
                         <SelectOption
+                          width="32"
                           label="Current Job Status"
                           value={statusMap[booking._id] || job.jobStatus}
-                          onChange={(e) =>
-                            handleStatusChange(booking._id, e.target.value)
-                          }
-                          options={statusOptions.map((status) => ({
-                            value: status,
-                            label: status,
-                          }))}
+                          onChange={(e) => handleStatusChange(booking._id, e.target.value)}
+                          options={statusOptions.map((status) => ({ value: status, label: status }))}
                         />
                         {loadingJobId === job._id && (
                           <div className="flex items-center mt-2 text-blue-600">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                            <div className="animate-spin h-4 w-4 border-b-2 border-blue-600 rounded-full mr-2"></div>
                             Updating status...
                           </div>
                         )}
                       </div>
-                    ) : null}
+                    )}
                   </div>
 
-                  {/* Right Section */}
-                  <div className="w-full text-right text-sm text-gray-500">
+                  <div className="text-right text-sm text-gray-500 w-full md:w-auto">
                     <strong className="mr-1">Booking Date:</strong>
-                    {new Date(journey.date).toLocaleDateString() || "—"},
-                    {journey.hour}:{journey.minute}
+                    {journey.date ? `${new Date(journey.date).toLocaleDateString()}, ${journey.hour}:${journey.minute}` : "—"}
                   </div>
                 </div>
               </div>
