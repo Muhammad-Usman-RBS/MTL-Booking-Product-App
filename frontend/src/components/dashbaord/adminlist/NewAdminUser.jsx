@@ -277,7 +277,13 @@ const NewAdminUser = () => {
 
   const getAvailablePermissions = (role) => {
     if (["driver"].includes(role)) {
-      return ["Statements", "Bookings", "Drivers", "Settings", "Invoices"];
+      return [
+        "Statements",
+        "Company Accounts",
+        "Drivers",
+        "Settings",
+        "Invoices",
+      ];
     } else if (
       ["clientadmin", "associateadmin", "staffmember"].includes(role)
     ) {

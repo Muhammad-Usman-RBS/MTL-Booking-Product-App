@@ -818,3 +818,5 @@ export const sendBookingEmail = async (req, res) => {
     res.status(500).json({ message: "Failed to send booking email." });
   }
 };
+
+

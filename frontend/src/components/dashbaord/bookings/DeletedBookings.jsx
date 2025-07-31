@@ -81,12 +81,8 @@ const DeletedBookings = () => {
           >
             Restore
           </button>
-          <button
-            className="btn btn-cancel"
-            onClick={() => handleDeleteClick(b._id)}
-          >
-            Delete
-          </button>
+          <button className="btn btn-cancel" onClick={() => handleDeleteClick(b._id)}>Delete</button>
+
         </div>
       </>
     ),

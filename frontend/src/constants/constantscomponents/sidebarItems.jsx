@@ -44,6 +44,7 @@ const sidebarItems = [
         title: "Invoices List",
         route: "/dashboard/invoices/list",
         icon: Icons.List,
+        roles: ["driver", "superadmin"],
       },
       {
         title: "New Driver Invoice",
@@ -66,6 +67,7 @@ const sidebarItems = [
         title: "Driver List",
         route: "/dashboard/drivers/list",
         icon: Icons.List,
+        roles: ["driver", "superadmin"],
       },
       {
         title: "New Driver",
@@ -81,13 +83,13 @@ const sidebarItems = [
         title: "Rides",
         icon: Icons.CarFront,
         route: "/dashboard/drivers/all-rides",
-        roles: ["driver"],
+        roles: ["driver", "superadmin"],
       },
       {
         title: "Earnings",
         icon: Icons.Activity,
         route: "/dashboard/drivers/earnings",
-        roles: ["driver"],
+        roles: ["driver", "superadmin"],
       },
     ],
   },
@@ -122,6 +124,7 @@ const sidebarItems = [
         title: "View Company",
         route: "/dashboard/view-company",
         icon: Icons.Building2,
+        roles: ["driver", "superadmin"],
       },
     ],
   },
@@ -134,11 +137,13 @@ const sidebarItems = [
         title: "Driver Statements",
         route: "/dashboard/statements/driver",
         icon: Icons.Truck,
+        roles: ["driver", "superadmin"],
       },
       {
         title: "Driver Payments",
         route: "/dashboard/statements/payments",
         icon: Icons.CreditCard,
+        roles: ["driver", "superadmin"],
       },
     ],
   },
@@ -207,11 +212,7 @@ const sidebarItems = [
       },
     ],
   },
-  {
-    title: "Permissions",
-    route: "/dashboard/permissions",
-    icon: Icons.Lock,
-  },
+
   {
     title: "Settings",
     icon: Icons.Settings,
