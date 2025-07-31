@@ -1,26 +1,23 @@
 import React, { useState, useEffect } from "react";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import {
-  useCreateCustomerMutation,
-  useUpdateCustomerMutation,
-} from "../../../redux/api/customerApi";
+import { useCreateCustomerMutation, useUpdateCustomerMutation } from "../../../redux/api/customerApi";
 import { useSelector } from "react-redux";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { toast } from "react-toastify";
+import IMAGES from "../../../assets/images";
 
 const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
-const [imageFile, setImageFile] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    contact: "",
+    phone: "",
     address: "",
     homeAddress: "",
-    status: "Active",
     profile: "",
   });
 
@@ -32,20 +29,18 @@ const [imageFile, setImageFile] = useState(null);
       setFormData({
         name: customerData.name || "",
         email: customerData.email || "",
-        contact: customerData.contact || "",
+        phone: customerData.phone || "",
         address: customerData.address || "",
         homeAddress: customerData.homeAddress || "",
-        status: customerData.status || "Active",
         profile: customerData.profile || "",
       });
     } else {
       setFormData({
         name: "",
         email: "",
-        contact: "",
+        phone: "",
         address: "",
         homeAddress: "",
-        status: "Active",
         profile: "",
       });
     }
@@ -57,29 +52,29 @@ const [imageFile, setImageFile] = useState(null);
   };
 
   const handlePhoneChange = (value) => {
-    setFormData((prev) => ({ ...prev, contact: value }));
+    setFormData((prev) => ({ ...prev, phone: value }));
   };
 
- const handleImageChange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  setImageFile(file); // Save the file for later (submit time)
+    setImageFile(file);
 
-  const reader = new FileReader();
-  reader.onloadend = () => {
-    setFormData((prev) => ({
-      ...prev,
-      profile: reader.result,
-    }));
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData((prev) => ({
+        ...prev,
+        profile: reader.result,
+      }));
+    };
+    reader.readAsDataURL(file);
   };
-  reader.readAsDataURL(file);
-};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.name.trim() || !formData.email.trim() || !formData.contact.trim()) {
+    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -87,18 +82,18 @@ const [imageFile, setImageFile] = useState(null);
     const customerPayload = {
       name: formData.name.trim(),
       email: formData.email.trim(),
-      contact: formData.contact.trim(),
+      phone: formData.phone.trim(),
       address: formData.address.trim(),
       homeAddress: formData.homeAddress.trim(),
-      status: formData.status.trim(),
-profile: imageFile ? formData.profile : customerData?.profile || "",
+      profile: formData.profile,
       companyId,
     };
 
     try {
       if (customerData && customerData._id) {
+        // Use the onSave callback if provided
         if (typeof onSave === "function") {
-          await onSave(customerData._id, customerPayload);
+          await onSave(customerData._id, customerPayload); // correctly passes to DashboardCustomers handler
         } else {
           await updateCustomer({ id: customerData._id, formData: customerPayload }).unwrap();
           toast.success("Customer updated successfully");
@@ -107,6 +102,7 @@ profile: imageFile ? formData.profile : customerData?.profile || "",
         await createCustomer(customerPayload).unwrap();
         toast.success("Customer created successfully");
       }
+
       onClose();
     } catch (err) {
       console.error("Error:", err);
@@ -121,8 +117,36 @@ profile: imageFile ? formData.profile : customerData?.profile || "",
       heading={customerData ? "Edit Customer" : "Add New Customer"}
     >
       <div className="text-sm w-96 px-4 pb-4 pt-4">
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <div className="flex items-center gap-5 mb-3">
+          {/* Profile Preview */}
+          <div className="shrink-0">
+            <img
+              src={formData.profile || IMAGES.dummyImg}
+              alt="Profile"
+              className="w-20 h-20 rounded-full border border-gray-300 object-cover shadow-sm"
+            />
+          </div>
 
+          {/* Upload Input */}
+          <div className="flex flex-col items-start gap-2">
+            <label className="text-sm font-medium">Upload Profile Image</label>
+            <label
+              htmlFor="upload-image"
+              className="px-4 py-1.5 rounded-md bg-gray-300 text-sm text-black cursor-pointer hover:bg-gray-400 transition"
+            >
+              Choose File
+            </label>
+            <input
+              id="upload-image"
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
           {["name", "email", "address", "homeAddress"].map((field) => (
             <div key={field}>
               <label className="block mb-1 font-medium capitalize">
@@ -140,48 +164,14 @@ profile: imageFile ? formData.profile : customerData?.profile || "",
           ))}
 
           <div>
-            <label className="block mb-1 font-medium">Contact</label>
+            <label className="block mb-1 font-medium">Phone</label>
             <PhoneInput
               country="gb"
               inputClass="w-full custom_input"
               inputStyle={{ width: "100%" }}
-              value={formData.contact}
+              value={formData.phone}
               onChange={handlePhoneChange}
             />
-          </div>
-
-          <div>
-            <label className="block mb-1 font-medium">Profile Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="custom_input"
-            />
-            {formData.profile && (
-              <div className="mt-2">
-                <img
-                  src={formData.profile}
-                  alt="Profile Preview"
-                  className="w-20 h-20 rounded-full border object-cover"
-                />
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="block font-medium text-sm mb-1">Status</label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="custom_input"
-            >
-              <option value="Active">Active</option>
-              <option value="Suspended">Suspended</option>
-              <option value="Pending">Pending</option>
-              <option value="Deleted">Deleted</option>
-            </select>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
@@ -190,7 +180,7 @@ profile: imageFile ? formData.profile : customerData?.profile || "",
               className="btn btn-reset"
               disabled={
                 isCreating || isUpdating ||
-                !formData.name || !formData.email || !formData.contact
+                !formData.name || !formData.email || !formData.phone
               }
             >
               {customerData

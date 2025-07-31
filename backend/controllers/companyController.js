@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Company from "../models/Company.js";
 import User from "../models/User.js";
 import sendEmail from "../utils/sendEmail.js";
+
 export const createCompanyAccount = async (req, res) => {
   try {
     const {

@@ -160,9 +160,9 @@ const BookingCalendar = () => {
     const completedTrips = filteredBookings.filter(b => b.status === "Completed").length;
 
     return (
-        <div className="min-h-screen">
-            <div className="max-w-7xl mx-auto w-full">
-                <OutletHeading name="Booking Calendar" />
+        <>
+            <OutletHeading name="Booking Calendar" />
+            <div>
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
 
                     <div className="flex items-center space-x-3 w-full md:w-auto">
@@ -358,7 +358,7 @@ const BookingCalendar = () => {
                     />
                 </section>
             </div>
-        </div>
+        </>
     );
 };
 

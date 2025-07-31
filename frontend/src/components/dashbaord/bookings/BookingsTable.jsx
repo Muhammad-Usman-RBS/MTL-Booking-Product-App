@@ -70,9 +70,9 @@ const BookingsTable = ({
   const tableHeaders =
     user?.role === "driver"
       ? allHeaders.filter(
-          (header) =>
-            header.key !== "journeyFare" && header.key !== "returnJourneyFare"
-        )
+        (header) =>
+          header.key !== "journeyFare" && header.key !== "returnJourneyFare"
+      )
       : allHeaders;
 
   const emptyTableRows = EmptyTableMessage({
@@ -179,8 +179,8 @@ const BookingsTable = ({
       !Array.isArray(selectedDrivers) || selectedDrivers.length === 0
         ? true
         : Array.isArray(b.drivers)
-        ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
-        : false;
+          ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
+          : false;
 
     const dateTime =
       !startDate || !endDate ? true : createdAt >= start && createdAt <= end;
@@ -382,14 +382,13 @@ const BookingsTable = ({
   const formatVehicle = (v) =>
     !v || typeof v !== "object"
       ? "-"
-      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${
-          v.handLuggage || 0
-        } | ${v.checkinLuggage || 0}`;
+      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${v.handLuggage || 0
+      } | ${v.checkinLuggage || 0}`;
 
   const formatPassenger = (p) =>
     !p || typeof p !== "object"
       ? "-"
-      : `${p.name || "N/A"} | ${p.email || 0} | ${p.phone || 0}`;
+      : `${p.name || "N/A"} | ${p.email || 0} | +${p.phone || 0}`;
   const formatDriver = (item) => {
     const allDrivers = driversData?.drivers || [];
 
@@ -730,30 +729,17 @@ const BookingsTable = ({
 
       driver: Array.isArray(item.drivers)
         ? item.drivers
-            .map((driver) => {
-              // Handle new structure where driver is an object with name/driverInfo
-              if (typeof driver === "object") {
-                if (driver.name) {
-                  return driver.name;
-                } else if (driver.driverInfo?.firstName) {
-                  return driver.driverInfo.firstName;
-                } else if (driver.driverId) {
-                  // Try to match with assignedDrivers using driverId
-                  const matchedDriver = assignedDrivers.find(
-                    (d) => d?._id?.toString() === driver.driverId?.toString()
-                  );
-                  return (
-                    matchedDriver?.DriverData?.firstName ||
-                    matchedDriver?.DriverData?.name ||
-                    matchedDriver?.name ||
-                    "Unnamed"
-                  );
-                }
-              } else {
-                // Legacy structure - try to match with assignedDrivers
-                const driverId = driver;
+          .map((driver) => {
+            // Handle new structure where driver is an object with name/driverInfo
+            if (typeof driver === "object") {
+              if (driver.name) {
+                return driver.name;
+              } else if (driver.driverInfo?.firstName) {
+                return driver.driverInfo.firstName;
+              } else if (driver.driverId) {
+                // Try to match with assignedDrivers using driverId
                 const matchedDriver = assignedDrivers.find(
-                  (d) => d?._id?.toString() === driverId?.toString()
+                  (d) => d?._id?.toString() === driver.driverId?.toString()
                 );
                 return (
                   matchedDriver?.DriverData?.firstName ||
@@ -762,9 +748,22 @@ const BookingsTable = ({
                   "Unnamed"
                 );
               }
-              return "Unnamed";
-            })
-            .join(", ")
+            } else {
+              // Legacy structure - try to match with assignedDrivers
+              const driverId = driver;
+              const matchedDriver = assignedDrivers.find(
+                (d) => d?._id?.toString() === driverId?.toString()
+              );
+              return (
+                matchedDriver?.DriverData?.firstName ||
+                matchedDriver?.DriverData?.name ||
+                matchedDriver?.name ||
+                "Unnamed"
+              );
+            }
+            return "Unnamed";
+          })
+          .join(", ")
         : "-",
       status: item.statusAudit?.at(-1)?.status || item.status || "-",
     };

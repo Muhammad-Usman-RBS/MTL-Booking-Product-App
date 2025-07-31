@@ -5,11 +5,7 @@ import Icons from "../../../assets/icons";
 import IMAGES from "../../../assets/images";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { themes } from "../../../constants/dashboardTabsData/data";
-import {
-  useGetUserNotificationsQuery,
-  useMarkAllAsReadMutation,
-  useMarkAsReadMutation,
-} from "../../../redux/api/notificationApi";
+import { useGetUserNotificationsQuery, useMarkAllAsReadMutation, useMarkAsReadMutation } from "../../../redux/api/notificationApi";
 import useUIStore from "../../../store/useUIStore";
 import JourneyDetailsModal from "../bookings/JourneyDetailsModal";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
@@ -91,6 +87,7 @@ function Navbar() {
   useEffect(() => {
     if (!user?.companyId) return;
   }, [user?.companyId]);
+
   return (
     <>
       <nav className="bg-theme text-theme z-20 relative p-[17.2px] flex  justify-between items-start gap-2 sm:gap-4">
@@ -98,7 +95,6 @@ function Navbar() {
           <button onClick={toggleSidebar} className=" cursor-pointer">
             <Icons.Menu className="size-6 text-theme" />
           </button>
-
           <h1 className="text-xl hidden lg:block font-bold uppercase">
             {[
               "clientadmin",
@@ -110,13 +106,147 @@ function Navbar() {
             ].includes(user?.role)
               ? "Admin Panel"
               : user?.role === "driver"
-              ? "Driver Portal"
-              : user?.role === "customer"
-              ? "Customer Portal"
-              : "Portal"}
+                ? "Driver Portal"
+                : user?.role === "customer"
+                  ? "Customer Portal"
+                  : "Portal"}
           </h1>
         </div>
         <div className="flex items-center  justify-end gap-2 sm:gap-4 flex-wrap">
+          <div
+            className="cursor-pointer lg:mt-0 mt-2 relative hover:bg-white/30 backdrop-blur-md p-2 rounded-full"
+            onClick={() => setShowTooltip(true)}
+            onMouseLeave={handleMouseLeave}
+          >
+            <Icons.BellPlus className="size-5" />
+            <div>
+              {notifications.length >= 1 && (
+                <span className="absolute -top-2 right-0 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
+                  {notifications.filter((n) => !n.isRead).length}
+                </span>
+              )}
+            </div>
+
+            {showTooltip && (
+              <div
+                onMouseEnter={handleMouseEnterTooltip}
+                onMouseLeave={handleMouseLeave}
+                className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 lg:right-0 -right-1/2   text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden"
+              >
+                <div className="border-b px-4 py-3 text-theme bg-theme">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold">Notifications</h3>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await markAllAsRead(user.employeeNumber);
+
+                          refetchNotifications();
+                        } catch (err) {
+                          console.error(
+                            "Error marking all notifications as read:",
+                            err
+                          );
+                        }
+                      }}
+                      className="text-sm"
+                    >
+                      Mark all as read
+                    </button>
+                  </div>
+                </div>
+                {(!Array.isArray(notifications) ||
+                  notifications.length === 0) && (
+                    <div className="px-4 py-3 text-gray-500 text-sm">
+                      No new notifications
+                    </div>
+                  )}
+                {/* Notifications List */}
+                <div className="max-h-64 overflow-y-auto">
+                  {Array.isArray(notifications) &&
+                    notifications.map((data) => (
+                      <div
+                        key={data._id}
+                        onClick={() => {
+                          setSelectedBookingId(data.bookingId);
+                          setShowJourneyModal(true);
+                          setShowTooltip(false);
+                          navigate("/dashboard/bookings/list");
+                        }}
+                        className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
+                          }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`flex-1 `}>
+                            <div className="flex items-start justify-between">
+                              <h4 className={`text-sm text-gray-700`}>
+                                {data.status || "New Notification"}
+                              </h4>
+                              <div>
+                                <span className="text-xs text-gray-700">
+                                  #{data.bookingId || "—"}
+                                </span>
+                              </div>
+                            </div>
+                            <p className="text-xs text-[var(--dark-gray)] mt-1 line-clamp-1 ">
+                              {data?.primaryJourney?.pickup ||
+                                data?.returnJourney?.pickup}
+                            </p>
+                            <div className="flex items-center mt-2 justify-between">
+                              <div className="flex items-center space-x-1">
+                                <Icons.Clock className="w-3 h-3 text-gray-400" />
+                                <span className="text-xs text-gray-500">
+                                  {getTimeAgo(data.bookingSentAt)}
+                                </span>
+                              </div>
+                              <div>
+                                {!data.isRead && (
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      try {
+                                        await markAsRead(data._id);
+                                        refetchNotifications();
+                                        setReadNotifications(
+                                          (prev) =>
+                                            new Set([...prev, data._id])
+                                        );
+                                      } catch (err) {
+                                        console.error(
+                                          "Error marking notification as read:",
+                                          err
+                                        );
+                                      }
+                                    }}
+                                    className="text-xs px-2 py-1 text-black cursor-pointer"
+                                  >
+                                    Mark as read
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+
+                {/* Footer */}
+                <div className="px-4 py-3 text-theme bg-theme border-t">
+                  <Link
+                    onClick={() => setShowTooltip(false)}
+                    to="/dashboard/settings/notifications"
+                    className="w-full text-center text-sm  font-medium flex items-center justify-center gap-2"
+                  >
+                    <Icons.Eye className="w-4 h-4" />
+                    View All Notifications
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
           <div className="relative">
             <button
               onClick={() => setIsThemeOpen(!isThemeOpen)}
@@ -190,8 +320,8 @@ function Navbar() {
                   <div className="border-b   text- ">
                     <div className="ps-4 pt-4 flex items-center space-x-3">
                       {profileImg &&
-                      profileImg !== "" &&
-                      profileImg !== "default" ? (
+                        profileImg !== "" &&
+                        profileImg !== "default" ? (
                         <img
                           src={profileImg}
                           alt="Profile"
@@ -227,147 +357,10 @@ function Navbar() {
                 </div>
               )}
             </div>
-
-            <div
-              className="cursor-pointer lg:mt-0 mt-2 relative hover:bg-white/30 backdrop-blur-md p-2 mx-1 rounded-full"
-              onClick={() => setShowTooltip(true)}
-              onMouseLeave={handleMouseLeave}
-            >
-              <Icons.BellPlus className="size-5" />
-              <div>
-                {notifications.length >= 1 && (
-                  <span className="absolute -top-2 right-0 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
-                    {notifications.filter((n) => !n.isRead).length}
-                  </span>
-                )}
-              </div>
-
-              {showTooltip && (
-                <div
-                  onMouseEnter={handleMouseEnterTooltip}
-                  onMouseLeave={handleMouseLeave}
-                  className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 lg:right-0 -right-1/2   text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden"
-                >
-                  <div className="border-b px-4 py-3 text-theme bg-theme">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">Notifications</h3>
-                      </div>
-                      <button
-                        onClick={async () => {
-                          try {
-                            await markAllAsRead(user.employeeNumber);
-
-                            refetchNotifications();
-                          } catch (err) {
-                            console.error(
-                              "Error marking all notifications as read:",
-                              err
-                            );
-                          }
-                        }}
-                        className="text-sm"
-                      >
-                        Mark all as read
-                      </button>
-                    </div>
-                  </div>
-                  {(!Array.isArray(notifications) ||
-                    notifications.length === 0) && (
-                    <div className="px-4 py-3 text-gray-500 text-sm">
-                      No new notifications
-                    </div>
-                  )}
-                  {/* Notifications List */}
-                  <div className="max-h-64 overflow-y-auto">
-                    {Array.isArray(notifications) &&
-                      notifications.map((data) => (
-                        <div
-                          key={data._id}
-                          onClick={() => {
-                            setSelectedBookingId(data.bookingId);
-                            setShowJourneyModal(true);
-                            setShowTooltip(false);
-                            navigate("/dashboard/bookings/list");
-                          }}
-                          className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${
-                            data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className={`flex-1 `}>
-                              <div className="flex items-start justify-between">
-                                <h4 className={`text-sm text-gray-700`}>
-                                  {data.status || "New Notification"}
-                                </h4>
-                                <div>
-                                  <span className="text-xs text-gray-700">
-                                    #{data.bookingId || "—"}
-                                  </span>
-                                </div>
-                              </div>
-                              <p className="text-xs text-[var(--dark-gray)] mt-1 line-clamp-1 ">
-                                {data?.primaryJourney?.pickup ||
-                                  data?.returnJourney?.pickup}
-                              </p>
-                              <div className="flex items-center mt-2 justify-between">
-                                <div className="flex items-center space-x-1">
-                                  <Icons.Clock className="w-3 h-3 text-gray-400" />
-                                  <span className="text-xs text-gray-500">
-                                    {getTimeAgo(data.bookingSentAt)}
-                                  </span>
-                                </div>
-                                <div>
-                                  {!data.isRead && (
-                                    <button
-                                      onClick={async (e) => {
-                                        e.stopPropagation();
-                                        try {
-                                          await markAsRead(data._id);
-                                          refetchNotifications();
-                                          setReadNotifications(
-                                            (prev) =>
-                                              new Set([...prev, data._id])
-                                          );
-                                        } catch (err) {
-                                          console.error(
-                                            "Error marking notification as read:",
-                                            err
-                                          );
-                                        }
-                                      }}
-                                      className="text-xs px-2 py-1 text-black cursor-pointer"
-                                    >
-                                      Mark as read
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="px-4 py-3 text-theme bg-theme border-t">
-                    <Link
-                      onClick={() => setShowTooltip(false)}
-                      to="/dashboard/settings/notifications"
-                      className="w-full text-center text-sm  font-medium flex items-center justify-center gap-2"
-                    >
-                      <Icons.Eye className="w-4 h-4" />
-                      View All Notifications
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </nav>
 
-      {/* 🎨 Custom Theme Modal */}
       <CustomModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

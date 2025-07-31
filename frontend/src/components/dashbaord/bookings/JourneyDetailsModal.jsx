@@ -254,7 +254,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                   </div>
                   <div>
                     <strong>Phone:</strong>{" "}
-                    {viewData?.passenger?.phone || "N/A"}
+                    +{viewData?.passenger?.phone || "N/A"}
                   </div>
                 </div>
                 <hr className="text-[var(--light-gray)] my-2" />

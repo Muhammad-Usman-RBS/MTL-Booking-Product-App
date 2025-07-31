@@ -94,13 +94,11 @@ function App() {
         />
 
         <Route element={<ProtectedRoute />}>
-          {/* Create Customer For Widget */}
           {/* Dashboard Layout with Nested Routes */}
           <Route path="/dashboard" element={<DashboardLayout />}>
             <>
               {/* Home */}
               <Route path="home" index element={<Dashboard />} />
-              <Route path="permissions" element={<PermissionsSettings />} />
 
               {/* Bookings */}
               <Route path="bookings/list" element={<BookingsList />} />
@@ -115,8 +113,10 @@ function App() {
 
               {/* Invoices */}
               <Route path="invoices/list" element={<InvoicesList />} />
-              <Route path="invoices/new" element={<NewInvoice />} />
               <Route path="invoices/edit/:id" element={<EditInvoice />} />
+              {/* <Route path="invoices/new" element={<InvoiceTypeSelector />} />  */}
+              <Route path="invoices/customer/new" element={<NewInvoice invoiceType="customer" />} />
+              <Route path="invoices/driver/new" element={<NewInvoice invoiceType="driver" />} />
 
               {/* Drivers */}
               <Route path="drivers/list" element={<DriverList />} />
@@ -131,25 +131,9 @@ function App() {
 
               {/* Company Accounts */}
               <Route path="company-accounts/list" element={<CompanyAccountsList />} />
-              <Route
-                path="view-company"
-                element={
-                  <ProtectedRoute allowedRoles={["customer"]}>
-                    <ViewCompany />
-                  </ProtectedRoute>
-                }
-              />
-
               <Route path="company-accounts/new" element={<AddCompanyAccount />} />
               <Route path="company-accounts/edit/:id" element={<AddCompanyAccount />} />
-              <Route
-                path="view-company"
-                element={
-                  <ProtectedRoute allowedRoles={["customer"]}>
-                    <ViewCompany />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="view-company" element={<ViewCompany />} />
 
               {/* Pricing */}
               <Route path="pricing/general" element={<General />} />

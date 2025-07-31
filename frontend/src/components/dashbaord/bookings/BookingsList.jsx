@@ -318,8 +318,8 @@ const BookingsList = () => {
           editBookingData?.__copyMode
             ? "Copy Booking"
             : editBookingData?._id
-            ? "Edit Booking"
-            : "New Booking"
+              ? "Edit Booking"
+              : "New Booking"
         }
       >
         <NewBooking

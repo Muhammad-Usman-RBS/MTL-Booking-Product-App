@@ -90,11 +90,13 @@ import {
   ChevronsRight,
   Info,
   Building2,
+  ShieldCheck,
 } from "lucide-react";
 
 const Icons = {
   Info,
   Building2,
+  ShieldCheck,
   Delete,
   ChevronsRight,
   BellPlus,

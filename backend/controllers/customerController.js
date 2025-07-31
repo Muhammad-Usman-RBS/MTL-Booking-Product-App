@@ -6,7 +6,7 @@ export const createCustomer = async (req, res) => {
     const {
       name,
       email,
-      contact,
+      phone,
       address,
       homeAddress,
       status,
@@ -17,7 +17,7 @@ export const createCustomer = async (req, res) => {
     const newCustomer = new Customer({
       name,
       email,
-      contact,
+      phone,
       address,
       homeAddress,
       status,
@@ -67,31 +67,38 @@ export const getCustomer = async (req, res) => {
 // ✅ Update Customer by ID
 export const updateCustomer = async (req, res) => {
   try {
+    const { id } = req.params;
     const updatedData = req.body;
 
-    const existingCustomer = await Customer.findById(req.params.id);
+    console.log("🔄 Incoming update for customer:", id);
+    console.log("🖼️ Image length:", updatedData.profile?.length);
+
+    const existingCustomer = await Customer.findById(id);
     if (!existingCustomer) {
       return res.status(404).json({ message: "Customer not found" });
     }
 
-    // If profile is not provided in request, preserve existing image
+    // Keep existing image if not changed
     if (!updatedData.profile) {
       updatedData.profile = existingCustomer.profile;
     }
 
-    const customer = await Customer.findByIdAndUpdate(
-      req.params.id,
+    const updatedCustomer = await Customer.findByIdAndUpdate(
+      id,
       updatedData,
       { new: true, runValidators: true }
     );
 
     res.status(200).json({
       message: "Customer updated successfully",
-      customer,
+      customer: updatedCustomer,
     });
   } catch (err) {
-    console.error("Error updating customer:", err);
-    res.status(500).json({ error: "Server error" });
+    console.error("❌ Error updating customer:", err.message);
+    res.status(500).json({
+      error: "Server error",
+      details: err.message,
+    });
   }
 };
 
