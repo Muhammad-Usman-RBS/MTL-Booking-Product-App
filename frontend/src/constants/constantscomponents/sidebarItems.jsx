@@ -46,8 +46,13 @@ const sidebarItems = [
         icon: Icons.List,
       },
       {
-        title: "New Invoice",
-        route: "/dashboard/invoices/new",
+        title: "New Driver Invoice",
+        route: "/dashboard/invoices/driver/new",
+        icon: Icons.FilePlus,
+      },
+      {
+        title: "New Customer Invoice",
+        route: "/dashboard/invoices/customer/new",
         icon: Icons.FilePlus,
       },
     ],

@@ -127,12 +127,13 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
             name: driver?.DriverData?.firstName || "Unnamed",
             email: driver?.DriverData?.email,
             employeeNumber: driver?.DriverData?.employeeNumber,
+            contact: driver?.DriverData?.contact,
             // Store additional driver info for easy access
-            driverInfo: {
-              firstName: driver?.DriverData?.firstName,
-              email: driver?.DriverData?.email,
-              employeeNumber: driver?.DriverData?.employeeNumber,
-            },
+            // driverInfo: {
+            //   firstName: driver?.DriverData?.firstName,
+            //   email: driver?.DriverData?.email,
+            //   employeeNumber: driver?.DriverData?.employeeNumber,
+            // },
           };
         })
         .filter((obj) => obj._id); // Only include drivers with valid user IDs

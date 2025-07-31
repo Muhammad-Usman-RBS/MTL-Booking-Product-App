@@ -23,7 +23,7 @@ const generateInvoiceNumber = async () => {
 export const createInvoice = async (req, res) => {
   try {
     const user = req.user;
-    const { items, customer } = req.body;
+    const { items, customer, driver, invoiceType } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: "Invoice items are required." });
@@ -31,13 +31,33 @@ export const createInvoice = async (req, res) => {
 
     const invoiceNumber = await generateInvoiceNumber();
 
-    const newInvoice = new Invoice({
+    const invoiceData = {
       invoiceNumber,
       companyId: user.companyId,
-      customer,
       items,
+      invoiceType,
       invoiceDate: new Date(),
-    });
+    };
+
+    if (invoiceType === "driver") {
+      if (!driver || !driver.name || !driver.email) {
+        return res
+          .status(400)
+          .json({ error: "Driver details are required for driver invoices." });
+      }
+      invoiceData.driver = driver;
+    } else {
+      if (!customer || !customer.name || !customer.email) {
+        return res
+          .status(400)
+          .json({
+            error: "Customer details are required for customer invoices.",
+          });
+      }
+      invoiceData.customer = customer;
+    }
+
+    const newInvoice = new Invoice(invoiceData);
 
     await newInvoice.save();
 
@@ -103,7 +123,7 @@ export const updateInvoice = async (req, res) => {
 
     const invoice = await Invoice.findOne({
       _id: id,
-      companyId: user.companyId,  
+      companyId: user.companyId,
     });
 
     if (!invoice) {

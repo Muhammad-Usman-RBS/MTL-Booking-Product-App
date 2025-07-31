@@ -15,6 +15,8 @@ import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 const InvoicesList = () => {
   const [search, setSearch] = useState("");
   const { data, isLoading, isError, refetch } = useGetAllInvoicesQuery();
+  const [invoiceMode, setInvoiceMode] = useState("Customer");
+
   const invoices = data?.invoices || [];
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
@@ -26,7 +28,7 @@ const InvoicesList = () => {
 
   const handleInvoiceClick = (invoiceNo) => {
     setExpandedInvoice((prev) => (prev === invoiceNo ? null : invoiceNo));
-    setScrollToInvoice(true); 
+    setScrollToInvoice(true);
   };
   useEffect(() => {
     if (scrollToInvoice) {
@@ -35,13 +37,15 @@ const InvoicesList = () => {
         if (target) {
           target.scrollIntoView({ behavior: "smooth", block: "start" });
         }
-        setScrollToInvoice(false); 
-      }, 100); 
+        setScrollToInvoice(false);
+      }, 100);
 
       return () => clearTimeout(timeout);
     }
   }, [expandedInvoice, scrollToInvoice]);
   const filteredData = invoices.filter((invoice) => {
+    if (invoice.invoiceType?.toLowerCase() !== invoiceMode.toLowerCase())
+      return false;
     const query = search.toLowerCase();
     const invoiceNo = invoice.invoiceNumber?.toLowerCase() || "";
     const customerName = invoice.customer?.name || "-";
@@ -184,11 +188,21 @@ const InvoicesList = () => {
       <div>
         <OutletHeading name="Invoices List" />
 
-        <Link to="/dashboard/invoices/new" className="w-full sm:w-auto">
-          <button className="btn btn-reset flex items-center gap-2 w-full mb-3 sm:w-auto justify-center">
-            Create New Invoice
-          </button>
-        </Link>
+        <div className="flex items-center justify-center mb-4">
+          {["Customer", "Driver"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setInvoiceMode(tab)}
+              className={`px-6 py-2 font-semibold text-sm border cursor-pointer ${
+                invoiceMode === tab
+                  ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
+                  : "bg-[#f9fafb] text-gray-700 border-gray-300"
+              } ${tab === "Customer" ? "rounded-l-md" : "rounded-r-md"}`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
 
         <CustomTable
           tableHeaders={tableHeaders}

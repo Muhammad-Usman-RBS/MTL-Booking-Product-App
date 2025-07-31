@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const CustomerSchema = new mongoose.Schema(
+const BillToSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true },
@@ -20,7 +20,6 @@ const InvoiceItemSchema = new mongoose.Schema(
     fare: { type: Number, required: true },
     notes: { type: String },
     internalNotes: { type: String },
-    
 
     tax: {
       type: String,
@@ -40,7 +39,11 @@ const InvoiceSchema = new mongoose.Schema(
       unique: true,
       required: true,
     },
-
+    invoiceType: {
+      type: String,
+      enum: ["customer", "driver"],
+      required: true,
+    },
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
@@ -51,7 +54,8 @@ const InvoiceSchema = new mongoose.Schema(
       enum: ["Paid", "Unpaid"],
       default: "Unpaid",
     },
-    customer: CustomerSchema,
+    customer: BillToSchema,
+    driver: BillToSchema,
     invoiceDate: {
       type: Date,
       default: Date.now,

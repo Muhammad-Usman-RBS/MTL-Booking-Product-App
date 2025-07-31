@@ -17,7 +17,7 @@ const getFirstAndLastDay = (offset = 0) => {
   return [firstDay, lastDay];
 };
 
-const NewInvoice = () => {
+const NewInvoice = ({ invoiceType = "customer" }) => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
   const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
@@ -32,6 +32,7 @@ const NewInvoice = () => {
   const [bookingTaxes, setBookingTaxes] = useState({});
 
   const [startDate, setStartDate] = useState(new Date());
+  const [selectedDrivers, setSelectedDrivers] = useState([]);
 
   const [endDate, setEndDate] = useState(new Date());
   const [selectedCustomers, setSelectedCustomers] = useState([]);
@@ -41,6 +42,7 @@ const NewInvoice = () => {
   const taxMultiplier = 1 + taxPercent / 100;
 
   const { data: bookingData } = useGetAllBookingsQuery(user?.companyId);
+  console.log("bookingData", bookingData);
   const allBookings = bookingData?.bookings || [];
   const filteredBookings = allBookings.filter((b) => {
     const createdAt = new Date(b.createdAt);
@@ -74,23 +76,57 @@ const NewInvoice = () => {
       count: 0,
     })),
   ];
-  const customerFilteredBookings = filteredBookings.filter((b) => {
-    // If date range is changed and no customers selected, show all date-filtered data
-    if (selectedCustomers.length === 0 && isDateRangeChanged) {
-      return true;
-    }
-    // If no customers selected and date range is default, don't show any data
-    if (selectedCustomers.length === 0) {
-      return false;
-    }
-    // If "All" is selected, show all data (already date filtered)
-    if (selectedCustomers.includes("All")) {
-      return true;
-    }
-    // Otherwise, filter by selected customers
-    return selectedCustomers.includes(b.passenger?.name);
-  });
 
+  const driverNames = Array.from(
+    new Set(
+      allBookings
+        .flatMap((b) => b?.drivers?.map((d) => d?.name))
+        .filter(Boolean)
+    )
+  ).sort();
+
+  const driverList = [
+    { label: "All", count: 0 },
+    ...driverNames.map((name) => ({ label: name, count: 0 })),
+  ];
+  const customerFilteredBookings = filteredBookings.filter((b) => {
+    const passengerName = b.passenger?.name;
+    const bookingDrivers = b?.drivers?.map((d) => d?.name) || [];
+    const isCompleted = b.status === "Completed";
+
+    const customerMatch =
+      selectedCustomers.includes("All") ||
+      selectedCustomers.includes(passengerName);
+
+    const driverMatch =
+      selectedDrivers.includes("All") ||
+      bookingDrivers.some((name) => selectedDrivers.includes(name));
+
+    const customerSelected = selectedCustomers.length > 0;
+    const driverSelected = selectedDrivers.length > 0;
+
+    // Only include completed bookings
+    if (!isCompleted) return false;
+
+    // If both customer & driver filters are applied
+    if (customerSelected && driverSelected) {
+      return customerMatch && driverMatch;
+    }
+
+    // If only customer filter is applied
+    if (customerSelected && !driverSelected) {
+      return customerMatch;
+    }
+
+    // If only driver filter is applied
+    if (!customerSelected && driverSelected) {
+      return driverMatch;
+    }
+
+    // If no filters are applied, return false
+    return false;
+  });
+  console.log(customerFilteredBookings);
   const tableHeaders = [
     {
       label: (
@@ -114,9 +150,15 @@ const NewInvoice = () => {
     { label: "Booking Id", key: "bookingId" },
     { label: "Pick Up", key: "pickUp" },
     { label: "Drop Off", key: "dropOff" },
-    { label: "Passenger", key: "passenger" },
+    {
+      label: invoiceType === "driver" ? "Driver" : "Customer",
+      key: "passenger",
+    },
     { label: "Date & Time", key: "date" },
-    { label: "Fare", key: "fare" },
+    {
+      label: invoiceType === "driver" ? "driverFare" : "Fare",
+      key: "fare",
+    },
     { label: "Tax", key: "tax" },
     { label: "Total Amount", key: "totalAmount" },
   ];
@@ -143,23 +185,37 @@ const NewInvoice = () => {
       return;
     }
 
-    // Group bookings by customer
     const grouped = {};
 
     selectedBookings.forEach((booking) => {
-      const passenger = booking.passenger || {};
-      const uniqueKey =
-        passenger._id ||
-        `${passenger.name}-${passenger.phone}` ||
-        Math.random();
+      let uniqueKey;
+      let contact;
+
+      if (invoiceType === "driver") {
+        const driver = booking?.drivers?.[0] || {};
+        uniqueKey =
+          driver._id || `${driver.name}-${driver.phone}` || Math.random();
+        contact = {
+          name: driver.name || "Unknown Driver",
+          email: driver.email || "no@email.com",
+          phone: driver.contact || "",
+        };
+      } else {
+        const passenger = booking.passenger || {};
+        uniqueKey =
+          passenger._id ||
+          `${passenger.name}-${passenger.phone}` ||
+          Math.random();
+        contact = {
+          name: passenger.name || "Unknown Customer",
+          email: passenger.email || "no@email.com",
+          phone: passenger.phone || "",
+        };
+      }
 
       if (!grouped[uniqueKey]) {
         grouped[uniqueKey] = {
-          customer: {
-            name: passenger.name || "Unknown",
-            email: passenger.email || "no@email.com",
-            phone: passenger.phone || "",
-          },
+          contact,
           bookings: [],
         };
       }
@@ -169,19 +225,28 @@ const NewInvoice = () => {
 
     try {
       for (const entry of Object.values(grouped)) {
-        const { customer, bookings } = entry;
-
+        const { contact, bookings } = entry;
         const items = bookings.map((booking) => {
-          const fare =
-            booking.returnJourney?.fare || booking.primaryJourney?.fare;
           const taxType = bookingTaxes[booking._id] || "No Tax";
+
+          const fare =
+            invoiceType === "driver"
+              ? booking.returnJourneyToggle
+                ? booking.returnDriverFare || 0
+                : booking.driverFare || 0
+              : booking.returnJourney?.fare ||
+                booking.primaryJourney?.fare ||
+                0;
+
           const totalAmount = taxType === "Tax" ? fare * taxMultiplier : fare;
+
           const journeyNotes =
             booking.returnJourney?.notes || booking.primaryJourney?.notes || "";
           const internalNotes =
             booking.returnJourney?.internalNotes ||
             booking.primaryJourney?.internalNotes;
           const source = booking?.source;
+
           return {
             bookingId: booking.bookingId,
             pickup: booking.primaryJourney?.pickup || "-",
@@ -196,11 +261,13 @@ const NewInvoice = () => {
             internalNotes: internalNotes,
           };
         });
-
         const payload = {
           invoiceNumber: "",
           companyId: user.companyId,
-          customer,
+          invoiceType,
+          ...(invoiceType === "driver"
+            ? { driver: contact }
+            : { customer: contact }),
           items,
         };
 
@@ -219,6 +286,18 @@ const NewInvoice = () => {
     setStartDate(first);
     setEndDate(last);
   }, []);
+  const handleDriverSelection = (newSelection) => {
+    const wasAllSelected = selectedDrivers.includes("All");
+    const isAllInNewSelection = newSelection.includes("All");
+
+    if (isAllInNewSelection && !wasAllSelected) {
+      setSelectedDrivers(["All", ...driverNames]);
+    } else if (wasAllSelected && !isAllInNewSelection) {
+      setSelectedDrivers([]);
+    } else {
+      setSelectedDrivers(newSelection.filter((item) => item !== "All"));
+    }
+  };
 
   let tableData = [];
 
@@ -254,8 +333,15 @@ const NewInvoice = () => {
 
       bookingId: item.bookingId || "-",
       totalAmount: (() => {
-        const fare = item.returnJourney?.fare || item.primaryJourney?.fare || 0;
         const taxType = bookingTaxes[item._id] || "No Tax";
+
+        const fare =
+          invoiceType === "driver"
+            ? item.returnJourneyToggle
+              ? item.returnDriverFare || 0
+              : item.driverFare || 0
+            : item.returnJourney?.fare || item.primaryJourney?.fare || 0;
+
         return taxType === "Tax"
           ? (fare * taxMultiplier).toFixed(2)
           : fare.toFixed(2);
@@ -276,14 +362,22 @@ const NewInvoice = () => {
           }}
         />
       ),
-      passenger: item.passenger?.name || "-",
       date: item.createdAt ? new Date(item.createdAt).toLocaleString() : "-",
+      passenger:
+        invoiceType === "driver"
+          ? item?.drivers?.[0]?.name || "-"
+          : item.passenger?.name || "-",
+
       fare: (
         <input
           type="text"
           className="custom_input"
           defaultValue={
-            item.returnJourney
+            invoiceType === "driver"
+              ? item.returnJourneyToggle
+                ? item.returnDriverFare || 0
+                : item.driverFare || 0
+              : item.returnJourney
               ? item.returnJourney.fare
               : item.primaryJourney?.fare
           }
@@ -310,7 +404,13 @@ const NewInvoice = () => {
 
   return (
     <div>
-      <OutletHeading name="Create New Invoice" />
+      <OutletHeading
+        name={
+          invoiceType === "customer"
+            ? "Create Customer Invoice"
+            : "Create Driver Invoice"
+        }
+      />
 
       <div className="flex    gap-4">
         {/* Filter Section */}
@@ -324,15 +424,29 @@ const NewInvoice = () => {
             />
           </div>
 
-          <div className="w-full sm:w-64">
-            <SelectedSearch
-              selected={selectedCustomers}
-              setSelected={handleCustomerSelection}
-              statusList={customerList}
-              placeholder="Select Customer"
-              showCount={false}
-            />
-          </div>
+          {invoiceType === "customer" && (
+            <div className="w-full sm:w-64">
+              <SelectedSearch
+                selected={selectedCustomers}
+                setSelected={handleCustomerSelection}
+                statusList={customerList}
+                placeholder="Select Customer"
+                showCount={false}
+              />
+            </div>
+          )}
+
+          {invoiceType === "driver" && (
+            <div className="w-full sm:w-64">
+              <SelectedSearch
+                selected={selectedDrivers}
+                setSelected={handleDriverSelection}
+                statusList={driverList}
+                placeholder="Select Driver"
+                showCount={false}
+              />
+            </div>
+          )}
           <div className="flex  mb-1   ">
             <div className="w-full sm:w-64">
               <SelectOption
