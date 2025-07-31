@@ -10,18 +10,26 @@ const Sidebar = () => {
   const isOpen = useUIStore((state) => state.isSidebarOpen);
   const [activeMain, setActiveMain] = useState(null);
 
-  const user = useSelector((state) => state?.auth?.user)
+  const user = useSelector((state) => state?.auth?.user);
   const permissions = user?.permissions || [];
-
+  const userRole = user?.role;
   // Filter sidebarItems based on top-level permission and also filter subTabs based on sub-level permission
   const sidebarTabs = sidebarItems
     .map((item) => {
-      if (!permissions.map(p => p.toLowerCase()).includes(item.title.toLowerCase())) return null;
+      if (
+        !permissions
+          .map((p) => p.toLowerCase())
+          .includes(item.title.toLowerCase())
+      )
+        return null;
 
       // Filter subTabs if they exist
-      let filteredSubTabs = item.subTabs?.filter(
-        (sub) => !sub.roles || sub.roles.some((r) => permissions.includes(r))
-      );
+      let filteredSubTabs = item.subTabs?.filter((sub) => {
+        if (sub.roles && sub.roles.length > 0) {
+          return sub.roles.includes(userRole);
+        }
+        return true;
+      });
 
       return {
         ...item,
@@ -134,9 +142,7 @@ const Sidebar = () => {
                   to={item.route}
                   className={`p-4 hover-theme flex items-center cursor-pointer ${
                     isOpen ? "justify-start pl-4" : "justify-center"
-                  } ${
-                    location.pathname === item.route ? "active-theme" : ""
-                  }`}
+                  } ${location.pathname === item.route ? "active-theme" : ""}`}
                 >
                   <item.icon className="w-4 h-4" />
                   {isOpen && (

@@ -24,10 +24,17 @@ export const notificationApi = apiSlice.injectEndpoints({
         method: "PATCH",
       }),
     }),
+    deleteNotification: builder.mutation({
+      query: (id) => ({
+        url: `/notification/delete-notification/${id}`,
+        method: "DELETE",
+      }),
+    }),
   }),
 });
 
 export const {
+  useDeleteNotificationMutation,
   useGetUserNotificationsQuery,
   useCreateNotificationMutation,
   useMarkAsReadMutation,

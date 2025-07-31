@@ -6,7 +6,11 @@ import { useCreateJobMutation } from "../../../redux/api/jobsApi";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 import { useAdminGetAllDriversQuery } from "../../../redux/api/adminApi";
 import { useCreateNotificationMutation } from "../../../redux/api/notificationApi";
-import { useGetAllBookingsQuery, useSendBookingEmailMutation, useUpdateBookingMutation } from "../../../redux/api/bookingApi";
+import {
+  useGetAllBookingsQuery,
+  useSendBookingEmailMutation,
+  useUpdateBookingMutation,
+} from "../../../redux/api/bookingApi";
 
 const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   const [createNotification] = useCreateNotificationMutation();
@@ -31,7 +35,8 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   const { data: bookingData, refetch: refetchBookings } =
     useGetAllBookingsQuery(companyId);
 
-  const { data: allUsers = [], isLoading: isAllUsersLoading } = useAdminGetAllDriversQuery();
+  const { data: allUsers = [], isLoading: isAllUsersLoading } =
+    useAdminGetAllDriversQuery();
   const allBookings = bookingData?.bookings || [];
 
   const selectedBooking = allBookings.find(
@@ -51,10 +56,10 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
 
     const matchesVehicle = showMatching
       ? vehicleTypes.some(
-        (type) =>
-          typeof type === "string" &&
-          type.trim().toLowerCase() === bookingVehicleType
-      )
+          (type) =>
+            typeof type === "string" &&
+            type.trim().toLowerCase() === bookingVehicleType
+        )
       : true;
 
     return matchesSearch && matchesVehicle;
@@ -65,9 +70,6 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   }
 
   const handleSendEmail = async () => {
-    console.log("🚀 Triggered handleSendEmail");
-    console.log("Company ID:", companyId);
-
     try {
       if (!companyId) {
         toast.error("Company ID is missing. Please log in again.");
@@ -97,7 +99,9 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
 
         if (!driverEmail || !matchedUser) {
           toast.error(
-            `${driver?.DriverData?.firstName || "Driver"} has no valid user account or driver role. Assignment blocked.`
+            `${
+              driver?.DriverData?.firstName || "Driver"
+            } has no valid user account or driver role. Assignment blocked.`
           );
           return;
         }
@@ -107,29 +111,31 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
       const { _id, createdAt, updatedAt, __v, ...restBookingData } = booking;
 
       // Create driver objects that contain both user ID and driver information
-      const driverObjects = selectedDrivers.map((driver) => {
-        const driverEmail = driver?.DriverData?.email?.toLowerCase().trim();
-        const matchedUser = (allUsers?.drivers || []).find(
-          (user) =>
-            user.email?.toLowerCase().trim() === driverEmail &&
-            user.role?.toLowerCase() === "driver"
-        );
+      const driverObjects = selectedDrivers
+        .map((driver) => {
+          const driverEmail = driver?.DriverData?.email?.toLowerCase().trim();
+          const matchedUser = (allUsers?.drivers || []).find(
+            (user) =>
+              user.email?.toLowerCase().trim() === driverEmail &&
+              user.role?.toLowerCase() === "driver"
+          );
 
-        return {
-          _id: matchedUser?._id, // User ID for system operations
-          userId: matchedUser?._id, // Explicit user ID reference
-          driverId: driver._id, // Original driver record ID
-          name: driver?.DriverData?.firstName || "Unnamed",
-          email: driver?.DriverData?.email,
-          employeeNumber: driver?.DriverData?.employeeNumber,
-          // Store additional driver info for easy access
-          driverInfo: {
-            firstName: driver?.DriverData?.firstName,
+          return {
+            _id: matchedUser?._id, // User ID for system operations
+            userId: matchedUser?._id, // Explicit user ID reference
+            driverId: driver._id, // Original driver record ID
+            name: driver?.DriverData?.firstName || "Unnamed",
             email: driver?.DriverData?.email,
-            employeeNumber: driver?.DriverData?.employeeNumber
-          }
-        };
-      }).filter(obj => obj._id); // Only include drivers with valid user IDs
+            employeeNumber: driver?.DriverData?.employeeNumber,
+            // Store additional driver info for easy access
+            driverInfo: {
+              firstName: driver?.DriverData?.firstName,
+              email: driver?.DriverData?.email,
+              employeeNumber: driver?.DriverData?.employeeNumber,
+            },
+          };
+        })
+        .filter((obj) => obj._id); // Only include drivers with valid user IDs
 
       await updateBooking({
         id: booking._id,
@@ -149,94 +155,110 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
 
       // ✅ Create Jobs
       console.log("🧾 Creating Jobs for Drivers...");
-      await Promise.all(selectedDrivers.map(async (driver) => {
-        const matchedUser = (allUsers?.drivers || []).find(
-          (user) =>
-            user.email?.toLowerCase().trim() === driver?.DriverData?.email?.toLowerCase().trim() &&
-            user.role?.toLowerCase() === "driver"
-        );
+      await Promise.all(
+        selectedDrivers.map(async (driver) => {
+          const matchedUser = (allUsers?.drivers || []).find(
+            (user) =>
+              user.email?.toLowerCase().trim() ===
+                driver?.DriverData?.email?.toLowerCase().trim() &&
+              user.role?.toLowerCase() === "driver"
+          );
 
-        const jobPayload = {
-          bookingId: booking._id,
-          driverId: matchedUser?._id,
-          assignedBy: user._id,
-          companyId,
-        };
+          const jobPayload = {
+            bookingId: booking._id,
+            driverId: matchedUser?._id,
+            assignedBy: user._id,
+            companyId,
+          };
 
-        console.log("📤 Sending Job Payload:", jobPayload);
+          console.log("📤 Sending Job Payload:", jobPayload);
 
-        try {
-          const jobRes = await createJob(jobPayload).unwrap();
-          console.log("✅ Job Created:", jobRes);
-          toast.success(`Job created for ${driver.DriverData?.firstName}`);
-        } catch (err) {
-          console.error("❌ Job creation error:", err);
-          toast.error(`Failed to create job for ${driver.DriverData?.firstName}`);
-        }
-      }));
+          try {
+            const jobRes = await createJob(jobPayload).unwrap();
+            toast.success(`Job created for ${driver.DriverData?.firstName}`);
+          } catch (err) {
+            toast.error(
+              `Failed to create job for ${driver.DriverData?.firstName}`
+            );
+          }
+        })
+      );
 
       // ✅ Send Email Alerts
       if (sendEmailChecked) {
-        await Promise.all(selectedDrivers.map(async (driver) => {
-          const email = driver?.DriverData?.email;
-          if (!email) {
-            toast.warning(`${driver?.DriverData?.firstName || "Driver"} has no email. Skipped.`);
-            return;
-          }
+        await Promise.all(
+          selectedDrivers.map(async (driver) => {
+            const email = driver?.DriverData?.email;
+            if (!email) {
+              toast.warning(
+                `${
+                  driver?.DriverData?.firstName || "Driver"
+                } has no email. Skipped.`
+              );
+              return;
+            }
 
-          const payload = {
-            bookingId: booking._id,
-            email,
-          };
+            const payload = {
+              bookingId: booking._id,
+              email,
+            };
 
-          try {
-            await sendBookingEmail(payload).unwrap();
-            toast.success(`Email sent to ${driver.DriverData?.firstName}`);
-          } catch (err) {
-            console.error("❌ Email error:", err);
-            toast.error(`Failed to send to ${driver.DriverData?.firstName}`);
-          }
-        }));
+            try {
+              await sendBookingEmail(payload).unwrap();
+              toast.success(`Email sent to ${driver.DriverData?.firstName}`);
+            } catch (err) {
+              console.error("❌ Email error:", err);
+              toast.error(`Failed to send to ${driver.DriverData?.firstName}`);
+            }
+          })
+        );
       }
 
       // ✅ Notifications
-      await Promise.all(selectedDrivers.map(async (driver) => {
-        const { DriverData } = driver;
+      await Promise.all(
+        selectedDrivers.map(async (driver) => {
+          const { DriverData } = driver;
 
-        if (!DriverData?.employeeNumber) {
-          toast.warning(`${DriverData?.firstName || "Driver"} has no employee number. Skipped.`);
-          return;
-        }
+          if (!DriverData?.employeeNumber) {
+            toast.warning(
+              `${
+                DriverData?.firstName || "Driver"
+              } has no employee number. Skipped.`
+            );
+            return;
+          }
 
-        const notificationPayload = {
-          employeeNumber: DriverData.employeeNumber,
-          bookingId: booking.bookingId,
-          status: booking.status,
-          primaryJourney: {
-            pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup,
-            dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff,
-          },
-          bookingSentAt: new Date(),
-          createdBy: user?._id,
-          companyId,
-        };
+          const notificationPayload = {
+            employeeNumber: DriverData.employeeNumber,
+            bookingId: booking.bookingId,
+            status: booking.status,
+            primaryJourney: {
+              pickup:
+                booking?.primaryJourney?.pickup ||
+                booking?.returnJourney?.pickup,
+              dropoff:
+                booking?.primaryJourney?.dropoff ||
+                booking?.returnJourney?.dropoff,
+            },
+            bookingSentAt: new Date(),
+            createdBy: user?._id,
+            companyId,
+          };
 
-        try {
-          await createNotification(notificationPayload).unwrap();
-          toast.success(`Notification sent to ${DriverData?.firstName}`);
-        } catch (error) {
-          console.error("❌ Notification error:", error);
-          toast.error(`Failed to notify ${DriverData?.firstName}`);
-        }
-      }));
+          try {
+            await createNotification(notificationPayload).unwrap();
+            toast.success(`Notification sent to ${DriverData?.firstName}`);
+          } catch (error) {
+            toast.error(`Failed to notify ${DriverData?.firstName}`);
+          }
+        })
+      );
 
       setShowDriverModal(false);
       if (onDriversUpdate) {
         onDriversUpdate(selectedRow, selectedDrivers);
       }
-
     } catch (error) {
-      console.error("🔥 Unexpected error in handleSendEmail:", error);
       toast.error("Something went wrong while assigning drivers.");
     }
   };
@@ -329,7 +351,7 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
             filteredDriver.map((driver, i) => (
               <label
                 key={i}
-                className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg shadow-sm bg-white hover:shadow-md hover:bg-gray-50 transition-all cursor-pointer"
+                className="flex items-center gap-3 p-3    cursor-pointer"
               >
                 <img
                   src={driver.UploadedData?.driverPicture || IMAGES.dummyImg}

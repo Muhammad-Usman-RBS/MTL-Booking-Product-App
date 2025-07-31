@@ -20,6 +20,7 @@ const sidebarItems = [
         title: "New Booking",
         route: "/dashboard/bookings/new",
         icon: Icons.PlusCircle,
+        roles: ["clientadmin", "manager"],
       },
       {
         title: "Booking Calendar",
@@ -30,7 +31,8 @@ const sidebarItems = [
         title: "Deleted Booking",
         route: "/dashboard/bookings/deleted-booking",
         icon: Icons.Delete,
-      }
+        roles: ["clientadmin", "manager", "associateadmin", "superadmin"],
+      },
     ],
   },
   {
@@ -74,13 +76,13 @@ const sidebarItems = [
         title: "Rides",
         icon: Icons.CarFront,
         route: "/dashboard/drivers/all-rides",
-        // roles: ["clientadmin"],
+        roles: ["driver"],
       },
       {
         title: "Earnings",
         icon: Icons.Activity,
         route: "/dashboard/drivers/earnings",
-        // roles: ["clientadmin"],
+        roles: ["driver"],
       },
     ],
   },
@@ -322,4 +324,3 @@ const sidebarItems = [
 ];
 
 export default sidebarItems;
-
