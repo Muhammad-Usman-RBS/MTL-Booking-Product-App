@@ -322,10 +322,20 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
           type="checkbox"
           checked={selectedRows.includes(item._id)}
           onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedRows([...selectedRows, item._id]);
+            const updatedSelectedRows = e.target.checked
+              ? [...selectedRows, item._id]
+              : selectedRows.filter((id) => id !== item._id);
+
+            setSelectedRows(updatedSelectedRows);
+
+            // Set globalTaxSelection based on first selected row's tax
+            if (updatedSelectedRows.length > 0) {
+              const firstSelectedBookingId = updatedSelectedRows[0];
+              const firstSelectedTax =
+                bookingTaxes[firstSelectedBookingId] || "No Tax";
+              setGlobalTaxSelection(firstSelectedTax);
             } else {
-              setSelectedRows(selectedRows.filter((id) => id !== item._id));
+              setGlobalTaxSelection("No Tax");
             }
           }}
         />

@@ -205,7 +205,6 @@ const InvoicePage = () => {
       toast.error("Failed to update invoice");
     }
   };
-
   const handleCheckboxChange = (item) => {
     const updated = {
       ...checkedItems,
@@ -213,8 +212,32 @@ const InvoicePage = () => {
     };
     setCheckedItems(updated);
     setSelectAll(Object.values(updated).every(Boolean));
-  };
 
+    // Get indices of checked items
+    const checkedIndices = Object.keys(updated)
+      .filter((key) => updated[key])
+      .map((key) => parseInt(key.replace("item", ""), 10));
+
+    if (checkedIndices.length > 0) {
+      // Set globalTaxSelection according to first selected invoice's tax
+      const firstCheckedTax = itemTaxes[checkedIndices[0]] || "No Tax";
+      setGlobalTaxSelection(firstCheckedTax);
+    } else {
+      setGlobalTaxSelection("No Tax"); // Default if nothing is selected
+    }
+  };
+  useEffect(() => {
+    const checkedIndices = Object.keys(checkedItems)
+      .filter((key) => checkedItems[key])
+      .map((key) => parseInt(key.replace("item", ""), 10));
+
+    if (checkedIndices.length > 0) {
+      const firstCheckedTax = itemTaxes[checkedIndices[0]] || "No Tax";
+      setGlobalTaxSelection(firstCheckedTax);
+    } else {
+      setGlobalTaxSelection("No Tax");
+    }
+  }, [checkedItems, itemTaxes]);
   return (
     <>
       <OutletHeading name="Edit Invoice" />

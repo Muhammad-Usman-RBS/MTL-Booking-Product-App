@@ -284,9 +284,9 @@ const NewAdminUser = () => {
         "Settings",
         "Invoices",
       ];
-    } else if (
-      ["clientadmin", "associateadmin", "staffmember"].includes(role)
-    ) {
+    } else if (["customer"].includes(role)) {
+      return ["Invoices", "Company Accounts", "Settings"];
+    } else if (["clientadmin", "manager"].includes(role)) {
       return [
         "Users",
         "Bookings",
@@ -299,7 +299,7 @@ const NewAdminUser = () => {
         "Settings",
         "Widget/API",
       ];
-    } else if (["manager"].includes(role)) {
+    } else if (["associateadmin"].includes(role)) {
       return [
         "Users",
         "Bookings",
@@ -310,7 +310,6 @@ const NewAdminUser = () => {
         "Statements",
         "Pricing",
         "Settings",
-        "Widget/API",
       ];
     } else {
       return [
