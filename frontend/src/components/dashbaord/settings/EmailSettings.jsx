@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import usePasswordToggle from "../../../hooks/usePasswordToggle";
+import UsePasswordToggle from "../../../hooks/UsePasswordToggle";
 import Icons from "../../../assets/icons";
 
 const EmailSettings = () => {
-  const {type: passwordType, visible: passwordVisible, toggleVisibility: togglePasswordVisibility} = usePasswordToggle();
+  const {type: passwordType, visible: passwordVisible, toggleVisibility: togglePasswordVisibility} = UsePasswordToggle();
   const [formData, setFormData] = useState({
     fromEmail: "megatransfers22@gmail.com",
     fromName: "Mega Transfers Limited",

@@ -1,7 +1,7 @@
 // hooks/usePasswordToggle.js
 import { useState } from "react";
 
-export default function usePasswordToggle() {
+const UsePasswordToggle =() => {
   const [visible, setVisible] = useState(false);
   const toggleVisibility = () => setVisible((prev) => !prev);
 
@@ -11,3 +11,4 @@ export default function usePasswordToggle() {
     toggleVisibility,
   };
 }
+export default UsePasswordToggle;
