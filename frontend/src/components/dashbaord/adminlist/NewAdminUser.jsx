@@ -326,7 +326,16 @@ const NewAdminUser = () => {
     }
   };
   useEffect(() => {
-    if (selectedAccount?.role === "driver" && !selectedAccount?.driverId) {
+    if (selectedAccount?.role === "driver") {
+      if (!driversList?.drivers?.length) {
+        toast.warn(
+          "⚠️ Please enter Driver details first from the Drivers tab."
+        );
+        setSelectedAccount(
+        {  role: roleOptions[0],}
+      );
+        return;
+      }
       const singleDriver = driversList.drivers[0];
       const driverData = singleDriver?.DriverData || {};
 
