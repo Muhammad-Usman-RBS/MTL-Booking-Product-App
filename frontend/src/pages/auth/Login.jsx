@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { useLoginUserMutation } from "../../redux/api/userApi";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../redux/authSlice";
-import usePasswordToggle from "../../hooks/usePasswordToggle";
+import UsePasswordToggle from "../../hooks/UsePasswordToggle";
 import Icons from "../../assets/icons";
 
 const Login = () => {
@@ -12,7 +12,7 @@ const Login = () => {
     type: passwordType,
     visible: passwordVisible,
     toggleVisibility: togglePasswordVisibility,
-  } = usePasswordToggle();
+  } = UsePasswordToggle();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();

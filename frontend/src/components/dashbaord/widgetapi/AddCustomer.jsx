@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Icons from "../../../assets/icons";
-import usePasswordToggle from "../../../hooks/usePasswordToggle";
+import UsePasswordToggle from "../../../hooks/UsePasswordToggle";
 import { useCreateCustomerViaWidgetMutation } from "../../../redux/api/adminApi";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -16,7 +16,7 @@ const AddCustomer = () => {
     const [createCustomer] = useCreateCustomerViaWidgetMutation();
 
     const { type: passwordType, visible: passwordVisible, toggleVisibility } =
-        usePasswordToggle();
+        UsePasswordToggle();
 
     const [formData, setFormData] = useState({
         fullName: "",

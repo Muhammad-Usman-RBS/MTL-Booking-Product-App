@@ -14,7 +14,7 @@ import {
 import { useParams } from "react-router-dom";
 
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
-import usePasswordToggle from "../../../hooks/usePasswordToggle";
+import UsePasswordToggle from "../../../hooks/UsePasswordToggle";
 import { useSendGoogleAuthLinkMutation } from "../../../redux/api/googleApi";
 
 const NewAdminUser = () => {
@@ -27,7 +27,7 @@ const NewAdminUser = () => {
     type: passwordType,
     visible: passwordVisible,
     toggleVisibility: toggleVisibility,
-  } = usePasswordToggle();
+  } = UsePasswordToggle();
   const user = useSelector((state) => state.auth.user);
   const [sendGoogleAuthLink] = useSendGoogleAuthLinkMutation();
   const [isSendingEmail, setIsSendingEmail] = useState(false);

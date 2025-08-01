@@ -7,7 +7,7 @@ import { useUpdateUserProfileMutation } from "../../../redux/api/userApi";
 import { useSelector, useDispatch } from "react-redux";
 import { setUser } from "../../../redux/authSlice";
 import Icons from "../../../assets/icons";
-import usePasswordToggle from "../../../hooks/usePasswordToggle";
+import UsePasswordToggle from "../../../hooks/UsePasswordToggle";
 
 const EditProfile = () => {
 // Two independent instances
@@ -15,13 +15,13 @@ const {
   type: newPasswordType,
   visible: newPasswordVisible,
   toggleVisibility: toggleNewPassword,
-} = usePasswordToggle();
+} = UsePasswordToggle();
 
 const {
   type: currentPasswordType,
   visible: currentPasswordVisible,
   toggleVisibility: toggleCurrentPassword,
-} = usePasswordToggle();
+} = UsePasswordToggle();
   
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);

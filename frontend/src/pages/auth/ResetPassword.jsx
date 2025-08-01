@@ -3,10 +3,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useResetPasswordMutation } from "../../redux/api/userApi"; // RTK hook
 import Icons from "../../assets/icons";
-import usePasswordToggle from "../../hooks/usePasswordToggle";
+import UsePasswordToggle from "../../hooks/UsePasswordToggle";
 
 const ResetPassword = () => {
-  const { type: passwordType, visible: passwordVisible, toggleVisibility: togglePasswordVisibility } = usePasswordToggle();
+  const { type: passwordType, visible: passwordVisible, toggleVisibility: togglePasswordVisibility } = UsePasswordToggle();
   const location = useLocation();
   const navigate = useNavigate();
   const [otp, setOtp] = useState("");
