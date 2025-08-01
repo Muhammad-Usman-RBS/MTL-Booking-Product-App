@@ -21,7 +21,6 @@ const General = () => {
   const { data, isSuccess, isError, refetch } = useGetGeneralPricingQuery();
   const [updateGeneralPricing, { isLoading }] =
     useUpdateGeneralPricingMutation();
-  console.log("datais", data);
   useEffect(() => {
     if (data) {
       setFormData({

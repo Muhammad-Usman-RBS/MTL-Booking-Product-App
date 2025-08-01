@@ -11,18 +11,16 @@ export const getGeneralPricing = async (req, res) => {
         .json({ message: "Company ID is missing from user data." });
     }
 
-    let pricing = await GeneralModel.findOne({ type: "general", companyId });
-
+    let pricing = await GeneralModel.findOne({ companyId });
     if (!pricing) {
       pricing = await GeneralModel.create({
-        type: "general",
         companyId,
         updatedBy: req.user?._id,
         pickupAirportPrice: 0,
         dropoffAirportPrice: 0,
-        minAdditionalDropOff: 10,
-        childSeatPrice: 5,
-        invoiceTaxPercent: "20",
+        minAdditionalDropOff: 0,
+        childSeatPrice: 0,
+        invoiceTaxPercent: 0,
         cardPaymentType: "Card",
         cardPaymentAmount: 0,
       });
@@ -30,7 +28,7 @@ export const getGeneralPricing = async (req, res) => {
 
     res.status(200).json(pricing);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({ message: "Failed to fetch pricing", error });
   }
 };
@@ -56,7 +54,6 @@ export const updateGeneralPricing = async (req, res) => {
     } = req.body;
 
     const data = {
-      type: "general",
       companyId,
       updatedBy,
       pickupAirportPrice,
@@ -68,21 +65,19 @@ export const updateGeneralPricing = async (req, res) => {
       invoiceTaxPercent,
     };
 
-    let pricing = await GeneralModel.findOne({ type: "general", companyId });
+    let pricing = await GeneralModel.findOne({ companyId });
 
     if (pricing) {
-      pricing = await GeneralModel.findOneAndUpdate(
-        { type: "general", companyId },
-        data,
-        { new: true }
-      );
+      pricing = await GeneralModel.findOneAndUpdate({ companyId }, data, {
+        new: true,
+      });
     } else {
       pricing = await GeneralModel.create(data);
     }
 
     res.status(200).json(pricing);
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     res.status(500).json({ message: "Failed to update pricing", error });
   }
@@ -100,7 +95,7 @@ export const getGeneralPricingWidget = async (req, res) => {
     }
 
     // Fetch general pricing for the provided companyId
-    const pricing = await GeneralModel.findOne({ companyId, type: "general" });
+    const pricing = await GeneralModel.findOne({ companyId });
 
     if (!pricing) {
       return res
@@ -111,7 +106,7 @@ export const getGeneralPricingWidget = async (req, res) => {
     // Return the pricing details
     res.status(200).json(pricing);
   } catch (err) {
-    console.log(err)
+    console.log(err);
 
     res.status(500).json({
       message: "Failed to fetch widget general pricing",
