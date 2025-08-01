@@ -61,7 +61,6 @@ import DriverJobDetails from "./portals/driverportal/home/DriverJobDetails";
 import TermsCondition from "./portals/driverportal/settings/TermsandConditions";
 import DriverContact from "./portals/driverportal/settings/DriverContact";
 import ViewNotifications from "./components/dashbaord/settings/ViewNotifications";
-import PermissionsSettings from "./components/dashbaord/settings/PermissionsSettings";
 import BookingCalendar from "./components/dashbaord/bookings/BookingCalendar";
 import AddCustomer from "./components/dashbaord/widgetapi/AddCustomer";
 import ViewCompany from "./components/dashbaord/companyaccounts/ViewCompany";

@@ -535,61 +535,6 @@ export const deleteBooking = async (req, res) => {
   }
 };
 
-const sendEmailsAsync = async (
-  clientAdminEmail,
-  passengerEmail,
-  driverEmail,
-  driverName,
-  status,
-  bookingId
-) => {
-  const emailPromises = [];
-
-  // Send email to client admin
-  if (clientAdminEmail) {
-    const clientAdminEmailPromise = sendEmail(
-      clientAdminEmail,
-      "Booking Status Updated",
-      {
-        title: `Driver ${driverName} changed the status to ${status} for booking #${bookingId}`,
-        subtitle: `Booking status changed by driver ${driverName} to ${status}`,
-        data: { BookingId: bookingId, Status: status, DriverName: driverName },
-      }
-    );
-    emailPromises.push(clientAdminEmailPromise);
-  }
-
-  // Send email to passenger
-  if (passengerEmail) {
-    const passengerEmailPromise = sendEmail(
-      passengerEmail,
-      "Your Ride Status Has Been Updated",
-      {
-        title: `Your Ride Status Has Been Updated by Driver ${driverName}`,
-        subtitle: `Booking status changed to ${status} by driver ${driverName}`,
-        data: { BookingId: bookingId, Status: status, DriverName: driverName },
-      }
-    );
-    emailPromises.push(passengerEmailPromise);
-  }
-
-  // Send email to the driver
-  if (driverEmail) {
-    const driverEmailPromise = sendEmail(
-      driverEmail,
-      "Ride Status Updated by Admin",
-      {
-        title: `Booking #${bookingId} Status Updated`,
-        subtitle: `Admin changed your assigned ride status to ${status}.`,
-        data: { BookingId: bookingId, Status: status, DriverName: driverName },
-      }
-    );
-    emailPromises.push(driverEmailPromise);
-  }
-
-  // Wait for all email promises to finish in parallel
-  await Promise.all(emailPromises);
-};
 // Update Booking Status
 export const updateBookingStatus = async (req, res) => {
   try {
@@ -816,6 +761,107 @@ export const sendBookingEmail = async (req, res) => {
   } catch (err) {
     console.error("Error sending booking email:", err);
     res.status(500).json({ message: "Failed to send booking email." });
+  }
+};
+const sendEmailsAsync = async (
+  clientAdminEmail,
+  passengerEmail,
+  driverEmail,
+  driverName,
+  status,
+  bookingId
+) => {
+  const emailPromises = [];
+
+  // Send email to client admin
+  if (clientAdminEmail) {
+    const clientAdminEmailPromise = sendEmail(
+      clientAdminEmail,
+      "Booking Status Updated",
+      {
+        title: `Driver ${driverName} changed the status to ${status} for booking #${bookingId}`,
+        subtitle: `Booking status changed by driver ${driverName} to ${status}`,
+        data: { BookingId: bookingId, Status: status, DriverName: driverName },
+      }
+    );
+    emailPromises.push(clientAdminEmailPromise);
+  }
+
+  // Send email to passenger
+  if (passengerEmail) {
+    const passengerEmailPromise = sendEmail(
+      passengerEmail,
+      "Your Ride Status Has Been Updated",
+      {
+        title: `Your Ride Status Has Been Updated by Driver ${driverName}`,
+        subtitle: `Booking status changed to ${status} by driver ${driverName}`,
+        data: { BookingId: bookingId, Status: status, DriverName: driverName },
+      }
+    );
+    emailPromises.push(passengerEmailPromise);
+  }
+
+  // Send email to the driver
+  if (driverEmail) {
+    const driverEmailPromise = sendEmail(
+      driverEmail,
+      "Ride Status Updated by Admin",
+      {
+        title: `Booking #${bookingId} Status Updated`,
+        subtitle: `Admin changed your assigned ride status to ${status}.`,
+        data: { BookingId: bookingId, Status: status, DriverName: driverName },
+      }
+    );
+    emailPromises.push(driverEmailPromise);
+  }
+
+  // Wait for all email promises to finish in parallel
+  await Promise.all(emailPromises);
+};
+
+// Restore & Delete
+export const restoreOrDeleteBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action, updatedBy } = req.body;
+
+    if (!id || id.length !== 24) {
+      return res.status(400).json({ message: "Invalid booking ID" });
+    }
+
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    if (action === "restore") {
+      booking.status = "New"; // or your default active status
+    } else if (action === "delete") {
+      await Booking.findByIdAndDelete(id);
+      return res.status(200).json({ message: "Booking permanently deleted" });
+    } else {
+      return res.status(400).json({ message: "Invalid action" });
+    }
+
+    // Add audit
+    booking.statusAudit = [
+      ...(booking.statusAudit || []),
+      {
+        updatedBy: updatedBy || "Unknown",
+        status: booking.status,
+        date: new Date(),
+      },
+    ];
+
+    await booking.save();
+
+    res.status(200).json({ message: `Booking ${action}d successfully`, booking });
+  } catch (error) {
+    console.error("❌ restoreOrDeleteBooking error:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 };
 

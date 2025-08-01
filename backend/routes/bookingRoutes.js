@@ -1,5 +1,5 @@
 import express from "express";
-import { createBooking, deleteBooking, getAllBookings, updateBooking, updateBookingStatus, getAllPassengers, sendBookingEmail } from "../controllers/bookingController.js";
+import { createBooking, deleteBooking, getAllBookings, updateBooking, updateBookingStatus, getAllPassengers, sendBookingEmail, restoreOrDeleteBooking } from "../controllers/bookingController.js";
 import { authorize, protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -24,4 +24,8 @@ router.get("/get-all-passengers", protect, authorize('clientadmin', 'associatead
 
 // Send Booking Data
 router.post("/send-booking-email", sendBookingEmail);
+
+// Restore & Delete
+router.put("/restore-or-delete/:id", protect, authorize('clientadmin', 'associateadmin'), restoreOrDeleteBooking);
+
 export default router;
