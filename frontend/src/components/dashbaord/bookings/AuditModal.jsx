@@ -16,21 +16,27 @@ const AuditModal = ({ auditData = [] }) => {
           <tbody className="divide-y divide-gray-200">
             {auditData.length > 0 ? (
               auditData.map((entry, i) => (
-                <tr key={i} className="hover:bg-gray-50 transition duration-200">
+                <tr
+                  key={i}
+                  className="hover:bg-gray-50 transition duration-200"
+                >
                   <td className="px-4 py-3 text-gray-500">{i + 1}</td>
                   <td className="px-4 py-3 font-medium text-gray-800">
                     {entry.updatedBy
                       ? entry.updatedBy
-                        .split(" ")
-                        .map(word =>
-                          word
-                            .split("|")
-                            .map(part => part.trim().charAt(0).toUpperCase() + part.trim().slice(1))
-                            .join(" | ")
-                        )
-                        .join(" ")
+                          .split(" ")
+                          .map((word) =>
+                            word
+                              .split("|")
+                              .map(
+                                (part) =>
+                                  part.trim().charAt(0).toUpperCase() +
+                                  part.trim().slice(1)
+                              )
+                              .join(" | ")
+                          )
+                          .join(" ")
                       : "Unknown"}
-
                   </td>
                   <td className="px-4 py-3 text-gray-700">
                     {entry.status || "—"}

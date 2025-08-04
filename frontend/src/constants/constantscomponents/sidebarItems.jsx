@@ -206,7 +206,7 @@ const sidebarItems = [
       {
         title: "New  User",
         icon: Icons.User,
-        route: "/dashboard/admin-list/create-admin-user",
+        route: "/dashboard/admin-list/add-user",
         roles: ["superadmin", "clientadmin", "associateadmin", "manager"],
       },
     ],

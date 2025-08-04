@@ -40,7 +40,7 @@ const Sidebar = () => {
 
   useEffect(() => {
     const index = sidebarTabs.findIndex((item) =>
-      item.subTabs?.some((sub) => location.pathname.startsWith(sub.route))
+      item.subTabs?.some((sub) => sub.route === location.pathname)
     );
     setActiveMain(index !== -1 ? index : null);
   }, [location.pathname]);
@@ -79,11 +79,8 @@ const Sidebar = () => {
         {sidebarTabs.map((item, index) => {
           const isMainActive =
             index === activeMain ||
-            location.pathname.startsWith(item.route) ||
-            item.subTabs?.some((sub) =>
-              location.pathname.startsWith(sub.route)
-            );
-
+            item.route === location.pathname ||
+            item.subTabs?.some((sub) => sub.route === location.pathname);
           return (
             <div key={index}>
               {item.subTabs?.length > 0 ? (
@@ -126,7 +123,7 @@ const Sidebar = () => {
                           <Link
                             to={sub.route}
                             className={`flex items-center p-2 gap-3 hover-theme ${
-                              location.pathname.startsWith(sub.route)
+                              sub.route === location.pathname
                                 ? "active-theme"
                                 : ""
                             }`}

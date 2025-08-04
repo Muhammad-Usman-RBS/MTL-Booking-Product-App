@@ -58,20 +58,64 @@ const DriverPortalHome = () => {
     }
   };
 
-  const handleStatusChange = (jobId, newStatus) => {
-    setStatusMap((prevState) => ({
-      ...prevState,
-      [jobId]: newStatus,
-    }));
+  const handleStatusChange = async (jobId, newStatus) => {
+    setLoadingJobId(jobId);
 
-    handleBookingAction(jobId, newStatus); // 🔴 HERE
+    try {
+      // Update job status
+      const jobResult = await updateJobStatus({ jobId, jobStatus: newStatus });
+      if (jobResult.error) {
+        throw new Error(
+          jobResult.error.data?.message || "Failed to update job status"
+        );
+      }
+
+      // Find the job to get the booking ID and update booking status too
+      const job = jobs.find((j) => j._id === jobId);
+      const bookingId = job?.booking?._id;
+
+      if (bookingId) {
+        const bookingResult = await updateBookingStatus({
+          id: bookingId,
+          status: newStatus,
+          updatedBy: user._id,
+        });
+
+        if (bookingResult.error) {
+          throw new Error(
+            bookingResult.error.data?.message ||
+              "Failed to update booking status"
+          );
+        }
+      }
+
+      // Update local state
+      setStatusMap((prevState) => ({
+        ...prevState,
+        [jobId]: newStatus,
+      }));
+
+      toast.success(`Status updated to "${newStatus}" successfully!`);
+      await refetch();
+    } catch (err) {
+      toast.error(err.message || "Failed to update status");
+    } finally {
+      setLoadingJobId(null);
+    }
   };
 
   const handleBookingAction = async (bookingId, status) => {
     setLoadingJobId(bookingId);
     try {
-      const result = await updateBookingStatus({ id: bookingId, status, updatedBy: user._id });
-      if (result.error) throw new Error(result.error.data?.message || "Failed to update booking status");
+      const result = await updateBookingStatus({
+        id: bookingId,
+        status,
+        updatedBy: user._id,
+      });
+      if (result.error)
+        throw new Error(
+          result.error.data?.message || "Failed to update booking status"
+        );
       toast.success(`Booking status updated to "${status}" successfully!`);
       setStatusMap((prevState) => ({ ...prevState, [bookingId]: status }));
       await refetch();
@@ -95,7 +139,8 @@ const DriverPortalHome = () => {
     return (
       <div className="p-4">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          Error loading bookings: {error?.data?.message || error.message || "Unknown error"}
+          Error loading bookings:{" "}
+          {error?.data?.message || error.message || "Unknown error"}
         </div>
       </div>
     );
@@ -114,8 +159,10 @@ const DriverPortalHome = () => {
           {jobs.map((job) => {
             const booking = job.booking || {};
             const isReturnJourney = booking?.returnJourneyToggle === true;
-            const journey = isReturnJourney ? booking?.returnJourney || {} : booking?.primaryJourney || {};
-            const currentStatus = statusMap[job._id] || job.jobStatus;
+            const journey = isReturnJourney
+              ? booking?.returnJourney || {}
+              : booking?.primaryJourney || {};
+              const currentStatus = statusMap[job._id] || job.booking?.status || job.jobStatus;
 
             return (
               <div
@@ -144,66 +191,160 @@ const DriverPortalHome = () => {
                 <div className="space-y-4 text-sm text-gray-700">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <h3 className="text-sm font-semibold text-gray-700 mb-2">Pickup</h3>
-                      <p className="pb-4"><strong>Location:</strong> {journey.pickup || "—"}</p>
-                      {journey?.pickupDoorNumber && <p><strong>Pickup Door:</strong> {journey.pickupDoorNumber}</p>}
-                      {journey?.terminal && <p><strong>Pickup Terminal:</strong> {journey.terminal}</p>}
-                      {journey?.arrivefrom && <p><strong>Arriving From:</strong> {journey.arrivefrom}</p>}
-                      {journey?.flightNumber && <p><strong>Flight Number:</strong> {journey.flightNumber}</p>}
-                      {journey?.pickmeAfter && <p><strong>Pick Me After:</strong> {journey.pickmeAfter}</p>}
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                        Pickup
+                      </h3>
+                      <p className="pb-4">
+                        <strong>Location:</strong> {journey.pickup || "—"}
+                      </p>
+                      {journey?.pickupDoorNumber && (
+                        <p>
+                          <strong>Pickup Door:</strong>{" "}
+                          {journey.pickupDoorNumber}
+                        </p>
+                      )}
+                      {journey?.terminal && (
+                        <p>
+                          <strong>Pickup Terminal:</strong> {journey.terminal}
+                        </p>
+                      )}
+                      {journey?.arrivefrom && (
+                        <p>
+                          <strong>Arriving From:</strong> {journey.arrivefrom}
+                        </p>
+                      )}
+                      {journey?.flightNumber && (
+                        <p>
+                          <strong>Flight Number:</strong> {journey.flightNumber}
+                        </p>
+                      )}
+                      {journey?.pickmeAfter && (
+                        <p>
+                          <strong>Pick Me After:</strong> {journey.pickmeAfter}
+                        </p>
+                      )}
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <h3 className="text-sm font-semibold text-gray-700 mb-2">Dropoff</h3>
-                      <p><strong>Location:</strong> {journey.dropoff || "—"}</p>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                        Dropoff
+                      </h3>
+                      <p>
+                        <strong>Location:</strong> {journey.dropoff || "—"}
+                      </p>
                       <div className="mt-4 text-sm text-gray-700">
-                        {["dropoffDoorNumber0", "dropoffDoorNumber1", "dropoffDoorNumber2"].map((key, i) => (
-                          journey?.[key] && <div key={key}><strong>Dropoff Door #{i + 1}:</strong> {journey[key]}</div>
-                        ))}
-                        {["additionalDropoff1", "additionalDropoff2"].map((key) => (
-                          journey?.[key] && <div key={key}><strong>{key.replace("additional", "Additional")}:</strong> {journey[key]}</div>
-                        ))}
-                        {["dropoff_terminal_0", "dropoff_terminal_1", "dropoff_terminal_2"].map((key, i) => (
-                          journey?.[key] && <div key={key}><strong>Dropoff Terminal {i + 1}:</strong> {journey[key]}</div>
-                        ))}
-                        {booking?.notes && <div className="md:col-span-2"><strong>Notes:</strong> {booking.notes}</div>}
-                        {booking?.internalNotes && <div className="md:col-span-2"><strong>Internal Notes:</strong> {booking.internalNotes}</div>}
+                        {[
+                          "dropoffDoorNumber0",
+                          "dropoffDoorNumber1",
+                          "dropoffDoorNumber2",
+                        ].map(
+                          (key, i) =>
+                            journey?.[key] && (
+                              <div key={key}>
+                                <strong>Dropoff Door #{i + 1}:</strong>{" "}
+                                {journey[key]}
+                              </div>
+                            )
+                        )}
+                        {["additionalDropoff1", "additionalDropoff2"].map(
+                          (key) =>
+                            journey?.[key] && (
+                              <div key={key}>
+                                <strong>
+                                  {key.replace("additional", "Additional")}:
+                                </strong>{" "}
+                                {journey[key]}
+                              </div>
+                            )
+                        )}
+                        {[
+                          "dropoff_terminal_0",
+                          "dropoff_terminal_1",
+                          "dropoff_terminal_2",
+                        ].map(
+                          (key, i) =>
+                            journey?.[key] && (
+                              <div key={key}>
+                                <strong>Dropoff Terminal {i + 1}:</strong>{" "}
+                                {journey[key]}
+                              </div>
+                            )
+                        )}
+                        {booking?.notes && (
+                          <div className="md:col-span-2">
+                            <strong>Notes:</strong> {booking.notes}
+                          </div>
+                        )}
+                        {booking?.internalNotes && (
+                          <div className="md:col-span-2">
+                            <strong>Internal Notes:</strong>{" "}
+                            {booking.internalNotes}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
-
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-
                   {/* Booking Details */}
                   <div>
-                    <strong className="block mb-3 text-lg font-bold text-[var(--dark-gray)]">Booking Details:</strong>
+                    <strong className="block mb-3 text-lg font-bold text-[var(--dark-gray)]">
+                      Booking Details:
+                    </strong>
                     <div className="space-y-2 text-sm">
                       <div>
-                        <strong className="mr-1 text-[var(--dark-gray)]">Booking Type:</strong>
+                        <strong className="mr-1 text-[var(--dark-gray)]">
+                          Booking Type:
+                        </strong>
                         {isReturnJourney ? "Return" : "Primary"}
                       </div>
                       <div>
-                        <strong className="mr-1 text-[var(--dark-gray)]">Distance:</strong>
+                        <strong className="mr-1 text-[var(--dark-gray)]">
+                          Distance:
+                        </strong>
                         {convertKmToMiles(journey?.distanceText) || "—"}
                       </div>
                       <div>
-                        <strong className="mr-1 text-[var(--dark-gray)]">Payment:</strong>
+                        <strong className="mr-1 text-[var(--dark-gray)]">
+                          Payment:
+                        </strong>
                         {booking.paymentMethod || "—"}
                       </div>
                       <div>
-                        <strong className="text-[var(--dark-gray)]">Driver Fare:</strong> £
-                        {isReturnJourney ? booking.returnDriverFare : booking.driverFare || "—"}
+                        <strong className="text-[var(--dark-gray)]">
+                          Driver Fare:
+                        </strong>{" "}
+                        £
+                        {isReturnJourney
+                          ? booking.returnDriverFare
+                          : booking.driverFare || "—"}
                       </div>
                     </div>
                   </div>
                   <div>
-                    <strong className="block mb-3 text-lg font-bold text-[var(--dark-gray)]">Passenger Details:</strong>
+                    <strong className="block mb-3 text-lg font-bold text-[var(--dark-gray)]">
+                      Passenger Details:
+                    </strong>
                     {currentStatus === "Accepted" && booking?.passenger ? (
                       <div className="text-sm space-y-2">
-                        <div><strong className="text-[var(--dark-gray)]">Name:</strong> {booking.passenger.name}</div>
-                        <div><strong className="text-[var(--dark-gray)]">Contact:</strong> {booking.passenger.phone || "N/A"}</div>
-                        <div><strong className="text-[var(--dark-gray)]">Email:</strong> {booking.passenger.email || "N/A"}</div>
+                        <div>
+                          <strong className="text-[var(--dark-gray)]">
+                            Name:
+                          </strong>{" "}
+                          {booking.passenger.name}
+                        </div>
+                        <div>
+                          <strong className="text-[var(--dark-gray)]">
+                            Contact:
+                          </strong>{" "}
+                          +{booking.passenger.phone || "N/A"}
+                        </div>
+                        <div>
+                          <strong className="text-[var(--dark-gray)]">
+                            Email:
+                          </strong>{" "}
+                          {booking.passenger.email || "N/A"}
+                        </div>
                       </div>
                     ) : (
                       <div className="text-sm">
@@ -211,41 +352,55 @@ const DriverPortalHome = () => {
                       </div>
                     )}
                   </div>
-
                 </div>
 
                 {/* ACTIONS */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mt-4">
                   <div className="w-full md:w-2/3">
                     {currentStatus === "Rejected" ? (
-                      <div className="text-red-600 font-semibold text-sm">The Job has been rejected</div>
+                      <div className="text-red-600 font-semibold text-sm">
+                        The Job has been rejected
+                      </div>
                     ) : currentStatus === "New" ? (
                       <div className="flex gap-3 pt-2">
-                        <button className="btn btn-success" onClick={() => handleJobAction(job._id, "Accepted")}>Accept</button>
-                        <button className="btn btn-cancel" onClick={() => handleJobAction(job._id, "Rejected")}>Reject</button>
+                        <button
+                          className="btn btn-success"
+                          onClick={() => handleJobAction(job._id, "Accepted")}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          className="btn btn-cancel"
+                          onClick={() => handleJobAction(job._id, "Rejected")}
+                        >
+                          Reject
+                        </button>
                       </div>
                     ) : (
                       <div>
                         <SelectOption
                           width="32"
                           label="Current Job Status"
-                          value={statusMap[booking._id] || job.jobStatus}
-                          onChange={(e) => handleStatusChange(booking._id, e.target.value)}
-                          options={statusOptions.map((status) => ({ value: status, label: status }))}
+                          value={statusMap[job._id] || job.booking?.status || job.jobStatus}
+                          onChange={(e) =>
+                            handleStatusChange(job._id, e.target.value)
+                          }
+                          options={statusOptions.map((status) => ({
+                            value: status,
+                            label: status,
+                          }))}
                         />
-                        {loadingJobId === job._id && (
-                          <div className="flex items-center mt-2 text-blue-600">
-                            <div className="animate-spin h-4 w-4 border-b-2 border-blue-600 rounded-full mr-2"></div>
-                            Updating status...
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
 
                   <div className="text-right text-sm text-gray-500 w-full md:w-auto">
                     <strong className="mr-1">Booking Date:</strong>
-                    {journey.date ? `${new Date(journey.date).toLocaleDateString()}, ${journey.hour}:${journey.minute}` : "—"}
+                    {journey.date
+                      ? `${new Date(journey.date).toLocaleDateString()}, ${
+                          journey.hour
+                        }:${journey.minute}`
+                      : "—"}
                   </div>
                 </div>
               </div>

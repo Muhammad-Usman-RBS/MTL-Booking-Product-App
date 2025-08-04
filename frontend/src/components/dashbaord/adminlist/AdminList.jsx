@@ -168,7 +168,7 @@ const AdminList = () => {
         <OutletHeading name="Admins List" />
         <div className="flex flex-col sm:flex-row justify-between gap-4 px-4 sm:px-0 mb-4">
           <Link
-            to="/dashboard/admin-list/create-admin-user"
+            to="/dashboard/admin-list/add-user"
             className="w-full sm:w-auto"
           >
             <button className="btn btn-edit flex items-center gap-2 w-full sm:w-auto justify-center">

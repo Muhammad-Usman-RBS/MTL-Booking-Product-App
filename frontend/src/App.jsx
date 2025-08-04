@@ -107,7 +107,7 @@ function App() {
 
               {/* Users/Admin List */}
               <Route path="admin-list" element={<AdminList />} />
-              <Route path="admin-list/create-admin-user" element={<NewAdminUser />} />
+              <Route path="admin-list/add-user" element={<NewAdminUser />} />
               <Route path="admin-list/edit/:id" element={<NewAdminUser />} />
 
               {/* Invoices */}

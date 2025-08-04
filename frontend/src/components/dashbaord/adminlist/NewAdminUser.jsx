@@ -21,7 +21,6 @@ const NewAdminUser = () => {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const actualAdminId = id;
-  const actualMode = isEdit ? "edit" : "create";
   const navigate = useNavigate();
   const {
     type: passwordType,
@@ -52,7 +51,7 @@ const NewAdminUser = () => {
   });
   const [googleConnected, setGoogleConnected] = useState(false);
   useEffect(() => {
-    if (actualMode !== "create") return;
+    if (isEdit) return;
 
     const params = new URLSearchParams(window.location.search);
 
@@ -102,7 +101,7 @@ const NewAdminUser = () => {
   }, []);
 
   useEffect(() => {
-    if (actualMode === "edit" && actualAdminId && adminsListData.length > 0) {
+    if (isEdit && actualAdminId && adminsListData.length > 0) {
       const adminToEdit = adminsListData.find(
         (admin) => admin._id === actualAdminId
       );
@@ -120,7 +119,7 @@ const NewAdminUser = () => {
         });
       }
     }
-  }, [actualMode, actualAdminId, adminsListData]);
+  }, [isEdit, actualAdminId, adminsListData]);
 
   const handleSave = async () => {
     if (user?.role === "demo") {
@@ -137,14 +136,14 @@ const NewAdminUser = () => {
     }
 
     // For clientadmin create only – require password
-    if (actualMode === "create" && role === "clientadmin" && !password) {
+    if (!isEdit && role === "clientadmin" && !password) {
       toast.error("Please enter a password for the client admin.");
       return;
     }
 
     try {
       // 🔁 EDIT MODE
-      if (actualMode === "edit" && actualAdminId) {
+      if (isEdit && actualAdminId) {
         const payload = {
           ...selectedAccount,
           employeeNumber: selectedAccount.employeeNumber,
@@ -267,13 +266,13 @@ const NewAdminUser = () => {
 
   useEffect(() => {
     if (
-      actualMode === "create" &&
+      !isEdit &&
       roleOptions.length > 0 &&
       !selectedAccount.role
     ) {
       setSelectedAccount((prev) => ({ ...prev, role: roleOptions[0] }));
     }
-  }, [roleOptions, actualMode]);
+  }, [roleOptions]);
 
   const getAvailablePermissions = (role) => {
     if (["driver"].includes(role)) {
@@ -331,9 +330,7 @@ const NewAdminUser = () => {
         toast.warn(
           "⚠️ Please enter Driver details first from the Drivers tab."
         );
-        setSelectedAccount(
-        {  role: roleOptions[0],}
-      );
+        setSelectedAccount({ role: roleOptions[0] });
         return;
       }
       const singleDriver = driversList.drivers[0];
@@ -358,7 +355,7 @@ const NewAdminUser = () => {
           isEdit ? "border-[var(--light-gray)] border-b" : ""
         } flex items-center justify-between `}
       >
-        <OutletHeading name={actualMode ? "Edit User" : "Add User"} />
+        <OutletHeading name={isEdit ? "Edit User" : "Add User"} />
 
         <Link to="/dashboard/admin-list" className="mb-4">
           <button className="btn btn-primary ">← Back to Users List</button>
@@ -599,7 +596,7 @@ const NewAdminUser = () => {
               >
                 {isSendingEmail
                   ? "Sending Email..."
-                  : actualMode === "edit"
+                  : isEdit
                   ? "Update User"
                   : sendCalendarInvite
                   ? "Create & Send Email"
@@ -612,7 +609,7 @@ const NewAdminUser = () => {
                 className={`${isEdit ? "btn btn-success" : "btn btn-primary"}`}
                 onClick={handleSave}
               >
-                {actualMode === "edit" ? "Update User" : "Create User"}
+                {isEdit ? "Update User" : "Create User"}
               </button>
             </div>
           )}

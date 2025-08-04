@@ -565,16 +565,17 @@ export const updateBookingStatus = async (req, res) => {
       booking.drivers = fullDriverDocs;
     }
 
-    // Add status to statusAudit for logging purposes
+    const fullName = currentUser.fullName || currentUser.name || "Unknown User";
+    updatedBy = `${currentUser?.role} | ${fullName}`;
+
     booking.statusAudit = [
       ...(booking.statusAudit || []),
       {
-        updatedBy: updatedBy || "Unknown",
+        updatedBy,
         status,
         date: new Date(),
       },
     ];
-
     // Save the updated booking
     const updatedBooking = await booking.save();
 
@@ -855,7 +856,9 @@ export const restoreOrDeleteBooking = async (req, res) => {
 
     await booking.save();
 
-    res.status(200).json({ message: `Booking ${action}d successfully`, booking });
+    res
+      .status(200)
+      .json({ message: `Booking ${action}d successfully`, booking });
   } catch (error) {
     console.error("❌ restoreOrDeleteBooking error:", error);
     res.status(500).json({
@@ -864,5 +867,3 @@ export const restoreOrDeleteBooking = async (req, res) => {
     });
   }
 };
-
-
