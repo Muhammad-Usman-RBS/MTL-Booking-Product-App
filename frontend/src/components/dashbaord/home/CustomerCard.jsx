@@ -16,22 +16,20 @@ const CustomerCard = () => {
 
     const allDrivers = driversData?.drivers || [];
 
-useEffect(() => {
-    if (data?.bookings) {
-        console.log("API Bookings:", data.bookings);
-        const userBookings = data.bookings.filter(
-            (b) => b?.passenger?.email === user.email
-        );
-        console.log("Filtered Bookings for User:", userBookings);
-        setBookings(userBookings);
-    }
-}, [data, user.email]);
+    useEffect(() => {
+        if (data?.bookings) {
+            console.log("API Bookings:", data.bookings);
+            const userBookings = data.bookings.filter(
+                (b) => b?.passenger?.email === user.email
+            );
+            console.log("Filtered Bookings for User:", userBookings);
+            setBookings(userBookings);
+        }
+    }, [data, user.email]);
 
     useEffect(() => {
         if (error) toast.error('Failed to load bookings');
     }, [error]);
-
-
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6 p-6">
@@ -98,26 +96,25 @@ useEffect(() => {
                                 {/* Driver Info Section */}
                                 <div className="mt-4">
                                     <strong className="block mb-1 text-lg mt-4 font-bold text-[var(--dark-gray)]">Drivers:</strong>
-                                    {booking?.drivers?.length > 0 ? (
+
+                                    {Array.isArray(booking?.drivers) && booking.drivers.length > 0 ? (
                                         <div className="space-y-3">
-                                            {booking.drivers.map((driverId, index) => {
-                                                const driver = allDrivers.find((d) => d._id === driverId);
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className="bg-gray-50 p-3 rounded-lg border border-gray-200 shadow-sm"
-                                                    >
-                                                        <div><strong>Name:</strong> {driver?.DriverData ? `${driver.DriverData.firstName} ${driver.DriverData.surName}` : 'Unnamed Driver'}</div>
-                                                        <div><strong>Contact:</strong> {driver?.DriverData?.contact || 'N/A'}</div>
-                                                        <div><strong>Car Reg#:</strong> {driver?.VehicleData?.carRegistration || 'N/A'}</div>
-                                                    </div>
-                                                );
-                                            })}
+                                            {booking.drivers.map((driver, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="bg-gray-50 p-3 rounded-lg border border-gray-200 shadow-sm"
+                                                >
+                                                    <div><strong>Name:</strong> {driver?.name}</div>
+                                                    <div><strong>Contact:</strong> {driver?.contact || 'N/A'}</div>
+                                                    <div><strong>Car Reg#:</strong> {booking?.vehicle?.vehicleName || 'N/A'}</div>
+                                                </div>
+                                            ))}
                                         </div>
                                     ) : (
                                         <span className="text-gray-500">No driver assigned</span>
                                     )}
                                 </div>
+
                             </div>
                         </div>
 

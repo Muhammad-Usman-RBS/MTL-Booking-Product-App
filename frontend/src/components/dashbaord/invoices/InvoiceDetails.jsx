@@ -50,9 +50,8 @@ const InvoiceDetails = ({ item }) => {
   if (!item) return null;
 
   const isDev = process.env.NODE_ENV !== "production";
-  const invoiceUrl = `${
-    isDev ? "http://localhost:3000" : "https://www.megatransfers.com"
-  }/dashboard/invoices/edit/${item?._id}`;
+  const invoiceUrl = `${isDev ? "http://localhost:3000" : "https://www.megatransfers.com"
+    }/dashboard/invoices/edit/${item?._id}`;
 
   const handleDownload = () => {
     const element = document.getElementById("invoiceToDownload");
@@ -71,13 +70,10 @@ const InvoiceDetails = ({ item }) => {
   };
 
   const openModal = () => {
-    const msg = `Dear ${
-      item?.customer?.name || "Customer"
-    },\n\nWe have prepared invoice <b>${
-      item?.invoiceNumber
-    }</b>.\n\nStatus: ${status}.\n\nView it here: <a href='${invoiceUrl}' target='_blank'>${invoiceUrl}</a>\n\nKind regards,\n${
-      company?.companyName || "MTL Team"
-    }`;
+    const msg = `Dear ${item?.customer?.name || "Customer"
+      },\n\nWe have prepared invoice <b>${item?.invoiceNumber
+      }</b>.\n\nStatus: ${status}.\n\nView it here: <a href='${invoiceUrl}' target='_blank'>${invoiceUrl}</a>\n\nKind regards,\n${company?.companyName || "MTL Team"
+      }`;
 
     setRecipient(item?.email);
     setSubject(`Invoice ${item?.invoiceNumber} created`);
@@ -150,11 +146,10 @@ const InvoiceDetails = ({ item }) => {
             <button
               onClick={handleStatusUpdate}
               disabled={status === selectedStatus}
-              className={`p-2.5 text-white rounded-md transition ${
-                status === selectedStatus
+              className={`p-2.5 text-white rounded-md transition ${status === selectedStatus
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-emerald-500 hover:bg-emerald-600"
-              }`}
+                }`}
             >
               <Icons.Check size={16} />
             </button>
@@ -166,7 +161,7 @@ const InvoiceDetails = ({ item }) => {
           <div className="invoice-header">
             <div className="company-info">
               <img
-                src={IMAGES.dashboardLargeLogo}
+                src={company.profileImage}
                 alt="Logo"
                 className="company-logo"
               />
@@ -187,9 +182,8 @@ const InvoiceDetails = ({ item }) => {
             <div className="invoice-info">
               <h2 className="invoice-title">INVOICE</h2>
               <p
-                className={`invoice-status ${
-                  status.toLowerCase() === "paid" ? "paid" : ""
-                }`}
+                className={`invoice-status ${status.toLowerCase() === "paid" ? "paid" : ""
+                  }`}
               >
                 {status}
               </p>
