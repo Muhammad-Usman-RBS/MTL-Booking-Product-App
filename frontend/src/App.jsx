@@ -18,8 +18,8 @@ import NewInvoice from "./components/dashbaord/invoices/NewInvoice";
 import EditInvoice from "./components/dashbaord/invoices/EditInvoice";
 import NewDriver from "./components/dashbaord/drivers/NewDriver";
 import DriverList from "./components/dashbaord/drivers/DriverList";
-import DriverStatements from "./components/dashbaord/statements/DriverStatements";
-import DriverPayments from "./components/dashbaord/statements/DriverPayments";
+// import DriverStatements from "./components/dashbaord/statements/DriverStatements";
+// import DriverPayments from "./components/dashbaord/statements/DriverPayments";
 import AddCompanyAccount from "./components/dashbaord/companyaccounts/AddCompanyAccount";
 import CompanyAccountsList from "./components/dashbaord/companyaccounts/CompanyAccountsList";
 import CustomersList from "./components/dashbaord/customers/CustomersList";
@@ -184,8 +184,8 @@ function App() {
               <Route path="widget-api" element={<WidgetAPI />} />
 
               {/* Statements */}
-              <Route path="statements/driver" element={<DriverStatements />} />
-              <Route path="statements/payments" element={<DriverPayments />} />
+              {/* <Route path="statements/driver" element={<DriverStatements />} />
+              <Route path="statements/payments" element={<DriverPayments />} /> */}
 
               {/* Profile */}
               <Route path="profile" element={<EditProfile />} />

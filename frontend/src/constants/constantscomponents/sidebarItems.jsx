@@ -160,38 +160,38 @@ const sidebarItems = [
       },
     ],
   },
-  {
-    title: "Statements",
-    icon: Icons.FileText,
-    route: "/dashboard/statements",
-    subTabs: [
-      {
-        title: "Driver Statements",
-        route: "/dashboard/statements/driver",
-        icon: Icons.Truck,
-        roles: [
-          "driver",
-          "superadmin",
-          "clientadmin",
-          "associateadmin",
-          "manager",
-        ],
-      },
-      {
-        title: "Driver Payments",
-        route: "/dashboard/statements/payments",
-        icon: Icons.CreditCard,
-        roles: [
-          "driver",
-          "superadmin",
-          "clientadmin",
-          "associateadmin",
-          "manager",
-          "driver",
-        ],
-      },
-    ],
-  },
+  // {
+  //   title: "Statements",
+  //   icon: Icons.FileText,
+  //   route: "/dashboard/statements",
+  //   subTabs: [
+  //     {
+  //       title: "Driver Statements",
+  //       route: "/dashboard/statements/driver",
+  //       icon: Icons.Truck,
+  //       roles: [
+  //         "driver",
+  //         "superadmin",
+  //         "clientadmin",
+  //         "associateadmin",
+  //         "manager",
+  //       ],
+  //     },
+  //     {
+  //       title: "Driver Payments",
+  //       route: "/dashboard/statements/payments",
+  //       icon: Icons.CreditCard,
+  //       roles: [
+  //         "driver",
+  //         "superadmin",
+  //         "clientadmin",
+  //         "associateadmin",
+  //         "manager",
+  //         "driver",
+  //       ],
+  //     },
+  //   ],
+  // },
   {
     title: "Users",
     icon: Icons.Users,
