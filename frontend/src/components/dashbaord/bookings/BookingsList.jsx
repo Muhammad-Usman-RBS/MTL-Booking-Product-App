@@ -27,6 +27,7 @@ const BookingsList = () => {
     vehicle: true,
     payment: true,
     journeyFare: true,
+    createdAt: true,
     driverFare: true,
     returnJourneyFare: true,
     returnDriverFare: true,

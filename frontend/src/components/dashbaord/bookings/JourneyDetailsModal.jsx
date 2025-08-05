@@ -7,6 +7,7 @@ import PDFContent from "./PDFContent";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import Icons from "../../../assets/icons";
+import moment from "moment-timezone";
 
 const JourneyDetailsModal = ({ viewData = {} }) => {
   const [sendBookingEmail, { isLoading: isSending }] =
@@ -14,6 +15,8 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
   const [selectedType, setSelectedType] = useState("Send Customer");
   const [email, setEmail] = useState("");
   const pdfRef = useRef();
+
+  const timezone = useSelector((state) => state.bookingSetting?.timezone) || "UTC";
 
   const companyId = localStorage.getItem("companyId");
   const companyList = useSelector((state) => state.company?.list);
@@ -97,37 +100,42 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
     }
     return text;
   };
+
   const formatDateTime = (dateStr, hour, minute) => {
-    if (!dateStr || !hour || !minute) return null;
+    if (dateStr == null || hour == null || minute == null) return "N/A";
 
-    const dateObj = new Date(dateStr);
-    dateObj.setHours(Number(hour), Number(minute));
+    const date = new Date(dateStr);
+    date.setHours(Number(hour));
+    date.setMinutes(Number(minute));
+    date.setSeconds(0);
+    date.setMilliseconds(0);
 
-    return dateObj.toLocaleString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hh = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const sec = String(date.getSeconds()).padStart(2, '0');
+
+    return `${day}/${month}/${year} ${hh}:${min}:${sec}`;
   };
 
   const pickupTime =
     viewData?.primaryJourney?.date && viewData?.primaryJourney?.hour
       ? formatDateTime(
-          viewData.primaryJourney.date,
-          viewData.primaryJourney.hour,
-          viewData.primaryJourney.minute
-        )
+        viewData.primaryJourney.date,
+        viewData.primaryJourney.hour,
+        viewData.primaryJourney.minute
+      )
       : viewData?.returnJourneyToggle &&
         viewData?.returnJourney?.date &&
         viewData?.returnJourney?.hour
-      ? formatDateTime(
+        ? formatDateTime(
           viewData.returnJourney.date,
           viewData.returnJourney.hour,
           viewData.returnJourney.minute
         )
-      : "N/A";
+        : "N/A";
 
   return (
     <>
@@ -137,9 +145,8 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
       >
         {/* Header */}
         <div
-          className={`${
-            loggedInUser.role === "driver" ? "hidden" : "flex"
-          } flex-col md:flex-row md:items-center gap-3 md:gap-4`}
+          className={`${loggedInUser.role === "driver" ? "hidden" : "flex"
+            } flex-col md:flex-row md:items-center gap-3 md:gap-4`}
         >
           <SelectOption
             options={["Send Customer", "Send Client Admin"]}
@@ -186,7 +193,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             <div>
               <strong>Booked On:</strong>{" "}
               {viewData?.createdAt
-                ? new Date(viewData.createdAt).toLocaleString()
+                ? moment(viewData.createdAt).tz(timezone).format("DD/MM/YYYY HH:mm:ss")
                 : "N/A"}
             </div>
             <div>
@@ -242,24 +249,24 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             {!(
               loggedInUser?.role === "driver" && viewData?.status !== "Accepted"
             ) && (
-              <div>
-                <strong>Passenger Details:</strong>
-                <div className="ml-4 mt-1 space-y-1">
-                  <div>
-                    <strong>Name:</strong> {viewData?.passenger?.name || "N/A"}
+                <div>
+                  <strong>Passenger Details:</strong>
+                  <div className="ml-4 mt-1 space-y-1">
+                    <div>
+                      <strong>Name:</strong> {viewData?.passenger?.name || "N/A"}
+                    </div>
+                    <div>
+                      <strong>Email:</strong>{" "}
+                      {viewData?.passenger?.email || "N/A"}
+                    </div>
+                    <div>
+                      <strong>Phone:</strong>{" "}
+                      +{viewData?.passenger?.phone || "N/A"}
+                    </div>
                   </div>
-                  <div>
-                    <strong>Email:</strong>{" "}
-                    {viewData?.passenger?.email || "N/A"}
-                  </div>
-                  <div>
-                    <strong>Phone:</strong>{" "}
-                    +{viewData?.passenger?.phone || "N/A"}
-                  </div>
+                  <hr className="text-[var(--light-gray)] my-2" />
                 </div>
-                <hr className="text-[var(--light-gray)] my-2" />
-              </div>
-            )}
+              )}
 
             <div>
               <strong>Vehicle Details:</strong>
@@ -323,8 +330,8 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             Approx. Distance:{" "}
             {convertKmToMiles(
               viewData?.primaryJourney?.distanceText ||
-                (viewData?.returnJourneyToggle &&
-                  viewData?.returnJourney?.distanceText)
+              (viewData?.returnJourneyToggle &&
+                viewData?.returnJourney?.distanceText)
             )}
           </div>
         </div>

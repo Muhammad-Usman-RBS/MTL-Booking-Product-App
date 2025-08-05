@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import AuthLayout from "./layouts/AuthLayout";
 import Login from "./pages/auth/Login";
@@ -70,7 +70,21 @@ import ProtectedAddCustomer from "./layouts/ProtectedAddCustomer";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// TimeStamps for Every File
+import { useDispatch } from "react-redux";
+import { useGetBookingSettingQuery } from "./redux/api/bookingSettingsApi";
+import { setTimezone } from "./redux/bookingSettingSlice";
+
 function App() {
+  // TimeStamps for Every File
+  const dispatch = useDispatch();
+  const { data, isSuccess } = useGetBookingSettingQuery();
+
+  useEffect(() => {
+    if (isSuccess && data?.setting?.timezone) {
+      dispatch(setTimezone(data.setting.timezone));
+    }
+  }, [isSuccess, data, dispatch]);
   return (
     <>
       <Routes>
