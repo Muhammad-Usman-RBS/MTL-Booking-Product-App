@@ -5,7 +5,10 @@ import User from "../models/User.js";
 import Job from "../models/Job.js";
 import mongoose from "mongoose";
 import Voucher from "../models/pricings/Voucher.js";
-import { createEventOnGoogleCalendar } from "../utils/calendarService.js";
+import {
+  createEventOnGoogleCalendar,
+  deleteEventFromGoogleCalendar,
+} from "../utils/calendarService.js";
 
 // Craete Booking (Dashboard/Widget)
 export const createBooking = async (req, res) => {
@@ -234,8 +237,21 @@ export const createBooking = async (req, res) => {
       role: "clientadmin",
     }).lean();
 
-    if (clientAdmin?.googleCalendar?.access_token) {
-      await createEventOnGoogleCalendar({ booking: savedBooking, clientAdmin });
+    try {
+      if (
+        clientAdmin?.googleCalendar?.access_token &&
+        savedBooking?.primaryJourney?.date
+      ) {
+        await createEventOnGoogleCalendar({
+          booking: savedBooking,
+          clientAdmin,
+        });
+      }
+    } catch (calendarError) {
+      console.error(
+        "⚠️ Calendar event creation failed:",
+        calendarError.message
+      );
     }
 
     const sanitize = (booking) => {
@@ -566,12 +582,12 @@ export const updateBookingStatus = async (req, res) => {
     }
 
     const fullName = currentUser.fullName || currentUser.name || "Unknown User";
-    updatedBy = `${currentUser?.role} | ${fullName}`;
+    const updater = `${currentUser?.role} | ${fullName}`;
 
     booking.statusAudit = [
       ...(booking.statusAudit || []),
       {
-        updatedBy,
+        updatedBy: updater,
         status,
         date: new Date(),
       },

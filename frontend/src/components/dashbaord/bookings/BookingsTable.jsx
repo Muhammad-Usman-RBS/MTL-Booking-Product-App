@@ -17,6 +17,7 @@ import {
 import Icons from "../../../assets/icons";
 import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
+import moment from "moment-timezone";
 
 const BookingsTable = ({
   assignedDrivers,
@@ -43,6 +44,8 @@ const BookingsTable = ({
   endDate,
 }) => {
   const user = useSelector((state) => state.auth.user);
+  const timezone =
+    useSelector((state) => state.bookingSetting?.timezone) || "UTC";
   const companyId = user?.companyId;
   const [tooltip, setTooltip] = useState({ show: false, text: "", x: 0, y: 0 });
   const [page, setPage] = useState(1);
@@ -63,6 +66,7 @@ const BookingsTable = ({
     { label: "Return Fare", key: "returnJourneyFare" },
     { label: "Return DR Fare", key: "returnDriverFare" },
     { label: "Driver", key: "driver" },
+    { label: "Created At", key: "createdAt" },
     { label: "Status", key: "status" },
     { label: "Actions", key: "actions" },
   ];
@@ -70,9 +74,9 @@ const BookingsTable = ({
   const tableHeaders =
     user?.role === "driver"
       ? allHeaders.filter(
-        (header) =>
-          header.key !== "journeyFare" && header.key !== "returnJourneyFare"
-      )
+          (header) =>
+            header.key !== "journeyFare" && header.key !== "returnJourneyFare"
+        )
       : allHeaders;
 
   const emptyTableRows = EmptyTableMessage({
@@ -179,8 +183,8 @@ const BookingsTable = ({
       !Array.isArray(selectedDrivers) || selectedDrivers.length === 0
         ? true
         : Array.isArray(b.drivers)
-          ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
-          : false;
+        ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
+        : false;
 
     const dateTime =
       !startDate || !endDate ? true : createdAt >= start && createdAt <= end;
@@ -382,8 +386,9 @@ const BookingsTable = ({
   const formatVehicle = (v) =>
     !v || typeof v !== "object"
       ? "-"
-      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${v.handLuggage || 0
-      } | ${v.checkinLuggage || 0}`;
+      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${
+          v.handLuggage || 0
+        } | ${v.checkinLuggage || 0}`;
 
   const formatPassenger = (p) =>
     !p || typeof p !== "object"
@@ -392,12 +397,10 @@ const BookingsTable = ({
   const formatDriver = (item) => {
     const allDrivers = driversData?.drivers || [];
 
-    // Check if the job is rejected
     if (item.jobStatus === "Rejected") {
       let driverName = "Unknown Driver";
 
       if (item.assignedDriverId) {
-        // Find driver by the assigned driver ID from job
         const driver = allDrivers.find(
           (d) =>
             d._id?.toString() === item.assignedDriverId?.toString() &&
@@ -405,17 +408,13 @@ const BookingsTable = ({
         );
         driverName = driver?.fullName || driver?.name || "Unknown Driver";
       } else if (item.drivers && item.drivers.length > 0) {
-        // Fallback to existing drivers array
         driverName = item.drivers
           .map((driver) => driver.name || "Unnamed Driver")
           .join(", ");
       }
 
       return (
-        <div
-          onClick={() => openDriverModal(item)}
-          className="text-red-500 italic"
-        >
+        <div className="text-red-500 italic">
           <div className="font-medium">{driverName} - Rejected</div>
           <div className="text-xs hover:underline text-gray-500 mt-1">
             Click here to Select Driver
@@ -428,12 +427,11 @@ const BookingsTable = ({
     if (drivers.length === 0) {
       return (
         <span className="text-[var(--dark-grey)]">
-          <Icons.CircleUserRound onClick={() => openDriverModal(item)} />
+          <Icons.CircleUserRound />
         </span>
       );
     }
 
-    // Return the name of the assigned driver(s)
     return drivers.map((driver, i) => (
       <div key={i} className="text-sm text-gray-700">
         {driver.name || "Unnamed Driver"}
@@ -459,11 +457,36 @@ const BookingsTable = ({
           case "passenger":
             row[key] = formatPassenger(item.passenger);
             break;
-          case "date":
-            row[key] = item.createdAt
-              ? new Date(item.createdAt).toLocaleString()
-              : "-";
+          case "date": {
+            const journey = item.returnJourney
+              ? item.returnJourney
+              : item.primaryJourney;
+            const rawDate = journey?.date;
+            const hour = journey?.hour;
+            const minute = journey?.minute;
+
+            if (!rawDate || hour === undefined || minute === undefined) {
+              row[key] = "-";
+              break;
+            }
+            const combinedDate = new Date(rawDate);
+            combinedDate.setHours(hour);
+            combinedDate.setMinutes(minute);
+            combinedDate.setSeconds(0);
+            combinedDate.setMilliseconds(0);
+            const formatted = combinedDate.toLocaleString("en-GB", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: false,
+            });
+
+            row[key] = formatted;
             break;
+          }
           case "pickUp":
             const pickupLocation = item.returnJourney
               ? item.returnJourney?.pickup || "-"
@@ -536,8 +559,27 @@ const BookingsTable = ({
             row[key] =
               item.returnDriverFare !== undefined ? item.returnDriverFare : "-";
             break;
+          case "createdAt":
+            row[key] = item.createdAt
+              ? moment(item.createdAt)
+                  .tz(timezone)
+                  .format("DD/MM/YYYY HH:mm:ss")
+              : "-";
+            break;
           case "driver":
-            row[key] = formatDriver(item);
+            row[key] = (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (selectedRow !== item._id) {
+                    setSelectedRow(item._id);
+                  }
+                  openDriverModal(item);
+                }}
+              >
+                {formatDriver(item)}
+              </div>
+            );
             break;
           case "status":
             row[key] = (
@@ -729,17 +771,30 @@ const BookingsTable = ({
 
       driver: Array.isArray(item.drivers)
         ? item.drivers
-          .map((driver) => {
-            // Handle new structure where driver is an object with name/driverInfo
-            if (typeof driver === "object") {
-              if (driver.name) {
-                return driver.name;
-              } else if (driver.driverInfo?.firstName) {
-                return driver.driverInfo.firstName;
-              } else if (driver.driverId) {
-                // Try to match with assignedDrivers using driverId
+            .map((driver) => {
+              // Handle new structure where driver is an object with name/driverInfo
+              if (typeof driver === "object") {
+                if (driver.name) {
+                  return driver.name;
+                } else if (driver.driverInfo?.firstName) {
+                  return driver.driverInfo.firstName;
+                } else if (driver.driverId) {
+                  // Try to match with assignedDrivers using driverId
+                  const matchedDriver = assignedDrivers.find(
+                    (d) => d?._id?.toString() === driver.driverId?.toString()
+                  );
+                  return (
+                    matchedDriver?.DriverData?.firstName ||
+                    matchedDriver?.DriverData?.name ||
+                    matchedDriver?.name ||
+                    "Unnamed"
+                  );
+                }
+              } else {
+                // Legacy structure - try to match with assignedDrivers
+                const driverId = driver;
                 const matchedDriver = assignedDrivers.find(
-                  (d) => d?._id?.toString() === driver.driverId?.toString()
+                  (d) => d?._id?.toString() === driverId?.toString()
                 );
                 return (
                   matchedDriver?.DriverData?.firstName ||
@@ -748,22 +803,9 @@ const BookingsTable = ({
                   "Unnamed"
                 );
               }
-            } else {
-              // Legacy structure - try to match with assignedDrivers
-              const driverId = driver;
-              const matchedDriver = assignedDrivers.find(
-                (d) => d?._id?.toString() === driverId?.toString()
-              );
-              return (
-                matchedDriver?.DriverData?.firstName ||
-                matchedDriver?.DriverData?.name ||
-                matchedDriver?.name ||
-                "Unnamed"
-              );
-            }
-            return "Unnamed";
-          })
-          .join(", ")
+              return "Unnamed";
+            })
+            .join(", ")
         : "-",
       status: item.statusAudit?.at(-1)?.status || item.status || "-",
     };
@@ -819,6 +861,14 @@ const BookingsTable = ({
         showSorting
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
+        onRowDoubleClick={(row) => {
+          const selectedBooking = filteredBookings.find(
+            (b) => b._id === row._id
+          );
+          if (selectedBooking) {
+            openViewModal(selectedBooking);
+          }
+        }}
       />
       <DeleteModal
         isOpen={showDeleteModal}

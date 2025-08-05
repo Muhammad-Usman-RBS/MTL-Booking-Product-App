@@ -356,8 +356,9 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
           ? (fare * taxMultiplier).toFixed(2)
           : fare.toFixed(2);
       })(),
-      pickUp: item.primaryJourney?.pickup || "-",
-      dropOff: item.primaryJourney?.dropoff || "-",
+      pickUp: item.primaryJourney?.pickup || item.returnJourney?.pickup || "-",
+      dropOff:
+        item.primaryJourney?.dropoff || item.returnJourney?.dropoff || "-",
       tax: (
         <SelectOption
           width="w-full md:w-24"
@@ -425,7 +426,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
       <div className="flex    gap-4">
         {/* Filter Section */}
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full">
-          <div className="w-full sm:w-64">
+          <div className="flex min-w-[255px] max-w-xs">
             <SelectDateRange
               startDate={startDate}
               endDate={endDate}
@@ -478,17 +479,15 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
             </div>
           </div>
         </div>
-        {selectedRows.length > 0 && (
-          <div className=" flex whitespace-nowrap justify-end">
-            <button
-              onClick={handleCreateInvoice}
-              disabled={isCreating}
-              className="btn btn-primary"
-            >
-              {isCreating ? "Creating..." : `Create Invoice `}
-            </button>
-          </div>
-        )}
+        <div className=" whitespace-nowrap">
+          <button
+            onClick={handleCreateInvoice}
+            disabled={isCreating}
+            className="btn btn-primary"
+          >
+            {isCreating ? "Creating..." : `Create Invoice `}
+          </button>
+        </div>
       </div>
       <div>
         <CustomTable

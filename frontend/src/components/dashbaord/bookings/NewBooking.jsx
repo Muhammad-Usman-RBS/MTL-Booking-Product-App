@@ -8,7 +8,10 @@ import VehicleSelection from "./VehicleSelection";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import { useSelector } from "react-redux";
-import { useCreateBookingMutation, useUpdateBookingMutation } from "../../../redux/api/bookingApi";
+import {
+  useCreateBookingMutation,
+  useUpdateBookingMutation,
+} from "../../../redux/api/bookingApi";
 import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
 import { useBookingFare } from "../../../utils/useBookingFare";
 import { useGetGeneralPricingPublicQuery } from "../../../redux/api/generalPricingApi";
@@ -20,26 +23,55 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const isCopyMode = !!editBookingData?.__copyMode;
 
   // Track if locations have been changed from original values
-  const [hasChangedPrimaryLocations, setHasChangedPrimaryLocations] = useState(false);
-  const [hasChangedReturnLocations, setHasChangedReturnLocations] = useState(false);
+  const [hasChangedPrimaryLocations, setHasChangedPrimaryLocations] =
+    useState(false);
+  const [hasChangedReturnLocations, setHasChangedReturnLocations] =
+    useState(false);
 
   // Store original location values for comparison
-  const [originalPrimaryLocations, setOriginalPrimaryLocations] = useState(null);
+  const [originalPrimaryLocations, setOriginalPrimaryLocations] =
+    useState(null);
   const [originalReturnLocations, setOriginalReturnLocations] = useState(null);
 
-  const { data: hourlyPackages = [] } = useGetAllHourlyRatesQuery(companyId, { skip: !companyId });
-  const { data: generalPricing } = useGetGeneralPricingPublicQuery(companyId, { skip: !companyId });
+  const { data: hourlyPackages = [] } = useGetAllHourlyRatesQuery(companyId, {
+    skip: !companyId,
+  });
+  const { data: generalPricing } = useGetGeneralPricingPublicQuery(companyId, {
+    skip: !companyId,
+  });
 
-  const [emailNotify, setEmailNotify] = useState({ admin: false, customer: false });
+  const [emailNotify, setEmailNotify] = useState({
+    admin: false,
+    customer: false,
+  });
   const [mode, setMode] = useState("Transfer");
   const [returnJourneyToggle, setreturnJourneyToggle] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [selectedHourly, setSelectedHourly] = useState(null);
-  const [vehicleExtras, setVehicleExtras] = useState({ passenger: 0, childSeat: 0, handLuggage: 0, checkinLuggage: 0 });
-  const [passengerDetails, setPassengerDetails] = useState({ name: "", email: "", phone: "" });
+  const [vehicleExtras, setVehicleExtras] = useState({
+    passenger: 0,
+    childSeat: 0,
+    handLuggage: 0,
+    checkinLuggage: 0,
+  });
+  const [passengerDetails, setPassengerDetails] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
 
-  const [primaryJourneyData, setPrimaryJourneyData] = useState({ pickup: "", date: "", hour: "", minute: "" });
-  const [returnJourneyData, setReturnJourneyData] = useState({ pickup: "", date: "", hour: "", minute: "" });
+  const [primaryJourneyData, setPrimaryJourneyData] = useState({
+    pickup: "",
+    date: "",
+    hour: "",
+    minute: "",
+  });
+  const [returnJourneyData, setReturnJourneyData] = useState({
+    pickup: "",
+    date: "",
+    hour: "",
+    minute: "",
+  });
   const [dropOffs1, setDropOffs1] = useState([""]);
   const [dropOffs2, setDropOffs2] = useState([""]);
 
@@ -51,7 +83,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const extraDropoffPrice = (count) => {
     const base = 0; // fallback if no generalPricing
     const rate = generalPricing?.minAdditionalDropOff || base;
-    return Math.max(0, (count - 1)) * rate;
+    return Math.max(0, count - 1) * rate;
   };
 
   // convert primaryJourneyData date + hour + minute to a JS Date
@@ -64,48 +96,57 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   };
 
   const journeyDateTime = getJourneyDate(primaryJourneyData);
-  const isReturnJourney = !!editBookingData?.__editReturn || !!editBookingData?.__copyReturn || returnJourneyToggle;
+  const isReturnJourney =
+    !!editBookingData?.__editReturn ||
+    !!editBookingData?.__copyReturn ||
+    returnJourneyToggle;
 
   // Only calculate new fare if locations have been changed or it's a new booking
-  const shouldCalculatePrimaryFare = !editBookingData || hasChangedPrimaryLocations;
-  const shouldCalculateReturnFare = !editBookingData || hasChangedReturnLocations;
+  const shouldCalculatePrimaryFare =
+    !editBookingData || hasChangedPrimaryLocations;
+  const shouldCalculateReturnFare =
+    !editBookingData || hasChangedReturnLocations;
 
-  const { calculatedFare: primaryFare,
+  const {
+    calculatedFare: primaryFare,
     pricingMode: primaryFareMode,
     hourlyError: hourlyError,
     distanceText: primaryDistanceText,
-    durationText: primaryDurationText, } = useBookingFare({
-      companyId,
-      pickup: primaryJourneyData.pickup,
-      dropoff: dropOffs1[0],
-      selectedVehicle,
-      mode,
-      selectedHourly,
-      dropOffPrice: extraDropoffPrice(dropOffs1.length),
-      journeyDateTime,
-      includeAirportFees: true,
-      includeChildSeat: vehicleExtras.childSeat > 0,
-      childSeatCount: vehicleExtras.childSeat,
-      enabled: shouldCalculatePrimaryFare, // Only calculate if needed
-    });
+    durationText: primaryDurationText,
+  } = useBookingFare({
+    companyId,
+    pickup: primaryJourneyData.pickup,
+    dropoff: dropOffs1[0],
+    selectedVehicle,
+    mode,
+    selectedHourly,
+    dropOffPrice: extraDropoffPrice(dropOffs1.length),
+    journeyDateTime,
+    includeAirportFees: true,
+    includeChildSeat: vehicleExtras.childSeat > 0,
+    childSeatCount: vehicleExtras.childSeat,
+    enabled: shouldCalculatePrimaryFare, // Only calculate if needed
+  });
 
-  const { calculatedFare: returnFare,
+  const {
+    calculatedFare: returnFare,
     distanceText: returnDistanceText,
     durationText: returnDurationText,
-    pricingMode: returnFareMode, } = useBookingFare({
-      companyId,
-      pickup: returnJourneyData.pickup,
-      dropoff: dropOffs2[0],
-      selectedVehicle,
-      mode,
-      selectedHourly,
-      dropOffPrice: extraDropoffPrice(dropOffs2.length),
-      journeyDateTime,
-      includeAirportFees: true,
-      includeChildSeat: vehicleExtras.childSeat > 0,
-      childSeatCount: vehicleExtras.childSeat,
-      enabled: shouldCalculateReturnFare, // Only calculate if needed
-    });
+    pricingMode: returnFareMode,
+  } = useBookingFare({
+    companyId,
+    pickup: returnJourneyData.pickup,
+    dropoff: dropOffs2[0],
+    selectedVehicle,
+    mode,
+    selectedHourly,
+    dropOffPrice: extraDropoffPrice(dropOffs2.length),
+    journeyDateTime,
+    includeAirportFees: true,
+    includeChildSeat: vehicleExtras.childSeat > 0,
+    childSeatCount: vehicleExtras.childSeat,
+    enabled: shouldCalculateReturnFare, // Only calculate if needed
+  });
 
   const [fareDetails, setFareDetails] = useState({
     paymentMethod: "Cash",
@@ -116,7 +157,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     returnJourneyFare: "",
     returnDriverFare: "",
     emailNotifications: { admin: false, customer: false },
-    appNotifications: { customer: false }
+    appNotifications: { customer: false },
   });
 
   // Function to check if locations have changed
@@ -125,7 +166,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
     return (
       originalPrimaryLocations.pickup !== primaryJourneyData.pickup ||
-      JSON.stringify(originalPrimaryLocations.dropOffs) !== JSON.stringify(dropOffs1)
+      JSON.stringify(originalPrimaryLocations.dropOffs) !==
+        JSON.stringify(dropOffs1)
     );
   };
 
@@ -134,7 +176,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
     return (
       originalReturnLocations.pickup !== returnJourneyData.pickup ||
-      JSON.stringify(originalReturnLocations.dropOffs) !== JSON.stringify(dropOffs2)
+      JSON.stringify(originalReturnLocations.dropOffs) !==
+        JSON.stringify(dropOffs2)
     );
   };
 
@@ -195,7 +238,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       // Store original return locations
       setOriginalReturnLocations({
         pickup: journeyState.pickup,
-        dropOffs: [...dropOffList]
+        dropOffs: [...dropOffList],
       });
     } else {
       setPrimaryJourneyData(journeyState);
@@ -203,7 +246,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       // Store original primary locations
       setOriginalPrimaryLocations({
         pickup: journeyState.pickup,
-        dropOffs: [...dropOffList]
+        dropOffs: [...dropOffList],
       });
     }
 
@@ -237,7 +280,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       setDropOffs2(returnDropOffList);
       setOriginalReturnLocations({
         pickup: returnJourneyState.pickup,
-        dropOffs: [...returnDropOffList]
+        dropOffs: [...returnDropOffList],
       });
     }
 
@@ -261,7 +304,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       paymentMethod: cloned.paymentMethod || "",
       cardPaymentReference: cloned.cardPaymentReference || "",
       paymentGateway: cloned.paymentGateway || "",
-      journeyFare: cloned.journeyFare || 0,
+      journeyFare: cloned.journeyFare,
       driverFare: cloned.driverFare || 0,
       returnJourneyFare: cloned.returnJourneyFare || 0,
       returnDriverFare: cloned.returnDriverFare || 0,
@@ -277,7 +320,11 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
   // Update local edit data with new calculated fares only when locations change
   useEffect(() => {
-    if (localEditData?.primaryJourney && hasChangedPrimaryLocations && primaryFare) {
+    if (
+      localEditData?.primaryJourney &&
+      hasChangedPrimaryLocations &&
+      primaryFare
+    ) {
       setLocalEditData((prev) => ({
         ...prev,
         primaryJourney: {
@@ -287,20 +334,23 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       }));
     }
   }, [primaryFare, hasChangedPrimaryLocations]);
-
   useEffect(() => {
-    if (localEditData?.returnJourney && hasChangedReturnLocations && returnFare) {
-      setLocalEditData((prev) => ({
+    if (primaryFare && !fareDetails.journeyFare) {
+      setFareDetails((prev) => ({
         ...prev,
-        returnJourney: {
-          ...prev.returnJourney,
-          fare: returnFare,
-        },
+        journeyFare: primaryFare,
       }));
     }
-  }, [returnFare, hasChangedReturnLocations]);
+  }, [primaryFare]);
 
-  // Custom wrapper for setPrimaryJourneyData to track changes
+  useEffect(() => {
+    if (returnFare && !fareDetails.returnJourneyFare && returnJourneyToggle) {
+      setFareDetails((prev) => ({
+        ...prev,
+        returnJourneyFare: returnFare,
+      }));
+    }
+  }, [returnFare, returnJourneyToggle]);
   const handlePrimaryJourneyDataChange = (newData) => {
     setPrimaryJourneyData(newData);
   };
@@ -336,7 +386,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const isReturnJourney = !!editBookingData?.__editReturn || !!editBookingData?.__copyReturn;
+    const isReturnJourney =
+      !!editBookingData?.__editReturn || !!editBookingData?.__copyReturn;
     const isEditing = !!editBookingData?._id && !editBookingData?.__copyMode;
 
     if (!companyId) {
@@ -356,8 +407,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     const buildDynamicFields = (dropOffs, journeyData) => {
       const dynamic = {};
       dropOffs.forEach((_, i) => {
-        dynamic[`dropoffDoorNumber${i}`] = journeyData?.[`dropoffDoorNumber${i}`] || "";
-        dynamic[`dropoff_terminal_${i}`] = journeyData?.[`dropoff_terminal_${i}`] || "";
+        dynamic[`dropoffDoorNumber${i}`] =
+          journeyData?.[`dropoffDoorNumber${i}`] || "";
+        dynamic[`dropoff_terminal_${i}`] =
+          journeyData?.[`dropoff_terminal_${i}`] || "";
       });
       return dynamic;
     };
@@ -374,9 +427,9 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       paymentMethod: fareDetails.paymentMethod,
       cardPaymentReference: fareDetails.cardPaymentReference,
       paymentGateway: fareDetails.paymentGateway,
-      journeyFare: parseFloat(fareDetails.journeyFare) || 0,
-      driverFare: parseFloat(fareDetails.driverFare) || 0,
-      returnJourneyFare: parseFloat(fareDetails.returnJourneyFare) || 0,
+      journeyFare: parseFloat(fareDetails.journeyFare),
+      driverFare: parseFloat(fareDetails.driverFare),
+      returnJourneyFare: parseFloat(fareDetails.returnJourneyFare),
       returnDriverFare: parseFloat(fareDetails.returnDriverFare) || 0,
       emailNotifications: {
         admin: !!fareDetails?.emailNotifications?.admin,
@@ -418,7 +471,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             dropoff: dropOffs2[0],
             additionalDropoff1: dropOffs2[1] || null,
             additionalDropoff2: dropOffs2[2] || null,
-            hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+            hourlyOption:
+              mode === "Hourly" && selectedHourly?.label
+                ? selectedHourly.label
+                : null,
             fare: getDisplayReturnFare(),
             ...dynamicFields2,
           };
@@ -429,7 +485,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             dropoff: dropOffs1[0],
             additionalDropoff1: dropOffs1[1] || null,
             additionalDropoff2: dropOffs1[2] || null,
-            hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+            hourlyOption:
+              mode === "Hourly" && selectedHourly?.label
+                ? selectedHourly.label
+                : null,
             fare: getDisplayPrimaryFare(),
             ...dynamicFields1,
           };
@@ -440,7 +499,11 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           updatedData: { bookingData: updatePayload },
         }).unwrap();
 
-        toast.success(`${isReturnJourney ? "Return" : "Primary"} booking updated successfully`);
+        toast.success(
+          `${
+            isReturnJourney ? "Return" : "Primary"
+          } booking updated successfully`
+        );
       }
 
       // ✅ CREATE MODE (Copy or New)
@@ -448,7 +511,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         // ➤ 1. Create primary booking
         const primaryPayload = {
           ...basePayload,
-          journeyFare: parseFloat(fareDetails.journeyFare) || 0,
+          journeyFare: parseFloat(fareDetails.journeyFare),
           driverFare: parseFloat(fareDetails.driverFare) || 0,
           primaryJourney: {
             ...primaryJourneyData,
@@ -457,7 +520,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             additionalDropoff2: dropOffs1[2] || null,
             distanceText: primaryDistanceText,
             durationText: primaryDurationText,
-            hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+            hourlyOption:
+              mode === "Hourly" && selectedHourly?.label
+                ? selectedHourly.label
+                : null,
             fare: getDisplayPrimaryFare(),
             ...dynamicFields1,
           },
@@ -479,7 +545,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
               additionalDropoff2: dropOffs2[2] || null,
               distanceText: returnDistanceText,
               durationText: returnDurationText,
-              hourlyOption: mode === "Hourly" && selectedHourly?.label ? selectedHourly.label : null,
+              hourlyOption:
+                mode === "Hourly" && selectedHourly?.label
+                  ? selectedHourly.label
+                  : null,
               fare: getDisplayReturnFare(),
               ...dynamicFields2,
             },
@@ -505,19 +574,18 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
   return (
     <>
-      {!editBookingData && (
-        <OutletHeading name="New Booking" />
-      )}
+      {!editBookingData && <OutletHeading name="New Booking" />}
       <div className="flex flex-col items-center justify-center mb-6 space-y-4">
         <div className="flex">
           {["Transfer", "Hourly"].map((tab) => (
             <button
               key={tab}
               onClick={() => setMode(tab)}
-              className={`px-6 py-2 font-semibold text-sm border cursor-pointer ${mode === tab
-                ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
-                : "bg-[#f9fafb] text-gray-700 border-gray-300"
-                } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
+              className={`px-6 py-2 font-semibold text-sm border cursor-pointer ${
+                mode === tab
+                  ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
+                  : "bg-[#f9fafb] text-gray-700 border-gray-300"
+              } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
             >
               {tab}
             </button>
@@ -571,12 +639,16 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       </div>
 
       <div className="w-full flex flex-col items-center gap-6">
-        <div className={`w-full ${returnJourneyToggle ? "lg:max-w-6xl gap-4" : "lg:max-w-4xl"} flex flex-col lg:flex-row`}>
+        <div
+          className={`w-full ${
+            returnJourneyToggle ? "lg:max-w-6xl gap-4" : "lg:max-w-4xl"
+          } flex flex-col lg:flex-row`}
+        >
           {/* Journey 1 */}
           {/* {(!isEditing || !isReturnJourney || returnJourneyToggle) && ( */}
           {(!isEditing && !returnJourneyToggle) ||
-            (isEditing && !isReturnJourney) ||
-            (!isEditing && returnJourneyToggle) ? (
+          (isEditing && !isReturnJourney) ||
+          (!isEditing && returnJourneyToggle) ? (
             <JourneyCard
               title="Journey 1"
               journeyData={primaryJourneyData}
@@ -591,7 +663,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             />
           ) : null}
           {/* Journey 2 (conditionally shown) */}
-          {(isEditing && isReturnJourney) || (!isEditing && returnJourneyToggle) ? (
+          {(isEditing && isReturnJourney) ||
+          (!isEditing && returnJourneyToggle) ? (
             <div className="w-full transition-all duration-200 ease-in-out transform">
               <JourneyCard
                 title="Journey 2"
@@ -620,28 +693,48 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             />
             <div className="w-12 h-6 bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-colors duration-300"></div>
             <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transform peer-checked:translate-x-6 transition-transform duration-300"></div>
-            <span className="ml-4 text-sm font-medium text-gray-800">Return Journey</span>
+            <span className="ml-4 text-sm font-medium text-gray-800">
+              Return Journey
+            </span>
           </label>
         </div>
       </div>
       <div
-        className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${editBookingData?._id || editBookingData?.__copyMode ? "px-6" : ""
-          }`}
+        className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${
+          editBookingData?._id || editBookingData?.__copyMode ? "px-6" : ""
+        }`}
       >
         <div className="col-span-6">
           <div className="bg-white shadow-lg rounded-2xl border border-gray-200">
             <div className="bg-[#0f192d] px-6 rounded-t-2xl py-3">
-              <h2 className="text-xl font-bold text-gray-50">Passenger & Vehicle Details:-</h2>
+              <h2 className="text-xl font-bold text-gray-50">
+                Passenger & Vehicle Details:-
+              </h2>
             </div>
             <div className="p-6">
-              <PassengerDetails passengerDetails={passengerDetails} setPassengerDetails={setPassengerDetails} />
+              <PassengerDetails
+                passengerDetails={passengerDetails}
+                setPassengerDetails={setPassengerDetails}
+              />
               <hr className="mb-6 mt-6 border-gray-300" />
-              <VehicleSelection setSelectedVehicle={setSelectedVehicle} setVehicleExtras={setVehicleExtras} editBookingData={editBookingData} />
+              <VehicleSelection
+                setSelectedVehicle={setSelectedVehicle}
+                setVehicleExtras={setVehicleExtras}
+                editBookingData={editBookingData}
+              />
             </div>
           </div>
         </div>
         <div className="col-span-6">
-          <FareSection returnJourneyToggle={returnJourneyToggle} fareDetails={fareDetails} setFareDetails={setFareDetails} setEmailNotify={setEmailNotify} handleSubmit={handleSubmit} isLoading={isLoading} editBookingData={editBookingData} />
+          <FareSection
+            returnJourneyToggle={returnJourneyToggle}
+            fareDetails={fareDetails}
+            setFareDetails={setFareDetails}
+            setEmailNotify={setEmailNotify}
+            handleSubmit={handleSubmit}
+            isLoading={isLoading}
+            editBookingData={editBookingData}
+          />
         </div>
       </div>
 
@@ -654,8 +747,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           {isLoading
             ? "Processing..."
             : editBookingData && editBookingData._id
-              ? "Update Booking"
-              : "Submit Booking"}
+            ? "Update Booking"
+            : "Submit Booking"}
         </button>
       </div>
     </>

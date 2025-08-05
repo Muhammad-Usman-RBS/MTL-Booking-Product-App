@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const SelectedSearch = ({
   selected,
@@ -7,6 +7,20 @@ const SelectedSearch = ({
   placeholder,
   showCount = true,
 }) => {
+  const dropdownRef = useRef(null);
+
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      setDropdownOpen(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, [])
   const [searchTerm, setSearchTerm] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -18,6 +32,7 @@ const SelectedSearch = ({
     } else {
       setSelected([...safeSelected, label]);
     }
+    setDropdownOpen(false);
   };
 
   const filteredStatuses = statusList.filter((item) =>
@@ -25,7 +40,7 @@ const SelectedSearch = ({
   );
 
   return (
-    <div className="relative inline-block text-left w-full">
+    <div ref={dropdownRef}  className="relative inline-block text-left w-full">
       <button
         onClick={() => setDropdownOpen(!dropdownOpen)}
         className="border px-3 py-1 rounded bg-white cursor-pointer border-[var(--light-gray)] w-full text-left"

@@ -1,12 +1,11 @@
-
-
-
 import React from "react";
 
 const FareSection = ({
   fareDetails,
   setFareDetails,
   returnJourneyToggle,
+  calculatedJourneyFare,
+  calculatedReturnFare,
 }) => {
   const handleFareChange = (key, value) => {
     setFareDetails((prev) => ({ ...prev, [key]: value }));
@@ -52,35 +51,54 @@ const FareSection = ({
         )}
 
         <div className="flex flex-wrap items-center gap-4">
-          {["Cash", "Card", "Payment Link", "Invoice", "Paypal"].map((method) => (
-            <label
-              key={method}
-              className="flex items-center cursor-pointer gap-2"
-            >
-              <input
-                type="radio"
-                name="payment"
-                className="cursor-pointer"
-                value={method}
-                checked={fareDetails.paymentMethod === method}
-                onChange={(e) =>
-                  handleFareChange("paymentMethod", e.target.value)
-                }
-              />
-              {method}
-            </label>
-          ))}
+          {["Cash", "Card", "Payment Link", "Invoice", "Paypal"].map(
+            (method) => (
+              <label
+                key={method}
+                className="flex items-center cursor-pointer gap-2"
+              >
+                <input
+                  type="radio"
+                  name="payment"
+                  className="cursor-pointer"
+                  value={method}
+                  checked={fareDetails.paymentMethod === method}
+                  onChange={(e) =>
+                    handleFareChange("paymentMethod", e.target.value)
+                  }
+                />
+                {method}
+              </label>
+            )
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
           {[
-            { key: "journeyFare", label: "Journey Fare" },
-            { key: "driverFare", label: "Driver Fare" },
+            {
+              key: "journeyFare",
+              label: "Journey Fare",
+              calculatedValue: calculatedJourneyFare,
+            },
+            {
+              key: "driverFare",
+              label: "Driver Fare",
+              calculatedValue: null,
+            },
             ...(returnJourneyToggle
               ? [
-                { key: "returnJourneyFare", label: "Return Journey Fare" },
-                { key: "returnDriverFare", label: "Return Driver Fare" },
-              ] : []),
+                  {
+                    key: "returnJourneyFare",
+                    label: "Return Journey Fare",
+                    calculatedValue: calculatedReturnFare,
+                  },
+                  {
+                    key: "returnDriverFare",
+                    label: "Return Driver Fare",
+                    calculatedValue: null,
+                  },
+                ]
+              : []),
           ].map((item) => (
             <div
               key={item.key}
@@ -94,8 +112,11 @@ const FareSection = ({
                   type="number"
                   className="custom_input"
                   value={fareDetails[item.key]}
+                  placeholder={
+                    item.calculatedValue ? `${item.calculatedValue}` : "0"
+                  }
                   onChange={(e) =>
-                    handleFareChange(item.key, parseFloat(e.target.value) ?? "")
+                    handleFareChange(item.key, parseFloat(e.target.value) || "")
                   }
                 />
                 <span className="bg-gray-200 border border-[var(--light-gray)] px-3 py-1 rounded-r text-gray-700 font-medium">
@@ -105,7 +126,6 @@ const FareSection = ({
             </div>
           ))}
         </div>
-
         <hr className="mb-7 mt-2 border-[var(--light-gray)]" />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
@@ -160,7 +180,6 @@ const FareSection = ({
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

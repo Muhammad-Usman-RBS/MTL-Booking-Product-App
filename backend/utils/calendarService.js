@@ -42,7 +42,9 @@ export const createEventOnGoogleCalendar = async ({ booking, clientAdmin }) => {
       const location = geocodeResponse.data.results[0].geometry.location;
       const lat = location.lat;
       const lng = location.lng;
-
+      if (!booking?.primaryJourney?.date) {
+        throw new Error("Primary journey date is missing.");
+      }
       const timeZoneUrl = `https://maps.googleapis.com/maps/api/timezone/json?location=${lat},${lng}&timestamp=${Math.floor(
         bookingDate.getTime() / 1000
       )}&key=${process.env.GOOGLE_API_KEY}`;

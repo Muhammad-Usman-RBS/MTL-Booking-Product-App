@@ -14,7 +14,8 @@
     showPagination = true,
     showSorting = true,
     selectedRow,
-    setSelectedRow
+    setSelectedRow,
+    onRowDoubleClick,
   }) => {
     const [search, setSearch] = useState("");
     const [perPage, setPerPage] = useState(5);
@@ -131,6 +132,7 @@
             ? () => setSelectedRow(selectedRow === item._id ? null : item._id)
             : undefined
         }
+        onDoubleClick={() => onRowDoubleClick?.(item)}
         className={`border-b border-[var(--light-gray)] hover:bg-[#CFE2FF] transition ${
           setSelectedRow ? "cursor-pointer " : ""
         } ${

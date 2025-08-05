@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Icons from "../../assets/icons";
 
 const formatDate = (dateStr) => {
@@ -56,7 +56,20 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
+  const dropdownRef = useRef(null);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   const handleRangeClick = (getRange) => {
     const [start, end] = getRange();
     setStartDate(start);
@@ -73,7 +86,7 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
   };
 
   return (
-    <div className="relative inline-block w-full">
+    <div ref={dropdownRef} className="relative inline-block w-full">
       <div
         className="flex items-center gap-2 border border-[var(--light-gray)] px-2 py-[6px] bg-white rounded cursor-pointer"
         onClick={() => setDropdownOpen(!dropdownOpen)}

@@ -1,19 +1,34 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { useSelector } from "react-redux";
+import Icons from "../../../assets/icons";
 import IMAGES from "../../../assets/images";
-import { useCreateJobMutation } from "../../../redux/api/jobsApi";
-import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 import { useAdminGetAllDriversQuery } from "../../../redux/api/adminApi";
-import { useCreateNotificationMutation } from "../../../redux/api/notificationApi";
 import {
   useGetAllBookingsQuery,
   useSendBookingEmailMutation,
   useUpdateBookingMutation,
 } from "../../../redux/api/bookingApi";
-
+import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
+import { useCreateJobMutation, useGetDriverJobsQuery } from "../../../redux/api/jobsApi";
+import {
+  notificationApi,
+  useCreateNotificationMutation,
+  useDeleteNotificationMutation,
+} from "../../../redux/api/notificationApi";
 const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
+  const user = useSelector((state) => state.auth.user);
+  const companyId = user?.companyId;
   const [createNotification] = useCreateNotificationMutation();
+  const [deleteNotification] = useDeleteNotificationMutation();
+
+const { data: jobsData } = useGetDriverJobsQuery(
+  { companyId },
+  { 
+    skip: !companyId,
+    pollingInterval: 5000 
+  }
+);
   const [createJob] = useCreateJobMutation();
 
   const [updateBooking] = useUpdateBookingMutation();
@@ -24,8 +39,6 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   const [showMatching, setShowMatching] = useState(false);
   const [sendEmailChecked, setSendEmailChecked] = useState(false);
 
-  const user = useSelector((state) => state.auth.user);
-  const companyId = user?.companyId;
   const [sendBookingEmail] = useSendBookingEmailMutation();
 
   const { data: drivers = [], isLoading } = useGetAllDriversQuery(companyId, {
@@ -68,7 +81,76 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   {
     isLoading && <p>Loading drivers...</p>;
   }
+  const dispatch = useDispatch();
+  // Auto-remove drivers who reject jobs
+  useEffect(() => {
+    if (!selectedBooking?.drivers || !jobsData?.jobs) return;
 
+    const rejectedJobs = jobsData.jobs.filter(
+      (job) =>
+        job.jobStatus === "Rejected" && job.booking?._id === selectedBooking._id
+    );
+
+    if (rejectedJobs.length > 0) {
+      rejectedJobs.forEach(async (rejectedJob) => {
+        const rejectedDriverId = rejectedJob.driverId;
+        const driverToRemove = selectedBooking.drivers.find(
+          (d) => d.userId === rejectedDriverId
+        );
+
+        if (driverToRemove) {
+          try {
+            const updatedDrivers = selectedBooking.drivers.filter(
+              (d) => d.userId !== rejectedDriverId
+            );
+
+            await updateBooking({
+              id: selectedBooking._id,
+              updatedData: {
+                bookingData: {
+                  ...selectedBooking,
+                  drivers: updatedDrivers,
+                },
+              },
+            }).unwrap();
+
+            // Delete notification if exists
+            if (driverToRemove.employeeNumber) {
+              const { data: notificationsForDriver } = await dispatch(
+                notificationApi.endpoints.getUserNotifications.initiate(
+                  driverToRemove.employeeNumber
+                )
+              );
+
+              const matchingNotification = notificationsForDriver?.find(
+                (notif) =>
+                  notif?.bookingId === selectedBooking.bookingId &&
+                  notif?.employeeNumber === driverToRemove.employeeNumber
+              );
+
+              if (matchingNotification?._id) {
+                await deleteNotification(matchingNotification._id).unwrap();
+              }
+            }
+
+            toast.info(
+              `${driverToRemove.name} rejected the job and was automatically removed.`
+            );
+            refetchBookings();
+          } catch (error) {
+            console.error("Failed to auto-remove rejected driver:", error);
+          }
+        }
+      });
+    }
+  }, [
+    jobsData,
+    selectedBooking,
+    updateBooking,
+    deleteNotification,
+    dispatch,
+    refetchBookings,
+  ]);
   const handleSendEmail = async () => {
     try {
       if (!companyId) {
@@ -107,10 +189,8 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
         }
       }
 
-      // Update Booking - Store driver objects with both user ID and driver details
       const { _id, createdAt, updatedAt, __v, ...restBookingData } = booking;
 
-      // Create driver objects that contain both user ID and driver information
       const driverObjects = selectedDrivers
         .map((driver) => {
           const driverEmail = driver?.DriverData?.email?.toLowerCase().trim();
@@ -121,23 +201,16 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
           );
 
           return {
-            _id: matchedUser?._id, // User ID for system operations
-            userId: matchedUser?._id, // Explicit user ID reference
-            driverId: driver._id, // Original driver record ID
+            _id: matchedUser?._id,
+            userId: matchedUser?._id,
+            driverId: driver._id,
             name: driver?.DriverData?.firstName || "Unnamed",
             email: driver?.DriverData?.email,
             employeeNumber: driver?.DriverData?.employeeNumber,
             contact: driver?.DriverData?.contact,
-            // Store additional driver info for easy access
-            // driverInfo: {
-            //   firstName: driver?.DriverData?.firstName,
-            //   email: driver?.DriverData?.email,
-            //   employeeNumber: driver?.DriverData?.employeeNumber,
-            // },
           };
         })
-        .filter((obj) => obj._id); // Only include drivers with valid user IDs
-
+        .filter((obj) => obj._id);
       await updateBooking({
         id: booking._id,
         updatedData: {
@@ -155,7 +228,6 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
       toast.success("Booking updated with selected drivers.");
 
       // ✅ Create Jobs
-      console.log("🧾 Creating Jobs for Drivers...");
       await Promise.all(
         selectedDrivers.map(async (driver) => {
           const matchedUser = (allUsers?.drivers || []).find(
@@ -172,8 +244,6 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
             companyId,
           };
 
-          console.log("📤 Sending Job Payload:", jobPayload);
-
           try {
             const jobRes = await createJob(jobPayload).unwrap();
             toast.success(`Job created for ${driver.DriverData?.firstName}`);
@@ -185,7 +255,6 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
         })
       );
 
-      // ✅ Send Email Alerts
       if (sendEmailChecked) {
         await Promise.all(
           selectedDrivers.map(async (driver) => {
@@ -215,7 +284,6 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
         );
       }
 
-      // ✅ Notifications
       await Promise.all(
         selectedDrivers.map(async (driver) => {
           const { DriverData } = driver;
@@ -264,6 +332,51 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
     }
   };
 
+  const handleRemoveDriver = async (driverId, employeeNumber, driverName) => {
+    try {
+      const updatedDrivers = selectedBooking.drivers.filter(
+        (d) => d.driverId !== driverId
+      );
+
+      await updateBooking({
+        id: selectedBooking._id,
+        updatedData: {
+          bookingData: {
+            ...selectedBooking,
+            drivers: updatedDrivers,
+          },
+        },
+      }).unwrap();
+
+      if (employeeNumber) {
+        const { data: notificationsForDriver } = await dispatch(
+          notificationApi.endpoints.getUserNotifications.initiate(
+            employeeNumber
+          )
+        );
+
+        const matchingNotification = notificationsForDriver?.find(
+          (notif) =>
+            notif?.bookingId === selectedBooking.bookingId &&
+            notif?.employeeNumber === employeeNumber
+        );
+
+        if (matchingNotification?._id) {
+          await deleteNotification(matchingNotification._id).unwrap();
+          toast.success(`Notification for ${driverName} deleted.`);
+        } else {
+          console.warn("No matching notification found to delete.");
+        }
+      }
+
+      toast.success(`${driverName} removed successfully.`);
+      refetchBookings();
+    } catch (error) {
+      console.error("❌ Failed to remove driver:", error);
+      toast.error(`Failed to remove ${driverName}`);
+    }
+  };
+
   const convertKmToMiles = (text) => {
     if (!text || typeof text !== "string") return "—";
     if (text.includes("km")) {
@@ -284,9 +397,9 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
               Distance:
             </label>
             <p className="bg-gray-100 px-3 py-1.5 rounded">
-              {/* {convertKmToMiles(viewData?.primaryJourney?.distanceText)} */}
               {convertKmToMiles(
-                selectedBooking?.primaryJourney?.distanceText
+                selectedBooking?.primaryJourney?.distanceText ||
+                  selectedBooking?.returnJourney?.distanceText
               ) || "Select a booking"}
             </p>
           </div>
@@ -297,11 +410,87 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
             <input
               type="number"
               className="custom_input"
-              value={selectedBooking?.driverFare || ""}
+              value={
+                selectedBooking?.driverFare ||
+                selectedBooking?.returnDriverFare ||
+                ""
+              }
               readOnly
             />
           </div>
         </div>
+
+        {selectedBooking?.drivers && selectedBooking.drivers.length > 0 && (
+  <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4">
+    <div className="flex items-center gap-2 mb-3">
+      <Icons.Users className="w-5 h-5 text-indigo-600" />
+      <h3 className="font-semibold text-gray-800 text-lg">
+        Currently Assigned Drivers
+      </h3>
+      <span className="bg-indigo-100 text-indigo-800 text-xs font-medium px-2 py-1 rounded-full">
+        {selectedBooking.drivers.length}
+      </span>
+    </div>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {selectedBooking.drivers.map((assignedDriver, index) => {
+        // Check if this driver has rejected the job
+        const hasRejectedJob = jobsData?.jobs?.some(job => 
+          job.driverId === assignedDriver.userId && 
+          job.booking?._id === selectedBooking._id && 
+          job.jobStatus === "Rejected"
+        );
+
+        return (
+          <div 
+            key={index} 
+            className={`flex justify-between items-center p-3 rounded-lg border transition-all ${
+              hasRejectedJob 
+                ? 'bg-red-50 border-red-200 opacity-75' 
+                : 'bg-white border-gray-200'
+            }`}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="font-medium text-gray-900 truncate">
+                  {assignedDriver.name || "Unnamed Driver"}
+                </p>
+                {hasRejectedJob && (
+                  <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full animate-pulse">
+                    Rejected - Removing...
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 truncate">
+                {assignedDriver.employeeNumber
+                  ? `#${assignedDriver.employeeNumber}`
+                  : assignedDriver.email}
+              </p>
+            </div>
+            <Icons.Trash
+              title="Remove Driver"
+              onClick={() =>
+                handleRemoveDriver(
+                  assignedDriver.driverId,
+                  assignedDriver.employeeNumber,
+                  assignedDriver.name
+                )
+              }
+              className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
+            />
+          </div>
+        );
+      })}
+    </div>
+
+    <div className="mt-3 pt-3 border-t border-gray-200">
+      <p className="text-xs text-gray-600 flex items-center">
+        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+        Drivers who reject jobs will be automatically removed
+      </p>
+    </div>
+  </div>
+)}
 
         <div className="flex space-x-2">
           <button
