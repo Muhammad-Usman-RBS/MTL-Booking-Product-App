@@ -66,9 +66,11 @@ const CompanyAccountsList = () => {
 
   const tableData = paginatedData.map((item) => ({
     ...item,
+    contact: item.contact?.startsWith("+") ? item.contact : +`${item.contact}`,
     createdAt: item.createdAt
       ? moment(item.createdAt).tz(timezone).format("DD/MM/YYYY HH:mm:ss")
       : "N/A",
+      
     actions: (
       <div className="flex gap-2">
         <Icons.Eye
@@ -178,8 +180,7 @@ const CompanyAccountsList = () => {
                   { label: "Trading Name", value: selectedAccount.tradingName },
                   { label: "Owner Name", value: selectedAccount.fullName },
                   { label: "Company Email", value: selectedAccount.email },
-                  { label: "Phone", value: selectedAccount.contact },
-                  { label: "Licensed By", value: selectedAccount.licensedBy },
+                  { label: "Phone", value: selectedAccount.contact?.startsWith("+") ? selectedAccount.contact : +`${selectedAccount.contact}` },                  { label: "Licensed By", value: selectedAccount.licensedBy },
                   { label: "License Number", value: selectedAccount.licenseNumber },
                   { label: "License Referrer Link", value: selectedAccount.referrerLink },
                   { label: "Cookie Consent", value: selectedAccount.cookieConsent },

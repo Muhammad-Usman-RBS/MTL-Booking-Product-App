@@ -32,7 +32,6 @@ const DriverPortalHome = () => {
   const [updateBookingStatus] = useUpdateBookingStatusMutation();
   const [loadingJobId, setLoadingJobId] = useState(null);
   const [statusMap, setStatusMap] = useState({});
-  const [rejectedJobId, setRejectedJobId] = useState(null);
 
   const convertKmToMiles = (text) => {
     if (!text || typeof text !== "string") return "—";
@@ -47,8 +46,14 @@ const DriverPortalHome = () => {
     setLoadingJobId(jobId);
     try {
       const result = await updateJobStatus({ jobId, jobStatus: status });
-      if (result.error) throw new Error(result.error.data?.message || "Failed to update job status");
-      if (status === "Rejected") setRejectedJobId(jobId);
+      if (result.error)
+        throw new Error(
+          result.error.data?.message || "Failed to update job status"
+        );
+      setStatusMap((prevState) => ({
+        ...prevState,
+        [jobId]: status,
+      }));
       toast.success(`Job status updated to "${status}" successfully!`);
       await refetch();
     } catch (err) {
@@ -60,41 +65,35 @@ const DriverPortalHome = () => {
 
   const handleStatusChange = async (jobId, newStatus) => {
     setLoadingJobId(jobId);
-
+  
     try {
-      // Update job status
-      const jobResult = await updateJobStatus({ jobId, jobStatus: newStatus });
-      if (jobResult.error) {
-        throw new Error(
-          jobResult.error.data?.message || "Failed to update job status"
-        );
-      }
-
-      // Find the job to get the booking ID and update booking status too
+      // Find the job to get the booking ID and update booking status only
       const job = jobs.find((j) => j._id === jobId);
       const bookingId = job?.booking?._id;
-
+  
       if (bookingId) {
         const bookingResult = await updateBookingStatus({
           id: bookingId,
           status: newStatus,
           updatedBy: user._id,
         });
-
+  
         if (bookingResult.error) {
           throw new Error(
             bookingResult.error.data?.message ||
               "Failed to update booking status"
           );
         }
+      } else {
+        throw new Error("Booking ID not found");
       }
-
+  
       // Update local state
       setStatusMap((prevState) => ({
         ...prevState,
         [jobId]: newStatus,
       }));
-
+  
       toast.success(`Status updated to "${newStatus}" successfully!`);
       await refetch();
     } catch (err) {
@@ -361,7 +360,7 @@ const DriverPortalHome = () => {
                       <div className="text-red-600 font-semibold text-sm">
                         The Job has been rejected
                       </div>
-                    ) : currentStatus === "New" ? (
+                    ) : currentStatus === "New" && !statusMap[job._id] ? (
                       <div className="flex gap-3 pt-2">
                         <button
                           className="btn btn-success"
@@ -381,7 +380,11 @@ const DriverPortalHome = () => {
                         <SelectOption
                           width="32"
                           label="Current Job Status"
-                          value={statusMap[job._id] || job.booking?.status || job.jobStatus}
+                          value={
+                            statusMap[job._id] ||
+                            job.booking?.status ||
+                            job.jobStatus
+                          }
                           onChange={(e) =>
                             handleStatusChange(job._id, e.target.value)
                           }

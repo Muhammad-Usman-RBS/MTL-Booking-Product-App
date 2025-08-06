@@ -214,6 +214,37 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       journeyData.additionalDropoff2 || "",
     ].filter(Boolean);
 
+    // const journeyState = {
+    //   pickup: journeyData.pickup || "",
+    //   dropoff: journeyData.dropoff || "",
+    //   date: journeyData.date?.slice(0, 10) || "",
+    //   hour: journeyData.hour?.toString().padStart(2, "0") || "",
+    //   minute: journeyData.minute?.toString().padStart(2, "0") || "",
+    //   notes: journeyData.notes || "",
+    //   internalNotes: journeyData.internalNotes || "",
+    //   arrivefrom: journeyData.arrivefrom || "",
+    //   flightNumber: journeyData.flightNumber || "",
+    //   pickmeAfter: journeyData.pickmeAfter || "",
+    //   fare: journeyData.fare || "",
+    //   pickupDoorNumber: journeyData.pickupDoorNumber || "",
+    //   terminal: journeyData.terminal || "",
+    //   distanceText: journeyData.distanceText || "",
+    //   durationText: journeyData.durationText || "",
+    // };
+    const dynamicDropFields = Object.fromEntries(
+      dropOffList.map((_, idx) => [
+        `dropoffDoorNumber${idx}`,
+        journeyData[`dropoffDoorNumber${idx}`] || "",
+      ])
+    );
+
+    const dynamicTerminalFields = Object.fromEntries(
+      dropOffList.map((_, idx) => [
+        `dropoff_terminal_${idx}`,
+        journeyData[`dropoff_terminal_${idx}`] || "",
+      ])
+    );
+
     const journeyState = {
       pickup: journeyData.pickup || "",
       dropoff: journeyData.dropoff || "",
@@ -230,6 +261,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       terminal: journeyData.terminal || "",
       distanceText: journeyData.distanceText || "",
       durationText: journeyData.durationText || "",
+      ...dynamicDropFields,
+      ...dynamicTerminalFields,
     };
 
     if (isReturnJourneyEdit) {
@@ -252,6 +285,38 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
     // Also set both journeys if it's a copy mode with return journey
     if (cloned.returnJourney && !isReturnJourneyEdit) {
+      // const returnJourneyState = {
+      //   pickup: cloned.returnJourney.pickup || "",
+      //   dropoff: cloned.returnJourney.dropoff || "",
+      //   date: cloned.returnJourney.date?.slice(0, 10) || "",
+      //   hour: cloned.returnJourney.hour?.toString().padStart(2, "0") || "",
+      //   minute: cloned.returnJourney.minute?.toString().padStart(2, "0") || "",
+      //   notes: cloned.returnJourney.notes || "",
+      //   internalNotes: cloned.returnJourney.internalNotes || "",
+      //   arrivefrom: cloned.returnJourney.arrivefrom || "",
+      //   flightNumber: cloned.returnJourney.flightNumber || "",
+      //   pickmeAfter: cloned.returnJourney.pickmeAfter || "",
+      //   fare: cloned.returnJourney.fare || "",
+      //   pickupDoorNumber: cloned.returnJourney.pickupDoorNumber || "",
+      //   terminal: cloned.returnJourney.terminal || "",
+      //   distanceText: cloned.returnJourney.distanceText || "",
+      //   durationText: cloned.returnJourney.durationText || "",
+      // };
+
+      const dynamicDropFieldsReturn = Object.fromEntries(
+        returnDropOffList.map((_, idx) => [
+          `dropoffDoorNumber${idx}`,
+          cloned.returnJourney[`dropoffDoorNumber${idx}`] || "",
+        ])
+      );
+
+      const dynamicTerminalFieldsReturn = Object.fromEntries(
+        returnDropOffList.map((_, idx) => [
+          `dropoff_terminal_${idx}`,
+          cloned.returnJourney[`dropoff_terminal_${idx}`] || "",
+        ])
+      );
+
       const returnJourneyState = {
         pickup: cloned.returnJourney.pickup || "",
         dropoff: cloned.returnJourney.dropoff || "",
@@ -268,8 +333,16 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         terminal: cloned.returnJourney.terminal || "",
         distanceText: cloned.returnJourney.distanceText || "",
         durationText: cloned.returnJourney.durationText || "",
+        ...dynamicDropFieldsReturn,
+        ...dynamicTerminalFieldsReturn,
       };
 
+      setReturnJourneyData(returnJourneyState);
+      setDropOffs2(returnDropOffList);
+      setOriginalReturnLocations({
+        pickup: returnJourneyState.pickup,
+        dropOffs: [...returnDropOffList],
+      });
       const returnDropOffList = [
         cloned.returnJourney.dropoff || "",
         cloned.returnJourney.additionalDropoff1 || "",
@@ -457,6 +530,26 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
     try {
       if (isEditing) {
+        const isAirportAddress = (address = "") =>
+          address.toLowerCase().includes("airport");
+
+        if (!isAirportAddress(primaryJourneyData.pickup)) {
+          delete primaryJourneyData.pickmeAfter;
+          delete primaryJourneyData.flightNumber;
+          delete primaryJourneyData.arrivefrom;
+        } else {
+          delete primaryJourneyData.pickupDoorNumber;
+        }
+
+        if (returnJourneyToggle && dropOffs2[0]) {
+          if (!isAirportAddress(returnJourneyData.pickup)) {
+            delete returnJourneyData.pickmeAfter;
+            delete returnJourneyData.flightNumber;
+            delete returnJourneyData.arrivefrom;
+          } else {
+            delete returnJourneyData.pickupDoorNumber;
+          }
+        }
         const updatePayload = {
           ...basePayload,
           journeyFare: paymentFields.journeyFare,
@@ -646,11 +739,15 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         >
           {/* Journey 1 */}
           {/* {(!isEditing || !isReturnJourney || returnJourneyToggle) && ( */}
+        
+        
+        
           {(!isEditing && !returnJourneyToggle) ||
           (isEditing && !isReturnJourney) ||
           (!isEditing && returnJourneyToggle) ? (
             <JourneyCard
               title="Journey 1"
+              isEditMode={!!editBookingData?._id}
               journeyData={primaryJourneyData}
               setJourneyData={handlePrimaryJourneyDataChange}
               dropOffs={dropOffs1}
@@ -668,6 +765,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             <div className="w-full transition-all duration-200 ease-in-out transform">
               <JourneyCard
                 title="Journey 2"
+                isEditMode={!!editBookingData?._id}
                 journeyData={returnJourneyData}
                 setJourneyData={handleReturnJourneyDataChange}
                 dropOffs={dropOffs2}

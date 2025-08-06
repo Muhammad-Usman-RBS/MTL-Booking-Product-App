@@ -16,7 +16,8 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
   const [email, setEmail] = useState("");
   const pdfRef = useRef();
 
-  const timezone = useSelector((state) => state.bookingSetting?.timezone) || "UTC";
+  const timezone =
+    useSelector((state) => state.bookingSetting?.timezone) || "UTC";
 
   const companyId = localStorage.getItem("companyId");
   const companyList = useSelector((state) => state.company?.list);
@@ -110,12 +111,12 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
     date.setSeconds(0);
     date.setMilliseconds(0);
 
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
-    const hh = String(date.getHours()).padStart(2, '0');
-    const min = String(date.getMinutes()).padStart(2, '0');
-    const sec = String(date.getSeconds()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, "0");
+    const min = String(date.getMinutes()).padStart(2, "0");
+    const sec = String(date.getSeconds()).padStart(2, "0");
 
     return `${day}/${month}/${year} ${hh}:${min}:${sec}`;
   };
@@ -123,19 +124,19 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
   const pickupTime =
     viewData?.primaryJourney?.date && viewData?.primaryJourney?.hour
       ? formatDateTime(
-        viewData.primaryJourney.date,
-        viewData.primaryJourney.hour,
-        viewData.primaryJourney.minute
-      )
+          viewData.primaryJourney.date,
+          viewData.primaryJourney.hour,
+          viewData.primaryJourney.minute
+        )
       : viewData?.returnJourneyToggle &&
         viewData?.returnJourney?.date &&
         viewData?.returnJourney?.hour
-        ? formatDateTime(
+      ? formatDateTime(
           viewData.returnJourney.date,
           viewData.returnJourney.hour,
           viewData.returnJourney.minute
         )
-        : "N/A";
+      : "N/A";
 
   return (
     <>
@@ -145,8 +146,9 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
       >
         {/* Header */}
         <div
-          className={`${loggedInUser.role === "driver" ? "hidden" : "flex"
-            } flex-col md:flex-row md:items-center gap-3 md:gap-4`}
+          className={`${
+            loggedInUser.role === "driver" ? "hidden" : "flex"
+          } flex-col md:flex-row md:items-center gap-3 md:gap-4`}
         >
           <SelectOption
             options={["Send Customer", "Send Client Admin"]}
@@ -191,13 +193,15 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
               <strong>Booking ID:</strong> {viewData?.bookingId || "N/A"}
             </div>
             <div>
-              <strong>Booked On:</strong>{" "}
+              <strong>Booked On:</strong>
               {viewData?.createdAt
-                ? moment(viewData.createdAt).tz(timezone).format("DD/MM/YYYY HH:mm:ss")
+                ? moment(viewData.createdAt)
+                    .tz(timezone)
+                    .format("DD/MM/YYYY HH:mm:ss")
                 : "N/A"}
             </div>
             <div>
-              <strong>Payment Reference:</strong>{" "}
+              <strong>Payment Reference:</strong>
               {viewData?.paymentMethod || "N/A"}
             </div>
             <div>
@@ -207,19 +211,55 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                   <strong>Date & Time:</strong> {pickupTime}
                 </div>
                 <div>
-                  <strong>Address:</strong>{" "}
+                  <strong>Address:</strong>
                   {viewData?.primaryJourney?.pickup ||
                     (viewData?.returnJourneyToggle &&
                       viewData?.returnJourney?.pickup) ||
                     "N/A"}
                 </div>
-                <div>
-                  <strong>Door No.:</strong>{" "}
-                  {viewData?.primaryJourney?.pickupDoorNumber ||
-                    (viewData?.returnJourneyToggle &&
-                      viewData?.returnJourney?.pickupDoorNumber) ||
-                    "—"}{" "}
-                </div>
+                {(viewData?.primaryJourney?.pickupDoorNumber ||
+                  viewData?.returnJourney?.pickupDoorNumber) && (
+                  <div>
+                    <strong>Door No.:</strong>
+                    {viewData?.primaryJourney?.pickupDoorNumber ||
+                      (viewData?.returnJourneyToggle &&
+                        viewData?.returnJourney?.pickupDoorNumber) ||
+                      "—"}
+                  </div>
+                )}
+
+                {(viewData?.primaryJourney?.pickmeAfter ||
+                  viewData?.returnJourney?.pickmeAfter) && (
+                  <div>
+                    <strong>Pick Me After:</strong>
+                    {viewData?.primaryJourney?.pickmeAfter ||
+                      (viewData?.returnJourneyToggle &&
+                        viewData?.returnJourney?.pickmeAfter) ||
+                      "—"}
+                  </div>
+                )}
+
+                {(viewData?.primaryJourney?.flightNumber ||
+                  viewData?.returnJourney?.flightNumber) && (
+                  <div>
+                    <strong>Flight No.:</strong>
+                    {viewData?.primaryJourney?.flightNumber ||
+                      (viewData?.returnJourneyToggle &&
+                        viewData?.returnJourney?.flightNumber) ||
+                      "—"}
+                  </div>
+                )}
+
+                {(viewData?.primaryJourney?.arrivefrom ||
+                  viewData?.returnJourney?.arrivefrom) && (
+                  <div>
+                    <strong>Arrive From:</strong>
+                    {viewData?.primaryJourney?.arrivefrom ||
+                      (viewData?.returnJourneyToggle &&
+                        viewData?.returnJourney?.arrivefrom) ||
+                      "—"}
+                  </div>
+                )}
               </div>
               <hr className="text-[var(--light-gray)] my-2" />
             </div>
@@ -227,20 +267,48 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
               <strong>Drop Off:</strong>
               <div className="ml-4 mt-1 space-y-1">
                 <div>
-                  <strong>Address:</strong>{" "}
+                  <strong>Address:</strong>
                   {viewData?.primaryJourney?.dropoff ||
                     (viewData?.returnJourneyToggle &&
                       viewData?.returnJourney?.dropoff) ||
                     "N/A"}
                 </div>
                 <div>
-                  <strong>Door No.:</strong> <strong>Door No.:</strong>{" "}
-                  {viewData?.primaryJourney?.dropoffDoorNumber0 ||
-                    (viewData?.returnJourneyToggle &&
-                      viewData?.returnJourney?.dropoffDoorNumber0) ||
-                    "—"}{" "}
+                  {(viewData?.primaryJourney?.dropoffDoorNumber0 ||
+                    viewData?.returnJourney?.dropoffDoorNumber0) && (
+                    <div>
+                      <strong>Door No.:</strong>
+                      {viewData?.primaryJourney?.dropoffDoorNumber0 ||
+                        (viewData?.returnJourneyToggle &&
+                          viewData?.returnJourney?.dropoffDoorNumber0) ||
+                        "—"}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  {(viewData?.primaryJourney?.dropoff_terminal_0 ||
+                    viewData?.returnJourney?.dropoff_terminal_0) && (
+                    <div>
+                      <strong>Terminal No.:</strong>
+                      {viewData?.primaryJourney?.dropoff_terminal_0 ||
+                        (viewData?.returnJourneyToggle &&
+                          viewData?.returnJourney?.dropoff_terminal_0) ||
+                        "—"}
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {(viewData?.primaryJourney?.terminal ||
+                viewData?.returnJourney?.terminal) && (
+                <div>
+                  <strong>Terminal:</strong>
+                  {viewData?.primaryJourney?.terminal ||
+                    (viewData?.returnJourneyToggle &&
+                      viewData?.returnJourney?.terminal) ||
+                    "—"}
+                </div>
+              )}
               <hr className="text-[var(--light-gray)] my-2" />
             </div>
           </div>
@@ -249,46 +317,46 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             {!(
               loggedInUser?.role === "driver" && viewData?.status !== "Accepted"
             ) && (
-                <div>
-                  <strong>Passenger Details:</strong>
-                  <div className="ml-4 mt-1 space-y-1">
-                    <div>
-                      <strong>Name:</strong> {viewData?.passenger?.name || "N/A"}
-                    </div>
-                    <div>
-                      <strong>Email:</strong>{" "}
-                      {viewData?.passenger?.email || "N/A"}
-                    </div>
-                    <div>
-                      <strong>Phone:</strong>{" "}
-                      +{viewData?.passenger?.phone || "N/A"}
-                    </div>
+              <div>
+                <strong>Passenger Details:</strong>
+                <div className="ml-4 mt-1 space-y-1">
+                  <div>
+                    <strong>Name:</strong> {viewData?.passenger?.name || "N/A"}
                   </div>
-                  <hr className="text-[var(--light-gray)] my-2" />
+                  <div>
+                    <strong>Email:</strong>
+                    {viewData?.passenger?.email || "N/A"}
+                  </div>
+                  <div>
+                    <strong>Phone:</strong> +
+                    {viewData?.passenger?.phone || "N/A"}
+                  </div>
                 </div>
-              )}
+                <hr className="text-[var(--light-gray)] my-2" />
+              </div>
+            )}
 
             <div>
               <strong>Vehicle Details:</strong>
               <div className="ml-4 mt-1 space-y-1">
                 <div>
-                  <strong>Vehicle:</strong>{" "}
+                  <strong>Vehicle:</strong>
                   {viewData?.vehicle?.vehicleName || "N/A"}
                 </div>
                 <div>
-                  <strong>Passengers:</strong>{" "}
+                  <strong>Passengers:</strong>
                   {viewData?.vehicle?.passenger || 0}
                 </div>
                 <div>
-                  <strong>Child Seats:</strong>{" "}
+                  <strong>Child Seats:</strong>
                   {viewData?.vehicle?.childSeat || 0}
                 </div>
                 <div>
-                  <strong>Small Luggage:</strong>{" "}
+                  <strong>Small Luggage:</strong>
                   {viewData?.vehicle?.handLuggage || 0}
                 </div>
                 <div>
-                  <strong>Large Luggage:</strong>{" "}
+                  <strong>Large Luggage:</strong>
                   {viewData?.vehicle?.checkinLuggage || 0}
                 </div>
               </div>
@@ -301,7 +369,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                 {viewData?.primaryJourney?.notes ||
                   (viewData?.returnJourneyToggle &&
                     viewData?.returnJourney?.notes) ||
-                  "None"}{" "}
+                  "None"}
               </div>
               <hr className="text-[var(--light-gray)] my-2" />
             </div>
@@ -310,14 +378,14 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
 
         <div className="text-center">
           <div className="btn btn-primary text-sm px-5 py-1.5">
-            Fare:{" "}
+            Fare:
             <span className="text-base">
               {loggedInUser.role === "driver" ? (
                 <>{viewData?.driverFare || viewData?.returnDriverFare} GBP</>
               ) : (
                 <>
                   {viewData?.primaryJourney?.fare ||
-                    viewData?.returnJourneyFare}{" "}
+                    viewData?.returnJourneyFare}
                   GBP
                 </>
               )}
@@ -327,11 +395,11 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             </span>
           </div>
           <div className="text-[var(--dark-gray)] mt-2 text-xs">
-            Approx. Distance:{" "}
+            Approx. Distance:
             {convertKmToMiles(
               viewData?.primaryJourney?.distanceText ||
-              (viewData?.returnJourneyToggle &&
-                viewData?.returnJourney?.distanceText)
+                (viewData?.returnJourneyToggle &&
+                  viewData?.returnJourney?.distanceText)
             )}
           </div>
         </div>

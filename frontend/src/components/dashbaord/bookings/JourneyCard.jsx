@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useLazySearchGooglePlacesQuery } from "../../../redux/api/googleApi";
 
@@ -13,7 +13,9 @@ const JourneyCard = ({
   primaryFare,
   selectedVehicle,
   matchedPostcodePrice,
+  isCopyMode,
   pricingMode,
+  isEditMode, 
 }) => {
   const [pickupSuggestions, setPickupSuggestions] = useState([]);
   const [dropOffSuggestions, setDropOffSuggestions] = useState([]);
@@ -22,7 +24,31 @@ const JourneyCard = ({
   const [pickupType, setPickupType] = useState(null);
 
   const [triggerSearchAutocomplete] = useLazySearchGooglePlacesQuery();
+  
+  useEffect(() => {
 
+    if (!isEditMode) return; 
+    // Auto-detect pickup type in edit mode
+    if (journeyData.pickup && !pickupType) {
+      const lowerPickup = journeyData.pickup.toLowerCase();
+      if (lowerPickup.includes("airport")) {
+        setPickupType("airport");
+      } else {
+        setPickupType("location");
+      }
+    }
+
+    // Auto-detect drop-off types in edit mode
+    dropOffs.forEach((val, idx) => {
+      if (val && !dropOffTypes[idx]) {
+        const lower = val.toLowerCase();
+        setDropOffTypes((prev) => ({
+          ...prev,
+          [idx]: lower.includes("airport") ? "airport" : "location",
+        }));
+      }
+    });
+  }, [journeyData.pickup, dropOffs]);
   const fetchSuggestions = async (query, setter) => {
     if (!query) return setter([]);
     try {

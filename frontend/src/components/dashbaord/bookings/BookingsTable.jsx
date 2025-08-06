@@ -289,6 +289,13 @@ const BookingsTable = ({
             });
           return;
         }
+        if (key === "r") {
+          const newStatus = "Ride Started";
+          updateStatus(selectedBooking._id, newStatus);
+          toast.success(`Status updated to "${newStatus}"`);
+          refetch();
+          return;
+        }
 
         if (key === "d") {
           if (user?.role === "driver") {
@@ -324,7 +331,9 @@ const BookingsTable = ({
             toast.info("This action is disabled in the Deleted tab.");
             return;
           }
-          setEditBookingData(selectedBooking);
+          const editedData = { ...selectedBooking };
+          editedData.__editReturn = !!selectedBooking.returnJourney;
+          setEditBookingData(editedData);
           setShowEditModal(true);
           return;
         }
@@ -334,7 +343,6 @@ const BookingsTable = ({
         a: "Accepted",
         o: "On Route",
         l: "At Location",
-        r: "Ride Started",
         n: "No Show",
         c: "Completed",
       };
@@ -422,7 +430,18 @@ const BookingsTable = ({
         </div>
       );
     }
-
+    if (item.jobStatus === "New" && item.drivers && item.drivers.length > 0) {
+      const driverNames = item.drivers
+        .map((driver) => driver.name || "Unnamed Driver")
+        .join(", ");
+      
+      return (
+        <div className="text-orange-600 italic">
+          <div className="font-medium">Booking sent to: {driverNames}</div>
+          <div className="text-xs text-gray-500 mt-1">(Awaiting acceptance)</div>
+        </div>
+      );
+    }
     const drivers = item.drivers || [];
     if (drivers.length === 0) {
       return (
