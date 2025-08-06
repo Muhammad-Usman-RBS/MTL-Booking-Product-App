@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import { useCreateCustomerMutation, useUpdateCustomerMutation } from "../../../redux/api/customerApi";
+import {useCreateCorporateCustomerMutation,useUpdateCorporateCustomerMutation } from "../../../redux/api/corporateCustomerApi";
 import { useSelector } from "react-redux";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { toast } from "react-toastify";
 import IMAGES from "../../../assets/images";
 
-const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
+const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
 
@@ -36,8 +36,8 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
     vatnumber: "",
   });
 
-  const [createCustomer, { isLoading: isCreating }] = useCreateCustomerMutation();
-  const [updateCustomer, { isLoading: isUpdating }] = useUpdateCustomerMutation();
+  const [createCustomer, { isLoading: isCreating }] = useCreateCorporateCustomerMutation();
+  const [updateCustomer, { isLoading: isUpdating }] = useUpdateCorporateCustomerMutation();
 
   useEffect(() => {
     if (customerData) {
@@ -115,16 +115,16 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
     payload.append("companyId", companyId);
 
     if (imageFile) {
-      payload.append("profile", imageFile); // ✅ This is what backend expects
+      payload.append("profile", imageFile);
     }
 
     try {
       if (customerData && customerData._id) {
         await updateCustomer({ id: customerData._id, formData: payload }).unwrap();
-        toast.success("Customer updated successfully");
+        toast.success("Corporate Customer updated successfully");
       } else {
         await createCustomer(payload).unwrap();
-        toast.success("Customer created successfully");
+        toast.success("Corporate Customer created successfully");
       }
 
       onClose();
@@ -135,9 +135,13 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
   };
 
   return (
-    <CustomModal isOpen={isOpen} onClose={onClose} heading={customerData ? "Edit Customer" : "Add New Customer"}>
+    <CustomModal
+      isOpen={isOpen}
+      onClose={onClose}
+      heading={customerData ? "Edit Corporate Customer" : "Add New Corporate Customer"}
+    >
       <div className="text-sm w-96 px-4 pb-4 pt-4">
-        {/* Image Upload Section */}
+        {/* Image Upload */}
         <div className="flex items-center gap-5 mb-3">
           <div className="shrink-0">
             <img
@@ -164,7 +168,7 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
           </div>
         </div>
 
-        {/* Form Fields */}
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3">
           {[
             "name",
@@ -201,6 +205,7 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
             );
           })}
 
+          {/* Phone */}
           <div>
             <label className="block mb-1 font-medium">Phone</label>
             <PhoneInput
@@ -212,6 +217,7 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
             />
           </div>
 
+          {/* Selects */}
           <div>
             <label className="block mb-1 font-medium">Country</label>
             <select name="country" value={formData.country} onChange={handleChange} className="custom_input">
@@ -223,7 +229,12 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
 
           <div>
             <label className="block mb-1 font-medium">Locations Display (Invoice)</label>
-            <select name="locationsDisplay" value={formData.locationsDisplay} onChange={handleChange} className="custom_input">
+            <select
+              name="locationsDisplay"
+              value={formData.locationsDisplay}
+              onChange={handleChange}
+              className="custom_input"
+            >
               <option value="Yes">Yes</option>
               <option value="No">No</option>
             </select>
@@ -231,7 +242,12 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
 
           <div>
             <label className="block mb-1 font-medium">Payment Options (Invoice)</label>
-            <select name="paymentOptionsInvoice" value={formData.paymentOptionsInvoice} onChange={handleChange} className="custom_input">
+            <select
+              name="paymentOptionsInvoice"
+              value={formData.paymentOptionsInvoice}
+              onChange={handleChange}
+              className="custom_input"
+            >
               <option>Pay Via Debit/Credit Card, Bank</option>
               <option>PayPal</option>
               <option>Cash</option>
@@ -250,7 +266,7 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
             />
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="submit"
@@ -268,4 +284,4 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
   );
 };
 
-export default NewCustomer;
+export default NewCorporateCustomer;

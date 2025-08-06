@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { useGetAllPassengersQuery } from "../../../redux/api/bookingApi";
-import { useGetCustomersQuery } from "../../../redux/api/customerApi";
+import { useGetCorporateCustomersQuery } from "../../../redux/api/corporateCustomerApi";
 
 const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
   const [selectedPassenger, setSelectedPassenger] = useState("");
@@ -12,7 +12,7 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
   const { data: passengerData, isLoading, isError } = useGetAllPassengersQuery();
   const passengers = passengerData?.passengers || [];
 
-  const { data: customerData } = useGetCustomersQuery();
+  const { data: customerData } = useGetCorporateCustomersQuery();
   const customers = Array.isArray(customerData)
     ? customerData
     : customerData?.customers || [];

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { useGetCustomersQuery, useDeleteCustomerMutation, useUpdateCustomerMutation } from "../../../redux/api/customerApi";
+import { useGetCorporateCustomersQuery, useDeleteCorporateCustomerMutation, useUpdateCorporateCustomerMutation } from "../../../redux/api/corporateCustomerApi";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import IMAGES from "../../../assets/images";
 import Icons from "../../../assets/icons";
@@ -15,11 +15,11 @@ const DashboardCustomers = () => {
     const user = useSelector((state) => state?.auth?.user);
     const companyId = user?.companyId?.toString();
 
-    const { data: customersData } = useGetCustomersQuery();
+    const { data: customersData } = useGetCorporateCustomersQuery();
     const { data: bookingsResponse } = useGetAllBookingsQuery(companyId);
 
-    const [deleteCustomer] = useDeleteCustomerMutation();
-    const [updateCustomer] = useUpdateCustomerMutation();
+    const [deleteCustomer] = useDeleteCorporateCustomerMutation();
+    const [updateCustomer] = useUpdateCorporateCustomerMutation();
 
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);

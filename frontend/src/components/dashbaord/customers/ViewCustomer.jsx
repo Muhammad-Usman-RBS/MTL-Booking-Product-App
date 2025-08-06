@@ -1,6 +1,6 @@
 import React from "react";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import { useGetCustomerQuery } from "../../../redux/api/customerApi";
+import { useGetCorporateCustomerQuery } from "../../../redux/api/corporateCustomerApi";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import { useSelector } from "react-redux";
 import IMAGES from "../../../assets/images";
@@ -19,8 +19,8 @@ const formatDate = (date) => {
   }
 };
 
-const ViewCustomer = ({ customerId, onClose }) => {
-  const { data: customer, isLoading, error } = useGetCustomerQuery(customerId);
+const ViewCorporateCustomer = ({ customerId, onClose }) => {
+  const { data: customer, isLoading, error } = useGetCorporateCustomerQuery(customerId);
   const user = useSelector((state) => state?.auth?.user);
   const companyId = user?.companyId?.toString();
 
@@ -50,12 +50,6 @@ const ViewCustomer = ({ customerId, onClose }) => {
     { label: "Country", value: customer?.country },
     { label: "Location Display (Invoice)", value: customer?.locationsDisplay },
     { label: "Payment Options (Invoice)", value: customer?.paymentOptionsInvoice },
-    {
-      label: "Payment Options (Booking)",
-      value: Array.isArray(customer?.paymentOptionsBooking)
-        ? customer?.paymentOptionsBooking.join(", ")
-        : customer?.paymentOptionsBooking || "N/A",
-    },
     { label: "Invoice Due Days", value: customer?.invoiceDueDays },
     { label: "Invoice Terms", value: customer?.invoiceTerms },
     { label: "Passphrase", value: customer?.passphrase },
@@ -64,7 +58,11 @@ const ViewCustomer = ({ customerId, onClose }) => {
   ];
 
   return (
-    <CustomModal isOpen={!!customerId} onClose={onClose} heading="Customer Information">
+    <CustomModal
+      isOpen={!!customerId}
+      onClose={onClose}
+      heading="Corporate Customer Information"
+    >
       <div className="text-sm px-6 pb-6 w-96">
         {isLoading && (
           <p className="text-center py-10 font-medium text-gray-500 animate-pulse">
@@ -74,7 +72,7 @@ const ViewCustomer = ({ customerId, onClose }) => {
 
         {error && (
           <p className="text-center py-10 font-medium text-red-600">
-            Failed to load customer information.
+            Failed to load corporate customer information.
           </p>
         )}
 
@@ -120,4 +118,4 @@ const ViewCustomer = ({ customerId, onClose }) => {
   );
 };
 
-export default ViewCustomer;
+export default ViewCorporateCustomer;

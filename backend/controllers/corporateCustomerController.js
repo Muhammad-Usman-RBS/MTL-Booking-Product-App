@@ -1,23 +1,16 @@
-import Customer from "../models/Customer.js";
+import CorporateCustomer from "../models/CorporateCustomer.js";
 
-// ✅ Create Customer (with improved validation and logging)
-export const createCustomer = async (req, res) => {
+// Create Customer
+export const createCorporateCustomer = async (req, res) => {
   try {
-    console.log("📥 Incoming customer creation request");
-
-    // 🔍 Log entire file payload (important for debugging)
-    console.log("🖼️ Received files:", req.files);
-
-    // ✅ Check for uploaded profile image
     let profileUrl = "";
     if (req.files?.profile?.[0]) {
-      profileUrl = req.files.profile[0].path; // Cloudinary uploaded URL
-      console.log("✅ Profile image uploaded to Cloudinary:", profileUrl);
+      profileUrl = req.files.profile[0].path;
+      console.log("Profile image uploaded to Cloudinary:", profileUrl);
     } else {
       console.warn("⚠️ No profile image uploaded.");
     }
 
-    // ✅ Destructure form fields from req.body
     const {
       name,
       email,
@@ -34,7 +27,6 @@ export const createCustomer = async (req, res) => {
       postcode,
       country,
       locationsDisplay = "Yes",
-      paymentOptionsBooking = [],
       paymentOptionsInvoice,
       invoiceDueDays = 1,
       invoiceTerms,
@@ -42,15 +34,13 @@ export const createCustomer = async (req, res) => {
       vatnumber,
     } = req.body;
 
-    // ✅ Basic field validation
     if (!name || !email || !phone || !companyId) {
       return res.status(400).json({
         message: "Missing required fields (name, email, phone, companyId)",
       });
     }
 
-    // ✅ Build new customer document
-    const newCustomer = new Customer({
+    const newCustomer = new CorporateCustomer({
       name,
       email,
       phone,
@@ -67,7 +57,6 @@ export const createCustomer = async (req, res) => {
       postcode,
       country,
       locationsDisplay,
-      paymentOptionsBooking,
       paymentOptionsInvoice,
       invoiceDueDays,
       invoiceTerms,
@@ -75,12 +64,9 @@ export const createCustomer = async (req, res) => {
       vatnumber,
     });
 
-    // ✅ Save to DB
     await newCustomer.save();
 
-    console.log("✅ Customer created:", newCustomer._id);
-
-    // ✅ Send response
+    console.log("Customer created:", newCustomer._id);
     res.status(201).json({
       message: "Customer profile created successfully",
       customer: newCustomer,
@@ -92,12 +78,11 @@ export const createCustomer = async (req, res) => {
   }
 };
 
-// ✅ Get all customers for a company
-export const getCustomers = async (req, res) => {
+// Get all customers for a company
+export const getCorporateCustomers = async (req, res) => {
   try {
     const companyId = req.user.companyId;
-    const customers = await Customer.find({ companyId });
-
+    const customers = await CorporateCustomer.find({ companyId });
     res.status(200).json({ customers });
   } catch (err) {
     console.error("❌ Error fetching customers:", err);
@@ -105,10 +90,10 @@ export const getCustomers = async (req, res) => {
   }
 };
 
-// ✅ Get a single customer by ID
-export const getCustomer = async (req, res) => {
+// Get a single customer by ID
+export const getCorporateCustomer = async (req, res) => {
   try {
-    const customer = await Customer.findById(req.params.id);
+    const customer = await CorporateCustomer.findById(req.params.id);
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
     }
@@ -119,29 +104,27 @@ export const getCustomer = async (req, res) => {
   }
 };
 
-// ✅ Update Customer by ID
-export const updateCustomer = async (req, res) => {
+// Update Customer by ID
+export const updateCorporateCustomer = async (req, res) => {
   try {
     const { id } = req.params;
     const updatedData = req.body;
 
     console.log("🔄 Updating customer:", id);
 
-    const existingCustomer = await Customer.findById(id);
+    const existingCustomer = await CorporateCustomer.findById(id);
     if (!existingCustomer) {
       return res.status(404).json({ message: "Customer not found" });
     }
 
-    // ✅ FIXED: Handle new profile image upload
-    if (req.files && req.files.profile && req.files.profile[0]) {
-      updatedData.profile = req.files.profile[0].path; // New Cloudinary URL
-      console.log("✅ New profile image uploaded:", updatedData.profile);
+    if (req.files?.profile?.[0]) {
+      updatedData.profile = req.files.profile[0].path;
+      console.log("New profile image uploaded:", updatedData.profile);
     } else {
-      // Keep existing image if no new image uploaded
       updatedData.profile = existingCustomer.profile;
     }
 
-    const updatedCustomer = await Customer.findByIdAndUpdate(
+    const updatedCustomer = await CorporateCustomer.findByIdAndUpdate(
       id,
       updatedData,
       { new: true, runValidators: true }
@@ -160,11 +143,10 @@ export const updateCustomer = async (req, res) => {
   }
 };
 
-// ✅ Delete Customer by ID
-export const deleteCustomer = async (req, res) => {
+// Delete Customer by ID
+export const deleteCorporateCustomer = async (req, res) => {
   try {
-    const customer = await Customer.findByIdAndDelete(req.params.id);
-
+    const customer = await CorporateCustomer.findByIdAndDelete(req.params.id);
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
     }

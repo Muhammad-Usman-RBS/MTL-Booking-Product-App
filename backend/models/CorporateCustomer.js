@@ -25,7 +25,6 @@ const customerSchema = new mongoose.Schema(
         country: { type: String, default: "" },
 
         locationsDisplay: { type: String, enum: ["Yes", "No"], default: "Yes" },
-        paymentOptionsBooking: [{ type: String, default: [] }],
         paymentOptionsInvoice: { type: String, default: "" },
         invoiceDueDays: { type: Number, default: 1 },
         invoiceTerms: { type: String, default: "" },
@@ -35,6 +34,6 @@ const customerSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-const Customer = mongoose.model("Customer", customerSchema);
+const CorporateCustomer = mongoose.model("CorporateCustomer", customerSchema);
 
-export default Customer;
+export default CorporateCustomer;
