@@ -10,11 +10,19 @@ const sidebarItems = [
     title: "Bookings",
     icon: Icons.ScrollText,
     route: "/dashboard/bookings",
+    roles: [
+      "driver",
+      "customer",
+      "clientadmin",
+      "associateadmin",
+      "manager",
+    ],
     subTabs: [
       {
         title: "Bookings List",
         route: "/dashboard/bookings/list",
         icon: Icons.ListChecks,
+        roles: ["clientadmin", "manager"],
       },
       {
         title: "New Booking",
@@ -26,6 +34,7 @@ const sidebarItems = [
         title: "Booking Calendar",
         route: "/dashboard/bookings/calendar",
         icon: Icons.CalendarDays,
+          roles: ["clientadmin", "manager", "associateadmin", "driver", "customer"],
       },
       {
         title: "Deleted Booking",
@@ -39,6 +48,13 @@ const sidebarItems = [
     title: "Invoices",
     icon: Icons.FileText,
     route: "/dashboard/invoices",
+    roles: [
+      "driver",
+      "customer",
+      "clientadmin",
+      "associateadmin",
+      "manager",
+    ],
     subTabs: [
       {
         title: "Invoices List",
@@ -71,6 +87,13 @@ const sidebarItems = [
     title: "Drivers",
     icon: Icons.Users,
     route: "/dashboard/drivers",
+    roles: [
+      "driver",
+      "customer",
+      "clientadmin",
+      "associateadmin",
+      "manager",
+    ],
     subTabs: [
       {
         title: "Driver List",
@@ -89,8 +112,6 @@ const sidebarItems = [
         route: "/dashboard/drivers/new",
         icon: Icons.UserPlus,
         roles: [
-          "driver",
-          "superadmin",
           "clientadmin",
           "associateadmin",
           "manager",
@@ -119,6 +140,13 @@ const sidebarItems = [
     title: "Customers",
     icon: Icons.UsersRound,
     route: "/dashboard/customers",
+    roles: [
+      "driver",
+      "customer",
+      "clientadmin",
+      "associateadmin",
+      "manager",
+    ],
     subTabs: [
       {
         title: "Customers List",
@@ -151,7 +179,6 @@ const sidebarItems = [
         icon: Icons.Building2,
         roles: [
           "driver",
-          "superadmin",
           "customer",
           "clientadmin",
           "associateadmin",
@@ -215,6 +242,13 @@ const sidebarItems = [
     title: "Pricing",
     icon: Icons.DollarSign,
     route: "/dashboard/pricing",
+    roles: [
+      "driver",
+      "customer",
+      "clientadmin",
+      "associateadmin",
+      "manager",
+    ],
     subTabs: [
       {
         title: "General",
@@ -513,7 +547,11 @@ const sidebarItems = [
     title: "Widget/API",
     icon: Icons.Code,
     route: "/dashboard/widget-api",
-    roles: ["clientadmin", "associateadmin", "superadmin", "manager"],
+    roles: [
+      "clientadmin",
+      "associateadmin",
+      "manager",
+    ],
   },
   {
     title: "Profile",

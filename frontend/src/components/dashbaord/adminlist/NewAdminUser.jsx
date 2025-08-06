@@ -6,11 +6,7 @@ import Icons from "../../../assets/icons";
 import "react-toastify/dist/ReactToastify.css";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
-import {
-  useCreateClientAdminMutation,
-  useFetchClientAdminsQuery,
-  useUpdateClientAdminMutation,
-} from "../../../redux/api/adminApi";
+import { useCreateClientAdminMutation, useFetchClientAdminsQuery, useUpdateClientAdminMutation } from "../../../redux/api/adminApi";
 import { useParams } from "react-router-dom";
 
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
@@ -282,6 +278,7 @@ const NewAdminUser = () => {
         "Drivers",
         "Settings",
         "Invoices",
+        "Bookings"
       ];
     } else if (["customer"].includes(role)) {
       return ["Invoices", "Company Accounts", "Settings"];

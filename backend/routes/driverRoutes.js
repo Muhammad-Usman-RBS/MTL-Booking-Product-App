@@ -1,12 +1,6 @@
 import express from "express";
 import { getUploader } from "../middleware/cloudinaryUpload.js";
-import {
-  getDriverById,
-  createDriver,
-  getAllDrivers,
-  deleteDriverById,
-  updateDriverById
-} from "../controllers/driverController.js";
+import { getDriverById, createDriver, getAllDrivers, deleteDriverById, updateDriverById } from "../controllers/driverController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();

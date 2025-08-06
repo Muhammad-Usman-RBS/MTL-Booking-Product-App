@@ -19,6 +19,20 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
     address: "",
     homeAddress: "",
     profile: "",
+    primaryContactName: "",
+    primaryContactDesignation: "",
+    website: "",
+    city: "",
+    stateCounty: "",
+    postcode: "",
+    country: "United Kingdom",
+    locationsDisplay: "Yes",
+    paymentOptionsBooking: [],
+    paymentOptionsInvoice: "Pay Via Debit/Credit Card, Bank",
+    invoiceDueDays: "1",
+    invoiceTerms: "",
+    passphrase: "",
+    vatnumber: "",
   });
 
   const [createCustomer, { isLoading: isCreating }] = useCreateCustomerMutation();
@@ -33,15 +47,20 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
         address: customerData.address || "",
         homeAddress: customerData.homeAddress || "",
         profile: customerData.profile || "",
-      });
-    } else {
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
-        homeAddress: "",
-        profile: "",
+        primaryContactName: customerData.primaryContactName || "",
+        primaryContactDesignation: customerData.primaryContactDesignation || "",
+        website: customerData.website || "",
+        city: customerData.city || "",
+        stateCounty: customerData.stateCounty || "",
+        postcode: customerData.postcode || "",
+        country: customerData.country || "United Kingdom",
+        locationsDisplay: customerData.locationsDisplay || "Yes",
+        paymentOptionsBooking: customerData.paymentOptionsBooking || [],
+        paymentOptionsInvoice: customerData.paymentOptionsInvoice || "Pay Via Debit/Credit Card, Bank",
+        invoiceDueDays: customerData.invoiceDueDays || "1",
+        invoiceTerms: customerData.invoiceTerms || "",
+        passphrase: customerData.passphrase || "",
+        vatnumber: customerData.vatnumber || "",
       });
     }
   }, [customerData]);
@@ -58,7 +77,6 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     setImageFile(file);
 
     const reader = new FileReader();
@@ -73,27 +91,20 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
       toast.error("Please fill in all required fields");
       return;
     }
 
     const customerPayload = {
-      name: formData.name.trim(),
-      email: formData.email.trim(),
-      phone: formData.phone.trim(),
-      address: formData.address.trim(),
-      homeAddress: formData.homeAddress.trim(),
-      profile: formData.profile,
+      ...formData,
       companyId,
     };
 
     try {
       if (customerData && customerData._id) {
-        // Use the onSave callback if provided
         if (typeof onSave === "function") {
-          await onSave(customerData._id, customerPayload); // correctly passes to DashboardCustomers handler
+          await onSave(customerData._id, customerPayload);
         } else {
           await updateCustomer({ id: customerData._id, formData: customerPayload }).unwrap();
           toast.success("Customer updated successfully");
@@ -117,8 +128,8 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
       heading={customerData ? "Edit Customer" : "Add New Customer"}
     >
       <div className="text-sm w-96 px-4 pb-4 pt-4">
+        {/* Image Upload Section */}
         <div className="flex items-center gap-5 mb-3">
-          {/* Profile Preview */}
           <div className="shrink-0">
             <img
               src={formData.profile || IMAGES.dummyImg}
@@ -126,8 +137,6 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
               className="w-20 h-20 rounded-full border border-gray-300 object-cover shadow-sm"
             />
           </div>
-
-          {/* Upload Input */}
           <div className="flex flex-col items-start gap-2">
             <label className="text-sm font-medium">Upload Profile Image</label>
             <label
@@ -146,23 +155,49 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
           </div>
         </div>
 
+        {/* Form Fields */}
         <form onSubmit={handleSubmit} className="space-y-3">
-          {["name", "email", "address", "homeAddress"].map((field) => (
-            <div key={field}>
-              <label className="block mb-1 font-medium capitalize">
-                {field.replace(/([A-Z])/g, " $1")}
-              </label>
-              <input
-                type="text"
-                name={field}
-                value={formData[field]}
-                onChange={handleChange}
-                className="custom_input"
-                placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-              />
-            </div>
-          ))}
+          {/* Basic Fields */}
+          {[
+            "name",
+            "email",
+            "primaryContactName",
+            "primaryContactDesignation",
+            "website",
+            "address",
+            "homeAddress",
+            "city",
+            "stateCounty",
+            "postcode",
+            "invoiceTerms",
+            "passphrase",
+            "vatnumber" // ✅ Corrected to match schema
+          ].map((field) => {
+            const formattedLabel =
+              field === "vatnumber"
+                ? "VAT Number"
+                : field
+                  .replace(/([A-Z])/g, " $1")
+                  .replace(/^./, (str) => str.toUpperCase());
 
+            return (
+              <div key={field}>
+                <label className="block mb-1 font-medium capitalize">
+                  {formattedLabel}
+                </label>
+                <input
+                  type="text"
+                  name={field}
+                  value={formData[field]}
+                  onChange={handleChange}
+                  className="custom_input"
+                  placeholder={formattedLabel}
+                />
+              </div>
+            );
+          })}
+
+          {/* Phone Input */}
           <div>
             <label className="block mb-1 font-medium">Phone</label>
             <PhoneInput
@@ -174,14 +209,51 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
             />
           </div>
 
+          {/* Dropdowns and Selects */}
+          <div>
+            <label className="block mb-1 font-medium">Country</label>
+            <select name="country" value={formData.country} onChange={handleChange} className="custom_input">
+              <option>United Kingdom</option>
+              <option>United States</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Locations Display (Invoice)</label>
+            <select name="locationsDisplay" value={formData.locationsDisplay} onChange={handleChange} className="custom_input">
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Payment Options (Invoice)</label>
+            <select name="paymentOptionsInvoice" value={formData.paymentOptionsInvoice} onChange={handleChange} className="custom_input">
+              <option>Pay Via Debit/Credit Card, Bank</option>
+              <option>PayPal</option>
+              <option>Cash</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Invoice Due Days</label>
+            <input
+              type="number"
+              name="invoiceDueDays"
+              value={formData.invoiceDueDays}
+              onChange={handleChange}
+              className="custom_input"
+              min="1"
+            />
+          </div>
+
+          {/* Submit Button */}
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="submit"
               className="btn btn-reset"
-              disabled={
-                isCreating || isUpdating ||
-                !formData.name || !formData.email || !formData.phone
-              }
+              disabled={isCreating || isUpdating || !formData.name || !formData.email || !formData.phone}
             >
               {customerData
                 ? isUpdating ? "Updating..." : "Update"

@@ -16,20 +16,24 @@ const Sidebar = () => {
   // Filter sidebarItems based on top-level permission and also filter subTabs based on sub-level permission
   const sidebarTabs = sidebarItems
     .map((item) => {
-      if (
-        !permissions
-          .map((p) => p.toLowerCase())
-          .includes(item.title.toLowerCase())
-      )
-        return null;
+      const hasPermission =
+        permissions.map((p) => p.toLowerCase()).includes(item.title.toLowerCase());
 
-      // Filter subTabs if they exist
-      let filteredSubTabs = item.subTabs?.filter((sub) => {
-        if (sub.roles && sub.roles.length > 0) {
-          return sub.roles.includes(userRole);
-        }
-        return true;
+      const hasRole =
+        !item.roles || item.roles.length === 0 || item.roles.includes(userRole);
+
+      // If either permission or role is missing, skip this tab
+      if (!hasPermission || !hasRole) return null;
+
+      // Filter subTabs with role check
+      const filteredSubTabs = item.subTabs?.filter((sub) => {
+        const subHasRole =
+          !sub.roles || sub.roles.length === 0 || sub.roles.includes(userRole);
+        return subHasRole;
       });
+
+      // If it has subTabs but all were filtered out, don't show the tab
+      if (item.subTabs && filteredSubTabs.length === 0) return null;
 
       return {
         ...item,
@@ -51,9 +55,8 @@ const Sidebar = () => {
 
   return (
     <div
-      className={`${
-        isOpen ? "w-64" : "w-16"
-      } min-w-[64px] bg-theme text-theme h-screen flex flex-col duration-300 overflow-y-auto`}
+      className={`${isOpen ? "w-64" : "w-16"
+        } min-w-[64px] bg-theme text-theme h-screen flex flex-col duration-300 overflow-y-auto`}
       style={{ transition: "0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)" }}
     >
       <div className="p-4 flex justify-center">
@@ -87,9 +90,8 @@ const Sidebar = () => {
                 <>
                   <li
                     onClick={() => handleToggle(index)}
-                    className={`p-4 hover-theme flex items-center justify-between cursor-pointer ${
-                      isMainActive ? "active-theme" : ""
-                    } ${isOpen ? "pl-4 pr-3" : "justify-center"}`}
+                    className={`p-4 hover-theme flex items-center justify-between cursor-pointer ${isMainActive ? "active-theme" : ""
+                      } ${isOpen ? "pl-4 pr-3" : "justify-center"}`}
                   >
                     <div className="flex items-center gap-3">
                       <item.icon className="w-4 h-4" />
@@ -99,9 +101,8 @@ const Sidebar = () => {
                     </div>
                     {isOpen && (
                       <svg
-                        className={`w-4 h-4 transition-transform ${
-                          activeMain === index ? "rotate-180" : ""
-                        }`}
+                        className={`w-4 h-4 transition-transform ${activeMain === index ? "rotate-180" : ""
+                          }`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -122,11 +123,10 @@ const Sidebar = () => {
                         <li key={subIndex}>
                           <Link
                             to={sub.route}
-                            className={`flex items-center p-2 gap-3 hover-theme ${
-                              sub.route === location.pathname
+                            className={`flex items-center p-2 gap-3 hover-theme ${sub.route === location.pathname
                                 ? "active-theme"
                                 : ""
-                            }`}
+                              }`}
                           >
                             <sub.icon className="w-4 h-4" />
                             <span className="text-[15px]">{sub.title}</span>
@@ -139,9 +139,8 @@ const Sidebar = () => {
               ) : (
                 <Link
                   to={item.route}
-                  className={`p-4 hover-theme flex items-center cursor-pointer ${
-                    isOpen ? "justify-start pl-4" : "justify-center"
-                  } ${location.pathname === item.route ? "active-theme" : ""}`}
+                  className={`p-4 hover-theme flex items-center cursor-pointer ${isOpen ? "justify-start pl-4" : "justify-center"
+                    } ${location.pathname === item.route ? "active-theme" : ""}`}
                 >
                   <item.icon className="w-4 h-4" />
                   {isOpen && (

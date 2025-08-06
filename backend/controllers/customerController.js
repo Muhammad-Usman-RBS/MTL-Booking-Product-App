@@ -11,8 +11,28 @@ export const createCustomer = async (req, res) => {
       homeAddress,
       status,
       companyId,
-      profile, // ✅ New field for image
+      primaryContactName,
+      primaryContactDesignation,
+      website,
+      city,
+      stateCounty,
+      postcode,
+      country,
+      locationsDisplay,
+      paymentOptionsBooking,
+      paymentOptionsInvoice,
+      invoiceDueDays,
+      invoiceTerms,
+      passphrase,
+      vatnumber,
     } = req.body;
+
+    // ✅ FIXED: Properly handle uploaded profile image
+    let profileUrl = "";
+    if (req.files && req.files.profile && req.files.profile[0]) {
+      profileUrl = req.files.profile[0].path; // Cloudinary URL
+      console.log("✅ Profile image uploaded:", profileUrl);
+    }
 
     const newCustomer = new Customer({
       name,
@@ -22,7 +42,21 @@ export const createCustomer = async (req, res) => {
       homeAddress,
       status,
       companyId,
-      profile, // ✅ Save image
+      profile: profileUrl, // ✅ Save Cloudinary URL
+      primaryContactName,
+      primaryContactDesignation,
+      website,
+      city,
+      stateCounty,
+      postcode,
+      country,
+      locationsDisplay,
+      paymentOptionsBooking,
+      paymentOptionsInvoice,
+      invoiceDueDays,
+      invoiceTerms,
+      passphrase,
+      vatnumber,
     });
 
     await newCustomer.save();
@@ -32,8 +66,8 @@ export const createCustomer = async (req, res) => {
       customer: newCustomer,
     });
   } catch (err) {
-    console.error("Error creating customer:", err);
-    res.status(500).json({ error: "Server error" });
+    console.error("❌ Error creating customer:", err);
+    res.status(500).json({ error: "Server error", details: err.message });
   }
 };
 
@@ -45,7 +79,7 @@ export const getCustomers = async (req, res) => {
 
     res.status(200).json({ customers });
   } catch (err) {
-    console.error("Error fetching customers:", err);
+    console.error("❌ Error fetching customers:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
@@ -59,7 +93,7 @@ export const getCustomer = async (req, res) => {
     }
     res.status(200).json(customer);
   } catch (err) {
-    console.error("Error fetching customer:", err);
+    console.error("❌ Error fetching customer:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
@@ -70,16 +104,19 @@ export const updateCustomer = async (req, res) => {
     const { id } = req.params;
     const updatedData = req.body;
 
-    console.log("🔄 Incoming update for customer:", id);
-    console.log("🖼️ Image length:", updatedData.profile?.length);
+    console.log("🔄 Updating customer:", id);
 
     const existingCustomer = await Customer.findById(id);
     if (!existingCustomer) {
       return res.status(404).json({ message: "Customer not found" });
     }
 
-    // Keep existing image if not changed
-    if (!updatedData.profile) {
+    // ✅ FIXED: Handle new profile image upload
+    if (req.files && req.files.profile && req.files.profile[0]) {
+      updatedData.profile = req.files.profile[0].path; // New Cloudinary URL
+      console.log("✅ New profile image uploaded:", updatedData.profile);
+    } else {
+      // Keep existing image if no new image uploaded
       updatedData.profile = existingCustomer.profile;
     }
 
@@ -113,7 +150,7 @@ export const deleteCustomer = async (req, res) => {
 
     res.status(200).json({ message: "Customer deleted successfully" });
   } catch (err) {
-    console.error("Error deleting customer:", err);
+    console.error("❌ Error deleting customer:", err);
     res.status(500).json({ error: "Server error" });
   }
 };

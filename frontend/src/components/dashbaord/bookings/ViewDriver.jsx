@@ -399,7 +399,7 @@ const { data: jobsData } = useGetDriverJobsQuery(
             <p className="bg-gray-100 px-3 py-1.5 rounded">
               {convertKmToMiles(
                 selectedBooking?.primaryJourney?.distanceText ||
-                  selectedBooking?.returnJourney?.distanceText
+                selectedBooking?.returnJourney?.distanceText
               ) || "Select a booking"}
             </p>
           </div>
@@ -421,76 +421,75 @@ const { data: jobsData } = useGetDriverJobsQuery(
         </div>
 
         {selectedBooking?.drivers && selectedBooking.drivers.length > 0 && (
-  <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4">
-    <div className="flex items-center gap-2 mb-3">
-      <Icons.Users className="w-5 h-5 text-indigo-600" />
-      <h3 className="font-semibold text-gray-800 text-lg">
-        Currently Assigned Drivers
-      </h3>
-      <span className="bg-indigo-100 text-indigo-800 text-xs font-medium px-2 py-1 rounded-full">
-        {selectedBooking.drivers.length}
-      </span>
-    </div>
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Icons.Users className="w-5 h-5 text-indigo-600" />
+              <h3 className="font-semibold text-gray-800 text-lg">
+                Currently Assigned Drivers
+              </h3>
+              <span className="bg-indigo-100 text-indigo-800 text-xs font-medium px-2 py-1 rounded-full">
+                {selectedBooking.drivers.length}
+              </span>
+            </div>
 
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {selectedBooking.drivers.map((assignedDriver, index) => {
-        // Check if this driver has rejected the job
-        const hasRejectedJob = jobsData?.jobs?.some(job => 
-          job.driverId === assignedDriver.userId && 
-          job.booking?._id === selectedBooking._id && 
-          job.jobStatus === "Rejected"
-        );
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {selectedBooking.drivers.map((assignedDriver, index) => {
+                // Check if this driver has rejected the job
+                const hasRejectedJob = jobsData?.jobs?.some(job =>
+                  job.driverId === assignedDriver.userId &&
+                  job.booking?._id === selectedBooking._id &&
+                  job.jobStatus === "Rejected"
+                );
 
-        return (
-          <div 
-            key={index} 
-            className={`flex justify-between items-center p-3 rounded-lg border transition-all ${
-              hasRejectedJob 
-                ? 'bg-red-50 border-red-200 opacity-75' 
-                : 'bg-white border-gray-200'
-            }`}
-          >
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="font-medium text-gray-900 truncate">
-                  {assignedDriver.name || "Unnamed Driver"}
-                </p>
-                {hasRejectedJob && (
-                  <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full animate-pulse">
-                    Rejected - Removing...
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 truncate">
-                {assignedDriver.employeeNumber
-                  ? `#${assignedDriver.employeeNumber}`
-                  : assignedDriver.email}
+                return (
+                  <div
+                    key={index}
+                    className={`flex justify-between items-center p-3 rounded-lg border transition-all ${hasRejectedJob
+                        ? 'bg-red-50 border-red-200 opacity-75'
+                        : 'bg-white border-gray-200'
+                      }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-900 truncate">
+                          {assignedDriver.name || "Unnamed Driver"}
+                        </p>
+                        {hasRejectedJob && (
+                          <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full animate-pulse">
+                            Rejected - Removing...
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 truncate">
+                        {assignedDriver.employeeNumber
+                          ? `#${assignedDriver.employeeNumber}`
+                          : assignedDriver.email}
+                      </p>
+                    </div>
+                    <Icons.Trash
+                      title="Remove Driver"
+                      onClick={() =>
+                        handleRemoveDriver(
+                          assignedDriver.driverId,
+                          assignedDriver.employeeNumber,
+                          assignedDriver.name
+                        )
+                      }
+                      className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <p className="text-xs text-gray-600 flex items-center">
+                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                Drivers who reject jobs will be automatically removed
               </p>
             </div>
-            <Icons.Trash
-              title="Remove Driver"
-              onClick={() =>
-                handleRemoveDriver(
-                  assignedDriver.driverId,
-                  assignedDriver.employeeNumber,
-                  assignedDriver.name
-                )
-              }
-              className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-            />
           </div>
-        );
-      })}
-    </div>
-
-    <div className="mt-3 pt-3 border-t border-gray-200">
-      <p className="text-xs text-gray-600 flex items-center">
-        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-        Drivers who reject jobs will be automatically removed
-      </p>
-    </div>
-  </div>
-)}
+        )}
 
         <div className="flex space-x-2">
           <button
@@ -553,7 +552,7 @@ const { data: jobsData } = useGetDriverJobsQuery(
                     {driver.DriverData?.firstName}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {driver.VehicleData?.carMake || "N/A"} |{" "}
+                    {driver.VehicleData?.carMake || "N/A"} |
                     {driver.VehicleData?.carModal || "N/A"}
                   </p>
                 </div>
