@@ -5,8 +5,8 @@ import { useGetCorporateCustomersQuery, useDeleteCorporateCustomerMutation, useU
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import IMAGES from "../../../assets/images";
 import Icons from "../../../assets/icons";
-import NewCustomer from "./NewCustomer";
-import ViewCustomer from "./ViewCustomer";
+import NewCorporateCustomer from "./NewCorporateCustomer";
+import ViewCorporateCustomer from "./ViewCorporateCustomer";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
@@ -91,7 +91,8 @@ const DashboardCustomers = () => {
     const tableHeaders = [
         { label: "No.", key: "index" },
         { label: "Profile", key: "profile" },
-        { label: "Name", key: "name" },
+        { label: "Vat No.", key: "vatnumber" },
+        { label: "Company Name", key: "companyname" },
         { label: "Email", key: "email" },
         { label: "Phone", key: "phone" },
         { label: "Bookings", key: "bookings" },
@@ -124,7 +125,8 @@ const DashboardCustomers = () => {
                             className="w-10 h-10 rounded-full object-cover border border-gray-300"
                         />
                     ),
-                    name: customer?.name || "N/A",
+                    vatnumber: customer?.vatnumber || "N/A",
+                    companyname: customer?.companyname || "N/A",
                     email: customer?.email || "N/A",
                     phone: customer?.phone ? `+${customer.phone}` : "N/A",
                     bookings: (
@@ -197,7 +199,7 @@ const DashboardCustomers = () => {
                 />
             </div>
 
-            <NewCustomer
+            <NewCorporateCustomer
                 isOpen={isModalOpen}
                 customerData={selectedCustomer}
                 onSave={handleUpdateCustomer}
@@ -208,7 +210,7 @@ const DashboardCustomers = () => {
             />
 
             {viewCustomerId && (
-                <ViewCustomer
+                <ViewCorporateCustomer
                     customerId={viewCustomerId}
                     onClose={() => setViewCustomerId(null)}
                 />

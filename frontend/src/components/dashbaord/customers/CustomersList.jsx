@@ -12,7 +12,7 @@ const CustomersListTabs = () => {
       <div className="flex flex-col items-center justify-center mb-6 space-y-4">
         <div className="flex">
           {[
-            { label: "Dashboard Customers", key: "dashboard" },
+            { label: "Corporate Customers", key: "dashboard" },
             { label: "Widget Customers", key: "widget" },
           ].map((tab, index) => (
             <button

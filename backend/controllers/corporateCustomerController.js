@@ -1,6 +1,6 @@
 import CorporateCustomer from "../models/CorporateCustomer.js";
 
-// Create Customer
+// Create Corporate Customer
 export const createCorporateCustomer = async (req, res) => {
   try {
     let profileUrl = "";
@@ -12,7 +12,7 @@ export const createCorporateCustomer = async (req, res) => {
     }
 
     const {
-      name,
+      companyname,
       email,
       phone,
       address,
@@ -34,14 +34,14 @@ export const createCorporateCustomer = async (req, res) => {
       vatnumber,
     } = req.body;
 
-    if (!name || !email || !phone || !companyId) {
+    if (!companyname || !email || !phone || !companyId) {
       return res.status(400).json({
-        message: "Missing required fields (name, email, phone, companyId)",
+        message: "Missing required fields (companyname, email, phone, companyId)",
       });
     }
 
     const newCustomer = new CorporateCustomer({
-      name,
+      companyname,
       email,
       phone,
       address,
@@ -66,55 +66,56 @@ export const createCorporateCustomer = async (req, res) => {
 
     await newCustomer.save();
 
-    console.log("Customer created:", newCustomer._id);
+    console.log("Corporate customer created:", newCustomer._id);
     res.status(201).json({
-      message: "Customer profile created successfully",
+      message: "Corporate customer profile created successfully",
       customer: newCustomer,
     });
 
   } catch (err) {
-    console.error("❌ Error creating customer:", err);
+    console.error("❌ Error creating corporate customer:", err);
     res.status(500).json({ error: "Server error", details: err.message });
   }
 };
 
-// Get all customers for a company
+// Get all corporate customers for a company
 export const getCorporateCustomers = async (req, res) => {
   try {
     const companyId = req.user.companyId;
     const customers = await CorporateCustomer.find({ companyId });
     res.status(200).json({ customers });
   } catch (err) {
-    console.error("❌ Error fetching customers:", err);
+    console.error("❌ Error fetching corporate customers:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
 
-// Get a single customer by ID
+// Get a single corporate customer by ID
+
 export const getCorporateCustomer = async (req, res) => {
   try {
     const customer = await CorporateCustomer.findById(req.params.id);
     if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({ message: "Corporate customer not found" });
     }
     res.status(200).json(customer);
   } catch (err) {
-    console.error("❌ Error fetching customer:", err);
+    console.error("❌ Error fetching corporate customer:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
 
-// Update Customer by ID
+// Update corporate customer by ID
 export const updateCorporateCustomer = async (req, res) => {
   try {
     const { id } = req.params;
     const updatedData = req.body;
 
-    console.log("🔄 Updating customer:", id);
+    console.log("🔄 Updating corporate customer:", id);
 
     const existingCustomer = await CorporateCustomer.findById(id);
     if (!existingCustomer) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({ message: "Corporate customer not found" });
     }
 
     if (req.files?.profile?.[0]) {
@@ -131,11 +132,11 @@ export const updateCorporateCustomer = async (req, res) => {
     );
 
     res.status(200).json({
-      message: "Customer updated successfully",
+      message: "Corporate customer updated successfully",
       customer: updatedCustomer,
     });
   } catch (err) {
-    console.error("❌ Error updating customer:", err.message);
+    console.error("❌ Error updating corporate customer:", err.message);
     res.status(500).json({
       error: "Server error",
       details: err.message,
@@ -143,17 +144,17 @@ export const updateCorporateCustomer = async (req, res) => {
   }
 };
 
-// Delete Customer by ID
+// Delete corporate customer by ID
 export const deleteCorporateCustomer = async (req, res) => {
   try {
     const customer = await CorporateCustomer.findByIdAndDelete(req.params.id);
     if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({ message: "Corporate customer not found" });
     }
 
-    res.status(200).json({ message: "Customer deleted successfully" });
+    res.status(200).json({ message: "Corporate customer deleted successfully" });
   } catch (err) {
-    console.error("❌ Error deleting customer:", err);
+    console.error("❌ Error deleting corporate customer:", err);
     res.status(500).json({ error: "Server error" });
   }
 };

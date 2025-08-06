@@ -4,6 +4,7 @@ import { useGetCorporateCustomerQuery } from "../../../redux/api/corporateCustom
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import { useSelector } from "react-redux";
 import IMAGES from "../../../assets/images";
+import moment from "moment-timezone";
 
 // Format date as DD-MMM-YYYY
 const formatDate = (date) => {
@@ -22,6 +23,7 @@ const formatDate = (date) => {
 const ViewCorporateCustomer = ({ customerId, onClose }) => {
   const { data: customer, isLoading, error } = useGetCorporateCustomerQuery(customerId);
   const user = useSelector((state) => state?.auth?.user);
+  const timezone = useSelector((state) => state.bookingSetting?.timezone) || "UTC";
   const companyId = user?.companyId?.toString();
 
   const { data: bookingsResponse } = useGetAllBookingsQuery(companyId);
@@ -36,7 +38,7 @@ const ViewCorporateCustomer = ({ customerId, onClose }) => {
   ).length;
 
   const detailFields = [
-    { label: "Full Name", value: customer?.name },
+    { label: "Company Name", value: customer?.companyname },
     { label: "Email Address", value: customer?.email },
     { label: "Contact Number", value: customer?.phone ? `+${customer.phone}` : null },
     { label: "Primary Address", value: customer?.address },
@@ -54,7 +56,12 @@ const ViewCorporateCustomer = ({ customerId, onClose }) => {
     { label: "Invoice Terms", value: customer?.invoiceTerms },
     { label: "Passphrase", value: customer?.passphrase },
     { label: "VAT Number", value: customer?.vatnumber },
-    { label: "Created On", value: formatDate(customer?.createdAt) },
+    {
+      label: "Created On",
+      value: customer?.createdAt
+        ? moment(customer.createdAt).tz(timezone).format("DD/MM/YYYY HH:mm:ss")
+        : "N/A"
+    },
   ];
 
   return (

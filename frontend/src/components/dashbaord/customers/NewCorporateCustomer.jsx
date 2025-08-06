@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import {useCreateCorporateCustomerMutation,useUpdateCorporateCustomerMutation } from "../../../redux/api/corporateCustomerApi";
+import { useCreateCorporateCustomerMutation, useUpdateCorporateCustomerMutation } from "../../../redux/api/corporateCustomerApi";
 import { useSelector } from "react-redux";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
@@ -15,7 +15,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
   const [preview, setPreview] = useState("");
 
   const [formData, setFormData] = useState({
-    name: "",
+    companyname: "",
     email: "",
     phone: "",
     address: "",
@@ -42,7 +42,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
   useEffect(() => {
     if (customerData) {
       setFormData({
-        name: customerData.name || "",
+        companyname: customerData.companyname || "",
         email: customerData.email || "",
         phone: customerData.phone || "",
         address: customerData.address || "",
@@ -88,13 +88,13 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.email || !formData.phone) {
+    if (!formData.companyname || !formData.email || !formData.phone) {
       toast.error("Please fill in all required fields.");
       return;
     }
 
     const payload = new FormData();
-    payload.append("name", formData.name);
+    payload.append("companyname", formData.companyname);
     payload.append("email", formData.email);
     payload.append("phone", formData.phone);
     payload.append("address", formData.address);
@@ -138,7 +138,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
     <CustomModal
       isOpen={isOpen}
       onClose={onClose}
-      heading={customerData ? "Edit Corporate Customer" : "Add New Corporate Customer"}
+      heading={customerData ? "Edit Corporate Customer" : "Add Corporate Customer"}
     >
       <div className="text-sm w-96 px-4 pb-4 pt-4">
         {/* Image Upload */}
@@ -171,7 +171,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3">
           {[
-            "name",
+            "companyname",
             "email",
             "primaryContactName",
             "primaryContactDesignation",
@@ -188,7 +188,9 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
             const label =
               field === "vatnumber"
                 ? "VAT Number"
-                : field.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
+                : field === "companyname"
+                  ? "Company Name"
+                  : field.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
 
             return (
               <div key={field}>
@@ -217,7 +219,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
             />
           </div>
 
-          {/* Selects */}
+          {/* Country */}
           <div>
             <label className="block mb-1 font-medium">Country</label>
             <select name="country" value={formData.country} onChange={handleChange} className="custom_input">
@@ -227,6 +229,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
             </select>
           </div>
 
+          {/* Locations Display */}
           <div>
             <label className="block mb-1 font-medium">Locations Display (Invoice)</label>
             <select
@@ -240,6 +243,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
             </select>
           </div>
 
+          {/* Payment Options */}
           <div>
             <label className="block mb-1 font-medium">Payment Options (Invoice)</label>
             <select
@@ -254,6 +258,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
             </select>
           </div>
 
+          {/* Invoice Due Days */}
           <div>
             <label className="block mb-1 font-medium">Invoice Due Days</label>
             <input
@@ -271,7 +276,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
             <button
               type="submit"
               className="btn btn-reset"
-              disabled={isCreating || isUpdating || !formData.name || !formData.email || !formData.phone}
+              disabled={isCreating || isUpdating || !formData.companyname || !formData.email || !formData.phone}
             >
               {customerData
                 ? isUpdating ? "Updating..." : "Update"
