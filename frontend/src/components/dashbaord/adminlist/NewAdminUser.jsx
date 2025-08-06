@@ -12,6 +12,7 @@ import { useParams } from "react-router-dom";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 import UsePasswordToggle from "../../../hooks/UsePasswordToggle";
 import { useSendGoogleAuthLinkMutation } from "../../../redux/api/googleApi";
+import { useGetCorporateCustomersQuery } from "../../../redux/api/corporateCustomerApi";
 
 const NewAdminUser = () => {
   const { id } = useParams();
@@ -34,8 +35,6 @@ const NewAdminUser = () => {
     skip: !user?.companyId,
   });
 
-  const [createAdmin] = useCreateClientAdminMutation();
-  const [updateAdmin] = useUpdateClientAdminMutation();
   const [selectedAccount, setSelectedAccount] = useState({
     fullName: "",
     email: "",
@@ -45,7 +44,12 @@ const NewAdminUser = () => {
     permissions: [],
     associateAdminLimit: 5,
   });
+
+  const [createAdmin] = useCreateClientAdminMutation();
+  const [updateAdmin] = useUpdateClientAdminMutation();
+
   const [googleConnected, setGoogleConnected] = useState(false);
+
   useEffect(() => {
     if (isEdit) return;
 
@@ -248,6 +252,25 @@ const NewAdminUser = () => {
     }
   };
 
+  const [customerSearchTerm, setCustomerSearchTerm] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const {
+    data: corporateCustomersData,
+    isLoading: isLoadingCustomers,
+  } = useGetCorporateCustomersQuery(undefined, {
+    skip: selectedAccount?.role?.toLowerCase() !== "customer",
+  });
+
+  const filteredCustomers =
+    selectedAccount?.role === "customer" &&
+      Array.isArray(corporateCustomersData?.customers)
+      ? corporateCustomersData.customers.filter((customer) =>
+        customer.name
+          .toLowerCase()
+          .includes(selectedAccount.fullName?.toLowerCase())
+      )
+      : [];
+
   let roleOptions = [];
   if (user?.role === "superadmin")
     roleOptions = ["clientadmin", "manager", "demo"];
@@ -321,6 +344,7 @@ const NewAdminUser = () => {
       ];
     }
   };
+
   useEffect(() => {
     if (selectedAccount?.role === "driver") {
       if (!driversList?.drivers?.length) {
@@ -336,9 +360,8 @@ const NewAdminUser = () => {
       setSelectedAccount({
         ...selectedAccount,
         driverId: singleDriver._id,
-        fullName: `${driverData.firstName || ""} ${
-          driverData.surName || ""
-        }`.trim(),
+        fullName: `${driverData.firstName || ""} ${driverData.surName || ""
+          }`.trim(),
         employeeNumber: driverData.employeeNumber || "",
         email: driverData.email || "",
       });
@@ -348,11 +371,10 @@ const NewAdminUser = () => {
   return (
     <div>
       <div
-        className={`${
-          isEdit ? "border-[var(--light-gray)] border-b" : ""
-        } flex items-center justify-between `}
+        className={`${isEdit ? "border-[var(--light-gray)] border-b" : ""
+          } flex items-center justify-between `}
       >
-        <OutletHeading name={isEdit ? "Edit User" : "Add User"} />
+        <OutletHeading name={isEdit ? "Edit User Account" : "Add User Account"} />
 
         <Link to="/dashboard/admin-list" className="mb-4">
           <button className="btn btn-primary ">← Back to Users List</button>
@@ -374,28 +396,57 @@ const NewAdminUser = () => {
             options={roleOptions}
           />
         </div>
-        <div className="md:col-span-1 ">
-          <label className="text-sm ">Full Name</label>
-
+        <div className="md:col-span-1 relative">
+          <label className="text-sm">Full Name</label>
           <input
             name="fullName"
             placeholder="Full Name"
             type="text"
-            readOnly={selectedAccount?.role === "driver"}
-            className={`custom_input mt-1   ${
-              selectedAccount?.role === "driver"
-                ? "bg-gray-100 cursor-not-allowed opacity-70"
-                : ""
-            }`}
             value={selectedAccount?.fullName || ""}
-            onChange={(e) =>
+            onChange={(e) => {
               setSelectedAccount({
                 ...selectedAccount,
                 fullName: e.target.value,
-              })
-            }
+              });
+              setShowSuggestions(true);
+            }}
+            readOnly={selectedAccount?.role === "driver"}
+            className={`custom_input mt-1 ${selectedAccount?.role === "driver"
+              ? "bg-gray-100 cursor-not-allowed opacity-70"
+              : ""
+              }`}
           />
+
+          {showSuggestions &&
+            selectedAccount?.role === "customer" &&
+            Array.isArray(corporateCustomersData?.customers) && (
+              <ul className="absolute z-10 bg-white border border-gray-200 rounded shadow mt-1 w-full max-h-48 overflow-y-auto">
+                {corporateCustomersData.customers
+                  .filter((customer) =>
+                    customer.name
+                      .toLowerCase()
+                      .includes(selectedAccount.fullName.toLowerCase())
+                  )
+                  .map((customer) => (
+                    <li
+                      key={customer._id}
+                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        setSelectedAccount({
+                          ...selectedAccount,
+                          fullName: customer.name,
+                          email: customer.email,
+                        });
+                        setShowSuggestions(false);
+                      }}
+                    >
+                      {customer.name} – {customer.email}
+                    </li>
+                  ))}
+              </ul>
+            )}
         </div>
+
         {selectedAccount?.role === "driver" && (
           <div className="md:col-span-2 lg:col-span-1">
             <SelectOption
@@ -411,9 +462,8 @@ const NewAdminUser = () => {
                   setSelectedAccount({
                     ...selectedAccount,
                     driverId: selectedDriver._id,
-                    fullName: `${driverData.firstName || ""} ${
-                      driverData.surName || ""
-                    }`.trim(),
+                    fullName: `${driverData.firstName || ""} ${driverData.surName || ""
+                      }`.trim(),
                     employeeNumber: driverData.employeeNumber || "",
                     email: driverData.email || "",
                   });
@@ -432,11 +482,10 @@ const NewAdminUser = () => {
           <input
             placeholder="Email"
             type="email"
-            className={`custom_input mt-1   ${
-              selectedAccount?.role === "driver"
-                ? "bg-gray-100 cursor-not-allowed opacity-70"
-                : ""
-            }`}
+            className={`custom_input mt-1   ${selectedAccount?.role === "driver"
+              ? "bg-gray-100 cursor-not-allowed opacity-70"
+              : ""
+              }`}
             readOnly={selectedAccount?.role === "driver" || googleConnected}
             value={selectedAccount?.email || ""}
             onChange={(e) =>
@@ -508,15 +557,13 @@ const NewAdminUser = () => {
               </label>
               <button
                 type="button"
-                className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors duration-300 ${
-                  sendCalendarInvite ? "bg-blue-500" : "bg-gray-300"
-                }`}
+                className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors duration-300 ${sendCalendarInvite ? "bg-blue-500" : "bg-gray-300"
+                  }`}
                 onClick={() => setSendCalendarInvite((prev) => !prev)}
               >
                 <div
-                  className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
-                    sendCalendarInvite ? "translate-x-6" : "translate-x-0"
-                  }`}
+                  className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ${sendCalendarInvite ? "translate-x-6" : "translate-x-0"
+                    }`}
                 />
               </button>
             </div>
@@ -577,13 +624,11 @@ const NewAdminUser = () => {
           {selectedAccount.role === "clientadmin" ? (
             <>
               <button
-                className={`${
-                  isEdit ? "btn btn-success" : "btn btn-primary"
-                } duration-300 ease-in-out ${
-                  googleConnected || isSendingEmail
+                className={`${isEdit ? "btn btn-success" : "btn btn-primary"
+                  } duration-300 ease-in-out ${googleConnected || isSendingEmail
                     ? "opacity-50 cursor-not-allowed"
                     : ""
-                }`}
+                  }`}
                 onClick={async () => {
                   if (googleConnected || isSendingEmail) return;
                   setIsSendingEmail(true);
@@ -594,10 +639,10 @@ const NewAdminUser = () => {
                 {isSendingEmail
                   ? "Sending Email..."
                   : isEdit
-                  ? "Update User"
-                  : sendCalendarInvite
-                  ? "Create & Send Email"
-                  : "Create User"}
+                    ? "Update User"
+                    : sendCalendarInvite
+                      ? "Create & Send Email"
+                      : "Create User"}
               </button>
             </>
           ) : (

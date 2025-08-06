@@ -92,6 +92,7 @@ const DashboardCustomers = () => {
         { label: "No.", key: "index" },
         { label: "Profile", key: "profile" },
         { label: "Vat No.", key: "vatnumber" },
+        { label: "Name", key: "name" },
         { label: "Company Name", key: "companyname" },
         { label: "Email", key: "email" },
         { label: "Phone", key: "phone" },
@@ -126,6 +127,7 @@ const DashboardCustomers = () => {
                         />
                     ),
                     vatnumber: customer?.vatnumber || "N/A",
+                    name: customer?.name || "N/A",
                     companyname: customer?.companyname || "N/A",
                     email: customer?.email || "N/A",
                     phone: customer?.phone ? `+${customer.phone}` : "N/A",

@@ -15,6 +15,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
   const [preview, setPreview] = useState("");
 
   const [formData, setFormData] = useState({
+    name: "",
     companyname: "",
     email: "",
     phone: "",
@@ -42,6 +43,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
   useEffect(() => {
     if (customerData) {
       setFormData({
+        name: customerData.name || "",
         companyname: customerData.companyname || "",
         email: customerData.email || "",
         phone: customerData.phone || "",
@@ -88,12 +90,13 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.companyname || !formData.email || !formData.phone) {
+    if (!formData.name || !formData.email || !formData.phone) {
       toast.error("Please fill in all required fields.");
       return;
     }
 
     const payload = new FormData();
+    payload.append("name", formData.name);
     payload.append("companyname", formData.companyname);
     payload.append("email", formData.email);
     payload.append("phone", formData.phone);
@@ -171,6 +174,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3">
           {[
+            "name",
             "companyname",
             "email",
             "primaryContactName",
@@ -276,7 +280,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
             <button
               type="submit"
               className="btn btn-reset"
-              disabled={isCreating || isUpdating || !formData.companyname || !formData.email || !formData.phone}
+              disabled={isCreating || isUpdating || !formData.name || !formData.email || !formData.phone}
             >
               {customerData
                 ? isUpdating ? "Updating..." : "Update"

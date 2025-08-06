@@ -6,7 +6,7 @@ export const corporateCustomerApi = apiSlice.injectEndpoints({
       query: (formData) => ({
         url: "/corporate-customer/create-corporate-customer",
         method: "POST",
-        body: formData, // ✅ FormData (multipart/form-data)
+        body: formData, 
       }),
       invalidatesTags: ["CorporateCustomerList"],
     }),
@@ -30,7 +30,7 @@ export const corporateCustomerApi = apiSlice.injectEndpoints({
       query: ({ id, formData }) => ({
         url: `/corporate-customer/corporate-customer/${id}`,
         method: "PUT",
-        body: formData, // ✅ FormData for file upload
+        body: formData,
       }),
       invalidatesTags: ["CorporateCustomerList"],
     }),

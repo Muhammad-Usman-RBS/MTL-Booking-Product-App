@@ -38,6 +38,7 @@ const ViewCorporateCustomer = ({ customerId, onClose }) => {
   ).length;
 
   const detailFields = [
+    { label: "Name", value: customer?.name },
     { label: "Company Name", value: customer?.companyname },
     { label: "Email Address", value: customer?.email },
     { label: "Contact Number", value: customer?.phone ? `+${customer.phone}` : null },

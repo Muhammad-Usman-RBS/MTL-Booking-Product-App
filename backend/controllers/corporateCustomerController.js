@@ -12,6 +12,7 @@ export const createCorporateCustomer = async (req, res) => {
     }
 
     const {
+      name,
       companyname,
       email,
       phone,
@@ -34,13 +35,14 @@ export const createCorporateCustomer = async (req, res) => {
       vatnumber,
     } = req.body;
 
-    if (!companyname || !email || !phone || !companyId) {
+    if (!name || !email || !phone || !companyId) {
       return res.status(400).json({
-        message: "Missing required fields (companyname, email, phone, companyId)",
+        message: "Missing required fields (name, email, phone, companyId)",
       });
     }
 
     const newCustomer = new CorporateCustomer({
+      name,
       companyname,
       email,
       phone,
