@@ -4,11 +4,11 @@ import { getUploader } from "../middleware/cloudinaryUpload.js";
 import { createCustomer, getCustomers, getCustomer, updateCustomer, deleteCustomer } from "../controllers/customerController.js";
 
 const router = express.Router();
-// ✅ FIXED: Changed from 'driver' to 'customer' folder
-const customerUploader = getUploader('customer');
+
+const customerUploader = getUploader("customer");
 
 const customerUploadFields = customerUploader.fields([
-    { name: 'profile', maxCount: 1 }
+  { name: "profile", maxCount: 1 },
 ]);
 
 // Protect routes and allow only certain roles to access

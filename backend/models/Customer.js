@@ -7,7 +7,7 @@ const customerSchema = new mongoose.Schema(
         phone: { type: String, required: true },
         address: { type: String, default: "N/A" },
         homeAddress: { type: String, default: "N/A" },
-        profile: { type: String, default: "" },
+        profile: { type: String },
         status: {
             type: String,
             enum: ["Active", "Suspended", "Pending", "Deleted"],

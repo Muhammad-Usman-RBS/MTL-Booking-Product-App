@@ -1,15 +1,30 @@
 import Customer from "../models/Customer.js";
 
-// ✅ Create Customer
+// ✅ Create Customer (with improved validation and logging)
 export const createCustomer = async (req, res) => {
   try {
+    console.log("📥 Incoming customer creation request");
+
+    // 🔍 Log entire file payload (important for debugging)
+    console.log("🖼️ Received files:", req.files);
+
+    // ✅ Check for uploaded profile image
+    let profileUrl = "";
+    if (req.files?.profile?.[0]) {
+      profileUrl = req.files.profile[0].path; // Cloudinary uploaded URL
+      console.log("✅ Profile image uploaded to Cloudinary:", profileUrl);
+    } else {
+      console.warn("⚠️ No profile image uploaded.");
+    }
+
+    // ✅ Destructure form fields from req.body
     const {
       name,
       email,
       phone,
       address,
       homeAddress,
-      status,
+      status = "Active",
       companyId,
       primaryContactName,
       primaryContactDesignation,
@@ -18,22 +33,23 @@ export const createCustomer = async (req, res) => {
       stateCounty,
       postcode,
       country,
-      locationsDisplay,
-      paymentOptionsBooking,
+      locationsDisplay = "Yes",
+      paymentOptionsBooking = [],
       paymentOptionsInvoice,
-      invoiceDueDays,
+      invoiceDueDays = 1,
       invoiceTerms,
       passphrase,
       vatnumber,
     } = req.body;
 
-    // ✅ FIXED: Properly handle uploaded profile image
-    let profileUrl = "";
-    if (req.files && req.files.profile && req.files.profile[0]) {
-      profileUrl = req.files.profile[0].path; // Cloudinary URL
-      console.log("✅ Profile image uploaded:", profileUrl);
+    // ✅ Basic field validation
+    if (!name || !email || !phone || !companyId) {
+      return res.status(400).json({
+        message: "Missing required fields (name, email, phone, companyId)",
+      });
     }
 
+    // ✅ Build new customer document
     const newCustomer = new Customer({
       name,
       email,
@@ -42,7 +58,7 @@ export const createCustomer = async (req, res) => {
       homeAddress,
       status,
       companyId,
-      profile: profileUrl, // ✅ Save Cloudinary URL
+      profile: profileUrl,
       primaryContactName,
       primaryContactDesignation,
       website,
@@ -59,12 +75,17 @@ export const createCustomer = async (req, res) => {
       vatnumber,
     });
 
+    // ✅ Save to DB
     await newCustomer.save();
 
+    console.log("✅ Customer created:", newCustomer._id);
+
+    // ✅ Send response
     res.status(201).json({
       message: "Customer profile created successfully",
       customer: newCustomer,
     });
+
   } catch (err) {
     console.error("❌ Error creating customer:", err);
     res.status(500).json({ error: "Server error", details: err.message });

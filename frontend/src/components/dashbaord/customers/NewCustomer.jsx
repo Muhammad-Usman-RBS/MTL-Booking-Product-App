@@ -10,7 +10,9 @@ import IMAGES from "../../../assets/images";
 const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
+
   const [imageFile, setImageFile] = useState(null);
+  const [preview, setPreview] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -18,7 +20,6 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
     phone: "",
     address: "",
     homeAddress: "",
-    profile: "",
     primaryContactName: "",
     primaryContactDesignation: "",
     website: "",
@@ -46,7 +47,6 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
         phone: customerData.phone || "",
         address: customerData.address || "",
         homeAddress: customerData.homeAddress || "",
-        profile: customerData.profile || "",
         primaryContactName: customerData.primaryContactName || "",
         primaryContactDesignation: customerData.primaryContactDesignation || "",
         website: customerData.website || "",
@@ -62,6 +62,7 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
         passphrase: customerData.passphrase || "",
         vatnumber: customerData.vatnumber || "",
       });
+      setPreview(customerData.profile || "");
     }
   }, [customerData]);
 
@@ -80,59 +81,67 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
     setImageFile(file);
 
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData((prev) => ({
-        ...prev,
-        profile: reader.result,
-      }));
-    };
+    reader.onloadend = () => setPreview(reader.result);
     reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
-      toast.error("Please fill in all required fields");
+
+    if (!formData.name || !formData.email || !formData.phone) {
+      toast.error("Please fill in all required fields.");
       return;
     }
 
-    const customerPayload = {
-      ...formData,
-      companyId,
-    };
+    const payload = new FormData();
+    payload.append("name", formData.name);
+    payload.append("email", formData.email);
+    payload.append("phone", formData.phone);
+    payload.append("address", formData.address);
+    payload.append("homeAddress", formData.homeAddress);
+    payload.append("primaryContactName", formData.primaryContactName);
+    payload.append("primaryContactDesignation", formData.primaryContactDesignation);
+    payload.append("website", formData.website);
+    payload.append("city", formData.city);
+    payload.append("stateCounty", formData.stateCounty);
+    payload.append("postcode", formData.postcode);
+    payload.append("country", formData.country);
+    payload.append("locationsDisplay", formData.locationsDisplay);
+    payload.append("paymentOptionsInvoice", formData.paymentOptionsInvoice);
+    payload.append("invoiceDueDays", formData.invoiceDueDays);
+    payload.append("invoiceTerms", formData.invoiceTerms);
+    payload.append("passphrase", formData.passphrase);
+    payload.append("vatnumber", formData.vatnumber);
+    payload.append("companyId", companyId);
+
+    if (imageFile) {
+      payload.append("profile", imageFile); // ✅ This is what backend expects
+    }
 
     try {
       if (customerData && customerData._id) {
-        if (typeof onSave === "function") {
-          await onSave(customerData._id, customerPayload);
-        } else {
-          await updateCustomer({ id: customerData._id, formData: customerPayload }).unwrap();
-          toast.success("Customer updated successfully");
-        }
+        await updateCustomer({ id: customerData._id, formData: payload }).unwrap();
+        toast.success("Customer updated successfully");
       } else {
-        await createCustomer(customerPayload).unwrap();
+        await createCustomer(payload).unwrap();
         toast.success("Customer created successfully");
       }
 
       onClose();
     } catch (err) {
-      console.error("Error:", err);
-      toast.error("Error: " + (err?.data?.message || "Unknown error"));
+      console.error("❌ Submission error:", err);
+      toast.error(err?.data?.message || "Something went wrong");
     }
   };
 
   return (
-    <CustomModal
-      isOpen={isOpen}
-      onClose={onClose}
-      heading={customerData ? "Edit Customer" : "Add New Customer"}
-    >
+    <CustomModal isOpen={isOpen} onClose={onClose} heading={customerData ? "Edit Customer" : "Add New Customer"}>
       <div className="text-sm w-96 px-4 pb-4 pt-4">
         {/* Image Upload Section */}
         <div className="flex items-center gap-5 mb-3">
           <div className="shrink-0">
             <img
-              src={formData.profile || IMAGES.dummyImg}
+              src={preview || IMAGES.dummyImg}
               alt="Profile"
               className="w-20 h-20 rounded-full border border-gray-300 object-cover shadow-sm"
             />
@@ -157,7 +166,6 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
 
         {/* Form Fields */}
         <form onSubmit={handleSubmit} className="space-y-3">
-          {/* Basic Fields */}
           {[
             "name",
             "email",
@@ -171,33 +179,28 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
             "postcode",
             "invoiceTerms",
             "passphrase",
-            "vatnumber" // ✅ Corrected to match schema
+            "vatnumber"
           ].map((field) => {
-            const formattedLabel =
+            const label =
               field === "vatnumber"
                 ? "VAT Number"
-                : field
-                  .replace(/([A-Z])/g, " $1")
-                  .replace(/^./, (str) => str.toUpperCase());
+                : field.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
 
             return (
               <div key={field}>
-                <label className="block mb-1 font-medium capitalize">
-                  {formattedLabel}
-                </label>
+                <label className="block mb-1 font-medium">{label}</label>
                 <input
                   type="text"
                   name={field}
                   value={formData[field]}
                   onChange={handleChange}
                   className="custom_input"
-                  placeholder={formattedLabel}
+                  placeholder={label}
                 />
               </div>
             );
           })}
 
-          {/* Phone Input */}
           <div>
             <label className="block mb-1 font-medium">Phone</label>
             <PhoneInput
@@ -209,7 +212,6 @@ const NewCustomer = ({ isOpen, onClose, customerData, onSave }) => {
             />
           </div>
 
-          {/* Dropdowns and Selects */}
           <div>
             <label className="block mb-1 font-medium">Country</label>
             <select name="country" value={formData.country} onChange={handleChange} className="custom_input">
