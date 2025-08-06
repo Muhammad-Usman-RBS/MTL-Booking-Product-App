@@ -1,12 +1,5 @@
 import express from "express";
-import {
-  createCompanyAccount,
-  getAllCompanies,
-  getCompanyById,
-  updateCompanyAccount,
-  deleteCompanyAccount,
-  sendCompanyEmail,
-} from "../controllers/companyController.js";
+import { createCompanyAccount, getAllCompanies, getCompanyById, updateCompanyAccount, deleteCompanyAccount, sendCompanyEmail } from "../controllers/companyController.js";
 import { protect, authorize } from "../middleware/authMiddleware.js";
 import { getUploader } from "../middleware/cloudinaryUpload.js";
 
@@ -14,7 +7,6 @@ const router = express.Router();
 const companyUploader = getUploader("company");
 const companyPicture = companyUploader.fields([
   { name: "profileImage", maxCount: 1 },
-  { name: "favicon", maxCount: 1 },
 ]); // FIX
 // COMPANIES CRUD
 router.post(

@@ -1,39 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  useFetchAllCompaniesQuery,
-  useSendCompanyEmailMutation,
-  useDeleteCompanyAccountMutation,
-} from "../../../redux/api/companyApi";
+import { useFetchAllCompaniesQuery, useSendCompanyEmailMutation, useDeleteCompanyAccountMutation } from "../../../redux/api/companyApi";
 import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
-import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import "react-toastify/dist/ReactToastify.css";
 import IMAGES from "../../../assets/images";
 import Icons from "../../../assets/icons";
-
-const tabs = ["active", "pending", "suspended", "deleted"];
+import { useSelector } from "react-redux";
+import moment from "moment-timezone";
 
 const CompanyAccountsList = () => {
   const { data: companies = [], refetch } = useFetchAllCompaniesQuery();
+  const timezone = useSelector((state) => state.bookingSetting?.timezone) || "UTC";
   const navigate = useNavigate();
   const [sendEmail] = useSendCompanyEmailMutation();
   const [deleteCompany] = useDeleteCompanyAccountMutation();
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [accountToDelete, setAccountToDelete] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTab, setSelectedTab] = useState("active");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [selectedAccount, setSelectedAccount] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [emailToSend, setEmailToSend] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState(null);
 
-  // Automatically refetch when component mounts
   useEffect(() => {
     refetch();
   }, []);
@@ -43,20 +35,18 @@ const CompanyAccountsList = () => {
       const { email, ...companyData } = selectedAccount;
       await sendEmail({ email, company: companyData }).unwrap();
       toast.success("Email sent successfully!");
-      setShowModal(false);
+      setSelectedAccount(null);
     } catch (error) {
       console.error("Email send error:", error);
       toast.error("Failed to send email.");
     }
   };
 
-  const filteredData = companies.filter(
-    (item) =>
-      (item.status || "").toLowerCase() === selectedTab.toLowerCase() &&
-      Object.values(item)
-        .join(" ")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+  const filteredData = companies.filter((item) =>
+    Object.values(item)
+      .join(" ")
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
   );
 
   const paginatedData =
@@ -65,21 +55,20 @@ const CompanyAccountsList = () => {
       : filteredData.slice((page - 1) * perPage, page * perPage);
 
   const tableHeaders = [
+    { label: "Company ID", key: "_id" },
     { label: "Company Name", key: "companyName" },
     { label: "Owner Name", key: "fullName" },
     { label: "Company Email", key: "email" },
-    { label: "Primary Contact", key: "contactName" },
     { label: "Phone", key: "contact" },
-    { label: "Due", key: "dueDays" },
-    { label: "Created", key: "createdAt" },
+    { label: "Created At", key: "createdAt" },
     { label: "Action", key: "actions" },
   ];
 
   const tableData = paginatedData.map((item) => ({
     ...item,
     createdAt: item.createdAt
-      ? new Date(item.createdAt).toLocaleDateString("en-GB")
-      : "-",
+      ? moment(item.createdAt).tz(timezone).format("DD/MM/YYYY HH:mm:ss")
+      : "N/A",
     actions: (
       <div className="flex gap-2">
         <Icons.Eye
@@ -106,36 +95,6 @@ const CompanyAccountsList = () => {
     ),
   }));
 
-  const tabCounts = tabs.reduce((acc, tab) => {
-    acc[tab] = companies.filter(
-      (item) => (item.status || "").toLowerCase() === tab.toLowerCase()
-    ).length;
-    return acc;
-  }, {});
-
-  const InfoRow = ({ label, value }) => (
-    <p
-      style={{
-        margin: "6px 0",
-        fontSize: "14px",
-        color: "#374151",
-        wordBreak: "break-word",
-      }}
-    >
-      <strong
-        style={{
-          display: "inline-block",
-          width: "160px",
-          color: "#1f2937",
-          fontWeight: "600",
-        }}
-      >
-        {label}:
-      </strong>
-      <span>{value || "-"}</span>
-    </p>
-  );
-
   return (
     <>
       {!selectedAccount ? (
@@ -144,26 +103,6 @@ const CompanyAccountsList = () => {
           <Link to="/dashboard/company-accounts/new">
             <button className="btn btn-edit mb-4">Add New</button>
           </Link>
-
-          <div className="flex gap-4 text-sm font-medium border-b mb-4">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => {
-                  setSelectedTab(tab);
-                  setPage(1);
-                }}
-                className={`pb-2 ${
-                  selectedTab === tab
-                    ? "border-b-2 border-blue-600 text-blue-600"
-                    : "text-[var(--dark-gray)] hover:text-blue-500"
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)} (
-                {tabCounts[tab] || 0})
-              </button>
-            ))}
-          </div>
 
           <CustomTable
             tableHeaders={tableHeaders}
@@ -176,28 +115,24 @@ const CompanyAccountsList = () => {
           />
         </>
       ) : (
-        <div className="w-full">
+        <>
           <div className="flex justify-between items-center mb-6">
-            <OutletHeading name="Account Details" />
+            <OutletHeading name="Company Account Details" />
             <div className="flex gap-2">
               <button
                 onClick={() =>
                   downloadPDF(
                     "invoiceToDownload",
-                    `Invoice-${selectedAccount.companyName}.pdf`
+                    `Company-${selectedAccount.companyName}.pdf`
                   )
                 }
                 className="btn btn-reset"
               >
                 Download PDF
               </button>
-              <button
-                onClick={handleConfirmSendEmail}
-                className="btn btn-success"
-              >
+              <button onClick={handleConfirmSendEmail} className="btn btn-success">
                 Send Email
               </button>
-
               <button
                 onClick={() => setSelectedAccount(null)}
                 className="btn btn-cancel"
@@ -206,116 +141,71 @@ const CompanyAccountsList = () => {
               </button>
             </div>
           </div>
-
-          <div
-            id="invoiceToDownload"
-            style={{
-              backgroundColor: "#fff",
-              padding: "24px",
-              borderRadius: "12px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              maxWidth: "1000px",
-              margin: "auto",
-              fontFamily: "sans-serif",
-            }}
-          >
-            <div style={{ marginBottom: "24px" }}>
-              <img
-                src={
-                  selectedAccount.profileImage?.startsWith("http")
-                    ? selectedAccount.profileImage
-                    : selectedAccount.profileImage
-                    ? `http://localhost:5000/${selectedAccount.profileImage}`
-                    : IMAGES.dummyImg
-                }
-                style={{
-                  width: "96px",
-                  height: "96px",
-                  borderRadius: "10%",
-                  objectFit: "cover",
-                  border: "2px solid #ccc",
-                }}
-                alt="Profile"
-              />
-            </div>
-
+          <div className="w-full max-w-2xl mx-auto px-4">
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                gap: "24px",
-              }}
+              id="invoiceToDownload"
+              className="bg-white px-6 py-6 rounded-lg shadow-sm border border-gray-200"
             >
-              <div>
-                <InfoRow label="Company" value={selectedAccount.companyName} />
-                <InfoRow label="Company Email" value={selectedAccount.email} />
-                <InfoRow
-                  label="Primary Contact"
-                  value={selectedAccount.contactName}
-                />
-                <InfoRow label="Phone" value={selectedAccount.contact} />
-                <InfoRow label="Website" value={selectedAccount.website} />
-                <InfoRow label="City" value={selectedAccount.city} />
-                <InfoRow label="State" value={selectedAccount.state} />
-                <InfoRow label="Country" value={selectedAccount.country} />
-                <InfoRow label="Zip" value={selectedAccount.zip} />
+              <div className="flex justify-center mb-6 mt-4">
+                <div className="relative w-28 h-28">
+                  <img
+                    src={
+                      selectedAccount.profileImage?.startsWith("http")
+                        ? selectedAccount.profileImage
+                        : selectedAccount.profileImage
+                          ? `http://localhost:5000/${selectedAccount.profileImage}`
+                          : IMAGES.dummyImg
+                    }
+                    alt="Profile"
+                    className="w-full h-full rounded-full border-4 border-[var(--main-color)] object-cover shadow-lg"
+                  />
+                  <div className="absolute bottom-0 right-0 bg-[var(--main-color)] p-1 rounded-full border-white border">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586l-3.293-3.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <div>
-                <InfoRow label="Owner Name" value={selectedAccount.fullName} />
-                <InfoRow
-                  label="Designation"
-                  value={selectedAccount.designation}
-                />
-                <InfoRow label="Status" value={selectedAccount.status} />
-                <InfoRow
-                  label="Passphrase"
-                  value={selectedAccount.passphrase}
-                />
-                <InfoRow label="Due Days" value={selectedAccount.dueDays} />
-                <InfoRow
-                  label="Invoice Terms"
-                  value={selectedAccount.invoiceTerms}
-                />
-                <InfoRow
-                  label="Invoice Payment"
-                  value={selectedAccount.invoicePayment}
-                />
-                <InfoRow label="Address" value={selectedAccount.address} />
-                <InfoRow
-                  label="Booking Payment"
-                  value={selectedAccount.bookingPayment}
-                />
+
+              <div className="grid grid-cols-1 gap-4 mb-6">
+                {[
+                  { label: "Company ID", value: selectedAccount._id },
+                  { label: "Company Name", value: selectedAccount.companyName },
+                  { label: "Trading Name", value: selectedAccount.tradingName },
+                  { label: "Owner Name", value: selectedAccount.fullName },
+                  { label: "Company Email", value: selectedAccount.email },
+                  { label: "Phone", value: selectedAccount.contact },
+                  { label: "Licensed By", value: selectedAccount.licensedBy },
+                  { label: "License Number", value: selectedAccount.licenseNumber },
+                  { label: "License Referrer Link", value: selectedAccount.referrerLink },
+                  { label: "Cookie Consent", value: selectedAccount.cookieConsent },
+                  {
+                    label: "Created At",
+                    value: selectedAccount?.createdAt
+                      ? moment(selectedAccount.createdAt).tz(timezone).format("DD/MM/YYYY HH:mm:ss")
+                      : "N/A"
+                  },
+                  { label: "Company Address", value: selectedAccount.address },
+                ].map(({ label, value }) => (
+                  <div
+                    key={label}
+                    className="bg-white border border-gray-200 py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                      {label}
+                    </p>
+                    <p className="text-gray-800 font-semibold">{value || "N/A"}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
-
-      <CustomModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        heading="Send Email"
-      >
-        <div className="p-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email:
-          </label>
-          <input
-            type="email"
-            value={emailToSend}
-            onChange={(e) => setEmailToSend(e.target.value)}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-          <div className="flex justify-end mt-4">
-            <button
-              onClick={() => setShowModal(false)}
-              className="btn btn-success"
-            >
-              Send Email
-            </button>
-          </div>
-        </div>
-      </CustomModal>
 
       <DeleteModal
         isOpen={showDeleteModal}

@@ -7,18 +7,9 @@ import "react-toastify/dist/ReactToastify.css";
 import FilePreview from "../../../constants/constantscomponents/FilePreview";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
-import countries from "../../../constants/constantscomponents/countries";
-import {
-  bookingPaymentOptions,
-  invoicePaymentOptions,
-  yesNoOptions,
-} from "../../../constants/dashboardTabsData/data";
+import { yesNoOptions } from "../../../constants/dashboardTabsData/data";
 import { useFetchClientAdminsQuery } from "../../../redux/api/adminApi";
-import {
-  useCreateCompanyMutation,
-  useGetCompanyByIdQuery,
-  useUpdateCompanyMutation,
-} from "../../../redux/api/companyApi";
+import { useCreateCompanyMutation, useGetCompanyByIdQuery, useUpdateCompanyMutation } from "../../../redux/api/companyApi";
 
 const AddCompanyAccount = () => {
   const { id } = useParams();
@@ -31,29 +22,17 @@ const AddCompanyAccount = () => {
   const [formData, setFormData] = useState({
     profileImage: "",
     companyName: "",
-    contactName: "",
+    tradingName: "",
     email: "",
-    website: "",
-    designation: "",
     contact: "",
-    city: "",
-    dueDays: "",
-    state: "",
-    zip: "",
-    passphrase: "",
-    country: "",
-    bookingPayment: "",
-    invoicePayment: "",
-    showLocations: "",
+    licensedBy: "",
+    licenseNumber: "",
+    referrerLink: "",
+    cookieConsent: "",
     address: "",
-    invoiceTerms: "",
     clientAdminId: "",
     fullName: "",
     status: "",
-    cookieConsent: "",
-    tradingName: "",
-    licenseNo: "",
-    licenseReferenceLink: "",
   });
   const handleInputChange = (e) => {
     const { name, type, files, value } = e.target;
@@ -83,9 +62,9 @@ const AddCompanyAccount = () => {
 
   const { data: rawClientAdmins = [] } = useFetchClientAdminsQuery();
   const clientAdmins = [
-    { label: "Select Name", value: "" },
     ...rawClientAdmins
       .filter((admin) => admin.status !== "Deleted")
+      .filter((admin) => !admin.companyId) 
       .map((admin) => ({
         label: admin.fullName,
         value: admin._id,
@@ -142,7 +121,7 @@ const AddCompanyAccount = () => {
       for (const key in formData) {
         if (key === "profileImage") continue; // skip to avoid double append
         const value =
-          key === "dueDays" ? parseInt(formData[key] || "0") : formData[key];
+          key === "licenseNumber" ? parseInt(formData[key] || "0") : formData[key];
         data.append(key, value);
       }
 
@@ -170,7 +149,7 @@ const AddCompanyAccount = () => {
     return <Navigate to="*" replace />;
   }
 
-  // Optional: show loading state
+  // Optional: show loading referrerLink
   if (isEdit && isLoading) {
     return <div className="text-center mt-10">Loading company data...</div>;
   }
@@ -178,9 +157,8 @@ const AddCompanyAccount = () => {
   return (
     <div>
       <div
-        className={`${
-          isEdit ? "border-[var(--light-gray)] border-b" : ""
-        } flex items-center justify-between `}
+        className={`${isEdit ? "border-[var(--light-gray)] border-b" : ""
+          } flex items-center justify-between `}
       >
         <OutletHeading
           name={isEdit ? "Edit Company Account" : "Add Company Account"}
@@ -203,7 +181,7 @@ const AddCompanyAccount = () => {
       </div>
 
       {/* Input Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 lg:grid-rows-4 grid-rows-1 gap-4 mt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
         <input
           placeholder="Company Name *"
           className="custom_input"
@@ -211,10 +189,10 @@ const AddCompanyAccount = () => {
           onChange={(e) => handleChange("companyName", e.target.value)}
         />
         <input
-          placeholder="Primary Contact Name *"
+          placeholder="Trading Name *"
           className="custom_input"
-          value={formData.contactName}
-          onChange={(e) => handleChange("contactName", e.target.value)}
+          value={formData.tradingName}
+          onChange={(e) => handleChange("tradingName", e.target.value)}
         />
         <input
           type="email"
@@ -222,18 +200,6 @@ const AddCompanyAccount = () => {
           className="custom_input"
           value={formData.email}
           onChange={(e) => handleChange("email", e.target.value)}
-        />
-        <input
-          placeholder="Website"
-          className="custom_input"
-          value={formData.website}
-          onChange={(e) => handleChange("website", e.target.value)}
-        />
-        <input
-          placeholder="Designation *"
-          className="custom_input"
-          value={formData.designation}
-          onChange={(e) => handleChange("designation", e.target.value)}
         />
         <PhoneInput
           country={"gb"}
@@ -243,99 +209,61 @@ const AddCompanyAccount = () => {
           onChange={(value) => handleChange("contact", value)}
         />
         <input
-          placeholder="City"
+          placeholder="Licensed By"
           className="custom_input"
-          value={formData.city}
-          onChange={(e) => handleChange("city", e.target.value)}
+          value={formData.licensedBy}
+          onChange={(e) => handleChange("licensedBy", e.target.value)}
         />
         <input
           type="number"
           min="1"
-          placeholder="Due Days *"
+          placeholder="License Number *"
           className="custom_input"
-          value={formData.dueDays}
-          onChange={(e) => handleChange("dueDays", e.target.value)}
+          value={formData.licenseNumber}
+          onChange={(e) => handleChange("licenseNumber", e.target.value)}
         />
         <input
-          placeholder="State"
+          placeholder="License Referrer Link"
           className="custom_input"
-          value={formData.state}
-          onChange={(e) => handleChange("state", e.target.value)}
-        />
-        <input
-          placeholder="Zip Code"
-          className="custom_input"
-          value={formData.zip}
-          onChange={(e) => handleChange("zip", e.target.value)}
-        />
-        <input
-          placeholder="Passphrase"
-          className="custom_input"
-          value={formData.passphrase}
-          onChange={(e) => handleChange("passphrase", e.target.value)}
+          value={formData.referrerLink}
+          onChange={(e) => handleChange("referrerLink", e.target.value)}
         />
       </div>
 
-      {/* Select & TextArea Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <div className="grid grid-cols-1 gap-4">
-          <SelectOption
-            label="Assign to Client Admin *"
-            value={formData.clientAdminId}
-            options={clientAdmins}
-            onChange={(e) => {
-              const selectedId = e?.target?.value || e?.value || e;
-              const selectedAdmin = clientAdmins.find(
-                (admin) => admin.value === selectedId
-              );
-              handleChange("clientAdminId", selectedId);
-              handleChange("fullName", selectedAdmin?.label || "");
-              handleChange("email", selectedAdmin?.email || "");
-              handleChange("status", selectedAdmin?.status);
-            }}
-          />
-          <SelectOption
-            label="Country *"
-            options={countries}
-            value={formData.country}
-            onChange={(e) => handleChange("country", e.target.value)}
-          />
-          <SelectOption
-            label="Booking Payment *"
-            options={bookingPaymentOptions}
-            value={formData.bookingPayment}
-            onChange={(e) => handleChange("bookingPayment", e.target.value)}
-          />
-          <SelectOption
-            label="Invoice Payment *"
-            options={invoicePaymentOptions}
-            value={formData.invoicePayment}
-            onChange={(e) => handleChange("invoicePayment", e.target.value)}
-          />
-          <SelectOption
-            label="Show Locations *"
-            options={yesNoOptions}
-            value={formData.showLocations}
-            onChange={(e) => handleChange("showLocations", e.target.value)}
-          />
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+        <SelectOption
+          label="Assign to Client Admin *"
+          value={formData.clientAdminId}
+          options={clientAdmins}
+          onChange={(e) => {
+            const selectedId = e?.target?.value || e?.value || e;
+            const selectedAdmin = clientAdmins.find(
+              (admin) => admin.value === selectedId
+            );
+            handleChange("clientAdminId", selectedId);
+            handleChange("fullName", selectedAdmin?.label || "");
+            handleChange("email", selectedAdmin?.email || "");
+            handleChange("status", selectedAdmin?.status || "");
+          }}
+        />
+        <SelectOption
+          label="Cookie Consent *"
+          options={yesNoOptions}
+          value={formData.cookieConsent}
+          onChange={(e) => handleChange("cookieConsent", e.target.value)}
+        />
+      </div>
 
-        <div className="grid grid-cols-1 gap-4">
-          <textarea
-            placeholder="Address"
-            className="custom_input"
-            rows={3}
-            value={formData.address}
-            onChange={(e) => handleChange("address", e.target.value)}
-          />
-          <textarea
-            placeholder="Invoice Terms"
-            className="custom_input"
-            rows={4}
-            value={formData.invoiceTerms}
-            onChange={(e) => handleChange("invoiceTerms", e.target.value)}
-          />
-        </div>
+      {/* Address Field */}
+      <div className="mt-6">
+        <label className="block mb-1 font-medium">Company Address</label>
+        <textarea
+          placeholder="Company Address"
+          className="custom_input w-full"
+          rows={3}
+          value={formData.address}
+          onChange={(e) => handleChange("address", e.target.value)}
+        />
       </div>
 
       <div className="mt-8 text-right">

@@ -34,7 +34,7 @@ const sidebarItems = [
         title: "Booking Calendar",
         route: "/dashboard/bookings/calendar",
         icon: Icons.CalendarDays,
-          roles: ["clientadmin", "manager", "associateadmin", "driver", "customer"],
+        roles: ["clientadmin", "manager", "associateadmin", "driver", "customer"],
       },
       {
         title: "Deleted Booking",
@@ -156,37 +156,6 @@ const sidebarItems = [
       },
     ],
   },
-  {
-    title: "Company Accounts",
-    icon: Icons.Building,
-    route: "/dashboard/company-accounts",
-    subTabs: [
-      {
-        title: "Accounts List",
-        route: "/dashboard/company-accounts/list",
-        icon: Icons.FileText,
-        roles: ["superadmin", "clientadmin", "associateadmin", "manager"],
-      },
-      {
-        title: "Add Account",
-        route: "/dashboard/company-accounts/new",
-        icon: Icons.PlusCircle,
-        roles: ["superadmin", "manager", "clientadmin"],
-      },
-      {
-        title: "View Company",
-        route: "/dashboard/view-company",
-        icon: Icons.Building2,
-        roles: [
-          "driver",
-          "customer",
-          "clientadmin",
-          "associateadmin",
-          "manager",
-        ],
-      },
-    ],
-  },
   // {
   //   title: "Statements",
   //   icon: Icons.FileText,
@@ -235,6 +204,37 @@ const sidebarItems = [
         icon: Icons.User,
         route: "/dashboard/admin-list/add-user",
         roles: ["superadmin", "clientadmin", "associateadmin", "manager"],
+      },
+    ],
+  },
+  {
+    title: "Company Accounts",
+    icon: Icons.Building,
+    route: "/dashboard/company-accounts",
+    subTabs: [
+      {
+        title: "Accounts List",
+        route: "/dashboard/company-accounts/list",
+        icon: Icons.FileText,
+        roles: ["superadmin", "clientadmin", "associateadmin", "manager"],
+      },
+      {
+        title: "Add Account",
+        route: "/dashboard/company-accounts/new",
+        icon: Icons.PlusCircle,
+        roles: ["superadmin", "manager", "clientadmin"],
+      },
+      {
+        title: "View Company",
+        route: "/dashboard/view-company",
+        icon: Icons.Building2,
+        roles: [
+          "driver",
+          "customer",
+          "clientadmin",
+          "associateadmin",
+          "manager",
+        ],
       },
     ],
   },

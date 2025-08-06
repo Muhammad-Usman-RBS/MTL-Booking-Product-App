@@ -252,7 +252,6 @@ const NewAdminUser = () => {
     }
   };
 
-  const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const {
     data: corporateCustomersData,
@@ -260,16 +259,6 @@ const NewAdminUser = () => {
   } = useGetCorporateCustomersQuery(undefined, {
     skip: selectedAccount?.role?.toLowerCase() !== "customer",
   });
-
-  const filteredCustomers =
-    selectedAccount?.role === "customer" &&
-      Array.isArray(corporateCustomersData?.customers)
-      ? corporateCustomersData.customers.filter((customer) =>
-        customer.name
-          .toLowerCase()
-          .includes(selectedAccount.fullName?.toLowerCase())
-      )
-      : [];
 
   let roleOptions = [];
   if (user?.role === "superadmin")

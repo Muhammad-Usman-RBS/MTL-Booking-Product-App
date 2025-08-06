@@ -7,90 +7,74 @@ export const createCompanyAccount = async (req, res) => {
   try {
     const {
       companyName,
-      contactName,
+      tradingName,
       email,
-      website,
-      designation,
       contact,
-      city,
-      dueDays,
-      state,
-      zip,
-      passphrase,
-      country,
-      bookingPayment,
-      invoicePayment,
-      showLocations,
+      licensedBy,
+      licenseNumber,
+      referrerLink,
+      cookieConsent,
       address,
-      invoiceTerms,
       clientAdminId,
       fullName,
       status,
-      cookieConsent,
-      tradingName,
-      licenseNo,
-      licenseReferenceLink,
     } = req.body;
 
-    // Validate required fields
+    // ✅ 1. Validate clientAdminId
     if (!clientAdminId || !mongoose.Types.ObjectId.isValid(clientAdminId)) {
-      return res
-        .status(400)
-        .json({ message: "Invalid or missing clientAdminId" });
+      return res.status(400).json({ message: "Invalid or missing clientAdminId" });
     }
 
-    if (!companyName || !email || !contactName || !designation) {
+    // ✅ 2. Check if the clientAdmin is already assigned to a company
+    const existingCompany = await Company.findOne({ clientAdminId });
+    if (existingCompany) {
+      return res.status(400).json({
+        message: "This Client Admin is already assigned to a company.",
+      });
+    }
+
+    // ✅ 3. Validate required fields
+    if (!companyName || !email || !tradingName) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Check if clientAdminId exists
+    // ✅ 4. Ensure clientAdmin exists
     const clientAdmin = await User.findById(clientAdminId);
     if (!clientAdmin) {
-      return res.status(404).json({ message: "ClientAdmin not found" });
+      return res.status(404).json({ message: "Client Admin not found" });
     }
-    const profileImage = req.files?.profileImage?.[0]?.path || "";
-    const favicon = req.files?.favicon?.[0]?.path || "";
 
-    // Create company instance
+    // ✅ 5. Handle file upload (profileImage)
+    const profileImage = req.files?.profileImage?.[0]?.path || "";
+
+    // ✅ 6. Create new company instance
     const newCompany = new Company({
       companyName,
-      contactName,
+      tradingName,
       email,
-      website,
-      designation,
       contact,
-      city,
-      dueDays: dueDays ? parseInt(dueDays) : null,
-      state,
-      zip,
-      passphrase,
-      country,
-      bookingPayment,
-      invoicePayment,
-      showLocations,
+      licensedBy,
+      licenseNumber: licenseNumber ? parseInt(licenseNumber) : null,
+      referrerLink,
+      cookieConsent,
       address,
-      invoiceTerms,
       profileImage,
-      favicon,
       clientAdminId: new mongoose.Types.ObjectId(clientAdminId),
       fullName,
       status,
-      cookieConsent,
-      tradingName,
-      licenseNo,
-      licenseReferenceLink,
     });
 
-    // Save company and update user
+    // ✅ 7. Save company and update clientAdmin with companyId
     const savedCompany = await newCompany.save();
 
     await User.findByIdAndUpdate(clientAdminId, {
       $set: { companyId: savedCompany._id },
     });
 
+    // ✅ 8. Return success
     return res.status(201).json(savedCompany);
   } catch (error) {
-    console.error("Company Create Error:", error);
+    console.error("❌ Company Create Error:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -158,21 +142,24 @@ export const getCompanyById = async (req, res) => {
 
 export const updateCompanyAccount = async (req, res) => {
   try {
+    // Handle file uploads
     if (req.files?.profileImage?.[0]) {
       req.body.profileImage = req.files.profileImage[0].path;
     }
 
-    if (req.files?.favicon?.[0]) {
-      req.body.favicon = req.files.favicon[0].path;
-    }
+    // ✅ Safely parse cookieConsent
     if (req.body.cookieConsent) {
-      if (typeof req.body.cookieConsent === "string") {
+      try {
         const parsed = JSON.parse(req.body.cookieConsent);
         if (parsed && typeof parsed === "object" && parsed.value) {
           req.body.cookieConsent = parsed.value;
         }
+      } catch (err) {
+        // It's already a plain string like "Yes" or "No" — leave it as is
       }
     }
+
+    // Update company
     const updatedCompany = await Company.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -185,6 +172,7 @@ export const updateCompanyAccount = async (req, res) => {
 
     res.status(200).json(updatedCompany);
   } catch (error) {
+    console.error("Update Company Error:", error.message);
     res.status(400).json({ message: error.message });
   }
 };

@@ -20,29 +20,27 @@ export const companyApi = apiSlice.injectEndpoints({
       providesTags: (result, error, id) => [{ type: "Companies", id }],
     }),
 
-    // Create a company
+    // Create a company (with FormData)
     createCompany: builder.mutation({
       query: (formData) => ({
         url: "/companies",
         method: "POST",
         body: formData,
-        formData: true,
       }),
       invalidatesTags: ["Companies"],
     }),
 
-    // Update a company
+    // ✅ Update a company (with FormData, file support)
     updateCompany: builder.mutation({
       query: ({ id, formData }) => ({
         url: `/companies/${id}`,
         method: "PUT",
         body: formData,
-        formData: true,
       }),
       invalidatesTags: ["Companies"],
     }),
 
-    // Add this in your companyApi
+    // Delete a company
     deleteCompanyAccount: builder.mutation({
       query: (id) => ({
         url: `/companies/${id}`,
