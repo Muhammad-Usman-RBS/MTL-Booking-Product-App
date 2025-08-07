@@ -77,23 +77,6 @@ const VehicleSelection = ({
     setVehicleExtras(updated);
   };
 
-  const IconRow = ({ vehicle }) => (
-    <div className="flex flex-wrap gap-2 text-xs text-[var(--dark-gray)] mt-1">
-      <span className="flex items-center gap-1">
-        <Icons.Users className="w-4 h-4" /> {vehicle.passengers}
-      </span>
-      <span className="flex items-center gap-1">
-        <Icons.Baby className="w-4 h-4" /> {vehicle.childSeat}
-      </span>
-      <span className="flex items-center gap-1">
-        <Icons.Briefcase className="w-4 h-4" /> {vehicle.handLuggage}
-      </span>
-      <span className="flex items-center gap-1">
-        <Icons.Luggage className="w-4 h-4" /> {vehicle.checkinLuggage}
-      </span>
-    </div>
-  );
-
   if (isLoading || !localSelectedVehicle) {
     return (
       <div className="text-center text-gray-500 py-10">
@@ -107,12 +90,12 @@ const VehicleSelection = ({
       <div>
         <div className="flex flex-col lg:flex-row gap-6 overflow-visible">
           <div className="flex flex-col items-center w-full lg:w-1/3">
-            <div className="bg-white border border-[var(--light-gray)] rounded-lg shadow-md p-3 mb-4">
+            <div className="bg-white border border-[var(--light-gray)] rounded-lg shadow-md w-full text-center mb-4">
               {localSelectedVehicle.image ? (
                 <img
                   src={localSelectedVehicle.image}
                   alt={localSelectedVehicle.vehicleName}
-                  className="h-18 object-contain"
+                  className=""
                 />
               ) : (
                 <span className="text-sm">No File uploaded</span>
@@ -124,11 +107,14 @@ const VehicleSelection = ({
                 className="w-full bg-gray-700 text-white px-4 py-3 rounded-md text-left shadow flex justify-between items-center"
               >
                 <div className="flex flex-col w-full">
-                  <div className="font-semibold text-sm flex justify-between items-center">
+                  {/* Vehicle Name + Dropdown Icon */}
+                  <div className="font-semibold text-sm flex justify-between items-center flex-wrap gap-2">
                     {localSelectedVehicle.vehicleName}
-                    <Icons.ChevronDown className="ml-3 w-4 h-4 text-white" />
+                    <Icons.ChevronDown className="w-4 h-4 text-white" />
                   </div>
-                  <div className="grid grid-cols-12 grid-rows-1 lg:grid-cols-2 lg:grid-rows-2 gap-x-4 gap-y-2 text-xs text-white mt-2">
+
+                  {/* Vehicle Attributes – responsive */}
+                  <div className="grid grid-cols-4 lg:grid-cols-4 gap-x-4 gap-y-2 text-xs text-white mt-2">
                     <span className="flex items-center gap-1">
                       <Icons.Users className="w-4 h-4" />
                       {localSelectedVehicle.passengers}
@@ -157,16 +143,20 @@ const VehicleSelection = ({
                       onClick={() => selectVehicle(vehicle)}
                       className="w-full text-left px-4 py-3 hover:bg-gray-100 transition"
                     >
+                      {/* Vehicle Name */}
                       <div className="font-medium text-sm text-gray-800">
                         {vehicle.vehicleName}
                       </div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2 text-xs text-[var(--dark-gray)]">
+
+                      {/* Vehicle Capacity Info - Fully Responsive */}
+                      <div className="grid grid-cols-4 lg:grid-cols-4 gap-x-4 gap-y-2 mt-2 text-xs text-gray-600">
                         <span className="flex items-center gap-1">
                           <Icons.Users className="w-4 h-4" />
                           {vehicle.passengers}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Icons.Baby className="w-4 h-4" /> {vehicle.childSeat}
+                          <Icons.Baby className="w-4 h-4" />
+                          {vehicle.childSeat}
                         </span>
                         <span className="flex items-center gap-1">
                           <Icons.Briefcase className="w-4 h-4" />

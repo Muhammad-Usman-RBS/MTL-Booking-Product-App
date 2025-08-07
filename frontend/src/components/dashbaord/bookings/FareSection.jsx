@@ -22,7 +22,7 @@ const FareSection = ({
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-2xl border border-gray-200 overflow-hidden">
+    <div className="bg-white shadow-lg rounded-2xl border border-gray-200 overflow-hidden h-full">
       <div className="bg-[#0f192d] px-6 py-3">
         <h2 className="text-xl font-bold text-gray-50">Fare&nbsp;Details:-</h2>
       </div>

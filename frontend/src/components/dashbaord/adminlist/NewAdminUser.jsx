@@ -117,6 +117,7 @@ const NewAdminUser = () => {
           associateAdminLimit: adminToEdit.associateAdminLimit || 5,
           driverId: adminToEdit.driverId || "",
           employeeNumber: adminToEdit.employeeNumber || "",
+          vatnumber: adminToEdit.vatnumber || "",
         });
       }
     }
@@ -181,8 +182,10 @@ const NewAdminUser = () => {
           if (sendCalendarInvite && !googleConnected) {
             await sendGoogleAuthLink({ email, role }).unwrap();
             toast.success("User created and Google auth link sent!");
+            navigate("/dashboard/admin-list")
           } else {
             toast.success("User created successfully");
+            navigate("/dashboard/admin-list")
           }
 
           localStorage.setItem(

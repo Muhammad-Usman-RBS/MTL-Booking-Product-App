@@ -65,7 +65,7 @@ const BookingsFilters = ({
               showCount={true}
             />
           </div>
-          <div className="w-full sm:w-64">
+          <div className="w-full sm:w-72">
             <SelectDateRange
               startDate={startDate}
               endDate={endDate}

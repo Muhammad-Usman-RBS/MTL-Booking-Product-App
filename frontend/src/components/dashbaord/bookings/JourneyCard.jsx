@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
 import { useLazySearchGooglePlacesQuery } from "../../../redux/api/googleApi";
 
@@ -15,7 +15,7 @@ const JourneyCard = ({
   matchedPostcodePrice,
   isCopyMode,
   pricingMode,
-  isEditMode, 
+  isEditMode,
 }) => {
   const [pickupSuggestions, setPickupSuggestions] = useState([]);
   const [dropOffSuggestions, setDropOffSuggestions] = useState([]);
@@ -24,10 +24,11 @@ const JourneyCard = ({
   const [pickupType, setPickupType] = useState(null);
 
   const [triggerSearchAutocomplete] = useLazySearchGooglePlacesQuery();
-  
+  const inputRef = useRef(null);
+
   useEffect(() => {
 
-    if (!isEditMode) return; 
+    if (!isEditMode) return;
     // Auto-detect pickup type in edit mode
     if (journeyData.pickup && !pickupType) {
       const lowerPickup = journeyData.pickup.toLowerCase();
@@ -49,6 +50,7 @@ const JourneyCard = ({
       }
     });
   }, [journeyData.pickup, dropOffs]);
+
   const fetchSuggestions = async (query, setter) => {
     if (!query) return setter([]);
     try {
@@ -119,6 +121,14 @@ const JourneyCard = ({
     setJourneyData((prev) => ({ ...prev, [name]: value }));
   };
 
+
+  const handleClick = () => {
+    if (inputRef.current) {
+      inputRef.current.showPicker?.(); // open date picker in modern browsers
+      inputRef.current.focus();        // ensure focus for older support
+    }
+  };
+
   return (
     <>
       <div className="w-full flex justify-center">
@@ -154,13 +164,20 @@ const JourneyCard = ({
                 Pick Up Date & Time
               </label>
               <div className="flex flex-col sm:flex-row gap-3">
-                <input
-                  type="date"
-                  name="date"
-                  className="custom_input w-full"
-                  value={journeyData.date?.slice(0, 10) || ""}
-                  onChange={handleChange}
-                />
+              <label
+      onClick={handleClick}
+      style={{ display: "block", width: "100%", cursor: "pointer" }}
+    >
+      <input
+        type="date"
+        name="date"
+        ref={inputRef}
+        className="custom_input w-full"
+        value={journeyData.date?.slice(0, 10) || ""}
+        onChange={handleChange}
+        style={{ pointerEvents: "none" }} // prevent direct input blocking
+      />
+    </label>
                 <div className="flex gap-2 w-full sm:w-1/2">
                   <select
                     name="hour"
@@ -194,7 +211,7 @@ const JourneyCard = ({
                     // value={journeyData.minute?.toString().padStart(2, "0") || ""}
                     value={
                       journeyData.minute === "" ||
-                      journeyData.minute === undefined
+                        journeyData.minute === undefined
                         ? ""
                         : journeyData.minute.toString().padStart(2, "0")
                     }

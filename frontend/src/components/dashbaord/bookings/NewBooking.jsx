@@ -803,7 +803,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         }`}
       >
         <div className="col-span-6">
-          <div className="bg-white shadow-lg rounded-2xl border border-gray-200">
+          <div className="bg-white shadow-lg rounded-2xl border border-gray-200 h-full">
             <div className="bg-[#0f192d] px-6 rounded-t-2xl py-3">
               <h2 className="text-xl font-bold text-gray-50">
                 Passenger & Vehicle Details:-

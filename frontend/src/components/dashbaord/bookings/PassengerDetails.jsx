@@ -68,18 +68,18 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
   }, [passengerDetails, combinedList]);
 
   return (
-    <div>
+    <div className="h-full">
       <div className="relative">
-        <div
-          className="custom_input cursor-pointer flex justify-between items-center"
-          onClick={() =>
-            !isLoading && !isError && setIsDropdownOpen(!isDropdownOpen)
-          }
-        >
-          <span className={selectedPassenger ? "text-black" : "text-gray-400"}>
-            {selectedPassenger || "None"}
-          </span>
-        </div>
+        {!isLoading && !isError && filteredPassengers.length > 0 && (
+          <div
+            className="custom_input cursor-pointer flex justify-between items-center"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+            <span className={selectedPassenger ? "text-black" : "text-gray-400"}>
+              {selectedPassenger || "Select Passenger"}
+            </span>
+          </div>
+        )}
 
         {isDropdownOpen && (
           <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">

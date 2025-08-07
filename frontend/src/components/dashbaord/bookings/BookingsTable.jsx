@@ -5,15 +5,8 @@ import { GripHorizontal } from "lucide-react";
 import SelectStatus from "./SelectStatus";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import {
-  useGetAllBookingsQuery,
-  useDeleteBookingMutation,
-  useUpdateBookingStatusMutation,
-} from "../../../redux/api/bookingApi";
-import {
-  useGetAllJobsQuery,
-  useUpdateJobStatusMutation,
-} from "../../../redux/api/jobsApi";
+import { useGetAllBookingsQuery, useDeleteBookingMutation, useUpdateBookingStatusMutation } from "../../../redux/api/bookingApi";
+import { useGetAllJobsQuery, useUpdateJobStatusMutation } from "../../../redux/api/jobsApi";
 import Icons from "../../../assets/icons";
 import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
@@ -71,13 +64,24 @@ const BookingsTable = ({
     { label: "Actions", key: "actions" },
   ];
 
-  const tableHeaders =
-    user?.role === "driver"
-      ? allHeaders.filter(
-          (header) =>
-            header.key !== "journeyFare" && header.key !== "returnJourneyFare"
-        )
-      : allHeaders;
+  let tableHeaders = allHeaders;
+
+  if (user?.role === "driver") {
+    tableHeaders = allHeaders.filter(
+      (header) =>
+        header.key !== "journeyFare" &&
+        header.key !== "returnJourneyFare" &&
+        header.key !== "driverFare" &&
+        header.key !== "returnDriverFare"
+    );
+  } else if (user?.role === "customer") {
+    tableHeaders = allHeaders.filter(
+      (header) =>
+        header.key !== "driverFare" &&
+        header.key !== "returnDriverFare" &&
+        header.key !== "status"
+    );
+  }
 
   const emptyTableRows = EmptyTableMessage({
     message: "No data to show, create booking",
@@ -183,8 +187,8 @@ const BookingsTable = ({
       !Array.isArray(selectedDrivers) || selectedDrivers.length === 0
         ? true
         : Array.isArray(b.drivers)
-        ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
-        : false;
+          ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
+          : false;
 
     const dateTime =
       !startDate || !endDate ? true : createdAt >= start && createdAt <= end;
@@ -394,17 +398,39 @@ const BookingsTable = ({
   const formatVehicle = (v) =>
     !v || typeof v !== "object"
       ? "-"
-      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${
-          v.handLuggage || 0
-        } | ${v.checkinLuggage || 0}`;
+      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${v.handLuggage || 0
+      } | ${v.checkinLuggage || 0}`;
 
   const formatPassenger = (p) =>
     !p || typeof p !== "object"
       ? "-"
       : `${p.name || "N/A"} | ${p.email || 0} | +${p.phone || 0}`;
+
   const formatDriver = (item) => {
     const allDrivers = driversData?.drivers || [];
 
+    // If role is customer
+    if (user?.role === "customer") {
+      const drivers = item.drivers || [];
+
+      if (!drivers || drivers.length === 0) {
+        // Show icon if no driver assigned
+        return (
+          <span className="text-[var(--dark-grey)]">
+            <Icons.CircleUserRound />
+          </span>
+        );
+      }
+
+      // Show driver name(s) if assigned
+      return drivers.map((driver, i) => (
+        <div key={i} className="text-sm text-gray-700">
+          {driver?.name || "Unnamed Driver"}
+        </div>
+      ));
+    }
+
+    // For drivers or admin
     if (item.jobStatus === "Rejected") {
       let driverName = "Unknown Driver";
 
@@ -430,11 +456,12 @@ const BookingsTable = ({
         </div>
       );
     }
+
     if (item.jobStatus === "New" && item.drivers && item.drivers.length > 0) {
       const driverNames = item.drivers
         .map((driver) => driver.name || "Unnamed Driver")
         .join(", ");
-      
+
       return (
         <div className="text-orange-600 italic">
           <div className="font-medium">Booking sent to: {driverNames}</div>
@@ -442,6 +469,7 @@ const BookingsTable = ({
         </div>
       );
     }
+
     const drivers = item.drivers || [];
     if (drivers.length === 0) {
       return (
@@ -457,6 +485,7 @@ const BookingsTable = ({
       </div>
     ));
   };
+
   let tableData = [];
   if (!bookings || bookings.length === 0 || filteredBookings.length === 0) {
     tableData = emptyTableRows;
@@ -581,24 +610,27 @@ const BookingsTable = ({
           case "createdAt":
             row[key] = item.createdAt
               ? moment(item.createdAt)
-                  .tz(timezone)
-                  .format("DD/MM/YYYY HH:mm:ss")
+                .tz(timezone)
+                .format("DD/MM/YYYY HH:mm:ss")
               : "-";
             break;
           case "driver":
-            row[key] = (
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (selectedRow !== item._id) {
-                    setSelectedRow(item._id);
-                  }
-                  openDriverModal(item);
-                }}
-              >
-                {formatDriver(item)}
-              </div>
-            );
+            row[key] =
+              user?.role === "customer" ? (
+                formatDriver(item)
+              ) : (
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (selectedRow !== item._id) {
+                      setSelectedRow(item._id);
+                    }
+                    openDriverModal(item);
+                  }}
+                >
+                  {formatDriver(item)}
+                </div>
+              );
             break;
           case "status":
             row[key] = (
@@ -673,9 +705,11 @@ const BookingsTable = ({
                       {actionMenuItems
                         .filter((action) => {
                           if (user?.role === "driver") {
-                            return (
-                              action === "View" || action === "Status Audit"
-                            );
+                            return action === "View" || action === "Status Audit";
+                          }
+                          // Hide the "Delete" action if user is a customer
+                          if (user?.role === "customer" && action === "Delete") {
+                            return false;
                           }
                           return true;
                         })
@@ -790,30 +824,17 @@ const BookingsTable = ({
 
       driver: Array.isArray(item.drivers)
         ? item.drivers
-            .map((driver) => {
-              // Handle new structure where driver is an object with name/driverInfo
-              if (typeof driver === "object") {
-                if (driver.name) {
-                  return driver.name;
-                } else if (driver.driverInfo?.firstName) {
-                  return driver.driverInfo.firstName;
-                } else if (driver.driverId) {
-                  // Try to match with assignedDrivers using driverId
-                  const matchedDriver = assignedDrivers.find(
-                    (d) => d?._id?.toString() === driver.driverId?.toString()
-                  );
-                  return (
-                    matchedDriver?.DriverData?.firstName ||
-                    matchedDriver?.DriverData?.name ||
-                    matchedDriver?.name ||
-                    "Unnamed"
-                  );
-                }
-              } else {
-                // Legacy structure - try to match with assignedDrivers
-                const driverId = driver;
+          .map((driver) => {
+            // Handle new structure where driver is an object with name/driverInfo
+            if (typeof driver === "object") {
+              if (driver.name) {
+                return driver.name;
+              } else if (driver.driverInfo?.firstName) {
+                return driver.driverInfo.firstName;
+              } else if (driver.driverId) {
+                // Try to match with assignedDrivers using driverId
                 const matchedDriver = assignedDrivers.find(
-                  (d) => d?._id?.toString() === driverId?.toString()
+                  (d) => d?._id?.toString() === driver.driverId?.toString()
                 );
                 return (
                   matchedDriver?.DriverData?.firstName ||
@@ -822,9 +843,22 @@ const BookingsTable = ({
                   "Unnamed"
                 );
               }
-              return "Unnamed";
-            })
-            .join(", ")
+            } else {
+              // Legacy structure - try to match with assignedDrivers
+              const driverId = driver;
+              const matchedDriver = assignedDrivers.find(
+                (d) => d?._id?.toString() === driverId?.toString()
+              );
+              return (
+                matchedDriver?.DriverData?.firstName ||
+                matchedDriver?.DriverData?.name ||
+                matchedDriver?.name ||
+                "Unnamed"
+              );
+            }
+            return "Unnamed";
+          })
+          .join(", ")
         : "-",
       status: item.statusAudit?.at(-1)?.status || item.status || "-",
     };
