@@ -24,6 +24,7 @@ export const protect = async (req, res, next) => {
         permissions: user.permissions,
         fullName: user.fullName,
         employeeNumber: user.employeeNumber,
+        vatnumber: user.vatnumber || null, 
       };
 
       next();

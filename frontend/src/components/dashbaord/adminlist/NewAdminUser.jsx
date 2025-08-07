@@ -43,6 +43,7 @@ const NewAdminUser = () => {
     password: "",
     permissions: [],
     associateAdminLimit: 5,
+    vatnumber: "",
   });
 
   const [createAdmin] = useCreateClientAdminMutation();
@@ -146,6 +147,7 @@ const NewAdminUser = () => {
       if (isEdit && actualAdminId) {
         const payload = {
           ...selectedAccount,
+          vatnumber: selectedAccount.vatnumber || "",
           employeeNumber: selectedAccount.employeeNumber,
         };
 
@@ -159,6 +161,7 @@ const NewAdminUser = () => {
         if (role === "clientadmin") {
           const payload = {
             ...selectedAccount,
+            vatnumber: selectedAccount.vatnumber || "",
             companyId:
               user?.role === "superadmin" ? null : user?.companyId || user?._id,
             createdBy: user?._id,
@@ -293,7 +296,7 @@ const NewAdminUser = () => {
         "Bookings"
       ];
     } else if (["customer"].includes(role)) {
-      return ["Invoices", "Company Accounts", "Settings"];
+      return ["Bookings", "Invoices", "Company Accounts", "Settings"];
     } else if (["clientadmin", "manager"].includes(role)) {
       return [
         "Users",
@@ -425,6 +428,7 @@ const NewAdminUser = () => {
                           ...selectedAccount,
                           fullName: customer.name,
                           email: customer.email,
+                          vatnumber: customer.vatnumber || "",
                         });
                         setShowSuggestions(false);
                       }}
@@ -435,6 +439,21 @@ const NewAdminUser = () => {
               </ul>
             )}
         </div>
+
+        {selectedAccount?.role === "customer" && (
+          <div className="md:col-span-1">
+            <label className="text-sm">VAT Number</label>
+            <input
+              placeholder="VAT Number"
+              type="text"
+              className="custom_input mt-1"
+              value={selectedAccount?.vatnumber || ""}
+              onChange={(e) =>
+                setSelectedAccount({ ...selectedAccount, vatnumber: e.target.value })
+              }
+            />
+          </div>
+        )}
 
         {selectedAccount?.role === "driver" && (
           <div className="md:col-span-2 lg:col-span-1">

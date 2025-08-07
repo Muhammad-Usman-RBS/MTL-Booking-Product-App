@@ -90,6 +90,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    vatnumber: {
+      type: String,
+      default: null,
+    },
 
     // ✅ Google Calendar credentials per user
     googleCalendar: {

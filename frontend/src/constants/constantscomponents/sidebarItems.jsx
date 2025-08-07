@@ -22,13 +22,13 @@ const sidebarItems = [
         title: "Bookings List",
         route: "/dashboard/bookings/list",
         icon: Icons.ListChecks,
-        roles: ["clientadmin", "manager"],
+        roles: ["clientadmin", "manager", "customer"],
       },
       {
         title: "New Booking",
         route: "/dashboard/bookings/new",
         icon: Icons.PlusCircle,
-        roles: ["clientadmin", "manager"],
+        roles: ["clientadmin", "manager", "customer"],
       },
       {
         title: "Booking Calendar",

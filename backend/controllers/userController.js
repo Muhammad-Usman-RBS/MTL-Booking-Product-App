@@ -14,7 +14,8 @@ export const createUserBySuperAdmin = async (req, res) => {
     permissions,
     associateAdminLimit,
     employeeNumber,
-    googleCalendar
+    googleCalendar,
+    vatnumber,
   } = req.body;
 
   try {
@@ -169,6 +170,7 @@ export const createUserBySuperAdmin = async (req, res) => {
       role,
       status,
       permissions: userPermissions,
+      vatnumber: role === "customer" ? vatnumber : undefined,
       createdBy: creator._id,
       associateAdminLimit: ["clientadmin", "manager"].includes(role)
         ? parsedLimit
@@ -264,6 +266,7 @@ export const getClientAdmins = async (req, res) => {
         status: user.status,
         companyId: user.companyId,
         associateAdminLimit: user.associateAdminLimit,
+        vatnumber: user.vatnumber || null,
       }))
     );
   } catch (error) {
@@ -283,6 +286,7 @@ export const updateUserBySuperAdmin = async (req, res) => {
     status,
     permissions,
     associateAdminLimit,
+    vatnumber,
   } = req.body;
 
   try {
@@ -293,6 +297,7 @@ export const updateUserBySuperAdmin = async (req, res) => {
     user.email = email || user.email;
     user.role = role || user.role;
     user.status = status || user.status;
+    user.vatnumber = role === "customer" ? vatnumber : user.vatnumber;
     // user.permissions = permissions || user.permissions;
     const defaultPermissions = ["Home", "Profile", "Logout"];
 
@@ -348,6 +353,7 @@ export const updateUserBySuperAdmin = async (req, res) => {
         permissions: user.permissions,
         status: user.status,
         associateAdminLimit: user.associateAdminLimit,
+        vatnumber: user.vatnumber || null,
       },
     });
   } catch (error) {

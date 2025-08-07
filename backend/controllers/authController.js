@@ -65,7 +65,8 @@ export const login = async (req, res) => {
       token: generateToken(user._id, user.role, user.companyId),
       profileImage: user.profileImage || null,
       companyId: user.companyId || null,
-      employeeNumber: user.employeeNumber
+      employeeNumber: user.employeeNumber,
+      vatnumber: user.vatnumber || null, 
     });
 
   } catch (error) {
@@ -113,6 +114,7 @@ export const updateProfile = async (req, res) => {
       permissions: user.permissions,
       profileImage: user.profileImage,
       token: generateToken(user._id, user.role),
+      vatnumber: user.vatnumber || null, 
     });
 
   } catch (err) {
