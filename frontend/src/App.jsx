@@ -88,7 +88,6 @@ function App() {
 
       if (data.setting.currency) {
         const selectedCurrency = data.setting.currency[0]?.value || "GBP"; 
-        console.log('Setting global currency:', selectedCurrency);
         dispatch(setCurrency(selectedCurrency)); 
       }
     }

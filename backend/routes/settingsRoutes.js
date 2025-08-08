@@ -1,8 +1,10 @@
 import express from "express";
+import { protect, authorize } from "../middleware/authMiddleware.js";
 import { createCoverage, deleteCoverage, getAllCoverage, getCoverageById, updateCoverage } from "../controllers/settings/coverageController.js";
 import { createLocation, deleteLocationbyId, getAllLocations, getLocationById, updateLocationById } from "../controllers/settings/locationsController.js";
 import { createBookingRestriction, deleteBookingRestriction, getAllBookingRestrictions, getBookingRestrictionById, updateBookingRestriction } from "../controllers/settings/BookingRestrictionDateController.js";
 import { createLocationCategory, deleteLocationCategory, getAllLocationCategories, getLocationCategoryById, updateLocationCategory } from "../controllers/settings/locationCategoryController.js";
+import { saveTheme, getTheme, resetTheme, getAllThemes, deleteTheme } from '../controllers/settings/themeController.js';
 
 const router = express.Router();
 
@@ -33,5 +35,11 @@ router.get('/get-all-location-category', getAllLocationCategories);
 router.get('/get-location-category/:id', getLocationCategoryById);
 router.put('/update-location-category/:id', updateLocationCategory);
 router.delete('/delete-location-category/:id', deleteLocationCategory);
+
+router.post('/save', protect, authorize("superadmin", "clientadmin"), saveTheme);
+router.get('/:companyId', protect, authorize("superadmin", "clientadmin"), getTheme);
+router.post('/reset', protect, authorize("superadmin", "clientadmin"), resetTheme);
+router.get('/', protect, authorize("superadmin", "clientadmin"), getAllThemes);
+router.delete('/:companyId', protect, authorize("superadmin", "clientadmin"), deleteTheme);
 
 export default router;
