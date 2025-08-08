@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
 import { useLazySearchGooglePlacesQuery } from "../../../redux/api/googleApi";
+import { useSelector } from 'react-redux';
 
 const JourneyCard = ({
   title,
@@ -22,6 +23,7 @@ const JourneyCard = ({
   const [dropOffTypes, setDropOffTypes] = useState({});
   const [activeDropIndex, setActiveDropIndex] = useState(null);
   const [pickupType, setPickupType] = useState(null);
+  const [currency, symbol] = useSelector((state) => [state.currency.currency, state.currency.symbol]);
 
   const [triggerSearchAutocomplete] = useLazySearchGooglePlacesQuery();
   const inputRef = useRef(null);
@@ -138,7 +140,7 @@ const JourneyCard = ({
             <h2 className="text-xl font-bold text-[#f5f5f5]">{title}:-</h2>
             <div className="text-left sm:text-right w-full sm:w-auto">
               <span className="inline-block px-4 py-1.5 text-base font-semibold text-white border border-white rounded-md bg-transparent">
-                Fare: £{fare?.toFixed(2) || "0.00"}
+                Fare: {symbol}{fare?.toFixed(2) || "0.00"} {/* Use the symbol from Redux */}
               </span>
               {/* <div className="text-sm text-white mt-1">
                                 <span className="text-xs font-normal text-gray-300">
@@ -164,20 +166,20 @@ const JourneyCard = ({
                 Pick Up Date & Time
               </label>
               <div className="flex flex-col sm:flex-row gap-3">
-              <label
-      onClick={handleClick}
-      style={{ display: "block", width: "100%", cursor: "pointer" }}
-    >
-      <input
-        type="date"
-        name="date"
-        ref={inputRef}
-        className="custom_input w-full"
-        value={journeyData.date?.slice(0, 10) || ""}
-        onChange={handleChange}
-        style={{ pointerEvents: "none" }} // prevent direct input blocking
-      />
-    </label>
+                <label
+                  onClick={handleClick}
+                  style={{ display: "block", width: "100%", cursor: "pointer" }}
+                >
+                  <input
+                    type="date"
+                    name="date"
+                    ref={inputRef}
+                    className="custom_input w-full"
+                    value={journeyData.date?.slice(0, 10) || ""}
+                    onChange={handleChange}
+                    style={{ pointerEvents: "none" }} // prevent direct input blocking
+                  />
+                </label>
                 <div className="flex gap-2 w-full sm:w-1/2">
                   <select
                     name="hour"

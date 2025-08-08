@@ -1,7 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
+import currencyOptions from "../../constants/constantscomponents/currencyOptions"
 
 const initialState = {
   currency: "GBP",  
+  symbol: "£",
   isLoading: false,
   error: null,
 };
@@ -11,9 +13,15 @@ const currencySlice = createSlice({
   initialState,
   reducers: {
     setCurrency: (state, action) => {
-      state.currency = action.payload; 
-      state.error = null;
-      console.log('Currency updated in Redux:', action.payload);
+      const selectedCurrency = action.payload;
+      const selectedOption = currencyOptions.find(option => option.value === selectedCurrency);
+      
+      if (selectedOption) {
+        state.currency = selectedCurrency;
+        state.symbol = selectedOption.symbol; // Store the symbol
+        state.error = null;
+        console.log('Currency updated in Redux:', selectedCurrency, selectedOption.symbol);
+      }
     },
     setCurrencyLoading: (state, action) => {
       state.isLoading = action.payload;
