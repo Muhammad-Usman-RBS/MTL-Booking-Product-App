@@ -38,7 +38,7 @@ const BookingsTable = ({
 }) => {
   const user = useSelector((state) => state.auth.user);
   const timezone =
-    useSelector((state) => state.bookingSetting?.timezone) || "UTC";
+    useSelector((state) => state.timezone?.timezone) || "UTC";
   const companyId = user?.companyId;
   const [tooltip, setTooltip] = useState({ show: false, text: "", x: 0, y: 0 });
   const [page, setPage] = useState(1);

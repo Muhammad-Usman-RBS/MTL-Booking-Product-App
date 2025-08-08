@@ -1,4 +1,5 @@
 import React from "react";
+import { useSelector } from 'react-redux';
 
 const FareSection = ({
   fareDetails,
@@ -7,6 +8,8 @@ const FareSection = ({
   calculatedJourneyFare,
   calculatedReturnFare,
 }) => {
+  const { currency } = useSelector((state) => state.currency);
+
   const handleFareChange = (key, value) => {
     setFareDetails((prev) => ({ ...prev, [key]: value }));
   };
@@ -87,17 +90,17 @@ const FareSection = ({
             },
             ...(returnJourneyToggle
               ? [
-                  {
-                    key: "returnJourneyFare",
-                    label: "Return Journey Fare",
-                    calculatedValue: calculatedReturnFare,
-                  },
-                  {
-                    key: "returnDriverFare",
-                    label: "Return Driver Fare",
-                    calculatedValue: null,
-                  },
-                ]
+                {
+                  key: "returnJourneyFare",
+                  label: "Return Journey Fare",
+                  calculatedValue: calculatedReturnFare,
+                },
+                {
+                  key: "returnDriverFare",
+                  label: "Return Driver Fare",
+                  calculatedValue: null,
+                },
+              ]
               : []),
           ].map((item) => (
             <div
@@ -120,7 +123,7 @@ const FareSection = ({
                   }
                 />
                 <span className="bg-gray-200 border border-[var(--light-gray)] px-3 py-1 rounded-r text-gray-700 font-medium">
-                  GBP
+                  {currency}
                 </span>
               </div>
             </div>
@@ -186,3 +189,26 @@ const FareSection = ({
 };
 
 export default FareSection;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

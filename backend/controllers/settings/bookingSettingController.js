@@ -32,7 +32,23 @@ export const createOrUpdateBookingSetting = async (req, res) => {
 
     const { operatingCountry, timezone, currency } = req.body;
 
-    // Directly update the settings without validating the currency field.
+    // Validate currency format (check if it's an array of objects with the correct properties)
+    if (currency && Array.isArray(currency)) {
+      const isValidCurrency = currency.every(
+        (curr) =>
+          curr.label && typeof curr.label === "string" &&
+          curr.value && typeof curr.value === "string" &&
+          curr.symbol && typeof curr.symbol === "string"
+      );
+
+      if (!isValidCurrency) {
+        return res.status(400).json({ message: "Invalid currency format" });
+      }
+    } else {
+      return res.status(400).json({ message: "Currency should be an array of currency objects" });
+    }
+
+    // Directly update the settings with the new currency structure
     const updated = await BookingSetting.findOneAndUpdate(
       { companyId },
       { operatingCountry, timezone, currency },

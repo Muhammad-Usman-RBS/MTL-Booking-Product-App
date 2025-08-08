@@ -74,17 +74,26 @@ import "react-toastify/dist/ReactToastify.css";
 import { useDispatch } from "react-redux";
 import { useGetBookingSettingQuery } from "./redux/api/bookingSettingsApi";
 import { setTimezone } from "./redux/slices/timezoneSlice";
+import { setCurrency } from "./redux/slices/currencySlice";
 
 function App() {
-  // TimeStamps for Every File
   const dispatch = useDispatch();
   const { data, isSuccess } = useGetBookingSettingQuery();
 
   useEffect(() => {
-    if (isSuccess && data?.setting?.timezone) {
-      dispatch(setTimezone(data.setting.timezone));
+    if (isSuccess && data?.setting) {
+      if (data.setting.timezone) {
+        dispatch(setTimezone(data.setting.timezone));
+      }
+
+      if (data.setting.currency) {
+        const selectedCurrency = data.setting.currency[0]?.value || "GBP"; 
+        console.log('Setting global currency:', selectedCurrency);
+        dispatch(setCurrency(selectedCurrency)); 
+      }
     }
   }, [isSuccess, data, dispatch]);
+
   return (
     <>
       <Routes>
