@@ -13,6 +13,10 @@ const BookingSettingSchema = new mongoose.Schema({
   timezone: {
     type: String,
   },
+  currency: {
+    type: String,
+    required: true,
+  }
 }, { timestamps: true });
 
 export default mongoose.model("BookingSetting", BookingSettingSchema);

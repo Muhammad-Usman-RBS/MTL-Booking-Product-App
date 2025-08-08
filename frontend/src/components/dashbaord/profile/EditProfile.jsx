@@ -5,7 +5,7 @@ import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 import IMAGES from "../../../assets/images";
 import { useUpdateUserProfileMutation } from "../../../redux/api/userApi";
 import { useSelector, useDispatch } from "react-redux";
-import { setUser } from "../../../redux/authSlice";
+import { setUser } from "../../../redux/slices/authSlice";
 import Icons from "../../../assets/icons";
 import UsePasswordToggle from "../../../hooks/UsePasswordToggle";
 

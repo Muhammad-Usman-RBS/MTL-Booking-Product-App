@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import { ALL_PERMISSIONS } from "../../../constants/dashboardTabsData/data";
 import { useUpdateSuperAdminPermissionsMutation } from "../../../redux/api/superAdminApi";
-import { updateUserPermissions } from "../../../redux/authSlice";
+import { updateUserPermissions } from "../../../redux/slices/authSlice";
 
 const PermissionsSettings = () => {
   const user = useSelector((state) => state.auth.user);

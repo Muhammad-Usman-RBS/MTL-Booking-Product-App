@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setCompanies } from "../../../redux/companySlice";
+import { setCompanies } from "../../../redux/slices/companySlice";
 import { useGetCompanyByIdQuery } from "../../../redux/api/companyApi";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import { actionMenuItems } from "../../../constants/dashboardTabsData/data";

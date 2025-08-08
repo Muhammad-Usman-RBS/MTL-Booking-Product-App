@@ -30,11 +30,12 @@ export const createOrUpdateBookingSetting = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const { operatingCountry, timezone } = req.body;
+    const { operatingCountry, timezone, currency } = req.body;
 
+    // Directly update the settings without validating the currency field.
     const updated = await BookingSetting.findOneAndUpdate(
       { companyId },
-      { operatingCountry, timezone },
+      { operatingCountry, timezone, currency },
       { new: true, upsert: true }
     );
 

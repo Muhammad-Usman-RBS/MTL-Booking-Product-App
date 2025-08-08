@@ -1,31 +1,30 @@
 import React, { useEffect, useState } from "react";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import {
-  useGetBookingSettingQuery,
-  useUpdateBookingSettingMutation,
-} from "../../../redux/api/bookingSettingsApi";
+import { useGetBookingSettingQuery, useUpdateBookingSettingMutation, } from "../../../redux/api/bookingSettingsApi";
 import { toast } from "react-toastify";
 import countries from "../../../constants/constantscomponents/countries";
 import timezoneOptions from "../../../constants/constantscomponents/timezones";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import currencyOptions from "../../../constants/constantscomponents/currencyOptions";
 
 const BookingSettings = () => {
   const { data, isLoading } = useGetBookingSettingQuery();
   const [updateBookingSetting] = useUpdateBookingSettingMutation();
 
-  const [country, setCountry] = useState({ label: "United Kingdom" });
-  const [timezone, setTimezone] = useState({ label: "Europe/London" });
-
-  const findOption = (options, label) =>
-    options.find((item) => item.label === label) || { label };
+  const [country, setCountry] = useState("United Kingdom");
+  const [timezone, setTimezone] = useState("Europe/London");
+  const [currency, setCurrency] = useState("GBP");
 
   useEffect(() => {
     if (data?.setting) {
       if (data.setting.operatingCountry) {
-        setCountry(findOption(countries, data.setting.operatingCountry));
+        setCountry(data.setting.operatingCountry);
       }
       if (data.setting.timezone) {
-        setTimezone(findOption(timezoneOptions, data.setting.timezone));
+        setTimezone(data.setting.timezone);
+      }
+      if (data.setting.currency) {
+        setCurrency(data.setting.currency);
       }
     }
   }, [data]);
@@ -33,8 +32,9 @@ const BookingSettings = () => {
   const handleUpdate = async () => {
     try {
       const formData = {
-        operatingCountry: country?.label || "United Kingdom",
-        timezone: timezone?.label || "Europe/London",
+        operatingCountry: country || "United Kingdom",
+        timezone: timezone || "Europe/London",
+        currency: currency || "GBP",
       };
       await updateBookingSetting(formData).unwrap();
       toast.success("Settings updated!");
@@ -50,29 +50,29 @@ const BookingSettings = () => {
     <div>
       <OutletHeading name="Booking Settings" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Operating Country */}
         <SelectOption
           label="Operating Country"
           options={countries}
-          value={country?.label || ""}
-          onChange={(e) => {
-            const selected = countries.find((item) => item.label === e.target.value);
-            if (selected) setCountry(selected);
-          }}
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
         />
 
-        {/* Timezone */}
         <SelectOption
           label="Timezone"
           options={timezoneOptions}
-          value={timezone?.label || ""}
-          onChange={(e) => {
-            const selected = timezoneOptions.find((item) => item.label === e.target.value);
-            if (selected) setTimezone(selected);
-          }}
+          value={timezone}
+          onChange={(e) => setTimezone(e.target.value)}
         />
 
-        {/* Update Button */}
+        <div>
+          <SelectOption
+            label="Currency"
+            options={currencyOptions}
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+          />
+        </div>
+
         <div className="md:col-span-2">
           <button className="btn btn-reset mt-4" onClick={handleUpdate}>
             Update

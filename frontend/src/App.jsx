@@ -73,7 +73,7 @@ import "react-toastify/dist/ReactToastify.css";
 // TimeStamps for Every File
 import { useDispatch } from "react-redux";
 import { useGetBookingSettingQuery } from "./redux/api/bookingSettingsApi";
-import { setTimezone } from "./redux/bookingSettingSlice";
+import { setTimezone } from "./redux/slices/timezoneSlice";
 
 function App() {
   // TimeStamps for Every File
