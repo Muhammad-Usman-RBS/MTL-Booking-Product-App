@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { useGetAllPassengersQuery } from "../../../redux/api/bookingApi";
@@ -8,6 +9,10 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
   const [selectedPassenger, setSelectedPassenger] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isEmailLocked, setIsEmailLocked] = useState(false);
+
+  const user = useSelector((state) => state.auth.user);
+  const role = user?.role;
 
   const { data: passengerData, isLoading, isError } = useGetAllPassengersQuery();
   const passengers = passengerData?.passengers || [];
@@ -17,7 +22,6 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
     ? customerData
     : customerData?.customers || [];
 
-  // Combine and deduplicate by email+phone
   const combinedList = [
     ...passengers,
     ...customers.filter(
@@ -43,13 +47,18 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
     setSelectedPassenger(value);
     const selected = combinedList.find((p) => buildDisplayValue(p) === value);
     if (selected) {
-      setPassengerDetails({
+      setPassengerDetails((prev) => ({
         name: selected.name || selected.fullName || "",
-        email: selected.email || "",
+        email: isEmailLocked ? prev.email : (selected.email || ""),
         phone: selected.phone || "",
-      });
+      }));
     } else {
-      setPassengerDetails({ name: "", email: "", phone: "" });
+      setPassengerDetails((prev) => ({
+        ...prev,
+        name: "",
+        phone: "",
+        email: isEmailLocked ? prev.email : "",
+      }));
     }
   };
 
@@ -66,6 +75,31 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
       setSelectedPassenger(buildDisplayValue(match));
     }
   }, [passengerDetails, combinedList]);
+
+  useEffect(() => {
+    if (role === "customer") {
+      const me =
+        customers.find(
+          (c) =>
+            (c.userId && user?._id && c.userId === user._id) ||
+            (c.email && user?.email && c.email.toLowerCase() === user.email.toLowerCase())
+        ) ||
+        customers.find((c) => c.email && user?.email && c.email.toLowerCase() === user.email.toLowerCase());
+
+      const hasVat = me && (me.vatnumber || me.vatNumber);
+      if (hasVat) {
+        setIsEmailLocked(true);
+        const lockedEmail = me.email || user?.email || "";
+        if (lockedEmail && passengerDetails.email !== lockedEmail) {
+          setPassengerDetails((prev) => ({ ...prev, email: lockedEmail }));
+        }
+      } else {
+        setIsEmailLocked(false);
+      }
+    } else {
+      setIsEmailLocked(false);
+    }
+  }, [role, customers, user?._id, user?.email]);
 
   return (
     <div className="h-full">
@@ -104,13 +138,11 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
                   Error loading passengers
                 </div>
               )}
-              {filteredPassengers.length === 0 &&
-                !isLoading &&
-                !isError && (
-                  <div className="px-3 py-2 text-gray-500 text-sm">
-                    No passengers found
-                  </div>
-                )}
+              {filteredPassengers.length === 0 && !isLoading && !isError && (
+                <div className="px-3 py-2 text-gray-500 text-sm">
+                  No passengers found
+                </div>
+              )}
               {filteredPassengers.map((p, idx) => (
                 <div
                   key={idx}
@@ -161,7 +193,9 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
               })
             }
             placeholder="name@example.com"
-            className="custom_input"
+            className={`custom_input ${isEmailLocked ? "bg-gray-100 cursor-not-allowed" : ""}`}
+            disabled={isEmailLocked}
+            title={isEmailLocked ? "Email is locked for VAT-verified customers" : ""}
           />
         </div>
       </div>
@@ -187,3 +221,4 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
 };
 
 export default PassengerDetails;
+
