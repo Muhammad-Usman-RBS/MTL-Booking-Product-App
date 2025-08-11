@@ -93,7 +93,6 @@ export const getCorporateCustomers = async (req, res) => {
 };
 
 // Get a single corporate customer by ID
-
 export const getCorporateCustomer = async (req, res) => {
   try {
     const customer = await CorporateCustomer.findById(req.params.id);
@@ -160,3 +159,26 @@ export const deleteCorporateCustomer = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+// Backend route: /corporate-customer/by-vat/:vatnumber
+export const getCorporateCustomerByVat = async (req, res) => {
+  try {
+    const companyId = req.user.companyId;
+    const vatnumber = req.params.vatnumber.trim().toUpperCase();
+
+    const customer = await CorporateCustomer.findOne({
+      companyId,
+      vatnumber: { $regex: new RegExp(`^${vatnumber}$`, 'i') }, // case-insensitive exact match
+    });
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    res.status(200).json(customer);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+

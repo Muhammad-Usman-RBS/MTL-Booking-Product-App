@@ -6,7 +6,7 @@ export const corporateCustomerApi = apiSlice.injectEndpoints({
       query: (formData) => ({
         url: "/corporate-customer/create-corporate-customer",
         method: "POST",
-        body: formData, 
+        body: formData,
       }),
       invalidatesTags: ["CorporateCustomerList"],
     }),
@@ -42,12 +42,24 @@ export const corporateCustomerApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["CorporateCustomerList"],
     }),
+
+    // New query to get customer by VAT number
+    getCorporateCustomerByVat: builder.query({
+      query: (vatnumber) => ({
+        url: `/corporate-customer/by-vat/${encodeURIComponent(vatnumber)}`,
+        method: "GET",
+      }),
+      providesTags: (result, error, arg) =>
+        result ? [{ type: "CorporateCustomer", id: result._id }] : [],
+    }),
+
   }),
 });
 
 export const {
   useCreateCorporateCustomerMutation,
   useGetCorporateCustomersQuery,
+  useGetCorporateCustomerByVatQuery,
   useGetCorporateCustomerQuery,
   useUpdateCorporateCustomerMutation,
   useDeleteCorporateCustomerMutation,

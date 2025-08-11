@@ -15,12 +15,19 @@ import {
 import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
 import { useBookingFare } from "../../../utils/useBookingFare";
 import { useGetGeneralPricingPublicQuery } from "../../../redux/api/generalPricingApi";
+import { useGetCorporateCustomerByVatQuery } from "../../../redux/api/corporateCustomerApi";
 
 const NewBooking = ({ editBookingData = null, onClose }) => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
   const userEmail = user?.email || "";
   const isCopyMode = !!editBookingData?.__copyMode;
+  const userRole = user?.role || "";
+  const vatnumber = user?.vatnumber || "";
+
+  const { data: customerByVat, isFetching, error } = useGetCorporateCustomerByVatQuery(vatnumber, {
+    skip: !vatnumber,
+  });
 
   // Track if locations have been changed from original values
   const [hasChangedPrimaryLocations, setHasChangedPrimaryLocations] =
@@ -167,7 +174,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     return (
       originalPrimaryLocations.pickup !== primaryJourneyData.pickup ||
       JSON.stringify(originalPrimaryLocations.dropOffs) !==
-        JSON.stringify(dropOffs1)
+      JSON.stringify(dropOffs1)
     );
   };
 
@@ -177,7 +184,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     return (
       originalReturnLocations.pickup !== returnJourneyData.pickup ||
       JSON.stringify(originalReturnLocations.dropOffs) !==
-        JSON.stringify(dropOffs2)
+      JSON.stringify(dropOffs2)
     );
   };
 
@@ -593,8 +600,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         }).unwrap();
 
         toast.success(
-          `${
-            isReturnJourney ? "Return" : "Primary"
+          `${isReturnJourney ? "Return" : "Primary"
           } booking updated successfully`
         );
       }
@@ -674,11 +680,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             <button
               key={tab}
               onClick={() => setMode(tab)}
-              className={`px-6 py-2 font-semibold text-sm border cursor-pointer ${
-                mode === tab
-                  ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
-                  : "bg-[#f9fafb] text-gray-700 border-gray-300"
-              } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
+              className={`px-6 py-2 font-semibold text-sm border cursor-pointer ${mode === tab
+                ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
+                : "bg-[#f9fafb] text-gray-700 border-gray-300"
+                } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
             >
               {tab}
             </button>
@@ -733,18 +738,17 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
       <div className="w-full flex flex-col items-center gap-6">
         <div
-          className={`w-full ${
-            returnJourneyToggle ? "lg:max-w-6xl gap-4" : "lg:max-w-4xl"
-          } flex flex-col lg:flex-row`}
+          className={`w-full ${returnJourneyToggle ? "lg:max-w-6xl gap-4" : "lg:max-w-4xl"
+            } flex flex-col lg:flex-row`}
         >
           {/* Journey 1 */}
           {/* {(!isEditing || !isReturnJourney || returnJourneyToggle) && ( */}
-        
-        
-        
+
+
+
           {(!isEditing && !returnJourneyToggle) ||
-          (isEditing && !isReturnJourney) ||
-          (!isEditing && returnJourneyToggle) ? (
+            (isEditing && !isReturnJourney) ||
+            (!isEditing && returnJourneyToggle) ? (
             <JourneyCard
               title="Journey 1"
               isEditMode={!!editBookingData?._id}
@@ -761,7 +765,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           ) : null}
           {/* Journey 2 (conditionally shown) */}
           {(isEditing && isReturnJourney) ||
-          (!isEditing && returnJourneyToggle) ? (
+            (!isEditing && returnJourneyToggle) ? (
             <div className="w-full transition-all duration-200 ease-in-out transform">
               <JourneyCard
                 title="Journey 2"
@@ -798,9 +802,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         </div>
       </div>
       <div
-        className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${
-          editBookingData?._id || editBookingData?.__copyMode ? "px-6" : ""
-        }`}
+        className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${editBookingData?._id || editBookingData?.__copyMode ? "px-6" : ""
+          }`}
       >
         <div className="col-span-6">
           <div className="bg-white shadow-lg rounded-2xl border border-gray-200 h-full">
@@ -824,15 +827,54 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           </div>
         </div>
         <div className="col-span-6">
-          <FareSection
-            returnJourneyToggle={returnJourneyToggle}
-            fareDetails={fareDetails}
-            setFareDetails={setFareDetails}
-            setEmailNotify={setEmailNotify}
-            handleSubmit={handleSubmit}
-            isLoading={isLoading}
-            editBookingData={editBookingData}
-          />
+          {userRole === "customer" && vatnumber ? (
+            <div className="bg-white shadow-lg rounded-2xl border border-gray-200 h-full flex flex-col">
+              <div className="bg-[#0f192d] px-6 py-3 rounded-t-2xl">
+                <h2 className="text-xl font-bold text-gray-50">Billing Details</h2>
+              </div>
+
+              <div className="p-6 flex flex-col gap-4 flex-grow">
+                <p className="font-semibold text-gray-700">This is a customer account.</p>
+
+                {isFetching && (
+                  <p className="text-blue-600 font-medium animate-pulse">Loading…</p>
+                )}
+
+                {error && (
+                  <p className="text-red-600 font-semibold bg-red-100 p-3 rounded-md shadow-sm">
+                    Failed to load customer data.
+                  </p>
+                )}
+
+                {!isFetching && !error && (
+                  <>
+                    {customerByVat ? (
+                      <div className="bg-gray-50 border border-gray-300 rounded-md p-4 shadow-inner">
+                        <p className="text-gray-800 font-medium">
+                          <span className="font-semibold">Payment Options Invoice:</span>&nbsp;
+                          {customerByVat.paymentOptionsInvoice || "—"}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-amber-700 font-medium mt-2">
+                        VAT match not found. Please check the VAT number for typos or spacing.
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <FareSection
+              returnJourneyToggle={returnJourneyToggle}
+              fareDetails={fareDetails}
+              setFareDetails={setFareDetails}
+              setEmailNotify={setEmailNotify}
+              handleSubmit={handleSubmit}
+              isLoading={isLoading}
+              editBookingData={editBookingData}
+            />
+          )}
         </div>
       </div>
 
@@ -845,8 +887,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           {isLoading
             ? "Processing..."
             : editBookingData && editBookingData._id
-            ? "Update Booking"
-            : "Submit Booking"}
+              ? "Update Booking"
+              : "Submit Booking"}
         </button>
       </div>
     </>
