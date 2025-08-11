@@ -5,15 +5,22 @@ import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import DeleteModal from "../../../constants/constantscomponents/DeleteModal"; // import DeleteModal here
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import { GoogleMap, LoadScript, DrawingManager, Polygon } from "@react-google-maps/api";
-import { useGetAllZonesQuery, useCreateZoneMutation, useUpdateZoneMutation, useDeleteZoneMutation } from "../../../redux/api/zoneApi";
+import {
+  useGetAllZonesQuery,
+  useCreateZoneMutation,
+  useUpdateZoneMutation,
+  useDeleteZoneMutation,
+  useSyncZoneMutation, // keep for Update+Sync
+} from "../../../redux/api/zoneApi";
 import { useLazySearchGooglePlacesQuery, useGetMapKeyQuery } from "../../../redux/api/googleApi";
 
 const LIBRARIES = ["drawing", "places"];
 
 const Zones = () => {
   const user = useSelector((state) => state.auth.user);
+
   const [selectedZone, setSelectedZone] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -24,12 +31,16 @@ const Zones = () => {
   const savedPolygonsRef = useRef([]);
   const [searchInput, setSearchInput] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState([]);
-  const [deleteId, setDeleteId] = useState(null); // state for delete modal
+  const [deleteId, setDeleteId] = useState(null);
 
-  const { data: zones = [], refetch } = useGetAllZonesQuery();
-  const [createZone] = useCreateZoneMutation();
-  const [updateZone] = useUpdateZoneMutation();
-  const [deleteZone] = useDeleteZoneMutation();
+  const { data: zones = [], refetch, isFetching: zonesLoading } = useGetAllZonesQuery();
+
+  const [createZone, { isLoading: creating }] = useCreateZoneMutation();
+  const [updateZone, { isLoading: updating }] = useUpdateZoneMutation();
+  const [deleteZone, { isLoading: deleting }] = useDeleteZoneMutation();
+
+  const [syncZone, { isLoading: syncingOne }] = useSyncZoneMutation(); // used only for Update+Sync
+
   const [triggerSearchGooglePlaces] = useLazySearchGooglePlacesQuery();
 
   const { data: mapKeyData, isLoading: mapKeyLoading } = useGetMapKeyQuery();
@@ -37,7 +48,7 @@ const Zones = () => {
 
   const handlePolygonComplete = useCallback((polygon) => {
     setTempPolygon(polygon);
-    drawingRef.current.setDrawingMode(null);
+    drawingRef.current?.setDrawingMode?.(null);
   }, []);
 
   const renderSavedZones = () => {
@@ -58,7 +69,6 @@ const Zones = () => {
         editable: false,
         zIndex: 1,
       });
-
       savedPolygonsRef.current.push(polygon);
     });
   };
@@ -69,10 +79,10 @@ const Zones = () => {
       return;
     }
 
-    const path = tempPolygon.getPath().getArray().map((latLng) => ({
-      lat: latLng.lat(),
-      lng: latLng.lng(),
-    }));
+    const path = tempPolygon
+      .getPath()
+      .getArray()
+      .map((latLng) => ({ lat: latLng.lat(), lng: latLng.lng() }));
 
     if (path.length < 3) {
       toast.error("Polygon must have at least 3 points");
@@ -80,14 +90,14 @@ const Zones = () => {
     }
 
     try {
-      await createZone({ name: newZoneName, coordinates: path });
+      await createZone({ name: newZoneName, coordinates: path }).unwrap();
       tempPolygon.setMap(null);
       setTempPolygon(null);
       setNewZoneName("");
-      refetch();
+      await refetch();
       toast.success("Zone created successfully!");
-    } catch {
-      toast.error("Failed to create zone");
+    } catch (e) {
+      toast.error(e?.data?.message || "Failed to create zone");
     }
   };
 
@@ -96,42 +106,46 @@ const Zones = () => {
     setShowModal(true);
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = async ({ withSync }) => {
     try {
       await updateZone({
         id: selectedZone._id,
         name: selectedZone.name,
         coordinates: selectedZone.coordinates,
-      });
+      }).unwrap();
+
+      if (withSync) {
+        await syncZone(selectedZone._id).unwrap();
+        toast.success("Zone updated & synced!");
+      } else {
+        toast.success("Zone updated!");
+      }
+
       setShowModal(false);
-      toast.success("Zone updated!");
-      refetch();
-    } catch {
-      toast.error("Failed to update zone");
+      await refetch();
+    } catch (e) {
+      toast.error(e?.data?.message || "Failed to update zone");
     }
   };
 
-  const handleDelete = (id) => {
-    setDeleteId(id);
-  };
+  const handleDelete = (id) => setDeleteId(id);
 
   const confirmDelete = async () => {
     try {
-      await deleteZone(deleteId);
+      await deleteZone(deleteId).unwrap();
       toast.success("Zone deleted!");
       setDeleteId(null);
-      refetch();
-    } catch {
-      toast.error("Failed to delete zone");
+      await refetch();
+    } catch (e) {
+      toast.error(e?.data?.message || "Failed to delete zone");
     }
   };
 
-  const cancelDelete = () => {
-    setDeleteId(null);
-  };
+  const cancelDelete = () => setDeleteId(null);
 
   useEffect(() => {
     renderSavedZones();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zones, map]);
 
   const handleSearchChange = async (value) => {
@@ -170,7 +184,8 @@ const Zones = () => {
         <Icons.Trash
           title="Delete"
           onClick={() => handleDelete(zone._id)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
+          className={`w-8 h-8 p-2 rounded-md hover:text-white border border-[var(--light-gray)] cursor-pointer ${deleting ? "opacity-60 pointer-events-none" : "hover:bg-red-600 text-[var(--dark-gray)]"
+            }`}
         />
       </div>
     ),
@@ -182,6 +197,7 @@ const Zones = () => {
     <>
       <div>
         <OutletHeading name={showForm ? "Zone Editor" : "Zones"} />
+
         {showForm ? (
           <>
             <div className="flex items-center gap-3 mb-4">
@@ -193,8 +209,12 @@ const Zones = () => {
                 onChange={(e) => setNewZoneName(e.target.value)}
                 placeholder="Enter zone name"
               />
-              <button className="btn btn-edit" onClick={handleAddZoneToMap}>Save</button>
-              <button className="btn btn-primary" onClick={() => setShowForm(false)}>Zone List</button>
+              <button className="btn btn-edit" onClick={handleAddZoneToMap} disabled={creating}>
+                {creating ? "Saving..." : "Save"}
+              </button>
+              <button className="btn btn-primary" onClick={() => setShowForm(false)}>
+                Zone List
+              </button>
             </div>
 
             <div className="h-[500px] mb-4">
@@ -253,8 +273,20 @@ const Zones = () => {
           </>
         ) : (
           <>
-            <button className="btn btn-edit mb-4" onClick={() => setShowForm(true)}>Add New</button>
-            <CustomTable tableHeaders={tableHeaders} tableData={tableData} showPagination={true} showSorting={true} />
+            <div className="flex items-center gap-2 mb-4">
+              <button className="btn btn-edit" onClick={() => setShowForm(true)}>
+                Add New
+              </button>
+              {/* Sync All button removed */}
+            </div>
+
+            <CustomTable
+              tableHeaders={tableHeaders}
+              tableData={tableData}
+              showPagination={true}
+              showSorting={true}
+              isLoading={zonesLoading}
+            />
           </>
         )}
       </div>
@@ -300,6 +332,7 @@ const Zones = () => {
                       };
                       window.google.maps.event.addListener(path, "set_at", updateCoords);
                       window.google.maps.event.addListener(path, "insert_at", updateCoords);
+                      window.google.maps.event.addListener(path, "remove_at", updateCoords);
                     }}
                   />
                 )}
@@ -307,14 +340,26 @@ const Zones = () => {
             </LoadScript>
           </div>
 
-          <div className="text-right pt-2">
-            <button className="btn btn-edit" onClick={handleUpdate}>Update</button>
+          {/* Only one action now: Update + Sync */}
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              className="btn btn-edit"
+              onClick={() => handleUpdate({ withSync: true })}
+              disabled={updating || syncingOne}
+              title="Update zone and sync dependents"
+            >
+              {updating || syncingOne ? "Updating & Syncing..." : "Update + Sync"}
+            </button>
           </div>
         </div>
       </CustomModal>
 
-      {/* Delete Confirmation Modal */}
-      <DeleteModal isOpen={!!deleteId} onConfirm={confirmDelete} onCancel={cancelDelete} />
+      <DeleteModal
+        isOpen={!!deleteId}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        loading={deleting}
+      />
     </>
   );
 };

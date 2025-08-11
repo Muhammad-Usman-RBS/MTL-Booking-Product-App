@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import Icons from "../../../assets/icons";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
@@ -19,44 +19,75 @@ const FixedPricing = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [isNew, setIsNew] = useState(true);
-  const [pickupSuggestions, setPickupSuggestions] = useState([]);
-  const [dropoffSuggestions, setDropoffSuggestions] = useState([]);
 
   const { data: zones = [] } = useGetAllZonesQuery();
-  const { data: fixedPrices = [], refetch } = useGetAllFixedPricesQuery();
-  const [createFixedPrice] = useCreateFixedPriceMutation();
-  const [updateFixedPrice] = useUpdateFixedPriceMutation();
-  const [deleteFixedPrice] = useDeleteFixedPriceMutation();
+  const zoneByName = useMemo(
+    () => new Map(zones.map((z) => [z.name, z])),
+    [zones]
+  );
+  const zoneById = useMemo(
+    () => new Map(zones.map((z) => [z._id, z])),
+    [zones]
+  );
+
+  const { data: fixedPrices = [], refetch, isFetching } = useGetAllFixedPricesQuery();
+
+  const [createFixedPrice, { isLoading: creating }] = useCreateFixedPriceMutation();
+  const [updateFixedPrice, { isLoading: updating }] = useUpdateFixedPriceMutation();
+  const [deleteFixedPrice, { isLoading: deleting }] = useDeleteFixedPriceMutation();
+
   const [priceChange, setPriceChange] = useState(0);
   const [deleteItemId, setDeleteItemId] = useState(null);
 
+  const zonesOptions = useMemo(
+    () =>
+      zones.map((z) => ({
+        value: z.name, // SelectOption uses .value/.label
+        label: z.name,
+        id: z._id,
+        coordinates: z.coordinates,
+      })),
+    [zones]
+  );
+
   const handleEdit = (item) => {
-    const pickupZone = zones.find((z) => z.name === item.pickup);
-    const dropoffZone = zones.find((z) => z.name === item.dropoff);
+    // Try to resolve by id (normalized), then name (legacy)
+    const pickupZone =
+      (item.pickupZone && zoneById.get(item.pickupZone)) ||
+      (item.pickupZoneId && zoneById.get(item.pickupZoneId)) ||
+      zoneByName.get(item.pickup) ||
+      {
+        // fallback to embedded coords if zone not found
+        name: item.pickup,
+        _id: undefined,
+        coordinates: item.pickupCoordinates || [],
+      };
+
+    const dropoffZone =
+      (item.dropoffZone && zoneById.get(item.dropoffZone)) ||
+      (item.dropoffZoneId && zoneById.get(item.dropoffZoneId)) ||
+      zoneByName.get(item.dropoff) ||
+      {
+        name: item.dropoff,
+        _id: undefined,
+        coordinates: item.dropoffCoordinates || [],
+      };
 
     setIsNew(false);
     setSelectedItem({
       ...item,
-      pickup: pickupZone || {
-        name: item.pickup,
-        coordinates: item.pickupCoordinates,
-      },
-      dropoff: dropoffZone || {
-        name: item.dropoff,
-        coordinates: item.dropoffCoordinates,
-      },
+      pickup: pickupZone,
+      dropoff: dropoffZone,
     });
     setShowModal(true);
   };
 
-  const confirmDelete = (id) => {
-    setDeleteItemId(id);
-  };
+  const confirmDelete = (id) => setDeleteItemId(id);
 
   const handleAddNew = () => {
     setIsNew(true);
     setSelectedItem({
-      direction: "",
+      direction: "One Way",
       pickup: null,
       dropoff: null,
       price: 0,
@@ -65,23 +96,28 @@ const FixedPricing = () => {
   };
 
   const handleSave = async () => {
-    const { pickup, dropoff, price, direction, _id } = selectedItem;
+    const { pickup, dropoff, price, direction, _id } = selectedItem || {};
 
-    if (!pickup || !dropoff || !price) {
-      toast.error("Please fill all fields");
+    if (!pickup || !dropoff || price === undefined || price === null || isNaN(Number(price))) {
+      toast.error("Please select pickup, dropoff and enter a valid price");
       return;
     }
 
+    // prefer zone coords if selected from list; otherwise keep whatever is present
+    const pickupCoords = pickup?.coordinates || selectedItem?.pickupCoordinates || [];
+    const dropoffCoords = dropoff?.coordinates || selectedItem?.dropoffCoordinates || [];
+
     const payload = {
+      // normalized fields (for new backend)
+      pickupZoneId: pickup?._id,
+      dropoffZoneId: dropoff?._id,
+      // legacy fields (for current backend)
       pickup: pickup?.name,
-      pickupCoordinates: pickup?.coordinates,
+      pickupCoordinates: pickupCoords,
       dropoff: dropoff?.name,
-      dropoffCoordinates: dropoff?.coordinates,
+      dropoffCoordinates: dropoffCoords,
       price: parseFloat(price),
-      direction:
-        direction === "One Way" || direction === "Both Ways"
-          ? direction
-          : "One Way",
+      direction: direction === "Both Ways" ? "Both Ways" : "One Way",
     };
 
     try {
@@ -93,45 +129,49 @@ const FixedPricing = () => {
         toast.success("Fixed Price Updated!");
       }
       setShowModal(false);
-      refetch();
+      await refetch();
     } catch (err) {
       if (err?.status === 409) {
         toast.error("This pickup-dropoff pair already exists.");
       } else {
-        toast.error("Operation failed");
+        toast.error(err?.data?.message || "Operation failed");
       }
     }
   };
 
   const handleBulkUpdate = async () => {
-    const value = parseFloat(priceChange);
-    if (isNaN(value)) {
+    const delta = parseFloat(priceChange);
+    if (isNaN(delta)) {
       toast.error("Enter a valid number.");
       return;
     }
+    if (!fixedPrices?.length) return;
 
     try {
+      // naive sequential; if you have a bulk API use that
       for (const item of fixedPrices) {
-        const updatedPrice = item.price + value;
+        const updatedPrice = Number(item.price) + delta;
 
         await updateFixedPrice({
           id: item._id,
+          // send both normalized and legacy so either backend accepts
+          pickupZoneId: item.pickupZone || item.pickupZoneId,
+          dropoffZoneId: item.dropoffZone || item.dropoffZoneId,
           pickup: item.pickup,
-          pickupCoordinates: item.pickupCoordinates, // retain existing coordinates
+          pickupCoordinates: item.pickupCoordinates,
           dropoff: item.dropoff,
-          dropoffCoordinates: item.dropoffCoordinates, // retain existing coordinates
+          dropoffCoordinates: item.dropoffCoordinates,
           price: updatedPrice,
           direction: item.direction,
         }).unwrap();
       }
 
       toast.success("All prices updated successfully!");
-      refetch();
+      await refetch();
     } catch (err) {
-      toast.error("Bulk update failed.");
+      toast.error(err?.data?.message || "Bulk update failed.");
     }
   };
-
 
   const tableHeaders = [
     { label: "Pick Up", key: "pickup" },
@@ -142,6 +182,7 @@ const FixedPricing = () => {
 
   const tableData = fixedPrices.map((item) => ({
     ...item,
+    // show names from item; they’re already strings
     actions: (
       <div className="flex gap-2">
         <Icons.Pencil
@@ -175,8 +216,7 @@ const FixedPricing = () => {
                 value={priceChange}
                 onChange={(e) => setPriceChange(e.target.value)}
               />
-
-              <button className="btn btn-reset" onClick={handleBulkUpdate}>
+              <button className="btn btn-reset" onClick={handleBulkUpdate} disabled={updating}>
                 Update
               </button>
             </div>
@@ -191,6 +231,7 @@ const FixedPricing = () => {
           tableData={tableData}
           showPagination={true}
           showSorting={true}
+          isLoading={isFetching}
         />
       </div>
 
@@ -202,44 +243,40 @@ const FixedPricing = () => {
         <div className="space-y-6 w-96 px-2 sm:px-4 pt-2 text-sm">
           {/* Direction */}
           <div>
-            <label className="block text-gray-700 font-semibold mb-1">
-              Direction
-            </label>
+            <label className="block text-gray-700 font-semibold mb-1">Direction</label>
             <SelectOption
               width="full"
-              value={selectedItem?.direction || ""}
+              value={selectedItem?.direction || "One Way"}
               onChange={(e) =>
-                setSelectedItem({
-                  ...selectedItem,
+                setSelectedItem((prev) => ({
+                  ...prev,
                   direction: e.target.value,
-                })
+                }))
               }
               options={["One Way", "Both Ways"]}
             />
           </div>
 
-        
+          {/* Pick Up */}
           <div>
             <SelectOption
               label="Pick Up"
               width="full"
               value={selectedItem?.pickup?.name || ""}
               onChange={(e) => {
-                console.log("Pickup onChange triggered:", e.target.value);
-                const selectedZone = zones.find(
-                  (z) => z.name === e.target.value
-                );
-                console.log("Selected pickup zone:", selectedZone);
-                setSelectedItem({
-                  ...selectedItem,
-                  pickup: selectedZone || null,
-                });
+                const zone = zoneByName.get(e.target.value);
+                setSelectedItem((prev) => ({
+                  ...prev,
+                  pickup: zone
+                    ? zone
+                    : {
+                      name: e.target.value,
+                      _id: undefined,
+                      coordinates: prev?.pickup?.coordinates || [],
+                    },
+                }));
               }}
-              options={zones.map((zone) => ({
-                value: zone.name,
-                label: zone.name,
-                coordinates: zone.coordinates,
-              }))}
+              options={zonesOptions}
             />
           </div>
 
@@ -250,38 +287,34 @@ const FixedPricing = () => {
               width="full"
               value={selectedItem?.dropoff?.name || ""}
               onChange={(e) => {
-                console.log("Dropoff onChange triggered:", e.target.value);
-                const selectedZone = zones.find(
-                  (z) => z.name === e.target.value
-                );
-                console.log("Selected dropoff zone:", selectedZone);
-                setSelectedItem({
-                  ...selectedItem,
-                  dropoff: selectedZone || null,
-                });
+                const zone = zoneByName.get(e.target.value);
+                setSelectedItem((prev) => ({
+                  ...prev,
+                  dropoff: zone
+                    ? zone
+                    : {
+                      name: e.target.value,
+                      _id: undefined,
+                      coordinates: prev?.dropoff?.coordinates || [],
+                    },
+                }));
               }}
-              options={zones.map((zone) => ({
-                value: zone.name,
-                label: zone.name,
-                coordinates: zone.coordinates,
-              }))}
+              options={zonesOptions}
             />
           </div>
 
           {/* Price */}
           <div>
-            <label className="block text-gray-700 font-semibold mb-1">
-              Price (GBP)
-            </label>
+            <label className="block text-gray-700 font-semibold mb-1">Price (GBP)</label>
             <input
               type="number"
               className="custom_input"
-              value={selectedItem?.price}
+              value={selectedItem?.price ?? 0}
               onChange={(e) =>
-                setSelectedItem({
-                  ...selectedItem,
-                  price: parseFloat(e.target.value),
-                })
+                setSelectedItem((prev) => ({
+                  ...prev,
+                  price: e.target.value === "" ? "" : parseFloat(e.target.value),
+                }))
               }
               placeholder="Enter fixed price in GBP"
             />
@@ -289,14 +322,11 @@ const FixedPricing = () => {
 
           {/* Actions */}
           <div className="flex justify-end pt-2 gap-3">
-            <button
-              onClick={() => setShowModal(false)}
-              className="btn btn-cancel"
-            >
+            <button onClick={() => setShowModal(false)} className="btn btn-cancel">
               Cancel
             </button>
-            <button onClick={handleSave} className="btn btn-reset">
-              {isNew ? "Add" : "Update"}
+            <button onClick={handleSave} className="btn btn-reset" disabled={creating || updating}>
+              {isNew ? (creating ? "Adding..." : "Add") : updating ? "Updating..." : "Update"}
             </button>
           </div>
         </div>
@@ -306,9 +336,9 @@ const FixedPricing = () => {
         isOpen={!!deleteItemId}
         onConfirm={async () => {
           try {
-            await deleteFixedPrice(deleteItemId);
+            await deleteFixedPrice(deleteItemId).unwrap();
             toast.success("Deleted successfully");
-            refetch();
+            await refetch();
           } catch {
             toast.error("Failed to delete");
           } finally {
@@ -316,6 +346,7 @@ const FixedPricing = () => {
           }
         }}
         onCancel={() => setDeleteItemId(null)}
+        loading={deleting}
       />
 
       <hr className="mb-12 mt-12 border-[var(--light-gray)]" />

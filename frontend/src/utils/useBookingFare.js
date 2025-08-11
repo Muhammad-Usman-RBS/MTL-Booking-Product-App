@@ -118,26 +118,56 @@ export const useBookingFare = ({
     return total;
   }, []);
 
-  const isWithinZone = useCallback((point, zone) => {
-    if (!point || !zone || zone.length < 4) return false;
-    const lats = zone.map(c => c.lat);
-    const lngs = zone.map(c => c.lng);
-    return (
-      point.lat >= Math.min(...lats) &&
-      point.lat <= Math.max(...lats) &&
-      point.lng >= Math.min(...lngs) &&
-      point.lng <= Math.max(...lngs)
-    );
-  }, []);
 
-  const getZoneEntryFee = useCallback((pickupCoord, dropoffCoord) => {
-    const matchedZone = extrasPricing.find((zone) =>
-      isWithinZone(pickupCoord, zone.coordinates)
-    ) || extrasPricing.find((zone) =>
-      isWithinZone(dropoffCoord, zone.coordinates)
-    );
-    return matchedZone?.price || 0;
-  }, [extrasPricing, isWithinZone]);
+  // ZONE PRICES WITH UPDATED SYNC METHOD START
+  const EPS = 1e-6; // ~ few cm/low meters tolerance in degrees
+
+  const isPointOnSegment = (p, a, b) => {
+    const cross = (p.lng - a.lng) * (b.lat - a.lat) - (p.lat - a.lat) * (b.lng - a.lng);
+    if (Math.abs(cross) > EPS) return false;
+    const dot = (p.lng - a.lng) * (b.lng - a.lng) + (p.lat - a.lat) * (b.lat - a.lat);
+    if (dot < -EPS) return false;
+    const lenSq = (b.lng - a.lng) ** 2 + (b.lat - a.lat) ** 2;
+    if (dot - lenSq > EPS) return false;
+    return true;
+  };
+
+  const pointInPolygon = (point, poly = []) => {
+    if (!point || !Array.isArray(poly) || poly.length < 3) return false;
+
+    // quick reject with bbox to save time
+    let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+    for (const c of poly) {
+      if (c.lat < minLat) minLat = c.lat;
+      if (c.lat > maxLat) maxLat = c.lat;
+      if (c.lng < minLng) minLng = c.lng;
+      if (c.lng > maxLng) maxLng = c.lng;
+    }
+    if (
+      point.lat < minLat - EPS || point.lat > maxLat + EPS ||
+      point.lng < minLng - EPS || point.lng > maxLng + EPS
+    ) return false;
+
+    // on-edge = inside
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      if (isPointOnSegment(point, poly[j], poly[i])) return true;
+    }
+
+    // ray casting
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i].lng, yi = poly[i].lat;
+      const xj = poly[j].lng, yj = poly[j].lat;
+      const intersect =
+        ((yi > point.lat) !== (yj > point.lat)) &&
+        (point.lng < ((xj - xi) * (point.lat - yi)) / (yj - yi + 0.0) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  };
+
+  // replace your old isWithinZone with this:
+  const isWithinZone = (point, zoneCoords) => pointInPolygon(point, zoneCoords);
 
   const getZonePrice = useCallback((pickupCoord, dropoffCoord) => {
     for (const zone of fixedPrices) {
@@ -160,7 +190,53 @@ export const useBookingFare = ({
       }
     }
     return null;
-  }, [fixedPrices, isWithinZone]);
+  }, [fixedPrices]);
+
+  // const isWithinZone = useCallback((point, zone) => {
+  //   if (!point || !zone || zone.length < 4) return false;
+  //   const lats = zone.map(c => c.lat);
+  //   const lngs = zone.map(c => c.lng);
+  //   return (
+  //     point.lat >= Math.min(...lats) &&
+  //     point.lat <= Math.max(...lats) &&
+  //     point.lng >= Math.min(...lngs) &&
+  //     point.lng <= Math.max(...lngs)
+  //   );
+  // }, []);
+
+  // const getZonePrice = useCallback((pickupCoord, dropoffCoord) => {
+  //   for (const zone of fixedPrices) {
+  //     const direction = (zone.direction || '').toLowerCase();
+
+  //     const pickupInPickupZone = isWithinZone(pickupCoord, zone.pickupCoordinates);
+  //     const dropoffInDropoffZone = isWithinZone(dropoffCoord, zone.dropoffCoordinates);
+
+  //     const pickupInDropoffZone = isWithinZone(pickupCoord, zone.dropoffCoordinates);
+  //     const dropoffInPickupZone = isWithinZone(dropoffCoord, zone.pickupCoordinates);
+
+  //     if (direction === 'both ways') {
+  //       if ((pickupInPickupZone && dropoffInDropoffZone) || (pickupInDropoffZone && dropoffInPickupZone)) {
+  //         return zone.price;
+  //       }
+  //     } else if (direction === 'one way') {
+  //       if (pickupInPickupZone && dropoffInDropoffZone) {
+  //         return zone.price;
+  //       }
+  //     }
+  //   }
+  //   return null;
+  // }, [fixedPrices, isWithinZone]);
+
+  const getZoneEntryFee = useCallback((pickupCoord, dropoffCoord) => {
+    const matchedZone = extrasPricing.find((zone) =>
+      isWithinZone(pickupCoord, zone.coordinates)
+    ) || extrasPricing.find((zone) =>
+      isWithinZone(dropoffCoord, zone.coordinates)
+    );
+    return matchedZone?.price || 0;
+  }, [extrasPricing, isWithinZone]);
+
+  // ZONE PRICES WITH UPDATED SYNC METHOD END
 
   const getValidDynamicPricing = useCallback(() => {
     if (!Array.isArray(discounts) || !journeyDateTime) return 0;

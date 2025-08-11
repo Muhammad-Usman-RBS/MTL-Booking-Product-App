@@ -258,50 +258,42 @@ function Navbar() {
 
             {isThemeOpen && (
               <div className="absolute right-0 mt-2 bg-white border rounded-lg shadow-lg z-50 w-[135px] max-h-64 overflow-y-auto px-2 py-2">
-                {themes.map((theme, i) => (
-                  <div
-                    key={i}
+                {themes
+                  .filter((theme) => theme.value !== "custom")
+                  .map((theme, i) => (
+                    <div
+                      key={i}
+                      onClick={() => {
+                        setTheme(theme.value);
+                        setIsThemeOpen(false);
+                      }}
+                      className="flex items-center justify-between px-2 py-2 rounded cursor-pointer hover:bg-gray-100 transition"
+                    >
+                      <div
+                        className="w-5 h-5 rounded"
+                        style={{ backgroundColor: theme.bg, border: "1px solid #ccc" }}
+                      />
+                      <div
+                        className="w-5 h-5 rounded"
+                        style={{ backgroundColor: theme.hoverActive, border: "1px solid #ccc" }}
+                      />
+                      <div
+                        className="w-5 h-5 rounded"
+                        style={{ backgroundColor: theme.text, border: "1px solid #ccc" }}
+                      />
+                    </div>
+                  ))}
+
+                <Link to="/dashboard/settings/general">
+                  <button
                     onClick={() => {
-                      setTheme(theme.value);
-                      if (theme.value === "custom") setIsModalOpen(true);
                       setIsThemeOpen(false);
                     }}
-                    className="cursor-pointer hover:bg-gray-100 px-1 py-1 rounded flex justify-between items-center"
+                    className="btn btn-reset"
                   >
-                    {theme.value !== "custom" ? (
-                      <>
-                        <div
-                          className="w-5 h-5 rounded"
-                          style={{
-                            backgroundColor: theme.bg,
-                            border: "1px solid #ccc",
-                          }}
-                        ></div>
-                        <div
-                          className="w-5 h-5 rounded"
-                          style={{
-                            backgroundColor: theme.hoverActive,
-                            border: "1px solid #ccc",
-                          }}
-                        ></div>
-                        <div
-                          className="w-5 h-5 rounded"
-                          style={{
-                            backgroundColor: theme.text,
-                            border: "1px solid #ccc",
-                          }}
-                        ></div>
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-center text-sm text-amber-700 font-semibold bg-amber-100 px-2 py-2 rounded-lg">
-                        <span className="text-lg">🎨</span>
-                        <span className="text-center">
-                          Choose your favorite color
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                    +&nbsp;Add&nbsp;New
+                  </button>
+                </Link>
               </div>
             )}
           </div>

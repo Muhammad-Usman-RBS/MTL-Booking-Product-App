@@ -9,7 +9,7 @@ import { getAllExtras, createExtra, updateExtra, deleteExtra, getExtrasByCompany
 import { getAllPostcodePrices, createPostcodePrice, updatePostcodePrice, deletePostcodePrice, getAllPostcodePricesWidget } from "../controllers/pricings/postcodePriceController.js";
 import { getAllDiscounts, createDiscount, updateDiscount, deleteDiscount, getDiscountsByCompanyId } from "../controllers/pricings/discountController.js";
 import { getAllVouchers, createVoucher, updateVoucher, deleteVoucher, getVoucherByCode } from "../controllers/pricings/voucherController.js";
-import { getAllZones, createZone, updateZone, deleteZone } from "../controllers/pricings/zoneController.js";
+import { getAllZones, createZone, updateZone, deleteZone, syncZoneToDependents, syncAllZones } from "../controllers/pricings/zoneController.js";
 
 const router = express.Router();
 const vehicleUploader = getUploader("vehicle");
@@ -52,6 +52,8 @@ router.get("/zones", protect, getAllZones);
 router.post("/zones", protect, createZone);
 router.put("/zones/:id", protect, updateZone);
 router.delete("/zones/:id", protect, deleteZone);
+router.post("/zones/:id/sync", protect, authorize("superadmin", "clientadmin"), syncZoneToDependents);
+router.post("/zones/sync-all", protect, authorize("superadmin", "clientadmin"), syncAllZones);
 
 // EXTRAS PRICING
 router.get("/extras", protect, getAllExtras);
