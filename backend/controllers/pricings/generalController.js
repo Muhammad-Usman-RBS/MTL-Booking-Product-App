@@ -15,6 +15,7 @@ export const getGeneralPricing = async (req, res) => {
     if (!pricing) {
       pricing = await GeneralModel.create({
         companyId,
+        type: "standard", // or some default value
         updatedBy: req.user?._id,
         pickupAirportPrice: 0,
         dropoffAirportPrice: 0,
@@ -44,6 +45,7 @@ export const updateGeneralPricing = async (req, res) => {
     }
 
     const {
+      type, // Include type
       pickupAirportPrice,
       dropoffAirportPrice,
       minAdditionalDropOff,
@@ -55,6 +57,7 @@ export const updateGeneralPricing = async (req, res) => {
 
     const data = {
       companyId,
+      type,
       updatedBy,
       pickupAirportPrice,
       dropoffAirportPrice,
@@ -78,7 +81,6 @@ export const updateGeneralPricing = async (req, res) => {
     res.status(200).json(pricing);
   } catch (error) {
     console.log(error);
-
     res.status(500).json({ message: "Failed to update pricing", error });
   }
 };
