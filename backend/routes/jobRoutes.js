@@ -4,6 +4,7 @@ import {
   updateJobStatus,
   createJob,
   getDriverJobs,
+  DeleteJob,
 } from "../controllers/jobController.js";
 
 import { protect, authorize } from "../middleware/authMiddleware.js";
@@ -24,5 +25,6 @@ router.get(
   authorize("driver", "clientadmin"),
   getDriverJobs
 );
+router.delete("delete-job/:jobId", DeleteJob )
 
 export default router;

@@ -5,8 +5,15 @@ import { GripHorizontal } from "lucide-react";
 import SelectStatus from "./SelectStatus";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import { useGetAllBookingsQuery, useDeleteBookingMutation, useUpdateBookingStatusMutation } from "../../../redux/api/bookingApi";
-import { useGetAllJobsQuery, useUpdateJobStatusMutation } from "../../../redux/api/jobsApi";
+import {
+  useGetAllBookingsQuery,
+  useDeleteBookingMutation,
+  useUpdateBookingStatusMutation,
+} from "../../../redux/api/bookingApi";
+import {
+  useGetAllJobsQuery,
+  useUpdateJobStatusMutation,
+} from "../../../redux/api/jobsApi";
 import Icons from "../../../assets/icons";
 import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
@@ -37,8 +44,7 @@ const BookingsTable = ({
   endDate,
 }) => {
   const user = useSelector((state) => state.auth.user);
-  const timezone =
-    useSelector((state) => state.timezone?.timezone) || "UTC";
+  const timezone = useSelector((state) => state.timezone?.timezone) || "UTC";
   const companyId = user?.companyId;
   const [tooltip, setTooltip] = useState({ show: false, text: "", x: 0, y: 0 });
   const [page, setPage] = useState(1);
@@ -101,9 +107,9 @@ const BookingsTable = ({
     isLoading: isJobsLoading,
     refetch: refetchJobs,
   } = useGetAllJobsQuery(companyId, { skip: !companyId });
-  const { data: driversData = {}, isLoading: isDriversLoading } =
-    useGetAllDriversQuery({ skip: !companyId });
-  console.log("jobData", jobData);
+  const { data: driversData = {} } = useGetAllDriversQuery({
+    skip: !companyId,
+  });
 
   const refetch = isDriver ? refetchJobs : refetchBookings;
   const [deleteBooking] = useDeleteBookingMutation();
@@ -187,8 +193,8 @@ const BookingsTable = ({
       !Array.isArray(selectedDrivers) || selectedDrivers.length === 0
         ? true
         : Array.isArray(b.drivers)
-          ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
-          : false;
+        ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
+        : false;
 
     const dateTime =
       !startDate || !endDate ? true : createdAt >= start && createdAt <= end;
@@ -197,7 +203,6 @@ const BookingsTable = ({
 
     return result;
   });
-
   if (user?.role === "driver" && user?.employeeNumber) {
     filteredBookings = filteredBookings.filter((booking) => {
       if (!Array.isArray(booking.drivers)) return false;
@@ -398,8 +403,9 @@ const BookingsTable = ({
   const formatVehicle = (v) =>
     !v || typeof v !== "object"
       ? "-"
-      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${v.handLuggage || 0
-      } | ${v.checkinLuggage || 0}`;
+      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${
+          v.handLuggage || 0
+        } | ${v.checkinLuggage || 0}`;
 
   const formatPassenger = (p) =>
     !p || typeof p !== "object"
@@ -409,28 +415,31 @@ const BookingsTable = ({
   const formatDriver = (item) => {
     const allDrivers = driversData?.drivers || [];
 
-    // If role is customer
     if (user?.role === "customer") {
       const drivers = item.drivers || [];
 
-      if (!drivers || drivers.length === 0) {
-        // Show icon if no driver assigned
-        return (
-          <span className="text-[var(--dark-grey)]">
-            <Icons.CircleUserRound />
-          </span>
-        );
-      }
+      // const acceptedDriver = drivers.find(
+      //   (driver) =>
+      //     driver?.jobStatus === "Accepted" &&
+      //     driver?.companyId?.toString() === companyId?.toString()
+      // );
 
-      // Show driver name(s) if assigned
-      return drivers.map((driver, i) => (
-        <div key={i} className="text-sm text-gray-700">
-          {driver?.name || "Unnamed Driver"}
-        </div>
-      ));
+      // if (!acceptedDriver) {
+      //   return (
+      //     <span className="text-[var(--dark-grey)]">
+      //       <Icons.CircleUserRound />
+      //     </span>
+      //   );
+      // }
+
+      // return (
+      //   <div className="text-sm text-gray-700">
+      //     {/* {acceptedDriver.name || "Unnamed Driver"} */}
+      //     yes
+      //   </div>
+      // );
     }
 
-    // For drivers or admin
     if (item.jobStatus === "Rejected") {
       let driverName = "Unknown Driver";
 
@@ -465,12 +474,15 @@ const BookingsTable = ({
       return (
         <div className="text-orange-600 italic">
           <div className="font-medium">Booking sent to: {driverNames}</div>
-          <div className="text-xs text-gray-500 mt-1">(Awaiting acceptance)</div>
+          <div className="text-xs text-gray-500 mt-1">
+            (Awaiting acceptance)
+          </div>
         </div>
       );
     }
-
     const drivers = item.drivers || [];
+    const jobsArray = jobData?.jobs || [];
+
     if (drivers.length === 0) {
       return (
         <span className="text-[var(--dark-grey)]">
@@ -479,11 +491,26 @@ const BookingsTable = ({
       );
     }
 
-    return drivers.map((driver, i) => (
-      <div key={i} className="text-sm text-gray-700">
-        {driver.name || "Unnamed Driver"}
-      </div>
-    ));
+    return drivers.map((driver, index) => {
+      const driverId = typeof driver === "object" ? driver._id : driver;
+      const driverName = driver.name || "Unnamed Driver";
+
+      const matchingJob = jobsArray.find(
+        (job) =>
+          job.driverId?.toString() === driverId?.toString() ||
+          job.driverId?._id?.toString() === driverId?.toString()
+      );
+
+      if (matchingJob && matchingJob.jobStatus !== "Already Assigned") {
+        return (
+          <div key={index} className="text-sm text-gray-700">
+            {driverName}
+          </div>
+        );
+      }
+
+      return null;
+    });
   };
 
   let tableData = [];
@@ -610,8 +637,8 @@ const BookingsTable = ({
           case "createdAt":
             row[key] = item.createdAt
               ? moment(item.createdAt)
-                .tz(timezone)
-                .format("DD/MM/YYYY HH:mm:ss")
+                  .tz(timezone)
+                  .format("DD/MM/YYYY HH:mm:ss")
               : "-";
             break;
           case "driver":
@@ -646,6 +673,20 @@ const BookingsTable = ({
                         jobStatus: newStatus,
                       }).unwrap();
                     } else {
+                      // Block client-admin if booking is New AND no driver is assigned
+                      const hasDrivers =
+                        Array.isArray(item.drivers) && item.drivers.length > 0;
+                      const currentStatus = (
+                        item.statusAudit?.at(-1)?.status ||
+                        item.status ||
+                        "New"
+                      ).toLowerCase();
+
+                      if (!hasDrivers && currentStatus === "new") {
+                        toast.info("Select driver first");
+                        return;
+                      }
+
                       await updateBookingStatus({
                         id: item._id,
                         status: newStatus,
@@ -705,10 +746,15 @@ const BookingsTable = ({
                       {actionMenuItems
                         .filter((action) => {
                           if (user?.role === "driver") {
-                            return action === "View" || action === "Status Audit";
+                            return (
+                              action === "View" || action === "Status Audit"
+                            );
                           }
                           // Hide the "Delete" action if user is a customer
-                          if (user?.role === "customer" && action === "Delete") {
+                          if (
+                            user?.role === "customer" &&
+                            action === "Delete"
+                          ) {
                             return false;
                           }
                           return true;
@@ -824,17 +870,30 @@ const BookingsTable = ({
 
       driver: Array.isArray(item.drivers)
         ? item.drivers
-          .map((driver) => {
-            // Handle new structure where driver is an object with name/driverInfo
-            if (typeof driver === "object") {
-              if (driver.name) {
-                return driver.name;
-              } else if (driver.driverInfo?.firstName) {
-                return driver.driverInfo.firstName;
-              } else if (driver.driverId) {
-                // Try to match with assignedDrivers using driverId
+            .map((driver) => {
+              // Handle new structure where driver is an object with name/driverInfo
+              if (typeof driver === "object") {
+                if (driver.name) {
+                  return driver.name;
+                } else if (driver.driverInfo?.firstName) {
+                  return driver.driverInfo.firstName;
+                } else if (driver.driverId) {
+                  // Try to match with assignedDrivers using driverId
+                  const matchedDriver = assignedDrivers.find(
+                    (d) => d?._id?.toString() === driver.driverId?.toString()
+                  );
+                  return (
+                    matchedDriver?.DriverData?.firstName ||
+                    matchedDriver?.DriverData?.name ||
+                    matchedDriver?.name ||
+                    "Unnamed"
+                  );
+                }
+              } else {
+                // Legacy structure - try to match with assignedDrivers
+                const driverId = driver;
                 const matchedDriver = assignedDrivers.find(
-                  (d) => d?._id?.toString() === driver.driverId?.toString()
+                  (d) => d?._id?.toString() === driverId?.toString()
                 );
                 return (
                   matchedDriver?.DriverData?.firstName ||
@@ -843,22 +902,9 @@ const BookingsTable = ({
                   "Unnamed"
                 );
               }
-            } else {
-              // Legacy structure - try to match with assignedDrivers
-              const driverId = driver;
-              const matchedDriver = assignedDrivers.find(
-                (d) => d?._id?.toString() === driverId?.toString()
-              );
-              return (
-                matchedDriver?.DriverData?.firstName ||
-                matchedDriver?.DriverData?.name ||
-                matchedDriver?.name ||
-                "Unnamed"
-              );
-            }
-            return "Unnamed";
-          })
-          .join(", ")
+              return "Unnamed";
+            })
+            .join(", ")
         : "-",
       status: item.statusAudit?.at(-1)?.status || item.status || "-",
     };

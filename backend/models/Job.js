@@ -8,7 +8,7 @@ const jobSchema = new mongoose.Schema({
     },
     driverId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "driver"
+        ref: "User"
     },
     assignedBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -22,7 +22,7 @@ const jobSchema = new mongoose.Schema({
     },
     jobStatus: {
         type: String,
-        enum: ["New", "Accepted", "Rejected"],
+        enum: ["New", "Accepted", "Rejected", "Already Assigned"],
         default: "New"
     },
     driverRejectionNote: {
@@ -33,7 +33,7 @@ const jobSchema = new mongoose.Schema({
         {
             status: {
                 type: String,
-                enum: ["New", "Accepted", "Rejected", "Reassigned"]
+                enum: ["New", "Accepted", "Rejected" , "Already Assigned"]
             },
             date: {
                 type: Date,

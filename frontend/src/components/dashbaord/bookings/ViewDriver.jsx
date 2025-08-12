@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import Icons from "../../../assets/icons";
 import IMAGES from "../../../assets/images";
 import { useAdminGetAllDriversQuery } from "../../../redux/api/adminApi";
 import {
@@ -10,7 +9,11 @@ import {
   useUpdateBookingMutation,
 } from "../../../redux/api/bookingApi";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
-import { useCreateJobMutation, useGetDriverJobsQuery } from "../../../redux/api/jobsApi";
+import {
+  useCreateJobMutation,
+  useDeleteJobMutation,
+  useGetDriverJobsQuery,
+} from "../../../redux/api/jobsApi";
 import {
   notificationApi,
   useCreateNotificationMutation,
@@ -22,13 +25,10 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   const [createNotification] = useCreateNotificationMutation();
   const [deleteNotification] = useDeleteNotificationMutation();
 
-const { data: jobsData } = useGetDriverJobsQuery(
-  { companyId },
-  { 
+  const { data: jobsData } = useGetDriverJobsQuery(companyId, {
     skip: !companyId,
-    pollingInterval: 5000 
-  }
-);
+    pollingInterval: 5000,
+  });
   const [createJob] = useCreateJobMutation();
 
   const [updateBooking] = useUpdateBookingMutation();
@@ -38,8 +38,12 @@ const { data: jobsData } = useGetDriverJobsQuery(
   const [searchTerm, setSearchTerm] = useState("");
   const [showMatching, setShowMatching] = useState(false);
   const [sendEmailChecked, setSendEmailChecked] = useState(false);
+  const [previouslySelectedDrivers, setPreviouslySelectedDrivers] = useState(
+    []
+  );
 
   const [sendBookingEmail] = useSendBookingEmailMutation();
+  const [deleteJob] = useDeleteJobMutation();
 
   const { data: drivers = [], isLoading } = useGetAllDriversQuery(companyId, {
     skip: !companyId,
@@ -48,8 +52,7 @@ const { data: jobsData } = useGetDriverJobsQuery(
   const { data: bookingData, refetch: refetchBookings } =
     useGetAllBookingsQuery(companyId);
 
-  const { data: allUsers = [], isLoading: isAllUsersLoading } =
-    useAdminGetAllDriversQuery();
+  const { data: allUsers = [] } = useAdminGetAllDriversQuery();
   const allBookings = bookingData?.bookings || [];
 
   const selectedBooking = allBookings.find(
@@ -82,6 +85,18 @@ const { data: jobsData } = useGetDriverJobsQuery(
     isLoading && <p>Loading drivers...</p>;
   }
   const dispatch = useDispatch();
+  useEffect(() => {
+    if (selectedBooking?.drivers) {
+      const preSelected = (drivers?.drivers || []).filter((driver) =>
+        selectedBooking.drivers.some(
+          (d) => d.driverId === driver._id || d.userId === driver._id
+        )
+      );
+      setSelectedDrivers(preSelected);
+      setPreviouslySelectedDrivers(preSelected); // Track initially selected drivers
+    }
+  }, [selectedBooking, drivers]);
+
   // Auto-remove drivers who reject jobs
   useEffect(() => {
     if (!selectedBooking?.drivers || !jobsData?.jobs) return;
@@ -151,8 +166,104 @@ const { data: jobsData } = useGetDriverJobsQuery(
     dispatch,
     refetchBookings,
   ]);
+  useEffect(() => {
+    const all = (filteredDriver || []).map((d) => String(d._id));
+    const chosen = new Set(
+      (selectedDrivers || []).map((d) =>
+        String(d._id ?? d.userId ?? d.driverId)
+      )
+    );
+
+    const allSelected = all.length > 0 && all.every((id) => chosen.has(id));
+    if (selectAll !== allSelected) setSelectAll(allSelected);
+  }, [filteredDriver, selectedDrivers]);
+  const removeDriverJobsAndNotifications = async (removedDrivers) => {
+    for (const removedDriver of removedDrivers) {
+      try {
+        // Find the job for this driver and booking
+        const driverJobs =
+          jobsData?.jobs?.filter(
+            (job) =>
+              job.bookingId?.toString() === selectedBooking._id?.toString() &&
+              (job.driverId?.toString() === removedDriver._id?.toString() ||
+                job.driverId?._id?.toString() === removedDriver._id?.toString())
+          ) || [];
+        for (const job of driverJobs) {
+          console.log(
+            "Attempting to delete job:",
+            job._id,
+            "for booking:",
+            selectedBooking?._id,
+            "driverId:",
+            job.driverId
+          );
+          await deleteJob(job._id).unwrap();
+
+          console.log(
+            `Deleted job ${job._id} for driver ${removedDriver.DriverData?.firstName}`
+          );
+        }
+        // Find and delete notifications
+        if (removedDriver.DriverData?.employeeNumber) {
+          const { data: notificationsForDriver } = await dispatch(
+            notificationApi.endpoints.getUserNotifications.initiate(
+              removedDriver.DriverData.employeeNumber
+            )
+          );
+
+          const matchingNotifications =
+            notificationsForDriver?.filter(
+              (notif) =>
+                notif?.bookingId === selectedBooking.bookingId &&
+                notif?.employeeNumber ===
+                  removedDriver.DriverData.employeeNumber
+            ) || [];
+
+          for (const notification of matchingNotifications) {
+            if (notification._id) {
+              await deleteNotification(notification._id).unwrap();
+              console.log(
+                `Deleted notification ${notification._id} for driver ${removedDriver.DriverData?.firstName}`
+              );
+            }
+          }
+        }
+
+        toast.success(
+          `Removed job and notification for ${
+            removedDriver.DriverData?.firstName || "driver"
+          }`
+        );
+      } catch (error) {
+        console.error(
+          `Failed to remove job/notification for driver ${removedDriver.DriverData?.firstName}:`,
+          error
+        );
+        toast.error(
+          `Failed to remove assignment for ${
+            removedDriver.DriverData?.firstName || "driver"
+          }`
+        );
+      }
+    }
+  };
   const handleSendEmail = async () => {
     try {
+      const currentDriverIds = new Set(
+        selectedDrivers.map((d) => String(d.userId ?? d._id ?? d.driverId))
+      );
+      console.log(currentDriverIds, "Current Driver IDs");
+      const removedDrivers = previouslySelectedDrivers.filter(
+        (driver) =>
+          !currentDriverIds.has(
+            String(driver.userId ?? driver.driverId ?? driver._id)
+          )
+      );
+
+      console.log(removedDrivers, "Removed Drivers");
+      if (removedDrivers.length > 0) {
+        await removeDriverJobsAndNotifications(removedDrivers);
+      }
       if (!companyId) {
         toast.error("Company ID is missing. Please log in again.");
         return;
@@ -166,7 +277,29 @@ const { data: jobsData } = useGetDriverJobsQuery(
       }
 
       if (selectedDrivers.length === 0) {
-        toast.info("Please select at least one driver.");
+        // No drivers selected: clear all from booking
+        const { _id, createdAt, updatedAt, __v, ...restBookingData } = booking;
+
+        await updateBooking({
+          id: booking._id,
+          updatedData: {
+            bookingData: {
+              ...restBookingData,
+              drivers: [],
+            },
+          },
+        }).unwrap();
+
+        if (typeof refetchBookings === "function") {
+          refetchBookings();
+        }
+        toast.success("All drivers removed from this booking.");
+        setPreviouslySelectedDrivers(selectedDrivers);
+
+        setShowDriverModal(false);
+        if (onDriversUpdate) {
+          onDriversUpdate(selectedRow, selectedDrivers);
+        }
         return;
       }
 
@@ -284,44 +417,46 @@ const { data: jobsData } = useGetDriverJobsQuery(
         );
       }
 
-      await Promise.all(
-        selectedDrivers.map(async (driver) => {
-          const { DriverData } = driver;
+      if (selectedDrivers.length > 0) {
+        await Promise.all(
+          selectedDrivers.map(async (driver) => {
+            const { DriverData } = driver;
 
-          if (!DriverData?.employeeNumber) {
-            toast.warning(
-              `${
-                DriverData?.firstName || "Driver"
-              } has no employee number. Skipped.`
-            );
-            return;
-          }
+            if (!DriverData?.employeeNumber) {
+              toast.warning(
+                `${
+                  DriverData?.firstName || "Driver"
+                } has no employee number. Skipped.`
+              );
+              return;
+            }
 
-          const notificationPayload = {
-            employeeNumber: DriverData.employeeNumber,
-            bookingId: booking.bookingId,
-            status: booking.status,
-            primaryJourney: {
-              pickup:
-                booking?.primaryJourney?.pickup ||
-                booking?.returnJourney?.pickup,
-              dropoff:
-                booking?.primaryJourney?.dropoff ||
-                booking?.returnJourney?.dropoff,
-            },
-            bookingSentAt: new Date(),
-            createdBy: user?._id,
-            companyId,
-          };
+            const notificationPayload = {
+              employeeNumber: DriverData.employeeNumber,
+              bookingId: booking.bookingId,
+              status: booking.status,
+              primaryJourney: {
+                pickup:
+                  booking?.primaryJourney?.pickup ||
+                  booking?.returnJourney?.pickup,
+                dropoff:
+                  booking?.primaryJourney?.dropoff ||
+                  booking?.returnJourney?.dropoff,
+              },
+              bookingSentAt: new Date(),
+              createdBy: user?._id,
+              companyId,
+            };
 
-          try {
-            await createNotification(notificationPayload).unwrap();
-            toast.success(`Notification sent to ${DriverData?.firstName}`);
-          } catch (error) {
-            toast.error(`Failed to notify ${DriverData?.firstName}`);
-          }
-        })
-      );
+            try {
+              await createNotification(notificationPayload).unwrap();
+              toast.success(`Notification sent to ${DriverData?.firstName}`);
+            } catch (error) {
+              toast.error(`Failed to notify ${DriverData?.firstName}`);
+            }
+          })
+        );
+      }
 
       setShowDriverModal(false);
       if (onDriversUpdate) {
@@ -329,51 +464,6 @@ const { data: jobsData } = useGetDriverJobsQuery(
       }
     } catch (error) {
       toast.error("Something went wrong while assigning drivers.");
-    }
-  };
-
-  const handleRemoveDriver = async (driverId, employeeNumber, driverName) => {
-    try {
-      const updatedDrivers = selectedBooking.drivers.filter(
-        (d) => d.driverId !== driverId
-      );
-
-      await updateBooking({
-        id: selectedBooking._id,
-        updatedData: {
-          bookingData: {
-            ...selectedBooking,
-            drivers: updatedDrivers,
-          },
-        },
-      }).unwrap();
-
-      if (employeeNumber) {
-        const { data: notificationsForDriver } = await dispatch(
-          notificationApi.endpoints.getUserNotifications.initiate(
-            employeeNumber
-          )
-        );
-
-        const matchingNotification = notificationsForDriver?.find(
-          (notif) =>
-            notif?.bookingId === selectedBooking.bookingId &&
-            notif?.employeeNumber === employeeNumber
-        );
-
-        if (matchingNotification?._id) {
-          await deleteNotification(matchingNotification._id).unwrap();
-          toast.success(`Notification for ${driverName} deleted.`);
-        } else {
-          console.warn("No matching notification found to delete.");
-        }
-      }
-
-      toast.success(`${driverName} removed successfully.`);
-      refetchBookings();
-    } catch (error) {
-      console.error("❌ Failed to remove driver:", error);
-      toast.error(`Failed to remove ${driverName}`);
     }
   };
 
@@ -399,7 +489,7 @@ const { data: jobsData } = useGetDriverJobsQuery(
             <p className="bg-gray-100 px-3 py-1.5 rounded">
               {convertKmToMiles(
                 selectedBooking?.primaryJourney?.distanceText ||
-                selectedBooking?.returnJourney?.distanceText
+                  selectedBooking?.returnJourney?.distanceText
               ) || "Select a booking"}
             </p>
           </div>
@@ -420,7 +510,6 @@ const { data: jobsData } = useGetDriverJobsQuery(
           </div>
         </div>
 
-   
         <div className="flex space-x-2">
           <button
             onClick={() => setShowMatching(false)}
@@ -489,7 +578,12 @@ const { data: jobsData } = useGetDriverJobsQuery(
                 <input
                   type="checkbox"
                   className="form-checkbox h-4 w-4 text-indigo-600"
-                  checked={selectedDrivers.some((d) => d._id === driver._id)}
+                  checked={selectedDrivers.some(
+                    (d) =>
+                      d._id === driver._id ||
+                      d.driverId === driver._id ||
+                      d.userId === driver._id
+                  )}
                   onChange={() => {
                     if (selectedDrivers.some((d) => d._id === driver._id)) {
                       setSelectedDrivers((prev) =>

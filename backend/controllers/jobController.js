@@ -37,10 +37,9 @@ export const createJob = async (req, res) => {
 
 // ✅ GET: All jobs for a company with embedded booking details
 export const getAllJobs = async (req, res) => {
-  console.log("api called");
   try {
-    const companyId = req?.user?.companyId;
-    if (!companyId || companyId.length !== 24) {
+    const { companyId } = req.query;
+        if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Invalid or missing companyId" });
     }
 
@@ -67,7 +66,9 @@ export const getAllJobs = async (req, res) => {
 export const getDriverJobs = async (req, res) => {
   try {
     const { companyId, driverId } = req.query;
-
+    if (!mongoose.Types.ObjectId.isValid(driverId)) {
+      return res.status(400).json({ message: "Invalid Driver ID format" });
+    }
     if (!companyId || !driverId) {
       return res.status(400).json({ message: "Missing companyId or driverId" });
     }
@@ -76,7 +77,11 @@ export const getDriverJobs = async (req, res) => {
       companyId: companyId,
       driverId: new mongoose.Types.ObjectId(driverId),
     })
-      .populate("driverId")
+      .populate({
+        path: 'bookingId',
+        model: 'Booking',
+        
+      })
       .lean();
 
     // populate booking
@@ -117,6 +122,15 @@ export const updateJobStatus = async (req, res) => {
     if (!job) {
       return res.status(404).json({ message: "Job not found" });
     }
+    
+    // If the job status is "Accepted"
+    if (jobStatus === "Accepted") {
+      // Update other jobs with the same bookingId to "Already Assigned"
+      await Job.updateMany(
+        { bookingId: job.bookingId, jobStatus: { $ne: "Accepted" } },
+        { $set: { jobStatus: "Already Assigned" } }
+      );
+    }
 
     // If the job status is "Rejected", remove the driver from the job
     if (jobStatus === "Rejected") {
@@ -149,5 +163,23 @@ export const updateJobStatus = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Server error", error: err.message });
+  }
+};
+
+
+export const DeleteJob = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    if (!jobId || jobId.length !== 24) {
+      return res.status(400).json({ message: "Invalid jobId" });
+    }
+    const job = await Job.findByIdAndDelete(jobId);
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+    return res.status(200).json({ success: true, message: "Job deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting job:", err);
+    return res.status(500).json({ message: "Server error", error: err.message });
   }
 };

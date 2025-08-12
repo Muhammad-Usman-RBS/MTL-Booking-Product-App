@@ -4,24 +4,16 @@ import { useGetDriverJobsQuery } from "../../../redux/api/jobsApi";
 import { useUpdateJobStatusMutation } from "../../../redux/api/jobsApi";
 import { useUpdateBookingStatusMutation } from "../../../redux/api/bookingApi";
 import { toast } from "react-toastify";
-import { statusColors } from "../../../constants/dashboardTabsData/data";
+import {
+  driverportalstatusOptions,
+  statusColors,
+} from "../../../constants/dashboardTabsData/data";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
-
-const statusOptions = [
-  "Accepted",
-  "On Route",
-  "At Location",
-  "Ride Started",
-  "Late Cancel",
-  "No Show",
-  "Completed",
-  "Cancel",
-];
 
 const DriverPortalHome = () => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
-  const driverId = user?.driverId || user?._id;
+  const driverId = user?._id;
 
   const { data, isLoading, error, refetch } = useGetDriverJobsQuery(
     { companyId, driverId },
@@ -41,20 +33,64 @@ const DriverPortalHome = () => {
     }
     return text;
   };
-
   const handleJobAction = async (jobId, status) => {
     setLoadingJobId(jobId);
     try {
       const result = await updateJobStatus({ jobId, jobStatus: status });
-      if (result.error)
+
+      if (result.error) {
+        if (result.error.status === 409) {
+          toast.error("Job already accepted by another driver");
+          await refetch();
+          return;
+        }
         throw new Error(
           result.error.data?.message || "Failed to update job status"
         );
+      }
+
       setStatusMap((prevState) => ({
         ...prevState,
         [jobId]: status,
       }));
+
       toast.success(`Job status updated to "${status}" successfully!`);
+
+      try {
+        if (status === "Accepted") {
+          const job = (data?.jobs || []).find((j) => j._id === jobId);
+          const bookingId =
+            job?.booking?._id || job?.bookingId?._id || job?.bookingId;
+
+          if (bookingId) {
+            await updateBookingStatus({
+              id: bookingId,
+              status: "Accepted",
+              updatedBy: `${user.role} | ${user.fullName}`,
+            }).unwrap();
+
+            const otherJobs = (data?.jobs || []).filter(
+              (j) => j.bookingId === bookingId && j._id !== jobId
+            );
+
+            for (const otherJob of otherJobs) {
+              try {
+                await updateJobStatus({
+                  jobId: otherJob._id,
+                  jobStatus: "Already Assigned",
+                });
+              } catch (e) {
+                console.warn(
+                  `Failed to update other job (${otherJob._id}) to 'Already Assigned':`
+                );
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to update booking status after accept:", e);
+      }
+
       await refetch();
     } catch (err) {
       toast.error(err.message || "Failed to update job status");
@@ -65,61 +101,37 @@ const DriverPortalHome = () => {
 
   const handleStatusChange = async (jobId, newStatus) => {
     setLoadingJobId(jobId);
-  
+
     try {
-      // Find the job to get the booking ID and update booking status only
+      // Only update the booking status (not job status)
       const job = jobs.find((j) => j._id === jobId);
       const bookingId = job?.booking?._id;
-  
-      if (bookingId) {
-        const bookingResult = await updateBookingStatus({
-          id: bookingId,
-          status: newStatus,
-          updatedBy: user._id,
-        });
-  
-        if (bookingResult.error) {
-          throw new Error(
-            bookingResult.error.data?.message ||
-              "Failed to update booking status"
-          );
-        }
-      } else {
+
+      if (!bookingId) {
         throw new Error("Booking ID not found");
       }
-  
-      // Update local state
+
+      const bookingResult = await updateBookingStatus({
+        id: bookingId,
+        status: newStatus, // Update booking status to the new status
+        updatedBy: `${user.role} | ${user.fullName}`,
+      });
+
+      if (bookingResult.error) {
+        throw new Error(
+          bookingResult.error.data?.message || "Failed to update booking status"
+        );
+      }
+
       setStatusMap((prevState) => ({
         ...prevState,
         [jobId]: newStatus,
       }));
-  
+
       toast.success(`Status updated to "${newStatus}" successfully!`);
       await refetch();
     } catch (err) {
       toast.error(err.message || "Failed to update status");
-    } finally {
-      setLoadingJobId(null);
-    }
-  };
-
-  const handleBookingAction = async (bookingId, status) => {
-    setLoadingJobId(bookingId);
-    try {
-      const result = await updateBookingStatus({
-        id: bookingId,
-        status,
-        updatedBy: user._id,
-      });
-      if (result.error)
-        throw new Error(
-          result.error.data?.message || "Failed to update booking status"
-        );
-      toast.success(`Booking status updated to "${status}" successfully!`);
-      setStatusMap((prevState) => ({ ...prevState, [bookingId]: status }));
-      await refetch();
-    } catch (err) {
-      toast.error(err.message || "Failed to update booking status");
     } finally {
       setLoadingJobId(null);
     }
@@ -138,7 +150,7 @@ const DriverPortalHome = () => {
     return (
       <div className="p-4">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          Error loading bookings:{" "}
+          Error loading bookings:
           {error?.data?.message || error.message || "Unknown error"}
         </div>
       </div>
@@ -161,8 +173,20 @@ const DriverPortalHome = () => {
             const journey = isReturnJourney
               ? booking?.returnJourney || {}
               : booking?.primaryJourney || {};
-              const currentStatus = statusMap[job._id] || job.booking?.status || job.jobStatus;
+            const getCurrentStatus = (job, statusMap) => {
+              if (statusMap[job._id]) {
+                return statusMap[job._id];
+              }
+              if (job.jobStatus === "Accepted" && job.booking?.status) {
+                return job.booking.status;
+              }
+              return job.jobStatus ?? "New";
+            };
 
+            const currentStatus = getCurrentStatus(job, statusMap);
+            const currentDriverId = job.driverId;
+            const driverIdStr = String(currentDriverId);
+            const userIdStr = String(user._id);
             return (
               <div
                 key={job._id}
@@ -198,7 +222,7 @@ const DriverPortalHome = () => {
                       </p>
                       {journey?.pickupDoorNumber && (
                         <p>
-                          <strong>Pickup Door:</strong>{" "}
+                          <strong>Pickup Door:</strong>
                           {journey.pickupDoorNumber}
                         </p>
                       )}
@@ -239,7 +263,7 @@ const DriverPortalHome = () => {
                           (key, i) =>
                             journey?.[key] && (
                               <div key={key}>
-                                <strong>Dropoff Door #{i + 1}:</strong>{" "}
+                                <strong>Dropoff Door #{i + 1}:</strong>
                                 {journey[key]}
                               </div>
                             )
@@ -250,7 +274,7 @@ const DriverPortalHome = () => {
                               <div key={key}>
                                 <strong>
                                   {key.replace("additional", "Additional")}:
-                                </strong>{" "}
+                                </strong>
                                 {journey[key]}
                               </div>
                             )
@@ -263,7 +287,7 @@ const DriverPortalHome = () => {
                           (key, i) =>
                             journey?.[key] && (
                               <div key={key}>
-                                <strong>Dropoff Terminal {i + 1}:</strong>{" "}
+                                <strong>Dropoff Terminal {i + 1}:</strong>
                                 {journey[key]}
                               </div>
                             )
@@ -275,7 +299,7 @@ const DriverPortalHome = () => {
                         )}
                         {booking?.internalNotes && (
                           <div className="md:col-span-2">
-                            <strong>Internal Notes:</strong>{" "}
+                            <strong>Internal Notes:</strong>
                             {booking.internalNotes}
                           </div>
                         )}
@@ -312,7 +336,7 @@ const DriverPortalHome = () => {
                       <div>
                         <strong className="text-[var(--dark-gray)]">
                           Driver Fare:
-                        </strong>{" "}
+                        </strong>
                         £
                         {isReturnJourney
                           ? booking.returnDriverFare
@@ -329,19 +353,19 @@ const DriverPortalHome = () => {
                         <div>
                           <strong className="text-[var(--dark-gray)]">
                             Name:
-                          </strong>{" "}
+                          </strong>
                           {booking.passenger.name}
                         </div>
                         <div>
                           <strong className="text-[var(--dark-gray)]">
                             Contact:
-                          </strong>{" "}
+                          </strong>
                           +{booking.passenger.phone || "N/A"}
                         </div>
                         <div>
                           <strong className="text-[var(--dark-gray)]">
                             Email:
-                          </strong>{" "}
+                          </strong>
                           {booking.passenger.email || "N/A"}
                         </div>
                       </div>
@@ -360,7 +384,7 @@ const DriverPortalHome = () => {
                       <div className="text-red-600 font-semibold text-sm">
                         The Job has been rejected
                       </div>
-                    ) : currentStatus === "New" && !statusMap[job._id] ? (
+                    ) : currentStatus === "New" ? (
                       <div className="flex gap-3 pt-2">
                         <button
                           className="btn btn-success"
@@ -376,24 +400,26 @@ const DriverPortalHome = () => {
                         </button>
                       </div>
                     ) : (
-                      <div>
-                        <SelectOption
-                          width="32"
-                          label="Current Job Status"
-                          value={
-                            statusMap[job._id] ||
-                            job.booking?.status ||
-                            job.jobStatus
-                          }
-                          onChange={(e) =>
-                            handleStatusChange(job._id, e.target.value)
-                          }
-                          options={statusOptions.map((status) => ({
-                            value: status,
-                            label: status,
-                          }))}
-                        />
-                      </div>
+                      driverIdStr === userIdStr &&
+                      currentStatus !== "Rejected" &&
+                      currentStatus !== "Already Assigned" && (
+                        <div>
+                          <SelectOption
+                            width="32"
+                            label="Current Job Status"
+                            value={currentStatus}
+                            onChange={(e) =>
+                              handleStatusChange(job._id, e.target.value)
+                            }
+                            options={driverportalstatusOptions?.map(
+                              (status) => ({
+                                value: status,
+                                label: status,
+                              })
+                            )}
+                          />
+                        </div>
+                      )
                     )}
                   </div>
 
