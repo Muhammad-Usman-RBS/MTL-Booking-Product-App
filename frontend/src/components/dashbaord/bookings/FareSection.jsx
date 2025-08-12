@@ -30,7 +30,7 @@ const FareSection = ({
         <h2 className="text-xl font-bold text-gray-50">Fare&nbsp;Details:-</h2>
       </div>
       <div className="p-6 space-y-6">
-        {fareDetails.paymentMethod === "Card" && (
+        {fareDetails.paymentMethod === "Card, Bank" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
               type="text"
@@ -54,7 +54,7 @@ const FareSection = ({
         )}
 
         <div className="flex flex-wrap items-center gap-4">
-          {["Cash", "Card", "Payment Link", "Invoice", "Paypal"].map(
+          {["Cash", "Card, Bank", "Payment Link", "Invoice", "Paypal"].map(
             (method) => (
               <label
                 key={method}

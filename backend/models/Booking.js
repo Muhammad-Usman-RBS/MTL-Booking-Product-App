@@ -134,7 +134,7 @@ const BookingSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
-      enum: ["Cash", "Card", "Payment Link", "Invoice", "Paypal"],
+      enum: ["Cash", "Card, Bank", "Payment Link", "Invoice", "Paypal"],
     },
     cardPaymentReference: { type: String, default: null },
     paymentGateway: { type: String, default: null },

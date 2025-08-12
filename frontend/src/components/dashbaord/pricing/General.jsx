@@ -13,7 +13,7 @@ const General = () => {
     dropoffAirportPrice: "0",
     minAdditionalDropOff: "0",
     childSeatPrice: "0",
-    cardPaymentType: "Card",
+    cardPaymentType: "Card, Bank",
     cardPaymentAmount: "0",
     invoiceTaxPercent: "0",
   });
@@ -28,7 +28,7 @@ const General = () => {
         dropoffAirportPrice: data.dropoffAirportPrice ?? "0",
         minAdditionalDropOff: data.minAdditionalDropOff ?? "0",
         childSeatPrice: data.childSeatPrice ?? "0",
-        cardPaymentType: data.cardPaymentType || "Card",
+        cardPaymentType: data.cardPaymentType || "Card, Bank",
         cardPaymentAmount: data.cardPaymentAmount ?? "0",
         invoiceTaxPercent: data.invoiceTaxPercent ?? "0",
       });
@@ -172,14 +172,14 @@ const General = () => {
           </label>
           <SelectOption
             width="full"
-            options={["Card", "Cash"]}
+            options={["Card, Bank", "Cash"]}
             value={formData.cardPaymentType}
             onChange={handlePaymentTypeChange}
           />
         </div>
 
         {/* Card Payment Amount */}
-        {formData.cardPaymentType === "Card" && (
+        {formData.cardPaymentType === "Card, Bank" && (
           <div>
             <label className="block text-gray-700 font-semibold mb-2">
               Card Payment Percentage

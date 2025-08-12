@@ -256,9 +256,11 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
               onChange={handleChange}
               className="custom_input"
             >
-              <option>Pay Via Debit/Credit Card, Bank</option>
-              <option>PayPal</option>
               <option>Cash</option>
+              <option>PayPal</option>
+              <option>Invoice</option>
+              <option>Card, Bank</option>
+              <option>Payment Link</option>
             </select>
           </div>
 

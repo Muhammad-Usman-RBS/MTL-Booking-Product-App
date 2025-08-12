@@ -72,7 +72,7 @@ const CustomerCard = () => {
                                 {booking.primaryJourney ? (
                                     <div className="flex justify-between flex-wrap">
                                         <span><strong>Journey Fare:</strong> {booking.journeyFare ? `${booking.journeyFare} GBP` : 'N/A'}</span>
-                                        <span><strong>Driver Fare:</strong> {booking.driverFare ? `${booking.driverFare} GBP` : 'N/A'}</span>
+                                        <span><strong>Payment:</strong> {booking?.paymentMethod || 'N/A'}</span>
                                     </div>
                                 ) : booking.returnJourney ? (
                                     <div className="flex justify-between flex-wrap">
@@ -85,7 +85,6 @@ const CustomerCard = () => {
 
                                 <div className="flex justify-between flex-wrap">
                                     <span><strong>Vehicle:</strong> {booking?.vehicle?.vehicleName || 'N/A'}</span>
-                                    <span><strong>Payment:</strong> {booking?.paymentMethod || 'N/A'}</span>
                                 </div>
 
                                 <div className="flex justify-between flex-wrap">

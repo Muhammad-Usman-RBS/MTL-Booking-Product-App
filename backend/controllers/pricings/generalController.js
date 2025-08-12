@@ -22,7 +22,7 @@ export const getGeneralPricing = async (req, res) => {
         minAdditionalDropOff: 0,
         childSeatPrice: 0,
         invoiceTaxPercent: 0,
-        cardPaymentType: "Card",
+        cardPaymentType: "Card, Bank",
         cardPaymentAmount: 0,
       });
     }

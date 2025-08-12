@@ -277,7 +277,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                     options={[
                                         { label: "Select", value: "" },
                                         { label: "Payment Link", value: "Payment Link" },
-                                        { label: "Card", value: "Card" },
+                                        { label: "Card, Bank", value: "Card, Bank" },
                                         { label: "Cash", value: "Cash" },
                                         { label: "Invoice", value: "Invoice" },
                                         { label: "Paypal", value: "Paypal" },

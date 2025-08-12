@@ -37,8 +37,8 @@ const generalPricingSchema = new mongoose.Schema({
   },
   cardPaymentType: { 
     type: String, 
-    enum: ["Card", "Cash"], 
-    default: "Card", 
+    enum: ["Card, Bank", "Cash"], 
+    default: "Card, Bank", 
     required: true 
   },
   cardPaymentAmount: { 

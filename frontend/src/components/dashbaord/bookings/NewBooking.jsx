@@ -188,6 +188,21 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     );
   };
 
+  // paymentOptionsInvoice get value only for corporate customer account
+  useEffect(() => {
+    if (customerByVat?.paymentOptionsInvoice) {
+      setFareDetails((prevDetails) => ({
+        ...prevDetails,
+        paymentMethod: customerByVat.paymentOptionsInvoice,
+      }));
+    } else {
+      setFareDetails((prevDetails) => ({
+        ...prevDetails,
+        paymentMethod: "Cash",
+      }));
+    }
+  }, [customerByVat]);
+
   // Watch for location changes
   useEffect(() => {
     if (originalPrimaryLocations) {
@@ -608,6 +623,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       // ✅ CREATE MODE (Copy or New)
       else {
         // ➤ 1. Create primary booking
+        const paymentMethodToUse =
+          customerByVat?.paymentOptionsInvoice || fareDetails.paymentMethod;
+
+
         const primaryPayload = {
           ...basePayload,
           journeyFare: parseFloat(fareDetails.journeyFare),
@@ -625,6 +644,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
                 : null,
             fare: getDisplayPrimaryFare(),
             ...dynamicFields1,
+            paymentMethod: paymentMethodToUse,
           },
         };
 
