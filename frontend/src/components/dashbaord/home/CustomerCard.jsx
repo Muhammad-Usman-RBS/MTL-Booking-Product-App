@@ -91,7 +91,7 @@ const CustomerCard = () => {
                     {booking?.returnJourney ? "Return" : "Primary"}
                   </span>
                 </div>
-
+ 
                 {booking.primaryJourney ? (
                   <div className="flex justify-between flex-wrap">
                     <span>
