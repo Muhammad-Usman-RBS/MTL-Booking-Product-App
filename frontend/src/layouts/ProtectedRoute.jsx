@@ -9,6 +9,7 @@ const ProtectedRoute = () => {
   const userPermissions = user?.permissions || [];
   const location = useLocation();
   const currentPath = location.pathname;
+  
   const token = localStorage.getItem("token");
   useEffect(() => {
     if (!token || isTokenExpired(token)) {
