@@ -7,11 +7,7 @@ const generalPricingSchema = new mongoose.Schema({
     ref: "Company",
     required: true,
   },
-  type: { 
-    type: String, 
-    required: true, 
-    enum: ["standard", "premium"], // Example types
-  },
+
   pickupAirportPrice: { 
     type: Number, 
     default: 2, 

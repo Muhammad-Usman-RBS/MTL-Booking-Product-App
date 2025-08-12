@@ -15,7 +15,6 @@ export const getGeneralPricing = async (req, res) => {
     if (!pricing) {
       pricing = await GeneralModel.create({
         companyId,
-        type: "standard", // or some default value
         updatedBy: req.user?._id,
         pickupAirportPrice: 0,
         dropoffAirportPrice: 0,
@@ -45,7 +44,6 @@ export const updateGeneralPricing = async (req, res) => {
     }
 
     const {
-      type, // Include type
       pickupAirportPrice,
       dropoffAirportPrice,
       minAdditionalDropOff,
@@ -57,7 +55,6 @@ export const updateGeneralPricing = async (req, res) => {
 
     const data = {
       companyId,
-      type,
       updatedBy,
       pickupAirportPrice,
       dropoffAirportPrice,
