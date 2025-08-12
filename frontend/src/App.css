@@ -135,42 +135,21 @@
 
 /* Default web style */
 .invoice-status {
-  margin: 10px 0px;
-  padding: 6px 14px;
+  margin-top: 10px;
+  margin-bottom: 10px;
   display: inline-block;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 700;
   color: #ffffff;
   border-radius: 10px;
-  text-align: center;
   min-width: 60px;
   text-transform: capitalize;
-  background-color: var(--medium-grey);
 }
 .invoice-status.paid {
-  background-color: var(--success-color);
-  color: #ffffff;
+  color: var(--success-color);
 }
-.invoice-container.pdf-mode .invoice-status.paid {
-  background-color: transparent !important;
-  font-size: small;
-  text-align: right;
-  border: transparent;
-}
-
-.invoice-container.pdf-mode .invoice-status.Unpaid {
-  color: #dc2626 !important;
-  font-size: small;
-  text-align: right;
-}
-
-.invoice-container.pdf-mode .invoice-status {
-  padding: 0;
-  background-color: transparent !important;
-  color: var(--primary-dark-red);
-  font-size: small;
-  border: transparent;
-  text-align: right;
+.invoice-status.unpaid {
+  color: var(--alert-red);
 }
 .invoice-container.pdf-mode .invoice-header {
   display: table;

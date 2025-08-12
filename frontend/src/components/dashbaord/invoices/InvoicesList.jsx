@@ -11,26 +11,70 @@ import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { useSelector } from "react-redux";
 
-
 const InvoicesList = () => {
   const [search, setSearch] = useState("");
   const { data, isLoading, isError, refetch } = useGetAllInvoicesQuery();
-  const [invoiceMode, setInvoiceMode] = useState("Customer");
   const [updateInvoice] = useUpdateInvoiceMutation();
   const user = useSelector((state) => state.auth.user);
 
+  // Determine user role and appropriate mode
+  const getUserRole = () => {
+    if (user?.role === "driver" || user?.roles?.includes("driver")) {
+      return "driver";
+    }
+    if (user?.role === "customer" || user?.roles?.includes("customer")) {
+      return "customer";
+    }
+    if (user?.role === "clientadmin" || user?.roles?.includes("clientadmin")) {
+      return "clientadmin";
+    }
+    return "clientadmin"; // default fallback
+  };
+
+  const userRole = getUserRole();
+
+  // Set initial invoice mode based on user role
+  const getInitialInvoiceMode = () => {
+    if (userRole === "driver") return "Driver";
+    if (userRole === "customer") return "Customer";
+    return "Customer"; // default for clientadmin
+  };
+
+  const [invoiceMode, setInvoiceMode] = useState(getInitialInvoiceMode());
+
+  // Check if customer has VAT (keeping existing logic)
   const isCustomerWithVat =
     (user?.role === "customer" || user?.roles?.includes("customer")) &&
     Boolean(user?.vatnumber || user?.customer?.vatnumber);
 
-  // + NEW: force mode to Customer if restricted
+  // Update invoice mode based on user role
+  useEffect(() => {
+    if (userRole === "driver") {
+      setInvoiceMode("Driver");
+    } else if (userRole === "customer") {
+      setInvoiceMode("Customer");
+    }
+    // For clientadmin, keep the current mode or default to Customer
+  }, [userRole]);
+
+  // Force mode to Customer if customer with VAT tries to access Driver mode
   useEffect(() => {
     if (isCustomerWithVat && invoiceMode === "Driver") {
       setInvoiceMode("Customer");
     }
   }, [isCustomerWithVat, invoiceMode]);
 
-  const tabs = ["Customer", ...(isCustomerWithVat ? [] : ["Driver"])];
+  // Define tabs based on user role
+  const getTabs = () => {
+    if (userRole === "driver" || userRole === "customer") {
+      return []; // No tabs for driver or customer
+    }
+    // For clientadmin, show tabs but respect VAT restrictions
+    return ["Customer", ...(isCustomerWithVat ? [] : ["Driver"])];
+  };
+
+  const tabs = getTabs();
+  const showTabs = tabs.length > 1; // Only show tabs if there are multiple options
 
   const invoices = data?.invoices || [];
   const [page, setPage] = useState(1);
@@ -45,6 +89,7 @@ const InvoicesList = () => {
     setExpandedInvoice((prev) => (prev === invoiceNo ? null : invoiceNo));
     setScrollToInvoice(true);
   };
+
   useEffect(() => {
     if (scrollToInvoice) {
       const timeout = setTimeout(() => {
@@ -58,6 +103,7 @@ const InvoicesList = () => {
       return () => clearTimeout(timeout);
     }
   }, [expandedInvoice, scrollToInvoice]);
+
   const filteredData = invoices.filter((invoice) => {
     if (invoice.invoiceType?.toLowerCase() !== invoiceMode.toLowerCase())
       return false;
@@ -91,7 +137,8 @@ const InvoicesList = () => {
     { label: "Due Date", key: "dueDate" },
     { label: "Amount", key: "amount" },
     { label: "Status", key: "status" },
-    { label: "Actions", key: "actions" },
+    // Only show Actions column for clientadmin
+    ...(userRole === "clientadmin" ? [{ label: "Actions", key: "actions" }] : []),
   ];
 
   const paginatedInvoices =
@@ -136,7 +183,7 @@ const InvoicesList = () => {
         date,
         dueDate,
         amount: `£${amount.toFixed(2)}`,
-        status: (
+        status: userRole === "clientadmin" ? (
           <SelectOption
             value={status}
             options={["Paid", "Unpaid"]}
@@ -154,23 +201,34 @@ const InvoicesList = () => {
               }
             }}
           />
+        ) : (
+          // Show only text for customer and driver roles
+          <span className={`px-2 py-1 rounded-full text-sm font-medium ${status === "Paid"
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+            }`}>
+            {status}
+          </span>
         ),
 
-        actions: (
-          <>
-            <div>
-              <div className="flex gap-2">
-                <Link to={`/dashboard/invoices/edit/${invoice._id}`}>
-                  <Icons.SquarePen className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2" />
-                </Link>
-                <Icons.Trash
-                  onClick={() => handleDeleteClick(invoice._id)}
-                  className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
-                />
+        // Only include actions for clientadmin
+        ...(userRole === "clientadmin" ? {
+          actions: (
+            <>
+              <div>
+                <div className="flex gap-2">
+                  <Link to={`/dashboard/invoices/edit/${invoice._id}`}>
+                    <Icons.SquarePen className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2" />
+                  </Link>
+                  <Icons.Trash
+                    onClick={() => handleDeleteClick(invoice._id)}
+                    className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
+                  />
+                </div>
               </div>
-            </div>
-          </>
-        ),
+            </>
+          )
+        } : {}),
       };
     });
 
@@ -216,37 +274,29 @@ const InvoicesList = () => {
     setDeleteModalOpen(false);
     setDeleteInvoiceId(null);
   };
+
   return (
     <>
       <div>
         <OutletHeading name="Invoices List" />
 
-        <div className="flex items-center justify-center mb-4">
-          {/* {["Customer", "Driver"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setInvoiceMode(tab)}
-              className={`px-6 py-2 font-semibold text-sm border cursor-pointer ${invoiceMode === tab
-                  ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
-                  : "bg-[#f9fafb] text-gray-700 border-gray-300"
-                } ${tab === "Customer" ? "rounded-l-md" : "rounded-r-md"}`}
-            >
-              {tab}
-            </button>
-          ))} */}
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setInvoiceMode(tab)}
-              className={`px-6 py-2 font-semibold text-sm border cursor-pointer ${invoiceMode === tab
-                  ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
-                  : "bg-[#f9fafb] text-gray-700 border-gray-300"
-                } ${tab === "Customer" ? "rounded-l-md" : "rounded-r-md"}`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+        {/* Only show tabs for clientadmin with multiple options */}
+        {showTabs && (
+          <div className="flex items-center justify-center mb-4">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setInvoiceMode(tab)}
+                className={`px-6 py-2 font-semibold text-sm border cursor-pointer ${invoiceMode === tab
+                    ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
+                    : "bg-[#f9fafb] text-gray-700 border-gray-300"
+                  } ${tab === "Customer" ? "rounded-l-md" : "rounded-r-md"}`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        )}
 
         <CustomTable
           tableHeaders={tableHeaders}

@@ -23,6 +23,22 @@ const InvoiceDetails = ({ item }) => {
   );
   const invoiceType = item?.invoiceType;
 
+  // Determine user role
+  const getUserRole = () => {
+    if (user?.role === "driver" || user?.roles?.includes("driver")) {
+      return "driver";
+    }
+    if (user?.role === "customer" || user?.roles?.includes("customer")) {
+      return "customer";
+    }
+    if (user?.role === "clientadmin" || user?.roles?.includes("clientadmin")) {
+      return "clientadmin";
+    }
+    return "clientadmin"; // default fallback
+  };
+
+  const userRole = getUserRole();
+
   const [updateInvoice] = useUpdateInvoiceMutation();
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(item?.status);
@@ -33,6 +49,7 @@ const InvoiceDetails = ({ item }) => {
     skip: !companyId,
   });
   const company = companyData || {};
+
   const handleStatusUpdate = async () => {
     try {
       await updateInvoice({
@@ -50,10 +67,11 @@ const InvoiceDetails = ({ item }) => {
 
   if (!item) return null;
 
-  const isDev = process.env.NODE_ENV !== "production";
-  const invoiceUrl = `${
-    isDev ? "http://localhost:3000" : "https://www.megatransfers.com"
-  }/dashboard/invoices/edit/${item?._id}`;
+  const baseUrl = import.meta.env.DEV
+    ? import.meta.env.VITE_API_BASE_URL
+    : import.meta.env.VITE_PROD_BASE_URL;
+
+  const invoiceUrl = `${baseUrl}/dashboard/invoices/edit/${item?._id}`;
 
   const handleDownload = () => {
     const element = document.getElementById("invoiceToDownload");
@@ -72,13 +90,10 @@ const InvoiceDetails = ({ item }) => {
   };
 
   const openModal = () => {
-    const msg = `Dear ${
-      item?.customer?.name || "Customer"
-    },\n\nWe have prepared invoice <b>${
-      item?.invoiceNumber
-    }</b>.\n\nStatus: ${status}.\n\nView it here: <a href='${invoiceUrl}' target='_blank'>${invoiceUrl}</a>\n\nKind regards,\n${
-      company?.companyName || "MTL Team"
-    }`;
+    const msg = `Dear ${item?.customer?.name || "Customer"
+      },\n\nWe have prepared invoice <b>${item?.invoiceNumber
+      }</b>.\n\nStatus: ${status}.\n\nView it here: <a href='${invoiceUrl}' target='_blank'>${invoiceUrl}</a>\n\nKind regards,\n${company?.companyName || "MTL Team"
+      }`;
 
     setRecipient(item?.email);
     setSubject(`Invoice ${item?.invoiceNumber} created`);
@@ -118,8 +133,6 @@ const InvoiceDetails = ({ item }) => {
     <>
       <div>
         <div className="flex flex-wrap gap-2 sm:gap-3 mb-3 mt-8">
-          {/* Edit Button */}
-
           {/* Download Button */}
           <button
             onClick={handleDownload}
@@ -128,38 +141,49 @@ const InvoiceDetails = ({ item }) => {
             <Icons.Download size={16} />
           </button>
 
-          {/* Mail Button */}
-          <button
-            onClick={openModal}
-            className="p-2.5 cursor-pointer bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-          >
-            <Icons.Mail size={16} />
-          </button>
-
-          {/* Delete Button */}
-
-          {/* Status Select + Tick */}
-          <div className="flex gap-2 items-center w-full sm:w-auto mt-2 sm:mt-0">
-            <div className="w-full sm:w-40">
-              <SelectOption
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                options={statusOption}
-                width="full"
-              />
-            </div>
+          {/* Mail Button - Only show for clientadmin */}
+          {userRole === "clientadmin" && (
             <button
-              onClick={handleStatusUpdate}
-              disabled={status === selectedStatus}
-              className={`p-2.5 text-white rounded-md transition ${
-                status === selectedStatus
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-emerald-500 hover:bg-emerald-600"
-              }`}
+              onClick={openModal}
+              className="p-2.5 cursor-pointer bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
             >
-              <Icons.Check size={16} />
+              <Icons.Mail size={16} />
             </button>
-          </div>
+          )}
+
+          {/* Status Select + Tick - Only show for clientadmin */}
+          {userRole === "clientadmin" ? (
+            <div className="flex gap-2 items-center w-full sm:w-auto mt-2 sm:mt-0">
+              <div className="w-full sm:w-40">
+                <SelectOption
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  options={statusOption}
+                  width="full"
+                />
+              </div>
+              <button
+                onClick={handleStatusUpdate}
+                disabled={status === selectedStatus}
+                className={`p-2.5 text-white rounded-md transition ${status === selectedStatus
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-emerald-500 hover:bg-emerald-600"
+                  }`}
+              >
+                <Icons.Check size={16} />
+              </button>
+            </div>
+          ) : (
+            // Show status as text badge for customer and driver
+            <div className="flex items-center mt-2 sm:mt-0">
+              <span className={`px-3 py-2 rounded-md text-sm font-medium ${status?.toLowerCase() === "paid"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+                }`}>
+                Status: {status}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Invoice Display */}
@@ -188,9 +212,8 @@ const InvoiceDetails = ({ item }) => {
             <div className="invoice-info">
               <h2 className="invoice-title">INVOICE</h2>
               <p
-                className={`invoice-status ${
-                  status.toLowerCase() === "paid" ? "paid" : ""
-                }`}
+                className={`invoice-status ${status.toLowerCase() === "paid" ? "paid" : "unpaid"
+                  }`}
               >
                 {status}
               </p>
@@ -206,9 +229,9 @@ const InvoiceDetails = ({ item }) => {
                     : "-"}
                 </p>
               </div>
-              <div className="bill-to">
-                <p>
-                  <strong>Bill To</strong>
+              <div className="bill-to div">
+                <p className="bill-to">
+                  Bill To
                 </p>
                 <div>
                   <span>
@@ -217,11 +240,10 @@ const InvoiceDetails = ({ item }) => {
                       : item.customer?.name}
                   </span>
                   <a
-                    href={`mailto:${
-                      invoiceType === "driver"
+                    href={`mailto:${invoiceType === "driver"
                         ? item.driver?.email
                         : item.customer?.email
-                    }`}
+                      }`}
                     className="email-link"
                   >
                     {invoiceType === "driver"
@@ -299,21 +321,24 @@ const InvoiceDetails = ({ item }) => {
         </div>
       </div>
 
-      <CustomModal
-        isOpen={showEmailModal}
-        onClose={() => setShowEmailModal(false)}
-        heading="Send Invoice"
-      >
-        <InvoiceEmailModal
-          recipient={recipient}
-          subject={subject}
-          message={message}
-          onChangeRecipient={(e) => setRecipient(e.target.value)}
-          onChangeSubject={(e) => setSubject(e.target.value)}
-          onChangeMessage={(e) => setMessage(e.target.value)}
-          onSend={handleSendEmail}
-        />
-      </CustomModal>
+      {/* Only show email modal for clientadmin */}
+      {userRole === "clientadmin" && (
+        <CustomModal
+          isOpen={showEmailModal}
+          onClose={() => setShowEmailModal(false)}
+          heading="Send Invoice"
+        >
+          <InvoiceEmailModal
+            recipient={recipient}
+            subject={subject}
+            message={message}
+            onChangeRecipient={(e) => setRecipient(e.target.value)}
+            onChangeSubject={(e) => setSubject(e.target.value)}
+            onChangeMessage={(e) => setMessage(e.target.value)}
+            onSend={handleSendEmail}
+          />
+        </CustomModal>
+      )}
     </>
   );
 };
