@@ -42,7 +42,7 @@ const BookingSettingSchema = new mongoose.Schema({
   },
 
   // distance unit
-  distanceUnit: { type: String, enum: ["Miles", "Kilometers"], default: "Miles" },
+  distanceUnit: { type: String, enum: ["Miles", "KMs"], default: "Miles" },
 
   // feature toggles
   hourlyPackage: { type: Boolean, default: false },

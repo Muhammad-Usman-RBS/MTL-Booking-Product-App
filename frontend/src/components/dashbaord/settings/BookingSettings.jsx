@@ -11,7 +11,7 @@ import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import currencyOptions from "../../../constants/constantscomponents/currencyOptions";
 
 const YES_NO = ["Yes", "No"];
-const DISTANCE_UNITS = ["Miles", "Kilometers"];
+const DISTANCE_UNITS = ["Miles", "KMs"];
 const TIME_UNITS = ["Minutes", "Hours", "Days", "Weeks", "Months", "Years"];
 
 const BookingSettings = () => {

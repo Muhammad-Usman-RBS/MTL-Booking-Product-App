@@ -34,7 +34,7 @@ export const createOrUpdateBookingSetting = async (req, res) => {
       currency, // array of {label,value,symbol}
       googleApiKeys, // {browser, server, android, ios}
       avoidRoutes,   // {highways, tolls, ferries}
-      distanceUnit,  // "Miles" | "Kilometers"
+      distanceUnit,  // "Miles" | "KMs"
       hourlyPackage, // boolean
       advanceBookingMin,  // {value, unit}
       advanceBookingMax,  // {value, unit}
