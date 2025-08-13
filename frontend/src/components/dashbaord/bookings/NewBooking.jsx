@@ -8,14 +8,12 @@ import VehicleSelection from "./VehicleSelection";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import { useSelector } from "react-redux";
-import {
-  useCreateBookingMutation,
-  useUpdateBookingMutation,
-} from "../../../redux/api/bookingApi";
+import { useCreateBookingMutation, useUpdateBookingMutation } from "../../../redux/api/bookingApi";
 import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
 import { useBookingFare } from "../../../utils/useBookingFare";
 import { useGetGeneralPricingPublicQuery } from "../../../redux/api/generalPricingApi";
 import { useGetCorporateCustomerByVatQuery } from "../../../redux/api/corporateCustomerApi";
+import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 
 const NewBooking = ({ editBookingData = null, onClose }) => {
   const user = useSelector((state) => state.auth.user);
@@ -25,9 +23,29 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const userRole = user?.role || "";
   const vatnumber = user?.vatnumber || "";
 
+  const [mode, setMode] = useState("Transfer");
+  const [selectedHourly, setSelectedHourly] = useState(null);
+
   const { data: customerByVat, isFetching, error } = useGetCorporateCustomerByVatQuery(vatnumber, {
     skip: !vatnumber,
   });
+
+  // Booking settings se hourly toggle lao
+  const { data: bookingSettingData, isFetching: isBookingSettingLoading } = useGetBookingSettingQuery();
+
+  // DB me kabhi key 'hourLyPackage' bhi ho sakti hai, isliye fallback:
+  const hourlyEnabled = !!(bookingSettingData?.setting?.hourlyPackage ?? bookingSettingData?.setting?.hourLyPackage);
+
+  // Agar hourly disabled ho aur user "Hourly" par ho to Transfer par switch + hourly selection clear
+  useEffect(() => {
+    if (!hourlyEnabled && mode === "Hourly") {
+      setMode("Transfer");
+      setSelectedHourly(null);
+    }
+  }, [hourlyEnabled, mode]);
+
+  // Tabs list ko settings ke hisaab se set karein
+  const TABS = hourlyEnabled ? ["Transfer", "Hourly"] : ["Transfer"];
 
   // Track if locations have been changed from original values
   const [hasChangedPrimaryLocations, setHasChangedPrimaryLocations] =
@@ -51,10 +69,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     admin: false,
     customer: false,
   });
-  const [mode, setMode] = useState("Transfer");
   const [returnJourneyToggle, setreturnJourneyToggle] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [selectedHourly, setSelectedHourly] = useState(null);
   const [vehicleExtras, setVehicleExtras] = useState({
     passenger: 0,
     childSeat: 0,
@@ -696,7 +712,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       {!editBookingData && <OutletHeading name="New Booking" />}
       <div className="flex flex-col items-center justify-center mb-6 space-y-4">
         <div className="flex">
-          {["Transfer", "Hourly"].map((tab) => (
+          {TABS.map((tab) => (
             <button
               key={tab}
               onClick={() => setMode(tab)}
@@ -704,49 +720,41 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
                 ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
                 : "bg-[#f9fafb] text-gray-700 border-gray-300"
                 } ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
+              disabled={tab === "Hourly" && isBookingSettingLoading} // optional
             >
               {tab}
             </button>
           ))}
         </div>
 
-        {mode === "Hourly" && hourlyError && (
+        {mode === "Hourly" && hourlyEnabled && hourlyError && (
           <div className="text-sm text-red-600 text-center max-w-2xl mb-4">
             {hourlyError}
           </div>
         )}
 
         {/* Hourly Dropdown */}
-        {mode === "Hourly" && (
+        {mode === "Hourly" && hourlyEnabled && (
           <div className="w-full max-w-xs">
             <SelectOption
               options={hourlyPackages.map((pkg) => ({
                 label: `${pkg.distance} miles ${pkg.hours} hours`,
-                value: JSON.stringify({
-                  distance: pkg.distance,
-                  hours: pkg.hours,
-                }),
+                value: JSON.stringify({ distance: pkg.distance, hours: pkg.hours }),
               }))}
               value={selectedHourly ? JSON.stringify(selectedHourly.value) : ""}
               onChange={(e) => {
                 const selectedValue = e.target.value;
                 if (!selectedValue) {
-                  setSelectedHourly(null); // Reset to default
+                  setSelectedHourly(null);
                 } else {
                   const selected = hourlyPackages.find(
                     (pkg) =>
-                      JSON.stringify({
-                        distance: pkg.distance,
-                        hours: pkg.hours,
-                      }) === selectedValue
+                      JSON.stringify({ distance: pkg.distance, hours: pkg.hours }) === selectedValue
                   );
                   if (selected) {
                     setSelectedHourly({
                       label: `${selected.distance} miles ${selected.hours} hours`,
-                      value: {
-                        distance: selected.distance,
-                        hours: selected.hours,
-                      },
+                      value: { distance: selected.distance, hours: selected.hours },
                     });
                   }
                 }

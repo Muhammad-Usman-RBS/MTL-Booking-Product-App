@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import SelectOption from '../../../../constants/constantscomponents/SelectOption';
+import { useGetBookingSettingQuery } from "../../../../redux/api/bookingSettingsApi";
 import Icons from '../../../../assets/icons';
 
 const PrimaryForm = ({
@@ -29,9 +30,29 @@ const PrimaryForm = ({
     setSelectedHourly,
     setFormData,
 }) => {
+    // booking settings
+    const { data: bookingSettingData, isFetching: isSettingLoading } =
+        useGetBookingSettingQuery();
+
+    // DB me kabhi "hourLyPackage" (capital L) aa sakta hai
+    const hourlyEnabled = !!(
+        bookingSettingData?.setting?.hourlyPackage ??
+        bookingSettingData?.setting?.hourLyPackage
+    );
+
+    // hourly disabled -> agar user Hourly par ho to Transfer par switch + hourly selection clear
+    useEffect(() => {
+        if (!hourlyEnabled && mode === "Hourly") {
+            setMode("Transfer");
+            setSelectedHourly?.(null);
+        }
+    }, [hourlyEnabled, mode, setMode, setSelectedHourly]);
+
+    // tabs list settings ke mutabiq
+    const TABS = hourlyEnabled ? ["Transfer", "Hourly"] : ["Transfer"];
     return (
         <>
-            <div className="flex justify-center mb-4">
+            {/* <div className="flex justify-center mb-4">
                 {["Transfer", "Hourly"].map((tab) => (
                     <button
                         key={tab}
@@ -66,6 +87,48 @@ const PrimaryForm = ({
                                 ...prev,
                                 hourlyOption: selected,
                                 originalHourlyOption: selected
+                            }));
+                        }}
+                    />
+                </div>
+            )} */}
+
+            <div className="flex justify-center mb-4">
+                {TABS.map((tab) => (
+                    <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setMode(tab)}
+                        className={`px-6 py-2 font-semibold text-sm border cursor-pointer 
+              ${mode === tab
+                                ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
+                                : "bg-[#f9fafb] text-gray-700 border-[var(--light-gray)]"}
+              ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
+                        disabled={tab === "Hourly" && (isSettingLoading || !hourlyEnabled)}
+                    >
+                        {tab}
+                    </button>
+                ))}
+            </div>
+
+            {/* Hourly dropdown only if enabled */}
+            {mode === "Hourly" && hourlyEnabled && (
+                <div className="flex justify-center">
+                    <SelectOption
+                        options={formattedHourlyOptions.map((opt) => ({
+                            label: opt.label,
+                            value: JSON.stringify(opt.value),
+                        }))}
+                        value={selectedHourly ? JSON.stringify(selectedHourly.value) : ""}
+                        onChange={(e) => {
+                            const selected = formattedHourlyOptions.find(
+                                (opt) => JSON.stringify(opt.value) === e.target.value
+                            );
+                            setSelectedHourly(selected || null);
+                            setFormData((prev) => ({
+                                ...prev,
+                                hourlyOption: selected || null,
+                                originalHourlyOption: selected || null,
                             }));
                         }}
                     />
