@@ -20,7 +20,6 @@ const currencySlice = createSlice({
         state.currency = selectedCurrency;
         state.symbol = selectedOption.symbol; // Store the symbol
         state.error = null;
-        console.log('Currency updated in Redux:', selectedCurrency, selectedOption.symbol);
       }
     },
     setCurrencyLoading: (state, action) => {

@@ -17,6 +17,13 @@ const JourneyCard = ({
   isCopyMode,
   pricingMode,
   isEditMode,
+  // Advacne Booking Restriction
+  minAllowedDT,
+  maxAllowedDT,
+  minDateISO,
+  maxDateISO,
+  isCreateMode,
+  formatDT,
 }) => {
   const [pickupSuggestions, setPickupSuggestions] = useState([]);
   const [dropOffSuggestions, setDropOffSuggestions] = useState([]);
@@ -27,6 +34,46 @@ const JourneyCard = ({
 
   const [triggerSearchAutocomplete] = useLazySearchGooglePlacesQuery();
   const inputRef = useRef(null);
+
+  // Advacne Booking Restriction Start
+  const clampToWindow = (dt) => {
+    if (!dt) return dt;
+    if (minAllowedDT && dt < minAllowedDT) return new Date(minAllowedDT);
+    if (maxAllowedDT && dt > maxAllowedDT) return new Date(maxAllowedDT);
+    return dt;
+  };
+
+  const buildDT = (dateStr, hh, mm) => {
+    if (!dateStr || hh === "" || mm === "" || hh == null || mm == null) return null;
+    const d = new Date(dateStr);
+    d.setHours(Number(hh), Number(mm), 0, 0);
+    return d;
+  };
+
+  const ensureWithinWindow = (nextState, { showToast = true } = {}) => {
+    if (!isCreateMode) return nextState; // edit mode = soft
+    const dt = buildDT(nextState.date?.slice(0, 10), nextState.hour, nextState.minute);
+    if (!dt) return nextState;
+
+    const clamped = clampToWindow(dt);
+    if (clamped.getTime() !== dt.getTime()) {
+      if (showToast) {
+        const prettyMin = formatDT ? formatDT(minAllowedDT) : minDateISO;
+        const prettyMax = formatDT ? formatDT(maxAllowedDT) : maxDateISO;
+        toast.warn(
+          `Pickup time must be between ${prettyMin} and ${prettyMax}.`
+        );
+      }
+      return {
+        ...nextState,
+        date: clamped.toISOString().slice(0, 10),
+        hour: clamped.getHours().toString().padStart(2, "0"),
+        minute: clamped.getMinutes().toString().padStart(2, "0"),
+      };
+    }
+    return nextState;
+  };
+  // Advacne Booking Restriction End
 
   useEffect(() => {
 
@@ -166,38 +213,36 @@ const JourneyCard = ({
                 Pick Up Date & Time
               </label>
               <div className="flex flex-col sm:flex-row gap-3">
-                <label
-                  onClick={handleClick}
-                  style={{ display: "block", width: "100%", cursor: "pointer" }}
-                >
+                <label onClick={handleClick} style={{ display: "block", width: "100%", cursor: "pointer" }}>
                   <input
                     type="date"
                     name="date"
                     ref={inputRef}
                     className="custom_input w-full"
                     value={journeyData.date?.slice(0, 10) || ""}
-                    onChange={handleChange}
-                    style={{ pointerEvents: "none" }} // prevent direct input blocking
+                    onChange={(e) => {
+                      const next = ensureWithinWindow({ ...journeyData, date: e.target.value });
+                      setJourneyData(next);
+                    }}
+                    min={isCreateMode ? (minDateISO || undefined) : undefined}
+                    max={isCreateMode ? (maxDateISO || undefined) : undefined}
+                    style={{ pointerEvents: "none" }}
                   />
                 </label>
                 <div className="flex gap-2 w-full sm:w-1/2">
                   <select
                     name="hour"
                     className="custom_input w-full"
-                    // value={journeyData.hour?.toString().padStart(2, "0") || ""}
                     value={
                       journeyData.hour === "" || journeyData.hour === undefined
                         ? ""
                         : journeyData.hour.toString().padStart(2, "0")
                     }
-                    onChange={(e) =>
-                      handleChange({
-                        target: {
-                          name: "hour",
-                          value: e.target.value.padStart(2, "0"),
-                        },
-                      })
-                    }
+                    onChange={(e) => {
+                      const hour = e.target.value.padStart(2, "0");
+                      const next = ensureWithinWindow({ ...journeyData, hour });
+                      setJourneyData(next);
+                    }}
                   >
                     <option value="">HH</option>
                     {[...Array(24).keys()].map((h) => (
@@ -210,21 +255,16 @@ const JourneyCard = ({
                   <select
                     name="minute"
                     className="custom_input w-full"
-                    // value={journeyData.minute?.toString().padStart(2, "0") || ""}
                     value={
-                      journeyData.minute === "" ||
-                        journeyData.minute === undefined
+                      journeyData.minute === "" || journeyData.minute === undefined
                         ? ""
                         : journeyData.minute.toString().padStart(2, "0")
                     }
-                    onChange={(e) =>
-                      handleChange({
-                        target: {
-                          name: "minute",
-                          value: e.target.value.padStart(2, "0"),
-                        },
-                      })
-                    }
+                    onChange={(e) => {
+                      const minute = e.target.value.padStart(2, "0");
+                      const next = ensureWithinWindow({ ...journeyData, minute });
+                      setJourneyData(next);
+                    }}
                   >
                     <option value="">MM</option>
                     {[...Array(60).keys()].map((m) => (
@@ -233,6 +273,7 @@ const JourneyCard = ({
                       </option>
                     ))}
                   </select>
+
                 </div>
               </div>
             </div>

@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import { useGetBookingSettingQuery, useUpdateBookingSettingMutation } from "../../../redux/api/bookingSettingsApi";
+import {
+  useGetBookingSettingQuery,
+  useUpdateBookingSettingMutation,
+} from "../../../redux/api/bookingSettingsApi";
 import { setCurrency } from "../../../redux/slices/currencySlice";
 import { setTimezone } from "../../../redux/slices/timezoneSlice";
 import { toast } from "react-toastify";
@@ -12,7 +15,11 @@ import currencyOptions from "../../../constants/constantscomponents/currencyOpti
 
 const YES_NO = ["Yes", "No"];
 const DISTANCE_UNITS = ["Miles", "KMs"];
-const TIME_UNITS = ["Minutes", "Hours", "Days", "Weeks", "Months", "Years"];
+
+// Exact unit sets per field (as in your images)
+const TIME_UNITS_MIN = ["Minutes", "Hours"];        // advance min
+const TIME_UNITS_MAX = ["Days", "Months", "Years"]; // advance max
+const TIME_UNITS_CANCEL = ["Hours", "Days"];        // cancel window
 
 const BookingSettings = () => {
   const dispatch = useDispatch();
@@ -38,11 +45,20 @@ const BookingSettings = () => {
   });
 
   const [distanceUnit, setDistanceUnit] = useState("Miles");
-  const [hourlyPackage, setHourlyPackage] = useState("No"); // string "Yes"/"No" in UI
+  const [hourlyPackage, setHourlyPackage] = useState("No"); // "Yes"/"No" for UI
 
-  const [advanceBookingMin, setAdvanceBookingMin] = useState({ value: 12, unit: "Hours" });
-  const [advanceBookingMax, setAdvanceBookingMax] = useState({ value: 2, unit: "Years" });
-  const [cancelBookingWindow, setCancelBookingWindow] = useState({ value: 6, unit: "Hours" });
+  const [advanceBookingMin, setAdvanceBookingMin] = useState({
+    value: 12,
+    unit: "Hours",
+  });
+  const [advanceBookingMax, setAdvanceBookingMax] = useState({
+    value: 2,
+    unit: "Years",
+  });
+  const [cancelBookingWindow, setCancelBookingWindow] = useState({
+    value: 6,
+    unit: "Hours",
+  });
 
   const [cancelBookingTerms, setCancelBookingTerms] = useState("");
 
@@ -87,34 +103,49 @@ const BookingSettings = () => {
 
   const handleUpdate = async () => {
     try {
-      const selectedCurrency = currencyOptions.find((opt) => opt.value === currency) || {
-        label: "British Pound",
-        value: "GBP",
-        symbol: "£",
-      };
+      const selectedCurrency =
+        currencyOptions.find((opt) => opt.value === currency) || {
+          label: "British Pound",
+          value: "GBP",
+          symbol: "£",
+        };
 
       const payload = {
         operatingCountry: country || "United Kingdom",
         timezone: timezone || "Europe/London",
-        currency: [{ label: selectedCurrency.label, value: selectedCurrency.value, symbol: selectedCurrency.symbol }],
+        currency: [
+          {
+            label: selectedCurrency.label,
+            value: selectedCurrency.value,
+            symbol: selectedCurrency.symbol,
+          },
+        ],
 
         googleApiKeys,
         avoidRoutes,
         distanceUnit,
         hourlyPackage: hourlyPackage === "Yes",
 
+        // enforce sensible defaults matching the allowed unit sets
         advanceBookingMin: {
-          value: Number(advanceBookingMin.value || 0),
-          unit: advanceBookingMin.unit || "Hours",
+          value: Number(advanceBookingMin.value ?? 12),
+          unit: TIME_UNITS_MIN.includes(advanceBookingMin.unit)
+            ? advanceBookingMin.unit
+            : "Hours",
         },
         advanceBookingMax: {
-          value: Number(advanceBookingMax.value || 0),
-          unit: advanceBookingMax.unit || "Years",
+          value: Number(advanceBookingMax.value ?? 2),
+          unit: TIME_UNITS_MAX.includes(advanceBookingMax.unit)
+            ? advanceBookingMax.unit
+            : "Years",
         },
         cancelBookingWindow: {
-          value: Number(cancelBookingWindow.value || 0),
-          unit: cancelBookingWindow.unit || "Hours",
+          value: Number(cancelBookingWindow.value ?? 6),
+          unit: TIME_UNITS_CANCEL.includes(cancelBookingWindow.unit)
+            ? cancelBookingWindow.unit
+            : "Hours",
         },
+
         cancelBookingTerms,
       };
 
@@ -137,7 +168,6 @@ const BookingSettings = () => {
     <div>
       <OutletHeading name="Booking Settings" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
         {/* Operating Country */}
         <SelectOption
           label="Operating Country"
@@ -164,43 +194,59 @@ const BookingSettings = () => {
 
         {/* Google API Keys */}
         <div>
-          <label className="block text-sm font-medium mb-1">Google Maps API key (Browser)</label>
+          <label className="block text-sm font-medium mb-1">
+            Google Maps API key (Browser)
+          </label>
           <input
             type="text"
             className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
             value={googleApiKeys.browser}
-            onChange={(e) => setGoogleApiKeys((p) => ({ ...p, browser: e.target.value }))}
+            onChange={(e) =>
+              setGoogleApiKeys((p) => ({ ...p, browser: e.target.value }))
+            }
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Google Maps API key (Server)</label>
+          <label className="block text-sm font-medium mb-1">
+            Google Maps API key (Server)
+          </label>
           <input
             type="text"
             className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
             value={googleApiKeys.server}
-            onChange={(e) => setGoogleApiKeys((p) => ({ ...p, server: e.target.value }))}
+            onChange={(e) =>
+              setGoogleApiKeys((p) => ({ ...p, server: e.target.value }))
+            }
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Google Maps API key (Android)</label>
+          <label className="block text-sm font-medium mb-1">
+            Google Maps API key (Android)
+          </label>
           <input
             type="text"
             className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
             value={googleApiKeys.android}
-            onChange={(e) => setGoogleApiKeys((p) => ({ ...p, android: e.target.value }))}
+            onChange={(e) =>
+              setGoogleApiKeys((p) => ({ ...p, android: e.target.value }))
+            }
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Google Maps API key (iOS)</label>
+          <label className="block text-sm font-medium mb-1">
+            Google Maps API key (iOS)
+          </label>
           <input
             type="text"
             className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
             value={googleApiKeys.ios}
-            onChange={(e) => setGoogleApiKeys((p) => ({ ...p, ios: e.target.value }))}
+            onChange={(e) =>
+              setGoogleApiKeys((p) => ({ ...p, ios: e.target.value }))
+            }
           />
         </div>
 
-        {/* Distance Unit (SelectOption) */}
+        {/* Distance Unit */}
         <SelectOption
           label="Distance Unit"
           options={DISTANCE_UNITS}
@@ -208,7 +254,7 @@ const BookingSettings = () => {
           onChange={(e) => setDistanceUnit(e.target.value)}
         />
 
-        {/* Hourly Package (SelectOption) */}
+        {/* Hourly Package */}
         <SelectOption
           label="Hourly Package"
           options={YES_NO}
@@ -218,38 +264,50 @@ const BookingSettings = () => {
 
         {/* Advance booking minimum */}
         <div>
-          <label className="block text-sm font-medium mb-1">Advance booking minimum</label>
+          <label className="block text-sm font-medium mb-1">
+            Advance booking minimum
+          </label>
           <div className="flex gap-2">
             <input
               type="number"
               min={0}
               className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
               value={advanceBookingMin.value}
-              onChange={(e) => setAdvanceBookingMin((p) => ({ ...p, value: e.target.value }))}
+              onChange={(e) =>
+                setAdvanceBookingMin((p) => ({ ...p, value: e.target.value }))
+              }
             />
             <SelectOption
-              options={TIME_UNITS}
+              options={TIME_UNITS_MIN}
               value={advanceBookingMin.unit}
-              onChange={(e) => setAdvanceBookingMin((p) => ({ ...p, unit: e.target.value }))}
+              onChange={(e) =>
+                setAdvanceBookingMin((p) => ({ ...p, unit: e.target.value }))
+              }
             />
           </div>
         </div>
 
         {/* Advance booking maximum */}
         <div>
-          <label className="block text-sm font-medium mb-1">Advance booking maximum</label>
+          <label className="block text-sm font-medium mb-1">
+            Advance booking maximum
+          </label>
           <div className="flex gap-2">
             <input
               type="number"
               min={0}
               className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
               value={advanceBookingMax.value}
-              onChange={(e) => setAdvanceBookingMax((p) => ({ ...p, value: e.target.value }))}
+              onChange={(e) =>
+                setAdvanceBookingMax((p) => ({ ...p, value: e.target.value }))
+              }
             />
             <SelectOption
-              options={TIME_UNITS}
+              options={TIME_UNITS_MAX}
               value={advanceBookingMax.unit}
-              onChange={(e) => setAdvanceBookingMax((p) => ({ ...p, unit: e.target.value }))}
+              onChange={(e) =>
+                setAdvanceBookingMax((p) => ({ ...p, unit: e.target.value }))
+              }
             />
           </div>
         </div>
@@ -263,12 +321,16 @@ const BookingSettings = () => {
               min={0}
               className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
               value={cancelBookingWindow.value}
-              onChange={(e) => setCancelBookingWindow((p) => ({ ...p, value: e.target.value }))}
+              onChange={(e) =>
+                setCancelBookingWindow((p) => ({ ...p, value: e.target.value }))
+              }
             />
             <SelectOption
-              options={TIME_UNITS}
+              options={TIME_UNITS_CANCEL}
               value={cancelBookingWindow.unit}
-              onChange={(e) => setCancelBookingWindow((p) => ({ ...p, unit: e.target.value }))}
+              onChange={(e) =>
+                setCancelBookingWindow((p) => ({ ...p, unit: e.target.value }))
+              }
             />
           </div>
         </div>
@@ -282,7 +344,9 @@ const BookingSettings = () => {
                 type="checkbox"
                 className="mr-2"
                 checked={avoidRoutes.highways}
-                onChange={(e) => setAvoidRoutes((p) => ({ ...p, highways: e.target.checked }))}
+                onChange={(e) =>
+                  setAvoidRoutes((p) => ({ ...p, highways: e.target.checked }))
+                }
               />
               Highways
             </label>
@@ -291,7 +355,9 @@ const BookingSettings = () => {
                 type="checkbox"
                 className="mr-2"
                 checked={avoidRoutes.tolls}
-                onChange={(e) => setAvoidRoutes((p) => ({ ...p, tolls: e.target.checked }))}
+                onChange={(e) =>
+                  setAvoidRoutes((p) => ({ ...p, tolls: e.target.checked }))
+                }
               />
               Tolls
             </label>
@@ -300,7 +366,9 @@ const BookingSettings = () => {
                 type="checkbox"
                 className="mr-2"
                 checked={avoidRoutes.ferries}
-                onChange={(e) => setAvoidRoutes((p) => ({ ...p, ferries: e.target.checked }))}
+                onChange={(e) =>
+                  setAvoidRoutes((p) => ({ ...p, ferries: e.target.checked }))
+                }
               />
               Ferries
             </label>
@@ -309,7 +377,9 @@ const BookingSettings = () => {
 
         {/* Terms */}
         <div className="md:col-span-3">
-          <label className="block text-sm font-medium mb-1">Cancel Booking Terms</label>
+          <label className="block text-sm font-medium mb-1">
+            Cancel Booking Terms
+          </label>
           <textarea
             className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
             rows={4}
@@ -327,7 +397,6 @@ const BookingSettings = () => {
             Update Settings
           </button>
         </div>
-
       </div>
     </div>
   );
