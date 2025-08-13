@@ -25,6 +25,6 @@ router.get(
   authorize("driver", "clientadmin"),
   getDriverJobs
 );
-router.delete("delete-job/:jobId", DeleteJob )
+router.delete("/delete-job/:jobId", DeleteJob )
 
 export default router;

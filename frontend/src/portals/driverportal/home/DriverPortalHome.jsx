@@ -86,9 +86,21 @@ const DriverPortalHome = () => {
               }
             }
           }
+        } else if (status === "Rejected") {
+          const job = (data?.jobs || []).find((j) => j._id === jobId);
+          const bookingId =
+            job?.booking?._id || job?.bookingId?._id || job?.bookingId;
+
+          if (bookingId) {
+            await updateBookingStatus({
+              id: bookingId,
+              status: "Rejected",
+              updatedBy: `${user.role} | ${user.fullName}`,
+            }).unwrap();
+          }
         }
       } catch (e) {
-        console.error("Failed to update booking status after accept:", e);
+        console.error("Failed to update booking status:", e);
       }
 
       await refetch();
@@ -173,20 +185,22 @@ const DriverPortalHome = () => {
             const journey = isReturnJourney
               ? booking?.returnJourney || {}
               : booking?.primaryJourney || {};
-            const getCurrentStatus = (job, statusMap) => {
-              if (statusMap[job._id]) {
-                return statusMap[job._id];
-              }
-              if (job.jobStatus === "Accepted" && job.booking?.status) {
-                return job.booking.status;
-              }
-              return job.jobStatus ?? "New";
-            };
+
+              const getCurrentStatus = (job, map) => {
+                const id = String(job?._id);
+                if (map[id]) return map[id];                 // local optimistic override
+                if (job?.jobStatus === "Accepted" && job?.booking?.status) {
+                  return job.booking.status;                 // follow booking progress
+                }
+                return job?.jobStatus ?? "New";              // New / Rejected / Already Assigned
+              };
 
             const currentStatus = getCurrentStatus(job, statusMap);
-            const currentDriverId = job.driverId;
-            const driverIdStr = String(currentDriverId);
-            const userIdStr = String(user._id);
+
+            const driverIdStr = String(
+              job?.driverId?._id ?? job?.driverId ?? ""
+            );
+            const userIdStr = String(user?._id ?? "");
             return (
               <div
                 key={job._id}
@@ -348,7 +362,9 @@ const DriverPortalHome = () => {
                     <strong className="block mb-3 text-lg font-bold text-[var(--dark-gray)]">
                       Passenger Details:
                     </strong>
-                    {currentStatus === "Accepted" && booking?.passenger ? (
+                    {currentStatus === "Accepted" &&
+                    currentStatus !== "Rejected" &&
+                    booking?.passenger ? (
                       <div className="text-sm space-y-2">
                         <div>
                           <strong className="text-[var(--dark-gray)]">
@@ -381,8 +397,8 @@ const DriverPortalHome = () => {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mt-4">
                   <div className="w-full md:w-2/3">
                     {currentStatus === "Rejected" ? (
-                      <div className="text-red-600 font-semibold text-sm">
-                        The Job has been rejected
+                      <div className="text-red-600 font-semibold text-sm bg-red-50 p-3 rounded-lg border border-red-200">
+                        ❌ This job has been rejected by you
                       </div>
                     ) : currentStatus === "New" ? (
                       <div className="flex gap-3 pt-2">

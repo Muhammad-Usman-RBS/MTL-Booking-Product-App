@@ -39,7 +39,7 @@ export const createJob = async (req, res) => {
 export const getAllJobs = async (req, res) => {
   try {
     const { companyId } = req.query;
-        if (!companyId || companyId.length !== 24) {
+    if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Invalid or missing companyId" });
     }
 
@@ -75,12 +75,18 @@ export const getDriverJobs = async (req, res) => {
 
     const jobs = await Job.find({
       companyId: companyId,
-      driverId: new mongoose.Types.ObjectId(driverId),
+      $or: [
+        { driverId: new mongoose.Types.ObjectId(driverId) },
+        {
+          jobStatus: "Rejected",
+          assignedBy: { $exists: true },
+          updatedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+        },
+      ],
     })
       .populate({
-        path: 'bookingId',
-        model: 'Booking',
-        
+        path: "bookingId",
+        model: "Booking",
       })
       .lean();
 
@@ -110,76 +116,256 @@ export const getDriverJobs = async (req, res) => {
 // ✅ PUT: Update job status - FIXED VERSION
 export const updateJobStatus = async (req, res) => {
   try {
-    const { jobId } = req.params; // Get the jobId from the route parameter
-    const { jobStatus, driverRejectionNote, newDriverId } = req.body; // Get jobStatus, driverRejectionNote, and newDriverId from the request body
+    const { jobId } = req.params;
+    const { jobStatus, driverRejectionNote, newDriverId } = req.body;
 
     if (!jobId || jobId.length !== 24) {
       return res.status(400).json({ message: "Invalid jobId" });
     }
 
-    const job = await Job.findById(jobId).populate("driverId"); // Find the job by its ID and populate driver details
+    // **CRITICAL: Race condition prevention for acceptance using atomic operations**
+    if (jobStatus === "Accepted") {
+      // Step 1: Get the current job to find the bookingId
+      const currentJob = await Job.findById(jobId);
+      if (!currentJob) {
+        return res.status(404).json({ message: "Job not found" });
+      }
 
+      // Step 2: Try to atomically update ONLY if no other job is already accepted
+      const atomicUpdate = await Job.findOneAndUpdate(
+        {
+          _id: jobId,
+          jobStatus: { $in: ["New"] }, // Only update if status is still "New"
+        },
+        {
+          $set: { jobStatus: "Accepted" },
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      ).populate("driverId");
+
+      // Step 3: Check if the update was successful
+      if (!atomicUpdate) {
+        // Either job doesn't exist or status was already changed
+        const existingJob = await Job.findById(jobId);
+        if (existingJob && existingJob.jobStatus !== "New") {
+          // Job status was changed by another request - mark as "Already Assigned"
+          const updatedJob = await Job.findByIdAndUpdate(
+            jobId,
+            { jobStatus: "Already Assigned" },
+            { new: true }
+          ).populate("driverId");
+
+          return res.status(409).json({
+            success: false,
+            message: "This booking has already been accepted by another driver",
+            job: updatedJob,
+          });
+        }
+        return res.status(404).json({ message: "Job not found" });
+      }
+
+      // Step 4: Update all other jobs for this booking to "Already Assigned"
+      await Job.updateMany(
+        {
+          bookingId: currentJob.bookingId,
+          _id: { $ne: jobId },
+          jobStatus: { $ne: "Accepted" },
+        },
+        { $set: { jobStatus: "Already Assigned" } }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Job accepted successfully",
+        job: atomicUpdate,
+      });
+    }
+
+    if (jobStatus === "Rejected") {
+      const updatedJob = await Job.findByIdAndUpdate(
+        jobId,
+        {
+          $set: {
+            jobStatus: "Rejected",
+            driverRejectionNote: driverRejectionNote || "No reason provided",
+          },
+        },
+        { new: true, runValidators: true }
+      ).populate("driverId");
+
+      if (!updatedJob) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Job status updated to ${jobStatus}`,
+        job: updatedJob,
+        driverRejectionNote: updatedJob.driverRejectionNote,
+      });
+    }
+
+    // Handle other status updates (like status changes from dropdown)
+    const job = await Job.findById(jobId).populate("driverId");
     if (!job) {
       return res.status(404).json({ message: "Job not found" });
     }
-    
-    // If the job status is "Accepted"
-    if (jobStatus === "Accepted") {
-      // Update other jobs with the same bookingId to "Already Assigned"
-      await Job.updateMany(
-        { bookingId: job.bookingId, jobStatus: { $ne: "Accepted" } },
-        { $set: { jobStatus: "Already Assigned" } }
-      );
-    }
 
-    // If the job status is "Rejected", remove the driver from the job
-    if (jobStatus === "Rejected") {
-      job.driverId = null; // Remove the driverId
-      job.driverRejectionNote = driverRejectionNote || "No reason provided"; // Store the rejection note
-    }
-
-    // If a new driver is being assigned, update the driverId
     if (newDriverId && jobStatus !== "Rejected") {
-      job.driverId = newDriverId; // Assign the new driver
+      job.driverId = newDriverId;
     }
 
-    job.jobStatus = jobStatus; // Update the job's status
+    job.jobStatus = jobStatus;
+    await job.save();
 
-    await job.save(); // Save the updated job
-
-    // Return response with updated job details, and driver's info (for rejected jobs)
     return res.status(200).json({
       success: true,
-      message:
-        jobStatus === "Rejected"
-          ? "Job status updated to Rejected"
-          : "Job status updated",
+      message: `Job status updated to ${jobStatus}`,
       job,
-      driver: job.driverId, // Return the driver's details
-      driverRejectionNote: job.driverRejectionNote, // Return the rejection note if it's set
+      driverRejectionNote: job.driverRejectionNote,
     });
   } catch (err) {
     console.error("Error updating job status:", err);
-    return res
-      .status(500)
-      .json({ message: "Server error", error: err.message });
+    return res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
   }
 };
+// export const updateJobStatus = async (req, res) => {
+//   try {
+//     const { jobId } = req.params;
+//     const { jobStatus, driverRejectionNote, newDriverId } = req.body;
 
+//     if (!jobId || jobId.length !== 24) {
+//       return res.status(400).json({ message: "Invalid jobId" });
+//     }
+
+//     // **CRITICAL: Race condition prevention for acceptance using atomic operations**
+//     if (jobStatus === "Accepted") {
+//       // Step 1: Get the current job to find the bookingId
+//       const currentJob = await Job.findById(jobId);
+//       if (!currentJob) {
+//         return res.status(404).json({ message: "Job not found" });
+//       }
+
+//       // Step 2: Try to atomically update ONLY if no other job is already accepted
+//       const atomicUpdate = await Job.findOneAndUpdate(
+//         {
+//           _id: jobId,
+//           jobStatus: { $in: ["New"] }, // Only update if status is still "New"
+//         },
+//         {
+//           $set: { jobStatus: "Accepted" },
+//         },
+//         {
+//           new: true,
+//           runValidators: true,
+//         }
+//       ).populate("driverId");
+
+//       // Step 3: Check if the update was successful
+//       if (!atomicUpdate) {
+//         // Either job doesn't exist or status was already changed
+//         const existingJob = await Job.findById(jobId);
+//         if (existingJob && existingJob.jobStatus !== "New") {
+//           // Job status was changed by another request - mark as "Already Assigned"
+//           const updatedJob = await Job.findByIdAndUpdate(
+//             jobId,
+//             { jobStatus: "Already Assigned" },
+//             { new: true }
+//           ).populate("driverId");
+
+//           return res.status(409).json({
+//             success: false,
+//             message: "This booking has already been accepted by another driver",
+//             job: updatedJob,
+//           });
+//         }
+//         return res.status(404).json({ message: "Job not found" });
+//       }
+
+//       // Step 4: Update all other jobs for this booking to "Already Assigned"
+//       await Job.updateMany(
+//         {
+//           bookingId: currentJob.bookingId,
+//           _id: { $ne: jobId },
+//           jobStatus: { $ne: "Accepted" },
+//         },
+//         { $set: { jobStatus: "Already Assigned" } }
+//       );
+
+//       return res.status(200).json({
+//         success: true,
+//         message: "Job accepted successfully",
+//         job: atomicUpdate,
+//       });
+//     }
+
+//     // Handle other status updates (Rejected, etc.) - existing logic
+//     const job = await Job.findById(jobId).populate("driverId");
+//     if (!job) {
+//       return res.status(404).json({ message: "Job not found" });
+//     }
+
+//     if (jobStatus === "Rejected") {
+//       job.driverId = null;
+//       job.driverRejectionNote = driverRejectionNote || "No reason provided";
+//     }
+
+//     if (newDriverId && jobStatus !== "Rejected") {
+//       job.driverId = newDriverId;
+//     }
+
+//     job.jobStatus = jobStatus;
+//     await job.save();
+
+//     return res.status(200).json({
+//       success: true,
+//       message: `Job status updated to ${jobStatus}`,
+//       job,
+//       driverRejectionNote: job.driverRejectionNote,
+//     });
+//   } catch (err) {
+//     console.error("Error updating job status:", err);
+//     return res.status(500).json({
+//       message: "Server error",
+//       error: err.message,
+//     });
+//   }
+// };
 
 export const DeleteJob = async (req, res) => {
   try {
     const { jobId } = req.params;
+    const { driverId } = req.query || {};
+
     if (!jobId || jobId.length !== 24) {
-      return res.status(400).json({ message: "Invalid jobId" });
+      return res.status(400).json({ message: "Invalid id" });
     }
-    const job = await Job.findByIdAndDelete(jobId);
+
+    let job = await Job.findByIdAndDelete(jobId);
+
+    if (!job) {
+      const where = { bookingId: jobId };
+      if (driverId && driverId.length === 24) where.driverId = driverId;
+      job = await Job.findOneAndDelete(where);
+    }
+
     if (!job) {
       return res.status(404).json({ message: "Job not found" });
     }
-    return res.status(200).json({ success: true, message: "Job deleted successfully" });
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Job deleted successfully" });
   } catch (err) {
     console.error("Error deleting job:", err);
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
   }
 };

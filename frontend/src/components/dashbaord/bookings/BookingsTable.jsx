@@ -412,34 +412,111 @@ const BookingsTable = ({
       ? "-"
       : `${p.name || "N/A"} | ${p.email || 0} | +${p.phone || 0}`;
 
+  // const formatDriver = (item) => {
+  //   const allDrivers = driversData?.drivers || [];
+
+  //   // if (user?.role === "customer") {
+  //   //   const drivers = item.drivers || [];
+
+  //   //   // const acceptedDriver = drivers.find(
+  //   //   //   (driver) =>
+  //   //   //     driver?.jobStatus === "Accepted" &&
+  //   //   //     driver?.companyId?.toString() === companyId?.toString()
+  //   //   // );
+
+  //   //   // if (!acceptedDriver) {
+  //   //   //   return (
+  //   //   //     <span className="text-[var(--dark-grey)]">
+  //   //   //       <Icons.CircleUserRound />
+  //   //   //     </span>
+  //   //   //   );
+  //   //   // }
+
+  //   //   // return (
+  //   //   //   <div className="text-sm text-gray-700">
+  //   //   //     {/* {acceptedDriver.name || "Unnamed Driver"} */}
+  //   //   //     yes
+  //   //   //   </div>
+  //   //   // );
+  //   // }
+
+  //   if (item.jobStatus === "Rejected") {
+  //     let driverName = "Unknown Driver";
+
+  //     if (item.assignedDriverId) {
+  //       const driver = allDrivers.find(
+  //         (d) =>
+  //           d._id?.toString() === item.assignedDriverId?.toString() &&
+  //           d.companyId?.toString() === companyId?.toString()
+  //       );
+  //       driverName = driver?.fullName || driver?.name || "Unknown Driver";
+  //     } else if (item.drivers && item.drivers.length > 0) {
+  //       driverName = item.drivers
+  //         .map((driver) => driver.name || "Unnamed Driver")
+  //         .join(", ");
+  //     }
+
+  //     return (
+  //       <div className="text-red-500 italic">
+  //         <div className="font-medium">{driverName} - Rejected</div>
+  //         <div className="text-xs hover:underline text-gray-500 mt-1">
+  //           Click here to Select Driver
+  //         </div>
+  //       </div>
+  //     );
+  //   }
+
+  //   if (item.jobStatus === "New" && item.drivers && item.drivers.length > 0) {
+  //     const driverNames = item.drivers
+  //       .map((driver) => driver.name || "Unnamed Driver")
+  //       .join(", ");
+
+  //     return (
+  //       <div className="text-orange-600 italic">
+  //         <div className="font-medium">Booking sent to: {driverNames}</div>
+  //         <div className="text-xs text-gray-500 mt-1">
+  //           (Awaiting acceptance)
+  //         </div>
+  //       </div>
+  //     );
+  //   }
+  //   const drivers = item.drivers || [];
+  //   const jobsArray = jobData?.jobs || [];
+
+  //   if (drivers.length === 0) {
+  //     return (
+  //       <span className="text-[var(--dark-grey)]">
+  //         <Icons.CircleUserRound />
+  //       </span>
+  //     );
+  //   }
+
+  //   return drivers.map((driver, index) => {
+  //     const driverId = typeof driver === "object" ? driver._id : driver;
+  //     const driverName = driver.name || "Unnamed Driver";
+
+  //     const matchingJob = jobsArray.find(
+  //       (job) =>
+  //         job.driverId?.toString() === driverId?.toString() ||
+  //         job.driverId?._id?.toString() === driverId?.toString()
+  //     );
+
+  //     if (matchingJob && matchingJob.jobStatus !== "Already Assigned") {
+  //       return (
+  //         <div key={index} className="text-sm text-gray-700">
+  //           {driverName}
+  //         </div>
+  //       );
+  //     }
+
+  //     return null;
+  //   });
+  // };
   const formatDriver = (item) => {
     const allDrivers = driversData?.drivers || [];
+    const jobsArray = jobData?.jobs || [];
 
-    if (user?.role === "customer") {
-      const drivers = item.drivers || [];
-
-      // const acceptedDriver = drivers.find(
-      //   (driver) =>
-      //     driver?.jobStatus === "Accepted" &&
-      //     driver?.companyId?.toString() === companyId?.toString()
-      // );
-
-      // if (!acceptedDriver) {
-      //   return (
-      //     <span className="text-[var(--dark-grey)]">
-      //       <Icons.CircleUserRound />
-      //     </span>
-      //   );
-      // }
-
-      // return (
-      //   <div className="text-sm text-gray-700">
-      //     {/* {acceptedDriver.name || "Unnamed Driver"} */}
-      //     yes
-      //   </div>
-      // );
-    }
-
+    // Handle rejected status
     if (item.jobStatus === "Rejected") {
       let driverName = "Unknown Driver";
 
@@ -466,6 +543,7 @@ const BookingsTable = ({
       );
     }
 
+    // Handle new status - show all assigned drivers
     if (item.jobStatus === "New" && item.drivers && item.drivers.length > 0) {
       const driverNames = item.drivers
         .map((driver) => driver.name || "Unnamed Driver")
@@ -480,8 +558,9 @@ const BookingsTable = ({
         </div>
       );
     }
+
+    // **FIXED: Only show drivers who have ACCEPTED jobs**
     const drivers = item.drivers || [];
-    const jobsArray = jobData?.jobs || [];
 
     if (drivers.length === 0) {
       return (
@@ -491,28 +570,48 @@ const BookingsTable = ({
       );
     }
 
-    return drivers.map((driver, index) => {
-      const driverId = typeof driver === "object" ? driver._id : driver;
-      const driverName = driver.name || "Unnamed Driver";
+    // Filter to only show drivers with "Accepted" status
+    const acceptedDrivers = drivers
+      .map((driver, index) => {
+        const driverId = typeof driver === "object" ? driver._id : driver;
+        const driverName = driver.name || "Unnamed Driver";
 
-      const matchingJob = jobsArray.find(
-        (job) =>
-          job.driverId?.toString() === driverId?.toString() ||
-          job.driverId?._id?.toString() === driverId?.toString()
-      );
-
-      if (matchingJob && matchingJob.jobStatus !== "Already Assigned") {
-        return (
-          <div key={index} className="text-sm text-gray-700">
-            {driverName}
-          </div>
+        // Find ALL jobs for this driver and booking
+        const driverJobs = jobsArray.filter(
+          (job) =>
+            (job.driverId?.toString() === driverId?.toString() ||
+              job.driverId?._id?.toString() === driverId?.toString()) &&
+            job.bookingId?.toString() === item._id?.toString()
         );
-      }
 
-      return null;
-    });
+        // Only include if driver has an "Accepted" job
+        const hasAcceptedJob = driverJobs.some(
+          (job) => job.jobStatus === "Accepted"
+        );
+
+        if (hasAcceptedJob) {
+          return (
+            <div key={index} className="text-sm text-gray-700">
+              {driverName}
+            </div>
+          );
+        }
+
+        return null;
+      })
+      .filter(Boolean); // Remove null entries
+
+    // If no accepted drivers, show icon
+    if (acceptedDrivers.length === 0) {
+      return (
+        <span className="text-[var(--dark-grey)]">
+          <Icons.CircleUserRound />
+        </span>
+      );
+    }
+
+    return acceptedDrivers;
   };
-
   let tableData = [];
   if (!bookings || bookings.length === 0 || filteredBookings.length === 0) {
     tableData = emptyTableRows;
@@ -668,25 +767,22 @@ const BookingsTable = ({
                 onChange={async (newStatus) => {
                   try {
                     if (isDriver) {
-                      await updateJobStatus({
+                      const response = await updateJobStatus({
                         jobId: item.jobId,
                         jobStatus: newStatus,
                       }).unwrap();
-                    } else {
-                      // Block client-admin if booking is New AND no driver is assigned
-                      const hasDrivers =
-                        Array.isArray(item.drivers) && item.drivers.length > 0;
-                      const currentStatus = (
-                        item.statusAudit?.at(-1)?.status ||
-                        item.status ||
-                        "New"
-                      ).toLowerCase();
 
-                      if (!hasDrivers && currentStatus === "new") {
-                        toast.info("Select driver first");
+                      if (
+                        !response.success &&
+                        response.message?.includes("already been accepted")
+                      ) {
+                        toast.warning(
+                          "This booking was just accepted by another driver!"
+                        );
+                        refetch();
                         return;
                       }
-
+                    } else {
                       await updateBookingStatus({
                         id: item._id,
                         status: newStatus,
@@ -697,7 +793,9 @@ const BookingsTable = ({
                     toast.success("Status updated");
                     refetch();
                   } catch (err) {
+                    console.error("Status update error:", err);
                     toast.error("Failed to update status");
+                    refetch();
                   }
                 }}
               />
@@ -866,12 +964,10 @@ const BookingsTable = ({
       driverFare: item.driverFare !== undefined ? item.driverFare : "-",
       returnDriverFare:
         item.returnDriverFare !== undefined ? item.returnDriverFare : "-",
-      // In BookingsTable.js, replace the driver field in exportTableData with this:
 
       driver: Array.isArray(item.drivers)
         ? item.drivers
             .map((driver) => {
-              // Handle new structure where driver is an object with name/driverInfo
               if (typeof driver === "object") {
                 if (driver.name) {
                   return driver.name;
@@ -939,6 +1035,7 @@ const BookingsTable = ({
         tableHeaders={tableHeaders.filter(
           (header) => selectedColumns[header.key]
         )}
+        a
         tableData={[]}
         exportTableData={[]}
         emptyMessage="Loading bookings..."
@@ -947,6 +1044,7 @@ const BookingsTable = ({
       />
     );
   }
+
   return (
     <>
       <CustomTable
