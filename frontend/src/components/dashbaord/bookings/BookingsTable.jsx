@@ -412,38 +412,24 @@ const BookingsTable = ({
       : `${p.name || "N/A"} | ${p.email || 0} | +${p.phone || 0}`;
 
   const formatDriver = (item) => {
+    const allDrivers = driversData?.drivers || [];
+    const jobsArray = jobData?.jobs || [];
+
+    // Handle rejected status
     if (item.jobStatus === "Rejected") {
-      const allDrivers = driversData?.drivers || [];
-      const jobsArray = jobData?.jobs || [];
-
-      // find most recent "Rejected" job for this booking
-      const rejectedJob = jobsArray
-        .filter(
-          (j) =>
-            j.bookingId?.toString() === item._id?.toString() &&
-            j.jobStatus === "Rejected"
-        )
-        .sort(
-          (a, b) =>
-            new Date(b.updatedAt || b.createdAt) -
-            new Date(a.updatedAt || a.createdAt)
-        )[0];
-
       let driverName = "Unknown Driver";
-      if (rejectedJob) {
-        const drv = rejectedJob.driverId; // can be id or object
-        const driverId = typeof drv === "object" ? drv._id : drv;
 
+      if (item.assignedDriverId) {
         const driver = allDrivers.find(
-          (d) => d._id?.toString() === driverId?.toString()
+          (d) =>
+            d._id?.toString() === item.assignedDriverId?.toString() &&
+            d.companyId?.toString() === companyId?.toString()
         );
-
-        driverName =
-          driver?.fullName ||
-          driver?.DriverData?.firstName ||
-          driver?.DriverData?.name ||
-          (typeof drv === "object" ? drv.name : null) ||
-          "Unknown Driver";
+        driverName = driver?.fullName || driver?.name || "Unknown Driver";
+      } else if (item.drivers && item.drivers.length > 0) {
+        driverName = item.drivers
+          .map((driver) => driver.name || "Unnamed Driver")
+          .join(", ");
       }
 
       return (
@@ -455,6 +441,7 @@ const BookingsTable = ({
         </div>
       );
     }
+
     // Handle new status - show all assigned drivers
     if (item.jobStatus === "New" && item.drivers && item.drivers.length > 0) {
       const driverNames = item.drivers
