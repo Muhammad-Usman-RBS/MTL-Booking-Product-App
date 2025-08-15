@@ -303,7 +303,8 @@ const airportTerminals = {
 // Helper function to get avoid routes settings for a company
 const getAvoidRoutesSettings = async (req) => {
   try {
-    const companyId = req.user?.companyId;
+    // ✅ query param se bhi le lo (public pages ke liye)
+    const companyId = req.query.companyId || req.user?.companyId;
     if (!companyId) return { highways: false, tolls: false, ferries: false };
 
     const setting = await BookingSetting.findOne({ companyId });
@@ -313,6 +314,7 @@ const getAvoidRoutesSettings = async (req) => {
     return { highways: false, tolls: false, ferries: false };
   }
 };
+
 
 // Helper function to check if location involves avoided routes
 const checkLocationForAvoidedRoutes = (location, avoidRoutes) => {
@@ -432,7 +434,7 @@ router.get("/autocomplete", async (req, res) => {
 // Distance API with avoid routes integration
 router.get("/distance", async (req, res) => {
   try {
-    const { origin, destination } = req.query;
+    const { origin, destination, avoid } = req.query;
 
     if (!origin || !destination) {
       return res
@@ -440,16 +442,26 @@ router.get("/distance", async (req, res) => {
         .json({ error: "Origin and destination are required" });
     }
 
-    // Get avoid routes settings
+    console.log('Backend distance request:', { origin, destination, avoid });
+
+    // Get avoid routes settings from user/company settings
     const avoidRoutes = await getAvoidRoutesSettings(req);
     
-    // Build avoid parameter for Google API
-    const avoidParams = [];
-    if (avoidRoutes.highways) avoidParams.push('highways');
-    if (avoidRoutes.tolls) avoidParams.push('tolls');
-    if (avoidRoutes.ferries) avoidParams.push('ferries');
-    
-    const avoidQuery = avoidParams.length > 0 ? `&avoid=${avoidParams.join('|')}` : '';
+    // Use avoid parameter from query if provided, otherwise use settings
+    let avoidQuery = '';
+    if (avoid && avoid.trim() !== '') {
+      avoidQuery = `&avoid=${encodeURIComponent(avoid)}`;
+      console.log('Using avoid parameter from query:', avoid);
+    } else {
+      // Build avoid parameter from settings
+      const avoidParams = [];
+      if (avoidRoutes.highways) avoidParams.push('highways');
+      if (avoidRoutes.tolls) avoidParams.push('tolls');
+      if (avoidRoutes.ferries) avoidParams.push('ferries');
+      
+      avoidQuery = avoidParams.length > 0 ? `&avoid=${avoidParams.join('|')}` : '';
+      console.log('Using avoid parameter from settings:', avoidParams.join('|'));
+    }
 
     const url = `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=${encodeURIComponent(
       origin
@@ -457,20 +469,27 @@ router.get("/distance", async (req, res) => {
       process.env.GOOGLE_API_KEY
     }`;
     
+    console.log('Google API URL:', url);
+    
     const response = await fetch(url);
     const data = await response.json();
+
+    console.log('Google API response:', JSON.stringify(data, null, 2));
 
     const element = data?.rows?.[0]?.elements?.[0];
 
     if (!element || element.status !== "OK") {
+      console.error('Invalid distance matrix response:', element);
       return res
         .status(400)
-        .json({ error: "Invalid distance matrix response" });
+        .json({ error: "Invalid distance matrix response", details: element });
     }
 
     const distanceText = element.distance?.text || null;
     const distanceValue = element.distance?.value || null;
     const durationText = element.duration?.text || null;
+
+    console.log('Processed result:', { distanceText, distanceValue, durationText });
 
     // Check both origin and destination for route warnings
     const originCheck = checkLocationForAvoidedRoutes(origin, avoidRoutes);
@@ -480,7 +499,7 @@ router.get("/distance", async (req, res) => {
       distanceText, 
       distanceValue, 
       durationText,
-      avoidRoutes,
+      avoidRoutes: avoidQuery ? avoid || Object.keys(avoidRoutes).filter(key => avoidRoutes[key]).join('|') : '',
       routeWarnings: {
         origin: originCheck.hasWarnings ? originCheck.warnings : null,
         destination: destinationCheck.hasWarnings ? destinationCheck.warnings : null,
@@ -488,7 +507,7 @@ router.get("/distance", async (req, res) => {
     });
   } catch (error) {
     console.error("Distance API error:", error);
-    res.status(500).json({ error: "Failed to fetch distance data" });
+    res.status(500).json({ error: "Failed to fetch distance data", details: error.message });
   }
 });
 

@@ -17,8 +17,7 @@ const YES_NO = ["Yes", "No"];
 const DISTANCE_UNITS = ["Miles", "KMs"];
 
 // Exact unit sets per field (as in your images)
-const TIME_UNITS_MIN = ["Minutes", "Hours"];        // advance min
-const TIME_UNITS_MAX = ["Days", "Months", "Years"]; // advance max
+const TIME_UNITS_MIN = ["Hours"];        // advance min
 const TIME_UNITS_CANCEL = ["Hours", "Days"];        // cancel window
 
 const BookingSettings = () => {
@@ -50,10 +49,6 @@ const BookingSettings = () => {
   const [advanceBookingMin, setAdvanceBookingMin] = useState({
     value: 12,
     unit: "Hours",
-  });
-  const [advanceBookingMax, setAdvanceBookingMax] = useState({
-    value: 2,
-    unit: "Years",
   });
   const [cancelBookingWindow, setCancelBookingWindow] = useState({
     value: 6,
@@ -95,7 +90,6 @@ const BookingSettings = () => {
     setHourlyPackage(setting.hourlyPackage ? "Yes" : "No");
 
     if (setting.advanceBookingMin) setAdvanceBookingMin(setting.advanceBookingMin);
-    if (setting.advanceBookingMax) setAdvanceBookingMax(setting.advanceBookingMax);
     if (setting.cancelBookingWindow) setCancelBookingWindow(setting.cancelBookingWindow);
 
     setCancelBookingTerms(setting.cancelBookingTerms || "");
@@ -132,12 +126,6 @@ const BookingSettings = () => {
           unit: TIME_UNITS_MIN.includes(advanceBookingMin.unit)
             ? advanceBookingMin.unit
             : "Hours",
-        },
-        advanceBookingMax: {
-          value: Number(advanceBookingMax.value ?? 2),
-          unit: TIME_UNITS_MAX.includes(advanceBookingMax.unit)
-            ? advanceBookingMax.unit
-            : "Years",
         },
         cancelBookingWindow: {
           value: Number(cancelBookingWindow.value ?? 6),
@@ -282,31 +270,6 @@ const BookingSettings = () => {
               value={advanceBookingMin.unit}
               onChange={(e) =>
                 setAdvanceBookingMin((p) => ({ ...p, unit: e.target.value }))
-              }
-            />
-          </div>
-        </div>
-
-        {/* Advance booking maximum */}
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Advance booking maximum
-          </label>
-          <div className="flex gap-2">
-            <input
-              type="number"
-              min={0}
-              className="w-full border border-[var(--light-gray)] rounded px-3 py-1"
-              value={advanceBookingMax.value}
-              onChange={(e) =>
-                setAdvanceBookingMax((p) => ({ ...p, value: e.target.value }))
-              }
-            />
-            <SelectOption
-              options={TIME_UNITS_MAX}
-              value={advanceBookingMax.unit}
-              onChange={(e) =>
-                setAdvanceBookingMax((p) => ({ ...p, unit: e.target.value }))
               }
             />
           </div>

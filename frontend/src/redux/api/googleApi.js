@@ -13,11 +13,11 @@ export const googleApi = apiSlice.injectEndpoints({
 
     // Distance Matrix API
     getDistance: builder.query({
-      query: ({ origin, destination }) => ({
-        url: "/google/distance",
-        method: "GET",
-        params: { origin, destination },
-      }),
+      query: ({ origin, destination, avoid, companyId }) => {
+        const params = { origin, destination, companyId }; // ✅
+        if (avoid && avoid.trim() !== '') params.avoid = avoid; // ✅ sirf non-empty bhejo
+        return { url: "/google/distance", method: "GET", params };
+      },
     }),
 
     // Google GET API KEY
@@ -47,11 +47,11 @@ export const googleApi = apiSlice.injectEndpoints({
     }),
     sendGoogleAuthLink: builder.mutation({
       query: ({ email, role }) => ({
-        url: "/google/send-google-auth-link",  
+        url: "/google/send-google-auth-link",
         method: "POST",
         body: { email, role },
       }),
-  }),
+    }),
   }),
   overrideExisting: false,
 });

@@ -37,7 +37,6 @@ export const createOrUpdateBookingSetting = async (req, res) => {
       distanceUnit,  // "Miles" | "KMs"
       hourlyPackage, // boolean
       advanceBookingMin,  // {value, unit}
-      advanceBookingMax,  // {value, unit}
       cancelBookingWindow,// {value, unit}
       cancelBookingTerms, // string
     } = req.body;
@@ -76,10 +75,6 @@ export const createOrUpdateBookingSetting = async (req, res) => {
       advanceBookingMin: {
         value: Number(advanceBookingMin?.value ?? 12),
         unit: advanceBookingMin?.unit || "Hours",
-      },
-      advanceBookingMax: {
-        value: Number(advanceBookingMax?.value ?? 2),
-        unit: advanceBookingMax?.unit || "Years",
       },
       cancelBookingWindow: {
         value: Number(cancelBookingWindow?.value ?? 6),

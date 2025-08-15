@@ -49,7 +49,6 @@ const BookingSettingSchema = new mongoose.Schema({
 
   // booking windows
   advanceBookingMin: { type: timeWindowSchema, default: { value: 12, unit: "Hours" } },
-  advanceBookingMax: { type: timeWindowSchema, default: { value: 2, unit: "Years" } },
   cancelBookingWindow: { type: timeWindowSchema, default: { value: 6, unit: "Hours" } },
 
   // policy text

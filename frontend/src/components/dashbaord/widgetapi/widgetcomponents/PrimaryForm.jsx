@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import SelectOption from '../../../../constants/constantscomponents/SelectOption';
 import { useGetBookingSettingQuery } from "../../../../redux/api/bookingSettingsApi";
 import Icons from '../../../../assets/icons';
+import { toast } from 'react-toastify';
 
 const PrimaryForm = ({
     formData,
@@ -39,6 +40,72 @@ const PrimaryForm = ({
         bookingSettingData?.setting?.hourlyPackage ??
         bookingSettingData?.setting?.hourLyPackage
     );
+
+    // Advance booking validation function
+    const validateAdvanceBooking = (selectedDate, selectedHour, selectedMinute) => {
+        if (!bookingSettingData?.setting?.advanceBookingMin) return true;
+
+        const { value, unit } = bookingSettingData.setting.advanceBookingMin;
+
+        if (!selectedDate || selectedHour === '' || selectedMinute === '') return true;
+
+        // Current time
+        const now = new Date();
+
+        // Selected booking time
+        const bookingDateTime = new Date(`${selectedDate}T${selectedHour.toString().padStart(2, '0')}:${selectedMinute.toString().padStart(2, '0')}:00`);
+
+        // Calculate minimum advance time in milliseconds
+        let advanceTimeMs = 0;
+        switch (unit.toLowerCase()) {
+            case 'hours':
+            case 'hour':
+                advanceTimeMs = value * 60 * 60 * 1000;
+                break;
+            case 'minutes':
+            case 'minute':
+                advanceTimeMs = value * 60 * 1000;
+                break;
+            case 'days':
+            case 'day':
+                advanceTimeMs = value * 24 * 60 * 60 * 1000;
+                break;
+            default:
+                console.warn('Unknown time unit:', unit);
+                return true;
+        }
+
+        // Minimum allowed booking time
+        const minBookingTime = new Date(now.getTime() + advanceTimeMs);
+
+        if (bookingDateTime < minBookingTime) {
+            const timeText = value === 1 ? unit.slice(0, -1) : unit; // Remove 's' if value is 1
+            toast.error(`Booking must be made at least ${value} ${timeText} in advance!`);
+            return false;
+        }
+
+        return true;
+    };
+
+    // Enhanced handleChange with validation
+    const handleChangeWithValidation = (e) => {
+        const { name, value } = e.target;
+
+        // Update form data first
+        handleChange(e);
+
+        // If date/time field changed, validate advance booking
+        if (name === 'date' || name === 'hour' || name === 'minute') {
+            setTimeout(() => {
+                const updatedFormData = { ...formData, [name]: value };
+                validateAdvanceBooking(
+                    updatedFormData.date,
+                    updatedFormData.hour,
+                    updatedFormData.minute
+                );
+            }, 0);
+        }
+    };
 
     // hourly disabled -> agar user Hourly par ho to Transfer par switch + hourly selection clear
     useEffect(() => {
@@ -291,13 +358,13 @@ const PrimaryForm = ({
                     type="date"
                     name="date"
                     value={formData.date}
-                    onChange={handleChange}
+                    onChange={handleChangeWithValidation}
                     className="custom_input"
                 />
                 <select
                     name="hour"
                     value={formData.hour}
-                    onChange={handleChange}
+                    onChange={handleChangeWithValidation}
                     className="custom_input"
                 >
                     <option value="">HH</option>
@@ -310,7 +377,7 @@ const PrimaryForm = ({
                 <select
                     name="minute"
                     value={formData.minute}
-                    onChange={handleChange}
+                    onChange={handleChangeWithValidation}
                     className="custom_input"
                 >
                     <option value="">MM</option>

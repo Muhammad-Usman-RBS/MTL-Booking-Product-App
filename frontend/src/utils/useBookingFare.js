@@ -6,6 +6,7 @@ import { useGetFixedPricesForWidgetQuery, useGetExtrasForWidgetQuery } from "../
 import { useGetAllVehiclesQuery } from "../redux/api/vehicleApi";
 import { useGetGeneralPricingPublicQuery } from "../redux/api/generalPricingApi";
 import { useGetDiscountsByCompanyIdQuery } from "../redux/api/discountApi";
+import { useGetBookingSettingQuery } from "../redux/api/bookingSettingsApi";
 import { toast } from "react-toastify";
 
 // Cache for geocoding results
@@ -40,6 +41,10 @@ export const useBookingFare = ({
   const { data: generalPricing = {} } = useGetGeneralPricingPublicQuery(companyId, { skip: !companyId });
   const { data: discounts = [] } = useGetDiscountsByCompanyIdQuery(companyId, { skip: !companyId });
   const { data: extrasPricing = [] } = useGetExtrasForWidgetQuery(companyId, { skip: !companyId });
+  const { data: bookingSettings = {} } = useGetBookingSettingQuery(undefined, { skip: !companyId });
+
+  const avoidRoutes = bookingSettings?.avoidRoutes || {};
+  const isAvoidActive = !!(avoidRoutes?.highways || avoidRoutes?.tolls || avoidRoutes?.ferries);
 
   const [distanceText, setDistanceText] = useState('');
   const [durationText, setDurationText] = useState('');
@@ -83,25 +88,44 @@ export const useBookingFare = ({
     }
   }, [triggerGeocode]);
 
-  const getDistance = useCallback(async (origin, destination) => {
-    const cacheKey = `${origin}-${destination}`;
+  // const getDistance = useCallback(async (origin, destination) => {
+  //   const cacheKey = `${origin}-${destination}`;
 
-    // Check cache first
-    if (distanceCache.has(cacheKey)) {
-      return distanceCache.get(cacheKey);
-    }
+  //   // Check cache first
+  //   if (distanceCache.has(cacheKey)) {
+  //     return distanceCache.get(cacheKey);
+  //   }
+
+  //   try {
+  //     const res = await triggerDistance({ origin, destination }).unwrap();
+
+  //     // Cache the result
+  //     distanceCache.set(cacheKey, res);
+  //     return res;
+  //   } catch (error) {
+  //     console.error('Distance calculation error:', error);
+  //     return null;
+  //   }
+  // }, [triggerDistance]);
+
+  const getDistance = useCallback(async (origin, destination) => {
+    const parts = [];
+    if (avoidRoutes.highways) parts.push('highways');
+    if (avoidRoutes.tolls) parts.push('tolls');
+    if (avoidRoutes.ferries) parts.push('ferries');
+    const avoidParam = parts.join('|');
+
+    const cacheKey = `${origin}-${destination}-${avoidParam}`;
+    if (distanceCache.has(cacheKey)) return distanceCache.get(cacheKey);
 
     try {
-      const res = await triggerDistance({ origin, destination }).unwrap();
-
-      // Cache the result
+      const res = await triggerDistance({ origin, destination, avoid: avoidParam, companyId }).unwrap();
       distanceCache.set(cacheKey, res);
       return res;
-    } catch (error) {
-      console.error('Distance calculation error:', error);
+    } catch {
       return null;
     }
-  }, [triggerDistance]);
+  }, [triggerDistance, avoidRoutes.highways, avoidRoutes.tolls, avoidRoutes.ferries]);
 
   const getVehiclePriceForDistance = useCallback((vehicle, miles) => {
     if (!vehicle?.slabs || !Array.isArray(vehicle.slabs)) return 0;
@@ -263,7 +287,12 @@ export const useBookingFare = ({
       includeChildSeat,
       childSeatCount,
       zoneFee,
-      journeyDateTime: journeyDateTime?.getTime()
+      journeyDateTime: journeyDateTime?.getTime(),
+      avoid: {
+        highways: !!avoidRoutes.highways,
+        tolls: !!avoidRoutes.tolls,
+        ferries: !!avoidRoutes.ferries
+      }
     });
   }, [
     pickup,
@@ -347,6 +376,35 @@ export const useBookingFare = ({
       const matchedVehicle = allVehicles.find(v => v.vehicleName === vehicleName);
       const markupPercent = parseFloat(matchedVehicle?.percentageIncrease || 0);
 
+      // if (mode === "Hourly") {
+      //   const selected = hourlyRates.find(
+      //     (r) => r.distance === selectedHourly?.value?.distance && r.hours === selectedHourly?.value?.hours
+      //   );
+      //   baseFare = selected?.vehicleRates?.[selectedVehicle.vehicleName] || 0;
+      //   pricing = 'hourly';
+      // } else {
+      //   const postcodeMatch = postcodePrices.find(
+      //     (p) =>
+      //     ((p.pickup === pickupPostcode && p.dropoff === dropoffPostcode) ||
+      //       (p.pickup === dropoffPostcode && p.dropoff === pickupPostcode))
+      //   );
+
+      //   if (postcodeMatch) {
+      //     baseFare = postcodeMatch.vehicleRates?.[vehicleName] ?? postcodeMatch.price;
+      //     pricing = 'postcode';
+      //   } else {
+      //     const zonePrice = getZonePrice(pickupCoord, dropoffCoord);
+
+      //     if (zonePrice !== null) {
+      //       baseFare = zonePrice;
+      //       pricing = 'zone';
+      //       extraZoneFee = getZoneEntryFee(pickupCoord, dropoffCoord);
+      //     } else {
+      //       baseFare = getVehiclePriceForDistance(selectedVehicle, totalMiles);
+      //       pricing = 'mileage';
+      //     }
+      //   }
+      // }
       if (mode === "Hourly") {
         const selected = hourlyRates.find(
           (r) => r.distance === selectedHourly?.value?.distance && r.hours === selectedHourly?.value?.hours
@@ -354,25 +412,31 @@ export const useBookingFare = ({
         baseFare = selected?.vehicleRates?.[selectedVehicle.vehicleName] || 0;
         pricing = 'hourly';
       } else {
-        const postcodeMatch = postcodePrices.find(
-          (p) =>
-          ((p.pickup === pickupPostcode && p.dropoff === dropoffPostcode) ||
-            (p.pickup === dropoffPostcode && p.dropoff === pickupPostcode))
-        );
-
-        if (postcodeMatch) {
-          baseFare = postcodeMatch.vehicleRates?.[vehicleName] ?? postcodeMatch.price;
-          pricing = 'postcode';
+        if (isAvoidActive) {
+          // Force mileage when avoid flags are on
+          baseFare = getVehiclePriceForDistance(selectedVehicle, totalMiles);
+          pricing = 'mileage';
         } else {
-          const zonePrice = getZonePrice(pickupCoord, dropoffCoord);
+          // postcode -> zone -> mileage
+          const postcodeMatch = postcodePrices.find(
+            (p) =>
+            ((p.pickup === pickupPostcode && p.dropoff === dropoffPostcode) ||
+              (p.pickup === dropoffPostcode && p.dropoff === pickupPostcode))
+          );
 
-          if (zonePrice !== null) {
-            baseFare = zonePrice;
-            pricing = 'zone';
-            extraZoneFee = getZoneEntryFee(pickupCoord, dropoffCoord);
+          if (postcodeMatch) {
+            baseFare = postcodeMatch.vehicleRates?.[vehicleName] ?? postcodeMatch.price;
+            pricing = 'postcode';
           } else {
-            baseFare = getVehiclePriceForDistance(selectedVehicle, totalMiles);
-            pricing = 'mileage';
+            const zonePrice = getZonePrice(pickupCoord, dropoffCoord);
+            if (zonePrice !== null) {
+              baseFare = zonePrice;
+              pricing = 'zone';
+              extraZoneFee = getZoneEntryFee(pickupCoord, dropoffCoord);
+            } else {
+              baseFare = getVehiclePriceForDistance(selectedVehicle, totalMiles);
+              pricing = 'mileage';
+            }
           }
         }
       }
@@ -403,7 +467,9 @@ export const useBookingFare = ({
         total: parseFloat(finalFare.toFixed(2)),
         pricingMode: pricing,
         distanceText: distText,
-        durationText: durText
+        durationText: durText,
+        avoidRoutes: { ...avoidRoutes },  // New
+        forcedMileage: isAvoidActive      // New
       };
 
       setCalculatedFare(breakdownDetails.total);
@@ -493,6 +559,7 @@ export const useBookingFare = ({
     pickupCoords,
     dropoffCoords,
     hourlyError,
-    isLoading
+    isLoading,
+    avoidRoutes,   // New
   };
 };

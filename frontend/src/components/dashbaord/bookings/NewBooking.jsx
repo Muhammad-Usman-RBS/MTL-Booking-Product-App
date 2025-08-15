@@ -30,44 +30,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     skip: !vatnumber,
   });
 
-  // Advacne Booking Restriction Start
   const { data: bookingSettingData, isFetching: isBookingSettingLoading } = useGetBookingSettingQuery();
-
-  const setting = bookingSettingData?.setting || {};
-
-  const unitToMinutes = (value, unit) => {
-    const v = Number(value);
-    if (Number.isNaN(v) || v < 0) return null;
-    const u = String(unit || "").toLowerCase();
-    if (u === "minute" || u === "minutes") return v;
-    if (u === "hour" || u === "hours") return v * 60;
-    if (u === "day" || u === "days") return v * 1440;
-    return null; // unknown unit
-  };
-
-  const minObj = setting.advanceBookingMin;
-  const maxObj = setting.advanceBookingMax;
-
-  const minAdvanceMinutes =
-    unitToMinutes(minObj?.value, minObj?.unit) ?? 30;
-  const maxAdvanceMinutes =
-    unitToMinutes(maxObj?.value, maxObj?.unit) ?? (365 * 24 * 60);
-
-  const now = new Date();
-  const minAllowedDT = new Date(now.getTime() + minAdvanceMinutes * 60 * 1000);
-  const maxAllowedDT = new Date(now.getTime() + maxAdvanceMinutes * 60 * 1000);
-
-  const toISODate = (d) => d.toISOString().slice(0, 10);
-  const minDateISO = toISODate(minAllowedDT);
-  const maxDateISO = toISODate(maxAllowedDT);
-
-  const formatDT = (d) =>
-    new Intl.DateTimeFormat(undefined, {
-      year: "numeric", month: "2-digit", day: "2-digit",
-      hour: "2-digit", minute: "2-digit"
-    }).format(d);
-
-  // Advacne Booking Restriction End
 
   // DB me kabhi key 'hourLyPackage' bhi ho sakti hai, isliye fallback:
   const hourlyEnabled = !!(bookingSettingData?.setting?.hourlyPackage ?? bookingSettingData?.setting?.hourLyPackage);
@@ -825,13 +788,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
               pricingMode={primaryFareMode}
               selectedVehicle={selectedVehicle}
               mode={mode}
-              // ---- NEW props ----
-              minAllowedDT={minAllowedDT}
-              maxAllowedDT={maxAllowedDT}
-              minDateISO={minDateISO}
-              maxDateISO={maxDateISO}
-              isCreateMode={!editBookingData?._id}
-              formatDT={formatDT} // (optional, for prettier toast)
             />
           ) : null}
           {/* Journey 2 (conditionally shown) */}
@@ -850,13 +806,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
                 pricingMode={returnFareMode}
                 selectedVehicle={selectedVehicle}
                 mode={mode}
-                // Advacne Booking Restriction End
-                minAllowedDT={minAllowedDT}
-                maxAllowedDT={maxAllowedDT}
-                minDateISO={minDateISO}
-                maxDateISO={maxDateISO}
-                isCreateMode={!editBookingData?._id}
-                formatDT={formatDT} // (optional, for prettier toast)
               />
             </div>
           ) : null}
