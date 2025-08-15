@@ -118,32 +118,31 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
     if (selectAll !== allSelected) setSelectAll(allSelected);
   }, [filteredDriver, selectedDrivers]);
   const removeDriverJobs = async (removedUserDrivers, allJobs = []) => {
-    const status = (selectedBooking?.status).trim().toLowerCase();
-    const canDelete = status === "new" || status === "already assigned" || status === "rejected";
+    const status = String(selectedBooking?.status || "")
+      .trim()
+      .toLowerCase();
+    const canDelete =
+      status === "new" ||
+      status === "already assigned" ||
+      status === "cancelled" ||
+      status === "rejected";
+
     if (!canDelete) {
       toast.error(
         `Cannot remove driver(s) when booking status is "${
           selectedBooking?.status || "Unknown"
         }".`
       );
-      return;
+      return false;
     }
 
     for (const removedUser of removedUserDrivers) {
       try {
-        const userId = removedUser._id;
-        if (!userId) {
-          console.warn(
-            "User ID not found for removed user driver:",
-            removedUser.email
-          );
-          continue;
-        }
+        const userId = removedUser._id?.toString();
+        if (!userId) continue;
 
         const bookingId = selectedBooking?._id?.toString();
-        const driverId = userId?.toString();
 
-        // normalize driverId on job (object or string)
         const driverJobs = (allJobs || []).filter((job) => {
           const jobBookingId =
             job?.bookingId?._id?.toString?.() ||
@@ -153,10 +152,9 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
             job?.driverId?._id?.toString?.() ||
             job?.driverId?.$oid ||
             job?.driverId?.toString?.();
-          return jobBookingId === bookingId && jobDriverId === driverId;
+          return jobBookingId === bookingId && jobDriverId === userId;
         });
 
-        // IMPORTANT: delete by job._id unless your backend accepts bookingId
         for (const job of driverJobs) {
           const jobId = job?._id?.toString?.();
           if (jobId) {
@@ -164,18 +162,20 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
           }
         }
 
-        toast.success(`Removed job  for ${removedUser.fullName || "driver"}`);
+        toast.success(`Removed job for ${removedUser.fullName || "driver"}`);
       } catch (error) {
-        console.error("❌ Failed to remove job:", error);
+        console.error("Failed to remove job:", error);
         toast.error(
           `Failed to remove assignment for ${removedUser.fullName || "driver"}`
         );
+        return false;
       }
     }
 
     try {
       await refetchJobs();
     } catch {}
+    return true;
   };
 
   const handleSendEmail = async () => {
@@ -221,7 +221,8 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
       );
 
       if (removedDrivers.length > 0) {
-        await removeDriverJobs(removedDrivers, jobsData?.jobs || []);
+        const ok = await removeDriverJobs(removedDrivers, jobsData?.jobs || []);
+        if (!ok) return; // << early exit fixes the double-toast
       }
       if (!companyId) {
         toast.error("Company ID is missing. Please log in again.");

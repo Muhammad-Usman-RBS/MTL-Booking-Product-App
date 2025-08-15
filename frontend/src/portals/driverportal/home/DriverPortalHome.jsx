@@ -115,7 +115,6 @@ const DriverPortalHome = () => {
     setLoadingJobId(jobId);
 
     try {
-      // Only update the booking status (not job status)
       const job = jobs.find((j) => j._id === jobId);
       const bookingId = job?.booking?._id;
 
@@ -125,7 +124,7 @@ const DriverPortalHome = () => {
 
       const bookingResult = await updateBookingStatus({
         id: bookingId,
-        status: newStatus, // Update booking status to the new status
+        status: newStatus,
         updatedBy: `${user.role} | ${user.fullName}`,
       });
 
@@ -188,11 +187,11 @@ const DriverPortalHome = () => {
 
             const getCurrentStatus = (job, map) => {
               const id = String(job?._id);
-              if (map[id]) return map[id]; // local optimistic override
+              if (map[id]) return map[id];
               if (job?.jobStatus === "Accepted" && job?.booking?.status) {
-                return job.booking.status; // follow booking progress
+                return job.booking.status;
               }
-              return job?.jobStatus ?? "New"; // New / Rejected / Already Assigned
+              return job?.jobStatus ?? "New";
             };
 
             const currentStatus = getCurrentStatus(job, statusMap);

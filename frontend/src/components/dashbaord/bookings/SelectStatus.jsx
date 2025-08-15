@@ -11,7 +11,6 @@ const STATUS_OPTIONS = [
     "Late Cancel",
     "No Show",
     "Completed",
-    "Cancel",
 ];
 
 const SelectStatus = ({ value, onChange }) => {
