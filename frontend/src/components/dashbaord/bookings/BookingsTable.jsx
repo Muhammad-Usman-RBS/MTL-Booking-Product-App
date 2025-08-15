@@ -107,10 +107,9 @@ const BookingsTable = ({
     isLoading: isJobsLoading,
     refetch: refetchJobs,
   } = useGetAllJobsQuery(companyId, { skip: !companyId });
-  const { data: driversData = {} } = useGetAllDriversQuery({
+  const { data: driversData = {} } = useGetAllDriversQuery(companyId, {
     skip: !companyId,
   });
-
   const refetch = isDriver ? refetchJobs : refetchBookings;
   const [deleteBooking] = useDeleteBookingMutation();
   const [updateBookingStatus] = useUpdateBookingStatusMutation();
@@ -412,125 +411,39 @@ const BookingsTable = ({
       ? "-"
       : `${p.name || "N/A"} | ${p.email || 0} | +${p.phone || 0}`;
 
-  // const formatDriver = (item) => {
-  //   const allDrivers = driversData?.drivers || [];
-
-  //   // if (user?.role === "customer") {
-  //   //   const drivers = item.drivers || [];
-
-  //   //   // const acceptedDriver = drivers.find(
-  //   //   //   (driver) =>
-  //   //   //     driver?.jobStatus === "Accepted" &&
-  //   //   //     driver?.companyId?.toString() === companyId?.toString()
-  //   //   // );
-
-  //   //   // if (!acceptedDriver) {
-  //   //   //   return (
-  //   //   //     <span className="text-[var(--dark-grey)]">
-  //   //   //       <Icons.CircleUserRound />
-  //   //   //     </span>
-  //   //   //   );
-  //   //   // }
-
-  //   //   // return (
-  //   //   //   <div className="text-sm text-gray-700">
-  //   //   //     {/* {acceptedDriver.name || "Unnamed Driver"} */}
-  //   //   //     yes
-  //   //   //   </div>
-  //   //   // );
-  //   // }
-
-  //   if (item.jobStatus === "Rejected") {
-  //     let driverName = "Unknown Driver";
-
-  //     if (item.assignedDriverId) {
-  //       const driver = allDrivers.find(
-  //         (d) =>
-  //           d._id?.toString() === item.assignedDriverId?.toString() &&
-  //           d.companyId?.toString() === companyId?.toString()
-  //       );
-  //       driverName = driver?.fullName || driver?.name || "Unknown Driver";
-  //     } else if (item.drivers && item.drivers.length > 0) {
-  //       driverName = item.drivers
-  //         .map((driver) => driver.name || "Unnamed Driver")
-  //         .join(", ");
-  //     }
-
-  //     return (
-  //       <div className="text-red-500 italic">
-  //         <div className="font-medium">{driverName} - Rejected</div>
-  //         <div className="text-xs hover:underline text-gray-500 mt-1">
-  //           Click here to Select Driver
-  //         </div>
-  //       </div>
-  //     );
-  //   }
-
-  //   if (item.jobStatus === "New" && item.drivers && item.drivers.length > 0) {
-  //     const driverNames = item.drivers
-  //       .map((driver) => driver.name || "Unnamed Driver")
-  //       .join(", ");
-
-  //     return (
-  //       <div className="text-orange-600 italic">
-  //         <div className="font-medium">Booking sent to: {driverNames}</div>
-  //         <div className="text-xs text-gray-500 mt-1">
-  //           (Awaiting acceptance)
-  //         </div>
-  //       </div>
-  //     );
-  //   }
-  //   const drivers = item.drivers || [];
-  //   const jobsArray = jobData?.jobs || [];
-
-  //   if (drivers.length === 0) {
-  //     return (
-  //       <span className="text-[var(--dark-grey)]">
-  //         <Icons.CircleUserRound />
-  //       </span>
-  //     );
-  //   }
-
-  //   return drivers.map((driver, index) => {
-  //     const driverId = typeof driver === "object" ? driver._id : driver;
-  //     const driverName = driver.name || "Unnamed Driver";
-
-  //     const matchingJob = jobsArray.find(
-  //       (job) =>
-  //         job.driverId?.toString() === driverId?.toString() ||
-  //         job.driverId?._id?.toString() === driverId?.toString()
-  //     );
-
-  //     if (matchingJob && matchingJob.jobStatus !== "Already Assigned") {
-  //       return (
-  //         <div key={index} className="text-sm text-gray-700">
-  //           {driverName}
-  //         </div>
-  //       );
-  //     }
-
-  //     return null;
-  //   });
-  // };
   const formatDriver = (item) => {
-    const allDrivers = driversData?.drivers || [];
-    const jobsArray = jobData?.jobs || [];
-
-    // Handle rejected status
     if (item.jobStatus === "Rejected") {
-      let driverName = "Unknown Driver";
+      const allDrivers = driversData?.drivers || [];
+      const jobsArray = jobData?.jobs || [];
 
-      if (item.assignedDriverId) {
+      // find most recent "Rejected" job for this booking
+      const rejectedJob = jobsArray
+        .filter(
+          (j) =>
+            j.bookingId?.toString() === item._id?.toString() &&
+            j.jobStatus === "Rejected"
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.updatedAt || b.createdAt) -
+            new Date(a.updatedAt || a.createdAt)
+        )[0];
+
+      let driverName = "Unknown Driver";
+      if (rejectedJob) {
+        const drv = rejectedJob.driverId; // can be id or object
+        const driverId = typeof drv === "object" ? drv._id : drv;
+
         const driver = allDrivers.find(
-          (d) =>
-            d._id?.toString() === item.assignedDriverId?.toString() &&
-            d.companyId?.toString() === companyId?.toString()
+          (d) => d._id?.toString() === driverId?.toString()
         );
-        driverName = driver?.fullName || driver?.name || "Unknown Driver";
-      } else if (item.drivers && item.drivers.length > 0) {
-        driverName = item.drivers
-          .map((driver) => driver.name || "Unnamed Driver")
-          .join(", ");
+
+        driverName =
+          driver?.fullName ||
+          driver?.DriverData?.firstName ||
+          driver?.DriverData?.name ||
+          (typeof drv === "object" ? drv.name : null) ||
+          "Unknown Driver";
       }
 
       return (
@@ -542,7 +455,6 @@ const BookingsTable = ({
         </div>
       );
     }
-
     // Handle new status - show all assigned drivers
     if (item.jobStatus === "New" && item.drivers && item.drivers.length > 0) {
       const driverNames = item.drivers
@@ -758,7 +670,44 @@ const BookingsTable = ({
                 </div>
               );
             break;
-          case "status":
+          case "status": {
+            // If the booking is Cancelled, and audit shows who did it (clientadmin/customer),
+            // show a message instead of the dropdown.
+            const latestCancelledBy = (() => {
+              if (
+                item.status !== "Cancelled" ||
+                !Array.isArray(item.statusAudit)
+              )
+                return null;
+
+              const entry = item.statusAudit
+                .slice() // don't mutate original
+                .reverse()
+                .find(
+                  (a) => (a.status || "").trim().toLowerCase() === "cancelled"
+                );
+
+              if (!entry) return null;
+
+              const byRaw = (entry.updatedBy || "unknown").toLowerCase(); // e.g. "clientadmin | Jane Smith"
+              const name = entry.updatedBy?.split(" | ")[1] || "";
+
+              if (byRaw.includes("clientadmin"))
+                return { role: "Clientadmin", name };
+              if (byRaw.includes("customer")) return { role: "Customer", name };
+              return null;
+            })();
+
+            if (latestCancelledBy) {
+              row[key] = (
+                <span className="text-red-500 text-xs italic">
+                  {`Booking Cancelled by ${latestCancelledBy.role}: ${latestCancelledBy.name}`}
+                </span>
+              );
+              break; // IMPORTANT: don't render dropdown
+            }
+
+            // Default: render status dropdown
             row[key] = (
               <SelectStatus
                 value={
@@ -801,6 +750,7 @@ const BookingsTable = ({
               />
             );
             break;
+          }
           case "actions":
             if (isDeletedTab) {
               row[key] = (
@@ -839,8 +789,9 @@ const BookingsTable = ({
                       className="text-[var(--dark-gray)]"
                     />
                   </button>
+
                   {selectedActionRow === index && (
-                    <div className="mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg animate-slide-in">
+                    <div className="mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg animate-slide-in">
                       {actionMenuItems
                         .filter((action) => {
                           if (user?.role === "driver") {
@@ -848,7 +799,6 @@ const BookingsTable = ({
                               action === "View" || action === "Status Audit"
                             );
                           }
-                          // Hide the "Delete" action if user is a customer
                           if (
                             user?.role === "customer" &&
                             action === "Delete"
@@ -871,7 +821,6 @@ const BookingsTable = ({
                                     toast.info("Drivers cannot edit bookings");
                                     return;
                                   }
-
                                   const editedData = { ...item };
                                   editedData.__editReturn =
                                     !!item.returnJourney;
@@ -879,11 +828,9 @@ const BookingsTable = ({
                                   setShowEditModal(true);
                                 } else if (action === "Delete") {
                                   if (isDeletedTab) {
-                                    // Permanent delete
                                     setSelectedDeleteId(item._id);
                                     setShowDeleteModal(true);
                                   } else {
-                                    // Soft delete
                                     await updateBookingStatus({
                                       id: item._id,
                                       status: "Deleted",
@@ -895,8 +842,6 @@ const BookingsTable = ({
                                   }
                                 } else if (action === "Copy Booking") {
                                   const copied = { ...item };
-
-                                  // Remove IDs
                                   delete copied._id;
                                   if (copied.passenger?._id)
                                     delete copied.passenger._id;
@@ -937,6 +882,33 @@ const BookingsTable = ({
                             {action}
                           </button>
                         ))}
+
+                      {user?.role?.toLowerCase() === "clientadmin" &&
+                        item.status !== "Cancelled" && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await updateBookingStatus({
+                                  id: item._id,
+                                  status: "Cancelled",
+                                  updatedBy: `${user.role} | ${user.fullName}`,
+                                }).unwrap();
+
+                                toast.success(
+                                  "Booking status set to Cancelled"
+                                );
+                                refetch();
+                                setSelectedActionRow(null);
+                              } catch (err) {
+                                toast.error("Failed to cancel booking");
+                                console.error(err);
+                              }
+                            }}
+                            className="w-full cursor-pointer text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition border-t border-gray-100"
+                          >
+                            Cancel Booking
+                          </button>
+                        )}
                     </div>
                   )}
                 </div>

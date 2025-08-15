@@ -49,7 +49,6 @@ const BookingsList = () => {
     "Late Cancel",
     "No Show",
     "Completed",
-    "Cancel",
   ];
   const [selectedRow, setSelectedRow] = useState(null);
   const [assignedDrivers, setAssignedDrivers] = useState([]);

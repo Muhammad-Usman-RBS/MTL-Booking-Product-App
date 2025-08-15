@@ -186,14 +186,14 @@ const DriverPortalHome = () => {
               ? booking?.returnJourney || {}
               : booking?.primaryJourney || {};
 
-              const getCurrentStatus = (job, map) => {
-                const id = String(job?._id);
-                if (map[id]) return map[id];                 // local optimistic override
-                if (job?.jobStatus === "Accepted" && job?.booking?.status) {
-                  return job.booking.status;                 // follow booking progress
-                }
-                return job?.jobStatus ?? "New";              // New / Rejected / Already Assigned
-              };
+            const getCurrentStatus = (job, map) => {
+              const id = String(job?._id);
+              if (map[id]) return map[id]; // local optimistic override
+              if (job?.jobStatus === "Accepted" && job?.booking?.status) {
+                return job.booking.status; // follow booking progress
+              }
+              return job?.jobStatus ?? "New"; // New / Rejected / Already Assigned
+            };
 
             const currentStatus = getCurrentStatus(job, statusMap);
 
@@ -396,9 +396,30 @@ const DriverPortalHome = () => {
                 {/* ACTIONS */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mt-4">
                   <div className="w-full md:w-2/3">
-                    {currentStatus === "Rejected" ? (
+                    {booking?.status === "Cancelled" ? (
+                      <div className="text-orange-600 text-sm bg-orange-100 px-3 py-1.5 rounded border border-orange-200 w-fit max-w-full">
+                        {(() => {
+                          const auditEntry = booking?.statusAudit?.find(
+                            (entry) => entry.status === "Cancelled"
+                          );
+                          if (
+                            auditEntry?.updatedBy?.startsWith("clientadmin")
+                          ) {
+                            return "Booking was cancelled by clientadmin.";
+                          } else if (
+                            auditEntry?.updatedBy?.startsWith("customer")
+                          ) {
+                            const customerName =
+                              booking?.passenger?.name || "the customer";
+                            return `Booking was cancelled by customer: ${customerName}`;
+                          } else {
+                            return "This booking has been cancelled.";
+                          }
+                        })()}
+                      </div>
+                    ) : currentStatus === "Rejected" ? (
                       <div className="text-red-600 font-semibold text-sm bg-red-50 p-3 rounded-lg border border-red-200">
-                        ❌ This job has been rejected by you
+                        This job has been rejected by you
                       </div>
                     ) : currentStatus === "New" ? (
                       <div className="flex gap-3 pt-2">
