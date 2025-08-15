@@ -386,7 +386,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                 <>
                   {viewData?.primaryJourney?.fare ||
                     viewData?.returnJourneyFare}
-                  GBP
+                 &nbsp; GBP
                 </>
               )}
             </span>

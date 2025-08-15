@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
 import { useLazySearchGooglePlacesQuery } from "../../../redux/api/googleApi";
+import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 import { useSelector } from 'react-redux';
 
 const JourneyCard = ({
@@ -17,7 +18,7 @@ const JourneyCard = ({
   isCopyMode,
   pricingMode,
   isEditMode,
-  // Advacne Booking Restriction
+  // Advance Booking Restriction
   minAllowedDT,
   maxAllowedDT,
   minDateISO,
@@ -35,7 +36,11 @@ const JourneyCard = ({
   const [triggerSearchAutocomplete] = useLazySearchGooglePlacesQuery();
   const inputRef = useRef(null);
 
-  // Advacne Booking Restriction Start
+  // Get booking settings for avoid routes
+  const { data: bookingSettingsData, isLoading: settingsLoading } = useGetBookingSettingQuery();
+  const avoidRoutes = bookingSettingsData?.setting?.avoidRoutes || {};
+
+  // Advance Booking Restriction Start
   const clampToWindow = (dt) => {
     if (!dt) return dt;
     if (minAllowedDT && dt < minAllowedDT) return new Date(minAllowedDT);
@@ -73,10 +78,66 @@ const JourneyCard = ({
     }
     return nextState;
   };
-  // Advacne Booking Restriction End
+  // Advance Booking Restriction End
+
+  // Check if location should be avoided based on settings
+  const checkAvoidRoutes = (location, locationType) => {
+    if (!location || settingsLoading) return false;
+
+    const locationLower = location.toLowerCase();
+    const warnings = [];
+
+    // Check highways
+    if (avoidRoutes.highways && (
+      locationLower.includes('motorway') ||
+      locationLower.includes('highway') ||
+      locationLower.includes('freeway') ||
+      locationLower.includes('m1') || locationLower.includes('m25') ||
+      locationLower.includes('m40') || locationLower.includes('a1') ||
+      locationLower.includes('ring road') || locationLower.includes('bypass')
+    )) {
+      warnings.push('highways');
+    }
+
+    // Check tolls
+    if (avoidRoutes.tolls && (
+      locationLower.includes('toll') ||
+      locationLower.includes('congestion charge') ||
+      locationLower.includes('dartford') || locationLower.includes('severn bridge') ||
+      locationLower.includes('london bridge') || locationLower.includes('tower bridge')
+    )) {
+      warnings.push('tolls');
+    }
+
+    // Check ferries
+    if (avoidRoutes.ferries && (
+      locationLower.includes('ferry') ||
+      locationLower.includes('port') ||
+      locationLower.includes('harbour') || locationLower.includes('pier') ||
+      locationLower.includes('terminal') && locationLower.includes('ferry')
+    )) {
+      warnings.push('ferries');
+    }
+
+    if (warnings.length > 0) {
+      const warningText = warnings.join(', ');
+      toast.warning(
+        `⚠️ ${locationType}: "${location.substring(0, 50)}${location.length > 50 ? '...' : ''}" may involve avoided routes (${warningText}). Please consider an alternative location.`,
+        {
+          position: "top-center",
+          autoClose: 6000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        }
+      );
+      return true;
+    }
+    return false;
+  };
 
   useEffect(() => {
-
     if (!isEditMode) return;
     // Auto-detect pickup type in edit mode
     if (journeyData.pickup && !pickupType) {
@@ -113,6 +174,7 @@ const JourneyCard = ({
       setter(results);
     } catch (err) {
       console.error("Autocomplete error:", err);
+      toast.error("Failed to fetch location suggestions. Please try again.");
     }
   };
 
@@ -128,6 +190,11 @@ const JourneyCard = ({
     setJourneyData((prev) => ({ ...prev, pickup: full }));
     setPickupType(sug.source);
     setPickupSuggestions([]);
+
+    // Check avoid routes for pickup
+    setTimeout(() => {
+      checkAvoidRoutes(full, "Pickup Location");
+    }, 100);
   };
 
   const handleDropOffChange = (idx, val) => {
@@ -146,6 +213,42 @@ const JourneyCard = ({
     setDropOffs(updated);
     setDropOffSuggestions([]);
     setDropOffTypes((prev) => ({ ...prev, [idx]: sug.source }));
+
+    // Check avoid routes for dropoff
+    setTimeout(() => {
+      checkAvoidRoutes(full, `Drop Off ${idx + 1}`);
+    }, 100);
+  };
+
+  const handleManualPickupUse = () => {
+    const currentPickup = journeyData.pickup;
+    setJourneyData({
+      ...journeyData,
+      pickup: currentPickup,
+    });
+    setPickupType("location");
+    setPickupSuggestions([]);
+
+    // Check avoid routes for manually entered pickup
+    setTimeout(() => {
+      checkAvoidRoutes(currentPickup, "Pickup Location");
+    }, 100);
+  };
+
+  const handleManualDropOffUse = (idx) => {
+    const updated = [...dropOffs];
+    updated[idx] = dropOffs[idx];
+    setDropOffs(updated);
+    setDropOffTypes((prev) => ({
+      ...prev,
+      [idx]: "location",
+    }));
+    setDropOffSuggestions([]);
+
+    // Check avoid routes for manually entered dropoff
+    setTimeout(() => {
+      checkAvoidRoutes(dropOffs[idx], `Drop Off ${idx + 1}`);
+    }, 100);
   };
 
   const addDropOff = () => {
@@ -163,13 +266,13 @@ const JourneyCard = ({
     delete types[index];
     setDropOffs(updated);
     setDropOffTypes(types);
+    toast.info(`Drop off ${index + 1} removed successfully.`);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setJourneyData((prev) => ({ ...prev, [name]: value }));
   };
-
 
   const handleClick = () => {
     if (inputRef.current) {
@@ -187,13 +290,17 @@ const JourneyCard = ({
             <h2 className="text-xl font-bold text-[#f5f5f5]">{title}:-</h2>
             <div className="text-left sm:text-right w-full sm:w-auto">
               <span className="inline-block px-4 py-1.5 text-base font-semibold text-white border border-white rounded-md bg-transparent">
-                Fare: {symbol}{fare?.toFixed(2) || "0.00"} {/* Use the symbol from Redux */}
+                Fare: {symbol}{fare?.toFixed(2) || "0.00"}
               </span>
-              {/* <div className="text-sm text-white mt-1">
-                                <span className="text-xs font-normal text-gray-300">
-                                    ({selectedVehicle?.vehicleName || "N/A"})
-                                </span>
-                            </div> */}
+              {/* Route Restrictions Indicator */}
+              {!settingsLoading && (avoidRoutes.highways || avoidRoutes.tolls || avoidRoutes.ferries) && (
+                <div className="text-xs text-yellow-300 mt-1">
+                  <span>🚫 Avoiding: </span>
+                  {avoidRoutes.highways && <span>Highways </span>}
+                  {avoidRoutes.tolls && <span>Tolls </span>}
+                  {avoidRoutes.ferries && <span>Ferries</span>}
+                </div>
+              )}
               {pricingMode === "postcode" &&
                 matchedPostcodePrice?.price &&
                 selectedVehicle?.percentageRate > 0 && (
@@ -273,7 +380,6 @@ const JourneyCard = ({
                       </option>
                     ))}
                   </select>
-
                 </div>
               </div>
             </div>
@@ -291,14 +397,7 @@ const JourneyCard = ({
               {pickupSuggestions.length > 0 && (
                 <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full">
                   <li
-                    onClick={() => {
-                      setJourneyData({
-                        ...journeyData,
-                        pickup: journeyData.pickup,
-                      });
-                      setPickupType("location");
-                      setPickupSuggestions([]);
-                    }}
+                    onClick={handleManualPickupUse}
                     className="p-2 text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 cursor-pointer border-b"
                   >
                     ➕ Use: "{journeyData.pickup}"
@@ -370,16 +469,7 @@ const JourneyCard = ({
                 {dropOffSuggestions.length > 0 && activeDropIndex === idx && (
                   <ul className="absolute z-30 bg-white border rounded shadow max-h-40 overflow-y-auto w-full top-full left-0 mt-1">
                     <li
-                      onClick={() => {
-                        const updated = [...dropOffs];
-                        updated[idx] = dropOffs[idx];
-                        setDropOffs(updated);
-                        setDropOffTypes((prev) => ({
-                          ...prev,
-                          [idx]: "location",
-                        }));
-                        setDropOffSuggestions([]);
-                      }}
+                      onClick={() => handleManualDropOffUse(idx)}
                       className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
                     >
                       ➕ Use: "{dropOffs[idx]}"

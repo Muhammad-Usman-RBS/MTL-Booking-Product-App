@@ -376,7 +376,7 @@ const BookingSettings = () => {
         </div>
 
         {/* Terms */}
-        <div className="md:col-span-3">
+        {/* <div className="md:col-span-3">
           <label className="block text-sm font-medium mb-1">
             Cancel Booking Terms
           </label>
@@ -386,7 +386,7 @@ const BookingSettings = () => {
             value={cancelBookingTerms}
             onChange={(e) => setCancelBookingTerms(e.target.value)}
           />
-        </div>
+        </div> */}
 
         {/* Save */}
         <div className="md:col-span-3">

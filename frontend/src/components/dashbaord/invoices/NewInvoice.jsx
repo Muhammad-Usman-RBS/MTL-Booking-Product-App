@@ -156,7 +156,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
     },
     { label: "Date & Time", key: "date" },
     {
-      label: invoiceType === "driver" ? "driverFare" : "Fare",
+      label: invoiceType === "driver" ? "DriverFare" : "Fare",
       key: "fare",
     },
     { label: "Tax", key: "tax" },
@@ -235,8 +235,8 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
                 ? booking.returnDriverFare || 0
                 : booking.driverFare || 0
               : booking.returnJourney?.fare ||
-                booking.primaryJourney?.fare ||
-                0;
+              booking.primaryJourney?.fare ||
+              0;
 
           const totalAmount = taxType === "Tax" ? fare * taxMultiplier : fare;
 
@@ -380,19 +380,15 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
           : item.passenger?.name || "-",
 
       fare: (
-        <input
-          type="text"
-          className="custom_input"
-          defaultValue={
-            invoiceType === "driver"
-              ? item.returnJourneyToggle
-                ? item.returnDriverFare || 0
-                : item.driverFare || 0
-              : item.returnJourney
+        <span>
+          {invoiceType === "driver"
+            ? item.returnJourneyToggle
+              ? item.returnDriverFare || 0
+              : item.driverFare || 0
+            : item.returnJourney
               ? item.returnJourney.fare
-              : item.primaryJourney?.fare
-          }
-        />
+              : item.primaryJourney?.fare}
+        </span>
       ),
     }));
   }

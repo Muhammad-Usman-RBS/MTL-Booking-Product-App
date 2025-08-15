@@ -2,6 +2,7 @@ import express from "express";
 import fetch from "node-fetch";
 import { google } from "googleapis";
 import User from "../models/User.js";
+import BookingSetting from "../models/settings/BookingSetting.js";
 import bcrypt from "bcryptjs";
 import sendEmail from "../utils/sendEmail.js";
 import { v4 as uuidv4 } from "uuid";
@@ -299,11 +300,77 @@ const airportTerminals = {
   ],
 };
 
-// HYBRID API (Local first, Google fallback)
+// Helper function to get avoid routes settings for a company
+const getAvoidRoutesSettings = async (req) => {
+  try {
+    const companyId = req.user?.companyId;
+    if (!companyId) return { highways: false, tolls: false, ferries: false };
+
+    const setting = await BookingSetting.findOne({ companyId });
+    return setting?.avoidRoutes || { highways: false, tolls: false, ferries: false };
+  } catch (error) {
+    console.error("Error fetching avoid routes settings:", error);
+    return { highways: false, tolls: false, ferries: false };
+  }
+};
+
+// Helper function to check if location involves avoided routes
+const checkLocationForAvoidedRoutes = (location, avoidRoutes) => {
+  if (!location || typeof location !== 'string') return { hasWarnings: false, warnings: [] };
+  
+  const locationLower = location.toLowerCase();
+  const warnings = [];
+
+  // Check highways/motorways
+  if (avoidRoutes.highways && (
+    locationLower.includes('motorway') || 
+    locationLower.includes('highway') || 
+    locationLower.includes('freeway') ||
+    locationLower.includes('m1') || locationLower.includes('m25') || 
+    locationLower.includes('m40') || locationLower.includes('a1') ||
+    locationLower.includes('ring road') || locationLower.includes('bypass') ||
+    /\bm\d+\b/.test(locationLower) || // Match M1, M25, etc.
+    /\ba\d+\b/.test(locationLower)    // Match A1, A40, etc.
+  )) {
+    warnings.push('highways');
+  }
+
+  // Check tolls
+  if (avoidRoutes.tolls && (
+    locationLower.includes('toll') || 
+    locationLower.includes('congestion charge') ||
+    locationLower.includes('dartford') || locationLower.includes('severn bridge') ||
+    locationLower.includes('london bridge') || locationLower.includes('tower bridge') ||
+    locationLower.includes('congestion zone')
+  )) {
+    warnings.push('tolls');
+  }
+
+  // Check ferries
+  if (avoidRoutes.ferries && (
+    locationLower.includes('ferry') || 
+    locationLower.includes('port') ||
+    locationLower.includes('harbour') || locationLower.includes('harbor') ||
+    locationLower.includes('pier') ||
+    (locationLower.includes('terminal') && locationLower.includes('ferry'))
+  )) {
+    warnings.push('ferries');
+  }
+
+  return {
+    hasWarnings: warnings.length > 0,
+    warnings: warnings
+  };
+};
+
+// HYBRID API (Local first, Google fallback) with avoid routes checking
 router.get("/autocomplete", async (req, res) => {
   try {
     const queryRaw = req.query.input || "";
     const query = queryRaw.toLowerCase().replace(/[\s,-]+/g, "");
+
+    // Get avoid routes settings
+    const avoidRoutes = await getAvoidRoutesSettings(req);
 
     const matchedKey = Object.keys(airportTerminals).find((key) => {
       const normalizedKey = key.toLowerCase().replace(/\s+/g, "");
@@ -311,12 +378,16 @@ router.get("/autocomplete", async (req, res) => {
     });
 
     if (matchedKey) {
-      const results = airportTerminals[matchedKey].map((item) => ({
-        name: item.name,
-        formatted_address: item.formatted_address,
-        source: "airport-local",
-      }));
-      return res.json({ predictions: results });
+      const results = airportTerminals[matchedKey].map((item) => {
+        const routeCheck = checkLocationForAvoidedRoutes(item.formatted_address, avoidRoutes);
+        return {
+          name: item.name,
+          formatted_address: item.formatted_address,
+          source: "airport-local",
+          routeWarnings: routeCheck.hasWarnings ? routeCheck.warnings : null,
+        };
+      });
+      return res.json({ predictions: results, avoidRoutes });
     }
 
     // If not found locally → fallback to Google
@@ -335,27 +406,30 @@ router.get("/autocomplete", async (req, res) => {
         const detailsResponse = await fetch(detailsUrl);
         const detailsData = await detailsResponse.json();
 
+        const fullAddress = detailsData.result?.formatted_address || prediction.description;
+        const routeCheck = checkLocationForAvoidedRoutes(fullAddress, avoidRoutes);
+
         return {
           name:
             detailsData.result?.name ||
             prediction.structured_formatting?.main_text,
-          formatted_address:
-            detailsData.result?.formatted_address || prediction.description,
+          formatted_address: fullAddress,
           source: prediction.types?.includes("airport")
             ? "airport-google"
             : "location",
+          routeWarnings: routeCheck.hasWarnings ? routeCheck.warnings : null,
         };
       })
     );
 
-    return res.json({ predictions: detailedResults });
+    return res.json({ predictions: detailedResults, avoidRoutes });
   } catch (error) {
     console.error("Autocomplete API error:", error);
     res.status(500).json({ error: "Failed to fetch autocomplete data." });
   }
 });
 
-// Distance API — NO CHANGE (already correct)
+// Distance API with avoid routes integration
 router.get("/distance", async (req, res) => {
   try {
     const { origin, destination } = req.query;
@@ -366,11 +440,23 @@ router.get("/distance", async (req, res) => {
         .json({ error: "Origin and destination are required" });
     }
 
+    // Get avoid routes settings
+    const avoidRoutes = await getAvoidRoutesSettings(req);
+    
+    // Build avoid parameter for Google API
+    const avoidParams = [];
+    if (avoidRoutes.highways) avoidParams.push('highways');
+    if (avoidRoutes.tolls) avoidParams.push('tolls');
+    if (avoidRoutes.ferries) avoidParams.push('ferries');
+    
+    const avoidQuery = avoidParams.length > 0 ? `&avoid=${avoidParams.join('|')}` : '';
+
     const url = `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=${encodeURIComponent(
       origin
-    )}&destinations=${encodeURIComponent(destination)}&key=${
+    )}&destinations=${encodeURIComponent(destination)}${avoidQuery}&key=${
       process.env.GOOGLE_API_KEY
     }`;
+    
     const response = await fetch(url);
     const data = await response.json();
 
@@ -386,7 +472,20 @@ router.get("/distance", async (req, res) => {
     const distanceValue = element.distance?.value || null;
     const durationText = element.duration?.text || null;
 
-    res.json({ distanceText, distanceValue, durationText });
+    // Check both origin and destination for route warnings
+    const originCheck = checkLocationForAvoidedRoutes(origin, avoidRoutes);
+    const destinationCheck = checkLocationForAvoidedRoutes(destination, avoidRoutes);
+
+    res.json({ 
+      distanceText, 
+      distanceValue, 
+      durationText,
+      avoidRoutes,
+      routeWarnings: {
+        origin: originCheck.hasWarnings ? originCheck.warnings : null,
+        destination: destinationCheck.hasWarnings ? destinationCheck.warnings : null,
+      }
+    });
   } catch (error) {
     console.error("Distance API error:", error);
     res.status(500).json({ error: "Failed to fetch distance data" });
@@ -404,13 +503,16 @@ router.get("/map-key", async (req, res) => {
   }
 });
 
-// POSTCODE SUGGESTION API
+// POSTCODE SUGGESTION API with route checking
 router.get("/postcode-suggestions", async (req, res) => {
   try {
     const query = req.query.input || "";
     if (!query) {
       return res.json({ postcodes: [] });
     }
+
+    // Get avoid routes settings
+    const avoidRoutes = await getAvoidRoutesSettings(req);
 
     const googleUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
       query
@@ -421,23 +523,31 @@ router.get("/postcode-suggestions", async (req, res) => {
     const response = await fetch(googleUrl);
     const data = await response.json();
 
-    // Extract only valid UK postcode format (first part e.g. RH6, TW6, etc.)
+    // Extract only valid UK postcode format and check for route warnings
     const postcodes =
       data?.predictions
         ?.map((pred) => {
           const match = pred.description.match(/\b[A-Z]{1,2}\d{1,2}[A-Z]?\b/);
-          return match ? match[0] : null;
+          if (!match) return null;
+          
+          const routeCheck = checkLocationForAvoidedRoutes(pred.description, avoidRoutes);
+          
+          return {
+            postcode: match[0],
+            description: pred.description,
+            routeWarnings: routeCheck.hasWarnings ? routeCheck.warnings : null,
+          };
         })
         .filter(Boolean) || [];
 
-    res.json({ postcodes });
+    res.json({ postcodes, avoidRoutes });
   } catch (error) {
     console.error("Postcode Suggestions API error:", error);
     res.status(500).json({ error: "Failed to fetch postcode suggestions" });
   }
 });
 
-// GEOCODE API - Convert address to lat/lng
+// GEOCODE API - Convert address to lat/lng with route checking
 router.get("/geocode", async (req, res) => {
   try {
     const address = req.query.address;
@@ -445,6 +555,9 @@ router.get("/geocode", async (req, res) => {
     if (!address) {
       return res.status(400).json({ error: "Address is required" });
     }
+
+    // Get avoid routes settings
+    const avoidRoutes = await getAvoidRoutesSettings(req);
 
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
       address
@@ -457,7 +570,17 @@ router.get("/geocode", async (req, res) => {
     }
 
     const location = data.results[0].geometry.location; // { lat, lng }
-    res.json({ location });
+    const formattedAddress = data.results[0].formatted_address;
+    
+    // Check for route warnings
+    const routeCheck = checkLocationForAvoidedRoutes(formattedAddress, avoidRoutes);
+
+    res.json({ 
+      location, 
+      formatted_address: formattedAddress,
+      avoidRoutes,
+      routeWarnings: routeCheck.hasWarnings ? routeCheck.warnings : null,
+    });
   } catch (error) {
     console.error("Geocode API error:", error);
     res.status(500).json({ error: "Failed to geocode address" });
