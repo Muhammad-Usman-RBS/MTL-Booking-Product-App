@@ -119,7 +119,7 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   }, [filteredDriver, selectedDrivers]);
   const removeDriverJobs = async (removedUserDrivers, allJobs = []) => {
     const status = (selectedBooking?.status).trim().toLowerCase();
-    const canDelete = status === "new" || status === "already assigned";
+    const canDelete = status === "new" || status === "already assigned" || status === "rejected";
     if (!canDelete) {
       toast.error(
         `Cannot remove driver(s) when booking status is "${

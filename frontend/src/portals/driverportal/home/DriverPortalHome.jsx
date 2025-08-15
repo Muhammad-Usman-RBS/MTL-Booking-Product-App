@@ -362,8 +362,9 @@ const DriverPortalHome = () => {
                     <strong className="block mb-3 text-lg font-bold text-[var(--dark-gray)]">
                       Passenger Details:
                     </strong>
-                    {currentStatus === "Accepted" &&
+                    {booking?.status !== "Cancelled" &&
                     currentStatus !== "Rejected" &&
+                    driverIdStr === userIdStr &&
                     booking?.passenger ? (
                       <div className="text-sm space-y-2">
                         <div>

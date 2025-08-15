@@ -411,106 +411,129 @@ const BookingsTable = ({
       ? "-"
       : `${p.name || "N/A"} | ${p.email || 0} | +${p.phone || 0}`;
 
-  const formatDriver = (item) => {
-    const allDrivers = driversData?.drivers || [];
-    const jobsArray = jobData?.jobs || [];
-
-    // Handle rejected status
-    if (item.jobStatus === "Rejected") {
-      let driverName = "Unknown Driver";
-
-      if (item.assignedDriverId) {
-        const driver = allDrivers.find(
-          (d) =>
-            d._id?.toString() === item.assignedDriverId?.toString() &&
-            d.companyId?.toString() === companyId?.toString()
-        );
-        driverName = driver?.fullName || driver?.name || "Unknown Driver";
-      } else if (item.drivers && item.drivers.length > 0) {
-        driverName = item.drivers
-          .map((driver) => driver.name || "Unnamed Driver")
-          .join(", ");
-      }
-
-      return (
-        <div className="text-red-500 italic">
-          <div className="font-medium">{driverName} - Rejected</div>
-          <div className="text-xs hover:underline text-gray-500 mt-1">
-            Click here to Select Driver
-          </div>
-        </div>
-      );
-    }
-
-    // Handle new status - show all assigned drivers
-    if (item.jobStatus === "New" && item.drivers && item.drivers.length > 0) {
-      const driverNames = item.drivers
-        .map((driver) => driver.name || "Unnamed Driver")
-        .join(", ");
-
-      return (
-        <div className="text-orange-600 italic">
-          <div className="font-medium">Booking sent to: {driverNames}</div>
-          <div className="text-xs text-gray-500 mt-1">
-            (Awaiting acceptance)
-          </div>
-        </div>
-      );
-    }
-
-    // **FIXED: Only show drivers who have ACCEPTED jobs**
-    const drivers = item.drivers || [];
-
-    if (drivers.length === 0) {
-      return (
-        <span className="text-[var(--dark-grey)]">
-          <Icons.CircleUserRound />
-        </span>
-      );
-    }
-
-    // Filter to only show drivers with "Accepted" status
-    const acceptedDrivers = drivers
-      .map((driver, index) => {
-        const driverId = typeof driver === "object" ? driver._id : driver;
-        const driverName = driver.name || "Unnamed Driver";
-
-        // Find ALL jobs for this driver and booking
-        const driverJobs = jobsArray.filter(
-          (job) =>
-            (job.driverId?.toString() === driverId?.toString() ||
-              job.driverId?._id?.toString() === driverId?.toString()) &&
-            job.bookingId?.toString() === item._id?.toString()
-        );
-
-        // Only include if driver has an "Accepted" job
-        const hasAcceptedJob = driverJobs.some(
-          (job) => job.jobStatus === "Accepted"
-        );
-
-        if (hasAcceptedJob) {
+      const formatDriver = (item) => {
+        const allDrivers = driversData?.drivers || [];
+        const jobsArray = jobData?.jobs || [];
+      
+        const resolveDriverNameByRef = (drv) => {
+          const driverId = typeof drv === "object" ? (drv._id || drv.id) : drv;
+          const d = allDrivers.find((x) => x._id?.toString() === driverId?.toString());
           return (
-            <div key={index} className="text-sm text-gray-700">
-              {driverName}
+            d?.fullName ||
+            d?.DriverData?.firstName ||
+            d?.DriverData?.name ||
+            (typeof drv === "object" ? (drv.name || drv.fullName || drv.firstName) : undefined)
+          );
+        };
+      
+        // Show the driver who actually REJECTED the job
+        if (String(item.jobStatus).toLowerCase() === "rejected") {
+          let driverName;
+      
+          // 1) Prefer statusAudit: "Driver | <name>"
+          const rejectedAudit = (item.statusAudit || [])
+            .slice()
+            .reverse()
+            .find(
+              (e) =>
+                String(e.status).toLowerCase() === "rejected" &&
+                String(e.updatedBy || "").toLowerCase().startsWith("driver")
+            );
+      
+          const nameFromAudit = rejectedAudit?.updatedBy?.split(" | ")[1]?.trim();
+          if (nameFromAudit) driverName = nameFromAudit;
+      
+          // 2) Fallback: latest Rejected job -> resolve via drivers list
+          if (!driverName) {
+            const rejectedJob = jobsArray
+              .filter(
+                (j) =>
+                  j.bookingId?.toString() === item._id?.toString() &&
+                  String(j.jobStatus).toLowerCase() === "rejected"
+              )
+              .sort(
+                (a, b) =>
+                  new Date(b.updatedAt || b.createdAt) -
+                  new Date(a.updatedAt || a.createdAt)
+              )[0];
+      
+            if (rejectedJob) {
+              driverName = resolveDriverNameByRef(rejectedJob.driverId);
+            }
+          }
+      
+          return (
+            <div className="text-red-500 italic">
+              <div className="font-medium">{driverName || "Unknown Driver"} - Rejected</div>
+              <div className="text-xs hover:underline text-gray-500 mt-1">
+                Click here to Select Driver
+              </div>
             </div>
           );
         }
-
-        return null;
-      })
-      .filter(Boolean); // Remove null entries
-
-    // If no accepted drivers, show icon
-    if (acceptedDrivers.length === 0) {
-      return (
-        <span className="text-[var(--dark-grey)]">
-          <Icons.CircleUserRound />
-        </span>
-      );
-    }
-
-    return acceptedDrivers;
-  };
+      
+        // Show all assigned drivers when New (awaiting acceptance)
+        if (item.jobStatus === "New" && Array.isArray(item.drivers) && item.drivers.length > 0) {
+          const driverNames = item.drivers
+            .map((d) => d.name || "Unnamed Driver")
+            .join(", ");
+      
+          return (
+            <div className="text-orange-600 italic">
+              <div className="font-medium">Booking sent to: {driverNames}</div>
+              <div className="text-xs text-gray-500 mt-1">(Awaiting acceptance)</div>
+            </div>
+          );
+        }
+      
+        // Only show drivers who have ACCEPTED a job for this booking
+        const drivers = item.drivers || [];
+        if (drivers.length === 0) {
+          return (
+            <span className="text-[var(--dark-grey)]">
+              <Icons.CircleUserRound />
+            </span>
+          );
+        }
+      
+        const acceptedDrivers = drivers
+          .map((driver, index) => {
+            const driverId = typeof driver === "object" ? driver._id : driver;
+            const driverName = driver.name || "Unnamed Driver";
+      
+            const driverJobs = jobsArray.filter(
+              (job) =>
+                (job.driverId?.toString() === driverId?.toString() ||
+                  job.driverId?._id?.toString() === driverId?.toString()) &&
+                job.bookingId?.toString() === item._id?.toString()
+            );
+      
+            const hasAcceptedJob = driverJobs.some(
+              (job) => job.jobStatus === "Accepted"
+            );
+      
+            if (hasAcceptedJob) {
+              return (
+                <div key={index} className="text-sm text-gray-700">
+                  {driverName}
+                </div>
+              );
+            }
+            return null;
+          })
+          .filter(Boolean);
+      
+        if (acceptedDrivers.length === 0) {
+          return (
+            <span className="text-[var(--dark-grey)]">
+              <Icons.CircleUserRound />
+            </span>
+          );
+        }
+      
+        return acceptedDrivers;
+      };
+      
   let tableData = [];
   if (!bookings || bookings.length === 0 || filteredBookings.length === 0) {
     tableData = emptyTableRows;
