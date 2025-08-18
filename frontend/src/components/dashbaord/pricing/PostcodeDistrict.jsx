@@ -6,12 +6,7 @@ import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import { useLazySearchPostcodeSuggestionsQuery } from "../../../redux/api/googleApi";
-import {
-  useFetchAllPostcodePricesQuery,
-  useCreatePostcodePriceMutation,
-  useUpdatePostcodePriceMutation,
-  useDeletePostcodePriceMutation,
-} from "../../../redux/api/postcodePriceApi";
+import { useFetchAllPostcodePricesQuery, useCreatePostcodePriceMutation, useUpdatePostcodePriceMutation, useDeletePostcodePriceMutation} from "../../../redux/api/postcodePriceApi";
 
 const PostcodeDistrict = () => {
   const companyId = useSelector((state) => state.auth?.user?.companyId);
@@ -34,6 +29,24 @@ const PostcodeDistrict = () => {
     refetch();
   }, []);
 
+  // const handlePostcodeSuggestions = async (value, setSuggestions) => {
+  //   if (!value || value.length < 1) {
+  //     setSuggestions([]);
+  //     return;
+  //   }
+  //   try {
+  //     const { data } = await triggerPostcodeSuggestions(value);
+  //     if (data?.postcodes?.length > 0) {
+  //       setSuggestions([...new Set(data.postcodes)]);
+  //     } else {
+  //       setSuggestions([]);
+  //     }
+  //   } catch (err) {
+  //     console.error("Failed to fetch suggestions", err);
+  //     setSuggestions([]);
+  //   }
+  // };
+
   const handlePostcodeSuggestions = async (value, setSuggestions) => {
     if (!value || value.length < 1) {
       setSuggestions([]);
@@ -42,7 +55,9 @@ const PostcodeDistrict = () => {
     try {
       const { data } = await triggerPostcodeSuggestions(value);
       if (data?.postcodes?.length > 0) {
-        setSuggestions([...new Set(data.postcodes)]);
+        // Map over the array to get the `postcode` string from each object
+        const postcodeStrings = data.postcodes.map(item => item.postcode);
+        setSuggestions([...new Set(postcodeStrings)]);
       } else {
         setSuggestions([]);
       }

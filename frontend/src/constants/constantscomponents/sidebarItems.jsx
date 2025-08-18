@@ -349,18 +349,18 @@ const sidebarItems = [
       //     "driver",
       //   ],
       // },
-      {
-        title: "Location Category",
-        route: "/dashboard/settings/location-category",
-        icon: Icons.MapPin,
-        roles: [
-          "clientadmin",
-          "associateadmin",
-          "superadmin",
-          "manager",
-          "driver",
-        ],
-      },
+      // {
+      //   title: "Location Category",
+      //   route: "/dashboard/settings/location-category",
+      //   icon: Icons.MapPin,
+      //   roles: [
+      //     "clientadmin",
+      //     "associateadmin",
+      //     "superadmin",
+      //     "manager",
+      //     "driver",
+      //   ],
+      // },
       {
         title: "Notifications",
         route: "/dashboard/settings/notifications",
