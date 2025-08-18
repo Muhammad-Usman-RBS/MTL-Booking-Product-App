@@ -1,6 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { toast } from "react-toastify";
-import { useLazySearchGooglePlacesQuery } from "../../../redux/api/googleApi";
+import { useLazySearchGooglePlacesQuery, useLazyGeocodeQuery } from "../../../redux/api/googleApi";
+import { normalizeCoverageRules, decideCoverage } from "../../../utils/coverageUtils";
+import { useGetAllCoveragesQuery } from "../../../redux/api/coverageApi"
 import { useSelector } from 'react-redux';
 
 const JourneyCard = ({
@@ -24,9 +26,36 @@ const JourneyCard = ({
   const [activeDropIndex, setActiveDropIndex] = useState(null);
   const [pickupType, setPickupType] = useState(null);
   const [currency, symbol] = useSelector((state) => [state.currency.currency, state.currency.symbol]);
-
   const [triggerSearchAutocomplete] = useLazySearchGooglePlacesQuery();
+  const [triggerGetPlaceDetails] = useLazyGeocodeQuery();
+  const [triggerGeocode] = useLazyGeocodeQuery();
+
+  // Store selected coords (optional but helpful)
+  const [pickupCoords, setPickupCoords] = useState(null);
+  const [dropoffCoords, setDropoffCoords] = useState({});
+
   const inputRef = useRef(null);
+
+  const companyId = useSelector(
+    (s) => s?.auth?.user?.companyId || s?.auth?.user?.company?._id || s?.company?.id
+  );
+  const { data: coveragesResp } = useGetAllCoveragesQuery(companyId, {
+    skip: !companyId,
+  });
+
+  const coverageRules = useMemo(
+    () => normalizeCoverageRules(coveragesResp),
+    [coveragesResp]
+  );
+
+  const checkCoverage = (text, scope, coords) => {
+    const res = decideCoverage(text, scope, coverageRules, coords);
+    if (!res.allowed) {
+      toast.warning(`We currently don't serve this ${scope} area. (${res.reason})`);
+      return false;
+    }
+    return true;
+  };
 
   useEffect(() => {
 
@@ -58,16 +87,18 @@ const JourneyCard = ({
     try {
       const res = await triggerSearchAutocomplete(query).unwrap();
       const results = res.predictions.map((r) => ({
+        place_id: r.place_id, // KEEP THIS
         name: r.name || r.structured_formatting?.main_text,
         formatted_address: r.formatted_address || r.description,
-        source:
-          r.source || (r.types?.includes("airport") ? "airport" : "location"),
+        source: r.source || (r.types?.includes("airport") ? "airport" : "location"),
+        location: r.location || null, // <<— ADD THIS (backend now sends geometry.location)
       }));
       setter(results);
     } catch (err) {
       console.error("Autocomplete error:", err);
     }
   };
+
 
   const handlePickupChange = (e) => {
     const val = e.target.value;
@@ -76,10 +107,21 @@ const JourneyCard = ({
     else setPickupSuggestions([]);
   };
 
-  const handlePickupSelect = (sug) => {
+  // const handlePickupSelect = (sug) => {
+  //   const full = `${sug.name} - ${sug.formatted_address}`;
+  //   setJourneyData((prev) => ({ ...prev, pickup: full }));
+  //   setPickupType(sug.source);
+  //   setPickupSuggestions([]);
+  // };
+  const handlePickupSelect = async (sug) => {
     const full = `${sug.name} - ${sug.formatted_address}`;
+    const coords = sug.location ? { lat: Number(sug.location.lat), lng: Number(sug.location.lng) } : null;
+
+    if (!checkCoverage(full, "pickup", coords)) return;
+
     setJourneyData((prev) => ({ ...prev, pickup: full }));
     setPickupType(sug.source);
+    setPickupCoords(coords); // save if found
     setPickupSuggestions([]);
   };
 
@@ -92,13 +134,27 @@ const JourneyCard = ({
     else setDropOffSuggestions([]);
   };
 
-  const handleDropOffSelect = (idx, sug) => {
+  // const handleDropOffSelect = (idx, sug) => {
+  //   const full = `${sug.name} - ${sug.formatted_address}`;
+  //   const updated = [...dropOffs];
+  //   updated[idx] = full;
+  //   setDropOffs(updated);
+  //   setDropOffSuggestions([]);
+  //   setDropOffTypes((prev) => ({ ...prev, [idx]: sug.source }));
+  // };
+
+  const handleDropOffSelect = async (idx, sug) => {
     const full = `${sug.name} - ${sug.formatted_address}`;
+    const coords = sug.location ? { lat: Number(sug.location.lat), lng: Number(sug.location.lng) } : null;
+
+    if (!checkCoverage(full, "dropoff", coords)) return;
+
     const updated = [...dropOffs];
     updated[idx] = full;
     setDropOffs(updated);
-    setDropOffSuggestions([]);
     setDropOffTypes((prev) => ({ ...prev, [idx]: sug.source }));
+    setDropoffCoords((prev) => ({ ...prev, [idx]: coords })); // save
+    setDropOffSuggestions([]);
   };
 
   const addDropOff = () => {
@@ -234,17 +290,27 @@ const JourneyCard = ({
 
             {/* Pickup Location */}
             <div className="relative mb-4">
-              <input
+              {/* <input
                 type="text"
                 name="pickup"
                 placeholder="Pickup Location"
                 value={journeyData.pickup}
                 onChange={handlePickupChange}
                 className="custom_input w-full"
+              /> */}
+              <input
+                type="text"
+                name="pickup"
+                placeholder="Pickup Location"
+                value={journeyData.pickup}
+                onChange={handlePickupChange}
+                onBlur={() => journeyData.pickup && checkCoverage(journeyData.pickup, "pickup", pickupCoords)}
+                className="custom_input w-full"
               />
+
               {pickupSuggestions.length > 0 && (
                 <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full">
-                  <li
+                  {/* <li
                     onClick={() => {
                       setJourneyData({
                         ...journeyData,
@@ -256,7 +322,38 @@ const JourneyCard = ({
                     className="p-2 text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 cursor-pointer border-b"
                   >
                     ➕ Use: "{journeyData.pickup}"
+                  </li> */}
+                  <li
+                    onClick={async () => {
+                      const val = (journeyData.pickup || "").trim();
+                      if (!val) return;
+
+                      // 1) Geocode typed text to get {lat,lng}
+                      let coords = null;
+                      try {
+                        const g = await triggerGeocode(val).unwrap(); // from useLazyGeocodeQuery
+                        if (g?.location && Number.isFinite(g.location.lat) && Number.isFinite(g.location.lng)) {
+                          coords = { lat: Number(g.location.lat), lng: Number(g.location.lng) };
+                        }
+                      } catch (err) {
+                        console.warn("Geocode failed, falling back to text-only coverage check", err);
+                      }
+
+                      // 2) Coverage check (uses polygon when coords exist)
+                      if (!checkCoverage(val, "pickup", coords)) return;
+
+                      // 3) Apply selection
+                      setJourneyData((prev) => ({ ...prev, pickup: val }));
+                      setPickupType("location");
+                      setPickupCoords(coords);
+                      setPickupSuggestions([]);
+                    }}
+                    className="p-2 text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 cursor-pointer border-b"
+                  >
+                    ➕ Use: "{journeyData.pickup}"
                   </li>
+
+
                   {pickupSuggestions.map((sug, idx) => (
                     <li
                       key={idx}
@@ -312,18 +409,28 @@ const JourneyCard = ({
                 key={idx}
                 className="relative flex flex-col sm:flex-row sm:items-center gap-2 mb-4"
               >
-                <input
+                {/* <input
                   type="text"
                   value={val}
                   placeholder={`Drop Off ${idx + 1}`}
                   onChange={(e) => handleDropOffChange(idx, e.target.value)}
                   className="custom_input w-full"
+                /> */}
+                <input
+                  type="text"
+                  value={val}
+                  placeholder={`Drop Off ${idx + 1}`}
+                  onChange={(e) => handleDropOffChange(idx, e.target.value)}
+                  onBlur={() => {
+                    const coords = dropoffCoords[idx] || null;
+                    dropOffs[idx] && checkCoverage(dropOffs[idx], "dropoff", coords);
+                  }}
+                  className="custom_input w-full"
                 />
-
                 {/* Suggestions */}
                 {dropOffSuggestions.length > 0 && activeDropIndex === idx && (
                   <ul className="absolute z-30 bg-white border rounded shadow max-h-40 overflow-y-auto w-full top-full left-0 mt-1">
-                    <li
+                    {/* <li
                       onClick={() => {
                         const updated = [...dropOffs];
                         updated[idx] = dropOffs[idx];
@@ -337,7 +444,45 @@ const JourneyCard = ({
                       className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
                     >
                       ➕ Use: "{dropOffs[idx]}"
+                    </li> */}
+                    <li
+                      onClick={async () => {
+                        const val = (dropOffs[idx] || "").trim();
+                        if (!val) return;
+
+                        // 1) Geocode typed text → lat/lng
+                        let coords = null;
+                        try {
+                          const g = await triggerGeocode(val).unwrap(); // from useLazyGeocodeQuery
+                          if (g?.location && Number.isFinite(g.location.lat) && Number.isFinite(g.location.lng)) {
+                            coords = { lat: Number(g.location.lat), lng: Number(g.location.lng) };
+                          }
+                        } catch (err) {
+                          console.warn("Dropoff geocode failed, fallback to text-only check", err);
+                        }
+
+                        // 2) Coverage check
+                        if (!checkCoverage(val, "dropoff", coords)) return;
+
+                        // 3) Update state
+                        const updated = [...dropOffs];
+                        updated[idx] = val;
+                        setDropOffs(updated);
+
+                        setDropOffTypes((prev) => ({ ...prev, [idx]: "location" }));
+
+                        setDropoffCoords((prev) => ({
+                          ...prev,
+                          [idx]: coords,
+                        }));
+
+                        setDropOffSuggestions([]);
+                      }}
+                      className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
+                    >
+                      ➕ Use: "{dropOffs[idx]}"
                     </li>
+
                     {dropOffSuggestions.map((sug, i) => (
                       <li
                         key={i}

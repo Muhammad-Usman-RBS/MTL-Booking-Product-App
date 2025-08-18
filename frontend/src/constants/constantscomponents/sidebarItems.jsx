@@ -337,18 +337,18 @@ const sidebarItems = [
           "driver",
         ],
       },
-      {
-        title: "Email",
-        route: "/dashboard/settings/email",
-        icon: Icons.Mail,
-        roles: [
-          "clientadmin",
-          "associateadmin",
-          "superadmin",
-          "manager",
-          "driver",
-        ],
-      },
+      // {
+      //   title: "Email",
+      //   route: "/dashboard/settings/email",
+      //   icon: Icons.Mail,
+      //   roles: [
+      //     "clientadmin",
+      //     "associateadmin",
+      //     "superadmin",
+      //     "manager",
+      //     "driver",
+      //   ],
+      // },
       {
         title: "Location Category",
         route: "/dashboard/settings/location-category",
@@ -373,18 +373,18 @@ const sidebarItems = [
           "driver",
         ],
       },
-      {
-        title: "Locations",
-        route: "/dashboard/settings/locations",
-        icon: Icons.Map,
-        roles: [
-          "clientadmin",
-          "associateadmin",
-          "superadmin",
-          "manager",
-          "driver",
-        ],
-      },
+      // {
+      //   title: "Locations",
+      //   route: "/dashboard/settings/locations",
+      //   icon: Icons.Map,
+      //   roles: [
+      //     "clientadmin",
+      //     "associateadmin",
+      //     "superadmin",
+      //     "manager",
+      //     "driver",
+      //   ],
+      // },
       {
         title: "Coverage",
         route: "/dashboard/settings/coverage",
@@ -445,18 +445,18 @@ const sidebarItems = [
           "driver",
         ],
       },
-      {
-        title: "Notifications Settings",
-        route: "/dashboard/settings/settings-notifications",
-        icon: Icons.Bell,
-        roles: [
-          "clientadmin",
-          "associateadmin",
-          "superadmin",
-          "manager",
-          "driver",
-        ],
-      },
+      // {
+      //   title: "Notifications Settings",
+      //   route: "/dashboard/settings/settings-notifications",
+      //   icon: Icons.Bell,
+      //   roles: [
+      //     "clientadmin",
+      //     "associateadmin",
+      //     "superadmin",
+      //     "manager",
+      //     "driver",
+      //   ],
+      // },
       {
         title: "Google Calendar",
         route: "/dashboard/settings/google-calendar",

@@ -366,61 +366,165 @@ const checkLocationForAvoidedRoutes = (location, avoidRoutes) => {
 };
 
 // HYBRID API (Local first, Google fallback) with avoid routes checking
+// router.get("/autocomplete", async (req, res) => {
+//   try {
+//     const queryRaw = req.query.input || "";
+//     const query = queryRaw.toLowerCase().replace(/[\s,-]+/g, "");
+
+//     // Get avoid routes settings
+//     const avoidRoutes = await getAvoidRoutesSettings(req);
+
+//     const matchedKey = Object.keys(airportTerminals).find((key) => {
+//       const normalizedKey = key.toLowerCase().replace(/\s+/g, "");
+//       return query.includes(normalizedKey) || normalizedKey.includes(query);
+//     });
+
+//     if (matchedKey) {
+//       const results = airportTerminals[matchedKey].map((item) => {
+//         const routeCheck = checkLocationForAvoidedRoutes(item.formatted_address, avoidRoutes);
+//         return {
+//           name: item.name,
+//           formatted_address: item.formatted_address,
+//           source: "airport-local",
+//           routeWarnings: routeCheck.hasWarnings ? routeCheck.warnings : null,
+//         };
+//       });
+//       return res.json({ predictions: results, avoidRoutes });
+//     }
+
+//     // If not found locally → fallback to Google
+//     const autocompleteUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
+//       queryRaw
+//     )}&components=country:gb&key=${process.env.GOOGLE_API_KEY}`;
+//     const autocompleteResponse = await fetch(autocompleteUrl);
+//     const autocompleteData = await autocompleteResponse.json();
+
+//     const predictions = autocompleteData?.predictions?.slice(0, 5) || [];
+
+//     const detailedResults = await Promise.all(
+//       predictions.map(async (prediction) => {
+//         const placeId = prediction.place_id;
+//         const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address&key=${process.env.GOOGLE_API_KEY}`;
+//         const detailsResponse = await fetch(detailsUrl);
+//         const detailsData = await detailsResponse.json();
+
+//         const fullAddress = detailsData.result?.formatted_address || prediction.description;
+//         const routeCheck = checkLocationForAvoidedRoutes(fullAddress, avoidRoutes);
+
+//         return {
+//           name:
+//             detailsData.result?.name ||
+//             prediction.structured_formatting?.main_text,
+//           formatted_address: fullAddress,
+//           source: prediction.types?.includes("airport")
+//             ? "airport-google"
+//             : "location",
+//           routeWarnings: routeCheck.hasWarnings ? routeCheck.warnings : null,
+//         };
+//       })
+//     );
+
+//     return res.json({ predictions: detailedResults, avoidRoutes });
+//   } catch (error) {
+//     console.error("Autocomplete API error:", error);
+//     res.status(500).json({ error: "Failed to fetch autocomplete data." });
+//   }
+// });
+
 router.get("/autocomplete", async (req, res) => {
   try {
     const queryRaw = req.query.input || "";
     const query = queryRaw.toLowerCase().replace(/[\s,-]+/g, "");
 
-    // Get avoid routes settings
+    // Company avoid-routes settings
     const avoidRoutes = await getAvoidRoutesSettings(req);
 
+    // 1) Local airport shortlist match
     const matchedKey = Object.keys(airportTerminals).find((key) => {
       const normalizedKey = key.toLowerCase().replace(/\s+/g, "");
       return query.includes(normalizedKey) || normalizedKey.includes(query);
     });
 
     if (matchedKey) {
-      const results = airportTerminals[matchedKey].map((item) => {
-        const routeCheck = checkLocationForAvoidedRoutes(item.formatted_address, avoidRoutes);
+      const results = (airportTerminals[matchedKey] || []).map((item) => {
+        const routeCheck = checkLocationForAvoidedRoutes(
+          item.formatted_address,
+          avoidRoutes
+        );
         return {
+          place_id: null, // local items don’t have a place_id
           name: item.name,
           formatted_address: item.formatted_address,
           source: "airport-local",
+          location: item.location || null, // optional: add lat/lng in your local list if you have them
           routeWarnings: routeCheck.hasWarnings ? routeCheck.warnings : null,
         };
       });
       return res.json({ predictions: results, avoidRoutes });
     }
 
-    // If not found locally → fallback to Google
-    const autocompleteUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
-      queryRaw
-    )}&components=country:gb&key=${process.env.GOOGLE_API_KEY}`;
+    // 2) Google fallback
+    const autocompleteUrl =
+      `https://maps.googleapis.com/maps/api/place/autocomplete/json` +
+      `?input=${encodeURIComponent(queryRaw)}` +
+      `&components=country:gb` +
+      `&key=${process.env.GOOGLE_API_KEY}`;
+
     const autocompleteResponse = await fetch(autocompleteUrl);
     const autocompleteData = await autocompleteResponse.json();
 
-    const predictions = autocompleteData?.predictions?.slice(0, 5) || [];
+    const predictions = Array.isArray(autocompleteData?.predictions)
+      ? autocompleteData.predictions.slice(0, 5)
+      : [];
 
     const detailedResults = await Promise.all(
       predictions.map(async (prediction) => {
-        const placeId = prediction.place_id;
-        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address&key=${process.env.GOOGLE_API_KEY}`;
-        const detailsResponse = await fetch(detailsUrl);
-        const detailsData = await detailsResponse.json();
+        try {
+          const placeId = prediction.place_id;
+          const detailsUrl =
+            `https://maps.googleapis.com/maps/api/place/details/json` +
+            `?place_id=${placeId}` +
+            `&fields=name,formatted_address,geometry,types` +
+            `&key=${process.env.GOOGLE_API_KEY}`;
 
-        const fullAddress = detailsData.result?.formatted_address || prediction.description;
-        const routeCheck = checkLocationForAvoidedRoutes(fullAddress, avoidRoutes);
+          const detailsResponse = await fetch(detailsUrl);
+          const detailsData = await detailsResponse.json();
 
-        return {
-          name:
-            detailsData.result?.name ||
-            prediction.structured_formatting?.main_text,
-          formatted_address: fullAddress,
-          source: prediction.types?.includes("airport")
-            ? "airport-google"
-            : "location",
-          routeWarnings: routeCheck.hasWarnings ? routeCheck.warnings : null,
-        };
+          const ok = detailsData?.status === "OK" && detailsData?.result;
+          const result = ok ? detailsData.result : null;
+
+          const name =
+            result?.name || prediction.structured_formatting?.main_text || "";
+          const fullAddress = result?.formatted_address || prediction.description || "";
+          const loc = result?.geometry?.location || null;
+
+          const routeCheck = checkLocationForAvoidedRoutes(fullAddress, avoidRoutes);
+
+          return {
+            place_id: placeId,
+            name,
+            formatted_address: fullAddress,
+            source: (Array.isArray(result?.types) && result.types.includes("airport"))
+              ? "airport-google"
+              : "location",
+            location: loc, // { lat, lng } or null
+            routeWarnings: routeCheck.hasWarnings ? routeCheck.warnings : null,
+          };
+        } catch (e) {
+          // If details call fails, still return something useful
+          const fullAddress = prediction.description || "";
+          const routeCheck = checkLocationForAvoidedRoutes(fullAddress, avoidRoutes);
+          return {
+            place_id: prediction.place_id,
+            name: prediction.structured_formatting?.main_text || fullAddress,
+            formatted_address: fullAddress,
+            source: (prediction.types || []).includes("airport")
+              ? "airport-google"
+              : "location",
+            location: null,
+            routeWarnings: routeCheck.hasWarnings ? routeCheck.warnings : null,
+          };
+        }
       })
     );
 

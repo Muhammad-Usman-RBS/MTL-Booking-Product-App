@@ -5,15 +5,20 @@ import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import { coverageData } from "../../../constants/dashboardTabsData/data";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { useCreateCoverageMutation, useDeleteCoverageMutation, useGetAllCoveragesQuery, useUpdateCoverageMutation } from "../../../redux/api/coverageApi";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
+import { useGetAllZonesQuery } from "../../../redux/api/zoneApi";
+import { useLazySearchPostcodeSuggestionsQuery } from "../../../redux/api/googleApi";
 
 const Coverage = () => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
-  console.log(user);
+  
+  // Fetch zones data with company filter
+  const { data: zonesData, isLoading: zonesLoading, error: zonesError } = useGetAllZonesQuery(companyId);
+  const zones = zonesData || []; // Direct access since API returns array directly
+
   const [isEditMode, setIsEditMode] = useState(false);
   const [createCoverage] = useCreateCoverageMutation();
   const {
@@ -29,12 +34,21 @@ const Coverage = () => {
   const [data, setData] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  
+  // State for zone suggestions
+  const [zoneSuggestions, setZoneSuggestions] = useState([]);
+  // State for postcode suggestions
+  const [postcodeSuggestions, setPostcodeSuggestions] = useState([]);
+  
+  // API hooks
+  const [triggerPostcodeSuggestions] = useLazySearchPostcodeSuggestionsQuery();
 
   const handleEdit = (item) => {
     setSelectedItem(item);
     setIsEditMode(true);
     setShowModal(true);
   };
+
   const handleAddNew = () => {
     setSelectedItem({
       type: "Pickup",
@@ -46,6 +60,55 @@ const Coverage = () => {
     setIsEditMode(false);
     setShowModal(true);
   };
+
+  // Handle postcode suggestions
+  const handlePostcodeSuggestions = async (value) => {
+    if (!value || value.length < 1) {
+      setPostcodeSuggestions([]);
+      return;
+    }
+    try {
+      const { data } = await triggerPostcodeSuggestions(value);
+      if (data?.postcodes?.length > 0) {
+        setPostcodeSuggestions([...new Set(data.postcodes.map(item => item.postcode))]);
+      } else {
+        setPostcodeSuggestions([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch postcode suggestions", err);
+      setPostcodeSuggestions([]);
+    }
+  };
+
+  // Handle zone suggestions based on input
+  const handleZoneSuggestions = (value) => {
+    if (!value || value.length < 1) {
+      setZoneSuggestions([]);
+      return;
+    }
+
+    console.log('Available zones:', zones); // Debug log
+    console.log('Search value:', value); // Debug log
+
+    // Filter zones based on input value
+    const filteredZones = zones.filter(zone => 
+      zone.name && zone.name.toLowerCase().includes(value.toLowerCase())
+    );
+    
+    console.log('Filtered zones:', filteredZones); // Debug log
+    setZoneSuggestions(filteredZones);
+  };
+
+  // Handle zone selection from suggestions
+  const handleZoneSelect = (zone) => {
+    setSelectedItem({ 
+      ...selectedItem, 
+      value: zone.name,
+      zoneCoordinates: zone.coordinates // Store coordinates for backend
+    });
+    setZoneSuggestions([]);
+  };
+
   const handleUpdate = async () => {
     if (isEditMode) {
       try {
@@ -106,11 +169,21 @@ const Coverage = () => {
       </div>
     ),
   }));
+
   useEffect(() => {
     if (fetchedData?.data) {
       setData(fetchedData.data);
     }
   }, [fetchedData]);
+
+  // Debug useEffect for zones
+  useEffect(() => {
+    console.log('Zones data changed:', zonesData);
+    console.log('Zones array:', zones);
+    console.log('Zones loading:', zonesLoading);
+    console.log('Zones error:', zonesError);
+  }, [zonesData, zones, zonesLoading, zonesError]);
+
   return (
     <>
       <div>
@@ -185,19 +258,91 @@ const Coverage = () => {
               }
             />
           </div>
-          <div>
+          
+          {/* Dynamic input field based on category */}
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-700">
               {selectedItem?.category === "Zone" ? "Zone" : "Postcode"}
             </label>
-            <input
-              type="text"
-              className="custom_input"
-              value={selectedItem?.value || ""}
-              onChange={(e) =>
-                setSelectedItem({ ...selectedItem, value: e.target.value })
-              }
-            />
+            
+            {selectedItem?.category === "Zone" ? (
+              // Zone input with suggestions
+              <>
+                <input
+                  type="text"
+                  className="custom_input"
+                  placeholder="Enter zone name"
+                  value={selectedItem?.value || ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSelectedItem({ ...selectedItem, value: val });
+                    handleZoneSuggestions(val);
+                  }}
+                  onBlur={() => setTimeout(() => setZoneSuggestions([]), 200)}
+                />
+                {zoneSuggestions.length > 0 && (
+                  <ul className="absolute z-10 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
+                    {zoneSuggestions.map((zone, index) => (
+                      <li 
+                        key={zone._id || index}
+                        onClick={() => handleZoneSelect(zone)}
+                        className="p-2 hover:bg-gray-100 cursor-pointer text-sm border-b last:border-b-0"
+                      >
+                        <div className="font-medium">{zone.name}</div>
+                        {zone.coordinates && (
+                          <div className="text-xs text-gray-500">
+                            {zone.coordinates.length} coordinates
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {zonesLoading && (
+                  <div className="text-xs text-gray-500 mt-1">Loading zones...</div>
+                )}
+                {zonesError && (
+                  <div className="text-xs text-red-500 mt-1">Error loading zones</div>
+                )}
+                {!zonesLoading && zones.length === 0 && (
+                  <div className="text-xs text-gray-500 mt-1">No zones available</div>
+                )}
+              </>
+            ) : (
+              // Regular postcode input with suggestions
+              <>
+                <input
+                  type="text"
+                  className="custom_input"
+                  placeholder="Enter postcode"
+                  value={selectedItem?.value || ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSelectedItem({ ...selectedItem, value: val });
+                    handlePostcodeSuggestions(val);
+                  }}
+                  onBlur={() => setTimeout(() => setPostcodeSuggestions([]), 200)}
+                />
+                {postcodeSuggestions.length > 0 && (
+                  <ul className="absolute z-10 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
+                    {postcodeSuggestions.map((postcode, index) => (
+                      <li 
+                        key={index}
+                        onClick={() => {
+                          setSelectedItem({ ...selectedItem, value: postcode });
+                          setPostcodeSuggestions([]);
+                        }}
+                        className="p-2 hover:bg-gray-100 cursor-pointer text-sm border-b last:border-b-0"
+                      >
+                        {postcode}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
           </div>
+
           <div className="flex justify-end gap-3 pt-2">
             <button
               onClick={() => setShowModal(false)}
@@ -211,6 +356,7 @@ const Coverage = () => {
           </div>
         </div>
       </CustomModal>
+      
       <DeleteModal
         isOpen={showDeleteModal}
         onConfirm={async () => {

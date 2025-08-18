@@ -35,7 +35,7 @@ const PrimaryForm = ({
     const { data: bookingSettingData, isFetching: isSettingLoading } =
         useGetBookingSettingQuery();
 
-    // DB me kabhi "hourLyPackage" (capital L) aa sakta hai
+    // hourly Enabled method
     const hourlyEnabled = !!(
         bookingSettingData?.setting?.hourlyPackage ??
         bookingSettingData?.setting?.hourLyPackage

@@ -2,15 +2,19 @@ import Coverage from "../../models/settings/Coverage.js";
 
 // CREATE
 export const createCoverage = async (req, res) => {
-  const { type, coverage, category, value , companyId } = req.body;
-  if (
-    !companyId
-  ) {
+  const { type, coverage, category, value, companyId, zoneCoordinates } = req.body;
+  
+  if (!companyId) {
     return res.status(400).json({ message: "Invalid or missing companyId" });
   }
 
   if (!type || !coverage || !category || !value) {
     return res.status(400).json({ message: "All fields are required." });
+  }
+
+  // Validate zone coordinates if category is Zone
+  if (category === "Zone" && (!zoneCoordinates || !Array.isArray(zoneCoordinates) || zoneCoordinates.length === 0)) {
+    return res.status(400).json({ message: "Zone coordinates are required when category is Zone." });
   }
 
   try {
@@ -20,13 +24,26 @@ export const createCoverage = async (req, res) => {
       coverage,
       category,
       value: value.trim().toLowerCase(), 
-    });    if (exists) {
-      return res
-        .status(409)
-        .json({ message: "Coverage value already exists." });
+    });
+    
+    if (exists) {
+      return res.status(409).json({ message: "Coverage value already exists." });
     }
 
-    const newCoverage = new Coverage({ type, coverage, category, value  , companyId });
+    const coverageData = { 
+      type, 
+      coverage, 
+      category, 
+      value: value.trim(), 
+      companyId 
+    };
+
+    // Add zone coordinates if category is Zone
+    if (category === "Zone" && zoneCoordinates) {
+      coverageData.zoneCoordinates = zoneCoordinates;
+    }
+
+    const newCoverage = new Coverage(coverageData);
     const savedCoverage = await newCoverage.save();
 
     res.status(201).json({
@@ -34,34 +51,33 @@ export const createCoverage = async (req, res) => {
       data: savedCoverage,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Server error while creating coverage.",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Server error while creating coverage.",
+      error: error.message,
+    });
   }
 };
 
 // READ ALL
 export const getAllCoverage = async (req, res) => {
   try {
-    const {companyId} = req.query
-    if (!companyId ) {
+    const { companyId } = req.query;
+    
+    if (!companyId) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
-    const coverages = await Coverage.find({companyId});
+    
+    const coverages = await Coverage.find({ companyId });
+    
     res.status(200).json({
       message: "All coverage entries retrieved.",
       data: coverages,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Failed to fetch coverage entries.",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Failed to fetch coverage entries.",
+      error: error.message,
+    });
   }
 };
 
@@ -80,26 +96,35 @@ export const getCoverageById = async (req, res) => {
       data: coverage,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Error retrieving coverage entry.",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error retrieving coverage entry.",
+      error: error.message,
+    });
   }
 };
 
 // UPDATE
 export const updateCoverage = async (req, res) => {
   const { id } = req.params;
-  const { type, coverage, category, value } = req.body;
+  const { type, coverage, category, value, zoneCoordinates } = req.body;
+
+  // Validate zone coordinates if category is Zone
+  if (category === "Zone" && (!zoneCoordinates || !Array.isArray(zoneCoordinates) || zoneCoordinates.length === 0)) {
+    return res.status(400).json({ message: "Zone coordinates are required when category is Zone." });
+  }
 
   try {
-    const updated = await Coverage.findByIdAndUpdate(
-      id,
-      { type, coverage, category, value },
-      { new: true }
-    );
+    const updateData = { type, coverage, category, value: value?.trim() };
+    
+    // Add or remove zone coordinates based on category
+    if (category === "Zone" && zoneCoordinates) {
+      updateData.zoneCoordinates = zoneCoordinates;
+    } else if (category === "Postcode") {
+      // Remove zoneCoordinates if category changed from Zone to Postcode
+      updateData.$unset = { zoneCoordinates: "" };
+    }
+
+    const updated = await Coverage.findByIdAndUpdate(id, updateData, { new: true });
 
     if (!updated) {
       return res.status(404).json({ message: "Coverage entry not found." });
@@ -110,9 +135,10 @@ export const updateCoverage = async (req, res) => {
       data: updated,
     });
   } catch (error) {
-    res
-      .status(400)
-      .json({ message: "Failed to update coverage.", error: error });
+    res.status(400).json({ 
+      message: "Failed to update coverage.", 
+      error: error.message 
+    });
   }
 };
 
@@ -131,8 +157,36 @@ export const deleteCoverage = async (req, res) => {
       data: deleted,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to delete coverage.", error: error.message });
+    res.status(500).json({ 
+      message: "Failed to delete coverage.", 
+      error: error.message 
+    });
+  }
+};
+
+// GET COVERAGE BY ZONE (Additional utility function)
+export const getCoverageByZone = async (req, res) => {
+  const { companyId, zoneName } = req.query;
+
+  try {
+    if (!companyId || !zoneName) {
+      return res.status(400).json({ message: "CompanyId and zoneName are required." });
+    }
+
+    const coverages = await Coverage.find({
+      companyId,
+      category: "Zone",
+      value: { $regex: zoneName, $options: 'i' }
+    });
+
+    res.status(200).json({
+      message: "Zone coverages retrieved.",
+      data: coverages,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch zone coverages.",
+      error: error.message,
+    });
   }
 };
