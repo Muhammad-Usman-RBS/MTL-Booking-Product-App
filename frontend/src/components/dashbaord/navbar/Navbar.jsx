@@ -1,11 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectBookmarkedThemes,
+  setThemeColors,
+} from "../../../redux/slices/themeSlice";
 import { Link, useNavigate } from "react-router-dom";
 import Icons from "../../../assets/icons";
 import IMAGES from "../../../assets/images";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
-import { themes } from "../../../constants/dashboardTabsData/data";
-import { useGetUserNotificationsQuery, useMarkAllAsReadMutation, useMarkAsReadMutation } from "../../../redux/api/notificationApi";
+import {
+  useGetUserNotificationsQuery,
+  useMarkAllAsReadMutation,
+  useMarkAsReadMutation,
+} from "../../../redux/api/notificationApi";
 import useUIStore from "../../../store/useUIStore";
 import JourneyDetailsModal from "../bookings/JourneyDetailsModal";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
@@ -13,15 +20,14 @@ import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 function Navbar() {
   const TimeRef = useRef(null);
   const user = useSelector((state) => state.auth.user);
+  const themeBtnRef = useRef(null);
   const email = user?.email || "No Email";
   const name = user?.fullName || "Guest";
   const profileImg = user?.profileImage;
   const navigate = useNavigate();
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
-  const setTheme = useUIStore((state) => state.setTheme);
   const [showTooltip, setShowTooltip] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isThemeOpen, setIsThemeOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState(null);
 
@@ -29,17 +35,31 @@ function Navbar() {
   const [markAllAsRead] = useMarkAllAsReadMutation();
   const [showJourneyModal, setShowJourneyModal] = useState(false);
   const { data: bookings } = useGetAllBookingsQuery(user?.companyId);
+  const dispatch = useDispatch();
+
+  const handleApplyBookmarkedTheme = React.useCallback(
+    (b) => {
+      const root = document.documentElement;
+      ["bg", "text", "primary", "hover", "active"].forEach((k) => {
+        if (b?.themeSettings?.[k]) {
+          root.style.setProperty(`--${k}`, b.themeSettings[k]);
+        }
+      });
+
+      dispatch(setThemeColors(b.themeSettings));
+
+      setActiveBookmarkId(b._id);
+      setIsModalOpen(false);
+    },
+    [dispatch, setIsModalOpen]
+  );
+  const bookmarks = useSelector(selectBookmarkedThemes);
+  const [activeBookmarkId, setActiveBookmarkId] = useState(null);
 
   const { data: notifications = [], refetch: refetchNotifications } =
     useGetUserNotificationsQuery(user?.employeeNumber, {
       skip: !user?.employeeNumber,
     });
-
-  const [customTheme, setCustomTheme] = useState({
-    bg: "#ffffff",
-    text: "#000000",
-    hoverActive: "#F7BE7E",
-  });
 
   const [firstName, lastName] = name.split(" ");
   const displayName = `${firstName || ""} ${lastName || ""}`.trim();
@@ -87,7 +107,15 @@ function Navbar() {
   useEffect(() => {
     if (!user?.companyId) return;
   }, [user?.companyId]);
-
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (themeBtnRef.current && !themeBtnRef.current.contains(e.target)) {
+        setIsModalOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
   return (
     <>
       <nav className="bg-theme text-theme z-20 relative p-[17.2px] flex  justify-between items-start gap-2 sm:gap-4">
@@ -106,10 +134,10 @@ function Navbar() {
             ].includes(user?.role)
               ? "Admin Panel"
               : user?.role === "driver"
-                ? "Driver Portal"
-                : user?.role === "customer"
-                  ? "Customer Portal"
-                  : "Portal"}
+              ? "Driver Portal"
+              : user?.role === "customer"
+              ? "Customer Portal"
+              : "Portal"}
           </h1>
         </div>
         <div className="flex items-center  justify-end gap-2 sm:gap-4 flex-wrap">
@@ -159,10 +187,10 @@ function Navbar() {
                 </div>
                 {(!Array.isArray(notifications) ||
                   notifications.length === 0) && (
-                    <div className="px-4 py-3 text-gray-500 text-sm">
-                      No new notifications
-                    </div>
-                  )}
+                  <div className="px-4 py-3 text-gray-500 text-sm">
+                    No new notifications
+                  </div>
+                )}
                 {/* Notifications List */}
                 <div className="max-h-64 overflow-y-auto">
                   {Array.isArray(notifications) &&
@@ -175,8 +203,9 @@ function Navbar() {
                           setShowTooltip(false);
                           navigate("/dashboard/bookings/list");
                         }}
-                        className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
-                          }`}
+                        className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${
+                          data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div className={`flex-1 `}>
@@ -210,8 +239,7 @@ function Navbar() {
                                         await markAsRead(data._id);
                                         refetchNotifications();
                                         setReadNotifications(
-                                          (prev) =>
-                                            new Set([...prev, data._id])
+                                          (prev) => new Set([...prev, data._id])
                                         );
                                       } catch (err) {
                                         console.error(
@@ -247,56 +275,80 @@ function Navbar() {
               </div>
             )}
           </div>
-          <div className="relative">
+          {/* Select Theme button + anchored popover */}
+          <div className="relative" ref={themeBtnRef}>
             <button
-              onClick={() => setIsThemeOpen(!isThemeOpen)}
+              onClick={() => setIsModalOpen((v) => !v)}
               className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white border border-[var(--light-gray)] text-sm shadow-md text-black hover:bg-gray-100 transition duration-200"
             >
               <span className="text-lg">🎨</span>
               <span>Select Theme</span>
             </button>
 
-            {isThemeOpen && (
-              <div className="absolute right-0 mt-2 bg-white border rounded-lg shadow-lg z-50 w-[135px] max-h-64 overflow-y-auto px-2 py-2">
-                {themes
-                  .filter((theme) => theme.value !== "custom")
-                  .map((theme, i) => (
-                    <div
-                      key={i}
-                      onClick={() => {
-                        setTheme(theme.value);
-                        setIsThemeOpen(false);
-                      }}
-                      className="flex items-center justify-between px-2 py-2 rounded cursor-pointer hover:bg-gray-100 transition"
+            {isModalOpen && (
+              <div
+                role="dialog"
+                className="absolute right-0 mt-1 w-36 bg-white border border-[var(--light-gray)] rounded-lg shadow-xl z-50 p-3"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {!bookmarks || bookmarks.length === 0 ? (
+                  <div className="p-2 text-xs">
+                    <p className="mb-2">You haven’t pinned any themes yet.</p>
+                    <Link
+                      to="/dashboard/settings/general"
+                      onClick={() => setIsModalOpen(false)}
+                      className="btn btn-primary"
                     >
-                      <div
-                        className="w-5 h-5 rounded"
-                        style={{ backgroundColor: theme.bg, border: "1px solid #ccc" }}
-                      />
-                      <div
-                        className="w-5 h-5 rounded"
-                        style={{ backgroundColor: theme.hoverActive, border: "1px solid #ccc" }}
-                      />
-                      <div
-                        className="w-5 h-5 rounded"
-                        style={{ backgroundColor: theme.text, border: "1px solid #ccc" }}
-                      />
-                    </div>
-                  ))}
-
-                <Link to="/dashboard/settings/general">
-                  <button
-                    onClick={() => {
-                      setIsThemeOpen(false);
-                    }}
-                    className="btn btn-reset"
-                  >
-                    +&nbsp;Add&nbsp;New
-                  </button>
-                </Link>
+                      + Add Themes
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 place-items-center text-center gap-2">
+                    {bookmarks.slice(0, 3).map((b) => {
+                      const c = b.themeSettings || {};
+                      const isActive = activeBookmarkId === b._id;
+                      return (
+                        <button
+                          key={b._id}
+                          type="button"
+                          onClick={() => {
+                            handleApplyBookmarkedTheme(b);
+                            setIsModalOpen(false);
+                          }}
+                          title={b.label || "Apply theme"}
+                          className={`w-full text-left p-3 rounded-lg border transition
+                  ${
+                    isActive
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 bg-white hover:bg-gray-50"
+                  }`}
+                        >
+                          {/* show ONLY bg, text, primary */}
+                          <div className="flex items-center justify-between gap-2">
+                            <span
+                              className="w-4 h-4 "
+                              style={{ backgroundColor: c.bg }}
+                            />
+                            <span
+                              className="w-4 h-4 "
+                              style={{ backgroundColor: c.text }}
+                            />
+                            <span
+                              className="w-4 h-4 "
+                              style={{
+                                backgroundColor: c.primary,
+                              }}
+                            />
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
+
           <div className="flex lg:flex-row md:flex-row sm:flex-row xs flex-row-reverse">
             <div className="relative">
               <button
@@ -312,8 +364,8 @@ function Navbar() {
                   <div className="border-b   text- ">
                     <div className="ps-4 pt-4 flex items-center space-x-3">
                       {profileImg &&
-                        profileImg !== "" &&
-                        profileImg !== "default" ? (
+                      profileImg !== "" &&
+                      profileImg !== "default" ? (
                         <img
                           src={profileImg}
                           alt="Profile"
@@ -353,59 +405,6 @@ function Navbar() {
         </div>
       </nav>
 
-      <CustomModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        heading="Customize Your Theme"
-      >
-        <div className="px-6 pt-4 pb-2 text-black space-y-4">
-          {/* Background Color */}
-          <div className="flex items-center justify-between">
-            <label className="font-semibold">Background Color</label>
-            <input
-              type="color"
-              value={customTheme.bg}
-              onChange={(e) => {
-                const value = e.target.value;
-                setCustomTheme((prev) => ({ ...prev, bg: value }));
-                document.documentElement.style.setProperty("--bg", value);
-              }}
-              className="w-18 h-12 cursor-pointer"
-            />
-          </div>
-
-          {/* Text Color */}
-          <div className="flex items-center justify-between">
-            <label className="font-semibold">Text Color</label>
-            <input
-              type="color"
-              value={customTheme.text}
-              onChange={(e) => {
-                const value = e.target.value;
-                setCustomTheme((prev) => ({ ...prev, text: value }));
-                document.documentElement.style.setProperty("--text", value);
-              }}
-              className="w-18 h-12 cursor-pointer"
-            />
-          </div>
-
-          {/* Hover/Active Color */}
-          <div className="flex items-center justify-between">
-            <label className="font-semibold">Hover/Active Color</label>
-            <input
-              type="color"
-              value={customTheme.hoverActive}
-              onChange={(e) => {
-                const value = e.target.value;
-                setCustomTheme((prev) => ({ ...prev, hoverActive: value }));
-                document.documentElement.style.setProperty("--hover", value);
-                document.documentElement.style.setProperty("--active", value);
-              }}
-              className="w-18 h-12 cursor-pointer"
-            />
-          </div>
-        </div>
-      </CustomModal>
       <CustomModal
         isOpen={showJourneyModal}
         onClose={() => setShowJourneyModal(false)}

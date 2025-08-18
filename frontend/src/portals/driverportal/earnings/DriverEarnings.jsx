@@ -1,63 +1,125 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
+import { useSelector } from "react-redux";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import Icons from "../../../assets/icons";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
 import {
-  mockJobs,
+  SCHEDULED_SET,
   statusOptions,
 } from "../../../constants/dashboardTabsData/data";
+import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
+import DriverStatCard from "../../../constants/constantscomponents/DriverStatCards";
+
+const CURRENCY = "£";
+
+const getJourneyDateTime = (b) => {
+  const j = b?.returnJourneyToggle ? b?.returnJourney : b?.primaryJourney;
+  if (!j?.date || j.hour == null || j.minute == null) return null;
+  const dt = new Date(j.date);
+  dt.setHours(j.hour, j.minute, 0, 0);
+  return dt;
+};
+
+const parseDistanceMiles = (txt) => {
+  if (!txt || typeof txt !== "string") return 0;
+  const num = parseFloat(txt.replace(/[^\d.]/g, ""));
+  if (Number.isNaN(num)) return 0;
+  const lower = txt.toLowerCase();
+  if (lower.includes("km")) return num * 0.621371;
+  return num;
+};
 
 const DriverEarnings = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState("7");
-  const [jobTypeFilter, setJobTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
-  const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
-
-  const filteredEarnings = useMemo(() => {
-    const transformedJobsToEarnings = mockJobs.map((job) => ({
-      id: job.id,
-      date: job.acceptedAt ?? new Date().toISOString(),
-      amount: job.driverShare,
-      jobType:
-        job.pickupLocation && job.dropLocation
-          ? "pick-drop"
-          : job.pickupLocation
-            ? "pickup-only"
-            : "drop-only",
-      status: job.status === "scheduled" ? "pending" : "completed",
-      tripDistance: parseFloat(job.distance),
-    }));
-
-    const daysAgo = parseInt(selectedPeriod);
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysAgo);
-
-    return transformedJobsToEarnings.filter((earning) => {
-      const earningDate = new Date(earning.date);
-      const isWithinPeriod = earningDate >= cutoffDate;
-      const matchesJobType =
-        jobTypeFilter === "all" || earning.jobType === jobTypeFilter;
-      const matchesStatus =
-        statusFilter === "all" || earning.status === statusFilter;
-
-      return isWithinPeriod && matchesJobType && matchesStatus;
-    });
-  }, [selectedPeriod, jobTypeFilter, statusFilter]);
-
-  const totalEarnings = filteredEarnings.reduce(
-    (sum, earning) => sum + earning.amount,
-    0
+  const [startDate, setStartDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split("T")[0]
   );
 
-  const averagePerJob =
-    filteredEarnings.length > 0 ? totalEarnings / filteredEarnings.length : 0;
-  const totalTrips = filteredEarnings.length;
-  const totalDistance = filteredEarnings.reduce(
-    (sum, earning) => sum + earning.tripDistance,
-    0
+  const user = useSelector((s) => s?.auth?.user);
+  const companyId = user?.companyId;
+
+  const {
+    data: bookingsRes,
+    isLoading,
+    error,
+  } = useGetAllBookingsQuery(companyId, { skip: !companyId });
+  const allBookings = bookingsRes?.bookings ?? [];
+
+  const isDriverOnBooking = (b) => {
+    const loggedInId = (user?._id || user?.id)?.toString?.();
+    if (!loggedInId || !Array.isArray(b?.drivers)) return false;
+    return b.drivers.some((d) => {
+      const val = typeof d === "object" ? d._id || d.userId || d.driverId : d;
+      return val?.toString?.() === loggedInId;
+    });
+  };
+
+  const earnings = useMemo(() => {
+    const start = startDate ? new Date(`${startDate}T00:00:00`) : null;
+    const end = endDate ? new Date(`${endDate}T23:59:59.999`) : null;
+
+    return allBookings
+      .filter((b) => b?.companyId?.toString?.() === companyId?.toString?.())
+      .filter(isDriverOnBooking)
+      .filter((b) => {
+        if (statusFilter === "all") return true;
+
+        const normalized = (b.status || "").trim().toLowerCase();
+        if (statusFilter === "scheduled") {
+          return SCHEDULED_SET.has(normalized);
+        }
+        return normalized === statusFilter.toLowerCase();
+      })
+
+      .filter((b) => {
+        const dt = getJourneyDateTime(b);
+        if (start && dt < start) return false;
+        if (end && dt > end) return false;
+        return true;
+      })
+      .map((b) => {
+        const dt = getJourneyDateTime(b);
+        const distMiles =
+          parseDistanceMiles(b?.primaryJourney?.distanceText) +
+          parseDistanceMiles(b?.returnJourney?.distanceText);
+
+        const driverAmount =
+          (Number(b?.driverFare) || 0) + (Number(b?.returnDriverFare) || 0);
+
+        return {
+          id: b._id,
+          dateObj: dt,
+          date: dt.toLocaleDateString(),
+          status: b.status || "New",
+          amount: driverAmount,
+          tripDistanceMiles: Number(distMiles.toFixed(2)),
+          jobType: (b?.mode || "Transfer").toLowerCase(),
+        };
+      });
+  }, [allBookings, companyId, user?._id, startDate, endDate, statusFilter]);
+
+  const completedOnly = useMemo(
+    () =>
+      earnings.filter((e) => (e.status || "").toLowerCase() === "completed"),
+    [earnings]
+  );
+
+  const totalEarnings = useMemo(
+    () => completedOnly.reduce((s, e) => s + (e.amount || 0), 0),
+    [completedOnly]
+  );
+  const averagePerJob = completedOnly.length
+    ? totalEarnings / completedOnly.length
+    : 0;
+  const totalTrips = earnings.length;
+  const totalDistanceMiles = useMemo(
+    () => earnings.reduce((s, e) => s + (e.tripDistanceMiles || 0), 0),
+    [earnings]
   );
 
   const tableHeaders = [
@@ -68,23 +130,67 @@ const DriverEarnings = () => {
     { label: "Amount", key: "amount" },
   ];
 
-  const tableData = filteredEarnings.map((earning) => ({
-    id: earning.id,
-    date: new Date(earning.date).toLocaleDateString(),
-    jobType: earning.jobType,
-    tripDistance: `${earning.tripDistance} km`,
-    status: (
-      <span
-        className={`px-3 py-1 text-xs rounded-md border font-medium transition
-          ${earning.status === "completed"
-            ? "bg-green-100 text-green-700 border-green-300 hover:bg-green-200"
-            : "bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200"}`}
-      >
-        {earning.status.charAt(0).toUpperCase() + earning.status.slice(1)}
-      </span>
-    ),
-    amount: `$${earning.amount.toFixed(2)}`,
-  }));
+  const statusChip = (status) => {
+    const s = (status || "").toLowerCase();
+    const base =
+      "px-3 py-1 text-xs rounded-md border font-medium transition whitespace-nowrap";
+    if (s === "completed") {
+      return `${base} bg-green-100 text-green-700 border-green-300 hover:bg-green-200`;
+    }
+    if (s === "cancelled") {
+      return `${base} bg-red-100 text-red-700 border-red-300 hover:bg-red-200`;
+    }
+    return `${base} bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200`;
+  };
+
+  const tableData = useMemo(
+    () =>
+      earnings
+        .sort((a, b) => b.dateObj - a.dateObj)
+        .map((e) => ({
+          id: e.id,
+          date: e.date,
+          jobType: e.jobType,
+          tripDistance: `${e.tripDistanceMiles} mi`,
+          status: <span className={statusChip(e.status)}>{e.status}</span>,
+          amount: `${CURRENCY}${(e.amount || 0).toFixed(2)}`,
+        })),
+    [earnings]
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-gray-500">Loading earnings…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-red-500">
+          Error loading earnings. Please try again.
+        </p>
+      </div>
+    );
+  }
+
+  const daysSelected = (() => {
+    try {
+      const s = new Date(startDate);
+      const e = new Date(endDate);
+      const diff = Math.max(
+        1,
+        Math.round(
+          (e.setHours(0, 0, 0, 0) - s.setHours(0, 0, 0, 0)) / 86400000
+        ) + 1
+      );
+      return diff;
+    } catch {
+      return null;
+    }
+  })();
 
   return (
     <>
@@ -94,7 +200,9 @@ const DriverEarnings = () => {
 
       <div className="flex flex-col lg:flex-row gap-6 lg:items-end mb-8">
         <div className="flex flex-col gap-2 w-full lg:w-1/3">
-          <span className="font-semibold text-gray-800 text-sm">Date Filter</span>
+          <span className="font-semibold text-gray-800 text-sm">
+            Date Filter
+          </span>
           <SelectDateRange
             startDate={startDate}
             endDate={endDate}
@@ -102,6 +210,7 @@ const DriverEarnings = () => {
             setEndDate={setEndDate}
           />
         </div>
+
         <div className="flex flex-col gap-2 w-full lg:w-1/3">
           <SelectOption
             options={statusOptions}
@@ -113,53 +222,43 @@ const DriverEarnings = () => {
         </div>
       </div>
 
+      {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-[var(--dark-gray)]">Total Earnings</h3>
-            <Icons.DollarSign className="w-5 h-5 text-gray-400" />
-          </div>
-          <p className="text-2xl font-bold text-black">${totalEarnings.toFixed(2)}</p>
-          <p className="text-xs text-gray-500 mt-1">Last {selectedPeriod} days</p>
-        </div>
+        <DriverStatCard
+          title="Total Earnings"
+          value={`${CURRENCY}${totalEarnings.toFixed(2)}`}
+          subtitle={
+            daysSelected
+              ? `Selected ${daysSelected} day${daysSelected > 1 ? "s" : ""}`
+              : ""
+          }
+          icon={<Icons.DollarSign className="w-5 h-5 text-gray-400" />}
+        />
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-[var(--dark-gray)]">Average Per Job</h3>
-            <Icons.TrendingUp className="w-5 h-5 text-gray-400" />
-          </div>
-          <p className="text-2xl font-bold text-black">${averagePerJob.toFixed(2)}</p>
-          <p className="text-xs text-gray-500 mt-1">Per service</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-[var(--dark-gray)]">Total Services</h3>
-            <Icons.Eye className="w-5 h-5 text-gray-400" />
-          </div>
-          <p className="text-2xl font-bold text-black">{totalTrips}</p>
-          <p className="text-xs text-gray-500 mt-1">Completed services</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-[var(--dark-gray)]">Distance Covered</h3>
-            <Icons.Calendar className="w-5 h-5 text-gray-400" />
-          </div>
-          <p className="text-2xl font-bold text-black">{totalDistance} km</p>
-          <p className="text-xs text-gray-500 mt-1">Total distance</p>
-        </div>
+        <DriverStatCard
+          title="Distance Covered"
+          value={`${totalDistanceMiles.toFixed(2)} mi`}
+          subtitle="Primary + return"
+          icon={<Icons.Calendar className="w-5 h-5 text-gray-400" />}
+        />
       </div>
 
+      {/* Table */}
       <div className="mt-12">
         <CustomTable
           title="Service History"
           tableHeaders={tableHeaders}
           tableData={tableData}
+          showSearch
+          showSorting
+          showPagination
+          showDownload
         />
-        {filteredEarnings.length === 0 && (
+        {earnings.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-500">No earnings found for the selected filters.</p>
+            <p className="text-gray-500">
+              No earnings found for the selected filters.
+            </p>
           </div>
         )}
       </div>

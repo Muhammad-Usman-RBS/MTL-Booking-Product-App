@@ -1,80 +1,47 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const themeSchema = new mongoose.Schema({
-  companyId: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true
-  },
+  companyId: { type: String, required: true, index: true }, 
   themeSettings: {
     bg: {
       type: String,
       default: "#ffffff",
-      validate: {
-        validator: function(v) {
-          return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(v);
-        },
-        message: 'Background color must be a valid hex color'
-      }
+      match: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
     },
     text: {
       type: String,
       default: "#000000",
-      validate: {
-        validator: function(v) {
-          return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(v);
-        },
-        message: 'Text color must be a valid hex color'
-      }
+      match: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
     },
     primary: {
       type: String,
       default: "#1e90ff",
-      validate: {
-        validator: function(v) {
-          return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(v);
-        },
-        message: 'Primary color must be a valid hex color'
-      }
+      match: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
     },
     hover: {
       type: String,
       default: "#ff6347",
-      validate: {
-        validator: function(v) {
-          return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(v);
-        },
-        message: 'Hover color must be a valid hex color'
-      }
+      match: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
     },
     active: {
       type: String,
       default: "#32cd32",
-      validate: {
-        validator: function(v) {
-          return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(v);
-        },
-        message: 'Active color must be a valid hex color'
-      }
-    }
+      match: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
+    },
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
+  isActive: { type: Boolean, default: true }, // newest gets active flag
+  createdAt: { type: Date, default: Date.now, index: true },
+  updatedAt: { type: Date, default: Date.now },
 });
 
-// Update the updatedAt field before saving
-themeSchema.pre('save', function(next) {
+// keep updatedAt fresh
+themeSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();
 });
 
-const Theme = mongoose.model('Theme', themeSchema);
+// help the “latest per company” queries
+themeSchema.index({ companyId: 1, createdAt: -1 });
 
+const Theme = mongoose.model("Theme", themeSchema);
 export default Theme;
