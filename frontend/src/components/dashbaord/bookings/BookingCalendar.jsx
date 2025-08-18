@@ -335,45 +335,9 @@ const BookingCalendar = () => {
                         </div>
                     </div>
                 )}
-
-                {/* Stats */}
-                <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-8">
-                    <StatCard
-                        label="Total Bookings"
-                        value={filteredBookings.length}
-                        icon={<Users className="h-6 w-6 text-white" />}
-                        color="from-blue-500 to-purple-600"
-                    />
-                    <StatCard
-                        label="Total Revenue"
-                        value={`£${totalRevenue.toFixed(2)}`}
-                        icon={<DollarSign className="h-6 w-6 text-white" />}
-                        color="from-green-500 to-teal-600"
-                    />
-                    <StatCard
-                        label="Completed Trips"
-                        value={completedTrips}
-                        icon={<Calendar className="h-6 w-6 text-white" />}
-                        color="from-orange-500 to-red-600"
-                    />
-                </section>
             </div>
         </>
     );
 };
-
-const StatCard = ({ label, value, icon, color }) => (
-    <div className="bg-white rounded-xl p-6 shadow-lg border">
-        <div className="flex items-center justify-between">
-            <div>
-                <p className="text-sm text-gray-600">{label}</p>
-                <p className="text-2xl font-bold text-gray-900">{value}</p>
-            </div>
-            <div className={`p-3 rounded-lg bg-gradient-to-r ${color}`}>
-                {icon}
-            </div>
-        </div>
-    </div>
-);
 
 export default BookingCalendar;
