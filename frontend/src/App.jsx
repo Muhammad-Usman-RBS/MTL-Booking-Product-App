@@ -76,7 +76,13 @@ import { useGetBookingSettingQuery } from "./redux/api/bookingSettingsApi";
 import { setTimezone } from "./redux/slices/timezoneSlice";
 import { setCurrency } from "./redux/slices/currencySlice";
 
+// Socket IO
+import useNotificationsRealtime from "./utils/useNotificationsRealtime";
+
 function App() {
+  // Hook call, socket events attach honge
+  useNotificationsRealtime();
+
   const dispatch = useDispatch();
   const { data, isSuccess } = useGetBookingSettingQuery();
 
@@ -87,8 +93,8 @@ function App() {
       }
 
       if (data.setting.currency) {
-        const selectedCurrency = data.setting.currency[0]?.value || "GBP"; 
-        dispatch(setCurrency(selectedCurrency)); 
+        const selectedCurrency = data.setting.currency[0]?.value || "GBP";
+        dispatch(setCurrency(selectedCurrency));
       }
     }
   }, [isSuccess, data, dispatch]);

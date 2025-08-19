@@ -75,20 +75,22 @@ const JourneyCard = ({
     const f = new Date(fromISO);
     const t = new Date(toISO);
 
+    // ✅ FIX: Use local time methods to align with backend
     const fy = target.getFullYear();
     const fThis = new Date(
-      fy, f.getUTCMonth(), f.getUTCDate(),
-      f.getUTCHours(), f.getUTCMinutes(), f.getUTCSeconds(), 0
+      fy, f.getMonth(), f.getDate(),
+      f.getHours(), f.getMinutes(), 0, 0
     );
     const tThis = new Date(
-      fy, t.getUTCMonth(), t.getUTCDate(),
-      t.getUTCHours(), t.getUTCMinutes(), 0
+      fy, t.getMonth(), t.getDate(),
+      t.getHours(), t.getMinutes(), 0, 0
     );
 
     if (tThis.getTime() >= fThis.getTime()) {
       return isBetween(target, fThis, tThis);
     }
 
+    // Edge case: wraps across year-end (Dec to Jan)
     const endOfYear = new Date(fy, 11, 31, 23, 59, 59, 999);
     const startOfYear = new Date(fy, 0, 1, 0, 0, 0, 0);
 
@@ -117,12 +119,13 @@ const JourneyCard = ({
     const dt = selectedDateTime(journeyData);
     if (!dt || !Array.isArray(restrictions) || restrictions.length === 0) return;
 
+    // ✅ FIX: Find an Active restriction that matches the selected date/time
     const hit = restrictions.find((r) => isRestrictedHit(dt, r));
     if (hit) {
-      // nice human label for range
       const fromLabel = new Date(hit.from).toLocaleString();
       const toLabel = new Date(hit.to).toLocaleString();
 
+      // ✅ FIX: Ensure toast is triggered correctly with toast.info
       toast.info(
         `${hit.caption || "Booking Restriction"}: ${fromLabel} → ${toLabel}. Bookings are restricted in this window.`
       );

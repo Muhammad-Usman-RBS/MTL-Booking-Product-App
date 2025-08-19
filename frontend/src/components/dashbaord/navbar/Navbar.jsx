@@ -16,6 +16,7 @@ import {
 import useUIStore from "../../../store/useUIStore";
 import JourneyDetailsModal from "../bookings/JourneyDetailsModal";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
+import { useMemo } from "react";
 
 function Navbar() {
   const TimeRef = useRef(null);
@@ -56,10 +57,20 @@ function Navbar() {
   const bookmarks = useSelector(selectBookmarkedThemes);
   const [activeBookmarkId, setActiveBookmarkId] = useState(null);
 
-  const { data: notifications = [], refetch: refetchNotifications } =
-    useGetUserNotificationsQuery(user?.employeeNumber, {
-      skip: !user?.employeeNumber,
-    });
+  // const { data: notifications = [], refetch: refetchNotifications } =
+  // useGetUserNotificationsQuery(user?.employeeNumber, {
+  //   skip: !user?.employeeNumber,
+  // });
+
+  const empArg = String(user?.employeeNumber || "");
+  const { data: notifications = [] } = useGetUserNotificationsQuery(empArg, {
+    skip: !empArg,
+  });
+
+  const unreadCount = useMemo(
+    () => (Array.isArray(notifications) ? notifications.filter((n) => !n.isRead).length : 0),
+    [notifications]
+  );
 
   const [firstName, lastName] = name.split(" ");
   const displayName = `${firstName || ""} ${lastName || ""}`.trim();
@@ -134,10 +145,10 @@ function Navbar() {
             ].includes(user?.role)
               ? "Admin Panel"
               : user?.role === "driver"
-              ? "Driver Portal"
-              : user?.role === "customer"
-              ? "Customer Portal"
-              : "Portal"}
+                ? "Driver Portal"
+                : user?.role === "customer"
+                  ? "Customer Portal"
+                  : "Portal"}
           </h1>
         </div>
         <div className="flex items-center  justify-end gap-2 sm:gap-4 flex-wrap">
@@ -169,14 +180,9 @@ function Navbar() {
                     <button
                       onClick={async () => {
                         try {
-                          await markAllAsRead(user.employeeNumber);
-
-                          refetchNotifications();
+                          await markAllAsRead(empArg).unwrap();
                         } catch (err) {
-                          console.error(
-                            "Error marking all notifications as read:",
-                            err
-                          );
+                          console.error("Error marking all as read:", err);
                         }
                       }}
                       className="text-sm"
@@ -187,10 +193,10 @@ function Navbar() {
                 </div>
                 {(!Array.isArray(notifications) ||
                   notifications.length === 0) && (
-                  <div className="px-4 py-3 text-gray-500 text-sm">
-                    No new notifications
-                  </div>
-                )}
+                    <div className="px-4 py-3 text-gray-500 text-sm">
+                      No new notifications
+                    </div>
+                  )}
                 {/* Notifications List */}
                 <div className="max-h-64 overflow-y-auto">
                   {Array.isArray(notifications) &&
@@ -203,9 +209,8 @@ function Navbar() {
                           setShowTooltip(false);
                           navigate("/dashboard/bookings/list");
                         }}
-                        className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${
-                          data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
-                        }`}
+                        className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
+                          }`}
                       >
                         <div className="flex items-start gap-3">
                           <div className={`flex-1 `}>
@@ -236,7 +241,7 @@ function Navbar() {
                                     onClick={async (e) => {
                                       e.stopPropagation();
                                       try {
-                                        await markAsRead(data._id);
+                                       await markAsRead(data._id).unwrap(); 
                                         refetchNotifications();
                                         setReadNotifications(
                                           (prev) => new Set([...prev, data._id])
@@ -317,11 +322,10 @@ function Navbar() {
                           }}
                           title={b.label || "Apply theme"}
                           className={`w-full text-left p-3 rounded-lg border transition
-                  ${
-                    isActive
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 bg-white hover:bg-gray-50"
-                  }`}
+                  ${isActive
+                              ? "border-blue-500 bg-blue-50"
+                              : "border-gray-200 bg-white hover:bg-gray-50"
+                            }`}
                         >
                           {/* show ONLY bg, text, primary */}
                           <div className="flex items-center justify-between gap-2">
@@ -364,8 +368,8 @@ function Navbar() {
                   <div className="border-b   text- ">
                     <div className="ps-4 pt-4 flex items-center space-x-3">
                       {profileImg &&
-                      profileImg !== "" &&
-                      profileImg !== "default" ? (
+                        profileImg !== "" &&
+                        profileImg !== "default" ? (
                         <img
                           src={profileImg}
                           alt="Profile"
