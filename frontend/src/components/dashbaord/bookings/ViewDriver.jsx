@@ -520,65 +520,75 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
           </label>
         </div>
 
-        <div className="max-h-48 overflow-y-auto pr-1 space-y-3 custom-scroll border border-gray-500 rounded-md">
-          {Array.isArray(filteredDriver) &&
-            filteredDriver.map((driver, i) => (
-              <label
-                key={i}
-                className="flex items-center gap-3 p-3    cursor-pointer"
-              >
-                <img
-                  src={driver.UploadedData?.driverPicture || IMAGES.dummyImg}
-                  alt={driver.name}
-                  className="w-10 h-10 rounded-full object-cover border border-[var(--light-gray)]"
-                />
-                <div className="flex-1">
-                  <p className="font-medium text-gray-800">
-                    {driver.DriverData?.firstName}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {driver.VehicleData?.carMake || "N/A"} |
-                    {driver.VehicleData?.carModal || "N/A"}
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  className="form-checkbox h-4 w-4 text-indigo-600"
-                  checked={selectedDrivers.some(
-                    (d) =>
-                      d._id === driver._id ||
-                      d.driverId === driver._id ||
-                      d.userId === driver._id
-                  )}
-                  onChange={() => {
-                    const matchingUser = findMatchingUser(driver);
-                    const isSelected = selectedDrivers.some(
-                      (d) =>
-                        d._id === driver._id ||
-                        d.driverId === driver._id ||
-                        d.userId === driver._id
-                    );
-
-                    if (isSelected) {
-                      // UNCHECK: remove from selection
-                      setSelectedDrivers((prev) =>
-                        prev.filter(
+          {filteredDriver.length === 0 ? (
+            <>
+              <span className="italics text-gray-400 text-sm  h-48">Kindly create your driver's accounts first</span>
+            </>
+          ) : (
+            <>
+            <div className="max-h-48 overflow-y-auto pr-1 space-y-3 custom-scroll border border-gray-500 rounded-md">
+              {Array.isArray(filteredDriver) &&
+                filteredDriver.map((driver, i) => (
+                  <label
+                    key={i}
+                    className="flex items-center gap-3 p-3    cursor-pointer"
+                  >
+                    <img
+                      src={
+                        driver.UploadedData?.driverPicture || IMAGES.dummyImg
+                      }
+                      alt={driver.name}
+                      className="w-10 h-10 rounded-full object-cover border border-[var(--light-gray)]"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-800">
+                        {driver.DriverData?.firstName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {driver.VehicleData?.carMake || "N/A"} |
+                        {driver.VehicleData?.carModal || "N/A"}
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="form-checkbox h-4 w-4 text-indigo-600"
+                      checked={selectedDrivers.some(
+                        (d) =>
+                          d._id === driver._id ||
+                          d.driverId === driver._id ||
+                          d.userId === driver._id
+                      )}
+                      onChange={() => {
+                        const matchingUser = findMatchingUser(driver);
+                        const isSelected = selectedDrivers.some(
                           (d) =>
-                            !(
-                              d._id === driver._id ||
-                              d.driverId === driver._id ||
-                              d.userId === driver._id
+                            d._id === driver._id ||
+                            d.driverId === driver._id ||
+                            d.userId === driver._id
+                        );
+
+                        if (isSelected) {
+                          // UNCHECK: remove from selection
+                          setSelectedDrivers((prev) =>
+                            prev.filter(
+                              (d) =>
+                                !(
+                                  d._id === driver._id ||
+                                  d.driverId === driver._id ||
+                                  d.userId === driver._id
+                                )
                             )
-                        )
-                      );
-                    } else {
-                      setSelectedDrivers((prev) => [...prev, driver]);
-                    }
-                  }}
-                />
-              </label>
-            ))}
+                          );
+                        } else {
+                          setSelectedDrivers((prev) => [...prev, driver]);
+                        }
+                      }}
+                    />
+                  </label>
+                ))}
         </div>
+            </>
+          )}
 
         <div>
           <label className="block font-semibold text-[var(--dark-gray)] mb-1">

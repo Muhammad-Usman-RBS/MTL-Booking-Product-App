@@ -186,7 +186,6 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
 
     return (
         <>
-            <ToastContainer />
             <div className="mx-auto max-w-5xl mt-6">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white shadow-lg rounded-xl p-6 sm:p-8">
                     {/* Passenger Details */}

@@ -367,7 +367,6 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                 onSubmit={handleSubmit}
                 className="bg-gradient-to-br from-white via-gray-50 to-gray-100 border border-[var(--light-gray)] rounded-2xl shadow-lg px-6 py-5 space-y-6 text-base text-gray-700 transition duration-300 hover:shadow-xl"
             >
-                <ToastContainer />
                 {isReturnForm ? (
                     <ReturnForm
                         formData={formData}
@@ -377,6 +376,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                     />
                 ) : (
                     <PrimaryForm
+                    companyId={companyId}
                         formData={formData}
                         handleSubmit={handleSubmit}
                         handlePickupChange={handlePickupChange}
@@ -390,6 +390,7 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                         setPickupSuggestions={setPickupSuggestions}
                         setDropOffSuggestions={setDropOffSuggestions}
                         activeDropIndex={activeDropIndex}
+                        setActiveDropIndex={setActiveDropIndex}
                         setDropOffTypes={setDropOffTypes}
                         handleDropOffChange={handleDropOffChange}
                         handleDropOffSelect={handleDropOffSelect}

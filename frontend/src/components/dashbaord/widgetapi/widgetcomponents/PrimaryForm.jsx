@@ -1,14 +1,13 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import SelectOption from '../../../../constants/constantscomponents/SelectOption';
 import { useGetBookingSettingQuery } from "../../../../redux/api/bookingSettingsApi";
-import Icons from '../../../../assets/icons';
 import { toast } from 'react-toastify';
-
+import { normalizeCoverageRules, decideCoverage } from "../../../../utils/coverageUtils";
+import { useGetAllCoveragesQuery } from "../../../../redux/api/coverageApi"
+import { useLazyGeocodeQuery, useLazySearchGooglePlacesQuery } from '../../../../redux/api/googleApi';
 const PrimaryForm = ({
     formData,
-    handlePickupChange,
     pickupSuggestions = [],
-    handlePickupSelect,
     pickupType,
     setPickupType,
     dropOffs = [],
@@ -18,8 +17,7 @@ const PrimaryForm = ({
     setDropOffSuggestions,
     dropOffSuggestions = [],
     activeDropIndex,
-    handleDropOffChange,
-    handleDropOffSelect,
+    setActiveDropIndex,
     dropOffTypes = {},
     removeDropOff,
     addDropOff,
@@ -30,10 +28,19 @@ const PrimaryForm = ({
     selectedHourly,
     setSelectedHourly,
     setFormData,
+    companyId
 }) => {
     // booking settings
     const { data: bookingSettingData, isFetching: isSettingLoading } =
         useGetBookingSettingQuery();
+ const [pickupCoords, setPickupCoords] = useState(null);
+   const [triggerSearchAutocomplete] = useLazySearchGooglePlacesQuery();
+   const [triggerGeocode] = useLazyGeocodeQuery();
+ 
+  const [dropoffCoords, setDropoffCoords] = useState({});
+  const { data: coveragesResp } = useGetAllCoveragesQuery(companyId, {
+    skip: !companyId,
+  });
 
     // hourly Enabled method
     const hourlyEnabled = !!(
@@ -115,50 +122,82 @@ const PrimaryForm = ({
         }
     }, [hourlyEnabled, mode, setMode, setSelectedHourly]);
 
+    const handlePickupChange = (e) => {
+        const val = e.target.value;
+        setFormData({ ...formData, pickup: val });
+        if (val.length >= 3) fetchSuggestions(val, setPickupSuggestions);
+        else setPickupSuggestions([]);
+      };
     // tabs list settings ke mutabiq
     const TABS = hourlyEnabled ? ["Transfer", "Hourly"] : ["Transfer"];
+    
+      const coverageRules = useMemo(
+        () => normalizeCoverageRules(coveragesResp),
+        [coveragesResp]
+      );
+    
+      const checkCoverage = (text, scope, coords) => {
+        const res = decideCoverage(text, scope, coverageRules, coords);
+        if (!res.allowed) {
+          toast.warning(`We currently don't serve this ${scope} area. (${res.reason})`);
+          return false;
+        }
+        return true;
+      };
+      const fetchSuggestions = async (query, setter) => {
+        if (!query) return setter([]);
+        try {
+          const res = await triggerSearchAutocomplete(query).unwrap();
+          const results = res.predictions.map((r) => ({
+            place_id: r.place_id, // KEEP THIS
+            name: r.name || r.structured_formatting?.main_text,
+            formatted_address: r.formatted_address || r.description,
+            source: r.source || (r.types?.includes("airport") ? "airport" : "location"),
+            location: r.location || null, // <<— ADD THIS (backend now sends geometry.location)
+          }));
+          setter(results);
+        } catch (err) {
+          console.error("Autocomplete error:", err);
+        }
+      };
+
+      const handlePickupSelect = async (sug) => {
+        const full = `${sug.name} - ${sug.formatted_address}`;
+        const coords = sug.location ? { lat: Number(sug.location.lat), lng: Number(sug.location.lng) } : null;
+    
+        if (!checkCoverage(full, "pickup", coords)) return;
+        setFormData((prev) => ({ ...prev, pickup: full }));
+
+        setPickupType(sug.source);
+        setPickupCoords(coords); // save if found
+        setPickupSuggestions([]);
+      };
+      
+  const handleDropOffChange = (idx, val) => {
+    const updated = [...dropOffs];
+    updated[idx] = val;
+    setDropOffs(updated);
+    setActiveDropIndex(idx);
+    if (val.length >= 3) fetchSuggestions(val, setDropOffSuggestions);
+    else setDropOffSuggestions([]);
+  };
+  const handleDropOffSelect = async (idx, sug) => {
+    const full = `${sug.name} - ${sug.formatted_address}`;
+    const coords = sug.location ? { lat: Number(sug.location.lat), lng: Number(sug.location.lng) } : null;
+
+    if (!checkCoverage(full, "dropoff", coords)) return;
+
+    const updated = [...dropOffs];
+    updated[idx] = full;
+    setDropOffs(updated);
+    setDropOffTypes((prev) => ({ ...prev, [idx]: sug.source }));
+    setDropoffCoords((prev) => ({ ...prev, [idx]: coords })); // save
+    setDropOffSuggestions([]);
+  };
+    
     return (
         <>
-            {/* <div className="flex justify-center mb-4">
-                {["Transfer", "Hourly"].map((tab) => (
-                    <button
-                        key={tab}
-                        type="button"
-                        onClick={() => setMode(tab)}
-                        className={`px-6 py-2 font-semibold text-sm border cursor-pointer 
-                            ${mode === tab
-                                ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
-                                : "bg-[#f9fafb] text-gray-700 border-[var(--light-gray)]"
-                            } 
-                            ${tab === "Transfer" ? "rounded-l-md" : "rounded-r-md"}`}
-                    >
-                        {tab}
-                    </button>
-                ))}
-            </div>
-
-            {mode === "Hourly" && (
-                <div className="flex justify-center">
-                    <SelectOption
-                        options={formattedHourlyOptions.map(opt => ({
-                            label: opt.label,
-                            value: JSON.stringify(opt.value),
-                        }))}
-                        value={JSON.stringify(selectedHourly?.value)}
-                        onChange={(e) => {
-                            const selected = formattedHourlyOptions.find(
-                                opt => JSON.stringify(opt.value) === e.target.value
-                            );
-                            setSelectedHourly(selected);
-                            setFormData(prev => ({
-                                ...prev,
-                                hourlyOption: selected,
-                                originalHourlyOption: selected
-                            }));
-                        }}
-                    />
-                </div>
-            )} */}
+          
 
             <div className="flex justify-center mb-4">
                 {TABS.map((tab) => (
@@ -202,39 +241,83 @@ const PrimaryForm = ({
                 </div>
             )}
 
-            <div className="relative">
-                <label className="text-sm font-medium text-[var(--dark-gray)] mb-1 block">Pickup Location</label>
-                <input
-                    type="text"
-                    name="pickup"
-                    placeholder="Enter pickup location..."
-                    value={formData.pickup}
-                    onChange={handlePickupChange}
-                    className="custom_input"
-                />
-                {pickupSuggestions.length > 0 && (
-                    <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
-                        <li
-                            onClick={() => {
-                                setFormData({ ...formData, pickup: formData.pickup });
-                                setPickupType("location");
-                                setPickupSuggestions([]);
-                            }}
-                            className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer text-sm border-b"
-                        >
-                            ➕ Use: "{formData.pickup}"
-                        </li>
-                        {pickupSuggestions.map((sug, idx) => (
-                            <li
-                                key={idx}
-                                onClick={() => handlePickupSelect(sug)}
-                                className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
-                            >
-                                {sug.name} - {sug.formatted_address}
-                            </li>
-                        ))}
-                    </ul>
-                )}
+        {/* Pickup Location */}
+        <div className="relative mb-4">
+              {/* <input
+                type="text"
+                name="pickup"
+                placeholder="Pickup Location"
+                value={formData.pickup}
+                onChange={handlePickupChange}
+                className="custom_input w-full"
+              /> */}
+              <input
+                type="text"
+                name="pickup"
+                placeholder="Pickup Location"
+                value={formData.pickup}
+                onChange={handlePickupChange}
+                onBlur={() => formData.pickup && checkCoverage(formData.pickup, "pickup", pickupCoords)}
+                className="custom_input w-full"
+              />
+
+              {pickupSuggestions.length > 0 && (
+                <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full">
+                  {/* <li
+                    onClick={() => {
+                      setformData({
+                        ...formData,
+                        pickup: formData.pickup,
+                      });
+                      setPickupType("location");
+                      setPickupSuggestions([]);
+                    }}
+                    className="p-2 text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 cursor-pointer border-b"
+                  >
+                    ➕ Use: "{formData.pickup}"
+                  </li> */}
+                  <li
+                    onClick={async () => {
+                      const val = (formData.pickup || "").trim();
+                      if (!val) return;
+
+                      // 1) Geocode typed text to get {lat,lng}
+                      let coords = null;
+                      try {
+                        const g = await triggerGeocode(val).unwrap(); // from useLazyGeocodeQuery
+                        if (g?.location && Number.isFinite(g.location.lat) && Number.isFinite(g.location.lng)) {
+                          coords = { lat: Number(g.location.lat), lng: Number(g.location.lng) };
+                        }
+                      } catch (err) {
+                        console.warn("Geocode failed, falling back to text-only coverage check", err);
+                      }
+
+                      // 2) Coverage check (uses polygon when coords exist)
+                      if (!checkCoverage(val, "pickup", coords)) return;
+
+                      // 3) Apply selection
+                      setformData((prev) => ({ ...prev, pickup: val }));
+                      setPickupType("location");
+                      setPickupCoords(coords);
+                      setPickupSuggestions([]);
+                    }}
+                    className="p-2 text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 cursor-pointer border-b"
+                  >
+                    ➕ Use: "{formData.pickup}"
+                  </li>
+
+
+                  {pickupSuggestions.map((sug, idx) => (
+                    <li
+                      key={idx}
+                      onClick={() => handlePickupSelect(sug)}
+                      className="p-2 text-xs sm:text-sm hover:bg-gray-100 cursor-pointer"
+                    >
+                      {sug.name} - {sug.formatted_address}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             {pickupType === "location" && !formData.pickup?.toLowerCase().includes("airport") && (
@@ -273,74 +356,128 @@ const PrimaryForm = ({
                 </div>
             )}
 
-            {dropOffs.map((val, idx) => (
-                <div key={idx} className="relative space-y-2">
-                    <label className="text-sm text-[var(--dark-gray)]">Drop Off Location</label>
-                    <input
-                        type="text"
-                        value={val}
-                        placeholder="Enter Drop Off location..."
-                        onChange={(e) => handleDropOffChange(idx, e.target.value)}
-                        className="custom_input"
-                    />
-                    {dropOffSuggestions.length > 0 && activeDropIndex === idx && (
-                        <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full mt-1">
-                            <li
-                                onClick={() => {
-                                    const updated = [...dropOffs];
-                                    updated[idx] = dropOffs[idx];
-                                    setDropOffs(updated);
-                                    setDropOffTypes((prev) => ({ ...prev, [idx]: "location" }));
-                                    setDropOffSuggestions([]);
-                                }}
-                                className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer text-sm border-b"
-                            >
-                                ➕ Use: "{dropOffs[idx]}"
-                            </li>
-                            {dropOffSuggestions.map((sug, i) => (
-                                <li
-                                    key={i}
-                                    onClick={() => handleDropOffSelect(idx, sug)}
-                                    className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
-                                >
-                                    {sug.name} - {sug.formatted_address}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
+{dropOffs.map((val, idx) => (
+              <div
+                key={idx}
+                className="relative flex flex-col sm:flex-row sm:items-center gap-2 mb-4"
+              >
+                {/* <input
+                  type="text"
+                  value={val}
+                  placeholder={`Drop Off ${idx + 1}`}
+                  onChange={(e) => handleDropOffChange(idx, e.target.value)}
+                  className="custom_input w-full"
+                /> */}
+                <input
+                  type="text"
+                  value={val}
+                  placeholder={`Drop Off ${idx + 1}`}
+                  onChange={(e) => handleDropOffChange(idx, e.target.value)}
+                  onBlur={() => {
+                    const coords = dropoffCoords[idx] || null;
+                    dropOffs[idx] && checkCoverage(dropOffs[idx], "dropoff", coords);
+                  }}
+                  className="custom_input w-full"
+                />
+                {/* Suggestions */}
+                {dropOffSuggestions.length > 0 && activeDropIndex === idx && (
+                  <ul className="absolute z-30 bg-white border rounded shadow max-h-40 overflow-y-auto w-full top-full left-0 mt-1">
+                    {/* <li
+                      onClick={() => {
+                        const updated = [...dropOffs];
+                        updated[idx] = dropOffs[idx];
+                        setDropOffs(updated);
+                        setDropOffTypes((prev) => ({
+                          ...prev,
+                          [idx]: "location",
+                        }));
+                        setDropOffSuggestions([]);
+                      }}
+                      className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
+                    >
+                      ➕ Use: "{dropOffs[idx]}"
+                    </li> */}
+                    <li
+                      onClick={async () => {
+                        const val = (dropOffs[idx] || "").trim();
+                        if (!val) return;
 
-                    {(dropOffTypes[idx] === "airport" || dropOffs[idx]?.toLowerCase().includes("airport")) && (
-                        <input
-                            name={`dropoff_terminal_${idx}`}
-                            value={formData[`dropoff_terminal_${idx}`] || ""}
-                            placeholder="Terminal No."
-                            className="custom_input"
-                            onChange={handleChange}
-                        />
-                    )}
+                        // 1) Geocode typed text → lat/lng
+                        let coords = null;
+                        try {
+                          const g = await triggerGeocode(val).unwrap(); // from useLazyGeocodeQuery
+                          if (g?.location && Number.isFinite(g.location.lat) && Number.isFinite(g.location.lng)) {
+                            coords = { lat: Number(g.location.lat), lng: Number(g.location.lng) };
+                          }
+                        } catch (err) {
+                          console.warn("Dropoff geocode failed, fallback to text-only check", err);
+                        }
 
-                    {dropOffs[idx] &&
-                        dropOffTypes[idx] !== "airport" &&
-                        !dropOffs[idx]?.toLowerCase().includes("airport") && (
-                            <input
-                                name={`dropoffDoorNumber${idx}`}
-                                value={formData[`dropoffDoorNumber${idx}`] || ""}
-                                placeholder="Drop Off Door No."
-                                className="custom_input"
-                                onChange={handleChange}
-                            />
-                        )}
+                        // 2) Coverage check
+                        if (!checkCoverage(val, "dropoff", coords)) return;
 
-                    {idx > 0 && (
-                        <button
-                            type="button"
-                            onClick={() => removeDropOff(idx)}
-                            className="text-sm text-red-600 cursor-pointer absolute right-1 top-0"
-                        >
-                            <Icons.Delete />
-                        </button>
-                    )}
-                </div>
+                        // 3) Update state
+                        const updated = [...dropOffs];
+                        updated[idx] = val;
+                        setDropOffs(updated);
+
+                        setDropOffTypes((prev) => ({ ...prev, [idx]: "location" }));
+
+                        setDropoffCoords((prev) => ({
+                          ...prev,
+                          [idx]: coords,
+                        }));
+
+                        setDropOffSuggestions([]);
+                      }}
+                      className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
+                    >
+                      ➕ Use: "{dropOffs[idx]}"
+                    </li>
+
+                    {dropOffSuggestions.map((sug, i) => (
+                      <li
+                        key={i}
+                        onClick={() => handleDropOffSelect(idx, sug)}
+                        className="p-2 text-xs hover:bg-gray-100 cursor-pointer"
+                      >
+                        {sug.name} - {sug.formatted_address}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* Extra Fields */}
+                {dropOffTypes[idx]?.toLowerCase()?.includes("airport") && (
+                  <input
+                    name={`dropoff_terminal_${idx}`}
+                    value={formData[`dropoff_terminal_${idx}`] || ""}
+                    placeholder="Terminal No."
+                    className="custom_input w-full"
+                    onChange={handleChange}
+                  />
+                )}
+                {dropOffTypes[idx]?.toLowerCase()?.includes("location") && (
+                  <input
+                    name={`dropoffDoorNumber${idx}`}
+                    value={formData[`dropoffDoorNumber${idx}`] || ""}
+                    placeholder="Drop Off Door No."
+                    className="custom_input w-full"
+                    onChange={handleChange}
+                  />
+                )}
+
+                {/* Remove Button */}
+                {idx > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => removeDropOff(idx)}
+                    className="btn btn-cancel text-sm px-3 py-1 w-fit sm:w-auto"
+                  >
+                    &minus;
+                  </button>
+                )}
+              </div>
             ))}
 
             {dropOffs.length < 3 && (

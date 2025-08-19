@@ -1,18 +1,9 @@
 import React, { useState, useEffect } from "react";
-import {
-    Calendar,
-    Clock,
-    MapPin,
-    DollarSign,
-    Users,
-    Filter,
-    ChevronLeft,
-    ChevronRight
-} from "lucide-react";
 import { useSelector } from "react-redux";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
-
+import Icons from "../../../assets/icons";
+import { useGetDriverJobsQuery } from "../../../redux/api/jobsApi";
 const statusColors = {
     "New": {
         bg: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)", // Indigo-Violet
@@ -64,59 +55,109 @@ const statusColors = {
 const BookingCalendar = () => {
     const user = useSelector((state) => state.auth.user);
     const { data: bookingsData, isLoading, error } = useGetAllBookingsQuery(user?.companyId);
+      const companyId = user?.companyId;
+      const driverId = user?._id;
+      const isDriver = user?.role?.toLowerCase?.() === "driver";
+      const isCustomer = user?.role.toLowerCase() === 'customer'
+      const {
+        data: driverJobsData, } = useGetDriverJobsQuery(
+        { companyId, driverId },
+        { skip: !companyId }
+      );
+      
+   
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedStatus, setSelectedStatus] = useState("All");
     const [hoveredEvent, setHoveredEvent] = useState(null);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [processedBookings, setProcessedBookings] = useState([]);
-
-    useEffect(() => {
-        if (bookingsData?.bookings) {
-            const processed = bookingsData.bookings.flatMap((booking) => {
-                const entries = [];
-
-                if (booking.primaryJourney?.date) {
-                    const fare = booking.journeyFare ?? booking.primaryJourney?.fare ?? 0;
-                    entries.push({
-                        id: booking._id,
-                        date: new Date(booking.primaryJourney.date).toISOString().split("T")[0],
-                        time: `${String(booking.primaryJourney.hour).padStart(2, "0")}:${String(booking.primaryJourney.minute).padStart(2, "0")}`,
-                        pickup: booking.primaryJourney.pickup || "N/A",
-                        dropoff: booking.primaryJourney.dropoff || "N/A",
-                        fare: booking.journeyFare,
-                        status: booking.status || "New",
-                        passenger: booking.passenger.name,
-                        vehicle: booking.vehicleType || "N/A",
-                        bookingId: booking.bookingId,
-                        journeyType: "Primary"
-                    });
-                }
-
-                if (booking.returnJourneyToggle && booking.returnJourney?.date) {
-                    const fare = booking.returnJourneyFare ?? booking.returnJourney?.fare ?? 0;
-                    entries.push({
-                        id: `${booking._id}_return`,
-                        date: new Date(booking.returnJourney.date).toISOString().split("T")[0],
-                        time: `${String(booking.returnJourney.hour).padStart(2, "0")}:${String(booking.returnJourney.minute).padStart(2, "0")}`,
-                        pickup: booking.returnJourney.pickup || "N/A",
-                        dropoff: booking.returnJourney.dropoff || "N/A",
-                        fare: booking.returnJourneyFare,
-                        status: booking.status || "New",
-                        passenger: booking.passenger.name,
-                        vehicle: booking.vehicleType || "N/A",
-                        bookingId: booking.bookingId,
-                        journeyType: "Return"
-                    });
-                }
-
-                return entries;
-            });
-
-            setProcessedBookings(processed);
+   
+      useEffect(() => {
+        // ✅ Bail out early if bookings not loaded yet
+        if (!bookingsData || !Array.isArray(bookingsData.bookings)) {
+          setProcessedBookings([]);
+          return;
         }
-    }, [bookingsData]);
-
+   
+       const userEmail = user?.email;
+       const base = bookingsData.bookings || [];
+    
+       let visibleBookings = base;
+   
+       if (isDriver) {
+        const jobs = driverJobsData?.jobs ?? [];
+        const allowedStatuses = new Set([
+          "Accepted",
+          "On Route",
+          "At Location",
+          "Ride Started",
+          "Completed",
+          "No Show"
+        ]);
+      
+        const visibleBookingIds = new Set(
+          jobs
+            .filter(
+              (job) =>
+                String(job?.driverId) === String(driverId) &&
+                allowedStatuses.has(job?.jobStatus) &&
+                job?.bookingId
+            )
+            .map((job) => String(job.bookingId))
+        );
+      
+        visibleBookings = base.filter((booking) =>
+          visibleBookingIds.has(String(booking?._id))
+        );
+      }else if(isCustomer ) {
+        visibleBookings = base.filter(
+            (b) => b?.passenger?.email === userEmail
+        )
+       }
+       const processed = visibleBookings.flatMap((booking) => {
+        const entries = [];
+  
+        if (booking.primaryJourney?.date) {
+          const fare = booking.returnJourneyToggle ? booking.returnDriverFare : booking.driverFare;
+          entries.push({
+            id: booking._id,
+            date: new Date(booking.primaryJourney.date).toISOString().split("T")[0],
+            time: `${String(booking.primaryJourney.hour).padStart(2, "0")}:${String(booking.primaryJourney.minute).padStart(2, "0")}`,
+            pickup: booking.primaryJourney.pickup || "N/A",
+            dropoff: booking.primaryJourney.dropoff || "N/A",
+            fare,
+            status: booking.status || "New",
+            passenger: booking.passenger?.name || "N/A",
+            vehicle: booking.vehicleType || "N/A",
+            bookingId: booking.bookingId,
+            journeyType: "Primary",
+          });
+        }
+  
+        if (booking.returnJourneyToggle && booking.returnJourney?.date) {
+          const fare = booking.returnJourneyFare ?? booking.returnJourney?.fare ?? 0;
+          entries.push({
+            id: `${booking._id}_return`,
+            date: new Date(booking.returnJourney.date).toISOString().split("T")[0],
+            time: `${String(booking.returnJourney.hour).padStart(2, "0")}:${String(booking.returnJourney.minute).padStart(2, "0")}`,
+            pickup: booking.returnJourney.pickup || "N/A",
+            dropoff: booking.returnJourney.dropoff || "N/A",
+            fare,
+            status: booking.status || "New",
+            passenger: booking.passenger?.name || "N/A",
+            vehicle: booking.vehicleType || "N/A",
+            bookingId: booking.bookingId,
+            journeyType: "Return",
+          });
+        }
+  
+        return entries;
+      });
+  
+      setProcessedBookings(processed);
+   }, [bookingsData, driverJobsData, user?._id, user?.role, isDriver]);
+ 
 
     const monthNames = [
         "January", "February", "March", "April", "May", "June",
@@ -156,8 +197,6 @@ const BookingCalendar = () => {
         setMousePosition({ x: e.clientX, y: e.clientY });
     };
 
-    const totalRevenue = filteredBookings.reduce((sum, booking) => sum + booking.fare, 0);
-    const completedTrips = filteredBookings.filter(b => b.status === "Completed").length;
 
     return (
         <>
@@ -220,7 +259,7 @@ const BookingCalendar = () => {
                                     onClick={() => navigateMonth(-1)}
                                     className="p-2 rounded-lg bg-gradient-to-r from-orange-400 to-red-500 text-white hover:scale-105"
                                 >
-                                    <ChevronLeft />
+                                    <Icons.ChevronLeft />
                                 </button>
                                 <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
                                     {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
@@ -229,7 +268,7 @@ const BookingCalendar = () => {
                                     onClick={() => navigateMonth(1)}
                                     className="p-2 rounded-lg bg-gradient-to-r from-orange-400 to-red-500 text-white hover:scale-105"
                                 >
-                                    <ChevronRight />
+                                    <Icons.ChevronRight />
                                 </button>
                             </div>
                             {/* Weekdays */}
@@ -276,7 +315,7 @@ const BookingCalendar = () => {
                                                                 onMouseLeave={() => setHoveredEvent(null)}
                                                             >
                                                                 <div className="flex items-center space-x-1 mb-1 truncate">
-                                                                    <Clock className="h-4 w-4" />
+                                                                    <Icons.Clock className="h-4 w-4" />
                                                                     <span className="text-sm">{booking.time}</span>
                                                                     {booking.journeyType === "Return" && (
                                                                         <span className="text-sm bg-red-300 text-black px-1 rounded">Return</span>
@@ -286,7 +325,7 @@ const BookingCalendar = () => {
                                                                     )}
                                                                 </div>
                                                                 <div className="flex items-center space-x-1 truncate">
-                                                                    <MapPin className="h-4 w-4" />
+                                                                    <Icons.MapPin className="h-4 w-4" />
                                                                     <span className="truncate">{booking.pickup}</span>
                                                                 </div>
                                                             </div>
@@ -331,8 +370,9 @@ const BookingCalendar = () => {
                             <p><strong>Passenger:</strong> {hoveredEvent.passenger}</p>
                             <p><strong>Booking ID:</strong> {hoveredEvent.bookingId}</p>
                             <p><strong>Journey:</strong> {hoveredEvent.journeyType}</p>
-                            <p className="font-bold text-green-600">£{hoveredEvent.fare.toFixed(2)}</p>
-                        </div>
+                            <p className="font-bold text-green-600">
+  £{Number(hoveredEvent?.fare ?? 0).toFixed(2)}
+</p>                        </div>
                     </div>
                 )}
             </div>
