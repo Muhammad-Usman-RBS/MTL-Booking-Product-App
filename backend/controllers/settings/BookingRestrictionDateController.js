@@ -10,40 +10,68 @@ const isActiveOneOffNow = (fromISO, toISO, now = new Date()) => {
 };
 
 const isActiveYearlyNow = (fromISO, toISO, now = new Date()) => {
-  // Month/Day/Time only; reuse current year; handle Dec→Jan wrap
+  // Fix: Use local time methods instead of UTC methods
   const f = new Date(fromISO);
   const t = new Date(toISO);
   const y = now.getFullYear();
 
+  // Create dates in local timezone to match the input format
   const fThis = new Date(
-    y, f.getUTCMonth(), f.getUTCDate(),
-    f.getUTCHours(), f.getUTCMinutes(), 0, 0
+    y, f.getMonth(), f.getDate(),
+    f.getHours(), f.getMinutes(), 0, 0
   );
   const tThis = new Date(
-    y, t.getUTCMonth(), t.getUTCDate(),
-    t.getUTCHours(), t.getUTCMinutes(), 0, 0
+    y, t.getMonth(), t.getDate(),
+    t.getHours(), t.getMinutes(), 0, 0
   );
 
+  console.log('Yearly check debug:', {
+    original: { from: fromISO, to: toISO },
+    thisYear: { from: fThis, to: tThis },
+    now: now,
+    nowTime: now.getTime(),
+    fThisTime: fThis.getTime(),
+    tThisTime: tThis.getTime()
+  });
+
   if (tThis >= fThis) {
-    return isBetween(now.getTime(), fThis, tThis);
+    // Normal case: doesn't wrap around year
+    const result = isBetween(now.getTime(), fThis, tThis);
+    console.log('Normal yearly check result:', result);
+    return result;
   }
-  // wraps across year-end
+  
+  // Edge case: wraps across year-end (Dec to Jan)
   const endOfYear = new Date(y, 11, 31, 23, 59, 59, 999);
   const startOfYear = new Date(y, 0, 1, 0, 0, 0, 0);
-  return isBetween(now.getTime(), fThis, endOfYear) || isBetween(now.getTime(), startOfYear, tThis);
+  const result = isBetween(now.getTime(), fThis, endOfYear) || isBetween(now.getTime(), startOfYear, tThis);
+  console.log('Year-wrap yearly check result:', result);
+  return result;
 };
 
 const computeDesiredStatus = (doc, now = new Date()) => {
   const rec = String(doc.recurring || "").toLowerCase();
+  console.log('Computing status for:', {
+    caption: doc.caption,
+    recurring: rec,
+    from: doc.from,
+    to: doc.to,
+    now: now
+  });
+  
   const active = rec === "yearly"
     ? isActiveYearlyNow(doc.from, doc.to, now)
     : isActiveOneOffNow(doc.from, doc.to, now);
-  return active ? "Active" : "Inactive";
+    
+  const status = active ? "Active" : "Inactive";
+  console.log('Computed status:', status);
+  return status;
 };
 
 const normalizeStatusNow = async (doc) => {
   const desired = computeDesiredStatus(doc);
   if (doc.status !== desired) {
+    console.log(`Status change for ${doc.caption}: ${doc.status} -> ${desired}`);
     doc.status = desired;
     doc.updatedAt = new Date();
     await doc.save();
@@ -97,10 +125,13 @@ export const getAllBookingRestrictions = async (req, res) => {
 
     // Auto-sync statuses in DB if needed (minimal writes)
     const now = new Date();
+    console.log('Current time for status check:', now);
+    
     const ops = [];
     const mapped = docs.map((d) => {
       const desired = computeDesiredStatus(d, now);
       if (d.status !== desired) {
+        console.log(`Bulk update needed for ${d.caption}: ${d.status} -> ${desired}`);
         ops.push({
           updateOne: {
             filter: { _id: d._id },
@@ -111,7 +142,11 @@ export const getAllBookingRestrictions = async (req, res) => {
       }
       return d;
     });
-    if (ops.length) await BookingRestriction.bulkWrite(ops);
+    
+    if (ops.length) {
+      console.log(`Performing ${ops.length} bulk status updates`);
+      await BookingRestriction.bulkWrite(ops);
+    }
 
     res.status(200).json({
       message: "The data was fetched successfully",
