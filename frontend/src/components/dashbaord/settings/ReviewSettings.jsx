@@ -1,31 +1,52 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
+import {
+  useGetReviewSettingsQuery,
+  useUpdateReviewSettingsMutation,
+} from "../../../redux/api/reviewsApi";
 
 const ReviewSettings = () => {
-  const [subject, setSubject] = useState("Share your experience - !ORDER_NO!");
-  const [template, setTemplate] = useState(`Dear !PASSENGER_NAME!,
+  const companyId = useSelector((s) => s?.auth?.user?.companyId);
 
-Thank you for choosing Mega Transfers Limited for your journey !ORDER_NO! on !PICKUP_DATE_TIME!.
+  const { data, isLoading, isError, error } = useGetReviewSettingsQuery(companyId, {
+    skip: !companyId,
+  });
+  const [updateSettings, { isLoading: isSaving }] =
+    useUpdateReviewSettingsMutation();
 
-We hope the journey was to your satisfaction and we appreciate your suggestions to improve our service. 
+  const [subject, setSubject] = useState("");
+  const [template, setTemplate] = useState("");
+  const [reviewLink, setReviewLink] = useState(""); // NEW
 
-Would you like to share your experience with us via following link:
+  useEffect(() => {
+    if (isError && error) {
+      toast.error(error?.data?.message || "Failed to load settings");
+    }
+  }, [isError, error]);
 
-https://g.page/r/CUFVH1EVOz6iEAI/review
+  useEffect(() => {
+    if (data?.settings) {
+      setSubject(data.settings.subject || "");
+      setTemplate(data.settings.template || "");
+      setReviewLink(data.settings.reviewLink || ""); // NEW
+    }
+  }, [data]);
 
-We consider all positive and negative feedbacks, it helps us to continuously improve our standards.
+  const handleUpdate = async () => {
+    if (!companyId) return toast.error("Missing companyId");
+    if (!subject.trim()) return toast.error("Subject is required");
+    if (!template.trim()) return toast.error("Template is required");
+    if (!reviewLink.trim()) return toast.error("Google review link is required"); // optional, but recommended
 
-If you have any questions or you would like to share any suggestions please email us on Bookings@megatransfers.co.uk. 
-
-We are looking forward to seeing you again.
-
-Thank you 
-
-Team Mega Transfers`);
-
-  const handleUpdate = () => {
-    toast.success("Review Settings Updated!");
+    try {
+      await updateSettings({ companyId, subject, template, reviewLink }).unwrap(); // include reviewLink
+      toast.success("Review Settings Updated!");
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.data?.message || "Save failed");
+    }
   };
 
   return (
@@ -33,35 +54,54 @@ Team Mega Transfers`);
       <OutletHeading name="Review Settings" />
 
       <div>
-        {/* Review Subject */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Review subject
-          </label>
-          <input
-            type="text"
-            className="custom_input w-full mt-1"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-          />
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Review subject
+        </label>
+        <input
+          type="text"
+          className="custom_input w-full mt-1"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          disabled={isLoading || isSaving}
+        />
+
+        <label className="block text-sm font-medium mt-5 text-gray-700 mb-1">
+          Review template
+        </label>
+        <textarea
+          rows={18}
+          className="custom_input w-full"
+          value={template}
+          onChange={(e) => setTemplate(e.target.value)}
+          disabled={isLoading || isSaving}
+        />
+
+        {/* NEW: Review link field */}
+        <label className="block text-sm font-medium mt-5 text-gray-700 mb-1">
+          Google review link
+        </label>
+        <input
+          type="url"
+          className="custom_input w-full"
+          value={reviewLink}
+          onChange={(e) => setReviewLink(e.target.value)}
+          disabled={isLoading || isSaving}
+          placeholder="https://g.page/r/...."
+        />
+
+        <div className="text-xs text-gray-500 mt-3">
+          Supported placeholders:&nbsp;
+          <code>!ORDER_NO!</code>, <code>!PASSENGER_NAME!</code>,{" "}
+          <code>!PICKUP_DATE_TIME!</code>, <code>!PICKUP!</code>,{" "}
+          <code>!DROPOFF!</code>
         </div>
 
-        {/* Review Template */}
-        <div>
-          <label className="block text-sm font-medium mt-5 text-gray-700 mb-1">
-            Review template
-          </label>
-          <textarea
-            rows="15"
-            className="custom_input w-full"
-            value={template}
-            onChange={(e) => setTemplate(e.target.value)}
-          />
-        </div>
-
-        {/* Update Button */}
-        <button className="btn btn-edit mt-4" onClick={handleUpdate}>
-          Update
+        <button
+          className="btn btn-edit mt-4"
+          onClick={handleUpdate}
+          disabled={isLoading || isSaving}
+        >
+          {isSaving ? "Saving..." : "UPDATE"}
         </button>
       </div>
     </div>

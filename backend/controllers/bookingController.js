@@ -5,10 +5,10 @@ import User from "../models/User.js";
 import Job from "../models/Job.js";
 import mongoose from "mongoose";
 import Voucher from "../models/pricings/Voucher.js";
-import {
-  createEventOnGoogleCalendar,
-  deleteEventFromGoogleCalendar,
-} from "../utils/calendarService.js";
+import { createEventOnGoogleCalendar, deleteEventFromGoogleCalendar } from "../utils/calendarService.js";
+import ReviewSetting from "../models/settings/ReviewSetting.js";
+import { compileReviewTemplate } from "../utils/reviewPlaceholders.js";
+import sendReviewEmail from "../utils/sendReviewEmail.js";
 
 // Craete Booking (Dashboard/Widget)
 export const createBooking = async (req, res) => {
@@ -595,6 +595,38 @@ export const updateBookingStatus = async (req, res) => {
     // Save the updated booking
     const updatedBooking = await booking.save();
 
+    /** AUTO-SEND REVIEW EMAIL when status becomes Completed **/
+    try {
+      const normalized = (status || "").trim().toLowerCase();
+      const isCompleted = normalized === "completed";
+
+      if (isCompleted && !booking.reviewEmailSent && booking?.passenger?.email) {
+        const settings = await ReviewSetting.findOne({ companyId: booking.companyId }).lean();
+        if (settings) {
+          const subj = compileReviewTemplate(settings.subject, booking);
+
+          let body = compileReviewTemplate(settings.template, booking);
+          // If template contains !REVIEW_LINK!, replace; else append separate link if present
+          if (body.includes("!REVIEW_LINK!")) {
+            body = body.replace(/!REVIEW_LINK!/g, settings.reviewLink || "");
+          } else if (settings.reviewLink && !body.includes(settings.reviewLink)) {
+            body += `\n\n${settings.reviewLink}`;
+          }
+
+          await sendReviewEmail(booking.passenger.email, subj, {
+            text: body,
+            html: body.replace(/\n/g, "<br/>"),
+          });
+
+          // mark sent to prevent duplicates
+          booking.reviewEmailSent = true;
+          await booking.save();
+        }
+      }
+    } catch (e) {
+      console.error("Review email auto-send failed:", e.message);
+    }
+
     // Driver updated the status
     if (currentUser?.role === "driver" && status) {
       const driver = await driverModel
@@ -611,9 +643,8 @@ export const updateBookingStatus = async (req, res) => {
         }).lean();
 
         const statusStyled = `<span style="color: green;">${status}</span>`;
-        const driverName = `"${driver?.DriverData?.firstName || ""} ${
-          driver?.DriverData?.surName || ""
-        }"`.trim();
+        const driverName = `"${driver?.DriverData?.firstName || ""} ${driver?.DriverData?.surName || ""
+          }"`.trim();
         const bookingId = booking.bookingId;
 
         const title = `Driver ${driverName} changed the status to ${statusStyled} for booking #${bookingId}`;
@@ -646,8 +677,7 @@ export const updateBookingStatus = async (req, res) => {
         : null;
 
       const driverName = assignedDriver
-        ? `"${assignedDriver.DriverData.firstName || ""} ${
-            assignedDriver.DriverData.surName || ""
+        ? `"${assignedDriver.DriverData.firstName || ""} ${assignedDriver.DriverData.surName || ""
           }"`.trim()
         : `"Assigned Driver"`;
 

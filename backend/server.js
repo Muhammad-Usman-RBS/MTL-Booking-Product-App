@@ -17,6 +17,7 @@ import NotificationRoutes from "./routes/notificationRoutes.js"
 import jobsRoutes from "./routes/jobRoutes.js"
 import corporateCustomerRoutes from "./routes/corporateCustomerRoutes.js"
 import bookingSettingRoutes from "./routes/bookingSettingRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 
 dotenv.config(); // .env file
 connectDB(); // Connect to the database
@@ -43,6 +44,7 @@ app.use('/api/jobs', jobsRoutes);
 app.use('/api/google', googleRoutes);
 app.use('/api/notification', NotificationRoutes);
 app.use("/api/booking-settings", bookingSettingRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 app.use('/api', userRoutes);
 
