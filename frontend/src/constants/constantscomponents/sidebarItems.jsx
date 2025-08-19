@@ -457,54 +457,54 @@ const sidebarItems = [
       //     "driver",
       //   ],
       // },
-      {
-        title: "Google Calendar",
-        route: "/dashboard/settings/google-calendar",
-        icon: Icons.Calendar,
-        roles: [
-          "clientadmin",
-          "associateadmin",
-          "superadmin",
-          "manager",
-          "driver",
-        ],
-      },
-      {
-        title: "SMS",
-        route: "/dashboard/settings/sms",
-        icon: Icons.MessageSquare,
-        roles: [
-          "clientadmin",
-          "associateadmin",
-          "superadmin",
-          "manager",
-          "driver",
-        ],
-      },
-      {
-        title: "Social Media",
-        route: "/dashboard/settings/social-media",
-        icon: Icons.Share2,
-        roles: [
-          "clientadmin",
-          "associateadmin",
-          "superadmin",
-          "manager",
-          "driver",
-        ],
-      },
-      {
-        title: "Chat Plugin",
-        route: "/dashboard/settings/chat-plugin",
-        icon: Icons.MessageCircle,
-        roles: [
-          "clientadmin",
-          "associateadmin",
-          "superadmin",
-          "manager",
-          "driver",
-        ],
-      },
+      // {
+      //   title: "Google Calendar",
+      //   route: "/dashboard/settings/google-calendar",
+      //   icon: Icons.Calendar,
+      //   roles: [
+      //     "clientadmin",
+      //     "associateadmin",
+      //     "superadmin",
+      //     "manager",
+      //     "driver",
+      //   ],
+      // },
+      // {
+      //   title: "SMS",
+      //   route: "/dashboard/settings/sms",
+      //   icon: Icons.MessageSquare,
+      //   roles: [
+      //     "clientadmin",
+      //     "associateadmin",
+      //     "superadmin",
+      //     "manager",
+      //     "driver",
+      //   ],
+      // },
+      // {
+      //   title: "Social Media",
+      //   route: "/dashboard/settings/social-media",
+      //   icon: Icons.Share2,
+      //   roles: [
+      //     "clientadmin",
+      //     "associateadmin",
+      //     "superadmin",
+      //     "manager",
+      //     "driver",
+      //   ],
+      // },
+      // {
+      //   title: "Chat Plugin",
+      //   route: "/dashboard/settings/chat-plugin",
+      //   icon: Icons.MessageCircle,
+      //   roles: [
+      //     "clientadmin",
+      //     "associateadmin",
+      //     "superadmin",
+      //     "manager",
+      //     "driver",
+      //   ],
+      // },
       {
         title: "Cron Job",
         route: "/dashboard/settings/cron-job",
@@ -520,7 +520,7 @@ const sidebarItems = [
       {
         title: "Driver Contact",
         route: "/dashboard/settings/driver-contact",
-        icon: Icons.Clock,
+        icon: Icons.Phone,
         roles: [
           "clientadmin",
           "associateadmin",
@@ -532,7 +532,7 @@ const sidebarItems = [
       {
         title: "Terms and Condition",
         route: "/dashboard/settings/terms-and-condition",
-        icon: Icons.Clock,
+        icon: Icons.ScrollText,
         roles: [
           "clientadmin",
           "associateadmin",

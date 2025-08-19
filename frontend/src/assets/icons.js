@@ -91,10 +91,15 @@ import {
   Info,
   Building2,
   ShieldCheck,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 
 const Icons = {
   Info,
+  ScrollText,
+  ChevronRight,
+  ChevronLeft,
   Building2,
   ShieldCheck,
   Delete,
@@ -152,7 +157,6 @@ const Icons = {
   LayoutDashboard,
   Home,
   CalendarDays,
-  ScrollText,
   Users,
   Map,
   RefreshCcw,
