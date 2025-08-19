@@ -10,6 +10,7 @@ const Logout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("companyId");
     localStorage.removeItem("token");
+    localStorage.removeItem("theme:persist");
 
     toast.success("Successfully logged out.");
 

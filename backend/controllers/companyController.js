@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Company from "../models/Company.js";
 import User from "../models/User.js";
 import sendEmail from "../utils/sendEmail.js";
+import { initializeDefaultThemes } from "./settings/themeController.js";
 
 export const createCompanyAccount = async (req, res) => {
   try {
@@ -70,6 +71,7 @@ export const createCompanyAccount = async (req, res) => {
     await User.findByIdAndUpdate(clientAdminId, {
       $set: { companyId: savedCompany._id },
     });
+    await initializeDefaultThemes(savedCompany._id);
 
     // ✅ 8. Return success
     return res.status(201).json(savedCompany);

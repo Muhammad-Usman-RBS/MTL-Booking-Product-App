@@ -10,7 +10,6 @@ import {
   useFetchThemeHistoryQuery,
   useDeleteThemeSettingsMutation,
 } from "../../../redux/api/themeApi";
-import { Bookmark, BookmarkCheck, CheckSquare, Square } from "lucide-react";
 import Icons from "../../../assets/icons";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -194,19 +193,13 @@ const SettingsGeneral = () => {
   const handleDeleteTheme = async (e, id) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!companyId) {
-      toast.error("Company ID not found!");
-      return;
-    }
     try {
-      const res = await deleteThemeSettings(companyId).unwrap();
-      dispatch(removeBookmarkById(id)); // also drop from bookmarks
+      const res = await deleteThemeSettings({ id }).unwrap();
+      dispatch(removeBookmarkById(id));
       toast.success(res?.message || "Theme deleted");
       await refetchHistory();
     } catch (err) {
-      toast.error(
-        err?.data?.message || err?.message || "Failed to delete theme"
-      );
+      toast.error(err?.data?.message || err?.message || "Failed to delete theme");
     }
   };
 
@@ -226,6 +219,7 @@ const SettingsGeneral = () => {
       </div>
     );
   }
+  console.log("Theme History:", history);
 
   return (
     <div>
@@ -340,9 +334,10 @@ const SettingsGeneral = () => {
                 >
                   {/* Rest of the card content stays the same */}
                   <div className="flex items-center justify-between mb-3">
+                  <span className="text-black">{t.name}</span>
+
                     <button
                       type="button"
-                      className="p-1 rounded hover:bg-blue-50"
                       title={
                         bookmarks.find((b) => b._id === t._id)
                           ? "Unpin from Navbar"
@@ -369,23 +364,19 @@ const SettingsGeneral = () => {
                       }}
                     >
                       {bookmarks.find((b) => b._id === t._id) ? (
-                        <BookmarkCheck className="w-5 h-5 text-blue-600" />
+                        <Icons.BookmarkCheck className="w-5 h-5 text-blue-600" />
                       ) : (
-                        <Bookmark className="w-5 h-5 text-gray-400" />
+                        <Icons.Bookmark className="w-5 h-5 text-gray-400" />
                       )}
                     </button>
 
-                    <button
-                      type="button"
-                      className="cursor-pointer"
-                      onClick={(e) => handleDeleteTheme(e, t._id)}
-                      title="Delete this theme"
-                    >
-                      <Icons.Trash className="w-5 h-5 text-red-500" />
-                    </button>
+            
                   </div>
+                  
+<div className="flex items-end justify-between">
 
-                  <div className="flex items-center gap-3">
+
+                  <div className="grid  lg:grid-rows-1 lg:grid-cols-5 grid-cols-3 grid-rows-2 items-center pt-4 gap-3">
                     {["bg", "text", "primary", "hover", "active"].map((k) => (
                       <div key={k} className="flex flex-col items-center">
                         <div
@@ -399,6 +390,21 @@ const SettingsGeneral = () => {
                       </div>
                     ))}
                   </div>
+<div>
+{!t.isDefault && (
+  <button
+    type="button"
+    className="cursor-pointer"
+    onClick={(e) => handleDeleteTheme(e, t._id)}
+    title="Delete this theme"
+  >
+    <Icons.Trash className="w-5 h-5 text-red-500" />
+  </button>
+)}
+
+</div>
+
+</div>
                 </div>
               );
             })}

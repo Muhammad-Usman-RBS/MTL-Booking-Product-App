@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const themeSchema = new mongoose.Schema({
   companyId: { type: String, required: true, index: true }, 
+  name: {type: String , default: "Custom Theme"},
+  isDefault: {
+    type: Boolean,
+    default: false
+  },
   themeSettings: {
     bg: {
       type: String,

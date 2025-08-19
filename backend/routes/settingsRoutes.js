@@ -88,7 +88,7 @@ router.post(
 );
 router.get("/", protect, authorize("superadmin", "clientadmin"), getAllThemes);
 router.delete(
-  "/:companyId",
+  "/:id",
   protect,
   authorize("superadmin", "clientadmin"),
   deleteTheme

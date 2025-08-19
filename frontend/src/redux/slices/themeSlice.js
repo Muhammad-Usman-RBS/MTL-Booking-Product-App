@@ -1,12 +1,11 @@
 // redux/slices/themeSlice.js
 import { createSlice } from "@reduxjs/toolkit";
-
 const initialColors = {
-  bg: "#ffffff",
-  text: "#000000",
-  primary: "#1e90ff",
-  hover: "#ff6347",
-  active: "#32cd32",
+  bg: '#07384d',
+  text: "#f1efef",
+  primary: "#01f5fe",
+  hover: "#003353",
+  active: "#064f7c",
 };
 
 // ⬇️ export so the store can merge persisted state safely

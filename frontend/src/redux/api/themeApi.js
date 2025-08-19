@@ -48,15 +48,12 @@ export const themeApi = apiSlice.injectEndpoints({
       ],
     }),
     deleteThemeSettings: builder.mutation({
-      query: (companyId) => ({
-        url: `/settings/${companyId}`,
-        method: "DELETE",
+      query: ({ id }) => ({
+        url: `/settings/${id}`,
+        method: 'DELETE',
       }),
-      invalidatesTags: (result, error, companyId) => [
-        { type: "Theme", id: companyId },
-        "Theme",
-      ],
-    }),
+      invalidatesTags: ['ThemeHistory', 'ThemeSettings'],
+    })
   }),
 });
 

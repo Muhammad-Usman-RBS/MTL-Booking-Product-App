@@ -93,10 +93,14 @@ import {
   ShieldCheck,
   ChevronRight,
   ChevronLeft,
+  Bookmark,
+  BookmarkCheck,
 } from "lucide-react";
 
 const Icons = {
   Info,
+  Bookmark,
+  BookmarkCheck,
   ScrollText,
   ChevronRight,
   ChevronLeft,
