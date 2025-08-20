@@ -88,7 +88,6 @@ import jobsRoutes from "./routes/jobRoutes.js";
 import corporateCustomerRoutes from "./routes/corporateCustomerRoutes.js";
 import bookingSettingRoutes from "./routes/bookingSettingRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
-import cronJobRoutes from "./routes/cronJobRoutes.js"
 
 dotenv.config();
 connectDB();
@@ -127,7 +126,6 @@ app.use("/api/google", googleRoutes);
 app.use("/api/notification", NotificationRoutes);
 app.use("/api/booking-settings", bookingSettingRoutes);
 app.use("/api/reviews", reviewRoutes);
-app.use("/api/cronjobs", cronJobRoutes);
 app.use("/api", userRoutes);
 
 // Static
@@ -149,6 +147,7 @@ export const io = new IOServer(server, {
   },
   path: "/socket.io", // default; keep explicit if you proxy
 });
+app.set("io", io);
 
 // Optional auth (JWT verify here if needed)
 io.use((socket, next) => {
