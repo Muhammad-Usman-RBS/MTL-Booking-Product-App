@@ -12,22 +12,21 @@ export default function useNotificationsRealtime() {
         (typeof window !== "undefined" ? window.location.origin : "http://localhost:5000");
 
     useEffect(() => {
-        if (!user?.employeeNumber || !user?.companyId) return;
-        const cacheKey = String(user.employeeNumber);
-
-        const s = initSocket({
+        const empKey =user?.role === "driver"? String(user?.employeeNumber || ""): String(user?._id || "");
+          const s = initSocket({
             apiBase: VITE_API_BASE_URL,
-            employeeNumber: cacheKey,
-            companyId: user.companyId,
+            employeeNumber: empKey,        
+            companyId: String(user?.companyId || ""),
             token: user?.token,
-        });
+          });
+
 
         const onNew = (notif) => {
             console.log("[SOCKET] notification:new", notif?._id);
             dispatch(
                 apiSlice.util.updateQueryData(
                     "getUserNotifications",
-                    cacheKey,
+                    empKey,
                     (draft) => {
                         if (Array.isArray(draft) && !draft.find((d) => d._id === notif._id)) {
                             draft.unshift(notif);
@@ -42,7 +41,7 @@ export default function useNotificationsRealtime() {
             dispatch(
                 apiSlice.util.updateQueryData(
                     "getUserNotifications",
-                    cacheKey,
+                    empKey,
                     (draft) => {
                         if (!Array.isArray(draft)) return;
                         const { type, id } = msg || {};
@@ -67,5 +66,5 @@ export default function useNotificationsRealtime() {
             sock?.off("notification:new", onNew);
             sock?.off("notification:update", onUpdate);
         };
-    }, [user?.employeeNumber, user?.companyId, dispatch]);
+    }, [user?.role, user?._id, user?.employeeNumber, user?.companyId, dispatch]);
 }

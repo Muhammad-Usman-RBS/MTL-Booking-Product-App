@@ -43,6 +43,9 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
 
   const [sendBookingEmail] = useSendBookingEmailMutation();
 
+
+
+  
   const { data: drivers = [], isLoading } = useGetAllDriversQuery(companyId, {
     skip: !companyId,
   });

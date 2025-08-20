@@ -2,14 +2,13 @@ import Booking from "../models/Booking.js";
 import sendEmail from "../utils/sendEmail.js";
 import driverModel from "../models/Driver.js";
 import User from "../models/User.js";
-import Job from "../models/Job.js";
 import mongoose from "mongoose";
 import Voucher from "../models/pricings/Voucher.js";
 import { createEventOnGoogleCalendar, deleteEventFromGoogleCalendar } from "../utils/calendarService.js";
 import ReviewSetting from "../models/settings/ReviewSetting.js";
 import { compileReviewTemplate } from "../utils/reviewPlaceholders.js";
 import sendReviewEmail from "../utils/sendReviewEmail.js";
-
+import Notification from "../models/Notification.js"
 // Craete Booking (Dashboard/Widget)
 export const createBooking = async (req, res) => {
   try {
@@ -626,7 +625,115 @@ export const updateBookingStatus = async (req, res) => {
     } catch (e) {
       console.error("Review email auto-send failed:", e.message);
     }
+// ========= DRIVER NOTIFY ON STATUS CHANGE =========
+const io = req.app.get("io");
 
+const audit = booking.statusAudit || [];
+const prevStatus = audit.length > 1 ? audit[audit.length - 2]?.status : null;
+const currStatus = booking.status;
+const isStatusChanged = prevStatus !== currStatus;
+try {
+
+  // 🔒 Notify drivers only when a non-driver updated the status
+  if (isStatusChanged && currentUser?.role !== "driver") {
+    const employeeNumbers = [];
+
+    for (const d of Array.isArray(booking.drivers) ? booking.drivers : []) {
+      if (d?.employeeNumber) {
+        employeeNumbers.push(String(d.employeeNumber));
+        continue;
+      }
+      if (d?.DriverData?.employeeNumber) {
+        employeeNumbers.push(String(d.DriverData.employeeNumber));
+        continue;
+      }
+      const uid = d?.userId || d?._id;
+      if (uid) {
+        const u = await User.findById(uid).lean();
+        if (u?.employeeNumber) employeeNumbers.push(String(u.employeeNumber));
+      }
+    }
+
+    const uniqEmp = [...new Set(employeeNumbers)].filter(Boolean);
+    if (uniqEmp.length) {
+      const payloads = uniqEmp.map((en) => ({
+        employeeNumber: en,
+        bookingId: booking.bookingId,
+        status: currStatus,
+        primaryJourney: {
+          pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
+          dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
+        },
+        bookingSentAt: new Date(),
+        createdBy: currentUser?._id,
+        companyId: booking.companyId,
+      }));
+
+      const docs = await Notification.insertMany(payloads, { ordered: false });
+      for (const n of docs) {
+        io.to(`emp:${n.employeeNumber}`).emit("notification:new", n);
+      }
+    }
+  }
+
+    
+
+} catch (e) {
+  console.error("Driver notify on status change failed:", e?.message);
+}
+// ========= END DRIVER NOTIFY =========
+try {
+
+
+  if (isStatusChanged && currentUser?.role === "driver") {
+    // 1) notify clientadmin in-app
+    const clientAdmin = await User.findOne({
+      companyId: booking.companyId,
+      role: "clientadmin",
+    }).lean();
+    const adminKey = String( clientAdmin?._id || "");
+    if (adminKey) {
+      const adminNotif = await Notification.create({
+        employeeNumber: String(adminKey),   // 👈 add this
+        bookingId: booking.bookingId,
+        status: currStatus,
+        primaryJourney: {
+          pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
+          dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
+        },
+        bookingSentAt: new Date(),
+        createdBy: currentUser?._id,
+        companyId: booking.companyId,
+      });
+      io.to(`emp:${adminKey}`).emit("notification:new", adminNotif);
+    }
+
+    // 2) (optional) notify customer user if you have one
+    const paxEmail = (booking?.passenger?.email || "").trim().toLowerCase();
+    const customerUser = paxEmail
+      ? await User.findOne({ companyId: booking.companyId, role: "customer", email: paxEmail }).lean()
+      : null;
+
+    const custKey = String(  customerUser?._id || "");
+    if (custKey) {
+      const customerNotif = await Notification.create({
+        employeeNumber: String(custKey),   // 👈 add this
+        bookingId: booking.bookingId,
+        status: currStatus,
+        primaryJourney: {
+          pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
+          dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
+        },
+        bookingSentAt: new Date(),
+        createdBy: currentUser?._id,
+        companyId: booking.companyId,
+      });
+      io.to(`emp:${custKey}`).emit("notification:new", customerNotif);
+    }
+  }
+} catch (e) {
+  console.error("Admin/Customer notify on driver change failed:", e?.message);
+}
     // Driver updated the status
     if (currentUser?.role === "driver" && status) {
       const driver = await driverModel
@@ -658,8 +765,7 @@ export const updateBookingStatus = async (req, res) => {
         await sendEmailsAsync(
           clientAdmin?.email,
           booking?.passenger?.email,
-          driver?.DriverData?.email,
-          driverName,
+null,          driverName,
           statusStyled,
           bookingId
         );
@@ -709,6 +815,34 @@ export const updateBookingStatus = async (req, res) => {
           data,
         });
       }
+
+
+      const paxEmail2 = (booking?.passenger?.email || "").trim().toLowerCase();
+      if (paxEmail2) {
+        const customerUser2 = await User.findOne({
+          companyId: booking.companyId,
+          role: "customer",
+          email: paxEmail2,
+        }).lean();
+    
+        const custKey2 = String(customerUser2?._id || "");
+        if (custKey2) {
+          const customerNotif2 = await Notification.create({
+            employeeNumber: custKey2, // customer portal uses _id as key
+            bookingId: booking.bookingId,
+            status: booking.status,   // or use currStatus
+            primaryJourney: {
+              pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
+              dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
+            },
+            bookingSentAt: new Date(),
+            createdBy: currentUser?._id,
+            companyId: booking.companyId,
+          });
+          io.to(`emp:${custKey2}`).emit("notification:new", customerNotif2);
+        }
+      }
+
     }
 
     res.status(200).json({ success: true, booking: updatedBooking });

@@ -4,17 +4,15 @@ import {
   selectBookmarkedThemes,
   setThemeColors,
 } from "../../../redux/slices/themeSlice";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Icons from "../../../assets/icons";
 import IMAGES from "../../../assets/images";
-import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import {
   useGetUserNotificationsQuery,
   useMarkAllAsReadMutation,
   useMarkAsReadMutation,
 } from "../../../redux/api/notificationApi";
 import useUIStore from "../../../store/useUIStore";
-import JourneyDetailsModal from "../bookings/JourneyDetailsModal";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import { useMemo } from "react";
 
@@ -25,7 +23,6 @@ function Navbar() {
   const email = user?.email || "No Email";
   const name = user?.fullName || "Guest";
   const profileImg = user?.profileImage;
-  const navigate = useNavigate();
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
   const [showTooltip, setShowTooltip] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -34,7 +31,6 @@ function Navbar() {
 
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
-  const [showJourneyModal, setShowJourneyModal] = useState(false);
   const { data: bookings } = useGetAllBookingsQuery(user?.companyId);
   const dispatch = useDispatch();
 
@@ -62,15 +58,20 @@ function Navbar() {
   //   skip: !user?.employeeNumber,
   // });
 
-  const empArg = String(user?.employeeNumber || "");
-  const { data: notifications = [] } = useGetUserNotificationsQuery(empArg, {
-    skip: !empArg,
-  });
+  const empArg =
+  user?.role === "driver"
+    ? String(user?.employeeNumber || "")
+    : String(user?._id || "");
 
-  const unreadCount = useMemo(
-    () => (Array.isArray(notifications) ? notifications.filter((n) => !n.isRead).length : 0),
-    [notifications]
-  );
+const { data: notifications = [] } = useGetUserNotificationsQuery(empArg, {
+  skip: !empArg,
+});
+
+// Also make sure any place that calls markAllAsRead / markAsRead
+// continues to use ids returned from the list, and for markAllAsRead
+// pass the SAME empArg:
+
+ 
 
   const [firstName, lastName] = name.split(" ");
   const displayName = `${firstName || ""} ${lastName || ""}`.trim();
@@ -88,10 +89,7 @@ function Navbar() {
     }
   };
   const bookingList = bookings?.bookings || [];
-  const selectedBooking = bookingList.find(
-    (booking) => booking.bookingId === selectedBookingId
-  );
-
+ 
   const getTimeAgo = (timestamp) => {
     const now = new Date();
     const past = new Date(timestamp);
@@ -205,9 +203,7 @@ function Navbar() {
                         key={data._id}
                         onClick={() => {
                           setSelectedBookingId(data.bookingId);
-                          setShowJourneyModal(true);
                           setShowTooltip(false);
-                          navigate("/dashboard/bookings/list");
                         }}
                         className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
                           }`}
@@ -409,13 +405,7 @@ function Navbar() {
         </div>
       </nav>
 
-      <CustomModal
-        isOpen={showJourneyModal}
-        onClose={() => setShowJourneyModal(false)}
-        heading="Journey Details"
-      >
-        <JourneyDetailsModal viewData={selectedBooking} />
-      </CustomModal>
+      
     </>
   );
 }
