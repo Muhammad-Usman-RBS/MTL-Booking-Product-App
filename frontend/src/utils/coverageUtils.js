@@ -38,7 +38,6 @@ export function normalizeCoverageRules(coveragesResp) {
       : [],
   }));
 }
-
 /** Outward code helper (unchanged) */
 export function outwardFromText(txt = "") {
   const m = String(txt).toUpperCase().match(/([A-Z]{1,2}\d[A-Z\d]?)/);

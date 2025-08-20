@@ -4,8 +4,6 @@ import { useLazySearchGooglePlacesQuery, useLazyGeocodeQuery } from "../../../re
 import { normalizeCoverageRules, decideCoverage } from "../../../utils/coverageUtils";
 import { useGetAllCoveragesQuery } from "../../../redux/api/coverageApi"
 import { useSelector } from 'react-redux';
-import { useGetAllBookingRestrictionsQuery } from "../../../redux/api/bookingRestrictionDateApi";
-import { useBookingRestrictionWatcher } from "../../../utils/bookingRestrictionUtils";
 
 const JourneyCard = ({
   title,
@@ -45,25 +43,10 @@ const JourneyCard = ({
     skip: !companyId,
   });
 
-  const { data: restrictionsResp } = useGetAllBookingRestrictionsQuery(companyId, { skip: !companyId });
-
-  const restrictions = useMemo(
-    () => (restrictionsResp?.data ?? restrictionsResp ?? []),
-    [restrictionsResp]
-  );
-
   const coverageRules = useMemo(
     () => normalizeCoverageRules(coveragesResp),
     [coveragesResp]
   );
-
-  // Booking Restriction Functionality Start
-  useBookingRestrictionWatcher(journeyData, restrictions, (hit, labels) => {
-    const title = hit.caption || "Booking Restriction";
-    toast.info(`${title}: ${labels.from} → ${labels.to}. Bookings are restricted in this window.`);
-  });
-
-  // Booking Restriction Functionality End
 
   const checkCoverage = (text, scope, coords) => {
     const res = decideCoverage(text, scope, coverageRules, coords);
