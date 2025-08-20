@@ -261,7 +261,6 @@ const NewAdminUser = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const {
     data: corporateCustomersData,
-    isLoading: isLoadingCustomers,
   } = useGetCorporateCustomersQuery(undefined, {
     skip: selectedAccount?.role?.toLowerCase() !== "customer",
   });
@@ -443,20 +442,21 @@ const NewAdminUser = () => {
             )}
         </div>
 
-        {selectedAccount?.role === "customer" && (
-          <div className="md:col-span-1">
-            <label className="text-sm">VAT Number</label>
-            <input
-              placeholder="VAT Number"
-              type="text"
-              className="custom_input mt-1"
-              value={selectedAccount?.vatnumber || ""}
-              onChange={(e) =>
-                setSelectedAccount({ ...selectedAccount, vatnumber: e.target.value })
-              }
-            />
-          </div>
-        )}
+        {selectedAccount?.role === "customer" && selectedAccount?.vatnumber && (
+  <div className="md:col-span-1">
+    <label className="text-sm">VAT Number</label>
+    <input
+      placeholder="VAT Number"
+      type="text"
+      className="custom_input mt-1"
+      value={selectedAccount?.vatnumber || ""}
+      readOnly
+      onChange={(e) =>
+        setSelectedAccount({ ...selectedAccount, vatnumber: e.target.value })
+      }
+    />
+  </div>
+)}
 
         {selectedAccount?.role === "driver" && (
           <div className="md:col-span-2 lg:col-span-1">

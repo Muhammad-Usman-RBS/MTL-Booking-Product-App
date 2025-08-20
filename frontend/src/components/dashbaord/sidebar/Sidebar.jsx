@@ -29,6 +29,9 @@ const Sidebar = () => {
       const filteredSubTabs = item.subTabs?.filter((sub) => {
         const subHasRole =
           !sub.roles || sub.roles.length === 0 || sub.roles.includes(userRole);
+          if (userRole === "customer" && (!user?.vatnumber) && (sub.route === "/dashboard/bookings/list" || sub.route === "/dashboard/bookings/new") ) {
+            return false;
+          }
         return subHasRole;
       });
 
