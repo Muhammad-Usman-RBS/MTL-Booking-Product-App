@@ -1,3 +1,4 @@
+// src/pages/settings/BookingRestrictionDate.jsx
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -14,19 +15,59 @@ import {
   useUpdateBookingRestrictionMutation,
 } from "../../../redux/api/bookingRestrictionDateApi";
 
+/* ---------- Helpers (timezone-safe) ---------- */
+
+// For <input type="datetime-local"> value (LOCAL, no Z)
+const toLocalInputValue = (dateLike) => {
+  if (!dateLike) return "";
+  const d = new Date(dateLike);
+  if (isNaN(d)) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  const y = d.getFullYear();
+  const m = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const mm = pad(d.getMinutes());
+  return `${y}-${m}-${day}T${hh}:${mm}`;
+};
+
+// Convert LOCAL input string -> ISO (UTC) for API/DB
+const localInputToISO = (localStr) => {
+  // localStr like "2025-08-18T15:15"
+  if (!localStr) return null;
+  const d = new Date(localStr);
+  if (isNaN(d)) return null;
+  return d.toISOString();
+};
+
+// Pretty table display in LOCAL timezone
+const formatDateForTable = (dateString) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  if (isNaN(date)) return "";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = date.toLocaleString("en-US", { month: "short" });
+  const year = date.getFullYear();
+  const time = date.toLocaleTimeString("en-GB", {
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${day}-${month}-${year} ${time}`;
+};
+/* --------------------------------------------- */
+
 const BookingRestrictionDate = () => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
-  const [isEditMode, setIsEditMode] = useState(false);
 
+  const [isEditMode, setIsEditMode] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+
   const [createBookingRestriction] = useCreateBookingRestrictionMutation();
-  const {
-    data: apiData,
-    isLoading,
-    isError,
-  } = useGetAllBookingRestrictionsQuery(companyId);
+  const { data: apiData, isLoading, isError } =
+    useGetAllBookingRestrictionsQuery(companyId);
   const [updateBookingRestriction] = useUpdateBookingRestrictionMutation();
   const [deleteBookingRestriction] = useDeleteBookingRestrictionMutation();
 
@@ -35,18 +76,16 @@ const BookingRestrictionDate = () => {
   const [statusFilter, setStatusFilter] = useState("Any Status");
 
   const handleEdit = (item) => {
-    const fromDate = item.from
-      ? new Date(item.from).toISOString().slice(0, 16)
-      : "";
-    const toDate = item.to ? new Date(item.to).toISOString().slice(0, 16) : "";
     setSelectedItem({
       ...item,
-      from: fromDate,
-      to: toDate,
+      // IMPORTANT: show local values in the input (no UTC shift)
+      from: toLocalInputValue(item.from),
+      to: toLocalInputValue(item.to),
     });
     setIsEditMode(true);
     setShowModal(true);
   };
+
   const handleAddNew = () => {
     setSelectedItem({
       caption: "",
@@ -54,33 +93,38 @@ const BookingRestrictionDate = () => {
       from: "",
       to: "",
       status: "Active",
-      companyId: companyId,
+      companyId,
     });
     setIsEditMode(false);
     setShowModal(true);
   };
+
   const handleUpdate = async () => {
     try {
-      const { _id, caption, recurring, from, to, status } = selectedItem;
+      const { _id, caption, recurring, from, to, status } = selectedItem || {};
 
       if (!caption || !recurring || !from || !to || !status) {
         toast.error("All fields are required!");
         return;
       }
+
+      // Normalize to ISO UTC before sending to API
       const payload = {
         caption,
         recurring,
-        from: new Date(from),
-        to: new Date(to),
+        from: localInputToISO(from),
+        to: localInputToISO(to),
         status,
         companyId,
       };
 
+      if (!payload.from || !payload.to) {
+        toast.error("Invalid date/time values!");
+        return;
+      }
+
       if (_id) {
-        await updateBookingRestriction({
-          id: _id,
-          updatedData: payload,
-        }).unwrap();
+        await updateBookingRestriction({ id: _id, updatedData: payload }).unwrap();
         toast.success("Booking Restriction Updated!");
       } else {
         await createBookingRestriction(payload).unwrap();
@@ -92,11 +136,13 @@ const BookingRestrictionDate = () => {
       toast.error("Failed to save booking restriction");
     }
   };
+
   const data = apiData?.data || [];
   const filteredData =
     statusFilter === "Any Status"
       ? data
       : data.filter((item) => item.status === statusFilter);
+
   const tableHeaders = [
     { label: "Caption", key: "caption" },
     { label: "Recurring", key: "recurring" },
@@ -106,22 +152,10 @@ const BookingRestrictionDate = () => {
     { label: "Action", key: "actions" },
   ];
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const day = date.getDate();
-    const month = date.toLocaleString("en-US", { month: "short" });
-    const year = date.getFullYear();
-    const time = date.toLocaleTimeString("en-GB", {
-      hour12: false,
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    return `${day.toString().padStart(2, "0")}-${month}-${year} ${time}`;
-  };
   const tableData = filteredData.map((item) => ({
     ...item,
-    from: formatDate(item.from),
-    to: formatDate(item.to),
+    from: formatDateForTable(item.from),
+    to: formatDateForTable(item.to),
     actions: (
       <div className="flex gap-2">
         <Icons.Pencil
@@ -140,6 +174,7 @@ const BookingRestrictionDate = () => {
       </div>
     ),
   }));
+
   if (isLoading) {
     return <p className="text-center py-10">Loading booking restrictions...</p>;
   }
@@ -150,7 +185,6 @@ const BookingRestrictionDate = () => {
       </p>
     );
   }
-
   if (isError) {
     return (
       <p className="text-center text-red-600 py-10">
@@ -158,6 +192,7 @@ const BookingRestrictionDate = () => {
       </p>
     );
   }
+
   return (
     <>
       <div>
@@ -188,9 +223,7 @@ const BookingRestrictionDate = () => {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         heading={
-          data.find((d) => d.caption === selectedItem?.caption)
-            ? `Edit`
-            : "Add New Booking Restriction"
+          selectedItem && selectedItem._id ? "Edit" : "Add New Booking Restriction"
         }
       >
         <div className="mx-auto w-96 p-4 font-sans space-y-4">
@@ -214,7 +247,7 @@ const BookingRestrictionDate = () => {
             </label>
             <select
               className="custom_input"
-              value={selectedItem?.recurring || ""}
+              value={selectedItem?.recurring || "No"}
               onChange={(e) =>
                 setSelectedItem({ ...selectedItem, recurring: e.target.value })
               }
@@ -249,7 +282,7 @@ const BookingRestrictionDate = () => {
               onChange={(e) =>
                 setSelectedItem({ ...selectedItem, to: e.target.value })
               }
-              placeholder="e.g. 02-Jan 23:55"
+              placeholder="e.g. 2025-01-02T23:55"
             />
           </div>
 
@@ -266,6 +299,7 @@ const BookingRestrictionDate = () => {
           </div>
         </div>
       </CustomModal>
+
       <DeleteModal
         isOpen={showDeleteModal}
         onConfirm={async () => {

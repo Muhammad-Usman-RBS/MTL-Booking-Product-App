@@ -433,18 +433,18 @@ const sidebarItems = [
           "driver",
         ],
       },
-      {
-        title: "Receipt",
-        route: "/dashboard/settings/receipt",
-        icon: Icons.Receipt,
-        roles: [
-          "clientadmin",
-          "associateadmin",
-          "superadmin",
-          "manager",
-          "driver",
-        ],
-      },
+      // {
+      //   title: "Receipt",
+      //   route: "/dashboard/settings/receipt",
+      //   icon: Icons.Receipt,
+      //   roles: [
+      //     "clientadmin",
+      //     "associateadmin",
+      //     "superadmin",
+      //     "manager",
+      //     "driver",
+      //   ],
+      // },
       // {
       //   title: "Notifications Settings",
       //   route: "/dashboard/settings/settings-notifications",
@@ -517,18 +517,18 @@ const sidebarItems = [
           "driver",
         ],
       },
-      {
-        title: "Driver Contact",
-        route: "/dashboard/settings/driver-contact",
-        icon: Icons.Phone,
-        roles: [
-          "clientadmin",
-          "associateadmin",
-          "superadmin",
-          "manager",
-          "driver",
-        ],
-      },
+      // {
+      //   title: "Driver Contact",
+      //   route: "/dashboard/settings/driver-contact",
+      //   icon: Icons.Phone,
+      //   roles: [
+      //     "clientadmin",
+      //     "associateadmin",
+      //     "superadmin",
+      //     "manager",
+      //     "driver",
+      //   ],
+      // },
       {
         title: "Terms and Condition",
         route: "/dashboard/settings/terms-and-condition",
