@@ -60,9 +60,7 @@
 //   createSuperAdmin();
 // });
 
-
-
-// server.js (or index.js)
+// server.js
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -72,6 +70,9 @@ import { Server as IOServer } from "socket.io";
 import connectDB from "./config/db.js";
 import createSuperAdmin from "./utils/createSuperAdmin.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
+
+// ⬇️ CRON: import the scheduler
+import { scheduleDriverDocsJobs } from "./utils/settings/cronjobs/driverDocumentsExpiration.js";
 
 // Routes
 import authRoutes from "./routes/authRoutes.js";
@@ -88,6 +89,7 @@ import jobsRoutes from "./routes/jobRoutes.js";
 import corporateCustomerRoutes from "./routes/corporateCustomerRoutes.js";
 import bookingSettingRoutes from "./routes/bookingSettingRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
+import cronJobsRoutes from "./routes/cronJobRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -104,7 +106,6 @@ const allowedOrigins = process.env.BASE_URL_FRONTEND
 app.use(
   cors({
     origin: (origin, cb) => {
-      // allow non-browser tools (no origin) & whitelisted origins
       if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
       return cb(new Error(`CORS blocked for origin: ${origin}`));
     },
@@ -112,7 +113,13 @@ app.use(
   })
 );
 
-// ---- Routes ----
+// ---- Static ----
+app.use("/uploads", express.static("uploads"));
+
+// ---- Health ----
+app.get("/health", (_req, res) => res.json({ ok: true }));
+
+// ---- API Routes ----
 app.use("/api/auth", authRoutes);
 app.use("/api/driver", driverRoutes);
 app.use("/api/invoice", invoiceRoutes);
@@ -126,49 +133,37 @@ app.use("/api/google", googleRoutes);
 app.use("/api/notification", NotificationRoutes);
 app.use("/api/booking-settings", bookingSettingRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/cronjobs", cronJobsRoutes);
 app.use("/api", userRoutes);
 
-// Static
-app.use("/uploads", express.static("uploads"));
-
-// Health (optional)
-app.get("/health", (_req, res) => res.json({ ok: true }));
-
-// Errors
+// ---- Errors (keep after routes) ----
 app.use(errorHandler);
 
 // ---- HTTP server + Socket.IO ----
 const server = http.createServer(app);
 export const io = new IOServer(server, {
-  // If you keep FE and BE on same origin in prod, you can tighten this:
   cors: {
     origin: allowedOrigins,
     credentials: true,
   },
-  path: "/socket.io", // default; keep explicit if you proxy
+  path: "/socket.io",
 });
 app.set("io", io);
 
-// Optional auth (JWT verify here if needed)
 io.use((socket, next) => {
-  // const { token } = socket.handshake.auth || {}
-  // verify token -> set socket.user = decoded
   next();
 });
 
-// Rooms: per-employee & per-company (query params from client)
 io.on("connection", (socket) => {
   const { employeeNumber, companyId } = socket.handshake.query || {};
   const emp = String(employeeNumber || "");
-  const co  = String(companyId || "");
+  const co = String(companyId || "");
 
   if (emp) socket.join(`emp:${emp}`);
-  if (co)  socket.join(`co:${co}`);
+  if (co) socket.join(`co:${co}`);
 
-  // DEBUG: dekhen client aya, kis room me join hua
   console.log("[SOCKET] connected:", socket.id, "emp:", emp, "co:", co);
   console.log("[SOCKET] rooms:", [...socket.rooms]);
-
   socket.emit("socket:ready", { ok: true, emp, co });
 
   socket.on("disconnect", (reason) => {
@@ -178,7 +173,32 @@ io.on("connection", (socket) => {
 
 // ---- Start ----
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`[BOOT] CRON_TIMEZONE=${process.env.CRON_TIMEZONE || "UTC"}`);
   createSuperAdmin();
+
+  // ⬇️ Start the daily document-expiry email scheduler
+  try {
+    await scheduleDriverDocsJobs();
+    console.log("[CRON] driverDocumentsExpiration jobs scheduled");
+  } catch (e) {
+    console.error("Failed to schedule driver docs jobs:", e);
+  }
+});
+
+// ⬇️ Optional: Graceful shutdown (useful for cron + sockets)
+process.on("SIGTERM", () => {
+  console.log("SIGTERM received, shutting down gracefully...");
+  server.close(() => {
+    console.log("HTTP server closed.");
+    process.exit(0);
+  });
+});
+process.on("SIGINT", () => {
+  console.log("SIGINT received, shutting down gracefully...");
+  server.close(() => {
+    console.log("HTTP server closed.");
+    process.exit(0);
+  });
 });

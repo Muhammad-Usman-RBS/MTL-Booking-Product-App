@@ -5,7 +5,7 @@
 // const CronJob = () => {
 //   const [autoAllocChecked, setAutoAllocChecked] = useState(false);
 //   const [reviewChecked, setReviewChecked] = useState(true);
-//   const [docExpiryChecked, setDocExpiryChecked] = useState(false);
+//   const [driverDocumentsExpirationChecked, setdriverDocumentsExpirationChecked] = useState(false);
 //   const [statementChecked, setStatementChecked] = useState(false);
 
 //   return (
@@ -115,12 +115,12 @@
 //             <input
 //               type="checkbox"
 //               className="mr-2"
-//               checked={docExpiryChecked}
-//               onChange={() => setDocExpiryChecked(!docExpiryChecked)}
+//               checked={driverDocumentsExpirationChecked}
+//               onChange={() => setdriverDocumentsExpirationChecked(!driverDocumentsExpirationChecked)}
 //             />
 //             Driver documents expiration
 //           </div>
-//           {docExpiryChecked && (
+//           {driverDocumentsExpirationChecked && (
 //             <div className="p-4 space-y-4">
 //               <div className="flex space-x-2 items-center">
 //                 <p className="text-sm text-gray-700">Daily:</p>

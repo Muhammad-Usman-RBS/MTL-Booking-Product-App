@@ -15,8 +15,11 @@ export const driverApi = apiSlice.injectEndpoints({
 
     // Get all drivers
     getAllDrivers: builder.query({
-      query: (companyId) => ({
-        url: `/driver/get-all-drivers?companyId=${companyId}`,
+      // query: (companyId) => ({
+      //   url: `/driver/get-all-drivers?companyId=${companyId}`,
+      // }),
+      query: ({ companyId, includeExpiry = false }) => ({
+        url: `/driver/get-all-drivers?companyId=${companyId}&includeExpiry=${includeExpiry}`,
       }),
       providesTags: ['DriverList'],
     }),
