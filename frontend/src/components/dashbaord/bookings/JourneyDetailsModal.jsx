@@ -10,6 +10,14 @@ import Icons from "../../../assets/icons";
 import moment from "moment-timezone";
 
 const JourneyDetailsModal = ({ viewData = {} }) => {
+
+  const j = viewData?.returnJourneyToggle
+  ? viewData?.returnJourney || {}
+  : viewData?.primaryJourney || {};
+
+const isAirport = (s = "") => s.toLowerCase().includes("airport");
+const pickupIsAirport = isAirport(j.pickup);
+const dropIsAirport   = isAirport(j.dropoff);
   const [sendBookingEmail, { isLoading: isSending }] =
     useSendBookingEmailMutation();
   const [selectedType, setSelectedType] = useState("Send Customer");
@@ -24,7 +32,6 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
   const companyData = Array.isArray(companyList)
     ? companyList.find((c) => c._id === companyId)
     : null;
-
   const loggedInUser = useSelector((state) => state.auth?.user);
 
   useEffect(() => {
@@ -207,97 +214,66 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             <div>
               <strong>Pick Up:</strong>
               <div className="ml-4 mt-1 space-y-1">
-                <div>
-                  <strong>Date & Time:</strong> {pickupTime}
-                </div>
-                <div>
-                  <strong>Address:</strong>
-                  {viewData?.primaryJourney?.pickup ||
-                    (viewData?.returnJourneyToggle &&
-                      viewData?.returnJourney?.pickup) ||
-                    "N/A"}
-                </div>
-                {(viewData?.primaryJourney?.pickupDoorNumber ||
-                  viewData?.returnJourney?.pickupDoorNumber) && (
-                  <div>
-                    <strong>Door No.:</strong>
-                    {viewData?.primaryJourney?.pickupDoorNumber ||
-                      (viewData?.returnJourneyToggle &&
-                        viewData?.returnJourney?.pickupDoorNumber) ||
-                      "—"}
-                  </div>
-                )}
+  <div>
+    <strong>Date & Time:</strong> {pickupTime}
+  </div>
 
-                {(viewData?.primaryJourney?.pickmeAfter ||
-                  viewData?.returnJourney?.pickmeAfter) && (
-                  <div>
-                    <strong>Pick Me After:</strong>
-                    {viewData?.primaryJourney?.pickmeAfter ||
-                      (viewData?.returnJourneyToggle &&
-                        viewData?.returnJourney?.pickmeAfter) ||
-                      "—"}
-                  </div>
-                )}
+  <div>
+    <strong>Address:</strong> {j.pickup || "N/A"}
+  </div>
 
-                {(viewData?.primaryJourney?.flightNumber ||
-                  viewData?.returnJourney?.flightNumber) && (
-                  <div>
-                    <strong>Flight No.:</strong>
-                    {viewData?.primaryJourney?.flightNumber ||
-                      (viewData?.returnJourneyToggle &&
-                        viewData?.returnJourney?.flightNumber) ||
-                      "—"}
-                  </div>
-                )}
+  {/* NON-airport pickup fields */}
+  {!pickupIsAirport && j.pickupDoorNumber && (
+    <div>
+      <strong>Door No.:</strong> {j.pickupDoorNumber}
+    </div>
+  )}
 
-                {(viewData?.primaryJourney?.arrivefrom ||
-                  viewData?.returnJourney?.arrivefrom) && (
-                  <div>
-                    <strong>Arrive From:</strong>
-                    {viewData?.primaryJourney?.arrivefrom ||
-                      (viewData?.returnJourneyToggle &&
-                        viewData?.returnJourney?.arrivefrom) ||
-                      "—"}
-                  </div>
-                )}
-              </div>
+  {/* Airport pickup fields */}
+  {pickupIsAirport && (j.arrivefrom || j.pickmeAfter || j.flightNumber) && (
+    <>
+      {j.arrivefrom && (
+        <div>
+          <strong>Arrive From:</strong> {j.arrivefrom}
+        </div>
+      )}
+      {j.pickmeAfter && (
+        <div>
+          <strong>Pick Me After:</strong> {j.pickmeAfter}
+        </div>
+      )}
+      {j.flightNumber && (
+        <div>
+          <strong>Flight No.:</strong> {j.flightNumber}
+        </div>
+      )}
+    </>
+  )}
+</div>
+
               <hr className="text-[var(--light-gray)] my-2" />
             </div>
             <div>
               <strong>Drop Off:</strong>
               <div className="ml-4 mt-1 space-y-1">
-                <div>
-                  <strong>Address:</strong>
-                  {viewData?.primaryJourney?.dropoff ||
-                    (viewData?.returnJourneyToggle &&
-                      viewData?.returnJourney?.dropoff) ||
-                    "N/A"}
-                </div>
-                <div>
-                  {(viewData?.primaryJourney?.dropoffDoorNumber0 ||
-                    viewData?.returnJourney?.dropoffDoorNumber0) && (
-                    <div>
-                      <strong>Door No.:</strong>
-                      {viewData?.primaryJourney?.dropoffDoorNumber0 ||
-                        (viewData?.returnJourneyToggle &&
-                          viewData?.returnJourney?.dropoffDoorNumber0) ||
-                        "—"}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  {(viewData?.primaryJourney?.dropoff_terminal_0 ||
-                    viewData?.returnJourney?.dropoff_terminal_0) && (
-                    <div>
-                      <strong>Terminal No.:</strong>
-                      {viewData?.primaryJourney?.dropoff_terminal_0 ||
-                        (viewData?.returnJourneyToggle &&
-                          viewData?.returnJourney?.dropoff_terminal_0) ||
-                        "—"}
-                    </div>
-                  )}
-                </div>
-              </div>
+  <div>
+    <strong>Address:</strong> {j.dropoff || "N/A"}
+  </div>
+
+  {/* NON-airport dropoff field */}
+  {!dropIsAirport && j.dropoffDoorNumber0 && (
+    <div>
+      <strong>Door No.:</strong> {j.dropoffDoorNumber0}
+    </div>
+  )}
+
+  {/* Airport dropoff field */}
+  {dropIsAirport && j.dropoff_terminal_0 && (
+    <div>
+      <strong>Terminal No.:</strong> {j.dropoff_terminal_0}
+    </div>
+  )}
+</div>
 
               {(viewData?.primaryJourney?.terminal ||
                 viewData?.returnJourney?.terminal) && (

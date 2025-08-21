@@ -32,7 +32,6 @@ useEffect(() => {
     } else {
       setSelected([...safeSelected, label]);
     }
-    setDropdownOpen(false);
   };
 
   const filteredStatuses = statusList.filter((item) =>

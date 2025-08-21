@@ -616,7 +616,7 @@ const CronJob = () => {
                     )}
                   />
                   <SelectOption
-                    options={timeOptions.statementTimes}
+                    options={timeOptions.dailyTimes}
                     value={
                       getNestedValue(formData, "driverStatement.timing.time") ||
                       "01:00 - 02:00"

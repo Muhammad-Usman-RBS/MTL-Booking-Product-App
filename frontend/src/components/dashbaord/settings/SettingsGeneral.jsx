@@ -4,7 +4,6 @@ import { skipToken } from "@reduxjs/toolkit/query/react";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import { colorFields } from "../../../constants/dashboardTabsData/data";
 import {
-  useFetchThemeSettingsQuery,
   useSaveThemeSettingsMutation,
   useFetchThemeHistoryQuery,
   useDeleteThemeSettingsMutation,
@@ -36,7 +35,6 @@ const applyThemeVars = (theme) => {
 const SettingsGeneral = () => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
-  const debounceRef = useRef(null);
   const [isSaving, setIsSaving] = useState(false);
   const dispatch = useDispatch();
   const colors = useSelector(selectThemeColors);
@@ -46,13 +44,6 @@ const SettingsGeneral = () => {
   const bookmarks = useSelector(selectBookmarkedThemes);
 
   const {
-    data: themeData,
-    error: fetchError,
-    isLoading,
-    isSuccess,
-    isError,
-  } = useFetchThemeSettingsQuery(companyId ?? skipToken);
-  const {
     data: historyRes,
     isFetching: isHistoryLoading,
     isSuccess: isHistorySuccess,
@@ -60,7 +51,7 @@ const SettingsGeneral = () => {
   } = useFetchThemeHistoryQuery(companyId ?? skipToken);
   const [saveThemeSettings] = useSaveThemeSettingsMutation();
   const [deleteThemeSettings] = useDeleteThemeSettingsMutation();
-  const [applyThemeSettings, { isLoading: isApplying }] = useApplyThemeSettingsMutation();
+  const [applyThemeSettings] = useApplyThemeSettingsMutation();
   const applyThemeToDOM = useCallback((themeColors) => {
     applyThemeVars(themeColors);
   }, []);
@@ -74,16 +65,7 @@ const SettingsGeneral = () => {
       dispatch(setThemeHistory(historyRes.data));
     }
   }, [isHistorySuccess, historyRes]);
-  useEffect(() => {
-    if (isError && fetchError) {
-      console.error("Error fetching theme settings:", fetchError);
-      if (fetchError.status === 404) {
-        toast.info("No custom theme found. Using default settings.");
-      } else {
-        toast.error("Error loading theme settings.");
-      }
-    }
-  }, [isError, fetchError]);
+
   const handleSaveThemeSettings = useCallback(
     async (themeColors = colors) => {
       if (limitReached) {
@@ -99,8 +81,8 @@ const SettingsGeneral = () => {
 
       setIsSaving(true);
       try {
-      const selectedDoc = history.find((h) => h._id === selectedThemeId);
-     const shouldUpdate = !!selectedDoc && selectedDoc.isDefault !== true;
+        const selectedDoc = history.find((h) => h._id === selectedThemeId);
+        const shouldUpdate = !!selectedDoc && selectedDoc.isDefault !== true;
 
         const result = await saveThemeSettings({
           companyId,
@@ -111,7 +93,6 @@ const SettingsGeneral = () => {
         if (result.success) {
           applyThemeToDOM(themeColors);
           toast.success(result.message);
-          // refresh history so limit & list stay in sync
           await refetchHistory();
         } else {
           toast.error(result.message || "Failed to save theme settings.");
@@ -140,38 +121,37 @@ const SettingsGeneral = () => {
     (key, value) => {
       const updatedColors = { ...colors, [key]: value };
       dispatch(setThemeColors(updatedColors));
-      if (debounceRef.current) clearTimeout(debounceRef.current);
     },
     [colors, dispatch]
   );
 
-    const handleApplyThemeFromHistory = async (themeDoc) => {
-       try {
-          if (!companyId) {
-            toast.error("Company ID not found!");
-           return;
-          }
-          // Persist lastApplied in DB
-         const res = await applyThemeSettings({
-           companyId,
-            themeId: themeDoc._id,
-         }).unwrap();
-    
-         const applied = res?.theme?.themeSettings || themeDoc.themeSettings;
-    
-          // Update UI
-          dispatch(setSelectedThemeId(themeDoc._id));
-        dispatch(setThemeColors(applied));
-         applyThemeToDOM(applied);
-    
-          toast.success("Theme applied and saved.");
-          await refetchHistory(); // keep the list in sync (lastApplied, flags, etc.)
-        } catch (err) {
-          toast.error(
-           err?.data?.message || err?.message || "Failed to apply theme."
-          );
-        }
-      };
+  const handleApplyThemeFromHistory = async (themeDoc) => {
+    try {
+      if (!companyId) {
+        toast.error("Company ID not found!");
+        return;
+      }
+      // Persist lastApplied in DB
+      const res = await applyThemeSettings({
+        companyId,
+        themeId: themeDoc._id,
+      }).unwrap();
+
+      const applied = res?.theme?.themeSettings || themeDoc.themeSettings;
+
+      // Update UI
+      dispatch(setSelectedThemeId(themeDoc._id));
+      dispatch(setThemeColors(applied));
+      applyThemeToDOM(applied);
+
+      toast.success("Theme applied and saved.");
+      await refetchHistory(); // keep the list in sync (lastApplied, flags, etc.)
+    } catch (err) {
+      toast.error(
+        err?.data?.message || err?.message || "Failed to apply theme."
+      );
+    }
+  };
   const handleDeleteTheme = async (e, id) => {
     e.stopPropagation();
     e.preventDefault();
@@ -186,24 +166,6 @@ const SettingsGeneral = () => {
       );
     }
   };
-
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        <span className="ml-3 text-gray-600">Loading theme settings...</span>
-      </div>
-    );
-  }
-
   return (
     <div>
       <OutletHeading name="Theme Color Settings" />
@@ -249,14 +211,14 @@ const SettingsGeneral = () => {
               <input
                 type="color"
                 className="h-10 w-16 rounded cursor-pointer border border-gray-300"
-                value={colors[key]}
+                value={colors[key] || ""}
                 onChange={(e) => handleColorChange(key, e.target.value)}
                 disabled={limitReached}
               />
               <input
                 type="text"
                 className="w-20 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={colors[key]}
+                value={colors[key] || ""}
                 onChange={(e) => handleColorChange(key, e.target.value)}
                 pattern="^#[0-9A-Fa-f]{6}$"
                 placeholder="#000000"
@@ -271,7 +233,7 @@ const SettingsGeneral = () => {
         <button
           className="btn btn-primary px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
           onClick={() => handleSaveThemeSettings()}
-          disabled={isSaving || isLoading || limitReached}
+          disabled={isSaving || limitReached}
         >
           {isSaving ? "Saving..." : "Save Changes"}
         </button>

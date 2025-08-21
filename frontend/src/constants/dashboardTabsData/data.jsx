@@ -1059,7 +1059,7 @@ export const timeOptions = {
     "0 hours","1 hour","2 hours","3 hours","4 hours","5 hours","6 hours","12 hours","24 hours"
   ],
   reviewHours: [
-    "30 minutes","1 hours","2 hours","3 hours","4 hours","6 hours","12 hours","24 hours"
+    "10 seconds","1 hours","2 hours","3 hours","4 hours","6 hours","12 hours","24 hours"
   ],
   dailyTimes: [
     "00:00 - 01:00","01:00 - 02:00","02:00 - 03:00","03:00 - 04:00","04:00 - 05:00",
@@ -1067,10 +1067,6 @@ export const timeOptions = {
     "10:00 - 11:00","11:00 - 12:00","12:00 - 13:00","13:00 - 14:00","14:00 - 15:00",
     "15:00 - 16:00","16:00 - 17:00","17:00 - 18:00","18:00 - 19:00","19:00 - 20:00",
     "20:00 - 21:00","21:00 - 22:00","22:00 - 23:00","23:00 - 24:00"
-  ],
-  statementTimes: [
-    "00:00 - 01:00","01:00 - 02:00","02:00 - 03:00","03:00 - 04:00",
-    "04:00 - 05:00","05:00 - 06:00","23:00 - 24:00"
   ],
   weekDays: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
   frequencies: ["Daily","Weekly","Bi-weekly","Monthly","Quarterly"]

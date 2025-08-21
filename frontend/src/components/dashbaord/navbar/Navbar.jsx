@@ -1,8 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   selectBookmarkedThemes,
   setThemeColors,
+   selectSelectedThemeId,
+   setSelectedThemeId,
 } from "../../../redux/slices/themeSlice";
 import { Link } from "react-router-dom";
 import Icons from "../../../assets/icons";
@@ -14,7 +16,7 @@ import {
 } from "../../../redux/api/notificationApi";
 import useUIStore from "../../../store/useUIStore";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
-import { useMemo } from "react";
+import { useApplyThemeSettingsMutation } from "../../../redux/api/themeApi";
 
 function Navbar() {
   const TimeRef = useRef(null);
@@ -27,32 +29,47 @@ function Navbar() {
   const [showTooltip, setShowTooltip] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBookingId, setSelectedBookingId] = useState(null);
 
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
   const { data: bookings } = useGetAllBookingsQuery(user?.companyId);
   const dispatch = useDispatch();
+  const [applyThemeSettings] = useApplyThemeSettingsMutation();
 
-  const handleApplyBookmarkedTheme = React.useCallback(
-    (b) => {
-      const root = document.documentElement;
-      ["bg", "text", "primary", "hover", "active"].forEach((k) => {
-        if (b?.themeSettings?.[k]) {
-          root.style.setProperty(`--${k}`, b.themeSettings[k]);
-        }
-      });
+  const handleApplyBookmarkedTheme = useCallback(
+   async (b) => {
+     try {
+       if (!user?.companyId) return;
+       const res = await applyThemeSettings({
+         companyId: user.companyId,
+         themeId: b._id,
+       }).unwrap();
 
-      dispatch(setThemeColors(b.themeSettings));
+       const applied = res?.theme?.themeSettings || b.themeSettings || {};
 
-      setActiveBookmarkId(b._id);
-      setIsModalOpen(false);
-    },
-    [dispatch, setIsModalOpen]
-  );
+       // apply to DOM
+       const root = document.documentElement;
+       ["bg", "text", "primary", "hover", "active"].forEach((k) => {
+         if (applied[k]) root.style.setProperty(`--${k}`, applied[k]);
+       });
+
+       // update store
+       dispatch(setThemeColors(applied));
+       dispatch(setSelectedThemeId(b._id));
+       setActiveBookmarkId(b._id);
+       setIsModalOpen(false);
+     } catch (e) {
+       console.error(e);
+     }
+   },
+   [applyThemeSettings, dispatch, user?.companyId]
+ );
   const bookmarks = useSelector(selectBookmarkedThemes);
+  const selectedThemeId = useSelector(selectSelectedThemeId)
   const [activeBookmarkId, setActiveBookmarkId] = useState(null);
-
+  useEffect(() => {
+      setActiveBookmarkId(selectedThemeId || null);
+    }, [selectedThemeId]);
   // const { data: notifications = [], refetch: refetchNotifications } =
   // useGetUserNotificationsQuery(user?.employeeNumber, {
   //   skip: !user?.employeeNumber,
@@ -202,7 +219,6 @@ const { data: notifications = [] } = useGetUserNotificationsQuery(empArg, {
                       <div
                         key={data._id}
                         onClick={() => {
-                          setSelectedBookingId(data.bookingId);
                           setShowTooltip(false);
                         }}
                         className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${data.isRead ? "bg-gray-50 opacity-60" : "bg-white"

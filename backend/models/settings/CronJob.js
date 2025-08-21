@@ -53,7 +53,7 @@ const cronJobSchema = new mongoose.Schema({
             hours: {
                 type: String,
                 enum: [
-                    "30 minutes",
+                    "10 seconds",
                     "1 hours", 
                     "2 hours", 
                     "3 hours", 
@@ -133,11 +133,8 @@ const cronJobSchema = new mongoose.Schema({
             frequency: {
                 type: String,
                 enum: [
-                    "Daily",
                     "Weekly", 
-                    "Bi-weekly",
                     "Monthly",
-                    "Quarterly"
                 ],
                 default: "Weekly"
             },
