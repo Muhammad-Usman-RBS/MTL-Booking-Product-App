@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import Icons from "../../../assets/icons";
-import IMAGES from "../../../assets/images";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";

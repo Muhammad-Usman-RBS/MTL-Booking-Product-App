@@ -1,28 +1,27 @@
-// redux/slices/themeSlice.js
 import { createSlice } from "@reduxjs/toolkit";
-const initialColors = {
-  bg: '#07384d',
-  text: "#f1efef",
-  primary: "#01f5fe",
-  hover: "#003353",
-  active: "#064f7c",
-};
-
-// ⬇️ export so the store can merge persisted state safely
+const initialColors = {};
 export const initialThemeState = {
   colors: initialColors,
-  bookmarks: [],          // up to 3 pinned themes for navbar
-  history: [],            // last 5 from server
+  bookmarks: [],          
+  history: [],            
   selectedThemeId: null,
   limitReached: false,
+  hydrated: false,
 };
 
 const themeSlice = createSlice({
   name: "theme",
-  initialState: initialThemeState, // ⬅️ use it here
+  initialState: initialThemeState, 
   reducers: {
+    setAppliedTheme(state, action) {
+      const { themeSettings, themeId } = action.payload;
+      state.colors = { ...state.colors, ...themeSettings };
+      state.selectedThemeId = themeId;
+      state.hydrated = true;
+    },
     setThemeColors(state, action) {
       state.colors = { ...state.colors, ...action.payload };
+      state.hydrated = true;
     },
     setThemeHistory(state, action) {
       state.history = action.payload || [];
@@ -34,10 +33,7 @@ const themeSlice = createSlice({
     setLimitReached(state, action) {
       state.limitReached = !!action.payload;
     },
-    resetThemeState(state) {
-      // reset everything (also clears bookmarks)
-      Object.assign(state, initialThemeState);
-    },
+ 
     toggleBookmarkTheme(state, action) {
       const { _id, themeSettings, label } = action.payload;
       const idx = state.bookmarks.findIndex((t) => t._id === _id);
@@ -45,7 +41,7 @@ const themeSlice = createSlice({
         state.bookmarks.splice(idx, 1);
         return;
       }
-      if (state.bookmarks.length >= 3) return;
+      if (state.bookmarks.length >= 5) return;
       state.bookmarks.push({ _id, themeSettings, label: label || "" });
     },
     removeBookmarkById(state, action) {
@@ -59,9 +55,9 @@ export const {
   setThemeHistory,
   setSelectedThemeId,
   setLimitReached,
-  resetThemeState,
   toggleBookmarkTheme,
   removeBookmarkById,
+  setAppliedTheme,
 } = themeSlice.actions;
 
 export const selectThemeColors = (s) => s.theme.colors;
@@ -69,5 +65,5 @@ export const selectThemeHistory = (s) => s.theme.history;
 export const selectThemeLimitReached = (s) => s.theme.limitReached;
 export const selectSelectedThemeId = (s) => s.theme.selectedThemeId;
 export const selectBookmarkedThemes = (s) => s.theme.bookmarks;
-
+export const selectThemeHydrated = (s) => s.theme.hydrated;
 export default themeSlice.reducer;

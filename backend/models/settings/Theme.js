@@ -7,6 +7,7 @@ const themeSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  lastApplied: { type: Boolean, default: false },
   themeSettings: {
     bg: {
       type: String,
@@ -33,6 +34,7 @@ const themeSchema = new mongoose.Schema({
       default: "#32cd32",
       match: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
     },
+    
   },
   isActive: { type: Boolean, default: true }, // newest gets active flag
   createdAt: { type: Date, default: Date.now, index: true },
@@ -45,8 +47,10 @@ themeSchema.pre("save", function (next) {
   next();
 });
 
-// help the “latest per company” queries
-themeSchema.index({ companyId: 1, createdAt: -1 });
+themeSchema.index(
+    { companyId: 1, lastApplied: 1 },
+    { unique: true, partialFilterExpression: { lastApplied: true } }
+  );
 
 const Theme = mongoose.model("Theme", themeSchema);
 export default Theme;

@@ -321,7 +321,6 @@ const sidebarItems = [
           "associateadmin",
           "superadmin",
           "manager",
-          "driver",
         ],
       },
 

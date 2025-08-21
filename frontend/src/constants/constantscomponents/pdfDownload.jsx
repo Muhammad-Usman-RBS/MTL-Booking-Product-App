@@ -47,14 +47,19 @@ export const downloadPDF = (elementId, filename = "statement.pdf") => {
         }
       })
   );
-
+  
   Promise.all(loadImages).then(() => {
     try {
       html2pdf()
         .set({
           margin: 0.5,
           filename,
-          image: { type: "jpeg", quality: 0.98 },
+          pagebreak: {
+            mode: ['css', 'legacy'],   
+            before: '.break-before',   
+            after:  '.break-after',    
+            avoid:  'tr, .avoid-break'
+          },          image: { type: "jpeg", quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true },
           jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
         })

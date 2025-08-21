@@ -6,9 +6,9 @@ import { colorFields } from "../../../constants/dashboardTabsData/data";
 import {
   useFetchThemeSettingsQuery,
   useSaveThemeSettingsMutation,
-  useResetThemeSettingsMutation,
   useFetchThemeHistoryQuery,
   useDeleteThemeSettingsMutation,
+  useApplyThemeSettingsMutation,
 } from "../../../redux/api/themeApi";
 import Icons from "../../../assets/icons";
 import { useDispatch, useSelector } from "react-redux";
@@ -59,25 +59,11 @@ const SettingsGeneral = () => {
     refetch: refetchHistory,
   } = useFetchThemeHistoryQuery(companyId ?? skipToken);
   const [saveThemeSettings] = useSaveThemeSettingsMutation();
-  const [resetThemeSettings] = useResetThemeSettingsMutation();
   const [deleteThemeSettings] = useDeleteThemeSettingsMutation();
-
+  const [applyThemeSettings, { isLoading: isApplying }] = useApplyThemeSettingsMutation();
   const applyThemeToDOM = useCallback((themeColors) => {
     applyThemeVars(themeColors);
   }, []);
-  useEffect(() => {
-    if (!isSuccess || !themeData?.success || !themeData?.data) return;
-
-    const fetchedColors = themeData.data;
-    dispatch(setThemeColors(fetchedColors));
-    applyThemeToDOM(fetchedColors);
-
-    if (
-      themeData.message !== "No custom theme found, returning default theme"
-    ) {
-      toast.success("Theme settings loaded successfully!");
-    }
-  }, [dispatch, isSuccess, themeData, applyThemeToDOM]);
 
   useEffect(() => {
     if (
@@ -113,9 +99,13 @@ const SettingsGeneral = () => {
 
       setIsSaving(true);
       try {
+      const selectedDoc = history.find((h) => h._id === selectedThemeId);
+     const shouldUpdate = !!selectedDoc && selectedDoc.isDefault !== true;
+
         const result = await saveThemeSettings({
           companyId,
           themeSettings: themeColors,
+          ...(shouldUpdate ? { themeId: selectedThemeId } : {}),
         }).unwrap();
 
         if (result.success) {
@@ -150,46 +140,38 @@ const SettingsGeneral = () => {
     (key, value) => {
       const updatedColors = { ...colors, [key]: value };
       dispatch(setThemeColors(updatedColors));
-      document.documentElement.style.setProperty(`--${key}`, value);
       if (debounceRef.current) clearTimeout(debounceRef.current);
     },
     [colors, dispatch]
   );
 
-  const handleResetColors = useCallback(async () => {
-    if (!companyId) {
-      toast.error("Company ID not found!");
-      return;
-    }
-
-    try {
-      const result = await resetThemeSettings({ companyId }).unwrap();
-      if (result.success) {
-        const defaultColors = result.data;
-        dispatch(setThemeColors(defaultColors));
-        applyThemeToDOM(defaultColors);
-        toast.success("Theme reset to default successfully!");
-        await refetchHistory();
-      } else {
-        toast.error(result.message || "Failed to reset theme.");
-      }
-    } catch (error) {
-      toast.error(error?.data?.message || "Error resetting theme settings.");
-    }
-  }, [
-    companyId,
-    resetThemeSettings,
-    applyThemeToDOM,
-    limitReached,
-    dispatch,
-    refetchHistory,
-  ]);
-
-  const handleApplyThemeFromHistory = (themeDoc) => {
-    dispatch(setSelectedThemeId(themeDoc._id));
-    dispatch(setThemeColors(themeDoc.themeSettings));
-    applyThemeToDOM(themeDoc.themeSettings);
-  };
+    const handleApplyThemeFromHistory = async (themeDoc) => {
+       try {
+          if (!companyId) {
+            toast.error("Company ID not found!");
+           return;
+          }
+          // Persist lastApplied in DB
+         const res = await applyThemeSettings({
+           companyId,
+            themeId: themeDoc._id,
+         }).unwrap();
+    
+         const applied = res?.theme?.themeSettings || themeDoc.themeSettings;
+    
+          // Update UI
+          dispatch(setSelectedThemeId(themeDoc._id));
+        dispatch(setThemeColors(applied));
+         applyThemeToDOM(applied);
+    
+          toast.success("Theme applied and saved.");
+          await refetchHistory(); // keep the list in sync (lastApplied, flags, etc.)
+        } catch (err) {
+          toast.error(
+           err?.data?.message || err?.message || "Failed to apply theme."
+          );
+        }
+      };
   const handleDeleteTheme = async (e, id) => {
     e.stopPropagation();
     e.preventDefault();
@@ -199,7 +181,9 @@ const SettingsGeneral = () => {
       toast.success(res?.message || "Theme deleted");
       await refetchHistory();
     } catch (err) {
-      toast.error(err?.data?.message || err?.message || "Failed to delete theme");
+      toast.error(
+        err?.data?.message || err?.message || "Failed to delete theme"
+      );
     }
   };
 
@@ -219,7 +203,6 @@ const SettingsGeneral = () => {
       </div>
     );
   }
-  console.log("Theme History:", history);
 
   return (
     <div>
@@ -286,13 +269,6 @@ const SettingsGeneral = () => {
 
       <div className="text-center mt-8 space-x-3">
         <button
-          className="btn btn-reset px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50 transition-colors"
-          onClick={handleResetColors}
-          disabled={isSaving || isLoading}
-        >
-          Reset to Default
-        </button>
-        <button
           className="btn btn-primary px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
           onClick={() => handleSaveThemeSettings()}
           disabled={isSaving || isLoading || limitReached}
@@ -334,7 +310,7 @@ const SettingsGeneral = () => {
                 >
                   {/* Rest of the card content stays the same */}
                   <div className="flex items-center justify-between mb-3">
-                  <span className="text-black">{t.name}</span>
+                    <span className="text-black">{t.name}</span>
 
                     <button
                       type="button"
@@ -348,17 +324,17 @@ const SettingsGeneral = () => {
                         const isPinned = !!bookmarks.find(
                           (b) => b._id === t._id
                         );
-                        if (!isPinned && bookmarks.length >= 3) {
+                        if (!isPinned && bookmarks.length >= 5) {
                           toast.error(
-                            "You can pin up to 3 themes in the navbar."
+                            "You can pin up to 5 themes in the navbar."
                           );
                           return;
                         }
                         dispatch(
                           toggleBookmarkTheme({
                             _id: t._id,
-                            themeSettings: c, 
-                            label: ts || "", 
+                            themeSettings: c,
+                            label: ts || "",
                           })
                         );
                       }}
@@ -369,42 +345,36 @@ const SettingsGeneral = () => {
                         <Icons.Bookmark className="w-5 h-5 text-gray-400" />
                       )}
                     </button>
-
-            
                   </div>
-                  
-<div className="flex items-end justify-between">
 
-
-                  <div className="grid  lg:grid-rows-1 lg:grid-cols-5 grid-cols-3 grid-rows-2 items-center pt-4 gap-3">
-                    {["bg", "text", "primary", "hover", "active"].map((k) => (
-                      <div key={k} className="flex flex-col items-center">
-                        <div
-                          className="w-8 h-8 rounded-full border-2 border-gray-200 shadow-sm"
-                          style={{ backgroundColor: c[k] || "#ffffff" }}
-                          title={`${k}: ${c[k] || ""}`}
-                        />
-                        <span className="text-[10px] text-gray-500 mt-1 capitalize">
-                          {k}
-                        </span>
-                      </div>
-                    ))}
+                  <div className="flex items-end justify-between">
+                    <div className="grid  lg:grid-rows-1 lg:grid-cols-5 grid-cols-3 grid-rows-2 items-center pt-4 gap-3">
+                      {["bg", "text", "primary", "hover", "active"].map((k) => (
+                        <div key={k} className="flex flex-col items-center">
+                          <div
+                            className="w-8 h-8 rounded-full border-2 border-gray-200 shadow-sm"
+                            style={{ backgroundColor: c[k] || "#ffffff" }}
+                            title={`${k}: ${c[k] || ""}`}
+                          />
+                          <span className="text-[10px] text-gray-500 mt-1 capitalize">
+                            {k}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      {!t.isDefault && (
+                        <button
+                          type="button"
+                          className="cursor-pointer"
+                          onClick={(e) => handleDeleteTheme(e, t._id)}
+                          title="Delete this theme"
+                        >
+                          <Icons.Trash className="w-5 h-5 text-red-500" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-<div>
-{!t.isDefault && (
-  <button
-    type="button"
-    className="cursor-pointer"
-    onClick={(e) => handleDeleteTheme(e, t._id)}
-    title="Delete this theme"
-  >
-    <Icons.Trash className="w-5 h-5 text-red-500" />
-  </button>
-)}
-
-</div>
-
-</div>
                 </div>
               );
             })}

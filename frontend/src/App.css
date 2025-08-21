@@ -129,9 +129,6 @@
   font-size: 13px;
 }
 
-/* ------------------------------- */
-/* Status Badge – Web & PDF Modes */
-/* ------------------------------- */
 
 /* Default web style */
 .invoice-status {
@@ -150,6 +147,16 @@
 }
 .invoice-status.unpaid {
   color: var(--alert-red);
+}
+.invoice-container.pdf-mode {
+  border: none;
+  background: transparent;
+  padding: 10px;
+  margin-top: 6px;
+  height: fit-content;
+  page-break-inside: avoid;
+  margin-bottom: 10px;
+
 }
 .invoice-container.pdf-mode .invoice-header {
   display: table;

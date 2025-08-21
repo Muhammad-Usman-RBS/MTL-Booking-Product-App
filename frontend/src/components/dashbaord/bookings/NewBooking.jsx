@@ -492,9 +492,44 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     if (hasChangedReturnLocations) return returnFare;
     return localEditData?.returnJourney?.fare || returnFare;
   };
-
+  const validateAdvanceForJourney = (journey) => {
+    const setting = bookingSettingData?.setting?.advanceBookingMin;
+    if (!setting) return true; // no rule configured
+  
+    const { value, unit } = setting;
+    const { date, hour, minute } = journey || {};
+    if (!date || hour === "" || minute === "") return true; // incomplete -> skip
+  
+    const now = new Date();
+    const bookingDateTime = new Date(
+      `${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`
+    );
+  
+    let advanceMs = 0;
+    const u = String(unit || "").toLowerCase();
+    if (u === "hour" || u === "hours") advanceMs = value * 60 * 60 * 1000;
+    else if (u === "minute" || u === "minutes") advanceMs = value * 60 * 1000;
+    else if (u === "day" || u === "days") advanceMs = value * 24 * 60 * 60 * 1000;
+    else return true; // unknown unit → don't block
+  
+    const minAllowed = new Date(now.getTime() + advanceMs);
+    if (bookingDateTime < minAllowed) {
+      const timeText = value === 1
+        ? (u.endsWith("s") ? u.slice(0, -1) : u)
+        : (u.endsWith("s") ? u : `${u}s`);
+      toast.error(`Booking must be made at least ${value} ${timeText} in advance!`);
+      return false;
+    }
+    return true;
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateAdvanceForJourney(primaryJourneyData)) return;
+
+if (returnJourneyToggle && dropOffs2[0]) {
+  if (!validateAdvanceForJourney(returnJourneyData)) return;
+}
 
     const isReturnJourney =
       !!editBookingData?.__editReturn || !!editBookingData?.__copyReturn;
@@ -702,7 +737,15 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       toast.error("Booking operation failed.");
     }
   };
-
+  useEffect(() => {
+    validateAdvanceForJourney(primaryJourneyData);
+  }, [primaryJourneyData.date, primaryJourneyData.hour, primaryJourneyData.minute]);
+  
+  useEffect(() => {
+    if (returnJourneyToggle) {
+      validateAdvanceForJourney(returnJourneyData);
+    }
+  }, [returnJourneyToggle, returnJourneyData.date, returnJourneyData.hour, returnJourneyData.minute]);
   // Add here:
   const isEditing = !!editBookingData?._id || !!editBookingData?.__copyMode;
 

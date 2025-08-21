@@ -5,7 +5,7 @@ export const themeApi = apiSlice.injectEndpoints({
     // In themeApi.js - REPLACE all endpoints with these corrected ones:
     fetchThemeSettings: builder.query({
       query: (companyId) => ({
-        url: `/settings/${companyId}`,
+        url: `/settings/get-theme/${companyId}`,
         method: "GET",
       }),
       providesTags: (result, error, companyId) => [
@@ -16,7 +16,7 @@ export const themeApi = apiSlice.injectEndpoints({
 
     saveThemeSettings: builder.mutation({
       query: (data) => ({
-        url: "/settings/save",
+        url: "/settings/save-theme",
         method: "POST",
         body: data,
       }),
@@ -26,20 +26,10 @@ export const themeApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    resetThemeSettings: builder.mutation({
-      query: (data) => ({
-        url: "/settings/reset",
-        method: "POST",
-        body: data,
-      }),
-      invalidatesTags: (result, error, { companyId }) => [
-        { type: "Theme", id: companyId },
-        "Theme",
-      ],
-    }),
+   
     fetchThemeHistory: builder.query({
       query: (companyId) => ({
-        url: `/settings/${companyId}/history`,
+        url: `/settings/theme-history/${companyId}`,
         method: "GET",
       }),
       providesTags: (result, error, companyId) => [
@@ -49,21 +39,38 @@ export const themeApi = apiSlice.injectEndpoints({
     }),
     deleteThemeSettings: builder.mutation({
       query: ({ id }) => ({
-        url: `/settings/${id}`,
+        url: `/settings/delete-theme/${id}`,
         method: 'DELETE',
       }),
       invalidatesTags: ['ThemeHistory', 'ThemeSettings'],
-    })
+    }),
+    
+    applyThemeSettings: builder.mutation({
+      query: ({ companyId, themeId }) => ({
+        url: `/settings/apply-them/${companyId}/${themeId}`,
+        method: "POST",
+      }),
+      invalidatesTags: (result, error, { companyId }) => [
+        { type: "Theme", id: companyId },
+        "Theme",
+      ],
+    }),
+    fetchCurrentTheme: builder.query({
+      query: (companyId) => ({
+        // use params style:
+        url: `/settings/current-theme/${companyId}`,
+        method: "GET",
+      }),
+      providesTags: ["Theme"],
+    }),
   }),
 });
 
 export const {
   useFetchThemeSettingsQuery,
-  useFetchAllThemeSettingsQuery,
   useSaveThemeSettingsMutation,
-  useResetThemeSettingsMutation,
-  useLazyFetchThemeSettingsQuery,
-  useLazyFetchAllThemeSettingsQuery,
   useFetchThemeHistoryQuery,
+  useApplyThemeSettingsMutation,
   useDeleteThemeSettingsMutation,
+  useFetchCurrentThemeQuery
 } = themeApi;

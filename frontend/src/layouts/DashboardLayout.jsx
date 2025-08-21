@@ -2,9 +2,12 @@ import React from "react";
 import Sidebar from "../components/dashbaord/sidebar/Sidebar";
 import Navbar from "../components/dashbaord/navbar/Navbar";
 import { Outlet } from "react-router-dom";
+import ThemeBootstrap from "../hooks/ThemeBootstrap";
 
 const DashboardLayout = () => {
   return (
+    <>
+    <ThemeBootstrap />
     <div className="flex h-screen w-full overflow-hidden">
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0">
@@ -19,6 +22,7 @@ const DashboardLayout = () => {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
