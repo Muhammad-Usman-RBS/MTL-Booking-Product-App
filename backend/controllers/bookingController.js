@@ -8,7 +8,10 @@ import { createEventOnGoogleCalendar, deleteEventFromGoogleCalendar } from "../u
 import ReviewSetting from "../models/settings/ReviewSetting.js";
 import { compileReviewTemplate } from "../utils/reviewPlaceholders.js";
 import sendReviewEmail from "../utils/sendReviewEmail.js";
-import Notification from "../models/Notification.js"
+import Notification from "../models/Notification.js";
+import CronJob from "../models/settings/CronJob.js";
+import { scheduleReviewEmail } from "../utils/settings/cronjobs/scheduleReviewEmail.js"
+
 // Craete Booking (Dashboard/Widget)
 export const createBooking = async (req, res) => {
   try {
@@ -597,143 +600,129 @@ export const updateBookingStatus = async (req, res) => {
     /** AUTO-SEND REVIEW EMAIL when status becomes Completed **/
     try {
       const normalized = (status || "").trim().toLowerCase();
-      const isCompleted = normalized === "completed";
-
-      if (isCompleted && !booking.reviewEmailSent && booking?.passenger?.email) {
-        const settings = await ReviewSetting.findOne({ companyId: booking.companyId }).lean();
-        if (settings) {
-          const subj = compileReviewTemplate(settings.subject, booking);
-
-          let body = compileReviewTemplate(settings.template, booking);
-          // If template contains !REVIEW_LINK!, replace; else append separate link if present
-          if (body.includes("!REVIEW_LINK!")) {
-            body = body.replace(/!REVIEW_LINK!/g, settings.reviewLink || "");
-          } else if (settings.reviewLink && !body.includes(settings.reviewLink)) {
-            body += `\n\n${settings.reviewLink}`;
-          }
-
-          await sendReviewEmail(booking.passenger.email, subj, {
-            text: body,
-            html: body.replace(/\n/g, "<br/>"),
-          });
-
-          // mark sent to prevent duplicates
-          booking.reviewEmailSent = true;
+      if (normalized === "completed" && booking?.passenger?.email) {
+        if (!booking.reviewEmailScheduledAt && !booking.reviewEmailSent) {
+          booking.reviewEmailScheduledAt = new Date();
           await booking.save();
+          await scheduleReviewEmail(booking);
+        } else {
+          console.log("Review email already scheduled/sent, skipping");
+        }
+      }
+
+    } catch (e) {
+      console.error("Review email schedule failed:", e.message);
+    }
+
+    // ========= DRIVER NOTIFY ON STATUS CHANGE =========
+    const io = req.app.get("io");
+
+    const audit = booking.statusAudit || [];
+    const prevStatus = audit.length > 1 ? audit[audit.length - 2]?.status : null;
+    const currStatus = booking.status;
+    const isStatusChanged = prevStatus !== currStatus;
+    try {
+
+      // 🔒 Notify drivers only when a non-driver updated the status
+      if (isStatusChanged && currentUser?.role !== "driver") {
+        const employeeNumbers = [];
+
+        for (const d of Array.isArray(booking.drivers) ? booking.drivers : []) {
+          if (d?.employeeNumber) {
+            employeeNumbers.push(String(d.employeeNumber));
+            continue;
+          }
+          if (d?.DriverData?.employeeNumber) {
+            employeeNumbers.push(String(d.DriverData.employeeNumber));
+            continue;
+          }
+          const uid = d?.userId || d?._id;
+          if (uid) {
+            const u = await User.findById(uid).lean();
+            if (u?.employeeNumber) employeeNumbers.push(String(u.employeeNumber));
+          }
+        }
+
+        const uniqEmp = [...new Set(employeeNumbers)].filter(Boolean);
+        if (uniqEmp.length) {
+          const payloads = uniqEmp.map((en) => ({
+            employeeNumber: en,
+            bookingId: booking.bookingId,
+            status: currStatus,
+            primaryJourney: {
+              pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
+              dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
+            },
+            bookingSentAt: new Date(),
+            createdBy: currentUser?._id,
+            companyId: booking.companyId,
+          }));
+
+          const docs = await Notification.insertMany(payloads, { ordered: false });
+          for (const n of docs) {
+            io.to(`emp:${n.employeeNumber}`).emit("notification:new", n);
+          }
+        }
+      }
+
+
+
+    } catch (e) {
+      console.error("Driver notify on status change failed:", e?.message);
+    }
+    // ========= END DRIVER NOTIFY =========
+    try {
+
+
+      if (isStatusChanged && currentUser?.role === "driver") {
+        // 1) notify clientadmin in-app
+        const clientAdmin = await User.findOne({
+          companyId: booking.companyId,
+          role: "clientadmin",
+        }).lean();
+        const adminKey = String(clientAdmin?._id || "");
+        if (adminKey) {
+          const adminNotif = await Notification.create({
+            employeeNumber: String(adminKey),   // 👈 add this
+            bookingId: booking.bookingId,
+            status: currStatus,
+            primaryJourney: {
+              pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
+              dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
+            },
+            bookingSentAt: new Date(),
+            createdBy: currentUser?._id,
+            companyId: booking.companyId,
+          });
+          io.to(`emp:${adminKey}`).emit("notification:new", adminNotif);
+        }
+
+        // 2) (optional) notify customer user if you have one
+        const paxEmail = (booking?.passenger?.email || "").trim().toLowerCase();
+        const customerUser = paxEmail
+          ? await User.findOne({ companyId: booking.companyId, role: "customer", email: paxEmail }).lean()
+          : null;
+
+        const custKey = String(customerUser?._id || "");
+        if (custKey) {
+          const customerNotif = await Notification.create({
+            employeeNumber: String(custKey),   // 👈 add this
+            bookingId: booking.bookingId,
+            status: currStatus,
+            primaryJourney: {
+              pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
+              dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
+            },
+            bookingSentAt: new Date(),
+            createdBy: currentUser?._id,
+            companyId: booking.companyId,
+          });
+          io.to(`emp:${custKey}`).emit("notification:new", customerNotif);
         }
       }
     } catch (e) {
-      console.error("Review email auto-send failed:", e.message);
+      console.error("Admin/Customer notify on driver change failed:", e?.message);
     }
-// ========= DRIVER NOTIFY ON STATUS CHANGE =========
-const io = req.app.get("io");
-
-const audit = booking.statusAudit || [];
-const prevStatus = audit.length > 1 ? audit[audit.length - 2]?.status : null;
-const currStatus = booking.status;
-const isStatusChanged = prevStatus !== currStatus;
-try {
-
-  // 🔒 Notify drivers only when a non-driver updated the status
-  if (isStatusChanged && currentUser?.role !== "driver") {
-    const employeeNumbers = [];
-
-    for (const d of Array.isArray(booking.drivers) ? booking.drivers : []) {
-      if (d?.employeeNumber) {
-        employeeNumbers.push(String(d.employeeNumber));
-        continue;
-      }
-      if (d?.DriverData?.employeeNumber) {
-        employeeNumbers.push(String(d.DriverData.employeeNumber));
-        continue;
-      }
-      const uid = d?.userId || d?._id;
-      if (uid) {
-        const u = await User.findById(uid).lean();
-        if (u?.employeeNumber) employeeNumbers.push(String(u.employeeNumber));
-      }
-    }
-
-    const uniqEmp = [...new Set(employeeNumbers)].filter(Boolean);
-    if (uniqEmp.length) {
-      const payloads = uniqEmp.map((en) => ({
-        employeeNumber: en,
-        bookingId: booking.bookingId,
-        status: currStatus,
-        primaryJourney: {
-          pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
-          dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
-        },
-        bookingSentAt: new Date(),
-        createdBy: currentUser?._id,
-        companyId: booking.companyId,
-      }));
-
-      const docs = await Notification.insertMany(payloads, { ordered: false });
-      for (const n of docs) {
-        io.to(`emp:${n.employeeNumber}`).emit("notification:new", n);
-      }
-    }
-  }
-
-    
-
-} catch (e) {
-  console.error("Driver notify on status change failed:", e?.message);
-}
-// ========= END DRIVER NOTIFY =========
-try {
-
-
-  if (isStatusChanged && currentUser?.role === "driver") {
-    // 1) notify clientadmin in-app
-    const clientAdmin = await User.findOne({
-      companyId: booking.companyId,
-      role: "clientadmin",
-    }).lean();
-    const adminKey = String( clientAdmin?._id || "");
-    if (adminKey) {
-      const adminNotif = await Notification.create({
-        employeeNumber: String(adminKey),   // 👈 add this
-        bookingId: booking.bookingId,
-        status: currStatus,
-        primaryJourney: {
-          pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
-          dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
-        },
-        bookingSentAt: new Date(),
-        createdBy: currentUser?._id,
-        companyId: booking.companyId,
-      });
-      io.to(`emp:${adminKey}`).emit("notification:new", adminNotif);
-    }
-
-    // 2) (optional) notify customer user if you have one
-    const paxEmail = (booking?.passenger?.email || "").trim().toLowerCase();
-    const customerUser = paxEmail
-      ? await User.findOne({ companyId: booking.companyId, role: "customer", email: paxEmail }).lean()
-      : null;
-
-    const custKey = String(  customerUser?._id || "");
-    if (custKey) {
-      const customerNotif = await Notification.create({
-        employeeNumber: String(custKey),   // 👈 add this
-        bookingId: booking.bookingId,
-        status: currStatus,
-        primaryJourney: {
-          pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
-          dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
-        },
-        bookingSentAt: new Date(),
-        createdBy: currentUser?._id,
-        companyId: booking.companyId,
-      });
-      io.to(`emp:${custKey}`).emit("notification:new", customerNotif);
-    }
-  }
-} catch (e) {
-  console.error("Admin/Customer notify on driver change failed:", e?.message);
-}
     // Driver updated the status
     if (currentUser?.role === "driver" && status) {
       const driver = await driverModel
@@ -765,7 +754,7 @@ try {
         await sendEmailsAsync(
           clientAdmin?.email,
           booking?.passenger?.email,
-null,          driverName,
+          null, driverName,
           statusStyled,
           bookingId
         );
@@ -824,7 +813,7 @@ null,          driverName,
           role: "customer",
           email: paxEmail2,
         }).lean();
-    
+
         const custKey2 = String(customerUser2?._id || "");
         if (custKey2) {
           const customerNotif2 = await Notification.create({
@@ -944,6 +933,7 @@ export const sendBookingEmail = async (req, res) => {
     res.status(500).json({ message: "Failed to send booking email." });
   }
 };
+
 const sendEmailsAsync = async (
   clientAdminEmail,
   passengerEmail,
