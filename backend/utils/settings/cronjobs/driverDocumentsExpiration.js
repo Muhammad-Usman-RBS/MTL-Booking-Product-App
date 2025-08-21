@@ -1,8 +1,8 @@
 import cron from "node-cron";
 import crypto from "crypto";
 import Driver from "../../../models/Driver.js";
+import sendEmail from "../../../utils/sendEmail.js";
 import CronJob from "../../../models/settings/CronJob.js";
-import sendEmail from "../../../utils/settings/cronjobs/driverDocsExpiryEmail.js";
 import { collectExpiredDocs } from "../../../utils/settings/cronjobs/expiry.js";
 
 const activeCronJobs = new Map();
@@ -43,17 +43,17 @@ function isWithinWindow(dailyTimeStr, tz = "UTC") {
   const toMin = (x) => x.h * 60 + x.m;
   const n = toMin(now), s = toMin(start), e = toMin(end);
   if (e === s) return true;           // degenerate: treat as always allowed
-  if (e > s)  return n >= s && n < e; // same-day window
+  if (e > s) return n >= s && n < e; // same-day window
   return n >= s || n < e;             // window crosses midnight
 }
 
 // Expiry fields map (label + path in Driver doc)
 const EXPIRY_FIELD_MAP = {
-  driverLicenseExpiry:            { label: "Driver License Expiry",           path: "DriverData.driverLicenseExpiry" },
-  driverPrivateHireLicenseExpiry: { label: "Private Hire License Expiry",     path: "DriverData.driverPrivateHireLicenseExpiry" },
-  carPrivateHireLicenseExpiry:    { label: "Car Private Hire License Expiry", path: "VehicleData.carPrivateHireLicenseExpiry" },
-  carInsuranceExpiry:             { label: "Car Insurance Expiry",            path: "VehicleData.carInsuranceExpiry" },
-  motExpiryDate:                  { label: "MOT Expiry Date",                 path: "VehicleData.motExpiryDate" },
+  driverLicenseExpiry: { label: "Driver License Expiry", path: "DriverData.driverLicenseExpiry" },
+  driverPrivateHireLicenseExpiry: { label: "Private Hire License Expiry", path: "DriverData.driverPrivateHireLicenseExpiry" },
+  carPrivateHireLicenseExpiry: { label: "Car Private Hire License Expiry", path: "VehicleData.carPrivateHireLicenseExpiry" },
+  carInsuranceExpiry: { label: "Car Insurance Expiry", path: "VehicleData.carInsuranceExpiry" },
+  motExpiryDate: { label: "MOT Expiry Date", path: "VehicleData.motExpiryDate" },
 };
 
 function getByPath(obj, dotted) {
@@ -170,12 +170,15 @@ export async function runOnceForCompany(
 
           if (email && allowed) {
             try {
-              const expiredFieldsOnly = buildExpiredFieldsObject(driver, expiredKeys);
-
-              await sendEmail(email, "Your documents have expired", {
-                title: "Driver document expiry alert",
-                subtitle: "Our system detected expired document(s).",
-                data: expiredFieldsOnly,
+              const expiredFieldsOnly = buildExpiredFieldsObject(driver, expiredKeys); // { "Label": "YYYY-MM-DD" }
+              const expiredPayload = Object.fromEntries(
+                Object.entries(expiredFieldsOnly).map(([k, v]) => [k, { expiresOn: v }])
+              );
+              await sendDriverDocsExpiryEmail({
+                to: email,
+                driverName: `${driver?.DriverData?.firstName || ""} ${driver?.DriverData?.surName || ""}`.trim(),
+                expiredDocs: expiredPayload,
+                companyName: "Mega Transfers",
               });
 
               if (force) {

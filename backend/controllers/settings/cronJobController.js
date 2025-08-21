@@ -1,11 +1,9 @@
 import express from "express";
 import mongoose from "mongoose";
 import Driver from "../../models/Driver.js";
-import sendEmail from "../../utils/settings/cronjobs/driverDocsExpiryEmail.js";
+import sendEmail from "../../utils/sendEmail.js";
 import CronJob from "../../models/settings/CronJob.js";
 import { updateCompanyCronJob } from "../../utils/settings/cronjobs/driverDocumentsExpiration.js";
-
-const router = express.Router();
 
 // Check if date is expired
 const isExpired = (dateValue) => {

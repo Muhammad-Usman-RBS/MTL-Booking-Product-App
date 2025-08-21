@@ -60,6 +60,17 @@
 //   createSuperAdmin();
 // });
 
+
+
+
+
+
+
+
+
+
+
+
 // server.js
 import express from "express";
 import dotenv from "dotenv";
@@ -71,7 +82,7 @@ import connectDB from "./config/db.js";
 import createSuperAdmin from "./utils/createSuperAdmin.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
 
-// ⬇️ CRON: import the scheduler
+// CRON: import the scheduler
 import { scheduleDriverDocsJobs } from "./utils/settings/cronjobs/driverDocumentsExpiration.js";
 
 // Routes
@@ -92,7 +103,12 @@ import reviewRoutes from "./routes/reviewRoutes.js";
 import cronJobsRoutes from "./routes/cronJobRoutes.js";
 
 dotenv.config();
-connectDB();
+await connectDB();
+
+// --- Ensure CRON uses the current machine timezone ---
+const systemTZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+// Make it available to any module reading process.env.CRON_TIMEZONE
+process.env.CRON_TIMEZONE = systemTZ;
 
 const app = express();
 app.use(express.json({ limit: "5mb" }));
@@ -117,7 +133,11 @@ app.use(
 app.use("/uploads", express.static("uploads"));
 
 // ---- Health ----
-app.get("/health", (_req, res) => res.json({ ok: true }));
+app.get("/health", (_req, res) => res.json({
+  ok: true,
+  tz: systemTZ,
+  now: new Date().toISOString(),
+}));
 
 // ---- API Routes ----
 app.use("/api/auth", authRoutes);
@@ -175,12 +195,12 @@ io.on("connection", (socket) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`[BOOT] CRON_TIMEZONE=${process.env.CRON_TIMEZONE || "UTC"}`);
+  console.log(`[BOOT] Using system timezone for CRON: ${systemTZ}`);
   createSuperAdmin();
 
-  // ⬇️ Start the daily document-expiry email scheduler
+  // Start the daily document-expiry email scheduler
   try {
-    await scheduleDriverDocsJobs();
+    await scheduleDriverDocsJobs(); // scheduler reads process.env.CRON_TIMEZONE internally
     console.log("[CRON] driverDocumentsExpiration jobs scheduled");
   } catch (e) {
     console.error("Failed to schedule driver docs jobs:", e);
@@ -201,4 +221,12 @@ process.on("SIGINT", () => {
     console.log("HTTP server closed.");
     process.exit(0);
   });
+});
+
+// Helpful: log unhandled rejections/exceptions
+process.on("unhandledRejection", (reason) => {
+  console.error("[UNHANDLED REJECTION]", reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("[UNCAUGHT EXCEPTION]", err);
 });

@@ -1,154 +1,73 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
+import { timeOptions } from "../../../constants/dashboardTabsData/data";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import {
-  useGetCronJobQuery,
-  useUpdateCronJobByCompanyMutation,
-  useToggleCronJobFeatureMutation
-} from "../../../redux/api/cronJobsApi";
-import DocumentExpiryTester from "./DocumentExpiryTester";
+import { useGetCronJobQuery, useUpdateCronJobByCompanyMutation, useToggleCronJobFeatureMutation, useRunDriverDocsNowMutation} from "../../../redux/api/cronJobsApi";
+
+// ---- helpers ----
+function isWithinTimeWindow(timeRange) {
+  if (!timeRange || typeof timeRange !== "string") return false;
+  const [start, end] = timeRange.split(/–|-/).map((t) => t.trim());
+  if (!start || !end) return false;
+
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  if ([sh, sm, eh, em].some(isNaN)) return false;
+
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const st = sh * 60 + sm;
+  const en = eh * 60 + em;
+
+  return en > st ? cur >= st && cur < en : cur >= st || cur < en; // midnight cross safe
+}
 
 const CronJob = () => {
   // Get user and company info from your auth state
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const companyId = user?.companyId || '';
-  const userId = user?._id || '';
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const companyId = user?.companyId || "";
+  const userId = user?._id || "";
 
   // RTK Query hooks
   const {
     data: cronJobData,
     isLoading,
     isError,
-    refetch
-  } = useGetCronJobQuery(companyId, {
-    skip: !companyId
-  });
+    refetch,
+  } = useGetCronJobQuery(companyId, { skip: !companyId });
 
-  const [updateCronJobByCompany, { isLoading: isUpdating }] = useUpdateCronJobByCompanyMutation();
-  const [toggleFeature, { isLoading: isToggling }] = useToggleCronJobFeatureMutation();
+  const [updateCronJobByCompany, { isLoading: isUpdating }] =
+    useUpdateCronJobByCompanyMutation();
+  const [toggleFeature, { isLoading: isToggling }] =
+    useToggleCronJobFeatureMutation();
+
+  // auto-run mutation
+  const [runNow, { isLoading: isAutoRunning }] = useRunDriverDocsNowMutation();
 
   // Local state for form data with proper default structure
   const [formData, setFormData] = useState({
     autoAllocation: {
       enabled: false,
-      timing: {
-        hours: "0 hours",
-        period: "before pickup time"
-      },
-      notifications: {
-        sms: false,
-        email: true
-      }
+      timing: { hours: "0 hours", period: "before pickup time" },
+      notifications: { sms: false, email: true },
     },
     reviews: {
       enabled: true,
-      timing: {
-        hours: "1 hours"
-      },
-      notifications: {
-        sms: false,
-        email: true
-      }
+      timing: { hours: "1 hours" },
+      notifications: { sms: false, email: true },
     },
     driverDocumentsExpiration: {
       enabled: false,
-      timing: {
-        dailyTime: "16:00 - 17:00"
-      },
-      notifications: {
-        sms: false,
-        email: false
-      }
+      timing: { dailyTime: "16:00 - 17:00" },
+      notifications: { sms: false, email: false },
     },
     driverStatement: {
       enabled: false,
-      timing: {
-        frequency: "Weekly",
-        day: "Monday",
-        time: "01:00 - 02:00"
-      },
-      notifications: {
-        sms: false,
-        email: false
-      }
-    }
+      timing: { frequency: "Weekly", day: "Monday", time: "01:00 - 02:00" },
+      notifications: { sms: false, email: false },
+    },
   });
-
-  const timeOptions = {
-    autoAllocationHours: [
-      "0 hours",
-      "1 hour",
-      "2 hours",
-      "3 hours",
-      "4 hours",
-      "5 hours",
-      "6 hours",
-      "12 hours",
-      "24 hours"
-    ],
-    reviewHours: [
-      "30 minutes",
-      "1 hours",
-      "2 hours",
-      "3 hours",
-      "4 hours",
-      "6 hours",
-      "12 hours",
-      "24 hours"
-    ],
-    dailyTimes: [
-      "00:00 - 01:00",
-      "01:00 - 02:00",
-      "02:00 - 03:00",
-      "03:00 - 04:00",
-      "04:00 - 05:00",
-      "05:00 - 06:00",
-      "06:00 - 07:00",
-      "07:00 - 08:00",
-      "08:00 - 09:00",
-      "09:00 - 10:00",
-      "10:00 - 11:00",
-      "11:00 - 12:00",
-      "12:00 - 13:00",
-      "13:00 - 14:00",
-      "14:00 - 15:00",
-      "15:00 - 16:00",
-      "16:00 - 17:00",
-      "17:00 - 18:00",
-      "18:00 - 19:00",
-      "19:00 - 20:00",
-      "20:00 - 21:00",
-      "21:00 - 22:00",
-      "22:00 - 23:00",
-      "23:00 - 24:00"
-    ],
-    statementTimes: [
-      "00:00 - 01:00",
-      "01:00 - 02:00",
-      "02:00 - 03:00",
-      "03:00 - 04:00",
-      "04:00 - 05:00",
-      "05:00 - 06:00",
-      "23:00 - 24:00"
-    ],
-    weekDays: [
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-      "Sunday"
-    ],
-    frequencies: [
-      "Daily",
-      "Weekly",
-      "Bi-weekly",
-      "Monthly",
-      "Quarterly"
-    ]
-  };
 
   // Helper function to ensure proper nested object structure
   const ensureNestedStructure = (data) => {
@@ -156,52 +75,52 @@ const CronJob = () => {
       autoAllocation: {
         enabled: false,
         timing: { hours: "0 hours", period: "before pickup time" },
-        notifications: { sms: false, email: true }
+        notifications: { sms: false, email: true },
       },
       reviews: {
         enabled: true,
         timing: { hours: "1 hours" },
-        notifications: { sms: false, email: true }
+        notifications: { sms: false, email: true },
       },
       driverDocumentsExpiration: {
         enabled: false,
         timing: { dailyTime: "16:00 - 17:00" },
-        notifications: { sms: false, email: false }
+        notifications: { sms: false, email: false },
       },
       driverStatement: {
         enabled: false,
-        timing: { frequency: "Weekly", day: "Monday", time: "01:00 - 02:00" },
-        notifications: { sms: false, email: false }
-      }
+        timing: {
+          frequency: "Weekly",
+          day: "Monday",
+          time: "01:00 - 02:00",
+        },
+        notifications: { sms: false, email: false },
+      },
     };
 
     const result = { ...defaultStructure };
-
-    // Merge with existing data while preserving structure
-    Object.keys(result).forEach(section => {
+    Object.keys(result).forEach((section) => {
       if (data[section]) {
         result[section] = {
           ...result[section],
           ...data[section],
           timing: {
             ...result[section].timing,
-            ...(data[section].timing || {})
+            ...(data[section].timing || {}),
           },
           notifications: {
             ...result[section].notifications,
-            ...(data[section].notifications || {})
-          }
+            ...(data[section].notifications || {}),
+          },
         };
       }
     });
-
     return result;
   };
 
   // Load data from API when component mounts or data changes
   useEffect(() => {
     if (cronJobData?.cronJob) {
-      console.log('Loading cron job data:', cronJobData.cronJob);
       const structuredData = ensureNestedStructure(cronJobData.cronJob);
       setFormData(structuredData);
     }
@@ -210,133 +129,183 @@ const CronJob = () => {
   // Handle toggle for main feature switches
   const handleFeatureToggle = async (feature) => {
     const newEnabledState = !formData[feature]?.enabled;
-
     try {
       const response = await toggleFeature({
         companyId,
         feature,
         enabled: newEnabledState,
-        updatedBy: userId
+        updatedBy: userId,
       }).unwrap();
 
-      // Update local state with response data
       if (response?.cronJob) {
         const structuredData = ensureNestedStructure(response.cronJob);
         setFormData(structuredData);
       } else {
-        // Fallback: update local state directly
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           [feature]: {
             ...prev[feature],
-            enabled: newEnabledState
-          }
+            enabled: newEnabledState,
+          },
         }));
       }
-
-      toast.success(`${feature} ${newEnabledState ? 'enabled' : 'disabled'} successfully!`);
+      toast.success(
+        `${feature} ${newEnabledState ? "enabled" : "disabled"} successfully!`
+      );
     } catch (error) {
-      console.error(`Failed to toggle ${feature}:`, error);
-      toast.error(`Failed to toggle ${feature}: ${error?.data?.message || 'Unknown error'}`);
+      toast.error(
+        `Failed to toggle ${feature}: ${error?.data?.message || "Unknown error"}`
+      );
     }
   };
 
-  // Handle form field changes with better error handling
+  // Handle form field changes
   const handleFieldChange = (section, field, value, subField = null) => {
-    // Extract clean value from various input types
     let cleanValue = value;
-    if (value && typeof value === 'object') {
+    if (value && typeof value === "object") {
       if (value.target !== undefined) {
-        // HTML input event
-        cleanValue = value.target.type === 'checkbox' ? value.target.checked : value.target.value;
+        cleanValue =
+          value.target.type === "checkbox"
+            ? value.target.checked
+            : value.target.value;
       } else if (value.value !== undefined) {
-        // Select option object
         cleanValue = value.value;
       }
     }
 
-    console.log('Field change:', { section, field, value: cleanValue, subField });
-
-    setFormData(prev => {
+    setFormData((prev) => {
       const newData = { ...prev };
-
-      // Ensure section exists
-      if (!newData[section]) {
-        newData[section] = {};
-      }
+      if (!newData[section]) newData[section] = {};
 
       if (subField) {
-        // Ensure nested field exists
-        if (!newData[section][field]) {
-          newData[section][field] = {};
-        }
+        if (!newData[section][field]) newData[section][field] = {};
         newData[section][field] = {
           ...newData[section][field],
-          [subField]: cleanValue
+          [subField]: cleanValue,
         };
       } else {
         newData[section][field] = cleanValue;
       }
-
       return newData;
     });
   };
 
-  // Handle form submission with better validation
+  // Submit settings
   const handleSubmit = async () => {
     if (!companyId || !userId) {
       toast.error("Missing company or user information");
       return;
     }
-
     try {
-      console.log('Submitting form data:', formData);
-
-      // Ensure all required nested structures exist
       const cleanFormData = ensureNestedStructure(formData);
-
       const response = await updateCronJobByCompany({
         companyId,
         ...cleanFormData,
-        updatedBy: userId
+        updatedBy: userId,
       }).unwrap();
-
-      console.log('Update response:', response);
 
       if (response?.cronJob) {
         const structuredData = ensureNestedStructure(response.cronJob);
         setFormData(structuredData);
       }
-
       toast.success("Cron job settings updated successfully!");
-      refetch(); // Refresh data
+      refetch();
     } catch (error) {
-      console.error('Update error:', error);
-      toast.error(`Failed to update settings: ${error?.data?.message || 'Unknown error'}`);
+      toast.error(
+        `Failed to update settings: ${error?.data?.message || "Unknown error"}`
+      );
     }
   };
 
-  // Helper function to handle select changes safely
+  // Select handler factory
   const handleSelectChange = (section, field, subField = null) => {
     return (selectedValue) => {
-      console.log(`Select change for ${section}.${field}${subField ? `.${subField}` : ''}:`, selectedValue);
       handleFieldChange(section, field, selectedValue, subField);
     };
   };
 
-  // Helper function to safely get nested values
-  const getNestedValue = (obj, path) => {
-    return path.split('.').reduce((current, key) => {
-      return current && current[key] !== undefined ? current[key] : '';
-    }, obj);
-  };
+  // Safe getter
+  const getNestedValue = (obj, path) =>
+    path.split(".").reduce(
+      (current, key) =>
+        current && current[key] !== undefined ? current[key] : "",
+      obj
+    );
+
+  // -------------- AUTO RUN (no button needed) --------------
+  const autoRunDoneRef = useRef(false); // to avoid spamming in same window
+
+  useEffect(() => {
+    if (!companyId) return;
+
+    const tick = async () => {
+      const enabled = !!formData?.driverDocumentsExpiration?.enabled;
+      const dailyTime =
+        formData?.driverDocumentsExpiration?.timing?.dailyTime || "";
+
+      // If feature disabled, reset flag & exit
+      if (!enabled) {
+        autoRunDoneRef.value = false;
+        return;
+      }
+
+      const inWindow = isWithinTimeWindow(dailyTime);
+
+      // if inside window & not yet run -> run once
+      if (inWindow && !autoRunDoneRef.current && !isAutoRunning) {
+        const toastId = toast.loading("Running driver docs expiry job…");
+        try {
+          const res = await runNow({ companyId, sendEmails: true }).unwrap();
+          toast.update(toastId, {
+            render: `Emails sent: ${res.emailsSent || 0} • Candidates: ${
+              res.totalCandidates || 0
+            }`,
+            type: "success",
+            isLoading: false,
+            autoClose: 4000,
+          });
+        } catch (err) {
+          toast.update(toastId, {
+            render:
+              "Auto run failed: " +
+              (err?.data?.message || err?.message || "Unknown"),
+            type: "error",
+            isLoading: false,
+            autoClose: 5000,
+          });
+        } finally {
+          autoRunDoneRef.current = true; // mark done for this window
+        }
+      }
+
+      // if outside window -> reset so next window triggers again
+      if (!inWindow) {
+        autoRunDoneRef.current = false;
+      }
+    };
+
+    // first immediate check
+    tick();
+    // check every minute
+    const id = setInterval(tick, 60 * 1000);
+    return () => clearInterval(id);
+  }, [
+    companyId,
+    formData?.driverDocumentsExpiration?.enabled,
+    formData?.driverDocumentsExpiration?.timing?.dailyTime,
+    isAutoRunning,
+    runNow,
+  ]);
+  // ---------------------------------------------------------
 
   if (!companyId) {
     return (
       <div>
         <OutletHeading name="Cron Job (Scheduled Tasks)" />
         <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded shadow">
-          <p className="text-red-500">Error: Company information not found. Please log in again.</p>
+          <p className="text-red-500">
+            Error: Company information not found. Please log in again.
+          </p>
         </div>
       </div>
     );
@@ -357,10 +326,8 @@ const CronJob = () => {
     <div>
       <OutletHeading name="Cron Job (Scheduled Tasks)" />
       <div className="mt-10">
-
         {/* First Row - Auto Allocation & Reviews */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
           {/* Auto Allocation Card */}
           <div className="border rounded overflow-hidden">
             <div className="bg-gray-700 text-white px-4 py-2 flex items-center">
@@ -368,7 +335,7 @@ const CronJob = () => {
                 type="checkbox"
                 className="mr-2"
                 checked={formData.autoAllocation?.enabled || false}
-                onChange={() => handleFeatureToggle('autoAllocation')}
+                onChange={() => handleFeatureToggle("autoAllocation")}
                 disabled={isToggling}
               />
               Auto Allocation
@@ -378,13 +345,29 @@ const CronJob = () => {
                 <div className="flex flex-col gap-3">
                   <SelectOption
                     options={timeOptions.autoAllocationHours}
-                    value={getNestedValue(formData, 'autoAllocation.timing.hours') || "0 hours"}
-                    onChange={handleSelectChange('autoAllocation', 'timing', 'hours')}
+                    value={
+                      getNestedValue(formData, "autoAllocation.timing.hours") ||
+                      "0 hours"
+                    }
+                    onChange={handleSelectChange(
+                      "autoAllocation",
+                      "timing",
+                      "hours"
+                    )}
                   />
                   <SelectOption
                     options={["before pickup time", "after pickup time"]}
-                    value={getNestedValue(formData, 'autoAllocation.timing.period') || "before pickup time"}
-                    onChange={handleSelectChange('autoAllocation', 'timing', 'period')}
+                    value={
+                      getNestedValue(
+                        formData,
+                        "autoAllocation.timing.period"
+                      ) || "before pickup time"
+                    }
+                    onChange={handleSelectChange(
+                      "autoAllocation",
+                      "timing",
+                      "period"
+                    )}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -392,8 +375,20 @@ const CronJob = () => {
                     <input
                       type="checkbox"
                       className="mr-2"
-                      checked={getNestedValue(formData, 'autoAllocation.notifications.sms') || false}
-                      onChange={(e) => handleFieldChange('autoAllocation', 'notifications', e.target.checked, 'sms')}
+                      checked={
+                        getNestedValue(
+                          formData,
+                          "autoAllocation.notifications.sms"
+                        ) || false
+                      }
+                      onChange={(e) =>
+                        handleFieldChange(
+                          "autoAllocation",
+                          "notifications",
+                          e.target.checked,
+                          "sms"
+                        )
+                      }
                     />
                     SMS
                   </label>
@@ -401,8 +396,20 @@ const CronJob = () => {
                     <input
                       type="checkbox"
                       className="mr-2"
-                      checked={getNestedValue(formData, 'autoAllocation.notifications.email') || false}
-                      onChange={(e) => handleFieldChange('autoAllocation', 'notifications', e.target.checked, 'email')}
+                      checked={
+                        getNestedValue(
+                          formData,
+                          "autoAllocation.notifications.email"
+                        ) || false
+                      }
+                      onChange={(e) =>
+                        handleFieldChange(
+                          "autoAllocation",
+                          "notifications",
+                          e.target.checked,
+                          "email"
+                        )
+                      }
                     />
                     Email
                   </label>
@@ -418,7 +425,7 @@ const CronJob = () => {
                 type="checkbox"
                 className="mr-2"
                 checked={formData.reviews?.enabled || false}
-                onChange={() => handleFeatureToggle('reviews')}
+                onChange={() => handleFeatureToggle("reviews")}
                 disabled={isToggling}
               />
               Reviews
@@ -428,8 +435,11 @@ const CronJob = () => {
                 <div className="flex flex-col gap-3">
                   <SelectOption
                     options={timeOptions.reviewHours}
-                    value={getNestedValue(formData, 'reviews.timing.hours') || "1 hours"}
-                    onChange={handleSelectChange('reviews', 'timing', 'hours')}
+                    value={
+                      getNestedValue(formData, "reviews.timing.hours") ||
+                      "1 hours"
+                    }
+                    onChange={handleSelectChange("reviews", "timing", "hours")}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -437,8 +447,20 @@ const CronJob = () => {
                     <input
                       type="checkbox"
                       className="mr-2"
-                      checked={getNestedValue(formData, 'reviews.notifications.sms') || false}
-                      onChange={(e) => handleFieldChange('reviews', 'notifications', e.target.checked, 'sms')}
+                      checked={
+                        getNestedValue(
+                          formData,
+                          "reviews.notifications.sms"
+                        ) || false
+                      }
+                      onChange={(e) =>
+                        handleFieldChange(
+                          "reviews",
+                          "notifications",
+                          e.target.checked,
+                          "sms"
+                        )
+                      }
                     />
                     SMS
                   </label>
@@ -446,8 +468,20 @@ const CronJob = () => {
                     <input
                       type="checkbox"
                       className="mr-2"
-                      checked={getNestedValue(formData, 'reviews.notifications.email') || false}
-                      onChange={(e) => handleFieldChange('reviews', 'notifications', e.target.checked, 'email')}
+                      checked={
+                        getNestedValue(
+                          formData,
+                          "reviews.notifications.email"
+                        ) || false
+                      }
+                      onChange={(e) =>
+                        handleFieldChange(
+                          "reviews",
+                          "notifications",
+                          e.target.checked,
+                          "email"
+                        )
+                      }
                     />
                     Email
                   </label>
@@ -459,7 +493,6 @@ const CronJob = () => {
 
         {/* Second Row - Driver Documents Expiration & Driver Statement */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
           {/* Driver Documents Expiration Card */}
           <div className="border rounded overflow-hidden">
             <div className="bg-gray-700 text-white px-4 py-2 flex items-center">
@@ -467,7 +500,7 @@ const CronJob = () => {
                 type="checkbox"
                 className="mr-2"
                 checked={formData.driverDocumentsExpiration?.enabled || false}
-                onChange={() => handleFeatureToggle('driverDocumentsExpiration')}
+                onChange={() => handleFeatureToggle("driverDocumentsExpiration")}
                 disabled={isToggling}
               />
               Driver Documents Expiration
@@ -479,8 +512,17 @@ const CronJob = () => {
                     <p className="text-sm text-gray-700 font-medium">Daily:</p>
                     <SelectOption
                       options={timeOptions.dailyTimes}
-                      value={getNestedValue(formData, 'driverDocumentsExpiration.timing.dailyTime') || "16:00 - 17:00"}
-                      onChange={handleSelectChange('driverDocumentsExpiration', 'timing', 'dailyTime')}
+                      value={
+                        getNestedValue(
+                          formData,
+                          "driverDocumentsExpiration.timing.dailyTime"
+                        ) || "16:00 - 17:00"
+                      }
+                      onChange={handleSelectChange(
+                        "driverDocumentsExpiration",
+                        "timing",
+                        "dailyTime"
+                      )}
                     />
                   </div>
                 </div>
@@ -489,8 +531,20 @@ const CronJob = () => {
                     <input
                       type="checkbox"
                       className="mr-2"
-                      checked={getNestedValue(formData, 'driverDocumentsExpiration.notifications.sms') || false}
-                      onChange={(e) => handleFieldChange('driverDocumentsExpiration', 'notifications', e.target.checked, 'sms')}
+                      checked={
+                        getNestedValue(
+                          formData,
+                          "driverDocumentsExpiration.notifications.sms"
+                        ) || false
+                      }
+                      onChange={(e) =>
+                        handleFieldChange(
+                          "driverDocumentsExpiration",
+                          "notifications",
+                          e.target.checked,
+                          "sms"
+                        )
+                      }
                     />
                     SMS
                   </label>
@@ -498,8 +552,20 @@ const CronJob = () => {
                     <input
                       type="checkbox"
                       className="mr-2"
-                      checked={getNestedValue(formData, 'driverDocumentsExpiration.notifications.email') || false}
-                      onChange={(e) => handleFieldChange('driverDocumentsExpiration', 'notifications', e.target.checked, 'email')}
+                      checked={
+                        getNestedValue(
+                          formData,
+                          "driverDocumentsExpiration.notifications.email"
+                        ) || false
+                      }
+                      onChange={(e) =>
+                        handleFieldChange(
+                          "driverDocumentsExpiration",
+                          "notifications",
+                          e.target.checked,
+                          "email"
+                        )
+                      }
                     />
                     Email
                   </label>
@@ -515,7 +581,7 @@ const CronJob = () => {
                 type="checkbox"
                 className="mr-2"
                 checked={formData.driverStatement?.enabled || false}
-                onChange={() => handleFeatureToggle('driverStatement')}
+                onChange={() => handleFeatureToggle("driverStatement")}
                 disabled={isToggling}
               />
               Driver Statement
@@ -525,18 +591,41 @@ const CronJob = () => {
                 <div className="flex flex-col gap-3">
                   <SelectOption
                     options={timeOptions.frequencies}
-                    value={getNestedValue(formData, 'driverStatement.timing.frequency') || "Weekly"}
-                    onChange={handleSelectChange('driverStatement', 'timing', 'frequency')}
+                    value={
+                      getNestedValue(
+                        formData,
+                        "driverStatement.timing.frequency"
+                      ) || "Weekly"
+                    }
+                    onChange={handleSelectChange(
+                      "driverStatement",
+                      "timing",
+                      "frequency"
+                    )}
                   />
                   <SelectOption
                     options={timeOptions.weekDays}
-                    value={getNestedValue(formData, 'driverStatement.timing.day') || "Monday"}
-                    onChange={handleSelectChange('driverStatement', 'timing', 'day')}
+                    value={
+                      getNestedValue(formData, "driverStatement.timing.day") ||
+                      "Monday"
+                    }
+                    onChange={handleSelectChange(
+                      "driverStatement",
+                      "timing",
+                      "day"
+                    )}
                   />
                   <SelectOption
                     options={timeOptions.statementTimes}
-                    value={getNestedValue(formData, 'driverStatement.timing.time') || "01:00 - 02:00"}
-                    onChange={handleSelectChange('driverStatement', 'timing', 'time')}
+                    value={
+                      getNestedValue(formData, "driverStatement.timing.time") ||
+                      "01:00 - 02:00"
+                    }
+                    onChange={handleSelectChange(
+                      "driverStatement",
+                      "timing",
+                      "time"
+                    )}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -544,8 +633,20 @@ const CronJob = () => {
                     <input
                       type="checkbox"
                       className="mr-2"
-                      checked={getNestedValue(formData, 'driverStatement.notifications.sms') || false}
-                      onChange={(e) => handleFieldChange('driverStatement', 'notifications', e.target.checked, 'sms')}
+                      checked={
+                        getNestedValue(
+                          formData,
+                          "driverStatement.notifications.sms"
+                        ) || false
+                      }
+                      onChange={(e) =>
+                        handleFieldChange(
+                          "driverStatement",
+                          "notifications",
+                          e.target.checked,
+                          "sms"
+                        )
+                      }
                     />
                     SMS
                   </label>
@@ -553,8 +654,20 @@ const CronJob = () => {
                     <input
                       type="checkbox"
                       className="mr-2"
-                      checked={getNestedValue(formData, 'driverStatement.notifications.email') || false}
-                      onChange={(e) => handleFieldChange('driverStatement', 'notifications', e.target.checked, 'email')}
+                      checked={
+                        getNestedValue(
+                          formData,
+                          "driverStatement.notifications.email"
+                        ) || false
+                      }
+                      onChange={(e) =>
+                        handleFieldChange(
+                          "driverStatement",
+                          "notifications",
+                          e.target.checked,
+                          "email"
+                        )
+                      }
                     />
                     Email
                   </label>
@@ -563,16 +676,16 @@ const CronJob = () => {
             )}
           </div>
         </div>
+
         <div className="flex gap-4 justify-end">
           <button
             onClick={handleSubmit}
             className="btn btn-reset px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
             disabled={isUpdating || isToggling}
           >
-            {isUpdating ? 'UPDATING...' : 'UPDATE'}
+            {isUpdating ? "UPDATING..." : "UPDATE"}
           </button>
         </div>
-        <DocumentExpiryTester />
       </div>
     </div>
   );
