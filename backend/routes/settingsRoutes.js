@@ -1,41 +1,10 @@
 import express from "express";
 import { protect, authorize } from "../middleware/authMiddleware.js";
-import {
-  createCoverage,
-  deleteCoverage,
-  getAllCoverage,
-  getCoverageById,
-  updateCoverage,
-} from "../controllers/settings/coverageController.js";
-import {
-  createLocation,
-  deleteLocationbyId,
-  getAllLocations,
-  getLocationById,
-  updateLocationById,
-} from "../controllers/settings/locationsController.js";
-import {
-  createBookingRestriction,
-  deleteBookingRestriction,
-  getAllBookingRestrictions,
-  getBookingRestrictionById,
-  updateBookingRestriction,
-} from "../controllers/settings/BookingRestrictionDateController.js";
-import {
-  createLocationCategory,
-  deleteLocationCategory,
-  getAllLocationCategories,
-  getLocationCategoryById,
-  updateLocationCategory,
-} from "../controllers/settings/locationCategoryController.js";
-import {
-  saveTheme,
-  getTheme,
-  resetTheme,
-  getAllThemes,
-  deleteTheme,
-  getThemeHistory,
-} from "../controllers/settings/themeController.js";
+import { createCoverage, deleteCoverage, getAllCoverage, getCoverageById, updateCoverage } from "../controllers/settings/coverageController.js";
+import { createLocation, deleteLocationbyId, getAllLocations, getLocationById, updateLocationById } from "../controllers/settings/locationsController.js";
+import { createBookingRestriction, deleteBookingRestriction, getAllBookingRestrictions, getBookingRestrictionById, updateBookingRestriction } from "../controllers/settings/BookingRestrictionDateController.js";
+import { createLocationCategory, deleteLocationCategory, getAllLocationCategories, getLocationCategoryById, updateLocationCategory } from "../controllers/settings/locationCategoryController.js";
+import { saveTheme, getTheme, getCurrentTheme, applyTheme, deleteTheme, getThemeHistory } from "../controllers/settings/themeController.js";
 
 const router = express.Router();
 
@@ -68,36 +37,11 @@ router.put("/update-location-category/:id", updateLocationCategory);
 router.delete("/delete-location-category/:id", deleteLocationCategory);
 
 // THEME CRUD
-router.post(
-  "/save",
-  protect,
-  authorize("superadmin", "clientadmin"),
-  saveTheme
-);
-router.get(
-  "/:companyId",
-  protect,
-  authorize("superadmin", "clientadmin"),
-  getTheme
-);
-router.post(
-  "/reset",
-  protect,
-  authorize("superadmin", "clientadmin"),
-  resetTheme
-);
-router.get("/", protect, authorize("superadmin", "clientadmin"), getAllThemes);
-router.delete(
-  "/:id",
-  protect,
-  authorize("superadmin", "clientadmin"),
-  deleteTheme
-);
-router.get(
-  "/:companyId/history",
-  protect,
-  authorize("superadmin", "clientadmin"),
-  getThemeHistory
-);
+router.post("/save-theme", protect, authorize("superadmin", "clientadmin"), saveTheme);
+router.get("/get-theme/:companyId", protect, authorize("superadmin", "clientadmin"), getTheme);
+router.delete("delete-theme/:id", protect, authorize("superadmin", "clientadmin"), deleteTheme);
+router.get("/theme-history/:companyId", protect, authorize("superadmin", "clientadmin"), getThemeHistory);
+router.get("/current-theme/:companyId", protect, authorize("clientadmin", "driver", "customer"), getCurrentTheme);
+router.post("/apply-them/:companyId/:themeId", protect, authorize("clientadmin"), applyTheme);
 
 export default router;

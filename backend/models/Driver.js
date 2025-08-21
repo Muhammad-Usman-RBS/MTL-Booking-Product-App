@@ -23,6 +23,12 @@ const DriverDataSchema = new mongoose.Schema({
       to: { type: Date },
     },
   ],
+  Notifications: {
+    docExpiry: {
+      lastSentAt: { type: Date },
+      lastDocsHash: { type: String },
+    },
+  },
 }, { _id: false });
 
 const VehicleDataSchema = new mongoose.Schema({

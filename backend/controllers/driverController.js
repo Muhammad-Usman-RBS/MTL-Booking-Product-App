@@ -1,5 +1,6 @@
 import Driver from "../models/Driver.js";
 import User from "../models/User.js";
+import { collectExpiredDocs } from "../utils/settings/cronjobs/expiry.js";
 
 export const createDriver = async (req, res) => {
     try {
@@ -117,18 +118,49 @@ export const createDriver = async (req, res) => {
     }
 };
 
+// export const getAllDrivers = async (req, res) => {
+//     try {
+//         const companyId = req?.user?.companyId
+//         if (!companyId) {
+//             return res.status(401).json({ success: false, message: "Unauthorized or missing company" });
+//           }
+//         const drivers = await Driver.find({companyId});
+//         res.status(200).json({ success: true, drivers });
+//     } catch (error) {
+//         console.error("Error fetching drivers:", error);
+//         res.status(500).json({ success: false, message: "Server error" });
+//     }
+// };
 export const getAllDrivers = async (req, res) => {
-    try {
-        const companyId = req?.user?.companyId
-        if (!companyId) {
-            return res.status(401).json({ success: false, message: "Unauthorized or missing company" });
-          }
-        const drivers = await Driver.find({companyId});
-        res.status(200).json({ success: true, drivers });
-    } catch (error) {
-        console.error("Error fetching drivers:", error);
-        res.status(500).json({ success: false, message: "Server error" });
+  try {
+    const companyId = req?.user?.companyId;
+    if (!companyId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Unauthorized or missing company" });
     }
+
+    const includeExpiry = String(req.query.includeExpiry || "false") === "true";
+    const drivers = await Driver.find({ companyId });
+
+    if (!includeExpiry) {
+      return res.status(200).json({ success: true, drivers });
+    }
+
+    const annotated = drivers.map((d) => {
+      const expiredDocs = collectExpiredDocs(d);
+      return {
+        ...d.toObject(),
+        hasExpired: expiredDocs.length > 0,
+        expiredDocs,
+      };
+    });
+
+    return res.status(200).json({ success: true, drivers: annotated });
+  } catch (error) {
+    console.error("Error fetching drivers:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 };
 
 export const getDriverById = async (req, res) => {
