@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import PaymentMethodSection from "./PaymentMethodSection";
+import PayButton from "../../../paymentmethod/PayButton";
 
 const PaymentOptions = () => {
   const [cashLive, setCashLive] = useState(true);
@@ -77,74 +78,9 @@ const PaymentOptions = () => {
               },
             ]}
           />
-
-          <PaymentMethodSection
-            name="Square"
-            checked={squareChecked}
-            setChecked={setSquareChecked}
-            isLive={squareLive}
-            toggleLive={() => setSquareLive(!squareLive)}
-            fields={[
-              { label: "Title", value: "Pay Via Square" },
-              { label: "Access Token" },
-              { label: "Application ID" },
-              { label: "Location ID" },
-            ]}
-          />
-
-          <PaymentMethodSection
-            name="Sumup"
-            checked={sumupChecked}
-            setChecked={setSumupChecked}
-            isLive={sumupLive}
-            toggleLive={() => setSumupLive(!sumupLive)}
-            fields={[
-              { label: "Title", value: "Pay Via Sumup" },
-              { label: "Email" },
-              { label: "Client ID" },
-              { label: "Client Secret" },
-            ]}
-          />
-
-          <PaymentMethodSection
-            name="Retail Merchant Services(RMS)"
-            checked={rmsChecked}
-            setChecked={setRmsChecked}
-            isLive={rmsLive}
-            toggleLive={() => setRmsLive(!rmsLive)}
-            fields={[
-              { label: "Title", value: "Pay Via RMS" },
-              { label: "Merchant ID" },
-              { label: "Secret Key" },
-            ]}
-          />
-
-          <PaymentMethodSection
-            name="Viva"
-            checked={vivaChecked}
-            setChecked={setVivaChecked}
-            isLive={vivaLive}
-            toggleLive={() => setVivaLive(!vivaLive)}
-            fields={[
-              { label: "Title", value: "Pay Via Debit/Credit Card" },
-              { label: "Merchant Id" },
-              { label: "Public Key" },
-              { label: "API Key" },
-            ]}
-          />
-
-          <PaymentMethodSection
-            name="Mollie"
-            checked={mollieChecked}
-            setChecked={setMollieChecked}
-            isLive={mollieLive}
-            toggleLive={() => setMollieLive(!mollieLive)}
-            fields={[
-              { label: "Title", value: "Pay Via Mollie" },
-              { label: "API KEY" },
-            ]}
-          />
         </div>
+
+        <PayButton/>
 
         <div className="flex items-center justify-center pt-8">
           <button className="btn btn-edit">Update Settings</button>

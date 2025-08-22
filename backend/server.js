@@ -69,13 +69,12 @@
 
 
 
-
-
 // server.js
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import http from "http";
+import bodyParser from "body-parser";
 import { Server as IOServer } from "socket.io";
 
 import connectDB from "./config/db.js";
@@ -84,6 +83,9 @@ import { errorHandler } from "./middleware/errorMiddleware.js";
 
 // CRON: import the scheduler
 import { scheduleDriverDocsJobs } from "./utils/settings/cronjobs/driverDocumentsExpiration.js";
+
+// Stripe webhook handler (APP-LEVEL, before json parser!)
+import { handleStripeWebhook } from "./controllers/settings/stripeWebhookController.js";
 
 // Routes
 import authRoutes from "./routes/authRoutes.js";
@@ -101,6 +103,7 @@ import corporateCustomerRoutes from "./routes/corporateCustomerRoutes.js";
 import bookingSettingRoutes from "./routes/bookingSettingRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import cronJobsRoutes from "./routes/cronJobRoutes.js";
+import stripeRoutes from "./routes/stripeRoutes.js";
 
 dotenv.config();
 await connectDB();
@@ -111,6 +114,22 @@ const systemTZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 process.env.CRON_TIMEZONE = systemTZ;
 
 const app = express();
+
+/**
+ * ⚠️ Stripe webhook MUST be mounted BEFORE any body-parsing middleware.
+ * It needs the RAW request body for signature verification.
+ */
+app.post(
+  "/api/stripe/webhook",
+  bodyParser.raw({ type: "application/json" }),
+  (req, _res, next) => {
+    req.rawBody = req.body; // Buffer for constructEvent
+    next();
+  },
+  handleStripeWebhook
+);
+
+// After webhook, use JSON/urlencoded parsers for the rest of the app.
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
@@ -133,13 +152,16 @@ app.use(
 app.use("/uploads", express.static("uploads"));
 
 // ---- Health ----
-app.get("/health", (_req, res) => res.json({
-  ok: true,
-  tz: systemTZ,
-  now: new Date().toISOString(),
-}));
+app.get("/health", (_req, res) =>
+  res.json({
+    ok: true,
+    tz: systemTZ,
+    now: new Date().toISOString(),
+  })
+);
 
 // ---- API Routes ----
+// (Normal JSON endpoints; webhook already mounted above)
 app.use("/api/auth", authRoutes);
 app.use("/api/driver", driverRoutes);
 app.use("/api/invoice", invoiceRoutes);
@@ -154,6 +176,7 @@ app.use("/api/notification", NotificationRoutes);
 app.use("/api/booking-settings", bookingSettingRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/cronjobs", cronJobsRoutes);
+app.use("/api/stripe", stripeRoutes); // e.g., /create-checkout-session
 app.use("/api", userRoutes);
 
 // ---- Errors (keep after routes) ----
@@ -196,6 +219,7 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`[BOOT] Using system timezone for CRON: ${systemTZ}`);
+
   createSuperAdmin();
 
   // Start the daily document-expiry email scheduler
