@@ -6,15 +6,15 @@ const pk = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = pk ? loadStripe(pk) : null;
 
 const DEFAULT_PRICE_ID = import.meta.env.VITE_STRIPE_DEFAULT_PRICE_ID || ""; // Option A
+
 const clampQty = (q) => Math.min(Math.max(Math.floor(q || 1), 1), 99);
 
 export default function PayButton({
   bookingId,
   customerEmail,
-  priceId,           // optional now
+  priceId, // optional now
   quantity = 1,
   onError,
-  // Option B: allow overriding dummy payment via props if needed
   fallbackAmountMinor = 500,   // 500 = £5.00 (smallest unit)
   fallbackCurrency = "gbp",
   fallbackName = "Test payment",
