@@ -15,6 +15,7 @@ export default function PayButton({
   priceId, // optional now
   quantity = 1,
   onError,
+  idemKey: idem, 
   fallbackAmountMinor = 500,   // 500 = £5.00 (smallest unit)
   fallbackCurrency = "gbp",
   fallbackName = "Test payment",
