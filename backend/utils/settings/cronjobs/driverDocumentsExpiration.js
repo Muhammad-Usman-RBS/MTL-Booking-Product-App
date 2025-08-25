@@ -268,13 +268,10 @@ function scheduleSingleCompany(companyId, dExp) {
   );
 
   activeCronJobs.set(jobKey, task);
-  console.log(
-    `[CRON] ✅ Scheduled docExpiry for company=${companyId} at ${expr} (TZ=${process.env.CRON_TIMEZONE || "UTC"})`
-  );
+
 }
 
 export async function scheduleDriverDocsJobs() {
-  console.log("[CRON] 🔄 Scheduling driver document expiry jobs...");
 
   try {
     const companies = await CronJob.find(
@@ -286,12 +283,10 @@ export async function scheduleDriverDocsJobs() {
       { companyId: 1, driverDocumentsExpiration: 1 }
     ).lean();
 
-    console.log(`[CRON] Found ${companies.length} companies with email notifications enabled`);
 
     // reset all
     activeCronJobs.forEach((job, key) => {
       job.destroy();
-      console.log(`[CRON] ⏹️ Stopped existing job: ${key}`);
     });
     activeCronJobs.clear();
 
@@ -299,14 +294,12 @@ export async function scheduleDriverDocsJobs() {
       scheduleSingleCompany(companyId, driverDocumentsExpiration);
     });
 
-    console.log(`[CRON] ✅ Successfully scheduled ${companies.length} document expiry jobs`);
   } catch (error) {
     console.error("[CRON] ❌ Error scheduling driver docs jobs:", error);
   }
 }
 
 export async function rescheduleDriverDocsJobs() {
-  console.log("[CRON] 🔄 Rescheduling driver document expiry jobs...");
   await scheduleDriverDocsJobs();
 }
 

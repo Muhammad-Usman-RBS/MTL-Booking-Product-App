@@ -356,7 +356,7 @@ const CronJob = () => {
                     )}
                   />
                   <SelectOption
-                    options={["before pickup time", "after pickup time"]}
+                    options={["before pickup time"]}
                     value={
                       getNestedValue(
                         formData,

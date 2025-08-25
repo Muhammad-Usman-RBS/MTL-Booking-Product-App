@@ -1056,7 +1056,7 @@ export const receiptData = [
 
 export const timeOptions = {
   autoAllocationHours: [
-    "0 hours","1 hour","2 hours","3 hours","4 hours","5 hours","6 hours","12 hours","24 hours"
+   "1 hour","2 hours","3 hours","4 hours","5 hours","6 hours","12 hours","24 hours"
   ],
   reviewHours: [
     "10 seconds","1 hours","2 hours","3 hours","4 hours","6 hours","12 hours","24 hours"

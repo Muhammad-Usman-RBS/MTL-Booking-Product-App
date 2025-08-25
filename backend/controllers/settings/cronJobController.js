@@ -8,7 +8,13 @@ import Invoice from "../../models/Invoice.js";
 import cron from "node-cron";
 import { DriverStatementEmail } from "../../utils/DriverStatementEmail.js";
 import Company from "../../models/Company.js";
+import User from "../../models/User.js";
+import Booking from "../../models/Booking.js";
 
+const SYSTEM_TZ =
+  process.env.CRON_TIMEZONE ||
+  Intl.DateTimeFormat().resolvedOptions().timeZone ||
+  "UTC";
 // Check if date is expired
 const isExpired = (dateValue) => {
   const d = dateValue ? new Date(dateValue) : null;
@@ -783,10 +789,8 @@ const dayToCron = {
 };
 
 function parseTimeRange(str) {
-  // "11:00 - 12:00" => { hour: 11, minute: 0 }
   if (!str) return { hour: 9, minute: 0 };
-  const [start] = str.split("-").map((s) => s.trim());
-  const [h, m] = start.split(":").map((n) => parseInt(n.trim(), 10));
+  const [h, m] = str.split(":").map((n) => parseInt(n.trim(), 10));
   return {
     hour: Number.isFinite(h) ? h : 9,
     minute: Number.isFinite(m) ? m : 0,
@@ -824,7 +828,7 @@ export async function scheduleDriverStatementsForCompany(
   if (!cronDoc.driverStatement.notifications?.email) {
     return;
   }
-
+  const tz = SYSTEM_TZ;
   const { frequency, day, time } = cronDoc.driverStatement.timing || {};
   if (frequency !== "Weekly") {
     return;
@@ -849,7 +853,7 @@ export async function scheduleDriverStatementsForCompany(
       try {
         const now = new Date();
         const fmt = new Intl.DateTimeFormat("en-GB", {
-          timeZone: timezone,
+          timeZone: tz,
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
@@ -871,7 +875,7 @@ export async function scheduleDriverStatementsForCompany(
           status: "Unpaid",
         });
 
-        const ymd = todayYMD(timezone);
+        const ymd = todayYMD(tz);
         for (const inv of invoices) {
           const to = inv?.driver?.email;
           if (!to) continue;
@@ -886,7 +890,6 @@ export async function scheduleDriverStatementsForCompany(
             {
               company: companyData,
               invoice: inv,
-              driverName: invoices?.driver?.name,
             }
           );
         }
@@ -894,7 +897,7 @@ export async function scheduleDriverStatementsForCompany(
         console.error("[DriverStatements] Job run error:", err);
       }
     },
-    { timezone }
+    { timezone: tz }
   );
 }
 
@@ -935,11 +938,7 @@ export const startDriverStatementsSchedule = async (req, res) => {
       });
     }
 
-    await scheduleDriverStatementsForCompany(companyId, {
-      timezone: "Asia/Karachi",
-      company: companyData,
-    });
-
+    await scheduleDriverStatementsForCompany(companyId);
     scheduledCompanies.add(key);
     return res
       .status(200)
@@ -950,5 +949,131 @@ export const startDriverStatementsSchedule = async (req, res) => {
       success: false,
       message: "Failed to schedule driver statements.",
     });
+  }
+};
+export async function scheduleDriverStatementsOnBoot() {
+  try {
+    const docs = await CronJob.find({
+      "driverStatement.enabled": true,
+      "driverStatement.notifications.email": true,
+    }).lean();
+
+    for (const doc of docs) {
+      await scheduleDriverStatementsForCompany(doc.companyId, {
+        timezone: process.env.CRON_TIMEZONE || "UTC",
+      });
+    }
+  } catch (e) {
+    console.error("scheduleDriverStatementsOnBoot error:", e);
+  }
+}
+
+export const autoAllocateDrivers = async (req, res) => {
+  const { companyId } = req?.user || req?.query;
+
+  try {
+    const cronJob = await CronJob.findOne({ companyId });
+    if (!cronJob) {
+      return res
+        .status(404)
+        .json({ message: "No cron job found for this company" });
+    }
+
+    const drivers = await Driver.find({ companyId });
+    if (!drivers || drivers.length === 0) {
+      return res.status(404).json({ message: "No drivers found" });
+    }
+
+    const users = await User.find({});
+    const usersByEmpNumber = new Map(
+      users.map((user) => [user.employeeNumber, user])
+    );
+
+    const bookings = await Booking.find({ companyId });
+    if (!bookings || bookings.length === 0) {
+      return res.status(404).json({ message: "No bookings found" });
+    }
+
+    for (const booking of bookings) {
+      const bookingVehicleType = booking?.vehicle?.vehicleName
+        .toLowerCase()
+        .trim();
+
+      let matchedDrivers = [];
+      if (booking.drivers && booking.drivers.length > 0) {
+        continue;
+      }
+      if (!cronJob?.autoAllocation?.enabled) {
+        continue;
+      }
+      const bookingTime = new Date(booking.date);
+      bookingTime.setHours(booking.hour, booking.minute, 0, 0);
+
+      const allocationHours = parseInt(
+        cronJob.autoAllocation?.timing?.hours || "0"
+      );
+      const allocationTriggerTime = new Date(
+        bookingTime.getTime() - allocationHours * 60 * 60 * 1000
+      );
+
+      if (new Date() < allocationTriggerTime) {
+        continue;
+      }
+      for (const driver of drivers) {
+        const empNumber = driver?.DriverData?.employeeNumber;
+        const rawvehicleTypes = driver?.VehicleData?.vehicleTypes || [];
+        const vehicleTypes = rawvehicleTypes.map((t) => t.toLowerCase().trim());
+        if (!usersByEmpNumber.has(empNumber)) {
+          console.log(
+            `User not found for driver with employeeNumber: ${empNumber}`
+          );
+          continue;
+        }
+
+        if (vehicleTypes.includes(bookingVehicleType)) {
+          matchedDrivers.push(driver);
+        }
+      }
+
+      if (matchedDrivers.length > 0) {
+        console.log(
+          `Matched drivers for booking ${booking.bookingId}:`,
+          matchedDrivers
+        );
+        const assignedDriver = matchedDrivers[0];
+        const driverUser = usersByEmpNumber.get(assignedDriver.DriverData.employeeNumber);
+
+        await Booking.findOneAndUpdate(
+          { _id: booking._id },
+          {
+            $set: {
+              drivers: [
+                {
+                  _id: String(new mongoose.Types.ObjectId()),
+                  userId: String(driverUser?._id),
+                  driverId: String(assignedDriver._id),
+                  name: driverUser?.name || "",
+                  email: driverUser?.email || "",
+                  employeeNumber: String(assignedDriver.DriverData.employeeNumber),
+                  contact: String(assignedDriver.DriverData.contact),
+                  assignedAt: new Date(),
+                  status: "assigned",
+                },
+              ],
+            },
+          },
+          { new: true }
+        );
+      } else {
+        console.log(
+          `No matching drivers found for booking ${booking.bookingId}`
+        );
+      }
+    }
+
+    return res.status(200).json({ message: "Auto allocation completed" });
+  } catch (error) {
+    console.error("Auto Allocation Error:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
