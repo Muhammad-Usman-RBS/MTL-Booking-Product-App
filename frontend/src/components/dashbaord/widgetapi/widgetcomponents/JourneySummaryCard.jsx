@@ -7,7 +7,9 @@ const JourneySummaryCard = ({
     showReturnBooking,
     matchedSurcharge,
     durationText,
-    distanceText
+    distanceText,
+    currencySymbol = '£',
+    currencyCode = 'GBP',
 }) => {
     /* ---------- helpers ---------- */
     const renderArrivalTime = () => {
@@ -50,10 +52,11 @@ const JourneySummaryCard = ({
                             formData.minute
                         ).padStart(2, "0")} ${formData.hour < 12 ? "AM" : "PM"}`
                         : "Time not set"}
-                    <span className="text-sm text-gray-500">&nbsp;(GMT+1)</span>
+                    {/* <span className="text-sm text-gray-500">&nbsp;(GMT+1)</span> */}
+                    <span className="text-sm text-gray-500">&nbsp;({currencyCode})</span>
                 </div>
 
-          
+
             </div>
 
             {/* outbound journey row */}

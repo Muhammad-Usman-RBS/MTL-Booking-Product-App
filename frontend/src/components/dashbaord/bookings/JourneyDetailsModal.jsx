@@ -8,8 +8,13 @@ import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import Icons from "../../../assets/icons";
 import moment from "moment-timezone";
+import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 
 const JourneyDetailsModal = ({ viewData = {} }) => {
+ const { data: bookingSettingData } = useGetBookingSettingQuery();
+  const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
+  const currencySymbol = currencySetting?.symbol || "£";
+  const currencyCode   = currencySetting?.value  || "GBP";
 
   const j = viewData?.returnJourneyToggle
   ? viewData?.returnJourney || {}
@@ -356,13 +361,30 @@ const dropIsAirport   = isAirport(j.dropoff);
           <div className="btn btn-primary text-sm px-5 py-1.5">
             Fare:
             <span className="text-base">
-              {loggedInUser.role === "driver" ? (
+              {/* {loggedInUser.role === "driver" ? (
                 <>{viewData?.driverFare || viewData?.returnDriverFare} GBP</>
               ) : (
                 <>
                   {viewData?.primaryJourney?.fare ||
                     viewData?.returnJourneyFare}
                  &nbsp; GBP
+                </>
+              )} */}
+                {loggedInUser.role === "driver" ? (
+                <>
+                  {currencySymbol}
+                  {Number(
+                    viewData?.driverFare ?? viewData?.returnDriverFare ?? 0
+                  ).toFixed(2)}{" "}
+                  {currencyCode}
+                </>
+              ) : (
+                <>
+                  {currencySymbol}
+                  {Number(
+                    viewData?.primaryJourney?.fare ?? viewData?.returnJourneyFare ?? 0
+                  ).toFixed(2)}{" "}
+                  {currencyCode}
                 </>
               )}
             </span>

@@ -10,6 +10,7 @@ import { useLazyGeocodeQuery } from '../../../redux/api/googleApi';
 import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
 import { useGetFixedPricesForWidgetQuery } from '../../../redux/api/fixedPriceApi';
 import { useGetDiscountsByCompanyIdQuery } from '../../../redux/api/discountApi';
+import { useGetBookingSettingQuery } from '../../../redux/api/bookingSettingsApi';
 import WidgetBooking from './WidgetBooking';
 import PriceBreakdown from './widgetcomponents/PriceBreakdown';
 import JourneySummaryCard from './widgetcomponents/JourneySummaryCard';
@@ -59,6 +60,15 @@ const WidgetBookingInformation = ({
   const { data: zoneToZonePrices = [] } = useGetFixedPricesForWidgetQuery(companyId, { skip: !companyId });
 
   const { data: discounts = [] } = useGetDiscountsByCompanyIdQuery(companyId, { skip: !companyId });
+
+  // Booking settings (currency, timezone, etc.)
+  const { data: bookingSettingData } = useGetBookingSettingQuery();
+
+  // Currency from settings (same shape as your screenshot)
+  const currencySetting = bookingSettingData?.setting?.currency?.[0] || null;
+  const currencySymbol = currencySetting?.symbol || '£';
+  const currencyCode = currencySetting?.value || 'GBP';
+  const currencyLabel = currencySetting?.label || 'GBP – British Pound (£)';
 
   const isPickupAirport = formData?.pickup?.toLowerCase()?.includes('airport');
   const isDropoffAirport = formData?.dropoff?.toLowerCase()?.includes('airport');
@@ -536,6 +546,8 @@ const WidgetBookingInformation = ({
             matchedSurcharge={matchedSurcharge}
             durationText={durationText}
             distanceText={distanceText}
+            currencySymbol={currencySymbol}
+            currencyCode={currencyCode}
           />
 
           <div className='mt-6'>
@@ -573,6 +585,8 @@ const WidgetBookingInformation = ({
                   returnPrice: totalWithReturn,
                 };
               })}
+              currencySymbol={currencySymbol}
+              currencyCode={currencyCode}
               selectedCarId={selectedCarId}
               onSelect={(id, type) => {
                 setSelectedCarId(id);
@@ -634,6 +648,8 @@ const WidgetBookingInformation = ({
             dropoffAirportPrice={dropoffAirportPrice}
             isHourlyMode={isHourlyMode}
             calculatedTotalPrice={calculatedTotalPrice}
+            currencySymbol={currencySymbol}
+            currencyCode={currencyCode}
           />
 
           {showReturnBooking && (

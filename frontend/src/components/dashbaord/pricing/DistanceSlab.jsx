@@ -6,12 +6,18 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useSelector } from "react-redux";
 import { useGetAllVehiclesQuery, useUpdateVehicleMutation } from "../../../redux/api/vehicleApi";
+import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 
 const DistanceSlab = () => {
   const companyId = useSelector((state) => state.auth?.user?.companyId);
   const { data: vehicleList = [] } = useGetAllVehiclesQuery(companyId, {
     skip: !companyId,
   });
+
+  const { data: bookingSettingData } = useGetBookingSettingQuery();
+  const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
+  const currencySymbol = currencySetting?.symbol || "£";
+  const currencyCode = currencySetting?.value || "GBP";
 
   const [data, setData] = useState([]);
   const [updateVehicle] = useUpdateVehicleMutation();
@@ -141,8 +147,10 @@ const DistanceSlab = () => {
   };
 
   const tableHeaders = [
+    // { label: "Distance (miles)", key: "distance" },
+    // { label: "Price Per Mile", key: "pricePerMile" },
     { label: "Distance (miles)", key: "distance" },
-    { label: "Price Per Mile", key: "pricePerMile" },
+    { label: `Price Per Mile (${currencySymbol}/${"mile"})`, key: "pricePerMile" },
     ...vehicleList.map((v) => ({
       label: `${v.vehicleName} (${v.percentageIncrease}%)`,
       key: `${v.vehicleName}_total`,
@@ -214,7 +222,10 @@ const DistanceSlab = () => {
 
       row[`${v.vehicleName}_total`] = (
         <div className="text-sm">
-          <div className="text-blue-600 font-semibold">£{perMile.toFixed(2)}</div>
+          {/* <div className="text-blue-600 font-semibold">£{perMile.toFixed(2)}</div> */}
+          <div className="text-blue-600 font-semibold">
+            {currencySymbol}{perMile.toFixed(2)}
+          </div>
           <div className="text-gray-400 text-xs">x {slabDistance} miles</div>
         </div>
       );

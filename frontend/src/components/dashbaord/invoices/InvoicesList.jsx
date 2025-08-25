@@ -10,12 +10,19 @@ import { toast } from "react-toastify";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { useSelector } from "react-redux";
+import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 
 const InvoicesList = () => {
   const [search, setSearch] = useState("");
   const { data, isLoading, isError, refetch } = useGetAllInvoicesQuery();
   const [updateInvoice] = useUpdateInvoiceMutation();
   const user = useSelector((state) => state.auth.user);
+
+   // currency from booking settings
+  const { data: bookingSettingData } = useGetBookingSettingQuery();
+  const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
+  const currencySymbol = currencySetting?.symbol || "£";
+  const currencyCode = currencySetting?.value || "GBP";
 
   // Determine user role and appropriate mode
   const getUserRole = () => {
@@ -182,7 +189,8 @@ const InvoicesList = () => {
         source,
         date,
         dueDate,
-        amount: `£${amount.toFixed(2)}`,
+        // amount: `£${amount.toFixed(2)}`,
+        amount: `${currencySymbol}${amount.toFixed(2)}`,
         status: userRole === "clientadmin" ? (
           <SelectOption
             value={status}
@@ -245,7 +253,8 @@ const InvoicesList = () => {
     account: item.account,
     date: item.date,
     dueDate: item.dueDate,
-    amount: `£${item.amount}`,
+    // amount: `£${item.amount}`,
+    amount: `${currencySymbol}${item.amount}`,
     status: item.status,
   }));
 

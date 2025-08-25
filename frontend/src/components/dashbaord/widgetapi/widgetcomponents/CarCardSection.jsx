@@ -7,6 +7,8 @@ const CarCard = ({
   isSelected,
   onSelect,
   triggerReturnJourney,
+  currencySymbol = '£',
+  currencyCode = 'GBP'
 }) => {
   const [showDetails, setShowDetails] = useState(false);
 
@@ -81,7 +83,8 @@ const CarCard = ({
                     }}
                     className="btn btn-primary"
                   >
-                    ONE WAY: £{parseFloat(price).toFixed(2)}
+                    {/* ONE WAY: £{parseFloat(price).toFixed(2)} */}
+                    ONE WAY: {currencySymbol}{Number(price).toFixed(2)}
                   </button>
                 )}
 
@@ -95,7 +98,8 @@ const CarCard = ({
                     }}
                     className="btn btn-reset"
                   >
-                    RETURN: £{parseFloat(returnPrice).toFixed(2)}
+                    {/* RETURN: £{parseFloat(returnPrice).toFixed(2)} */}
+                    RETURN: {currencySymbol}{Number(returnPrice).toFixed(2)}
                   </button>
                 )}
               </div>
@@ -132,6 +136,8 @@ const CarCardSection = ({
   selectedCarId,
   onSelect,
   triggerReturnJourney,
+  currencySymbol = '£',
+  currencyCode = 'GBP'
 }) => (
   <div className="grid grid-cols-1">
     {carList.map((car) => (
@@ -141,6 +147,8 @@ const CarCardSection = ({
         isSelected={selectedCarId === car._id}
         onSelect={onSelect}
         triggerReturnJourney={triggerReturnJourney}
+        currencySymbol={currencySymbol}
+        currencyCode={currencyCode}
       />
     ))}
   </div>

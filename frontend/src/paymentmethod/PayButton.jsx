@@ -5,7 +5,7 @@ import { loadStripe } from "@stripe/stripe-js";
 const pk = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = pk ? loadStripe(pk) : null;
 
-const DEFAULT_PRICE_ID = import.meta.env.VITE_STRIPE_DEFAULT_PRICE_ID || ""; // Option A
+const DEFAULT_PRICE_ID = import.meta.env.VITE_STRIPE_DEFAULT_PRICE_ID || ""; 
 
 const clampQty = (q) => Math.min(Math.max(Math.floor(q || 1), 1), 99);
 

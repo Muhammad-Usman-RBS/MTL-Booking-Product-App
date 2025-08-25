@@ -7,9 +7,16 @@ import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import { useLazySearchPostcodeSuggestionsQuery } from "../../../redux/api/googleApi";
 import { useFetchAllPostcodePricesQuery, useCreatePostcodePriceMutation, useUpdatePostcodePriceMutation, useDeletePostcodePriceMutation} from "../../../redux/api/postcodePriceApi";
+import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 
 const PostcodeDistrict = () => {
   const companyId = useSelector((state) => state.auth?.user?.companyId);
+
+  // currency from booking settings
+  const { data: bookingSettingData } = useGetBookingSettingQuery();
+  const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
+  const currencySymbol = currencySetting?.symbol || "£";
+ const currencyCode = currencySetting?.value || "GBP";
 
   const { data: fixedPrices = [], refetch } = useFetchAllPostcodePricesQuery();
   const [createFixedPrice] = useCreatePostcodePriceMutation();
@@ -151,7 +158,8 @@ const PostcodeDistrict = () => {
   const tableHeaders = [
     { label: "Pick Up", key: "pickup" },
     { label: "Drop Off", key: "dropoff" },
-    { label: "Price (GBP)", key: "price" },
+    // { label: "Price (GBP)", key: "price" },
+    { label: `Price (${currencyCode})`, key: "price" },
     { label: "Action", key: "actions" },
   ];
 
@@ -173,7 +181,7 @@ const PostcodeDistrict = () => {
         <div>
           <label className="block mb-1 text-sm font-medium text-gray-700">Increase / Decrease All Prices</label>
           <div className="flex gap-2">
-            <input type="number" className="custom_input w-32" placeholder="GBP" value={priceChange} onChange={(e) => setPriceChange(e.target.value)} />
+         <input type="number" className="custom_input w-32" placeholder={currencyCode} value={priceChange} onChange={(e) => setPriceChange(e.target.value)} />
             <button className="btn btn-reset" onClick={handleBulkUpdate}>Update</button>
           </div>
         </div>
@@ -234,8 +242,9 @@ const PostcodeDistrict = () => {
 
           {/* Price */}
           <div>
-            <label className="block text-gray-700 font-semibold mb-1">Price (GBP)</label>
-            <input type="number" className="custom_input" value={selectedItem?.price} onChange={(e) => setSelectedItem({ ...selectedItem, price: parseFloat(e.target.value) })} placeholder="Enter fixed price" />
+            {/* <label className="block text-gray-700 font-semibold mb-1">Price (GBP)</label> */}
+            <label className="block text-gray-700 font-semibold mb-1">Price ({currencyCode})</label>
+            <input type="number" className="custom_input" value={selectedItem?.price} onChange={(e) => setSelectedItem({ ...selectedItem, price: parseFloat(e.target.value) })} placeholder={`Enter fixed price in ${currencyCode}`} />
           </div>
 
           {/* Footer Buttons */}

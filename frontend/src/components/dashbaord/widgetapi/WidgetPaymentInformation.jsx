@@ -10,6 +10,7 @@ import { useLazyGetVoucherByCodeQuery } from "../../../redux/api/vouchersApi";
 import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPricingApi';
 import OutletHeading from '../../../constants/constantscomponents/OutletHeading';
 import ArrowButton from '../../../constants/constantscomponents/ArrowButton';
+import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 
 const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, booking = {} }) => {
     const [passengerDetails, setPassengerDetails] = useState({ name: '', email: '', phone: '' });
@@ -24,6 +25,10 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
     const [fetchVoucher] = useLazyGetVoucherByCodeQuery();
     const { data: discounts = [] } = useGetDiscountsByCompanyIdQuery(companyId);
     const { data: generalPricing } = useGetGeneralPricingPublicQuery(companyId);
+    const { data: bookingSettingData } = useGetBookingSettingQuery();
+    const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
+    const currencySymbol = currencySetting?.symbol || "£";
+    const currencyCode = currencySetting?.value || "GBP";
 
     const [voucher, setVoucher] = useState('');
     const [companyDiscountPercent, setCompanyDiscountPercent] = useState(0);
@@ -247,12 +252,17 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                     {((companyDiscountPercent + voucherDiscountPercent) > 0 || parseInt(formData.childSeat || '0') > 0) ? (
                                         <>
                                             <span className="line-through text-red-400 me-2">
-                                                {(fare || 0).toFixed(2)} GBP
+                                                {/* {(fare || 0).toFixed(2)} GBP */}
+                                                {currencySymbol}{Number(fare || 0).toFixed(2)}
                                             </span>
-                                            <span className="text-green-600">{finalFare} GBP</span>
+                                            <span className="text-green-600">
+                                                {/* {finalFare} GBP */}
+                                                {currencySymbol}{Number(finalFare).toFixed(2)}
+                                            </span>
                                         </>
                                     ) : (
-                                        <>FARE: {finalFare} GBP</>
+                                        // <>FARE: {finalFare} GBP</>4
+                                        <>FARE: {currencySymbol}{Number(finalFare).toFixed(2)}</>
                                     )}
                                 </div>
 

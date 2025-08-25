@@ -14,6 +14,7 @@ import {
 } from "../../../redux/api/fixedPriceApi";
 import { useGetAllZonesQuery } from "../../../redux/api/zoneApi";
 import ExtrasPrcing from "./ExtrasPrcing";
+import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 
 const FixedPricing = () => {
   const [selectedItem, setSelectedItem] = useState(null);
@@ -38,6 +39,12 @@ const FixedPricing = () => {
 
   const [priceChange, setPriceChange] = useState(0);
   const [deleteItemId, setDeleteItemId] = useState(null);
+
+   // currency from booking settings
+  const { data: bookingSettingData } = useGetBookingSettingQuery();
+  const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
+  const currencySymbol = currencySetting?.symbol || "£";
+  const currencyCode = currencySetting?.value || "GBP";
 
   const zonesOptions = useMemo(
     () =>
@@ -176,7 +183,8 @@ const FixedPricing = () => {
   const tableHeaders = [
     { label: "Pick Up", key: "pickup" },
     { label: "Drop Off", key: "dropoff" },
-    { label: "Price (GBP)", key: "price" },
+    // { label: "Price (GBP)", key: "price" },
+    { label: `Price (${currencyCode})`, key: "price" },
     { label: "Action", key: "actions" },
   ];
 
@@ -212,7 +220,8 @@ const FixedPricing = () => {
               <input
                 type="number"
                 className="custom_input w-32"
-                placeholder="GBP"
+                // placeholder="GBP"
+                 placeholder={currencyCode}
                 value={priceChange}
                 onChange={(e) => setPriceChange(e.target.value)}
               />
@@ -305,7 +314,9 @@ const FixedPricing = () => {
 
           {/* Price */}
           <div>
-            <label className="block text-gray-700 font-semibold mb-1">Price (GBP)</label>
+            {/* <label className="block text-gray-700 font-semibold mb-1">Price (GBP)</label> */}
+            <label className="block text-gray-700 font-semibold mb-1">Price ({currencyCode})</label>
+ 
             <input
               type="number"
               className="custom_input"
@@ -316,7 +327,8 @@ const FixedPricing = () => {
                   price: e.target.value === "" ? "" : parseFloat(e.target.value),
                 }))
               }
-              placeholder="Enter fixed price in GBP"
+              // placeholder="Enter fixed price in GBP"
+              placeholder={`Enter fixed price in ${currencyCode}`}
             />
           </div>
 

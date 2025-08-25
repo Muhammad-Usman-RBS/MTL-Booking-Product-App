@@ -10,6 +10,7 @@ import {
 import { toast } from "react-toastify";
 import { useGetGeneralPricingPublicQuery } from "../../../redux/api/generalPricingApi";
 import { useSelector } from "react-redux";
+import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 
 const InvoicePage = () => {
   const { id } = useParams();
@@ -21,6 +22,13 @@ const InvoicePage = () => {
     companyId,
     { skip: !companyId }
   );
+
+  // Currency from booking settings (same shape as NewBooking)
+  const { data: bookingSettingData } = useGetBookingSettingQuery();
+  const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
+  const currencySymbol = currencySetting?.symbol || "£";
+  const currencyCode = currencySetting?.value || "GBP";
+
   const [selectAll, setSelectAll] = useState(false);
   const [checkedItems, setCheckedItems] = useState({});
   const [itemDetails, setItemDetails] = useState([]);
@@ -41,9 +49,8 @@ const InvoicePage = () => {
     if (invoiceData?.invoice) {
       const invoice = invoiceData.invoice;
 
-      const customerText = `${invoice.customer?.name || ""}\n${
-        invoice.customer?.email || ""
-      }\n${invoice.customer?.phone || ""}`;
+      const customerText = `${invoice.customer?.name || ""}\n${invoice.customer?.email || ""
+        }\n${invoice.customer?.phone || ""}`;
       setBillTo(customerText);
       const fetchedTaxPercent =
         parseFloat(generalPricingData?.invoiceTaxPercent) || 0;
@@ -51,8 +58,8 @@ const InvoicePage = () => {
 
       setInvoiceDate(
         invoice.invoiceDate?.split("T")[0] ||
-          invoice.createdAt?.split("T")[0] ||
-          ""
+        invoice.createdAt?.split("T")[0] ||
+        ""
       );
 
       setDueDate(invoice.items?.[0]?.date?.split("T")[0] || "");
@@ -75,8 +82,7 @@ const InvoicePage = () => {
       const details =
         invoice.items?.map(
           (item) =>
-            `${item.bookingId} - ${invoice.customer?.name || ""}\nPickup: ${
-              item.pickup
+            `${item.bookingId} - ${invoice.customer?.name || ""}\nPickup: ${item.pickup
             }\n\nDrop off: ${item.dropoff}`
         ) || [];
       setItemDetails(details);
@@ -172,13 +178,13 @@ const InvoicePage = () => {
             : undefined,
         customer:
           name.trim() !== original.customer?.name ||
-          email.trim() !== original.customer?.email ||
-          phone.trim() !== original.customer?.phone
+            email.trim() !== original.customer?.email ||
+            phone.trim() !== original.customer?.phone
             ? {
-                name: name.trim(),
-                email: email.trim(),
-                phone: phone.trim(),
-              }
+              name: name.trim(),
+              email: email.trim(),
+              phone: phone.trim(),
+            }
             : undefined,
         notes: notes !== original.notes ? notes : undefined,
         discount:
@@ -445,19 +451,26 @@ const InvoicePage = () => {
           {/* Sub Total */}
           <p>
             Sub Total:
-            <strong className="text-blue-800 ml-1">
+            {/* <strong className="text-blue-800 ml-1">
               £
               {invoiceData?.invoice?.items?.reduce(
                 (acc, item) => acc + (item.fare || 0),
                 0
               )}
+            </strong> */}
+            <strong className="text-blue-800 ml-1">
+              {currencySymbol}
+              {(invoiceData?.invoice?.items?.reduce(
+                (acc, item) => acc + (item.fare || 0),
+                0
+              ) || 0).toFixed(2)}
             </strong>
           </p>
 
           {/* Discount */}
           <p className="mt-4 flex justify-end items-center gap-2">
             <span className="text-gray-700">Discount:</span>
-            <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" />
+            <span className="font-semibold">{currencySymbol}</span>
             <input
               type="text"
               className="border border-[var(--light-gray)] rounded-lg p-1 w-24 text-right"
@@ -469,7 +482,8 @@ const InvoicePage = () => {
           {/* Deposit */}
           <p className="mt-2 flex justify-end items-center gap-2">
             <span className="text-gray-700">Deposit:</span>
-            <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" />
+            {/* <Icons.IndianRupee size={16} className="text-[var(--dark-gray)]" /> */}
+            <span className="font-semibold">{currencySymbol}</span>
             <input
               type="text"
               className="border border-[var(--light-gray)] rounded-lg p-1 w-24 text-right"
@@ -480,12 +494,13 @@ const InvoicePage = () => {
 
           {/* Grand Total */}
           <p className="mt-3 text-xl font-bold text-blue-800">
-            Total: £
-            {(
+            {/* Total: £ */}
+            Total: {currencySymbol}
+            {Number((
               itemAmounts.reduce((sum, amt) => sum + parseFloat(amt || 0), 0) -
               parseFloat(discount || 0) +
               parseFloat(deposit || 0)
-            ).toFixed(2)}
+            ).toFixed(2)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
 

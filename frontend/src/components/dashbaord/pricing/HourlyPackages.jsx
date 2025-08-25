@@ -13,6 +13,7 @@ import {
   useDeleteHourlyPackageMutation,
 } from "../../../redux/api/hourlyPricingApi";
 import { useGetAllVehiclesQuery } from "../../../redux/api/vehicleApi";
+import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 
 const HourlyPackages = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,6 +25,11 @@ const HourlyPackages = () => {
 
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
+
+  const { data: bookingSettingData } = useGetBookingSettingQuery();
+  const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
+  const currencySymbol = currencySetting?.symbol || "£";
+  const currencyCode = currencySetting?.value || "GBP";
 
   const [addHourlyPackage, { isLoading: adding }] =
     useAddHourlyPackageMutation();
@@ -60,7 +66,8 @@ const HourlyPackages = () => {
     vehicles.forEach((v) => {
       row[v.vehicleName] =
         item.vehicleRates?.[v.vehicleName] !== undefined
-          ? `£${item.vehicleRates[v.vehicleName]}`
+          // ? `£${item.vehicleRates[v.vehicleName]}`
+          ? `${currencySymbol}${Number(item.vehicleRates[v.vehicleName]).toFixed(2)}`
           : "-";
     });
 
@@ -183,7 +190,6 @@ const HourlyPackages = () => {
   return (
     <div>
       <OutletHeading name="Hourly Package" />
-
       <button onClick={handleOpenModal} className="mb-6 btn btn-edit">
         Add New
       </button>
@@ -225,8 +231,9 @@ const HourlyPackages = () => {
           ].map(({ label, name }, idx) => (
             <div key={name}>
               <label className="block text-sm font-medium text-gray-700">
-                {label}
-                {idx >= 2 ? " (£)" : ""}
+                {/* {label}
+                {idx >= 2 ? " (£)" : ""} */}
+                {label}{idx >= 2 ? ` (${currencySymbol})` : ""}
               </label>
               <input
                 type="number"

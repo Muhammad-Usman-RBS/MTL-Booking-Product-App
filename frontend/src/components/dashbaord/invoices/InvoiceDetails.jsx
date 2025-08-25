@@ -6,6 +6,7 @@ import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { useGetCompanyByIdQuery } from "../../../redux/api/companyApi";
+import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 import {
   useSendInvoiceEmailMutation,
   useUpdateInvoiceMutation,
@@ -48,6 +49,12 @@ const InvoiceDetails = ({ item }) => {
     skip: !companyId,
   });
   const company = companyData || {};
+
+  // currency from booking settings (same pattern as NewBooking)
+  const { data: bookingSettingData } = useGetBookingSettingQuery();
+  const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
+  const currencySymbol = currencySetting?.symbol || "£";
+  const currencyCode = currencySetting?.value || "GBP";
 
   const handleStatusUpdate = async () => {
     try {
@@ -289,7 +296,8 @@ const InvoiceDetails = ({ item }) => {
                         return `${taxPercent.toFixed(0)}%`;
                       })()}
                     </td>
-                    <td>£{ride.totalAmount.toFixed(2)}</td>
+                    {/* <td>£{ride.totalAmount.toFixed(2)}</td> */}
+                    <td>{currencySymbol}{ride.totalAmount.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -298,18 +306,22 @@ const InvoiceDetails = ({ item }) => {
 
           <div className="totals">
             <p>
-              Sub Total: £
-              {item.items.reduce((acc, i) => acc + i.fare, 0).toFixed(2)}
+              {/* Sub Total: £
+              {item.items.reduce((acc, i) => acc + i.fare, 0).toFixed(2)} */}
+              Sub Total: {currencySymbol}
+            {item.items.reduce((acc, i) => acc + i.fare, 0).toFixed(2)}
             </p>
             <p>
-              Total Tax: £
+              Total Tax: {currencySymbol}
               {item.items
                 .reduce((acc, i) => acc + (i.totalAmount - i.fare), 0)
                 .toFixed(2)}
             </p>
             <p className="balance">
-              Grand Total: £
-              {item.items.reduce((acc, i) => acc + i.totalAmount, 0).toFixed(2)}
+              {/* Grand Total: £
+              {item.items.reduce((acc, i) => acc + i.totalAmount, 0).toFixed(2)} */}
+                Grand Total: {currencySymbol}
+            {item.items.reduce((acc, i) => acc + i.totalAmount, 0).toFixed(2)}
             </p>
           </div>
 

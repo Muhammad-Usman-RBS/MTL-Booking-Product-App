@@ -4,6 +4,8 @@ import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import Icons from "../../../assets/icons";
 import { useGetDriverJobsQuery } from "../../../redux/api/jobsApi";
+import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
+
 const statusColors = {
     "New": {
         bg: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)", // Indigo-Violet
@@ -54,110 +56,115 @@ const statusColors = {
 
 const BookingCalendar = () => {
     const user = useSelector((state) => state.auth.user);
+    const { data: bookingSettingData } = useGetBookingSettingQuery();
+    const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
+    const currencySymbol = currencySetting?.symbol || "£";
+    const currencyCode = currencySetting?.value || "GBP";
+
     const { data: bookingsData, isLoading, error } = useGetAllBookingsQuery(user?.companyId);
-      const companyId = user?.companyId;
-      const driverId = user?._id;
-      const isDriver = user?.role?.toLowerCase?.() === "driver";
-      const isCustomer = user?.role.toLowerCase() === 'customer'
-      const {
+    const companyId = user?.companyId;
+    const driverId = user?._id;
+    const isDriver = user?.role?.toLowerCase?.() === "driver";
+    const isCustomer = user?.role.toLowerCase() === 'customer'
+    const {
         data: driverJobsData, } = useGetDriverJobsQuery(
-        { companyId, driverId },
-        { skip: !companyId }
-      );
-      
-   
+            { companyId, driverId },
+            { skip: !companyId }
+        );
+
+
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedStatus, setSelectedStatus] = useState("All");
     const [hoveredEvent, setHoveredEvent] = useState(null);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [processedBookings, setProcessedBookings] = useState([]);
-   
-      useEffect(() => {
+
+    useEffect(() => {
         // ✅ Bail out early if bookings not loaded yet
         if (!bookingsData || !Array.isArray(bookingsData.bookings)) {
-          setProcessedBookings([]);
-          return;
+            setProcessedBookings([]);
+            return;
         }
-   
-       const userEmail = user?.email;
-       const base = bookingsData.bookings || [];
-    
-       let visibleBookings = base;
-   
-       if (isDriver) {
-        const jobs = driverJobsData?.jobs ?? [];
-        const allowedStatuses = new Set([
-          "Accepted",
-          "On Route",
-          "At Location",
-          "Ride Started",
-          "Completed",
-          "No Show"
-        ]);
-      
-        const visibleBookingIds = new Set(
-          jobs
-            .filter(
-              (job) =>
-                String(job?.driverId) === String(driverId) &&
-                allowedStatuses.has(job?.jobStatus) &&
-                job?.bookingId
+
+        const userEmail = user?.email;
+        const base = bookingsData.bookings || [];
+
+        let visibleBookings = base;
+
+        if (isDriver) {
+            const jobs = driverJobsData?.jobs ?? [];
+            const allowedStatuses = new Set([
+                "Accepted",
+                "On Route",
+                "At Location",
+                "Ride Started",
+                "Completed",
+                "No Show"
+            ]);
+
+            const visibleBookingIds = new Set(
+                jobs
+                    .filter(
+                        (job) =>
+                            String(job?.driverId) === String(driverId) &&
+                            allowedStatuses.has(job?.jobStatus) &&
+                            job?.bookingId
+                    )
+                    .map((job) => String(job.bookingId))
+            );
+
+            visibleBookings = base.filter((booking) =>
+                visibleBookingIds.has(String(booking?._id))
+            );
+        } else if (isCustomer) {
+            visibleBookings = base.filter(
+                (b) => b?.passenger?.email === userEmail
             )
-            .map((job) => String(job.bookingId))
-        );
-      
-        visibleBookings = base.filter((booking) =>
-          visibleBookingIds.has(String(booking?._id))
-        );
-      }else if(isCustomer ) {
-        visibleBookings = base.filter(
-            (b) => b?.passenger?.email === userEmail
-        )
-       }
-       const processed = visibleBookings.flatMap((booking) => {
-        const entries = [];
-  
-        if (booking.primaryJourney?.date) {
-          const fare = booking.returnJourneyToggle ? booking.returnDriverFare : booking.driverFare;
-          entries.push({
-            id: booking._id,
-            date: new Date(booking.primaryJourney.date).toISOString().split("T")[0],
-            time: `${String(booking.primaryJourney.hour).padStart(2, "0")}:${String(booking.primaryJourney.minute).padStart(2, "0")}`,
-            pickup: booking.primaryJourney.pickup || "N/A",
-            dropoff: booking.primaryJourney.dropoff || "N/A",
-            fare,
-            status: booking.status || "New",
-            passenger: booking.passenger?.name || "N/A",
-            vehicle: booking.vehicleType || "N/A",
-            bookingId: booking.bookingId,
-            journeyType: "Primary",
-          });
         }
-  
-        if (booking.returnJourneyToggle && booking.returnJourney?.date) {
-          const fare = booking.returnJourneyFare ?? booking.returnJourney?.fare ?? 0;
-          entries.push({
-            id: `${booking._id}_return`,
-            date: new Date(booking.returnJourney.date).toISOString().split("T")[0],
-            time: `${String(booking.returnJourney.hour).padStart(2, "0")}:${String(booking.returnJourney.minute).padStart(2, "0")}`,
-            pickup: booking.returnJourney.pickup || "N/A",
-            dropoff: booking.returnJourney.dropoff || "N/A",
-            fare,
-            status: booking.status || "New",
-            passenger: booking.passenger?.name || "N/A",
-            vehicle: booking.vehicleType || "N/A",
-            bookingId: booking.bookingId,
-            journeyType: "Return",
-          });
-        }
-  
-        return entries;
-      });
-  
-      setProcessedBookings(processed);
-   }, [bookingsData, driverJobsData, user?._id, user?.role, isDriver]);
- 
+        const processed = visibleBookings.flatMap((booking) => {
+            const entries = [];
+
+            if (booking.primaryJourney?.date) {
+                const fare = booking.returnJourneyToggle ? booking.returnDriverFare : booking.driverFare;
+                entries.push({
+                    id: booking._id,
+                    date: new Date(booking.primaryJourney.date).toISOString().split("T")[0],
+                    time: `${String(booking.primaryJourney.hour).padStart(2, "0")}:${String(booking.primaryJourney.minute).padStart(2, "0")}`,
+                    pickup: booking.primaryJourney.pickup || "N/A",
+                    dropoff: booking.primaryJourney.dropoff || "N/A",
+                    fare,
+                    status: booking.status || "New",
+                    passenger: booking.passenger?.name || "N/A",
+                    vehicle: booking.vehicleType || "N/A",
+                    bookingId: booking.bookingId,
+                    journeyType: "Primary",
+                });
+            }
+
+            if (booking.returnJourneyToggle && booking.returnJourney?.date) {
+                const fare = booking.returnJourneyFare ?? booking.returnJourney?.fare ?? 0;
+                entries.push({
+                    id: `${booking._id}_return`,
+                    date: new Date(booking.returnJourney.date).toISOString().split("T")[0],
+                    time: `${String(booking.returnJourney.hour).padStart(2, "0")}:${String(booking.returnJourney.minute).padStart(2, "0")}`,
+                    pickup: booking.returnJourney.pickup || "N/A",
+                    dropoff: booking.returnJourney.dropoff || "N/A",
+                    fare,
+                    status: booking.status || "New",
+                    passenger: booking.passenger?.name || "N/A",
+                    vehicle: booking.vehicleType || "N/A",
+                    bookingId: booking.bookingId,
+                    journeyType: "Return",
+                });
+            }
+
+            return entries;
+        });
+
+        setProcessedBookings(processed);
+    }, [bookingsData, driverJobsData, user?._id, user?.role, isDriver]);
+
 
     const monthNames = [
         "January", "February", "March", "April", "May", "June",
@@ -371,8 +378,9 @@ const BookingCalendar = () => {
                             <p><strong>Booking ID:</strong> {hoveredEvent.bookingId}</p>
                             <p><strong>Journey:</strong> {hoveredEvent.journeyType}</p>
                             <p className="font-bold text-green-600">
-  £{Number(hoveredEvent?.fare ?? 0).toFixed(2)}
-</p>                        </div>
+                                {/* £{Number(hoveredEvent?.fare ?? 0).toFixed(2)} */}
+                                {currencySymbol}{Number(hoveredEvent?.fare ?? 0).toFixed(2)} {currencyCode}
+                            </p>                        </div>
                     </div>
                 )}
             </div>

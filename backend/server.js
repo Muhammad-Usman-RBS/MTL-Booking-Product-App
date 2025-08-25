@@ -104,6 +104,7 @@ import bookingSettingRoutes from "./routes/bookingSettingRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import cronJobsRoutes from "./routes/cronJobRoutes.js";
 import stripeRoutes from "./routes/stripeRoutes.js";
+import paypalRoutes from "./routes/paypalRoutes.js";
 
 dotenv.config();
 await connectDB();
@@ -176,7 +177,9 @@ app.use("/api/notification", NotificationRoutes);
 app.use("/api/booking-settings", bookingSettingRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/cronjobs", cronJobsRoutes);
-app.use("/api/stripe", stripeRoutes); // e.g., /create-checkout-session
+app.use("/api/stripe", stripeRoutes);
+app.use("/api/paypal", paypalRoutes);
+
 app.use("/api", userRoutes);
 
 // ---- Errors (keep after routes) ----
