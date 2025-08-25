@@ -1069,7 +1069,7 @@ export const timeOptions = {
     "20:00 - 21:00","21:00 - 22:00","22:00 - 23:00","23:00 - 24:00"
   ],
   weekDays: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
-  frequencies: ["Daily","Weekly","Bi-weekly","Monthly","Quarterly"]
+frequencies: ["Weekly","Monthly"]
 };
 
 // Used

@@ -1,5 +1,5 @@
 import express from "express";
-import { createCronJob, getCronJob, getAllCronJobs, updateCronJob, updateCronJobByCompany, deleteCronJob, toggleCronJobFeature, runNow } from "../controllers/settings/cronJobController.js";
+import { createCronJob, getCronJob, getAllCronJobs, updateCronJob, updateCronJobByCompany, deleteCronJob, toggleCronJobFeature, runNow,  startDriverStatementsSchedule } from "../controllers/settings/cronJobController.js";
 import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -12,5 +12,6 @@ router.put("/company/:companyId", protect, authorize("clientadmin"), updateCronJ
 router.put("/company/:companyId/toggle", protect, authorize("clientadmin"), toggleCronJobFeature);
 router.delete("/:cronJobId", protect, authorize("clientadmin"), deleteCronJob);
 router.post("/driver-docs/run-now", protect, authorize("clientadmin"), runNow);
+router.get("/send-invoice-email",  startDriverStatementsSchedule);
 
 export default router;

@@ -163,12 +163,17 @@ const sendEmail = async (to, subject, { title, subtitle = "", data = {} }) => {
 
   const html = generateHtmlTable(title, subtitle, toPlain(data));
 
-  await transporter.sendMail({
-    from: `"MTL Booking" <${process.env.GMAIL_USER}>`,
-    to,
-    subject,
-    html,
-  });
+  try {
+    const info = await transporter.sendMail({
+      from: `"MTL Booking" <${process.env.GMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
+  } catch (e) {
+    throw e;
+  }
+  
 };
 
 export default sendEmail;
