@@ -3,15 +3,15 @@ import paypal from '@paypal/checkout-server-sdk';
 export function getPayPalClient() {
   const clientId = process.env.PAYPAL_CLIENT_ID;
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
-  
+
   if (!clientId || !clientSecret) {
     throw new Error('PayPal credentials missing in environment variables');
   }
-  
+
   const environment = process.env.PAYPAL_MODE === 'live'
-  ? new paypal.core.LiveEnvironment(clientId, clientSecret)
-  : new paypal.core.SandboxEnvironment(clientId, clientSecret);
-  
+    ? new paypal.core.LiveEnvironment(clientId, clientSecret)
+    : new paypal.core.SandboxEnvironment(clientId, clientSecret);
+
   return new paypal.core.PayPalHttpClient(environment);
 }
 
@@ -33,21 +33,21 @@ export const getConfig = (req, res) => {
   console.log("PAYPAL_CLIENT_SECRET:", process.env.PAYPAL_CLIENT_SECRET ? "SET" : "MISSING");
   console.log("PAYPAL_MODE:", process.env.PAYPAL_MODE);
   console.log("PAYPAL_CURRENCY:", process.env.PAYPAL_CURRENCY);
-  
+
   try {
     const config = {
       clientId: process.env.PAYPAL_CLIENT_ID,
-      currency: process.env.PAYPAL_CURRENCY || 'GBP',
+      currency: process.env.PAYPAL_CURRENCY,
       mode: process.env.PAYPAL_MODE || 'sandbox',
     };
-    
+
     console.log("Config being sent to frontend:", config);
-    
+
     if (!config.clientId) {
       console.log("❌ Client ID missing!");
       return res.status(500).json({ message: 'PayPal client ID not configured' });
     }
-    
+
     console.log("✅ Config sent successfully");
     res.json(config);
   } catch (error) {
@@ -85,7 +85,7 @@ export const createOrder = async (req, res) => {
         {
           reference_id: bookingId.toString(),
           amount: {
-            currency_code: process.env.PAYPAL_CURRENCY || "GBP",
+            currency_code: process.env.PAYPAL_CURRENCY,
             value: total.toFixed(2),
           },
           description: `Booking payment for booking ID: ${bookingId}`,
@@ -102,15 +102,15 @@ export const createOrder = async (req, res) => {
 
     const response = await client.execute(request);
     console.log('[PayPal] Order created:', response.result.id);
-    
-    return res.json({ 
+
+    return res.json({
       id: response.result.id,
-      status: response.result.status 
+      status: response.result.status
     });
   } catch (error) {
     console.error("[PayPal] createOrder error:", error);
     console.error("[PayPal] Error details:", error.message);
-    return res.status(500).json({ 
+    return res.status(500).json({
       message: "Failed to create PayPal order",
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -121,7 +121,7 @@ export const captureOrder = async (req, res) => {
   try {
     // Check both query and body for orderID
     const orderID = req.query.orderID || req.body.orderID;
-    
+
     if (!orderID) {
       return res.status(400).json({ message: "Order ID is required" });
     }
@@ -132,7 +132,7 @@ export const captureOrder = async (req, res) => {
 
     const capture = await client.execute(request);
     const result = capture.result;
-    
+
     console.log('[PayPal] Order captured:', result.id, result.status);
 
     // Save payment to database here
@@ -149,15 +149,15 @@ export const captureOrder = async (req, res) => {
     //   raw: result,
     // });
 
-    return res.json({ 
-      ok: true, 
+    return res.json({
+      ok: true,
       capture: result,
       paymentId: result.purchase_units?.[0]?.payments?.captures?.[0]?.id
     });
   } catch (error) {
     console.error('[PayPal] captureOrder error:', error);
     console.error('[PayPal] Error details:', error.message);
-    return res.status(500).json({ 
+    return res.status(500).json({
       message: 'Failed to capture PayPal order',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });

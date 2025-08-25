@@ -1,161 +1,103 @@
-import React, { useMemo, useEffect } from "react";
-import {
-  PayPalScriptProvider,
-  PayPalButtons,
-} from "@paypal/react-paypal-js";
+import React, { useMemo } from "react";
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import currencyOptions from "../constants/constantscomponents/currencyOptions";
 import {
   useGetPayPalConfigQuery,
   useCreatePayPalOrderMutation,
   useCapturePayPalOrderMutation,
 } from "../redux/api/paypalApi";
 
-export default function PayPalCheckout({
+// central symbol map from currencyOptions
+const SYMBOL_MAP = Object.freeze(
+  currencyOptions.reduce((acc, c) => {
+    acc[(c.value || "").toUpperCase()] = c.symbol || "";
+    return acc;
+  }, { MYR: "RM", PLN: "zł", HUF: "Ft", CZK: "Kč", ILS: "₪", MXN: "MX$" })
+);
+const symbolFor = (ccy) => SYMBOL_MAP[(ccy || "").toUpperCase()] ?? "";
+
+// zero-decimal handling for display
+const ZERO_DEC = new Set(["JPY", "TWD", "HUF"]);
+const formatDisplay = (ccy, val) =>
+  ZERO_DEC.has(String(ccy).toUpperCase())
+    ? String(Math.max(Number(val) || 0, 0) | 0)
+    : Math.max(Number(val) || 0, 0).toFixed(2);
+
+const PayPalCheckout = ({
   bookingId,
-  amount = 5.0,
-  currencyOverride,
-  onSuccess = () => {},
-  onError = () => {},
-  onCancel = () => {},
+  amount,                  // ← REQUIRED (no default, no dummy)
+  onSuccess = () => { },
+  onError = () => { },
+  onCancel = () => { },
   disabled = false,
-}) {
+}) => {
   const { data: cfg, isLoading: cfgLoading, error: cfgError } = useGetPayPalConfigQuery();
   const [createOrder, { isLoading: creating }] = useCreatePayPalOrderMutation();
   const [captureOrder, { isLoading: capturing }] = useCapturePayPalOrderMutation();
 
-  // 🔍 DEBUG: Log everything
-  useEffect(() => {
-    console.log("=== PAYPAL DEBUG ===");
-    console.log("cfgLoading:", cfgLoading);
-    console.log("cfg:", cfg);
-    console.log("cfgError:", cfgError);
-    console.log("cfg?.clientId:", cfg?.clientId);
-    console.log("==================");
-  }, [cfg, cfgLoading, cfgError]);
+  const amountNum = Number(amount);
+  const isAmountValid = Number.isFinite(amountNum) && amountNum > 0;
 
   const options = useMemo(() => {
-    console.log("Creating options with cfg:", cfg);
-    if (!cfg?.clientId) {
-      console.log("No clientId found, returning null");
-      return null;
-    }
-    const opts = { 
-      "client-id": cfg.clientId, 
-      currency: currencyOverride || cfg.currency || "GBP",
+    if (!cfg?.clientId) return null;
+    return {
+      "client-id": cfg.clientId,
+      currency: (cfg.currency || "GBP").toUpperCase(),  // ← ONLY backend currency
       intent: "capture",
+      components: "buttons",
     };
-    console.log("PayPal options created:", opts);
-    return opts;
-  }, [cfg, currencyOverride]);
+  }, [cfg]);
 
-  // Loading state
-  if (cfgLoading) {
-    return <div style={{padding: '20px', border: '1px solid #ccc'}}>
-      Loading PayPal configuration...
-    </div>;
-  }
+  if (cfgLoading) return <div style={{ padding: 16, border: "1px solid #ddd", borderRadius: 8 }}>Loading PayPal configuration...</div>;
+  if (cfgError) return <div style={{ padding: 16, border: "1px solid #e11", color: "#a00", borderRadius: 8 }}>PayPal configuration error: {typeof cfgError === "string" ? cfgError : JSON.stringify(cfgError)}</div>;
+  if (!cfg?.clientId || !options) return <div style={{ padding: 16, border: "1px solid #f90", color: "#a60", borderRadius: 8 }}>PayPal client configuration missing.</div>;
 
-  // Error state
-  if (cfgError) {
-    console.error("PayPal config error:", cfgError);
-    return <div style={{padding: '20px', border: '1px solid red', color: 'red'}}>
-      PayPal configuration error: {JSON.stringify(cfgError)}
-      <br/>
-      <small>Check browser console and server logs</small>
-    </div>;
-  }
-
-  // No config
-  if (!cfg) {
-    return <div style={{padding: '20px', border: '1px solid orange', color: 'orange'}}>
-      PayPal config is null/undefined
-      <br/>
-      <small>API call may have failed silently</small>
-    </div>;
-  }
-
-  // No client ID
-  if (!cfg.clientId) {
-    return <div style={{padding: '20px', border: '1px solid orange', color: 'orange'}}>
-      PayPal Client ID missing from config: {JSON.stringify(cfg)}
-    </div>;
-  }
-
-  // No options
-  if (!options) {
-    return <div style={{padding: '20px', border: '1px solid red', color: 'red'}}>
-      PayPal options could not be created
-    </div>;
-  }
+  const ccy = options.currency;
+  const display = formatDisplay(ccy, amountNum);
+  const ccySymbol = symbolFor(ccy);
 
   return (
-    <PayPalScriptProvider options={options}>
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        flexWrap: "wrap"
-      }}>
+    // key={options.currency} → agar backend currency change ho to script re-load ho
+    <PayPalScriptProvider options={options} key={options.currency}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <h4 style={{ margin: 0 }}>
-          Pay {options.currency === 'GBP' ? '£' : '$'}{amount.toFixed(2)}
+          Pay {ccySymbol}{display} {ccySymbol ? "" : ccy}
         </h4>
 
         <div style={{ width: 260, minWidth: 220 }}>
           <PayPalButtons
-            style={{ 
-              layout: "horizontal", 
-              height: 40,
-              color: "gold",
-              shape: "rect"
-            }}
-            disabled={disabled || creating || capturing}
-            forceReRender={[amount, bookingId, options.currency]}
-            
+            style={{ layout: "horizontal", height: 40, color: "gold", shape: "rect" }}
+            disabled={disabled || creating || capturing || !isAmountValid}
+            forceReRender={[bookingId, ccy, display]}
             createOrder={async () => {
               try {
-                console.log('Creating PayPal order...', { bookingId, amount });
-                const res = await createOrder({ 
-                  bookingId: bookingId || 'test-booking', 
-                  amount 
+                const res = await createOrder({
+                  bookingId: bookingId || "temp-booking-id",
+                  amount: amountNum,               // ← sirf real amount
+                  // currency NOT sent; server decides
                 }).unwrap();
-                console.log('Order created:', res.orderId);
+                if (!res?.orderId) throw new Error("Server did not return orderId");
                 return res.orderId;
-              } catch (error) {
-                console.error("createOrder failed:", error);
-                onError(error);
-                throw error;
-              }
+              } catch (error) { onError(error); throw error; }
             }}
-            
-            onApprove={async (data, actions) => {
+            onApprove={async (data) => {
               try {
-                console.log('Capturing PayPal order:', data.orderID);
                 const res = await captureOrder({ orderId: data.orderID }).unwrap();
-                console.log('Order captured:', res);
-                
-                if (res.ok) {
-                  onSuccess(res.capture);
-                } else {
-                  const error = new Error("Payment capture failed");
-                  onError(error);
-                }
-              } catch (error) {
-                console.error("captureOrder failed:", error);
-                onError(error);
-              }
+                res?.ok ? onSuccess(res.capture) : onError(new Error("Payment capture failed"));
+              } catch (error) { onError(error); }
             }}
-            
-            onError={(err) => {
-              console.error("PayPal button error:", err);
-              onError(err);
-            }}
-            
-            onCancel={() => {
-              console.log("PayPal payment cancelled");
-              onCancel();
-            }}
+            onError={(err) => onError(err)}
+            onCancel={() => onCancel()}
           />
         </div>
       </div>
+      {!isAmountValid && (
+        <div style={{ marginTop: 8, fontSize: 12, color: "#b45309" }}>
+          Amount required: positive number &gt; 0
+        </div>
+      )}
     </PayPalScriptProvider>
   );
-}
+};
+
+export default PayPalCheckout;

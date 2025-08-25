@@ -9,7 +9,7 @@ export const paypalApi = apiSlice.injectEndpoints({
       providesTags: ["PayPal"],
       transformResponse: (res) => ({
         clientId: res?.clientId,
-        currency: res?.currency || "GBP",
+        currency: res?.currency,
         mode: res?.mode || "sandbox",
       }),
     }),
@@ -19,7 +19,7 @@ export const paypalApi = apiSlice.injectEndpoints({
       query: ({ bookingId, amount }) => ({
         url: `/paypal/create-order`,
         method: "POST",
-        body: { bookingId, amount }, // ← dummy ya real
+        body: { bookingId, amount },
       }),
       invalidatesTags: ["PayPal"],
       transformResponse: (res) => ({ orderId: res?.id }),

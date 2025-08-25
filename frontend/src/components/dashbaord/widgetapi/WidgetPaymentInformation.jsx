@@ -11,6 +11,7 @@ import { useGetGeneralPricingPublicQuery } from '../../../redux/api/generalPrici
 import OutletHeading from '../../../constants/constantscomponents/OutletHeading';
 import ArrowButton from '../../../constants/constantscomponents/ArrowButton';
 import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
+import PayPalCheckout from "../../../paymentmethod/PayPalCheckout"; // apni file path ke mutabiq
 
 const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, booking = {} }) => {
     const [passengerDetails, setPassengerDetails] = useState({ name: '', email: '', phone: '' });
@@ -123,6 +124,11 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
     };
 
     const finalFare = calculateFinalFare();
+
+    // helpers
+    const isPassengerMissing =
+        !passengerDetails.name || !passengerDetails.email || !passengerDetails.phone;
+    const bookingIdSafe = booking?._id || booking?.id || "temp-booking-id";
 
     const handleSubmit = () => {
         if (!passengerDetails.name || !passengerDetails.email || !passengerDetails.phone) {
@@ -292,6 +298,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                         { label: "Paypal", value: "Paypal" },
                                     ]}
                                 />
+
                             </div>
 
                             {/* Voucher */}
@@ -313,7 +320,40 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                 </div>
                                 <p className="text-xs mt-2 text-[var(--dark-gray)]">Click "Apply" to update the voucher</p>
                             </div>
-                            <ArrowButton label="Book Now" onClick={handleSubmit} mainColor="#20a220" />
+                            {/* Bottom action area */}
+                            <div className="mt-4">
+                                {formData.paymentMethod === "Paypal" ? (
+                                    <PayPalCheckout
+                                        bookingId={bookingIdSafe}
+                                        amount={Number(finalFare || 0)}
+                                        disabled={
+                                            !passengerDetails.name || !passengerDetails.email || !passengerDetails.phone || Number(finalFare) <= 0
+                                        }
+                                        onSuccess={(capture) => {
+                                            toast.success("PayPal payment successful!");
+                                            onBookNow?.({
+                                                passengerDetails,
+                                                fare: finalFare,
+                                                voucher,
+                                                voucherApplied: !!voucherDiscountPercent,
+                                                paymentMethod: "Paypal",
+                                                paypalCaptureId: capture?.purchase_units?.[0]?.payments?.captures?.[0]?.id,
+                                                selectedVehicle: {
+                                                    ...vehicle,
+                                                    passenger: Number(formData.passenger) || 0,
+                                                    childSeat: Number(formData.childSeat) || 0,
+                                                    handLuggage: Number(formData.handLuggage) || 0,
+                                                    checkinLuggage: Number(formData.checkinLuggage) || 0,
+                                                },
+                                            });
+                                        }}
+                                        onError={(e) => toast.error(e?.message || "PayPal error")}
+                                        onCancel={() => toast.info("Payment cancelled")}
+                                    />
+                                ) : (
+                                    <ArrowButton label="Book Now" mainColor="#20a220" onClick={handleSubmit} />
+                                )}
+                            </div>
                         </div>
                     </div>
 
