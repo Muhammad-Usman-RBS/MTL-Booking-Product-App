@@ -14,15 +14,61 @@ const toMinor = (n) => {
     return Math.round(v);
 };
 
+/**
+ * Basic URL guard. Allows only http/https and returns null if invalid.
+ */
+const safeHttpUrl = (maybeUrl) => {
+    try {
+        if (!maybeUrl) return null;
+        const u = new URL(maybeUrl);
+        if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+        return u.toString();
+    } catch {
+        return null;
+    }
+};
+
+/**
+ * Ensure success URL contains a placeholder for the session id.
+ * If "{CHECKOUT_SESSION_ID}" is missing AND no explicit session_id param exists,
+ * append ?session_id={CHECKOUT_SESSION_ID} (or & if needed).
+ */
+const normalizeSuccessUrl = (url) => {
+    if (!url) return url;
+    if (url.includes("{CHECKOUT_SESSION_ID}")) return url;
+
+    try {
+        const u = new URL(url);
+        // already has a session_id param? keep it
+        if (u.searchParams.has("session_id")) return url;
+
+        // otherwise add the placeholder
+        u.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
+        return u.toString();
+    } catch {
+        // if URL parsing fails, just append best-effort
+        const sep = url.includes("?") ? "&" : "?";
+        return `${url}${sep}session_id={CHECKOUT_SESSION_ID}`;
+    }
+};
+
 // ---- controller ----
 export const createCheckoutSession = async (req, res, next) => {
     try {
-        const { items = [], bookingId = "", customerEmail, mode = "payment" } = req.body ?? {};
+        const {
+            items = [],
+            bookingId = "",
+            customerEmail,
+            mode = "payment",
+            successUrl: clientSuccessUrl,
+            cancelUrl: clientCancelUrl,
+        } = req.body ?? {};
 
         if (!Array.isArray(items) || items.length === 0) {
             return res.status(400).json({ message: "At least one line item is required." });
         }
 
+        // Build Stripe line_items
         const line_items = items.map((it) => {
             const quantity = clampQty(it.quantity);
 
@@ -49,9 +95,28 @@ export const createCheckoutSession = async (req, res, next) => {
             };
         });
 
+        // Frontend base (fallback)
         const FRONT = (process.env.BASE_URL_FRONTEND || "").replace(/\/$/, "");
-        if (!FRONT) {
-            return res.status(500).json({ message: "BASE_URL_FRONTEND is not configured on the server." });
+        if (!FRONT && !clientSuccessUrl && !clientCancelUrl) {
+            return res
+                .status(500)
+                .json({ message: "BASE_URL_FRONTEND is not configured and no redirect URLs were provided." });
+        }
+
+        // Prefer client-provided URLs if valid; else fallback to FRONT
+        const safeSuccessFromClient = safeHttpUrl(clientSuccessUrl);
+        const safeCancelFromClient = safeHttpUrl(clientCancelUrl);
+
+        const success_url = normalizeSuccessUrl(
+            safeSuccessFromClient || (FRONT ? `${FRONT}/payment/success` : null)
+        );
+        const cancel_url = safeCancelFromClient || (FRONT ? `${FRONT}/payment/cancel` : null);
+
+        if (!success_url || !cancel_url) {
+            return res.status(500).json({
+                message:
+                    "Unable to resolve success/cancel URLs. Provide valid URLs in the request or set BASE_URL_FRONTEND.",
+            });
         }
 
         const session = await stripe.checkout.sessions.create(
@@ -68,10 +133,10 @@ export const createCheckoutSession = async (req, res, next) => {
                 metadata: { bookingId: String(bookingId || "") },
                 payment_intent_data: { metadata: { bookingId: String(bookingId || "") } },
 
-                success_url: `${FRONT}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-                cancel_url: `${FRONT}/payment/cancel`,
+                success_url,
+                cancel_url,
             },
-            // 🔑 RANDOM idempotency => har attempt par NAYA session (multiple tests allowed)
+            // RANDOM idempotency => har attempt par naya session (multiple tests allowed)
             { idempotencyKey: uuid() }
         );
 

@@ -20,6 +20,22 @@ const WidgetMain = () => {
 
     const [createBooking] = useCreateBookingMutation();
 
+    // Stripe Payment Method
+    useEffect(() => {
+        const sp = new URLSearchParams(window.location.search);
+        const sid = sp.get("session_id");
+        if (sid) {
+            // (Optional) yahan aap useGetCheckoutSessionQuery(sid) se verify bhi kar sakte hain
+            setStep("success");
+
+            // URL saaf kar do (optional)
+            const url = new URL(window.location.href);
+            url.searchParams.delete("session_id");
+            window.history.replaceState({}, "", url.toString());
+        }
+    }, []);
+
+
     const handleStepChange = (targetStep) => {
         setStep(targetStep);
     };

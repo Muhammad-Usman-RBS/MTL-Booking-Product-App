@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import PaymentMethodSection from "./PaymentMethodSection";
-import PayButton from "../../../paymentmethod/PayButton";
-import PayPalCheckout from "../../../paymentmethod/PayPalCheckout";
 
 const PaymentOptions = () => {
   const [cashLive, setCashLive] = useState(true);
@@ -80,15 +78,6 @@ const PaymentOptions = () => {
             ]}
           />
         </div>
-
-        <PayButton />
-        
-        <PayPalCheckout
-          bookingId="TEST-123"
-          amount={7.99}
-          onSuccess={(capture) => console.log("Success:", capture)}
-          onError={(e) => console.error(e)}
-        />
 
         <div className="flex items-center justify-center pt-8">
           <button className="btn btn-edit">Update Settings</button>
