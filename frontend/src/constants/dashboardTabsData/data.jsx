@@ -1288,9 +1288,9 @@ export const jobTypes = [
 
 export const statusOptions = [
   { value: "all", label: "All Rides" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
-  { value: "scheduled", label: "Scheduled" },
+  { value: "Completed", label: "Completed" },
+  { value: "Cancelled", label: "Cancelled" },
+  { value: "Scheduled", label: "Scheduled" },
 ];
 
 export const termsData = [

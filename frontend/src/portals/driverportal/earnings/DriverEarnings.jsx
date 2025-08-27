@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import Icons from "../../../assets/icons";
@@ -47,6 +47,7 @@ const DriverEarnings = () => {
     data: bookingsRes,
     isLoading,
     error,
+    refetch,
   } = useGetAllBookingsQuery(companyId, { skip: !companyId });
   const allBookings = bookingsRes?.bookings ?? [];
 
@@ -67,13 +68,31 @@ const DriverEarnings = () => {
       .filter((b) => b?.companyId?.toString?.() === companyId?.toString?.())
       .filter(isDriverOnBooking)
       .filter((b) => {
+        const normalized = (b.status || "").trim().toLowerCase();
+
         if (statusFilter === "all") return true;
 
-        const normalized = (b.status || "").trim().toLowerCase();
-        if (statusFilter === "scheduled") {
-          return SCHEDULED_SET.has(normalized);
+        if (statusFilter === "Completed") {
+          return normalized === "completed";
         }
-        return normalized === statusFilter.toLowerCase();
+
+        if (statusFilter === "Cancelled") {
+          return normalized === "cancel";
+        }
+
+        if (statusFilter === "Scheduled") {
+          const SCHEDULED_STATUSES = [
+            "accepted",
+            "on route",
+            "at location",
+            "ride started",
+            "late cancel",
+            "no show",
+          ];
+          return SCHEDULED_STATUSES.includes(normalized);
+        }
+
+        return false;
       })
 
       .filter((b) => {
@@ -108,6 +127,20 @@ const DriverEarnings = () => {
       earnings.filter((e) => (e.status || "").toLowerCase() === "completed"),
     [earnings]
   );
+
+  useEffect(() => {
+    const onFocus = async () => {
+      if (!error && !isLoading) {
+        await refetch();
+      }
+    };
+  
+    window.addEventListener("focus", onFocus);
+  
+    return () => {
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [error, isLoading, refetch]);
 
   const totalEarnings = useMemo(
     () => completedOnly.reduce((s, e) => s + (e.amount || 0), 0),

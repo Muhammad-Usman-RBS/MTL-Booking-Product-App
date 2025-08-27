@@ -33,14 +33,20 @@ const DriverRides = () => {
   } = useGetAllBookingsQuery(companyId, {
     skip: !companyId,
   });
+
+  console.log("bbookings", bookings);
   const allBookings = bookings?.bookings ?? [];
   const getJourneyDateTime = (b) => {
     const j = b?.returnJourneyToggle ? b?.returnJourney : b?.primaryJourney;
-    if (!j?.date || j.hour == null || j.minute == null) return null;
+    if (!j?.date || j.hour == null || j.minute == null) {
+      console.warn("Missing journey date/hour/minute for booking:", b._id, j);
+      return null;
+    }
     const dt = new Date(j.date);
     dt.setHours(j.hour, j.minute, 0, 0);
     return dt;
   };
+  
 
   const isDriverOnBooking = (b) => {
     const loggedInId = (user?._id || user?.id)?.toString();
@@ -60,23 +66,41 @@ const DriverRides = () => {
       .filter((b) => b?.companyId?.toString?.() === companyId?.toString())
       .filter(isDriverOnBooking)
       .filter((b) => {
+        const normalized = (b.status || "").trim().toLowerCase();
+
         if (statusFilter === "all") return true;
 
-        const normalized = (b.status || "").trim().toLowerCase();
-        if (statusFilter === "scheduled") {
-          return SCHEDULED_SET.has(normalized);
+        if (statusFilter === "Completed") {
+          return normalized === "completed";
         }
-        return normalized === statusFilter.toLowerCase();
+        
+        if (statusFilter === "Cancelled") {
+          return normalized === "cancel";
+        }
+        
+        if (statusFilter === "Scheduled") {
+          const SCHEDULED_STATUSES = [
+            "accepted",
+            "on route",
+            "at location",
+            "ride started",
+            "late cancel",
+            "no show",
+          ];
+          return SCHEDULED_STATUSES.includes(normalized);
+        }
+
+        return false;
       })
 
       .filter((b) => {
-        const dt = getJourneyDateTime(b) ;
+        const dt = getJourneyDateTime(b);
         if (start && dt < start) return false;
         if (end && dt > end) return false;
         return true;
       })
       .map((b) => {
-        const dt = getJourneyDateTime(b) ;
+        const dt = getJourneyDateTime(b);
         return {
           id: b._id,
           date: dt.toLocaleDateString(),
@@ -112,12 +136,9 @@ const DriverRides = () => {
   }, [startDate, endDate]);
   const totalRides = filteredRides.length;
   const completedRides = filteredRides.filter(
-    (r) => (r.statusRaw || "").toLowerCase() === "completed"
+    (r) => (r.statusRaw || "") === "completed"
   ).length;
-  const totalEarnings = filteredRides
-    .filter((r) => (r.statusRaw || "").toLowerCase() === "completed")
-    .reduce((sum, r) => sum + (r.fareRaw || 0), 0);
-  const averageRating = 0;
+
   const statusStyles = {
     completed:
       "px-3 py-1 text-xs rounded-md border font-medium transition bg-green-100 text-green-700 border-green-300 hover:bg-green-200",
@@ -145,11 +166,7 @@ const DriverRides = () => {
     pickupLocation: ride.pickupLocation,
     dropLocation: ride.dropLocation,
     status: (
-      <span
-        className={
-          statusStyles[ride.statusRaw.toLowerCase()] || statusStyles["pending"]
-        }
-      >
+      <span className={statusStyles[ride.statusRaw] || statusStyles["pending"]}>
         {ride.statusRaw}
       </span>
     ),
