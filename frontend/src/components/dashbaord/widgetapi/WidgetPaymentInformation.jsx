@@ -620,6 +620,40 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
         return id;
     };
 
+    // ⬇️ Add this inside the component (above return)
+    const buildPendingBookingPayload = () => {
+        if (!passengerDetails.name || !passengerDetails.email || !passengerDetails.phone) {
+            toast.error("Please fill passenger details.");
+            throw new Error("Missing passenger details");
+        }
+
+        const payload = {
+            companyId,
+            source: "widget",
+            referrer: window.location.href,
+            vehicle: {
+                ...vehicle,
+                passenger: Number(formData.passenger) || 0,
+                childSeat: Number(formData.childSeat) || 0,
+                handLuggage: Number(formData.handLuggage) || 0,
+                checkinLuggage: Number(formData.checkinLuggage) || 0,
+            },
+            passenger: passengerDetails,
+            PassengerEmail: passengerDetails.email,
+            voucher,
+            voucherApplied: !!voucherDiscountPercent,
+            mode: booking?.mode || "Transfer",
+            returnJourneyToggle: !!booking?.returnJourneyToggle,
+            primaryJourney: booking,
+            ...(booking?.returnJourneyToggle && booking?.returnBooking ? { returnJourney: booking.returnBooking } : {}),
+            journeyFare: Number(finalFare || 0),
+            driverFare: Number(finalFare || 0),
+            // NOTE: paymentMethod set on success page; here we only stage data.
+        };
+
+        return payload;
+    };
+
     return (
         <>
             <div className="mx-auto max-w-5xl mt-6">
@@ -775,9 +809,8 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                     />
                                 ) : formData.paymentMethod === "Card, Bank" ? (
                                     <StripeCheckout
-                                        bookingId={bookingId}                             // ✅ ensure booking id is available
-                                        customerEmail={passengerDetails?.email || ""}     // ✅ send email
-                                        amount={Number(finalFare || 0)}                   // ✅ correct prop name
+                                        customerEmail={passengerDetails?.email || ""}
+                                        amount={Number(finalFare || 0)}
                                         currency={String(currencyCode).toLowerCase()}
                                         disabled={
                                             !passengerDetails.name ||
@@ -785,10 +818,15 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                             !passengerDetails.phone ||
                                             Number(finalFare) <= 0
                                         }
-                                        // ✅ create booking just before redirect if needed (sets bookingId too)
                                         onBeforeRedirect={async () => {
-                                            if (!bookingId) {
-                                                await createBookingForStripe();
+                                            try {
+                                                const pending = buildPendingBookingPayload();
+                                                // mark: stripe, method will be finalized after success
+                                                pending.paymentMethod = "Card, Bank";
+                                                localStorage.setItem("pendingStripeBookingPayload", JSON.stringify(pending));
+                                            } catch (e) {
+                                                // agar details missing hain to redirect block kar do
+                                                throw e;
                                             }
                                         }}
                                         onError={(e) => toast.error(e?.message || "Stripe error")}

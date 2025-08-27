@@ -21,20 +21,46 @@ const WidgetMain = () => {
     const [createBooking] = useCreateBookingMutation();
 
     // Stripe Payment Method
+    // ⬇️ Replace your Stripe useEffect with this one
     useEffect(() => {
         const sp = new URLSearchParams(window.location.search);
         const sid = sp.get("session_id");
-        if (sid) {
-            // (Optional) yahan aap useGetCheckoutSessionQuery(sid) se verify bhi kar sakte hain
-            setStep("success");
+        if (!sid) return;
 
-            // URL saaf kar do (optional)
-            const url = new URL(window.location.href);
-            url.searchParams.delete("session_id");
-            window.history.replaceState({}, "", url.toString());
+        const payloadStr = localStorage.getItem("pendingStripeBookingPayload");
+        if (!payloadStr) {
+            setError("Missing pending booking data after Stripe payment.");
+            return;
         }
-    }, []);
 
+        const payload = JSON.parse(payloadStr);
+        // Stripe reference attach kar do (helpful for audit)
+        payload.stripe = { checkoutSessionId: sid };
+        // paymentMethod already "Card, Bank" set kiya tha
+
+        (async () => {
+            try {
+                // (Optional but recommended): yahan backend par sid verify bhi kara sakte ho
+                // e.g. await verifyStripeSession(sid) — agar tumhare paas endpoint ho.
+
+                await createBooking(payload).unwrap();
+
+                // cleanup
+                localStorage.removeItem("pendingStripeBookingPayload");
+
+                // URL saaf
+                const url = new URL(window.location.href);
+                url.searchParams.delete("session_id");
+                window.history.replaceState({}, "", url.toString());
+
+                // success step
+                localStorage.setItem("isWidgetFormFilled", "true");
+                setStep("success");
+            } catch (e) {
+                setError("Failed to save booking after Stripe payment.");
+            }
+        })();
+    }, [createBooking]);
 
     const handleStepChange = (targetStep) => {
         setStep(targetStep);
