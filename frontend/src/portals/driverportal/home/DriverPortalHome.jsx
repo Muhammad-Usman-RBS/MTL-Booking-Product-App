@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useGetDriverJobsQuery } from "../../../redux/api/jobsApi";
 import { useUpdateJobStatusMutation } from "../../../redux/api/jobsApi";
@@ -117,7 +117,17 @@ const DriverPortalHome = () => {
     try {
       const job = jobs.find((j) => j._id === jobId);
       const bookingId = job?.booking?._id;
+      const isLockedByAdmin =
+        String(job?.booking?.status).toLowerCase() === "accepted" &&
+        String(job?.jobStatus).toLowerCase() !== "accepted";
+      const isAlreadyAssigned =
+        String(job?.jobStatus).toLowerCase() === "already assigned";
 
+      if (isLockedByAdmin || isAlreadyAssigned) {
+        toast.info("This job is already assigned to another driver.");
+        setLoadingJobId(null);
+        return;
+      }
       if (!bookingId) {
         throw new Error("Booking ID not found");
       }
@@ -147,6 +157,18 @@ const DriverPortalHome = () => {
       setLoadingJobId(null);
     }
   };
+  useEffect(() => {
+    const onFocus = () => {
+      if (!isLoading && !error) {
+        refetch();
+      }
+    };
+
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [refetch, isLoading, error]);
 
   if (isLoading) {
     return (
@@ -188,14 +210,33 @@ const DriverPortalHome = () => {
             const getCurrentStatus = (job, map) => {
               const id = String(job?._id);
               if (map[id]) return map[id];
-              if (job?.jobStatus === "Accepted" && job?.booking?.status) {
-                return job.booking.status;
+
+              const jobStatus = job?.jobStatus ?? "New";
+              const bookingStatus = job?.booking?.status.trim();
+              if (bookingStatus === "deleted") return "Deleted";
+              if (jobStatus === "Accepted" && bookingStatus) {
+                return bookingStatus;
               }
-              return job?.jobStatus ?? "New";
+
+              if (
+                bookingStatus === "Accepted" &&
+                jobStatus !== "Rejected" &&
+                jobStatus !== "Already Assigned"
+              ) {
+                return "Accepted";
+              }
+
+              // Otherwise fall back to the raw job status
+              return jobStatus;
             };
 
             const currentStatus = getCurrentStatus(job, statusMap);
-
+            const acceptedByAdmin =
+              String(booking?.status).toLowerCase() === "accepted" &&
+              String(job?.jobStatus).toLowerCase() !== "accepted";
+            const locked =
+              acceptedByAdmin ||
+              String(currentStatus).toLowerCase() === "already assigned";
             const driverIdStr = String(
               job?.driverId?._id ?? job?.driverId ?? ""
             );
@@ -417,8 +458,14 @@ const DriverPortalHome = () => {
                           }
                         })()}
                       </div>
+                    ) : booking?.status?.toLowerCase().trim() === "deleted" ? (
+                      <>
+                        <p className="text-orange-600 text-sm bg-orange-100 px-3 py-1.5 rounded border border-orange-200 w-fit max-w-full">
+                          Booking was already Deleted
+                        </p>
+                      </>
                     ) : currentStatus === "Rejected" ? (
-                      <div className="text-red-600 font-semibold text-sm bg-red-50 p-3 rounded-lg border border-red-200">
+                      <div className="text-red-600 font-semibold w-fit max-w-full text-sm bg-red-50 p-3 rounded-lg border border-red-200">
                         This job has been rejected by you
                       </div>
                     ) : currentStatus === "New" ? (
@@ -435,6 +482,10 @@ const DriverPortalHome = () => {
                         >
                           Reject
                         </button>
+                      </div>
+                    ) : locked ? (
+                      <div className="text-orange-600 text-sm bg-orange-100 px-3 py-1.5 rounded border border-orange-200 w-fit max-w-full">
+                        This job is already assigned to another driver.
                       </div>
                     ) : (
                       driverIdStr === userIdStr &&

@@ -569,11 +569,27 @@ export const updateBookingStatus = async (req, res) => {
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
+    if (req.user?.role === "clientadmin") {
+      if (
+        status.trim().toLowerCase() === "new" ||
+        status.trim().toLowerCase() === "accepted"
+      ) {
+        const driverAcceptedEver = (booking.statusAudit || []).some((e) => {
+          return (
+            e?.status?.toLowerCase() === "accepted" &&
+            e?.updatedBy?.toLowerCase()?.startsWith("driver")
+          );
+        });
 
-    // Update the booking status
+        if (driverAcceptedEver) {
+          return res.status(403).json({
+            message:
+              "A driver has already accepted this job. You cannot set status to 'New' or 'Accepted'.",
+          });
+        }
+      }
+    }
     booking.status = status === "Late Cancel" ? "Late Cancel" : status;
-
-    // Optionally, update driver details if needed
     if (Array.isArray(driverIds)) {
       const fullDriverDocs = await driverModel
         .find({
@@ -609,7 +625,6 @@ export const updateBookingStatus = async (req, res) => {
           console.log("Review email already scheduled/sent, skipping");
         }
       }
-
     } catch (e) {
       console.error("Review email schedule failed:", e.message);
     }
@@ -618,11 +633,11 @@ export const updateBookingStatus = async (req, res) => {
     const io = req.app.get("io");
 
     const audit = booking.statusAudit || [];
-    const prevStatus = audit.length > 1 ? audit[audit.length - 2]?.status : null;
+    const prevStatus =
+      audit.length > 1 ? audit[audit.length - 2]?.status : null;
     const currStatus = booking.status;
     const isStatusChanged = prevStatus !== currStatus;
     try {
-
       // 🔒 Notify drivers only when a non-driver updated the status
       if (isStatusChanged && currentUser?.role !== "driver") {
         const employeeNumbers = [];
@@ -639,7 +654,8 @@ export const updateBookingStatus = async (req, res) => {
           const uid = d?.userId || d?._id;
           if (uid) {
             const u = await User.findById(uid).lean();
-            if (u?.employeeNumber) employeeNumbers.push(String(u.employeeNumber));
+            if (u?.employeeNumber)
+              employeeNumbers.push(String(u.employeeNumber));
           }
         }
 
@@ -650,30 +666,33 @@ export const updateBookingStatus = async (req, res) => {
             bookingId: booking.bookingId,
             status: currStatus,
             primaryJourney: {
-              pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
-              dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
+              pickup:
+                booking?.primaryJourney?.pickup ||
+                booking?.returnJourney?.pickup ||
+                "",
+              dropoff:
+                booking?.primaryJourney?.dropoff ||
+                booking?.returnJourney?.dropoff ||
+                "",
             },
             bookingSentAt: new Date(),
             createdBy: currentUser?._id,
             companyId: booking.companyId,
           }));
 
-          const docs = await Notification.insertMany(payloads, { ordered: false });
+          const docs = await Notification.insertMany(payloads, {
+            ordered: false,
+          });
           for (const n of docs) {
             io.to(`emp:${n.employeeNumber}`).emit("notification:new", n);
           }
         }
       }
-
-
-
     } catch (e) {
       console.error("Driver notify on status change failed:", e?.message);
     }
     // ========= END DRIVER NOTIFY =========
     try {
-
-
       if (isStatusChanged && currentUser?.role === "driver") {
         // 1) notify clientadmin in-app
         const clientAdmin = await User.findOne({
@@ -683,12 +702,18 @@ export const updateBookingStatus = async (req, res) => {
         const adminKey = String(clientAdmin?._id || "");
         if (adminKey) {
           const adminNotif = await Notification.create({
-            employeeNumber: String(adminKey),   // 👈 add this
+            employeeNumber: String(adminKey), // 👈 add this
             bookingId: booking.bookingId,
             status: currStatus,
             primaryJourney: {
-              pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
-              dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
+              pickup:
+                booking?.primaryJourney?.pickup ||
+                booking?.returnJourney?.pickup ||
+                "",
+              dropoff:
+                booking?.primaryJourney?.dropoff ||
+                booking?.returnJourney?.dropoff ||
+                "",
             },
             bookingSentAt: new Date(),
             createdBy: currentUser?._id,
@@ -700,18 +725,28 @@ export const updateBookingStatus = async (req, res) => {
         // 2) (optional) notify customer user if you have one
         const paxEmail = (booking?.passenger?.email || "").trim().toLowerCase();
         const customerUser = paxEmail
-          ? await User.findOne({ companyId: booking.companyId, role: "customer", email: paxEmail }).lean()
+          ? await User.findOne({
+              companyId: booking.companyId,
+              role: "customer",
+              email: paxEmail,
+            }).lean()
           : null;
 
         const custKey = String(customerUser?._id || "");
         if (custKey) {
           const customerNotif = await Notification.create({
-            employeeNumber: String(custKey),   // 👈 add this
+            employeeNumber: String(custKey), // 👈 add this
             bookingId: booking.bookingId,
             status: currStatus,
             primaryJourney: {
-              pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
-              dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
+              pickup:
+                booking?.primaryJourney?.pickup ||
+                booking?.returnJourney?.pickup ||
+                "",
+              dropoff:
+                booking?.primaryJourney?.dropoff ||
+                booking?.returnJourney?.dropoff ||
+                "",
             },
             bookingSentAt: new Date(),
             createdBy: currentUser?._id,
@@ -721,7 +756,10 @@ export const updateBookingStatus = async (req, res) => {
         }
       }
     } catch (e) {
-      console.error("Admin/Customer notify on driver change failed:", e?.message);
+      console.error(
+        "Admin/Customer notify on driver change failed:",
+        e?.message
+      );
     }
     // Driver updated the status
     if (currentUser?.role === "driver" && status) {
@@ -739,8 +777,9 @@ export const updateBookingStatus = async (req, res) => {
         }).lean();
 
         const statusStyled = `<span style="color: green;">${status}</span>`;
-        const driverName = `"${driver?.DriverData?.firstName || ""} ${driver?.DriverData?.surName || ""
-          }"`.trim();
+        const driverName = `"${driver?.DriverData?.firstName || ""} ${
+          driver?.DriverData?.surName || ""
+        }"`.trim();
         const bookingId = booking.bookingId;
 
         const title = `Driver ${driverName} changed the status to ${statusStyled} for booking #${bookingId}`;
@@ -754,7 +793,8 @@ export const updateBookingStatus = async (req, res) => {
         await sendEmailsAsync(
           clientAdmin?.email,
           booking?.passenger?.email,
-          null, driverName,
+          null,
+          driverName,
           statusStyled,
           bookingId
         );
@@ -772,7 +812,8 @@ export const updateBookingStatus = async (req, res) => {
         : null;
 
       const driverName = assignedDriver
-        ? `"${assignedDriver.DriverData.firstName || ""} ${assignedDriver.DriverData.surName || ""
+        ? `"${assignedDriver.DriverData.firstName || ""} ${
+            assignedDriver.DriverData.surName || ""
           }"`.trim()
         : `"Assigned Driver"`;
 
@@ -805,7 +846,6 @@ export const updateBookingStatus = async (req, res) => {
         });
       }
 
-
       const paxEmail2 = (booking?.passenger?.email || "").trim().toLowerCase();
       if (paxEmail2) {
         const customerUser2 = await User.findOne({
@@ -819,10 +859,16 @@ export const updateBookingStatus = async (req, res) => {
           const customerNotif2 = await Notification.create({
             employeeNumber: custKey2, // customer portal uses _id as key
             bookingId: booking.bookingId,
-            status: booking.status,   // or use currStatus
+            status: booking.status, // or use currStatus
             primaryJourney: {
-              pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
-              dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
+              pickup:
+                booking?.primaryJourney?.pickup ||
+                booking?.returnJourney?.pickup ||
+                "",
+              dropoff:
+                booking?.primaryJourney?.dropoff ||
+                booking?.returnJourney?.dropoff ||
+                "",
             },
             bookingSentAt: new Date(),
             createdBy: currentUser?._id,
@@ -831,7 +877,6 @@ export const updateBookingStatus = async (req, res) => {
           io.to(`emp:${custKey2}`).emit("notification:new", customerNotif2);
         }
       }
-
     }
 
     res.status(200).json({ success: true, booking: updatedBooking });

@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   selectBookmarkedThemes,
   setThemeColors,
-   selectSelectedThemeId,
-   setSelectedThemeId,
+  selectSelectedThemeId,
+  setSelectedThemeId,
 } from "../../../redux/slices/themeSlice";
 import { Link } from "react-router-dom";
 import Icons from "../../../assets/icons";
@@ -29,6 +29,7 @@ function Navbar() {
   const [showTooltip, setShowTooltip] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [themeBtnWidth, setThemeBtnWidth] = useState(null);
 
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
@@ -37,58 +38,62 @@ function Navbar() {
   const [applyThemeSettings] = useApplyThemeSettingsMutation();
 
   const handleApplyBookmarkedTheme = useCallback(
-   async (b) => {
-     try {
-       if (!user?.companyId) return;
-       const res = await applyThemeSettings({
-         companyId: user.companyId,
-         themeId: b._id,
-       }).unwrap();
+    async (b) => {
+      try {
+        if (!user?.companyId) return;
+        const res = await applyThemeSettings({
+          companyId: user.companyId,
+          themeId: b._id,
+        }).unwrap();
 
-       const applied = res?.theme?.themeSettings || b.themeSettings || {};
+        const applied = res?.theme?.themeSettings || b.themeSettings || {};
 
-       // apply to DOM
-       const root = document.documentElement;
-       ["bg", "text", "primary", "hover", "active"].forEach((k) => {
-         if (applied[k]) root.style.setProperty(`--${k}`, applied[k]);
-       });
+        // apply to DOM
+        const root = document.documentElement;
+        ["bg", "text", "primary", "hover", "active"].forEach((k) => {
+          if (applied[k]) root.style.setProperty(`--${k}`, applied[k]);
+        });
 
-       // update store
-       dispatch(setThemeColors(applied));
-       dispatch(setSelectedThemeId(b._id));
-       setActiveBookmarkId(b._id);
-       setIsModalOpen(false);
-     } catch (e) {
-       console.error(e);
-     }
-   },
-   [applyThemeSettings, dispatch, user?.companyId]
- );
+        // update store
+        dispatch(setThemeColors(applied));
+        dispatch(setSelectedThemeId(b._id));
+        setActiveBookmarkId(b._id);
+        setIsModalOpen(false);
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    [applyThemeSettings, dispatch, user?.companyId]
+  );
   const bookmarks = useSelector(selectBookmarkedThemes);
-  const selectedThemeId = useSelector(selectSelectedThemeId)
+  const selectedThemeId = useSelector(selectSelectedThemeId);
   const [activeBookmarkId, setActiveBookmarkId] = useState(null);
   useEffect(() => {
-      setActiveBookmarkId(selectedThemeId || null);
-    }, [selectedThemeId]);
+    setActiveBookmarkId(selectedThemeId || null);
+  }, [selectedThemeId]);
+  useEffect(() => {
+    if (themeBtnRef.current) {
+      setThemeBtnWidth(themeBtnRef.current.offsetWidth);
+    }
+  }, [isModalOpen]);
+
   // const { data: notifications = [], refetch: refetchNotifications } =
   // useGetUserNotificationsQuery(user?.employeeNumber, {
   //   skip: !user?.employeeNumber,
   // });
 
   const empArg =
-  user?.role === "driver"
-    ? String(user?.employeeNumber || "")
-    : String(user?._id || "");
+    user?.role === "driver"
+      ? String(user?.employeeNumber || "")
+      : String(user?._id || "");
 
-const { data: notifications = [] } = useGetUserNotificationsQuery(empArg, {
-  skip: !empArg,
-});
+  const { data: notifications = [] } = useGetUserNotificationsQuery(empArg, {
+    skip: !empArg,
+  });
 
-// Also make sure any place that calls markAllAsRead / markAsRead
-// continues to use ids returned from the list, and for markAllAsRead
-// pass the SAME empArg:
-
- 
+  // Also make sure any place that calls markAllAsRead / markAsRead
+  // continues to use ids returned from the list, and for markAllAsRead
+  // pass the SAME empArg:
 
   const [firstName, lastName] = name.split(" ");
   const displayName = `${firstName || ""} ${lastName || ""}`.trim();
@@ -106,7 +111,7 @@ const { data: notifications = [] } = useGetUserNotificationsQuery(empArg, {
     }
   };
   const bookingList = bookings?.bookings || [];
- 
+
   const getTimeAgo = (timestamp) => {
     const now = new Date();
     const past = new Date(timestamp);
@@ -160,10 +165,10 @@ const { data: notifications = [] } = useGetUserNotificationsQuery(empArg, {
             ].includes(user?.role)
               ? "Admin Panel"
               : user?.role === "driver"
-                ? "Driver Portal"
-                : user?.role === "customer"
-                  ? "Customer Portal"
-                  : "Portal"}
+              ? "Driver Portal"
+              : user?.role === "customer"
+              ? "Customer Portal"
+              : "Portal"}
           </h1>
         </div>
         <div className="flex items-center  justify-end gap-2 sm:gap-4 flex-wrap">
@@ -208,10 +213,10 @@ const { data: notifications = [] } = useGetUserNotificationsQuery(empArg, {
                 </div>
                 {(!Array.isArray(notifications) ||
                   notifications.length === 0) && (
-                    <div className="px-4 py-3 text-gray-500 text-sm">
-                      No new notifications
-                    </div>
-                  )}
+                  <div className="px-4 py-3 text-gray-500 text-sm">
+                    No new notifications
+                  </div>
+                )}
                 {/* Notifications List */}
                 <div className="max-h-64 overflow-y-auto">
                   {Array.isArray(notifications) &&
@@ -221,8 +226,9 @@ const { data: notifications = [] } = useGetUserNotificationsQuery(empArg, {
                         onClick={() => {
                           setShowTooltip(false);
                         }}
-                        className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
-                          }`}
+                        className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${
+                          data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div className={`flex-1 `}>
@@ -253,7 +259,7 @@ const { data: notifications = [] } = useGetUserNotificationsQuery(empArg, {
                                     onClick={async (e) => {
                                       e.stopPropagation();
                                       try {
-                                       await markAsRead(data._id).unwrap(); 
+                                        await markAsRead(data._id).unwrap();
                                         refetchNotifications();
                                         setReadNotifications(
                                           (prev) => new Set([...prev, data._id])
@@ -293,101 +299,100 @@ const { data: notifications = [] } = useGetUserNotificationsQuery(empArg, {
             )}
           </div>
           {/* Theme selector - only for admins */}
-{(user?.role === 'clientadmin' || user?.role === 'superadmin') && (
-  <div className="relative" ref={themeBtnRef}>
-    <button
-      onClick={() => setIsModalOpen((v) => !v)}
-      className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white border border-[var(--light-gray)] text-sm shadow-md text-black hover:bg-gray-100 transition duration-200"
-    >
-      <span className="text-lg">🎨</span>
-      <span>Select Theme</span>
-    </button>
+          {(user?.role === "clientadmin" || user?.role === "superadmin") && (
+            <div className="relative" ref={themeBtnRef}>
+              <button
+                onClick={() => setIsModalOpen((v) => !v)}
+                className="flex items-center gap-2 p-2 rounded-lg bg-white border border-[var(--light-gray)] text-sm shadow-md text-black hover:bg-gray-100 transition duration-200"
+              >
+                <span>🎨</span>
+                <span>Select Theme</span>
+              </button>
 
-    {isModalOpen && (
-      <div
-      role="dialog"
-      className="absolute right-0 mt-2 bg-white/95 backdrop-blur-md border border-gray-200 rounded-xl shadow-2xl z-50 p-4 min-w-[280px] animate-in fade-in-0 zoom-in-95 duration-200"
-      onClick={(e) => e.stopPropagation()}
-    >
-       {bookmarks && bookmarks.length > 0 ? (
-  <>
-    <div className="flex items-center justify-between mb-3">
-      <h3 className="text-sm font-semibold text-gray-700">Choose Theme</h3>
-      <span className="text-xs text-gray-500">{bookmarks.length}/5</span>
-    </div>
-    <div className="space-y-2">
-      {bookmarks.map((b) => {
-        const c = b.themeSettings || {};
-        const isActive = activeBookmarkId === b._id;
-        return (
-          <button
-            key={b._id}
-            type="button"
-            onClick={() => {
-              handleApplyBookmarkedTheme(b);
-              setIsModalOpen(false);
-            }}
-            title={b.label || "Apply theme"}
-            className={`w-full p-3 rounded-lg border-2 transition-all duration-200 group hover:scale-[1.02] hover:shadow-lg ${
-              isActive
-                ? "border-blue-500 bg-blue-50 shadow-md"
-                : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1">
-                  <div
-                    className="w-4 h-4 rounded-full border border-gray-300 shadow-sm"
-                    style={{ backgroundColor: c.bg }}
-                  />
-                  <div
-                    className="w-4 h-4 rounded-full border border-gray-300 shadow-sm"
-                    style={{ backgroundColor: c.text }}
-                  />
-                  <div
-                    className="w-4 h-4 rounded-full border border-gray-300 shadow-sm"
-                    style={{ backgroundColor: c.primary }}
-                  />
-                </div>
-               
-              </div>
-              {isActive && (
-                <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
+              {isModalOpen && (
+                <div
+                  role="dialog"
+                  style={{ width: themeBtnWidth || "auto" }}
+                  className={`absolute right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 p-3 ${
+                    isModalOpen && themeBtnRef.current
+                      ? `w-[${themeBtnRef.current.offsetWidth}px]`
+                      : ""
+                  }`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {bookmarks && bookmarks.length > 0 ? (
+                    <>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-xs font-semibold text-gray-700">
+                          Choose Theme
+                        </h3>
+                      </div>
+                      <div className="space-y-2">
+                        {bookmarks.map((b) => {
+                          const c = b.themeSettings || {};
+                          return (
+                            <button
+                              key={b._id}
+                              type="button"
+                              onClick={() => {
+                                handleApplyBookmarkedTheme(b);
+                                setIsModalOpen(false);
+                              }}
+                              title={b.label || "Apply theme"}
+                              className={`w-full p-2 border-1 rounded-lg transition-all duration-200 group hover:scale-[1.02] hover:shadow-lg 
+             border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50
+            `}
+                            >
+                              <div className="flex space-x-3 gap-1">
+                                <div
+                                  className="w-4 h-4 rounded-sm  border border-gray-300 shadow-sm"
+                                  style={{ backgroundColor: c.bg }}
+                                />
+                                <div
+                                  className="w-4 h-4  rounded-sm border border-gray-300 shadow-sm"
+                                  style={{ backgroundColor: c.text }}
+                                />
+                                <div
+                                  className="w-4 h-4  rounded-sm   border border-gray-300 shadow-sm"
+                                  style={{ backgroundColor: c.primary }}
+                                />
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center ">
+                      <div className="size-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <span className="text-2xl">🎨</span>
+                      </div>
+                      <Link
+                        to="/dashboard/settings/general"
+                        onClick={() => setIsModalOpen(false)}
+                        className="inline-flex items-center  text-xs text-blue-600 hover:text-blue-700 "
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
+                        Add Themes
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          </button>
-        );
-      })}
-    </div>
-  </>
-) : (
-  <div className="text-center py-6">
-    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-      <span className="text-2xl">🎨</span>
-    </div>
-    <p className="text-sm text-gray-500 mb-3">No themes pinned yet</p>
-    <Link
-      to="/dashboard/settings/general"
-      onClick={() => setIsModalOpen(false)}
-      className="inline-flex items-center gap-2 text-xs text-blue-600 hover:text-blue-700 font-medium"
-    >
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-      </svg>
-      Pin themes from settings
-    </Link>
-  </div>
-)}
-      </div>
-    )}
-  </div>
-)}
-           
+          )}
 
           <div className="flex lg:flex-row md:flex-row sm:flex-row xs flex-row-reverse">
             <div className="relative">
@@ -404,8 +409,8 @@ const { data: notifications = [] } = useGetUserNotificationsQuery(empArg, {
                   <div className="border-b   text- ">
                     <div className="ps-4 pt-4 flex items-center space-x-3">
                       {profileImg &&
-                        profileImg !== "" &&
-                        profileImg !== "default" ? (
+                      profileImg !== "" &&
+                      profileImg !== "default" ? (
                         <img
                           src={profileImg}
                           alt="Profile"
@@ -444,8 +449,6 @@ const { data: notifications = [] } = useGetUserNotificationsQuery(empArg, {
           </div>
         </div>
       </nav>
-
-      
     </>
   );
 }

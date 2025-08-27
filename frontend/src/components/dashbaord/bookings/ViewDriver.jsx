@@ -86,7 +86,45 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
     isLoading && <p>Loading drivers...</p>;
   }
   useEffect(() => {
-    if (selectedBooking?.drivers && allUsers?.drivers) {
+    if (!selectedBooking || !allUsers?.drivers) return;
+  
+    const getIdStr = (v) =>
+      v?._id?.toString?.() || v?.$oid || v?.toString?.() || String(v || "");
+  
+    // 1) If an Accepted job exists for this booking, preselect ONLY that driver
+    const acceptedJob = (jobsData?.jobs || []).find((j) => {
+      const jBookingId =
+        getIdStr(j?.bookingId) || getIdStr(j?.bookingId?._id);
+      return (
+        j.jobStatus === "Accepted" &&
+        jBookingId === getIdStr(selectedBooking?._id)
+      );
+    });
+  
+    if (acceptedJob) {
+      const acceptedUserId = getIdStr(acceptedJob.driverId);
+      const acceptedUser = (allUsers?.drivers || []).find(
+        (u) => getIdStr(u._id) === acceptedUserId
+      );
+  
+      if (acceptedUser) {
+        // match to the "drivers" collection by email
+        const winner = (drivers?.drivers || []).find(
+          (d) =>
+            d?.DriverData?.email?.toLowerCase().trim() ===
+            acceptedUser.email?.toLowerCase().trim()
+        );
+  
+        if (winner) {
+          setSelectedDrivers([winner]);
+          setPreviouslySelectedDrivers([winner]);
+          return; // <-- IMPORTANT: stop here; only the accepted driver stays checked
+        }
+      }
+    }
+  
+    // 2) Fallback (no accepted job): keep existing behavior (preselect all assigned)
+    if (selectedBooking?.drivers) {
       const preSelected = (drivers?.drivers || []).filter((driver) => {
         const driverEmail = driver?.DriverData?.email?.toLowerCase().trim();
         const matchedUser = (allUsers?.drivers || []).find(
@@ -94,21 +132,20 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
             user.email?.toLowerCase().trim() === driverEmail &&
             user.role?.toLowerCase() === "driver"
         );
-
+  
         return (
           matchedUser &&
           selectedBooking.drivers.some(
-            (d) =>
-              d.driverId === matchedUser._id || d.userId === matchedUser._id
+            (d) => d.driverId === matchedUser._id || d.userId === matchedUser._id
           )
         );
       });
-
+  
       setSelectedDrivers(preSelected);
       setPreviouslySelectedDrivers(preSelected);
     }
-  }, [selectedBooking, drivers, allUsers]);
-
+  }, [selectedBooking, drivers, allUsers, jobsData]);
+  
   useEffect(() => {
     const all = (filteredDriver || []).map((d) => String(d._id));
     const chosen = new Set(

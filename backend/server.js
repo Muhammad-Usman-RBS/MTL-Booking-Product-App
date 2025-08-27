@@ -60,15 +60,6 @@
 //   createSuperAdmin();
 // });
 
-
-
-
-
-
-
-
-
-
 // server.js
 import express from "express";
 import dotenv from "dotenv";
@@ -86,9 +77,9 @@ import { scheduleDriverDocsJobs } from "./utils/settings/cronjobs/driverDocument
 
 // Stripe webhook handler (APP-LEVEL, before json parser!)
 import { handleStripeWebhook } from "./controllers/settings/stripeWebhookController.js";
-import { getPayPalClient } from './utils/settings/paypalClient.js';
+import { getPayPalClient } from "./utils/settings/paypalClient.js";
 
-import { scheduleDriverStatementsOnBoot } from "./controllers/settings/cronJobController.js";
+// import { scheduleDriverStatementsOnBoot } from "./controllers/settings/cronJobController.js";
 
 // Routes
 import authRoutes from "./routes/authRoutes.js";
@@ -108,6 +99,8 @@ import reviewRoutes from "./routes/reviewRoutes.js";
 import cronJobsRoutes from "./routes/cronJobRoutes.js";
 import stripeRoutes from "./routes/stripeRoutes.js";
 import paypalRoutes from "./routes/paypalRoutes.js";
+import { scheduleAutoAllocation } from "./utils/cronJob/scheduleAutoAllocation.js";
+import { scheduleDriverStatements } from "./utils/cronJob/scheduleDriverStatements.js";
 
 dotenv.config();
 await connectDB();
@@ -227,8 +220,18 @@ server.listen(PORT, async () => {
   console.log(`[BOOT] Using system timezone for CRON: ${systemTZ}`);
   getPayPalClient();
   createSuperAdmin();
-  await scheduleDriverStatementsOnBoot();
-
+  try {
+    scheduleDriverStatements();
+    console.log("[CRON] Driver statements scheduler started");
+  } catch (e) {
+    console.error("Failed to start driver statements:", e);
+  }
+  try {
+    scheduleAutoAllocation();
+    console.log("[CRON] Auto-allocation scheduler started");
+  } catch (e) {
+    console.error("Failed to start auto-allocation:", e);
+  }
   // Start the daily document-expiry email scheduler
   try {
     await scheduleDriverDocsJobs(); // scheduler reads process.env.CRON_TIMEZONE internally
