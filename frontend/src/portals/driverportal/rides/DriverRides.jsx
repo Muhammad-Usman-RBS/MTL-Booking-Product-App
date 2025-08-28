@@ -1,20 +1,15 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
-import {
-  statusOptions,
-  mockJobs,
-  SCHEDULED_SET,
-} from "../../../constants/dashboardTabsData/data";
+import { statusOptions } from "../../../constants/dashboardTabsData/data";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import { useSelector } from "react-redux";
 import DriverStatCard from "../../../constants/constantscomponents/DriverStatCards";
 
 const DriverRides = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState("7");
   const [statusFilter, setStatusFilter] = useState("all");
   const [startDate, setStartDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -30,11 +25,19 @@ const DriverRides = () => {
     data: bookings = [],
     isLoading,
     error,
+    refetch,
   } = useGetAllBookingsQuery(companyId, {
     skip: !companyId,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
   });
-
-  console.log("bbookings", bookings);
+  useEffect(() => {
+    const onFocus = () => {
+      refetch();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [refetch, error, isLoading]);
   const allBookings = bookings?.bookings ?? [];
   const getJourneyDateTime = (b) => {
     const j = b?.returnJourneyToggle ? b?.returnJourney : b?.primaryJourney;
@@ -46,14 +49,13 @@ const DriverRides = () => {
     dt.setHours(j.hour, j.minute, 0, 0);
     return dt;
   };
-  
 
   const isDriverOnBooking = (b) => {
     const loggedInId = (user?._id || user?.id)?.toString();
     if (!loggedInId || !Array.isArray(b?.drivers)) return false;
 
     return b.drivers.some((d) => {
-      const val = typeof d === "object" ? d._id || d.userId || d.driverId : d;
+      const val = typeof d === "object" ? d._id : d;
       return val?.toString?.() === loggedInId;
     });
   };
@@ -73,11 +75,11 @@ const DriverRides = () => {
         if (statusFilter === "Completed") {
           return normalized === "completed";
         }
-        
+
         if (statusFilter === "Cancelled") {
           return normalized === "cancel";
         }
-        
+
         if (statusFilter === "Scheduled") {
           const SCHEDULED_STATUSES = [
             "accepted",
@@ -100,25 +102,28 @@ const DriverRides = () => {
         return true;
       })
       .map((b) => {
+        const journey = b?.returnJourneyToggle
+          ? b?.returnJourney
+          : b?.primaryJourney;
         const dt = getJourneyDateTime(b);
+
         return {
           id: b._id,
-          date: dt.toLocaleDateString(),
-          time: dt.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+          date: dt ? dt.toLocaleDateString() : "-",
+          time: dt
+            ? dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            : "-",
           customerName: b.passenger?.name ?? "-",
-          pickupLocation:
-            b.primaryJourney?.pickup || b.returnJourney?.pickup || "-",
-          dropLocation:
-            b.primaryJourney?.dropoff || b.returnJourney?.dropoff || "-",
+          pickupLocation: journey?.pickup || "-",
+          dropLocation: journey?.dropoff || "-",
           statusRaw: b.status || "New",
-          fareRaw: b.driverFare ?? 0,
+          fareRaw: b?.returnJourneyToggle
+            ? b.returnDriverFare ?? b.driverFare ?? 0
+            : b.driverFare ?? 0,
         };
       });
   }, [allBookings, companyId, user?._id, startDate, endDate, statusFilter]);
-
+  console.log("filtered", filteredRides);
   const daysSelected = useMemo(() => {
     try {
       const s = new Date(startDate);
@@ -135,6 +140,7 @@ const DriverRides = () => {
     }
   }, [startDate, endDate]);
   const totalRides = filteredRides.length;
+  console.log(totalRides);
   const completedRides = filteredRides.filter(
     (r) => (r.statusRaw || "") === "completed"
   ).length;
@@ -157,6 +163,7 @@ const DriverRides = () => {
     { label: "Status", key: "status" },
     { label: "Fare", key: "fare" },
   ];
+  console.log(filteredRides);
 
   const tableData = filteredRides.map((ride) => ({
     id: ride.id,

@@ -157,7 +157,8 @@ const DriverList = () => {
     <>
       <div>
         <OutletHeading name="Driver List" />
-
+        {user?.role !== "driver" && (
+          <>
         <div className="flex flex-col sm:flex-row justify-between gap-4 px-4 sm:px-0 mb-4">
           <Link to="/dashboard/drivers/new" className="w-full sm:w-auto">
             <button className="btn btn-reset flex items-center gap-2 w-full sm:w-auto justify-center">
@@ -165,7 +166,7 @@ const DriverList = () => {
             </button>
           </Link>
         </div>
-        {user?.role !== "driver" && (
+      
   <div className="w-full overflow-x-auto mb-4">
     <div className="flex gap-4 text-sm font-medium border-b min-w-max sm:text-base px-2">
       {tabOptions.map((tab) => (
@@ -187,6 +188,8 @@ const DriverList = () => {
       ))}
     </div>
   </div>
+  </>
+
 )}
 
 

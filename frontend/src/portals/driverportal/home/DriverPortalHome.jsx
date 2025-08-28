@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useGetDriverJobsQuery } from "../../../redux/api/jobsApi";
 import { useUpdateJobStatusMutation } from "../../../redux/api/jobsApi";
 import { useUpdateBookingStatusMutation } from "../../../redux/api/bookingApi";
 import { toast } from "react-toastify";
-import {
-  driverportalstatusOptions,
-  statusColors,
-} from "../../../constants/dashboardTabsData/data";
+import { driverportalstatusOptions, SCHEDULED_SET, sortList, statusColors } from "../../../constants/dashboardTabsData/data";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
+import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
+import SelectedSearch from "../../../constants/constantscomponents/SelectedSearch";
 
 const DriverPortalHome = () => {
   const user = useSelector((state) => state.auth.user);
@@ -24,6 +23,138 @@ const DriverPortalHome = () => {
   const [updateBookingStatus] = useUpdateBookingStatusMutation();
   const [loadingJobId, setLoadingJobId] = useState(null);
   const [statusMap, setStatusMap] = useState({});
+  const [sortBy, setSortBy] = useState("date-desc"); 
+  const [statusFilter, setStatusFilter] = useState([]);
+  const [startDate, setStartDate] = useState(() => {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return weekAgo.toISOString().split("T")[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const weekAhead = new Date();
+    weekAhead.setDate(weekAhead.getDate() + 7);
+    return weekAhead.toISOString().split("T")[0];
+  });
+  useEffect(() => {
+    const onFocus = () => {
+      if (!isLoading && !error) {
+        refetch();
+        
+        // Reset filters to show newly assigned jobs
+        const today = new Date().toISOString().split("T")[0];
+        if (startDate === today && endDate === today && statusFilter.length === 0) {
+          // If filters are at default, expand date range to show more jobs
+          const weekAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          setStartDate(weekAgo.toISOString().split("T")[0]);
+          
+          const weekAhead = new Date();
+          weekAhead.setDate(weekAhead.getDate() + 7);
+          setEndDate(weekAhead.toISOString().split("T")[0]);
+        }
+      }
+    };
+  
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [refetch, startDate, endDate, statusFilter]);
+  
+  const getCurrentStatus = (job, map) => {
+    const id = String(job?._id);
+    if (map[id]) return map[id];
+
+    const jobStatus = job?.jobStatus ?? "New";
+    const bookingStatus = job?.booking?.status?.trim();
+    if (bookingStatus === "deleted") return "Deleted";
+    if (jobStatus === "Accepted" && bookingStatus) {
+      return bookingStatus;
+    }
+
+    if (
+      bookingStatus === "Accepted" &&
+      jobStatus !== "Rejected" &&
+      jobStatus !== "Already Assigned"
+    ) {
+      return "Accepted";
+    }
+
+    return jobStatus;
+  };
+
+  const jobs = data?.jobs || [];
+  // Filter and sort jobs
+  const filteredAndSortedJobs = useMemo(() => {
+    let filtered = jobs;
+
+    // Filter by status
+    if (statusFilter.length > 0) {
+      filtered = filtered.filter((job) => {
+        const currentStatus = getCurrentStatus(job, statusMap);
+        return statusFilter.includes(currentStatus);
+      });
+    }
+
+    // Filter by date range
+    filtered = filtered.filter((job) => {
+      const booking = job.booking || {};
+      const journey = booking?.returnJourneyToggle
+        ? booking?.returnJourney || {}
+        : booking?.primaryJourney || {};
+
+      if (!journey.date) return false;
+
+      const jobDate = new Date(journey.date).toISOString().split("T")[0];
+      return jobDate >= startDate && jobDate <= endDate;
+    });
+
+    filtered.sort((a, b) => {
+      if (sortBy.startsWith("date")) {
+        const getJobDate = (job) => {
+          const booking = job.booking || {};
+          const journey = booking?.returnJourneyToggle
+            ? booking?.returnJourney || {}
+            : booking?.primaryJourney || {};
+
+          if (!journey.date ) { return new Date(0)}
+
+          const pickupDateTime = new Date(journey.date);
+          pickupDateTime.setHours(journey.hour);
+          pickupDateTime.setMinutes(journey.minute);
+          pickupDateTime.setSeconds(0);
+          pickupDateTime.setMilliseconds(0);
+
+          return pickupDateTime;
+        };
+
+        const dateA = getJobDate(a);
+        const dateB = getJobDate(b);
+
+        return sortBy === "date-asc" ? dateA - dateB : dateB - dateA;
+      } else if (sortBy.startsWith("status")) {
+        const statusA = getCurrentStatus(a, statusMap);
+        const statusB = getCurrentStatus(b, statusMap);
+
+        return sortBy === "status-asc"
+          ? statusA.localeCompare(statusB)
+          : statusB.localeCompare(statusA);
+      }
+
+      return 0;
+    });
+
+    return filtered;
+  }, [jobs, statusFilter, startDate, endDate, sortBy, statusMap]);
+
+  const statusOptions = useMemo(() => {
+    return SCHEDULED_SET.map((status) => ({
+      label: status,
+      value: status,
+      count: jobs.filter((job) => getCurrentStatus(job, statusMap) === status)
+        .length,
+    }));
+  }, [jobs, statusMap]);
 
   const convertKmToMiles = (text) => {
     if (!text || typeof text !== "string") return "—";
@@ -59,8 +190,9 @@ const DriverPortalHome = () => {
       try {
         if (status === "Accepted") {
           const job = (data?.jobs || []).find((j) => j._id === jobId);
+          console.log(job)
           const bookingId =
-            job?.booking?._id || job?.bookingId?._id || job?.bookingId;
+              job?.bookingId;
 
           if (bookingId) {
             await updateBookingStatus({
@@ -88,8 +220,7 @@ const DriverPortalHome = () => {
           }
         } else if (status === "Rejected") {
           const job = (data?.jobs || []).find((j) => j._id === jobId);
-          const bookingId =
-            job?.booking?._id || job?.bookingId?._id || job?.bookingId;
+          const bookingId = job?.bookingId;
 
           if (bookingId) {
             await updateBookingStatus({
@@ -157,18 +288,6 @@ const DriverPortalHome = () => {
       setLoadingJobId(null);
     }
   };
-  useEffect(() => {
-    const onFocus = () => {
-      if (!isLoading && !error) {
-        refetch();
-      }
-    };
-
-    window.addEventListener("focus", onFocus);
-    return () => {
-      window.removeEventListener("focus", onFocus);
-    };
-  }, [refetch, isLoading, error]);
 
   if (isLoading) {
     return (
@@ -190,45 +309,72 @@ const DriverPortalHome = () => {
     );
   }
 
-  const jobs = data?.jobs || [];
-
   return (
-    <div className="container mx-auto px-4">
-      {jobs.length === 0 ? (
+    <>
+      <div className="bg-gray-100 rounded-lg p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <SelectDateRange
+              startDate={startDate}
+              endDate={endDate}
+              setStartDate={setStartDate}
+              setEndDate={setEndDate}
+            />
+          </div>
+
+          <div>
+            <SelectedSearch
+              selected={statusFilter}
+              setSelected={setStatusFilter}
+              statusList={statusOptions}
+              placeholder="All Statuses"
+              showCount={true}
+            />
+          </div>
+
+          <div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="border lg:p-2 p-1.5 rounded w-full bg-white cursor-pointer "
+            >
+              {sortList.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-end">
+            <button
+              onClick={() => {
+                setStatusFilter([]);
+                setStartDate(new Date().toISOString().split("T")[0]);
+                setEndDate(new Date().toISOString().split("T")[0]);
+                setSortBy("date-desc");
+              }}
+              className="btn btn-outline "
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {filteredAndSortedJobs.length === 0 ? (
         <div className="col-span-full text-center text-lg font-medium text-gray-500">
-          No bookings assigned to you yet.
+          {jobs.length === 0
+            ? "No bookings assigned to you yet."
+            : "No bookings match your filters."}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6">
-          {jobs.map((job) => {
+          {filteredAndSortedJobs.map((job) => {
             const booking = job.booking || {};
-            const isReturnJourney = booking?.returnJourneyToggle === true;
-            const journey = isReturnJourney
+            const journey = booking?.returnJourneyToggle
               ? booking?.returnJourney || {}
               : booking?.primaryJourney || {};
-
-            const getCurrentStatus = (job, map) => {
-              const id = String(job?._id);
-              if (map[id]) return map[id];
-
-              const jobStatus = job?.jobStatus ?? "New";
-              const bookingStatus = job?.booking?.status.trim();
-              if (bookingStatus === "deleted") return "Deleted";
-              if (jobStatus === "Accepted" && bookingStatus) {
-                return bookingStatus;
-              }
-
-              if (
-                bookingStatus === "Accepted" &&
-                jobStatus !== "Rejected" &&
-                jobStatus !== "Already Assigned"
-              ) {
-                return "Accepted";
-              }
-
-              // Otherwise fall back to the raw job status
-              return jobStatus;
-            };
 
             const currentStatus = getCurrentStatus(job, statusMap);
             const acceptedByAdmin =
@@ -248,7 +394,7 @@ const DriverPortalHome = () => {
               >
                 {/* HEADER */}
                 <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-xl font-bold text-[var(--dark-gray)]">
+                  <h2 className="lg:text-xl text-md sm:text-sm font-bold text-[var(--dark-gray)]">
                     Booking ID: {booking.bookingId || "—"}
                   </h2>
                   <span
@@ -373,7 +519,7 @@ const DriverPortalHome = () => {
                         <strong className="mr-1 text-[var(--dark-gray)]">
                           Booking Type:
                         </strong>
-                        {isReturnJourney ? "Return" : "Primary"}
+                        {booking?.returnJourneyToggle ? "Return" : "Primary"}
                       </div>
                       <div>
                         <strong className="mr-1 text-[var(--dark-gray)]">
@@ -392,7 +538,7 @@ const DriverPortalHome = () => {
                           Driver Fare:
                         </strong>
                         £
-                        {isReturnJourney
+                        {booking?.returnJourneyToggle
                           ? booking.returnDriverFare
                           : booking.driverFare || "—"}
                       </div>
@@ -525,7 +671,7 @@ const DriverPortalHome = () => {
           })}
         </div>
       )}
-    </div>
+    </>
   );
 };
 

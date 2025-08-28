@@ -1164,13 +1164,7 @@ const BookingsTable = ({
   const getIdStr = (v) =>
     v?._id?.toString?.() || v?.$oid || v?.toString?.() || String(v || "");
   let tableHeaders = allHeaders;
-  const resolveNameFromBookingDrivers = (driversArr, anyId) => {
-    const id = getIdStr(anyId);
-    const hit = (driversArr || []).find(
-      (d) => getIdStr(d?._id) === id 
-    );
-    return hit?.name;
-  };
+
   if (user?.role === "driver") {
     tableHeaders = allHeaders.filter(
       (header) =>
@@ -1462,21 +1456,104 @@ const BookingsTable = ({
         openDriverModal(selectedBooking.driver);
       } else if (key === "enter") {
         openViewModal(selectedBooking);
-      } else if (key in statusMap) {
+      }
+      if (key in statusMap) {
         const newStatus = statusMap[key];
-        updateBookingStatus({
-          id: selectedBooking._id,
-          status: newStatus,
-          updatedBy: `${user.role} | ${user.fullName}`,
-        })
-          .unwrap()
-          .then(() => {
-            toast.success(`Status updated to "${newStatus}"`);
-            refetch();
+
+        // Apply the same logic as the dropdown for "Accepted" status
+        if (newStatus === "Accepted") {
+          if (
+            !["new", "pending"].includes(
+              String(selectedBooking?.status).toLowerCase()
+            )
+          ) {
+            toast.error("You can only mark 'Accepted' from 'New'.");
+            return;
+          }
+
+          const driversArr = Array.isArray(selectedBooking.drivers)
+            ? selectedBooking.drivers
+            : [];
+          if (driversArr.length !== 1) {
+            toast.error(
+              "Select a single driver before marking booking as Accepted."
+            );
+            return;
+          }
+
+          const singleDriver = driversArr[0];
+          const singleDriverId = getIdStr(
+            typeof singleDriver === "object" ? singleDriver._id : singleDriver
+          );
+
+          const jobsArray = jobData?.jobs || [];
+          const jobForDriver = jobsArray.find(
+            (j) =>
+              getIdStr(j?.bookingId) === getIdStr(selectedBooking?._id) &&
+              getIdStr(j?.driverId) === singleDriverId
+          );
+
+          if (!jobForDriver?._id) {
+            toast.error(
+              "No job found for the selected driver. Create/assign the job first."
+            );
+            return;
+          }
+
+          // Accept this driver's job first
+          updateJobStatus({
+            jobId: jobForDriver._id,
+            jobStatus: "Accepted",
           })
-          .catch(() => {
-            toast.error("Failed to update status");
-          });
+            .unwrap()
+            .then(() => {
+              // Mark sibling jobs as Already Assigned
+              const siblingJobs = jobsArray.filter(
+                (j) =>
+                  getIdStr(j?.bookingId) === getIdStr(selectedBooking?._id) &&
+                  getIdStr(j?._id) !== getIdStr(jobForDriver._id)
+              );
+
+              Promise.all(
+                siblingJobs.map((j) =>
+                  updateJobStatus({
+                    jobId: j._id,
+                    jobStatus: "Already Assigned",
+                  })
+                )
+              ).then(() => {
+                // Finally update booking status
+                updateBookingStatus({
+                  id: selectedBooking._id,
+                  status: newStatus,
+                  updatedBy: `${user.role} | ${user.fullName}`,
+                })
+                  .unwrap()
+                  .then(() => {
+                    toast.success(`Status updated to "${newStatus}"`);
+                    refetch();
+                  })
+                  .catch(() => {
+                    toast.error("Failed to update status");
+                  });
+              });
+            });
+        } else {
+          // For non-Accepted statuses, use the original logic
+          updateBookingStatus({
+            id: selectedBooking._id,
+            status: newStatus,
+            updatedBy: `${user.role} | ${user.fullName}`,
+          })
+            .unwrap()
+            .then(() => {
+              toast.success(`Status updated to "${newStatus}"`);
+              refetch();
+            })
+            .catch(() => {
+              toast.error("Failed to update status");
+            });
+        }
       }
     }
 
@@ -1564,9 +1641,9 @@ const BookingsTable = ({
     );
     if (acceptedJob) {
       const fullNameFromJob = acceptedJob?.driverId?.fullName;
-      
-      const name = fullNameFromJob 
-    
+
+      const name = fullNameFromJob;
+
       return <div className="text-sm text-gray-700">{name}</div>;
     }
 
@@ -2193,19 +2270,14 @@ const BookingsTable = ({
         ? item.drivers
             .map((driver) => {
               if (typeof driver === "object") {
-              
-                  if (driver.driverInfo?.firstName) {
+                if (driver.driverInfo?.firstName) {
                   return driver.driverInfo.firstName;
                 } else if (driver.driverId) {
                   // Try to match with assignedDrivers using driverId
                   const matchedDriver = assignedDrivers.find(
                     (d) => d?._id?.toString() === driver.driverId?.toString()
                   );
-                  return (
-                    matchedDriver?.DriverData?.firstName ||
-                  
-                    "Unnamed"
-                  );
+                  return matchedDriver?.DriverData?.firstName || "Unnamed";
                 }
               } else {
                 // Legacy structure - try to match with assignedDrivers
@@ -2213,11 +2285,7 @@ const BookingsTable = ({
                 const matchedDriver = assignedDrivers.find(
                   (d) => d?._id?.toString() === driverId?.toString()
                 );
-                return (
-                  matchedDriver?.DriverData?.firstName ||
-                 
-                  "Unnamed"
-                );
+                return matchedDriver?.DriverData?.firstName || "Unnamed";
               }
               return "Unnamed";
             })

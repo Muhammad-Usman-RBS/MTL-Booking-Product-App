@@ -333,7 +333,6 @@ const sidebarItems = [
           "associateadmin",
           "superadmin",
           "manager",
-          "driver",
         ],
       },
       // {
@@ -393,7 +392,6 @@ const sidebarItems = [
           "associateadmin",
           "superadmin",
           "manager",
-          "driver",
         ],
       },
       {
@@ -405,7 +403,6 @@ const sidebarItems = [
           "associateadmin",
           "superadmin",
           "manager",
-          "driver",
         ],
       },
       {
@@ -417,7 +414,6 @@ const sidebarItems = [
           "associateadmin",
           "superadmin",
           "manager",
-          "driver",
         ],
       },
       {
@@ -429,7 +425,6 @@ const sidebarItems = [
           "associateadmin",
           "superadmin",
           "manager",
-          "driver",
         ],
       },
       // {
@@ -513,7 +508,6 @@ const sidebarItems = [
           "associateadmin",
           "superadmin",
           "manager",
-          "driver",
         ],
       },
       // {

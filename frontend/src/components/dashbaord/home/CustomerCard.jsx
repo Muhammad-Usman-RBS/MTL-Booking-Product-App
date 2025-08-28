@@ -14,8 +14,7 @@ const CustomerCard = () => {
 
   const [bookings, setBookings] = useState([]);
 
-  const { data, error } = useGetAllBookingsQuery(companyId);
-  console.log(data);
+  const { data, error , refetch } = useGetAllBookingsQuery(companyId);
   const { data: jobData = {} } = useGetAllJobsQuery(companyId);
   const { data: bookingSettingsData } = useGetBookingSettingQuery();
   const [updateBookingStatus] = useUpdateBookingStatusMutation();
@@ -27,7 +26,16 @@ const CustomerCard = () => {
       setBookings(userBookings);
     }
   }, [data, user.email]);
+useEffect(()=> {
+  const onFocus = async () => {
 
+    if(!error) {
+      await refetch()
+    }
+  }
+  window.addEventListener("focus" , onFocus)
+  return ()=> window.removeEventListener("focus" , onFocus)
+} , [refetch  , error])
   useEffect(() => {
     if (error) toast.error("Failed to load bookings");
   }, [error]);

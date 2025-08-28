@@ -1422,7 +1422,7 @@ export const statusColors = {
   "Late Cancel": { bg: "#FECACA", text: "#B91C1C" },
   "No Show": { bg: "#E9D5FF", text: "#7E22CE" },
   "Completed": { bg: "#DCFCE7", text: "#15803D" },
-  "Cancelled": { bg: "#F3F4F6", text: "#6B7280" },
+  "Cancel": { bg: "#F3F4F6", text: "#6B7280" },
   "Deleted": { bg: "#F3F4F6", text: "#6B7280" },
   "Rejected": { bg: "var(--alert-red)", text: "#FFFFFF" },
 };
@@ -1442,12 +1442,21 @@ export const driverportalstatusOptions = [
 
 
 
-export const SCHEDULED_SET = new Set([
-  "new",
-  "accepted",
-  "on route",
-  "at location",
-  "ride started",
-  "late cancel",
-  "no show",
-]);
+export const SCHEDULED_SET = [
+  "New",
+  "Accepted",
+  "On Route",
+  "At Location",
+  "Ride Started",
+  "Late Cancel",
+  "No Show",
+  "Completed",
+  "Cancel",
+];
+
+export  const sortList =  [
+  { label: "Date Descending",  value: "date-desc"  },
+  { label: "Date Ascending",   value: "date-asc"   },
+  { label: "Status Ascending", value: "status-asc" },
+  { label: "Status Descending",value: "status-desc"},
+]

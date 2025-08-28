@@ -6,7 +6,6 @@ import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
 import {
-  SCHEDULED_SET,
   statusOptions,
 } from "../../../constants/dashboardTabsData/data";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
@@ -146,10 +145,7 @@ const DriverEarnings = () => {
     () => completedOnly.reduce((s, e) => s + (e.amount || 0), 0),
     [completedOnly]
   );
-  const averagePerJob = completedOnly.length
-    ? totalEarnings / completedOnly.length
-    : 0;
-  const totalTrips = earnings.length;
+
   const totalDistanceMiles = useMemo(
     () => earnings.reduce((s, e) => s + (e.tripDistanceMiles || 0), 0),
     [earnings]
