@@ -136,7 +136,7 @@ const VehicleSelection = ({
               </button>
 
               {open && (
-                <div className="absolute z-50 mt-2 w-full bg-white border border-[var(--light-gray)] rounded-md shadow-lg max-h-72 overflow-y-auto sm:max-h-80">
+                <div className="absolute z-50 bottom-full mb-2 w-full bg-white border border-[var(--light-gray)] rounded-md shadow-lg max-h-72 overflow-y-auto sm:max-h-80">
                   {vehicleOptions.map((vehicle, idx) => (
                     <button
                       key={vehicle._id || idx}
@@ -148,7 +148,7 @@ const VehicleSelection = ({
                         {vehicle.vehicleName}
                       </div>
 
-                      {/* Vehicle Capacity Info - Fully Responsive */}
+                      {/* Vehicle Capacity Info */}
                       <div className="grid grid-cols-4 lg:grid-cols-4 gap-x-4 gap-y-2 mt-2 text-xs text-gray-600">
                         <span className="flex items-center gap-1">
                           <Icons.Users className="w-4 h-4" />

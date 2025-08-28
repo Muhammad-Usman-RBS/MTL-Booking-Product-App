@@ -14,8 +14,11 @@ import { useBookingFare } from "../../../utils/useBookingFare";
 import { useGetGeneralPricingPublicQuery } from "../../../redux/api/generalPricingApi";
 import { useGetCorporateCustomerByVatQuery } from "../../../redux/api/corporateCustomerApi";
 import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
+import { useNavigate } from "react-router-dom";
 
 const NewBooking = ({ editBookingData = null, onClose }) => {
+  const navigate = useNavigate();
+
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
   const userEmail = user?.email || "";
@@ -428,6 +431,21 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     }));
   }, [editBookingData]);
 
+  // NEW: track manual edits
+  const [fareTouched, setFareTouched] = useState({ journey: false, return: false });
+
+  useEffect(() => {
+    if (primaryFare != null && !fareTouched.journey) {
+      setFareDetails((p) => ({ ...p, journeyFare: primaryFare }));
+    }
+  }, [primaryFare, fareTouched.journey]);
+
+  useEffect(() => {
+    if (returnJourneyToggle && returnFare != null && !fareTouched.return) {
+      setFareDetails((p) => ({ ...p, returnJourneyFare: returnFare }));
+    }
+  }, [returnFare, returnJourneyToggle, fareTouched.return]);
+
   // Update local edit data with new calculated fares only when locations change
   useEffect(() => {
     if (
@@ -495,23 +513,23 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const validateAdvanceForJourney = (journey) => {
     const setting = bookingSettingData?.setting?.advanceBookingMin;
     if (!setting) return true; // no rule configured
-  
+
     const { value, unit } = setting;
     const { date, hour, minute } = journey || {};
     if (!date || hour === "" || minute === "") return true; // incomplete -> skip
-  
+
     const now = new Date();
     const bookingDateTime = new Date(
       `${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`
     );
-  
+
     let advanceMs = 0;
     const u = String(unit || "").toLowerCase();
     if (u === "hour" || u === "hours") advanceMs = value * 60 * 60 * 1000;
     else if (u === "minute" || u === "minutes") advanceMs = value * 60 * 1000;
     else if (u === "day" || u === "days") advanceMs = value * 24 * 60 * 60 * 1000;
     else return true; // unknown unit → don't block
-  
+
     const minAllowed = new Date(now.getTime() + advanceMs);
     if (bookingDateTime < minAllowed) {
       const timeText = value === 1
@@ -527,9 +545,9 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
     if (!validateAdvanceForJourney(primaryJourneyData)) return;
 
-if (returnJourneyToggle && dropOffs2[0]) {
-  if (!validateAdvanceForJourney(returnJourneyData)) return;
-}
+    if (returnJourneyToggle && dropOffs2[0]) {
+      if (!validateAdvanceForJourney(returnJourneyData)) return;
+    }
 
     const isReturnJourney =
       !!editBookingData?.__editReturn || !!editBookingData?.__copyReturn;
@@ -701,6 +719,9 @@ if (returnJourneyToggle && dropOffs2[0]) {
         await createBooking(primaryPayload).unwrap();
         toast.success("Primary booking created successfully");
 
+        // Redirect after booking creation
+navigate("/dashboard/bookings/list");
+
         // ➤ 2. Create return booking if toggle is ON
         if (returnJourneyToggle && dropOffs2[0]) {
           const returnPayload = {
@@ -728,6 +749,7 @@ if (returnJourneyToggle && dropOffs2[0]) {
 
           await createBooking(returnPayload).unwrap();
           toast.success("Return journey booking created successfully");
+          navigate("/dashboard/bookings/list");
         }
       }
 
@@ -740,7 +762,7 @@ if (returnJourneyToggle && dropOffs2[0]) {
   useEffect(() => {
     validateAdvanceForJourney(primaryJourneyData);
   }, [primaryJourneyData.date, primaryJourneyData.hour, primaryJourneyData.minute]);
-  
+
   useEffect(() => {
     if (returnJourneyToggle) {
       validateAdvanceForJourney(returnJourneyData);
@@ -939,10 +961,15 @@ if (returnJourneyToggle && dropOffs2[0]) {
               returnJourneyToggle={returnJourneyToggle}
               fareDetails={fareDetails}
               setFareDetails={setFareDetails}
+              calculatedJourneyFare={primaryFare}
+              calculatedReturnFare={returnFare}
               setEmailNotify={setEmailNotify}
               handleSubmit={handleSubmit}
               isLoading={isLoading}
               editBookingData={editBookingData}
+              onFareManuallyEdited={(which) =>
+                setFareTouched((t) => ({ ...t, [which]: true }))
+              }
             />
           )}
         </div>

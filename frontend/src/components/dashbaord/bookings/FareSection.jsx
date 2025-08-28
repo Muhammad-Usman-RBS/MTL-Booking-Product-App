@@ -1,17 +1,26 @@
 import React from "react";
-import { useSelector } from 'react-redux';
+import { useSelector } from "react-redux";
 
 const FareSection = ({
   fareDetails,
   setFareDetails,
   returnJourneyToggle,
-  calculatedJourneyFare,
-  calculatedReturnFare,
+  calculatedJourneyFare,   // still accepted but not shown as a hint
+  calculatedReturnFare,    // still accepted but not shown as a hint
+  onFareManuallyEdited,    // keep so parent can stop auto-sync on manual edits
 }) => {
   const { currency } = useSelector((state) => state.currency);
 
   const handleFareChange = (key, value) => {
-    setFareDetails((prev) => ({ ...prev, [key]: value }));
+    if (key === "journeyFare") onFareManuallyEdited?.("journey");
+    if (key === "returnJourneyFare") onFareManuallyEdited?.("return");
+
+    const next =
+      value === "" || value === null || Number.isNaN(Number(value))
+        ? ""
+        : Number(value);
+
+    setFareDetails((prev) => ({ ...prev, [key]: next }));
   };
 
   const handleCheckboxChange = (group, key) => {
@@ -24,11 +33,23 @@ const FareSection = ({
     }));
   };
 
+  const fareFields = [
+    { key: "journeyFare", label: "Journey Fare" },
+    { key: "driverFare", label: "Driver Fare" },
+    ...(returnJourneyToggle
+      ? [
+          { key: "returnJourneyFare", label: "Return Journey Fare" },
+          { key: "returnDriverFare", label: "Return Driver Fare" },
+        ]
+      : []),
+  ];
+
   return (
     <div className="bg-white shadow-lg rounded-2xl border border-gray-200 overflow-hidden h-full">
       <div className="bg-[#0f192d] px-6 py-3">
         <h2 className="text-xl font-bold text-gray-50">Fare&nbsp;Details:-</h2>
       </div>
+
       <div className="p-6 space-y-6">
         {fareDetails.paymentMethod === "Card, Bank" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -38,7 +59,10 @@ const FareSection = ({
               className="custom_input"
               value={fareDetails.cardPaymentReference}
               onChange={(e) =>
-                handleFareChange("cardPaymentReference", e.target.value)
+                setFareDetails((prev) => ({
+                  ...prev,
+                  cardPaymentReference: e.target.value,
+                }))
               }
             />
             <input
@@ -47,7 +71,10 @@ const FareSection = ({
               className="custom_input"
               value={fareDetails.paymentGateway}
               onChange={(e) =>
-                handleFareChange("paymentGateway", e.target.value)
+                setFareDetails((prev) => ({
+                  ...prev,
+                  paymentGateway: e.target.value,
+                }))
               }
             />
           </div>
@@ -67,7 +94,10 @@ const FareSection = ({
                   value={method}
                   checked={fareDetails.paymentMethod === method}
                   onChange={(e) =>
-                    handleFareChange("paymentMethod", e.target.value)
+                    setFareDetails((prev) => ({
+                      ...prev,
+                      paymentMethod: e.target.value,
+                    }))
                   }
                 />
                 {method}
@@ -77,49 +107,27 @@ const FareSection = ({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
-          {[
-            {
-              key: "journeyFare",
-              label: "Journey Fare",
-              calculatedValue: calculatedJourneyFare,
-            },
-            {
-              key: "driverFare",
-              label: "Driver Fare",
-              calculatedValue: null,
-            },
-            ...(returnJourneyToggle
-              ? [
-                {
-                  key: "returnJourneyFare",
-                  label: "Return Journey Fare",
-                  calculatedValue: calculatedReturnFare,
-                },
-                {
-                  key: "returnDriverFare",
-                  label: "Return Driver Fare",
-                  calculatedValue: null,
-                },
-              ]
-              : []),
-          ].map((item) => (
+          {fareFields.map(({ key, label }) => (
             <div
-              key={item.key}
+              key={key}
               className="bg-gray-100 border border-[var(--light-gray)] rounded px-4 py-3"
             >
               <label className="block text-sm font-semibold text-gray-800 mb-1">
-                {item.label}
+                {label}
               </label>
               <div className="flex items-center">
                 <input
                   type="number"
+                  step="0.01"
                   className="custom_input"
-                  value={fareDetails[item.key]}
-                  placeholder={
-                    item.calculatedValue ? `${item.calculatedValue}` : "0"
+                  value={
+                    fareDetails[key] === "" || fareDetails[key] === undefined
+                      ? ""
+                      : fareDetails[key]
                   }
+                  placeholder="0"
                   onChange={(e) =>
-                    handleFareChange(item.key, parseFloat(e.target.value) || "")
+                    handleFareChange(key, e.target.value.trim())
                   }
                 />
                 <span className="bg-gray-200 border border-[var(--light-gray)] px-3 py-1 rounded-r text-gray-700 font-medium">
@@ -129,6 +137,7 @@ const FareSection = ({
             </div>
           ))}
         </div>
+
         <hr className="mb-7 mt-2 border-[var(--light-gray)]" />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
@@ -189,26 +198,3 @@ const FareSection = ({
 };
 
 export default FareSection;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
