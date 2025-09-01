@@ -4,7 +4,9 @@ import { getPayPalClient, paypal } from "../../utils/settings/paypalClient.js";
 /** ──────────────────────────────────────────────────────────────
  * Single source of truth: currency backend decide karega
  * ────────────────────────────────────────────────────────────── */
-const MERCHANT_CCY = (process.env.PAYPAL_CURRENCY).toUpperCase();
+const DEFAULT_CCY = "GBP";
+const rawCcy = process.env.PAYPAL_CURRENCY || process.env.CURRENCY || DEFAULT_CCY;
+const MERCHANT_CCY = String(rawCcy).trim().toUpperCase();
 
 // Zero-decimal currencies (PayPal requires integer string)
 const ZERO_DEC = new Set(["JPY", "TWD", "HUF"]);
