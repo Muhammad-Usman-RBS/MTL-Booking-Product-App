@@ -1,38 +1,39 @@
-import Booking from "../../../models/Booking.js";
-import CronJob from "../../../models/settings/CronJob.js";
-import ReviewSetting from "../../../models/settings/ReviewSetting.js";
-import { compileReviewTemplate } from "../../reviewPlaceholders.js";
-import sendReviewEmail from "../../sendReviewEmail.js";
+import Booking from "../../models/Booking.js";
+import CronJob from "../../models/settings/CronJob.js";
+import ReviewSetting from "../../models/settings/ReviewSetting.js";
+import { compileReviewTemplate } from "./reviewPlaceholders.js";
+import sendReviewEmail from "./sendReviewEmail.js";
+import { DEFAULT_SUBJECT, DEFAULT_TEMPLATE } from "../bookings/reviewDefaults.js";
 
+// Convert things like "1", "1h", "90m", "30 min", "10 sec" → ms
 export const hoursToMs = (val) => {
     if (val == null) return 0;
     const str = String(val).trim().toLowerCase();
 
-    // number only? default hours
+    // "1.5" (treat as hours)
     if (/^\d+(\.\d+)?$/.test(str)) {
         const n = parseFloat(str);
         return n * 3600 * 1000;
     }
 
-    const num = parseFloat(str.match(/[\d.]+/)?.[0] || "0");
-    if (!num) return 0;
+    const n = parseFloat(str.match(/[\d.]+/)?.[0] || "0");
+    if (!n) return 0;
 
-    if (str.includes("sec")) return num * 1000;            // "10 sec", "10 seconds"
-    if (str.includes("min")) return num * 60 * 1000;       // "2 min", "2 minutes"
-    if (str.includes("hour") || str.includes("hr") || str.includes("h")) {
-        return num * 3600 * 1000;                            // "1 hour", "1 h"
+    if (str.includes("sec")) return n * 1000;
+    if (str.includes("min")) return n * 60 * 1000;
+    if (str.includes("hour") || str.includes("hr") || /\b\d+h\b/.test(str) || str.endsWith("h")) {
+        return n * 3600 * 1000;
     }
     // fallback => hours
-    return num * 3600 * 1000;
+    return n * 3600 * 1000;
 };
 
-export const scheduleReviewEmail = async (booking) => {
+export const autoSendReviewEmail = async (booking) => {
     try {
-        // safety checks
         const paxEmail = booking?.passenger?.email?.trim();
         if (!paxEmail) return;
 
-        // don't double-schedule if already sent
+        // don't schedule if already sent
         if (booking.reviewEmailSent) return;
 
         // read cron settings
@@ -46,36 +47,36 @@ export const scheduleReviewEmail = async (booking) => {
             return;
         }
 
-        // delay
+        // schedule after delay
         const delayMs = hoursToMs(feature.timing?.hours || "1 hours");
         const when = new Date(Date.now() + delayMs);
         console.log(`Scheduling review email for booking #${booking.bookingId} at ${when.toISOString()}`);
 
         setTimeout(async () => {
             try {
-                // re-fetch latest booking to ensure not already sent / still completed
+                // re-fetch latest booking
                 const fresh = await Booking.findById(booking._id);
                 if (!fresh) return;
                 if (fresh.reviewEmailSent) return;
 
-                // optional: ensure still "Completed"
+                // optional: ensure booking is completed before emailing
                 const normalized = (fresh.status || "").toLowerCase().trim();
                 if (normalized !== "completed") return;
 
-                // load company review template
+                // load company review template (with fallbacks)
                 const settings = await ReviewSetting.findOne({ companyId: fresh.companyId }).lean();
-                if (!settings) {
-                    console.log("No ReviewSetting found for company:", fresh.companyId.toString());
-                    return;
-                }
-                console.log("Sending review email to:", paxEmail, "subjectTpl:", settings.subject);
+                const subjectTpl = settings?.subject || DEFAULT_SUBJECT;
+                const bodyTpl = settings?.template || DEFAULT_TEMPLATE;
+                const link = settings?.reviewLink || "https://g.page/r/CUFVH1EVOz6iEAI/review";
 
-                const subj = compileReviewTemplate(settings.subject, fresh);
-                let body = compileReviewTemplate(settings.template, fresh);
+                const subj = compileReviewTemplate(subjectTpl, fresh);
+                let body = compileReviewTemplate(bodyTpl, fresh);
+
+                // insert link token or append if missing (avoid duplication)
                 if (body.includes("!REVIEW_LINK!")) {
-                    body = body.replace(/!REVIEW_LINK!/g, settings.reviewLink || "");
-                } else if (settings.reviewLink && !body.includes(settings.reviewLink)) {
-                    body += `\n\n${settings.reviewLink}`;
+                    body = body.replace(/!REVIEW_LINK!/g, link);
+                } else if (link && !body.includes(link)) {
+                    body += `\n\n${link}`;
                 }
 
                 await sendReviewEmail(paxEmail, subj, {
@@ -91,6 +92,6 @@ export const scheduleReviewEmail = async (booking) => {
             }
         }, delayMs);
     } catch (e) {
-        console.error("scheduleReviewEmail failed:", e.message);
+        console.error("autoSendReviewEmail failed:", e.message);
     }
 };

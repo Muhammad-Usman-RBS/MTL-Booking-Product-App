@@ -2,35 +2,18 @@ import express from "express";
 import mongoose from "mongoose";
 import ReviewSetting from "../models/settings/ReviewSetting.js";
 import Booking from "../models/Booking.js";
-import sendReviewEmail from "../utils/sendReviewEmail.js";
-import { compileReviewTemplate } from "../utils/reviewPlaceholders.js";
+import sendReviewEmail from "../utils/bookings/sendReviewEmail.js";
+import { compileReviewTemplate } from "../utils/bookings/reviewPlaceholders.js";
+import { DEFAULT_SUBJECT, DEFAULT_TEMPLATE } from "../utils/bookings/reviewDefaults.js";
 
 const router = express.Router();
 
-const DEFAULT_SUBJECT = "Share your experience - !ORDER_NO!";
-const DEFAULT_TEMPLATE = `Dear !PASSENGER_NAME!,
-
-Thank you for choosing Mega Transfers Limited for your journey !ORDER_NO! on !PICKUP_DATE_TIME!.
-
-We hope the journey was to your satisfaction and we appreciate your suggestions to improve our service.
-
-Would you like to share your experience with us via following link:
-!REVIEW_LINK!
-
-We consider all positive and negative feedbacks, it helps us to continuously improve our standards.
-
-If you have any questions or you would like to share any suggestions please email us on Bookings@megatransfers.co.uk.
-
-We are looking forward to seeing you again.
-
-Thank you
-
-Team Mega Transfers`;
-
 // Small helper
-const isValidObjectId = (id) => typeof id === "string" && id.length === 24 && mongoose.isValidObjectId(id);
+const isValidObjectId = (id) =>
+    typeof id === "string" &&
+    id.length === 24 &&
+    mongoose.isValidObjectId(id);
 
-/** █ GET /api/reviews/settings?companyId=... */
 router.get("/settings", async (req, res) => {
     try {
         const { companyId } = req.query;
@@ -105,16 +88,14 @@ router.post("/send/:bookingId", async (req, res) => {
         }
 
         const settings = await ReviewSetting.findOne({ companyId: booking.companyId }).lean();
-        if (!settings) {
-            return res.status(400).json({ message: "Review settings not configured" });
-        }
+        // use defaults if not configured (allows manual send even before settings exist)
+        const subjectTpl = settings?.subject || DEFAULT_SUBJECT;
+        const bodyTpl = settings?.template || DEFAULT_TEMPLATE;
+        const link = settings?.reviewLink || "https://g.page/r/CUFVH1EVOz6iEAI/review";
 
-        const subject = compileReviewTemplate(settings.subject || DEFAULT_SUBJECT, booking);
+        const subject = compileReviewTemplate(subjectTpl, booking);
+        let body = compileReviewTemplate(bodyTpl, booking);
 
-        let body = compileReviewTemplate(settings.template || DEFAULT_TEMPLATE, booking);
-        const link = settings.reviewLink || "https://g.page/r/CUFVH1EVOz6iEAI/review";
-
-        // If template uses token, replace it; otherwise, append (avoid duplicate)
         if (body.includes("!REVIEW_LINK!")) {
             body = body.replace(/!REVIEW_LINK!/g, link);
         } else if (link && !body.includes(link)) {

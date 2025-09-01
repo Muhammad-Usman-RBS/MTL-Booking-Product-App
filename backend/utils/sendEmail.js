@@ -183,9 +183,6 @@
 
 
 
-
-
-
 import nodemailer from "nodemailer";
 
 /** Make a Mongoose doc / subdoc safe for rendering */
@@ -216,7 +213,6 @@ const generateHtmlTable = (title, subtitle, raw) => {
     if (value instanceof Date) return value.toISOString();
     if (typeof value === "number" || typeof value === "boolean") return String(value);
     if (typeof value === "string") return value;
-    // objects/arrays will be handled recursively
     return "";
   };
 
@@ -224,7 +220,6 @@ const generateHtmlTable = (title, subtitle, raw) => {
     if (!Array.isArray(arr)) return "";
     return arr.map((item, idx) => {
       if (rowCount > MAX_ROWS) return "";
-      // object inside array → section, otherwise simple row
       if (item && typeof item === "object" && !Array.isArray(item)) {
         rowCount++;
         const header = `<tr><td colspan="2"><strong>${escapeHtml(keyPath)} [${idx+1}]</strong></td></tr>`;
@@ -323,31 +318,39 @@ const renderTextFallback = (subject, title, subtitle, data = {}) => {
 const sendEmail = async (to, subject, payload = {}) => {
   const { html, title, subtitle = "", data = {} } = payload || {};
 
+  // Validate email format
+  if (!to || !to.includes("@")) {
+    console.error("Invalid email address:", to);
+    return;
+  }
+
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
-    secure: true,
+    secure: true, // true for 465, false for other ports
     auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_PASS },
   });
 
-  // Build final HTML
+  // Build final HTML content
   const finalHtml = html
     ? (html.startsWith("<") ? html : `<!doctype html><html><body>${html}</body></html>`)
     : generateHtmlTable(title || subject, subtitle, data);
 
-  // Plain-text alternative
+  // Plain-text alternative for email clients that can't render HTML
   const textAlt = renderTextFallback(subject, title || subject, subtitle, data);
 
-  // Optional — log length to verify not-empty
-  // console.log("EMAIL_HTML_LEN:", finalHtml?.length || 0);
-
-  await transporter.sendMail({
-    from: `"MTL Booking" <${process.env.GMAIL_USER}>`,
-    to,
-    subject,
-    html: finalHtml,
-    text: textAlt,
-  });
+  try {
+    const info = await transporter.sendMail({
+      from: `"MTL Booking" <${process.env.GMAIL_USER}>`,
+      to,
+      subject,
+      html: finalHtml,
+      text: textAlt,
+    });
+    console.log(`Email sent to: ${to}, MessageId: ${info.messageId}`);
+  } catch (error) {
+    console.error('Error sending email:', error);
+  }
 };
 
 export default sendEmail;

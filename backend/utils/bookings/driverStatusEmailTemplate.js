@@ -26,12 +26,12 @@ export const driverStatusEmailTemplate = ({
     phone: options.supportPhone || company?.phone || company?.companyProfile?.phone || "",
   };
 
-  const safe = (v) => String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const safe = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
   // Enhanced driver/vehicle data with fallbacks
   const driverInfo = {
     firstName: driver?.firstName || "Your",
-    surName: driver?.surName || "Driver", 
+    surName: driver?.surName || "Driver",
     contact: driver?.contact || "Will contact you shortly",
     pcoLicense: driver?.privateHireCardNo || "-",
     fullName: driver ? `${driver.firstName || ''} ${driver.surName || ''}`.trim() || 'Your Driver' : 'Your Driver'
@@ -83,9 +83,9 @@ export const driverStatusEmailTemplate = ({
                 <tr>
                   <td align="left" style="vertical-align:middle">
                     ${org.logoUrl
-                      ? `<img src="${safe(org.logoUrl)}" width="150" style="display:block;max-width:180px;height:auto" alt="${safe(org.name)}" />`
-                      : `<div style="font:800 18px/1 Arial,sans-serif;color:${brand.primary}">${safe(org.name)}</div>`
-                    }
+      ? `<img src="${safe(org.logoUrl)}" width="150" style="display:block;max-width:180px;height:auto" alt="${safe(org.name)}" />`
+      : `<div style="font:800 18px/1 Arial,sans-serif;color:${brand.primary}">${safe(org.name)}</div>`
+    }
                   </td>
                   <td align="right" style="vertical-align:middle">
                     <span style="display:inline-block;background:${currentStatus.bg};color:${currentStatus.color};font:700 12px/1 Arial,sans-serif;padding:8px 12px;border-radius:999px;border:1px solid ${currentStatus.color}33">${safe(status)}</span>
