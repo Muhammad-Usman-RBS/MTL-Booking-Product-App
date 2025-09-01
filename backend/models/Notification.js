@@ -14,6 +14,10 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    jobId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Job"
+    },
     
     primaryJourney: {
       pickup: { type: String, required: true },

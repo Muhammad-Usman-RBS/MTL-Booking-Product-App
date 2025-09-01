@@ -1,29 +1,41 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useGetDriverJobsQuery } from "../../../redux/api/jobsApi";
 import { useUpdateJobStatusMutation } from "../../../redux/api/jobsApi";
 import { useUpdateBookingStatusMutation } from "../../../redux/api/bookingApi";
 import { toast } from "react-toastify";
-import { driverportalstatusOptions, SCHEDULED_SET, sortList, statusColors } from "../../../constants/dashboardTabsData/data";
+import {
+  driverportalstatusOptions,
+  SCHEDULED_SET,
+  sortList,
+  statusColors,
+} from "../../../constants/dashboardTabsData/data";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
 import SelectedSearch from "../../../constants/constantscomponents/SelectedSearch";
 
-const DriverPortalHome = () => {
+const DriverPortalHome = ({ propJob  ,setIsBookingModalOpen }) => {
+
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
   const driverId = user?._id;
 
   const { data, isLoading, error, refetch } = useGetDriverJobsQuery(
     { companyId, driverId },
-    { skip: !companyId || !driverId }
+    {
+      skip: !companyId || !driverId,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMountOrArgChange: true,
+    }
   );
+
 
   const [updateJobStatus] = useUpdateJobStatusMutation();
   const [updateBookingStatus] = useUpdateBookingStatusMutation();
   const [loadingJobId, setLoadingJobId] = useState(null);
   const [statusMap, setStatusMap] = useState({});
-  const [sortBy, setSortBy] = useState("date-desc"); 
+  const [sortBy, setSortBy] = useState("date-desc");
   const [statusFilter, setStatusFilter] = useState([]);
   const [startDate, setStartDate] = useState(() => {
     const weekAgo = new Date();
@@ -36,31 +48,91 @@ const DriverPortalHome = () => {
     return weekAhead.toISOString().split("T")[0];
   });
   useEffect(() => {
-    const onFocus = () => {
-      if (!isLoading && !error) {
-        refetch();
-        
-        // Reset filters to show newly assigned jobs
-        const today = new Date().toISOString().split("T")[0];
-        if (startDate === today && endDate === today && statusFilter.length === 0) {
-          // If filters are at default, expand date range to show more jobs
-          const weekAgo = new Date();
-          weekAgo.setDate(weekAgo.getDate() - 7);
-          setStartDate(weekAgo.toISOString().split("T")[0]);
-          
-          const weekAhead = new Date();
-          weekAhead.setDate(weekAhead.getDate() + 7);
-          setEndDate(weekAhead.toISOString().split("T")[0]);
-        }
-      }
+    const onFocus = async () => {
+     await refetch();
     };
-  
     window.addEventListener("focus", onFocus);
-    return () => {
-      window.removeEventListener("focus", onFocus);
-    };
-  }, [refetch, startDate, endDate, statusFilter]);
-  
+    return () => window.removeEventListener("focus", onFocus);
+  }, [refetch]);
+
+
+  const modalMode = !!(propJob && propJob.length > 0);
+
+const resolveRealJobId = useCallback(
+  (maybeJobId) => {
+    const asStr = String(maybeJobId);
+
+    const apiExact = (data?.jobs || []).find(
+      (j) => String(j._id) === asStr
+    );
+    if (apiExact) {
+      return apiExact._id;
+    }
+
+    // 2) Try bookingId match in API jobs (notif carries bookingId)
+    const apiByBookingId = (data?.jobs || []).find(
+      (j) => String(j.bookingId) === asStr
+    );
+    if (apiByBookingId) {
+    
+      return apiByBookingId._id;
+    }
+
+    const propExact = (propJob || []).find(
+      (j) => String(j._id) === asStr
+    );
+    if (propExact) {
+      return propExact._id;
+    }
+
+    const propByBookingId = (propJob || []).find(
+      (j) => String(j.bookingId) === asStr
+    );
+    if (propByBookingId) {
+      
+      return propByBookingId._id;
+    }
+
+   
+    return asStr;
+  },
+  [data?.jobs, propJob]
+);
+
+
+const jobs = useMemo(() => {
+  const apiJobs = data?.jobs || [];
+
+  if (propJob?.length > 0) {
+    return propJob.map((job) => {
+      const safeId = String(job?._id ?? job?.id ?? job?.jobId ?? job?.bookingId ?? "");
+      const apiMatch =
+        apiJobs.find((j) => String(j.bookingId) === String(job?.bookingId)) ||
+        apiJobs.find((j) => String(j._id) === String(job?._id));
+
+
+
+      return {
+        _id: safeId,
+        bookingId: String(job?.bookingId || apiMatch?.bookingId || ""),
+        jobStatus:
+          job?.jobStatus || job?.jobstatus || job?.status || apiMatch?.jobStatus || "New",
+        // prefer API booking (has full journey), then job.booking, then job itself
+        booking: apiMatch?.booking || job?.booking || job,
+        driverId: job?.driverId || apiMatch?.driverId,
+      };
+    });
+  }
+
+  return apiJobs.map((j) => ({
+    ...j,
+    _id: String(j?._id || j?.id || j?.jobId || ""),
+    bookingId: String(j?.bookingId || ""),
+    jobStatus: j?.jobStatus || j?.jobstatus || j?.status || "New",
+  }));
+}, [propJob, data?.jobs]);
+
+
   const getCurrentStatus = (job, map) => {
     const id = String(job?._id);
     if (map[id]) return map[id];
@@ -83,69 +155,64 @@ const DriverPortalHome = () => {
     return jobStatus;
   };
 
-  const jobs = data?.jobs || [];
-  // Filter and sort jobs
-  const filteredAndSortedJobs = useMemo(() => {
-    let filtered = jobs;
+const filteredAndSortedJobs = useMemo(() => {
+  if (modalMode) {
+    return jobs;
+  }
 
-    // Filter by status
-    if (statusFilter.length > 0) {
-      filtered = filtered.filter((job) => {
-        const currentStatus = getCurrentStatus(job, statusMap);
-        return statusFilter.includes(currentStatus);
-      });
-    }
+  let filtered = jobs;
 
-    // Filter by date range
+  // Filter by status
+  if (statusFilter.length > 0) {
     filtered = filtered.filter((job) => {
-      const booking = job.booking || {};
-      const journey = booking?.returnJourneyToggle
-        ? booking?.returnJourney || {}
-        : booking?.primaryJourney || {};
-
-      if (!journey.date) return false;
-
-      const jobDate = new Date(journey.date).toISOString().split("T")[0];
-      return jobDate >= startDate && jobDate <= endDate;
+      const currentStatus = getCurrentStatus(job, statusMap);
+      return statusFilter.includes(currentStatus);
     });
+  }
 
-    filtered.sort((a, b) => {
-      if (sortBy.startsWith("date")) {
-        const getJobDate = (job) => {
-          const booking = job.booking || {};
-          const journey = booking?.returnJourneyToggle
-            ? booking?.returnJourney || {}
-            : booking?.primaryJourney || {};
+  // Filter by date range
+  filtered = filtered.filter((job) => {
+    const booking = job.booking || {};
+    const journey = booking?.returnJourneyToggle
+      ? booking?.returnJourney || {}
+      : booking?.primaryJourney || {};
 
-          if (!journey.date ) { return new Date(0)}
+    if (!journey.date) return false;
 
-          const pickupDateTime = new Date(journey.date);
-          pickupDateTime.setHours(journey.hour);
-          pickupDateTime.setMinutes(journey.minute);
-          pickupDateTime.setSeconds(0);
-          pickupDateTime.setMilliseconds(0);
+    const jobDate = new Date(journey.date).toISOString().split("T")[0];
+    return jobDate >= startDate && jobDate <= endDate;
+  });
 
-          return pickupDateTime;
-        };
+  filtered.sort((a, b) => {
+    if (sortBy.startsWith("date")) {
+      const getJobDate = (job) => {
+        const booking = job.booking || {};
+        const journey = booking?.returnJourneyToggle
+          ? booking?.returnJourney || {}
+          : booking?.primaryJourney || {};
+        if (!journey.date) return new Date(0);
+        const dt = new Date(journey.date);
+        dt.setHours(journey.hour);
+        dt.setMinutes(journey.minute);
+        dt.setSeconds(0);
+        dt.setMilliseconds(0);
+        return dt;
+      };
+      const dateA = getJobDate(a);
+      const dateB = getJobDate(b);
+      return sortBy === "date-asc" ? dateA - dateB : dateB - dateA;
+    } else if (sortBy.startsWith("status")) {
+      const statusA = getCurrentStatus(a, statusMap);
+      const statusB = getCurrentStatus(b, statusMap);
+      return sortBy === "status-asc"
+        ? statusA.localeCompare(statusB)
+        : statusB.localeCompare(statusA);
+    }
+    return 0;
+  });
 
-        const dateA = getJobDate(a);
-        const dateB = getJobDate(b);
-
-        return sortBy === "date-asc" ? dateA - dateB : dateB - dateA;
-      } else if (sortBy.startsWith("status")) {
-        const statusA = getCurrentStatus(a, statusMap);
-        const statusB = getCurrentStatus(b, statusMap);
-
-        return sortBy === "status-asc"
-          ? statusA.localeCompare(statusB)
-          : statusB.localeCompare(statusA);
-      }
-
-      return 0;
-    });
-
-    return filtered;
-  }, [jobs, statusFilter, startDate, endDate, sortBy, statusMap]);
+  return filtered;
+}, [modalMode, jobs, statusFilter, startDate, endDate, sortBy, statusMap]);
 
   const statusOptions = useMemo(() => {
     return SCHEDULED_SET.map((status) => ({
@@ -164,130 +231,128 @@ const DriverPortalHome = () => {
     }
     return text;
   };
-  const handleJobAction = async (jobId, status) => {
-    setLoadingJobId(jobId);
-    try {
-      const result = await updateJobStatus({ jobId, jobStatus: status });
 
-      if (result.error) {
-        if (result.error.status === 409) {
-          toast.error("Job already accepted by another driver");
-          await refetch();
-          return;
-        }
-        throw new Error(
-          result.error.data?.message || "Failed to update job status"
-        );
-      }
+const handleJobAction = async (jobId, status) => {
+  const realJobId = resolveRealJobId(jobId);
+ 
 
-      setStatusMap((prevState) => ({
-        ...prevState,
-        [jobId]: status,
-      }));
+  setLoadingJobId(realJobId);
+  try {
+  
+    const result = await updateJobStatus({
+      jobId: String(realJobId),
+      jobStatus: status,
+    });
 
-      toast.success(`Job status updated to "${status}" successfully!`);
-
-      try {
-        if (status === "Accepted") {
-          const job = (data?.jobs || []).find((j) => j._id === jobId);
-          console.log(job)
-          const bookingId =
-              job?.bookingId;
-
-          if (bookingId) {
-            await updateBookingStatus({
-              id: bookingId,
-              status: "Accepted",
-              updatedBy: `${user.role} | ${user.fullName}`,
-            }).unwrap();
-
-            const otherJobs = (data?.jobs || []).filter(
-              (j) => j.bookingId === bookingId && j._id !== jobId
-            );
-
-            for (const otherJob of otherJobs) {
-              try {
-                await updateJobStatus({
-                  jobId: otherJob._id,
-                  jobStatus: "Already Assigned",
-                });
-              } catch (e) {
-                console.warn(
-                  `Failed to update other job (${otherJob._id}) to 'Already Assigned':`
-                );
-              }
-            }
-          }
-        } else if (status === "Rejected") {
-          const job = (data?.jobs || []).find((j) => j._id === jobId);
-          const bookingId = job?.bookingId;
-
-          if (bookingId) {
-            await updateBookingStatus({
-              id: bookingId,
-              status: "Rejected",
-              updatedBy: `${user.role} | ${user.fullName}`,
-            }).unwrap();
-          }
-        }
-      } catch (e) {
-        console.error("Failed to update booking status:", e);
-      }
-
-      await refetch();
-    } catch (err) {
-      toast.error(err.message || "Failed to update job status");
-    } finally {
-      setLoadingJobId(null);
-    }
-  };
-
-  const handleStatusChange = async (jobId, newStatus) => {
-    setLoadingJobId(jobId);
-
-    try {
-      const job = jobs.find((j) => j._id === jobId);
-      const bookingId = job?.booking?._id;
-      const isLockedByAdmin =
-        String(job?.booking?.status).toLowerCase() === "accepted" &&
-        String(job?.jobStatus).toLowerCase() !== "accepted";
-      const isAlreadyAssigned =
-        String(job?.jobStatus).toLowerCase() === "already assigned";
-
-      if (isLockedByAdmin || isAlreadyAssigned) {
-        toast.info("This job is already assigned to another driver.");
-        setLoadingJobId(null);
+    if (result.error) {
+      if (result.error.status === 409) {
+        toast.error("Job already accepted by another driver");
+        await refetch();
         return;
       }
-      if (!bookingId) {
-        throw new Error("Booking ID not found");
-      }
-
-      const bookingResult = await updateBookingStatus({
-        id: bookingId,
-        status: newStatus,
-        updatedBy: `${user.role} | ${user.fullName}`,
-      });
-
-      if (bookingResult.error) {
-        throw new Error(
-          bookingResult.error.data?.message || "Failed to update booking status"
-        );
-      }
-
-      setStatusMap((prevState) => ({
-        ...prevState,
-        [jobId]: newStatus,
-      }));
-
-      toast.success(`Status updated to "${newStatus}" successfully!`);
-      await refetch();
-    } catch (err) {
-      toast.error(err.message || "Failed to update status");
-    } finally {
-      setLoadingJobId(null);
+      throw new Error(result.error.data?.message || "Failed to update job status");
     }
-  };
+
+    setStatusMap((prev) => ({ ...prev, [String(realJobId)]: status }));
+    toast.success(`Job status updated to "${status}" successfully!`);
+    setIsBookingModalOpen(false)
+
+    const job =
+      (data?.jobs || []).find((j) => String(j._id) === String(realJobId)) ||
+      (propJob || []).find((j) => String(j._id) === String(realJobId)) ||
+      (data?.jobs || []).find((j) => String(j.bookingId) === String(realJobId)) ||
+      (propJob || []).find((j) => String(j.bookingId) === String(realJobId));
+
+
+    const bookingId = job?.bookingId || job?.booking?._id;
+    if (bookingId) {
+      if (status === "Accepted") {
+        await updateBookingStatus({
+          id: bookingId,
+          status: "Accepted",
+          updatedBy: `${user.role} | ${user.fullName}`,
+        }).unwrap();
+
+        const otherJobs = (data?.jobs || []).filter(
+          (j) => String(j.bookingId) === String(bookingId) && String(j._id) !== String(realJobId)
+        );
+    
+        for (const otherJob of otherJobs) {
+          try {
+            await updateJobStatus({
+              jobId: String(otherJob._id),
+              jobStatus: "Already Assigned",
+            });
+          } catch (e) {
+            console.warn(
+              "[handleJobAction] failed to set 'Already Assigned' for:",
+              otherJob._id,
+              e
+            );
+          }
+        }
+      } else if (status === "Rejected") {
+        await updateBookingStatus({
+          id: bookingId,
+          status: "Rejected",
+          updatedBy: `${user.role} | ${user.fullName}`,
+        }).unwrap();
+      }
+    } else {
+      console.warn("[handleJobAction] No bookingId found for job:", realJobId);
+    }
+
+    await refetch();
+  } catch (err) {
+    console.error("[handleJobAction] error:", err);
+    toast.error(err.message || "Failed to update job status");
+  } finally {
+    setLoadingJobId(null);
+  }
+};
+
+const handleStatusChange = async (jobId, newStatus) => {
+  setLoadingJobId(jobId);
+  try {
+    const job = jobs.find((j) => String(j._id) === String(jobId));
+
+    const bookingId = job?.booking?._id;
+    const isLockedByAdmin =
+      String(job?.booking?.status).toLowerCase() === "accepted" &&
+      String(job?.jobStatus).toLowerCase() !== "accepted";
+    const isAlreadyAssigned =
+      String(job?.jobStatus).toLowerCase() === "already assigned";
+
+    if (isLockedByAdmin || isAlreadyAssigned) {
+      toast.info("This job is already assigned to another driver.");
+      setLoadingJobId(null);
+      return;
+    }
+    if (!bookingId) throw new Error("Booking ID not found");
+
+    const bookingResult = await updateBookingStatus({
+      id: bookingId,
+      status: newStatus,
+      updatedBy: `${user.role} | ${user.fullName}`,
+    });
+
+    if (bookingResult.error) {
+      throw new Error(
+        bookingResult.error.data?.message || "Failed to update booking status"
+      );
+    }
+
+    setStatusMap((prev) => ({ ...prev, [jobId]: newStatus }));
+    toast.success(`Status updated to "${newStatus}" successfully!`);
+    await refetch();
+  } catch (err) {
+    console.error("[handleStatusChange] error:", err);
+    toast.error(err.message || "Failed to update status");
+  } finally {
+    setLoadingJobId(null);
+  }
+};
+
 
   if (isLoading) {
     return (
@@ -311,57 +376,61 @@ const DriverPortalHome = () => {
 
   return (
     <>
-      <div className="bg-gray-100 rounded-lg p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <SelectDateRange
-              startDate={startDate}
-              endDate={endDate}
-              setStartDate={setStartDate}
-              setEndDate={setEndDate}
-            />
-          </div>
+      {!propJob 
+         && (
+          <>
+            <div className="bg-gray-100 rounded-lg p-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <SelectDateRange
+                    startDate={startDate}
+                    endDate={endDate}
+                    setStartDate={setStartDate}
+                    setEndDate={setEndDate}
+                  />
+                </div>
 
-          <div>
-            <SelectedSearch
-              selected={statusFilter}
-              setSelected={setStatusFilter}
-              statusList={statusOptions}
-              placeholder="All Statuses"
-              showCount={true}
-            />
-          </div>
+                <div>
+                  <SelectedSearch
+                    selected={statusFilter}
+                    setSelected={setStatusFilter}
+                    statusList={statusOptions}
+                    placeholder="All Statuses"
+                    showCount={true}
+                  />
+                </div>
 
-          <div>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="border lg:p-2 p-1.5 rounded w-full bg-white cursor-pointer "
-            >
-              {sortList.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </div>
+                <div>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="border lg:p-2 p-1.5 rounded w-full bg-white cursor-pointer "
+                  >
+                    {sortList.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-          <div className="flex items-end">
-            <button
-              onClick={() => {
-                setStatusFilter([]);
-                setStartDate(new Date().toISOString().split("T")[0]);
-                setEndDate(new Date().toISOString().split("T")[0]);
-                setSortBy("date-desc");
-              }}
-              className="btn btn-outline "
-            >
-              Clear Filters
-            </button>
-          </div>
-        </div>
-      </div>
-
+                <div className="flex items-end">
+                  <button
+                    onClick={() => {
+                      setStatusFilter([]);
+                      setStartDate(new Date().toISOString().split("T")[0]);
+                      setEndDate(new Date().toISOString().split("T")[0]);
+                      setSortBy("date-desc");
+                    }}
+                    className="btn btn-outline "
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       {filteredAndSortedJobs.length === 0 ? (
         <div className="col-span-full text-center text-lg font-medium text-gray-500">
           {jobs.length === 0
@@ -390,7 +459,7 @@ const DriverPortalHome = () => {
             return (
               <div
                 key={job._id}
-                className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg w-full transition-transform hover:scale-[1.01]"
+                className={`bg-white rounded-2xl p-6 border border-gray-200 shadow-lg  w-full transition-transform `}
               >
                 {/* HEADER */}
                 <div className="flex justify-between items-start mb-4">

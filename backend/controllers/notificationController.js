@@ -21,7 +21,7 @@ const emitToCompany = (companyId, event, payload = {}) => {
 // ---------- CREATE ----------
 export const createNotification = async (req, res) => {
   try {
-    const { employeeNumber, bookingId, createdBy, companyId } = req.body || {};
+    const { employeeNumber, bookingId, createdBy, companyId , jobId } = req.body || {};
 
     if (!employeeNumber || !bookingId || !companyId) {
       return res
@@ -40,7 +40,6 @@ export const createNotification = async (req, res) => {
         .json({ error: "No user found with this employee number in company" });
     }
 
-    // bookingId looks like a custom field in your schema, not _id
     const booking = await Booking.findOne({ bookingId: toStr(bookingId) }).lean();
     if (!booking) {
       return res.status(404).json({ error: "Booking not found" });
@@ -49,11 +48,12 @@ export const createNotification = async (req, res) => {
     const isReturn = !!booking.returnJourneyToggle;
     const journey = isReturn ? booking.returnJourney : booking.primaryJourney;
 
-    const pickup = journey?.pickup || "N/A";
+    const pickup = journey?.pickup || "N/A";  
     const dropoff = journey?.dropoff || "N/A";
 
     const doc = new Notification({
       employeeNumber: toStr(employeeNumber),
+      jobId: booking._id,
       bookingId: toStr(bookingId),
       status: booking.status,
       primaryJourney: { pickup, dropoff },

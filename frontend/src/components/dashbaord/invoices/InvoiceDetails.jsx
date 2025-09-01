@@ -96,10 +96,13 @@ const InvoiceDetails = ({ item }) => {
   };
 
   const openModal = () => {
-    const msg = `Dear ${item?.customer?.name || "Customer"
-      },\n\nWe have prepared invoice <b>${item?.invoiceNumber
-      }</b>.\n\nStatus: ${status}.\n\nView it here: <a href='${invoiceUrl}' target='_blank'>${invoiceUrl}</a>\n\nKind regards,\n${company?.companyName || "MTL Team"
-      }`;
+    const msg = `Dear ${
+      item?.customer?.name || "Customer"
+    },\n\nWe have prepared invoice <b>${
+      item?.invoiceNumber
+    }</b>.\n\nStatus: ${status}.\n\nView it here: <a href='${invoiceUrl}' target='_blank'>${invoiceUrl}</a>\n\nKind regards,\n${
+      company?.companyName || "MTL Team"
+    }`;
 
     setRecipient(item?.email);
     setSubject(`Invoice ${item?.invoiceNumber} created`);
@@ -134,7 +137,14 @@ const InvoiceDetails = ({ item }) => {
       });
     }
   };
+  const totalFare = item.items.reduce((acc, i) => acc + i.fare, 0);
+  const totalTax = item.items.reduce(
+    (acc, i) => acc + (i.totalAmount - i.fare),
+    0
+  );
 
+  const effectiveTaxPercent =
+    totalFare > 0 ? ((totalTax / totalFare) * 100).toFixed(2) : "0";
   return (
     <>
       <div>
@@ -171,10 +181,11 @@ const InvoiceDetails = ({ item }) => {
               <button
                 onClick={handleStatusUpdate}
                 disabled={status === selectedStatus}
-                className={`p-2.5 text-white rounded-md transition ${status === selectedStatus
+                className={`p-2.5 text-white rounded-md transition ${
+                  status === selectedStatus
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-emerald-500 hover:bg-emerald-600"
-                  }`}
+                }`}
               >
                 <Icons.Check size={16} />
               </button>
@@ -182,10 +193,13 @@ const InvoiceDetails = ({ item }) => {
           ) : (
             // Show status as text badge for customer and driver
             <div className="flex items-center mt-2 sm:mt-0">
-              <span className={`px-3 py-2 rounded-md text-sm font-medium ${status?.toLowerCase() === "paid"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-                }`}>
+              <span
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  status?.toLowerCase() === "paid"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
                 Status: {status}
               </span>
             </div>
@@ -218,8 +232,9 @@ const InvoiceDetails = ({ item }) => {
             <div className="invoice-info">
               <h2 className="invoice-title">INVOICE</h2>
               <p
-                className={`invoice-status ${status.toLowerCase() === "paid" ? "paid" : "unpaid"
-                  }`}
+                className={`invoice-status ${
+                  status.toLowerCase() === "paid" ? "paid" : "unpaid"
+                }`}
               >
                 {status}
               </p>
@@ -236,9 +251,7 @@ const InvoiceDetails = ({ item }) => {
                 </p>
               </div>
               <div className="bill-to div">
-                <p className="bill-to">
-                  Bill To
-                </p>
+                <p className="bill-to">Bill To</p>
                 <div>
                   <span>
                     {invoiceType === "driver"
@@ -246,10 +259,11 @@ const InvoiceDetails = ({ item }) => {
                       : item.customer?.name}
                   </span>
                   <a
-                    href={`mailto:${invoiceType === "driver"
+                    href={`mailto:${
+                      invoiceType === "driver"
                         ? item.driver?.email
                         : item.customer?.email
-                      }`}
+                    }`}
                     className="email-link"
                   >
                     {invoiceType === "driver"
@@ -297,7 +311,10 @@ const InvoiceDetails = ({ item }) => {
                       })()}
                     </td>
                     {/* <td>£{ride.totalAmount.toFixed(2)}</td> */}
-                    <td>{currencySymbol}{ride.totalAmount.toFixed(2)}</td>
+                    <td>
+                      {currencySymbol}
+                      {ride.totalAmount.toFixed(2)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -309,19 +326,19 @@ const InvoiceDetails = ({ item }) => {
               {/* Sub Total: £
               {item.items.reduce((acc, i) => acc + i.fare, 0).toFixed(2)} */}
               Sub Total: {currencySymbol}
-            {item.items.reduce((acc, i) => acc + i.fare, 0).toFixed(2)}
+              {item.items.reduce((acc, i) => acc + i.fare, 0).toFixed(2)}
             </p>
             <p>
-              Total Tax: {currencySymbol}
-              {item.items
+              <strong>{effectiveTaxPercent}%Tax:</strong> 
+              {currencySymbol}{item.items
                 .reduce((acc, i) => acc + (i.totalAmount - i.fare), 0)
                 .toFixed(2)}
             </p>
             <p className="balance">
               {/* Grand Total: £
               {item.items.reduce((acc, i) => acc + i.totalAmount, 0).toFixed(2)} */}
-                Grand Total: {currencySymbol}
-            {item.items.reduce((acc, i) => acc + i.totalAmount, 0).toFixed(2)}
+              Grand Total: {currencySymbol}
+              {item.items.reduce((acc, i) => acc + i.totalAmount, 0).toFixed(2)}
             </p>
           </div>
 

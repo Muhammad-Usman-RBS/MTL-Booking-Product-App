@@ -71,26 +71,24 @@ const InvoicesList = () => {
     }
   }, [isCustomerWithVat, invoiceMode]);
 
-  // Define tabs based on user role
   const getTabs = () => {
     if (userRole === "driver" || userRole === "customer") {
-      return []; // No tabs for driver or customer
+      return []; 
     }
-    // For clientadmin, show tabs but respect VAT restrictions
     return ["Customer", ...(isCustomerWithVat ? [] : ["Driver"])];
   };
 
   const tabs = getTabs();
-  const showTabs = tabs.length > 1; // Only show tabs if there are multiple options
-
+  const showTabs = tabs.length > 1;
   const invoices = data?.invoices || [];
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(5);
+
+  
   const [expandedInvoice, setExpandedInvoice] = useState(null);
   const [deleteInvoiceById] = useDeleteInvoiceByIdMutation();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteInvoiceId, setDeleteInvoiceId] = useState(null);
   const [scrollToInvoice, setScrollToInvoice] = useState(false);
+  const [perPage, setPerPage] = useState(5);
 
   const handleInvoiceClick = (invoiceNo) => {
     setExpandedInvoice((prev) => (prev === invoiceNo ? null : invoiceNo));
@@ -129,9 +127,6 @@ const InvoicesList = () => {
   const totalPages =
     perPage === "All" ? 1 : Math.ceil(filteredData.length / perPage);
 
-  useEffect(() => {
-    if (page > totalPages) setPage(1);
-  }, [filteredData, perPage]);
 
   const tableHeaders = [
     { label: "Invoice", key: "invoiceNo" },
@@ -148,17 +143,12 @@ const InvoicesList = () => {
     ...(userRole === "clientadmin" ? [{ label: "Actions", key: "actions" }] : []),
   ];
 
-  const paginatedInvoices =
-    perPage === "All"
-      ? filteredData
-      : filteredData.slice((page - 1) * perPage, page * perPage);
-
   const tableData = !filteredData.length
     ? EmptyTableMessage({
       message: "No invoices available. Create a new one.",
       colSpan: tableHeaders.length,
     })
-    : paginatedInvoices.map((invoice) => {
+    : filteredData.map((invoice) => {
       const invoiceNo = invoice.invoiceNumber || "-";
       const customerOrDriverName =
         invoiceMode === "Driver"
@@ -243,11 +233,8 @@ const InvoicesList = () => {
   if (isLoading) return <p>Loading invoices...</p>;
   if (isError) return <p>Failed to load invoices.</p>;
 
-  const exportTableData = (
-    perPage === "All"
-      ? filteredData
-      : filteredData.slice((page - 1) * perPage, page * perPage)
-  ).map((item) => ({
+  const exportTableData = filteredData.map((item) => ({
+
     invoiceNo: item.invoiceNo,
     customer: item.customer,
     account: item.account,
@@ -307,17 +294,18 @@ const InvoicesList = () => {
           </div>
         )}
 
-        <CustomTable
-          tableHeaders={tableHeaders}
-          tableData={tableData}
-          exportTableData={exportTableData}
-          showSearch={true}
-          showRefresh={true}
-          showDownload={true}
-          showPagination={true}
-          showSorting={true}
-        />
-
+<CustomTable
+  tableHeaders={tableHeaders}
+  tableData={tableData}
+  exportTableData={exportTableData}
+  showSearch={true}
+  showRefresh={true}
+  showDownload={true}
+  showPagination={true}
+  showSorting={true}
+  search={search}
+  setSearch={setSearch}
+/>
         {expandedInvoice && (
           <InvoiceDetails
             item={invoices.find((i) => i.invoiceNumber === expandedInvoice)}

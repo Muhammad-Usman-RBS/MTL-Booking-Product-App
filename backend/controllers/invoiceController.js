@@ -48,11 +48,9 @@ export const createInvoice = async (req, res) => {
       invoiceData.driver = driver;
     } else {
       if (!customer || !customer.name || !customer.email) {
-        return res
-          .status(400)
-          .json({
-            error: "Customer details are required for customer invoices.",
-          });
+        return res.status(400).json({
+          error: "Customer details are required for customer invoices.",
+        });
       }
       invoiceData.customer = customer;
     }
@@ -111,9 +109,11 @@ export const updateInvoice = async (req, res) => {
     const { id } = req.params;
 
     const {
+      
       items,
       status,
       customer,
+      driver,
       invoiceDate,
       dueDate,
       notes,
@@ -132,12 +132,17 @@ export const updateInvoice = async (req, res) => {
 
     if (items && Array.isArray(items)) {
       invoice.items = items;
+      invoice.markModified("items")
     }
     if (status) {
       invoice.status = status;
     }
+  
     if (customer) {
       invoice.customer = customer;
+    }
+    if (driver) {
+      invoice.driver = driver;
     }
     if (invoiceDate) {
       invoice.invoiceDate = new Date(invoiceDate);

@@ -44,14 +44,18 @@ const InvoicePage = () => {
   const [itemNotes, setItemNotes] = useState({});
   const [itemInternalNotes, setItemInternalNotes] = useState({});
   const [taxPercent, setTaxPercent] = useState(0);
+  const [baseAmounts, setBaseAmounts] = useState([]);
 
   useEffect(() => {
     if (invoiceData?.invoice) {
       const invoice = invoiceData.invoice;
-
+      const baseFares = invoice.items?.map((item) => item.fare || 0) || [];
+      setBaseAmounts(baseFares);
       const customerText = `${invoice.customer?.name || ""}\n${invoice.customer?.email || ""
         }\n${invoice.customer?.phone || ""}`;
-      setBillTo(customerText);
+      const driverText = `${invoice.driver?.name || ""}\n${invoice.driver?.email || ""
+        }\n${invoice.driver?.phone || ""}`;
+      setBillTo(invoice?.invoiceType === "driver" ?  driverText : customerText);
       const fetchedTaxPercent =
         parseFloat(generalPricingData?.invoiceTaxPercent) || 0;
       setTaxPercent(fetchedTaxPercent);
@@ -80,13 +84,15 @@ const InvoicePage = () => {
       setNotes(invoice.notes || "");
 
       const details =
-        invoice.items?.map(
-          (item) =>
-            `${item.bookingId} - ${invoice.customer?.name || ""}\nPickup: ${item.pickup
-            }\n\nDrop off: ${item.dropoff}`
-        ) || [];
-      setItemDetails(details);
-
+      invoice.items?.map((item) => {
+        const bookingIdLine = item.bookingId
+          ? `Booking ID: ${item.bookingId}\n`
+          : "";
+        const pickupLine = `Pickup: ${item.pickup || ""}`;
+        const dropoffLine = `Drop off: ${item.dropoff || ""}`;
+        return `${bookingIdLine}${pickupLine}\n\n${dropoffLine}`;
+      }) || [];
+    setItemDetails(details);
       // Initialize all item-related states
       const initialItemTaxes = {};
       const initialItemNotes = {};
@@ -123,10 +129,11 @@ const InvoicePage = () => {
       const originalItems = invoiceData.invoice.items || [];
       const items = itemDetails.map((text, index) => {
         const lines = text.split("\n").filter(Boolean);
-        const bookingLine = lines[0] || "";
-        const pickupLine = lines[1] || "";
-        const dropoffLine = lines[3] || "";
 
+        const bookingLine = lines.find((line) => line.includes(" - ")) || "";
+        const pickupLine = lines.find((line) => line.startsWith("Pickup:")) || "";
+        const dropoffLine = lines.find((line) => line.startsWith("Drop off:")) || "";
+        
         const bookingId = bookingLine.split(" - ")[0]?.trim() || "";
         const pickup = pickupLine.replace("Pickup: ", "").trim();
         const dropoff = dropoffLine.replace("Drop off: ", "").trim();
@@ -138,9 +145,12 @@ const InvoicePage = () => {
           pickup: pickup || original.pickup || "",
           dropoff: dropoff || original.dropoff || "",
           totalAmount:
-            parseFloat(itemAmounts[index]) || original.totalAmount || 0,
+          itemTaxes[index] === "Tax"
+            ? (parseFloat(baseAmounts[index]) || 0) * (1 + taxPercent / 100)
+            : parseFloat(baseAmounts[index]) || 0,
+        
           tax: itemTaxes[index] || original.tax || "No Tax",
-          fare: original.fare || 0,
+          fare: parseFloat(baseAmounts[index]) || original.fare || 0,
           date: dueDate ? new Date(dueDate) : original.date || new Date(),
           notes:
             itemNotes[index]?.trim() === ""
@@ -176,16 +186,29 @@ const InvoicePage = () => {
           JSON.stringify(items) !== JSON.stringify(original.items)
             ? items
             : undefined,
-        customer:
-          name.trim() !== original.customer?.name ||
-            email.trim() !== original.customer?.email ||
-            phone.trim() !== original.customer?.phone
-            ? {
-              name: name.trim(),
-              email: email.trim(),
-              phone: phone.trim(),
-            }
-            : undefined,
+            ...(original.invoiceType === "driver" 
+              ? {
+                  driver: name.trim() !== original.driver?.name ||
+                          email.trim() !== original.driver?.email ||
+                          phone.trim() !== original.driver?.phone
+                    ? {
+                        name: name.trim(),
+                        email: email.trim(),
+                        phone: phone.trim(),
+                      }
+                    : undefined,
+                }
+              : {
+                  customer: name.trim() !== original.customer?.name ||
+                            email.trim() !== original.customer?.email ||
+                            phone.trim() !== original.customer?.phone
+                    ? {
+                        name: name.trim(),
+                        email: email.trim(),
+                        phone: phone.trim(),
+                      }
+                    : undefined,
+                }),
         notes: notes !== original.notes ? notes : undefined,
         discount:
           parseFloat(discount) !== original.discount
@@ -324,25 +347,14 @@ const InvoicePage = () => {
                   const updatedTaxes = { ...itemTaxes };
                   const updatedAmounts = [...itemAmounts];
                   const taxRate = 1 + taxPercent / 100;
-
                   Object.keys(checkedItems).forEach((key) => {
                     if (checkedItems[key]) {
                       const itemIndex = parseInt(key.replace("item", ""));
-                      const currentAmount =
-                        parseFloat(itemAmounts[itemIndex]) || 0;
-
-                      // Reverse existing tax if necessary
-                      const wasTaxed = itemTaxes[itemIndex] === "Tax";
-                      let baseAmount = currentAmount;
-
-                      if (wasTaxed && value === "No Tax") {
-                        baseAmount = currentAmount / taxRate;
-                      } else if (!wasTaxed && value === "Tax") {
-                        baseAmount = currentAmount * taxRate;
-                      }
-
+                      const baseAmount = parseFloat(baseAmounts[itemIndex]) || 0;
+                  
                       updatedTaxes[itemIndex] = value;
-                      updatedAmounts[itemIndex] = baseAmount;
+                      updatedAmounts[itemIndex] =
+                        value === "Tax" ? baseAmount * taxRate : baseAmount;
                       anyChecked = true;
                     }
                   });
@@ -364,7 +376,6 @@ const InvoicePage = () => {
           {/* Each Item Block */}
           {itemDetails.map((details, index) => {
             const taxApplied = itemTaxes[index] === "Tax";
-            const adjustedAmount = parseFloat(itemAmounts[index]) || 0;
 
             return (
               <div
@@ -434,12 +445,24 @@ const InvoicePage = () => {
                   <input
                     type="text"
                     className="custom_input"
-                    value={parseFloat(adjustedAmount || 0).toFixed(2)}
+                    value={baseAmounts[index] || ""}
                     onChange={(e) => {
-                      const updated = [...itemAmounts];
-                      updated[index] = e.target.value;
-                      setItemAmounts(updated);
+                      const input = e.target.value;
+                    
+                      const updated = [...baseAmounts];
+                      updated[index] = input;
+                      setBaseAmounts(updated);
+                    
+                      const parsed = parseFloat(input);
+                      const updatedAmounts = [...itemAmounts];
+                      updatedAmounts[index] =
+                        itemTaxes[index] === "Tax"
+                          ? (isNaN(parsed) ? 0 : parsed * (1 + taxPercent / 100))
+                          : (isNaN(parsed) ? 0 : parsed);
+                    
+                      setItemAmounts(updatedAmounts);
                     }}
+                    
                   />
                 </div>
               </div>

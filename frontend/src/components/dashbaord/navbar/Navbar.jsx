@@ -15,8 +15,10 @@ import {
   useMarkAsReadMutation,
 } from "../../../redux/api/notificationApi";
 import useUIStore from "../../../store/useUIStore";
-import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import { useApplyThemeSettingsMutation } from "../../../redux/api/themeApi";
+import DriverPortalHome from "../../../portals/driverportal/home/DriverPortalHome";
+import CustomModal from "../../../constants/constantscomponents/CustomModal";
+import { useGetAllJobsQuery } from "../../../redux/api/jobsApi";
 
 function Navbar() {
   const TimeRef = useRef(null);
@@ -30,13 +32,45 @@ function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [themeBtnWidth, setThemeBtnWidth] = useState(null);
-
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
-  const { data: bookings } = useGetAllBookingsQuery(user?.companyId);
+  const { data: jobData , refetch } = useGetAllJobsQuery(user?.companyId);
+
   const dispatch = useDispatch();
   const [applyThemeSettings] = useApplyThemeSettingsMutation();
 
+  const JobsList = jobData?.jobs || [];
+useEffect(()=> {
+  const onFocus = () => {
+    refetch();
+  }
+  window.addEventListener("focus", onFocus);
+  return () => window.removeEventListener("focus", onFocus);
+
+} , [refetch])
+  const handleNotificationClick = (jobId) => {
+    if (user?.role !== "driver") return;
+
+    const foundJob = JobsList.find(
+      (job) => String(job.bookingId) === String(jobId)
+    );
+
+    if (foundJob) {
+      const formattedJob = {
+        ...foundJob,
+        _id: String(foundJob._id || foundJob.id || foundJob.jobId || ""),
+        bookingId: String(foundJob.bookingId || ""),
+        jobStatus:
+          foundJob.jobStatus || foundJob.jobstatus || foundJob.status || "New",
+        booking: foundJob.booking || foundJob,
+      };
+
+      setSelectedBooking(formattedJob);
+      setIsBookingModalOpen(true);
+    }
+  };
   const handleApplyBookmarkedTheme = useCallback(
     async (b) => {
       try {
@@ -110,7 +144,6 @@ function Navbar() {
       TimeRef.current = null;
     }
   };
-  const bookingList = bookings?.bookings || [];
 
   const getTimeAgo = (timestamp) => {
     const now = new Date();
@@ -224,6 +257,7 @@ function Navbar() {
                       <div
                         key={data._id}
                         onClick={() => {
+                          handleNotificationClick(data.jobId);
                           setShowTooltip(false);
                         }}
                         className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${
@@ -449,6 +483,23 @@ function Navbar() {
           </div>
         </div>
       </nav>
+      <div className="">
+        <CustomModal
+          isOpen={isBookingModalOpen}
+          onClose={() => setIsBookingModalOpen(false)}
+          heading="Booking Details"
+        >
+          <div
+            className="w-full max-w-xl px-6 mt-3 py-1
+           mx-auto"
+          >
+            <DriverPortalHome
+              setIsBookingModalOpen={setIsBookingModalOpen}
+              propJob={[selectedBooking]}
+            />
+          </div>
+        </CustomModal>
+      </div>
     </>
   );
 }
