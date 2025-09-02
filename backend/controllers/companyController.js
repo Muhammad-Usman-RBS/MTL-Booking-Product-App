@@ -103,21 +103,38 @@ export const deleteCompanyAccount = async (req, res) => {
 export const getAllCompanies = async (req, res) => {
   try {
     const currentUser = req.user;
-
     let companies;
 
     if (currentUser.role === "superadmin") {
-      // Superadmin sees ALL companies they created via assigned clientAdmins
+      // Superadmin → sab companies
       companies = await Company.find({})
-        .populate("clientAdminId", "status")
+        .populate("clientAdminId", "status role fullName")
         .sort({ createdAt: -1 });
-    } else {
-      // Clientadmin sees only their own assigned companies
+    } 
+    else if (currentUser.role === "clientadmin") {
+      // ClientAdmin → apni + associates wali companies
+
+      // Sab associates nikaalo jo is clientAdmin ke under bane hain
+      const associates = await User.find({ createdBy: currentUser._id }).select("_id");
+
+      // Apna id + associate ids
+      const allAdminIds = [currentUser._id, ...associates.map(a => a._id)];
+
+      companies = await Company.find({ clientAdminId: { $in: allAdminIds } })
+        .populate("clientAdminId", "status role fullName")
+        .sort({ createdAt: -1 });
+    } 
+    else if (currentUser.role === "associateadmin") {
+      // Associate admin → sirf apni companies
       companies = await Company.find({ clientAdminId: currentUser._id })
-        .populate("clientAdminId", "status")
+        .populate("clientAdminId", "status role fullName")
         .sort({ createdAt: -1 });
+    } 
+    else {
+      return res.status(403).json({ message: "Unauthorized" });
     }
 
+    // status ko normalize kar diya
     const updated = companies.map((c) => ({
       ...c._doc,
       status: c.clientAdminId?.status || c.status,
@@ -125,6 +142,7 @@ export const getAllCompanies = async (req, res) => {
 
     res.status(200).json(updated);
   } catch (error) {
+    console.error("getAllCompanies error:", error);
     res.status(500).json({ message: error.message });
   }
 };

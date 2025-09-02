@@ -8,13 +8,27 @@ import FilePreview from "../../../constants/constantscomponents/FilePreview";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { yesNoOptions } from "../../../constants/dashboardTabsData/data";
-import { useFetchClientAdminsQuery } from "../../../redux/api/adminApi";
-import { useCreateCompanyMutation, useGetCompanyByIdQuery, useUpdateCompanyMutation } from "../../../redux/api/companyApi";
+import { useSelector } from "react-redux";
+
+// ⬇️ NEW: import associates query
+import {
+  useFetchClientAdminsQuery,
+  useFetchAssociateAdminsQuery,
+} from "../../../redux/api/adminApi";
+
+import {
+  useCreateCompanyMutation,
+  useGetCompanyByIdQuery,
+  useUpdateCompanyMutation,
+} from "../../../redux/api/companyApi";
 
 const AddCompanyAccount = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
+
+  const user = useSelector((state) => state.auth?.user);
+  const isClientAdmin = user?.role === "clientadmin";
 
   const [notFound, setNotFound] = useState(false);
   const [filePreviews, setFilePreviews] = useState({});
@@ -34,44 +48,45 @@ const AddCompanyAccount = () => {
     fullName: "",
     status: "",
   });
+
   const handleInputChange = (e) => {
     const { name, type, files, value } = e.target;
-
     if (type === "file") {
       const file = files[0];
-      const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/jpg",
-        "application/pdf",
-      ];
+      const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
       if (file && !allowedTypes.includes(file.type)) {
         toast.error("Only PDF, JPEG, PNG, JPG files are supported.");
         return;
       }
-
       setFormData((prev) => ({ ...prev, [name]: file }));
-      setFilePreviews((prev) => ({
-        ...prev,
-        [name]: file ? URL.createObjectURL(file) : "",
-      }));
+      setFilePreviews((prev) => ({ ...prev, [name]: file ? URL.createObjectURL(file) : "" }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  const { data: rawClientAdmins = [] } = useFetchClientAdminsQuery();
-  const clientAdmins = [
-    ...rawClientAdmins
-      .filter((admin) => admin.status !== "Deleted")
-      .filter((admin) => !admin.companyId) 
-      .map((admin) => ({
-        label: admin.fullName,
-        value: admin._id,
-        email: admin.email,
-        status: admin.status,
-      })),
-  ];
+  // ⬇️ If NOT clientadmin, fetch clientadmins as before
+  const { data: rawClientAdmins = [] } = useFetchClientAdminsQuery(undefined, {
+    skip: isClientAdmin, // important
+  });
+
+  // ⬇️ If clientadmin, fetch ONLY its associates (by createdBy + companyId)
+  const { data: rawAssociates = [] } = useFetchAssociateAdminsQuery(
+    { createdBy: user?._id, companyId: user?.companyId },
+    { skip: !isClientAdmin }
+  );
+
+  // Build options based on role
+  const options = (isClientAdmin ? rawAssociates : rawClientAdmins)
+    .filter((u) => u?.status !== "Deleted")
+    // extra guard: if you still get others, keep only same company for associates
+    .filter((u) => (isClientAdmin ? String(u?.companyId) === String(user?.companyId) : true))
+    .map((u) => ({
+      label: u.fullName,
+      value: u._id,
+      email: u.email,
+      status: u.status,
+    }));
 
   const {
     data: companyData,
@@ -87,21 +102,16 @@ const AddCompanyAccount = () => {
       setNotFound(true);
       return;
     }
-
     if (companyData) {
       const imagePath = companyData.profileImage?.startsWith("/")
         ? companyData.profileImage
         : `${companyData.profileImage}`;
-
       setFormData((prev) => ({
         ...prev,
         ...companyData,
         clientAdminId: companyData.clientAdminId || "",
       }));
-
-      setFilePreviews({
-        profileImage: imagePath,
-      });
+      setFilePreviews({ profileImage: imagePath });
     }
   }, [companyData, isEdit, isError]);
 
@@ -111,24 +121,19 @@ const AddCompanyAccount = () => {
 
   const handleSubmit = async () => {
     if (!formData.clientAdminId) {
-      toast.error("Please select a Client Admin.");
+      toast.error(`Please select a ${isClientAdmin ? "Associate Admin" : "Client Admin"}.`);
       return;
     }
-
     try {
       const data = new FormData();
-
       for (const key in formData) {
-        if (key === "profileImage") continue; // skip to avoid double append
-        const value =
-          key === "licenseNumber" ? parseInt(formData[key] || "0") : formData[key];
+        if (key === "profileImage") continue;
+        const value = key === "licenseNumber" ? parseInt(formData[key] || "0") : formData[key];
         data.append(key, value);
       }
-
       if (formData.profileImage instanceof File) {
-        data.append("profileImage", formData.profileImage); // add only once, correctly
+        data.append("profileImage", formData.profileImage);
       }
-
       if (isEdit) {
         await updateCompany({ id, formData: data }).unwrap();
         toast.success("Company Account updated successfully! ✨");
@@ -136,7 +141,6 @@ const AddCompanyAccount = () => {
         await createCompany(data).unwrap();
         toast.success("Company Account created successfully! 🚀");
       }
-
       navigate("/dashboard/company-accounts/list");
     } catch (err) {
       console.error("❌ Error submitting company form:", err);
@@ -144,30 +148,18 @@ const AddCompanyAccount = () => {
     }
   };
 
-  // Redirect to 404 if invalid ID
-  if (notFound) {
-    return <Navigate to="*" replace />;
-  }
-
-  // Optional: show loading referrerLink
-  if (isEdit && isLoading) {
-    return <div className="text-center mt-10">Loading company data...</div>;
-  }
+  if (notFound) return <Navigate to="*" replace />;
+  if (isEdit && isLoading) return <div className="text-center mt-10">Loading company data...</div>;
 
   return (
     <div>
-      <div
-        className={`${isEdit ? "border-[var(--light-gray)] border-b" : ""
-          } flex items-center justify-between `}
-      >
-        <OutletHeading
-          name={isEdit ? "Edit Company Account" : "Add Company Account"}
-        />
-
+      <div className={`${isEdit ? "border-[var(--light-gray)] border-b" : ""} flex items-center justify-between `}>
+        <OutletHeading name={isEdit ? "Edit Company Account" : "Add Company Account"} />
         <Link to="/dashboard/company-accounts/list" className="mb-4">
           <button className="btn btn-primary ">← Back to  List</button>
         </Link>
       </div>
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
         <FilePreview
           label=""
@@ -180,7 +172,7 @@ const AddCompanyAccount = () => {
         />
       </div>
 
-      {/* Input Fields */}
+      {/* Inputs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
         <input
           placeholder="Company Name *"
@@ -232,18 +224,16 @@ const AddCompanyAccount = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
         <SelectOption
-          label="Assign to Client Admin *"
+          label={isClientAdmin ? "Assign to Associate Admin *" : "Assign to Client Admin *"}
           value={formData.clientAdminId}
-          options={clientAdmins}
+          options={options}
           onChange={(e) => {
             const selectedId = e?.target?.value || e?.value || e;
-            const selectedAdmin = clientAdmins.find(
-              (admin) => admin.value === selectedId
-            );
-            handleChange("clientAdminId", selectedId);
-            handleChange("fullName", selectedAdmin?.label || "");
-            handleChange("email", selectedAdmin?.email || "");
-            handleChange("status", selectedAdmin?.status || "");
+            const sel = options.find((o) => o.value === selectedId);
+            handleChange("clientAdminId", selectedId); // NOTE: backend expects user _id (associate or clientadmin)
+            handleChange("fullName", sel?.label || "");
+            handleChange("email", sel?.email || "");
+            handleChange("status", sel?.status || "");
           }}
         />
         <SelectOption
@@ -254,7 +244,6 @@ const AddCompanyAccount = () => {
         />
       </div>
 
-      {/* Address Field */}
       <div className="mt-6">
         <label className="block mb-1 font-medium">Company Address</label>
         <textarea

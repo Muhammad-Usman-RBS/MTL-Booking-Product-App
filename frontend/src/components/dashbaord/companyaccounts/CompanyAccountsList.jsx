@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
-import { useFetchAllCompaniesQuery, useSendCompanyEmailMutation, useDeleteCompanyAccountMutation } from "../../../redux/api/companyApi";
+import {
+  useFetchAllCompaniesQuery,
+  useSendCompanyEmailMutation,
+  useDeleteCompanyAccountMutation,
+} from "../../../redux/api/companyApi";
 import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
@@ -14,7 +18,9 @@ import moment from "moment-timezone";
 
 const CompanyAccountsList = () => {
   const { data: companies = [], refetch } = useFetchAllCompaniesQuery();
-  const timezone = useSelector((state) => state.bookingSetting?.timezone) || "UTC";
+  const timezone =
+    useSelector((state) => state.bookingSetting?.timezone) || "UTC";
+  const user = useSelector((state) => state.auth?.user); // ✅ login user
   const navigate = useNavigate();
   const [sendEmail] = useSendCompanyEmailMutation();
   const [deleteCompany] = useDeleteCompanyAccountMutation();
@@ -43,10 +49,7 @@ const CompanyAccountsList = () => {
   };
 
   const filteredData = companies.filter((item) =>
-    Object.values(item)
-      .join(" ")
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
+    Object.values(item).join(" ").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const paginatedData =
@@ -64,38 +67,48 @@ const CompanyAccountsList = () => {
     { label: "Action", key: "actions" },
   ];
 
-  const tableData = paginatedData.map((item) => ({
-    ...item,
-    contact: item.contact?.startsWith("+") ? item.contact : `+${item.contact}`,
-    createdAt: item.createdAt
-      ? moment(item.createdAt).tz(timezone).format("DD/MM/YYYY HH:mm:ss")
-      : "N/A",
+  const tableData = paginatedData.map((item) => {
+    const canDelete = !(
+      user?.role === "clientadmin" &&
+      String(item?.clientAdminId?._id || item?.clientAdminId) === String(user._id)
+    );
 
-    actions: (
-      <div className="flex gap-2">
-        <Icons.Eye
-          title="View"
-          onClick={() => setSelectedAccount(item)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-blue-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-        />
-        <Icons.Pencil
-          title="Edit"
-          onClick={() =>
-            navigate(`/dashboard/company-accounts/edit/${item._id}`)
-          }
-          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-        />
-        <Icons.Trash
-          title="Delete"
-          onClick={() => {
-            setAccountToDelete(item);
-            setShowDeleteModal(true);
-          }}
-          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-        />
-      </div>
-    ),
-  }));
+    return {
+      ...item,
+      contact: item.contact?.startsWith("+") ? item.contact : `+${item.contact}`,
+      createdAt: item.createdAt
+        ? moment(item.createdAt).tz(timezone).format("DD/MM/YYYY HH:mm:ss")
+        : "N/A",
+
+      actions: (
+        <div className="flex gap-2">
+          <Icons.Eye
+            title="View"
+            onClick={() => setSelectedAccount(item)}
+            className="w-8 h-8 p-2 rounded-md hover:bg-blue-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
+          />
+          <Icons.Pencil
+            title="Edit"
+            onClick={() =>
+              navigate(`/dashboard/company-accounts/edit/${item._id}`)
+            }
+            className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
+          />
+          {canDelete && (
+            <Icons.Trash
+              title="Delete"
+              onClick={() => {
+                setAccountToDelete(item);
+                setShowDeleteModal(true);
+              }}
+              className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
+            />
+          )}
+        </div>
+      ),
+    };
+  });
+
 
   return (
     <>
@@ -132,7 +145,10 @@ const CompanyAccountsList = () => {
               >
                 Download PDF
               </button>
-              <button onClick={handleConfirmSendEmail} className="btn btn-success">
+              <button
+                onClick={handleConfirmSendEmail}
+                className="btn btn-success"
+              >
                 Send Email
               </button>
               <button
@@ -180,15 +196,25 @@ const CompanyAccountsList = () => {
                   { label: "Trading Name", value: selectedAccount.tradingName },
                   { label: "Owner Name", value: selectedAccount.fullName },
                   { label: "Company Email", value: selectedAccount.email },
-                  { label: "Phone", value: selectedAccount.contact?.startsWith("+") ? selectedAccount.contact : `+${selectedAccount.contact}` },
+                  {
+                    label: "Phone",
+                    value: selectedAccount.contact?.startsWith("+")
+                      ? selectedAccount.contact
+                      : `+${selectedAccount.contact}`,
+                  },
                   { label: "License Number", value: selectedAccount.licenseNumber },
-                  { label: "License Referrer Link", value: selectedAccount.referrerLink },
+                  {
+                    label: "License Referrer Link",
+                    value: selectedAccount.referrerLink,
+                  },
                   { label: "Cookie Consent", value: selectedAccount.cookieConsent },
                   {
                     label: "Created At",
                     value: selectedAccount?.createdAt
-                      ? moment(selectedAccount.createdAt).tz(timezone).format("DD/MM/YYYY HH:mm:ss")
-                      : "N/A"
+                      ? moment(selectedAccount.createdAt)
+                        .tz(timezone)
+                        .format("DD/MM/YYYY HH:mm:ss")
+                      : "N/A",
                   },
                   { label: "Company Address", value: selectedAccount.address },
                 ].map(({ label, value }) => (
@@ -199,7 +225,9 @@ const CompanyAccountsList = () => {
                     <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
                       {label}
                     </p>
-                    <p className="text-gray-800 font-semibold">{value || "N/A"}</p>
+                    <p className="text-gray-800 font-semibold">
+                      {value || "N/A"}
+                    </p>
                   </div>
                 ))}
               </div>

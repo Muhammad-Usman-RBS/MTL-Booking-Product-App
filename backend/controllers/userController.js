@@ -214,20 +214,8 @@ export const getClientAdmins = async (req, res) => {
       query.role = {
         $in: ["clientadmin", "manager", "demo", "driver", "customer"],
       };
-      // } else if (role === "clientadmin") {
-      //   // Get all users created by clientadmin OR by any of their associateadmins
-      //   const associateAdmins = await User.find({
-      //     createdBy: userId,
-      //     role: "associateadmin",
-      //   });
-      //   const associateAdminIds = associateAdmins.map((user) => user._id);
-
-      //   query = {
-      //     createdBy: userId, // only direct creations
-      //     role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
-      //   };
-      // }
     } else if (role === "clientadmin") {
+      // Get all associateadmins created by this clientadmin
       const associateAdmins = await User.find({
         createdBy: userId,
         role: "associateadmin",
@@ -236,17 +224,23 @@ export const getClientAdmins = async (req, res) => {
 
       query = {
         $or: [
-          { createdBy: userId },
-          { createdBy: { $in: associateAdminIds } },
-          { role: "customer", companyId: companyId, createdBy: null } // 👈 include widget-based customers
-        ],
-        role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
+          { 
+            createdBy: userId,
+            role: { $in: ["associateadmin", "staffmember", "driver", "customer"] }
+          },
+          { 
+            role: "customer", 
+            companyId: companyId, 
+            createdBy: null // widget-based customers for this company only
+          }
+        ]
       };
     } else if (role === "associateadmin") {
+      // Associateadmin can only see users they created + their own record
       query = {
         $or: [
-          { createdBy: userId },
-          { _id: userId }, // So they can also see their own record
+          { createdBy: userId }, // Users created by this associateadmin
+          { _id: userId }, // Their own record
         ],
         role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
       };
@@ -267,11 +261,49 @@ export const getClientAdmins = async (req, res) => {
         companyId: user.companyId,
         associateAdminLimit: user.associateAdminLimit,
         vatnumber: user.vatnumber || null,
+        createdBy: user.createdBy, // Include this for debugging
       }))
     );
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ message: "Failed to fetch users" });
+  }
+};
+
+// Get associates of a given clientadmin (optionally scoped by companyId)
+export const getAssociateAdmins = async (req, res) => {
+  try {
+    const requester = req.user; // { _id, role, companyId }
+    const { createdBy, companyId } = req.query;
+
+    if (!createdBy) {
+      return res.status(400).json({ message: "createdBy (clientAdminId) is required" });
+    }
+
+    // Security: clientadmin can only query their own associates
+    if (requester.role === "clientadmin" && String(requester._id) !== String(createdBy)) {
+      return res.status(403).json({ message: "You can only view your own associates." });
+    }
+
+    // Build query
+    const query = {
+      role: "associateadmin",
+      status: { $ne: "Deleted" },
+      createdBy, // who created these associates (clientadmin id)
+    };
+
+    if (companyId) {
+      query.companyId = companyId;
+    }
+
+    const associates = await User.find(query)
+      .select("_id fullName email role status companyId createdBy")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json(associates);
+  } catch (error) {
+    console.error("getAssociateAdmins error:", error);
+    return res.status(500).json({ message: "Failed to fetch associates" });
   }
 };
 

@@ -57,6 +57,22 @@ export const useBookingFare = ({
   const [hourlyError, setHourlyError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Debug extrasPricing data
+  useEffect(() => {
+    console.log('=== EXTRAS PRICING DEBUG ===');
+    console.log('extrasPricing:', extrasPricing);
+    console.log('extrasPricing length:', extrasPricing?.length);
+    console.log('extrasPricing type:', typeof extrasPricing);
+    console.log('Is array:', Array.isArray(extrasPricing));
+    
+    if (extrasPricing && extrasPricing.length > 0) {
+      console.log('Sample zone structure:', extrasPricing[0]);
+      console.log('Sample zone coordinates:', extrasPricing[0]?.coordinates);
+      console.log('Sample zone price:', extrasPricing[0]?.price);
+    }
+    console.log('=== END EXTRAS PRICING DEBUG ===');
+  }, [extrasPricing]);
+
   const isValidAddress = (address) => {
     return typeof address === 'string' && address.trim().length > 5 && /[a-zA-Z0-9]/.test(address);
   };
@@ -88,26 +104,6 @@ export const useBookingFare = ({
     }
   }, [triggerGeocode]);
 
-  // const getDistance = useCallback(async (origin, destination) => {
-  //   const cacheKey = `${origin}-${destination}`;
-
-  //   // Check cache first
-  //   if (distanceCache.has(cacheKey)) {
-  //     return distanceCache.get(cacheKey);
-  //   }
-
-  //   try {
-  //     const res = await triggerDistance({ origin, destination }).unwrap();
-
-  //     // Cache the result
-  //     distanceCache.set(cacheKey, res);
-  //     return res;
-  //   } catch (error) {
-  //     console.error('Distance calculation error:', error);
-  //     return null;
-  //   }
-  // }, [triggerDistance]);
-
   const getDistance = useCallback(async (origin, destination) => {
     const parts = [];
     if (avoidRoutes.highways) parts.push('highways');
@@ -125,7 +121,7 @@ export const useBookingFare = ({
     } catch {
       return null;
     }
-  }, [triggerDistance, avoidRoutes.highways, avoidRoutes.tolls, avoidRoutes.ferries]);
+  }, [triggerDistance, avoidRoutes.highways, avoidRoutes.tolls, avoidRoutes.ferries, companyId]);
 
   const getVehiclePriceForDistance = useCallback((vehicle, miles) => {
     if (!vehicle?.slabs || !Array.isArray(vehicle.slabs)) return 0;
@@ -142,7 +138,6 @@ export const useBookingFare = ({
     return total;
   }, []);
 
-
   // ZONE PRICES WITH UPDATED SYNC METHOD START
   const EPS = 1e-6; // ~ few cm/low meters tolerance in degrees
 
@@ -156,42 +151,62 @@ export const useBookingFare = ({
     return true;
   };
 
-  const pointInPolygon = (point, poly = []) => {
-    if (!point || !Array.isArray(poly) || poly.length < 3) return false;
+  const pointInPolygon = useCallback((point, poly = []) => {
+    if (!point || !Array.isArray(poly) || poly.length < 3) {
+      console.log('pointInPolygon: Invalid input data');
+      return false;
+    }
 
-    // quick reject with bbox to save time
+    // Validate coordinates
+    const validPoly = poly.filter(coord => 
+      coord && 
+      typeof coord.lat === 'number' && 
+      typeof coord.lng === 'number' && 
+      !isNaN(coord.lat) && 
+      !isNaN(coord.lng)
+    );
+
+    if (validPoly.length < 3) {
+      console.log('pointInPolygon: Not enough valid coordinates');
+      return false;
+    }
+
+    // Quick reject with bbox to save time
     let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
-    for (const c of poly) {
+    for (const c of validPoly) {
       if (c.lat < minLat) minLat = c.lat;
       if (c.lat > maxLat) maxLat = c.lat;
       if (c.lng < minLng) minLng = c.lng;
       if (c.lng > maxLng) maxLng = c.lng;
     }
+    
     if (
       point.lat < minLat - EPS || point.lat > maxLat + EPS ||
       point.lng < minLng - EPS || point.lng > maxLng + EPS
-    ) return false;
+    ) {
+      return false;
+    }
 
     // on-edge = inside
-    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-      if (isPointOnSegment(point, poly[j], poly[i])) return true;
+    for (let i = 0, j = validPoly.length - 1; i < validPoly.length; j = i++) {
+      if (isPointOnSegment(point, validPoly[j], validPoly[i])) return true;
     }
 
     // ray casting
     let inside = false;
-    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-      const xi = poly[i].lng, yi = poly[i].lat;
-      const xj = poly[j].lng, yj = poly[j].lat;
+    for (let i = 0, j = validPoly.length - 1; i < validPoly.length; j = i++) {
+      const xi = validPoly[i].lng, yi = validPoly[i].lat;
+      const xj = validPoly[j].lng, yj = validPoly[j].lat;
       const intersect =
         ((yi > point.lat) !== (yj > point.lat)) &&
         (point.lng < ((xj - xi) * (point.lat - yi)) / (yj - yi + 0.0) + xi);
       if (intersect) inside = !inside;
     }
     return inside;
-  };
+  }, []);
 
   // replace your old isWithinZone with this:
-  const isWithinZone = (point, zoneCoords) => pointInPolygon(point, zoneCoords);
+  const isWithinZone = useCallback((point, zoneCoords) => pointInPolygon(point, zoneCoords), [pointInPolygon]);
 
   const getZonePrice = useCallback((pickupCoord, dropoffCoord) => {
     for (const zone of fixedPrices) {
@@ -214,53 +229,93 @@ export const useBookingFare = ({
       }
     }
     return null;
-  }, [fixedPrices]);
+  }, [fixedPrices, isWithinZone]);
 
-  // const isWithinZone = useCallback((point, zone) => {
-  //   if (!point || !zone || zone.length < 4) return false;
-  //   const lats = zone.map(c => c.lat);
-  //   const lngs = zone.map(c => c.lng);
-  //   return (
-  //     point.lat >= Math.min(...lats) &&
-  //     point.lat <= Math.max(...lats) &&
-  //     point.lng >= Math.min(...lngs) &&
-  //     point.lng <= Math.max(...lngs)
-  //   );
-  // }, []);
-
-  // const getZonePrice = useCallback((pickupCoord, dropoffCoord) => {
-  //   for (const zone of fixedPrices) {
-  //     const direction = (zone.direction || '').toLowerCase();
-
-  //     const pickupInPickupZone = isWithinZone(pickupCoord, zone.pickupCoordinates);
-  //     const dropoffInDropoffZone = isWithinZone(dropoffCoord, zone.dropoffCoordinates);
-
-  //     const pickupInDropoffZone = isWithinZone(pickupCoord, zone.dropoffCoordinates);
-  //     const dropoffInPickupZone = isWithinZone(dropoffCoord, zone.pickupCoordinates);
-
-  //     if (direction === 'both ways') {
-  //       if ((pickupInPickupZone && dropoffInDropoffZone) || (pickupInDropoffZone && dropoffInPickupZone)) {
-  //         return zone.price;
-  //       }
-  //     } else if (direction === 'one way') {
-  //       if (pickupInPickupZone && dropoffInDropoffZone) {
-  //         return zone.price;
-  //       }
-  //     }
-  //   }
-  //   return null;
-  // }, [fixedPrices, isWithinZone]);
-
+  // MAIN FIX: Updated getZoneEntryFee function
   const getZoneEntryFee = useCallback((pickupCoord, dropoffCoord) => {
-    const matchedZone = extrasPricing.find((zone) =>
-      isWithinZone(pickupCoord, zone.coordinates)
-    ) || extrasPricing.find((zone) =>
-      isWithinZone(dropoffCoord, zone.coordinates)
-    );
-    return matchedZone?.price || 0;
-  }, [extrasPricing, isWithinZone]);
+    console.log('\n=== ZONE ENTRY FEE CALCULATION START ===');
+    console.log('Pickup Coord:', pickupCoord);
+    console.log('Dropoff Coord:', dropoffCoord);
+    console.log('Extras Pricing Data Length:', extrasPricing?.length);
+    
+    // Validate inputs
+    if (!pickupCoord || !dropoffCoord) {
+      console.log('Missing coordinates - returning 0');
+      return 0;
+    }
 
-  // ZONE PRICES WITH UPDATED SYNC METHOD END
+    if (!extrasPricing || !Array.isArray(extrasPricing) || extrasPricing.length === 0) {
+      console.log('No extrasPricing data - returning 0');
+      return 0;
+    }
+
+    let totalZoneFee = 0;
+    const matchedZones = [];
+
+    extrasPricing.forEach((zone, index) => {
+      console.log(`\n--- Checking Zone ${index + 1}: ${zone.zone} ---`);
+      console.log('Zone Price:', zone.price, '(Type:', typeof zone.price, ')');
+      console.log('Coordinates Count:', zone.coordinates?.length);
+
+      // Validate zone data
+      if (!zone.coordinates || !Array.isArray(zone.coordinates) || zone.coordinates.length < 3) {
+        console.log(`Skipping zone ${zone.zone} - invalid coordinates`);
+        return;
+      }
+
+      // Validate and parse price
+      const zonePrice = parseFloat(zone.price);
+      if (isNaN(zonePrice) || zonePrice <= 0) {
+        console.log(`Skipping zone ${zone.zone} - invalid price: ${zone.price}`);
+        return;
+      }
+
+      // Check coordinates format
+      const hasValidCoords = zone.coordinates.every(coord => 
+        coord && 
+        typeof coord.lat === 'number' && 
+        typeof coord.lng === 'number' && 
+        !isNaN(coord.lat) && 
+        !isNaN(coord.lng)
+      );
+
+      if (!hasValidCoords) {
+        console.log(`Skipping zone ${zone.zone} - invalid coordinate format`);
+        console.log('Coordinate sample:', zone.coordinates[0]);
+        return;
+      }
+
+      // Check if pickup is in this zone
+      const pickupInZone = pointInPolygon(pickupCoord, zone.coordinates);
+      console.log(`Pickup in ${zone.zone}:`, pickupInZone);
+
+      // Check if dropoff is in this zone
+      const dropoffInZone = pointInPolygon(dropoffCoord, zone.coordinates);
+      console.log(`Dropoff in ${zone.zone}:`, dropoffInZone);
+
+      if (pickupInZone || dropoffInZone) {
+        console.log(`✅ ZONE MATCH! ${zone.zone} - Price: ${zonePrice}`);
+        
+        matchedZones.push({
+          zone: zone.zone,
+          price: zonePrice,
+          pickupInZone,
+          dropoffInZone
+        });
+        
+        totalZoneFee += zonePrice;
+      } else {
+        console.log(`No match for ${zone.zone}`);
+      }
+    });
+
+    console.log('\n=== ZONE ENTRY FEE RESULTS ===');
+    console.log('Matched Zones:', matchedZones);
+    console.log('Total Zone Entry Fee:', totalZoneFee);
+    console.log('=== END ZONE ENTRY FEE CALCULATION ===\n');
+
+    return totalZoneFee;
+  }, [extrasPricing, pointInPolygon]);
 
   const getValidDynamicPricing = useCallback(() => {
     if (!Array.isArray(discounts) || !journeyDateTime) return 0;
@@ -304,7 +359,8 @@ export const useBookingFare = ({
     includeChildSeat,
     childSeatCount,
     zoneFee,
-    journeyDateTime
+    journeyDateTime,
+    avoidRoutes
   ]);
 
   // Debounced calculation function
@@ -335,7 +391,12 @@ export const useBookingFare = ({
       const pickupPostcode = extractPostcode(pickup);
       const dropoffPostcode = extractPostcode(dropoff);
       const isAirportJourney = pickup.toLowerCase().includes('airport') || dropoff.toLowerCase().includes('airport');
-      const flatAirportFee = isAirportJourney ? 20 : 0;
+      const isPickupAirport = pickup.toLowerCase().includes('airport');
+      const isDropoffAirport = dropoff.toLowerCase().includes('airport');
+
+      const pickupAirportFee = isPickupAirport ? parseFloat(generalPricing?.pickupAirportPrice || 0) : 0;
+      const dropoffAirportFee = isDropoffAirport ? parseFloat(generalPricing?.dropoffAirportPrice || 0) : 0;
+      const totalAirportFee = pickupAirportFee + dropoffAirportFee;
 
       // Get coordinates and distance in parallel
       const [pickupCoord, dropoffCoord, distRes] = await Promise.all([
@@ -371,40 +432,15 @@ export const useBookingFare = ({
 
       let baseFare = 0;
       let pricing = '';
-      let extraZoneFee = 0;
       const vehicleName = selectedVehicle?.vehicleName;
       const matchedVehicle = allVehicles.find(v => v.vehicleName === vehicleName);
       const markupPercent = parseFloat(matchedVehicle?.percentageIncrease || 0);
 
-      // if (mode === "Hourly") {
-      //   const selected = hourlyRates.find(
-      //     (r) => r.distance === selectedHourly?.value?.distance && r.hours === selectedHourly?.value?.hours
-      //   );
-      //   baseFare = selected?.vehicleRates?.[selectedVehicle.vehicleName] || 0;
-      //   pricing = 'hourly';
-      // } else {
-      //   const postcodeMatch = postcodePrices.find(
-      //     (p) =>
-      //     ((p.pickup === pickupPostcode && p.dropoff === dropoffPostcode) ||
-      //       (p.pickup === dropoffPostcode && p.dropoff === pickupPostcode))
-      //   );
+      // Calculate zone entry fee for ALL cases (not just zone pricing)
+      console.log('\n🎯 CALCULATING ZONE ENTRY FEE FOR ALL CASES');
+      const calculatedZoneEntryFee = getZoneEntryFee(pickupCoord, dropoffCoord);
+      console.log('Final Calculated Zone Entry Fee:', calculatedZoneEntryFee);
 
-      //   if (postcodeMatch) {
-      //     baseFare = postcodeMatch.vehicleRates?.[vehicleName] ?? postcodeMatch.price;
-      //     pricing = 'postcode';
-      //   } else {
-      //     const zonePrice = getZonePrice(pickupCoord, dropoffCoord);
-
-      //     if (zonePrice !== null) {
-      //       baseFare = zonePrice;
-      //       pricing = 'zone';
-      //       extraZoneFee = getZoneEntryFee(pickupCoord, dropoffCoord);
-      //     } else {
-      //       baseFare = getVehiclePriceForDistance(selectedVehicle, totalMiles);
-      //       pricing = 'mileage';
-      //     }
-      //   }
-      // }
       if (mode === "Hourly") {
         const selected = hourlyRates.find(
           (r) => r.distance === selectedHourly?.value?.distance && r.hours === selectedHourly?.value?.hours
@@ -432,7 +468,6 @@ export const useBookingFare = ({
             if (zonePrice !== null) {
               baseFare = zonePrice;
               pricing = 'zone';
-              extraZoneFee = getZoneEntryFee(pickupCoord, dropoffCoord);
             } else {
               baseFare = getVehiclePriceForDistance(selectedVehicle, totalMiles);
               pricing = 'mileage';
@@ -442,7 +477,7 @@ export const useBookingFare = ({
       }
 
       const markupAmount = (baseFare * markupPercent) / 100;
-      let finalFare = baseFare + markupAmount + flatAirportFee;
+      let finalFare = baseFare + markupAmount + totalAirportFee;
 
       const surchargePercent = getValidDynamicPricing();
       const surchargeAmount = (surchargePercent / 100) * baseFare;
@@ -450,26 +485,42 @@ export const useBookingFare = ({
 
       const childSeatUnitPrice = includeChildSeat ? parseFloat(generalPricing?.childSeatPrice || 0) : 0;
       const totalChildSeatCharge = includeChildSeat ? childSeatCount * childSeatUnitPrice : 0;
-      finalFare += dropOffPrice + totalChildSeatCharge + zoneFee + extraZoneFee;
+      
+      // Add all fees including zone entry fee
+      finalFare += dropOffPrice + totalChildSeatCharge + zoneFee + calculatedZoneEntryFee;
+
+      console.log('\n💰 FINAL FARE BREAKDOWN:');
+      console.log('- Base Fare:', baseFare);
+      console.log('- Markup Amount:', markupAmount);
+      console.log('- Total Airport Fee:', totalAirportFee);
+      console.log('- Manual Zone Fee (zoneFee prop):', zoneFee);
+      console.log('- Calculated Zone Entry Fee:', calculatedZoneEntryFee);
+      console.log('- Child Seat Charge:', totalChildSeatCharge);
+      console.log('- Drop Off Price:', dropOffPrice);
+      console.log('- Surcharge Amount:', surchargeAmount);
+      console.log('- FINAL TOTAL:', finalFare);
 
       const breakdownDetails = {
         baseFare: parseFloat(baseFare.toFixed(2)),
         markupAmount: parseFloat(markupAmount.toFixed(2)),
-        airportFee: flatAirportFee,
-        dropOffPrice,
+        pickupAirportFee: parseFloat(pickupAirportFee.toFixed(2)),
+        dropoffAirportFee: parseFloat(dropoffAirportFee.toFixed(2)),
+        totalAirportFee: parseFloat(totalAirportFee.toFixed(2)),
+        dropOffPrice: parseFloat(dropOffPrice.toFixed(2)),
         childSeatUnitPrice: parseFloat(childSeatUnitPrice.toFixed(2)),
         childSeatCount,
         totalChildSeatCharge: parseFloat(totalChildSeatCharge.toFixed(2)),
-        zoneFee,
-        zoneEntryFee: parseFloat(extraZoneFee.toFixed(2)),
+        manualZoneFee: parseFloat(zoneFee.toFixed(2)), // Manual zone fee from props
+        calculatedZoneEntryFee: parseFloat(calculatedZoneEntryFee.toFixed(2)), // Auto-calculated from API
+        totalZoneFees: parseFloat((zoneFee + calculatedZoneEntryFee).toFixed(2)), // Combined
         surchargePercentage: surchargePercent,
         surchargeAmount: parseFloat(surchargeAmount.toFixed(2)),
         total: parseFloat(finalFare.toFixed(2)),
         pricingMode: pricing,
         distanceText: distText,
         durationText: durText,
-        avoidRoutes: { ...avoidRoutes },  // New
-        forcedMileage: isAvoidActive      // New
+        avoidRoutes: { ...avoidRoutes },
+        forcedMileage: isAvoidActive
       };
 
       setCalculatedFare(breakdownDetails.total);
@@ -507,7 +558,11 @@ export const useBookingFare = ({
     getVehiclePriceForDistance,
     getZonePrice,
     getZoneEntryFee,
-    getValidDynamicPricing
+    getValidDynamicPricing,
+    avoidRoutes.highways,
+    avoidRoutes.tolls,
+    avoidRoutes.ferries,
+    companyId
   ]);
 
   // Debounced effect for fare calculation
@@ -517,7 +572,7 @@ export const useBookingFare = ({
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [calculationKey]);
+  }, [calculationKey, calculateFare]);
 
   // Hourly Error Logic
   useEffect(() => {
@@ -560,6 +615,6 @@ export const useBookingFare = ({
     dropoffCoords,
     hourlyError,
     isLoading,
-    avoidRoutes,   // New
+    avoidRoutes,
   };
 };

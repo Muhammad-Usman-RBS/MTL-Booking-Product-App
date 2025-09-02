@@ -98,69 +98,140 @@ const AdminList = () => {
     { label: "Actions", key: "actions" },
   ];
 
-  const tableData = paginatedData.map((item) => ({
-    role: item.role || "N/A",
-    fullName: item.fullName || "N/A",
-    email: item.email || "N/A",
-    status: item.status || "N/A",
-    actions: (
-      <div className="flex gap-2">
-        <div className="flex flex-wrap gap-1">
-          {(() => {
-            let allowedStatusChanges = [];
+  // const tableData = paginatedData.map((item) => ({
+  //   role: item.role || "N/A",
+  //   fullName: item.fullName || "N/A",
+  //   email: item.email || "N/A",
+  //   status: item.status || "N/A",
+  //   actions: (
+  //     <div className="flex gap-2">
+  //       <div className="flex flex-wrap gap-1">
+  //         {(() => {
+  //           let allowedStatusChanges = [];
 
-            if (item.status === "Active") {
-              allowedStatusChanges = ["Suspended", "Deleted"];
-            } else if (item.status === "Suspended") {
-              allowedStatusChanges = ["Active", "Deleted"];
-            } else if (item.status === "Deleted") {
-              allowedStatusChanges = ["Active", "Suspended"];
-            } else if (item.status === "Pending") {
-              allowedStatusChanges = ["Active", "Suspended", "Deleted"];
-            }
+  //           if (item.status === "Active") {
+  //             allowedStatusChanges = ["Suspended", "Deleted"];
+  //           } else if (item.status === "Suspended") {
+  //             allowedStatusChanges = ["Active", "Deleted"];
+  //           } else if (item.status === "Deleted") {
+  //             allowedStatusChanges = ["Active", "Suspended"];
+  //           } else if (item.status === "Pending") {
+  //             allowedStatusChanges = ["Active", "Suspended", "Deleted"];
+  //           }
 
-            const getButtonStyle = (status) => {
-              switch (status) {
-                case "Active":
-                  return "tab-success ";
-                case "Suspended":
-                  return " tab-suspended ";
-                case "Deleted":
-                  return "tab-danger ";
-                default:
-                  return "bg-gray-100 text-gray-700 border-[var(--light-gray)] hover:bg-gray-200";
+  //           const getButtonStyle = (status) => {
+  //             switch (status) {
+  //               case "Active":
+  //                 return "tab-success ";
+  //               case "Suspended":
+  //                 return " tab-suspended ";
+  //               case "Deleted":
+  //                 return "tab-danger ";
+  //               default:
+  //                 return "bg-gray-100 text-gray-700 border-[var(--light-gray)] hover:bg-gray-200";
+  //             }
+  //           };
+
+  //           return allowedStatusChanges.map((status) => (
+  //             <button
+  //               key={status}
+  //               onClick={() => handleStatusChange(item._id, status)}
+  //               className={` tab ${getButtonStyle(
+  //                 status
+  //               )}`}
+  //             >
+  //               {status}
+  //             </button>
+  //           ));
+  //         })()}
+  //       </div>
+  //       <Link to={`/dashboard/admin-list/edit/${item._id}`}>
+  //         <Icons.Pencil
+  //           title="Edit"
+  //           className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
+  //         />
+  //       </Link>
+  //       {selectedTab === "Deleted" && (
+  //         <Icons.Trash
+  //           title="Delete"
+  //           onClick={() => handleDeleteClick(item._id)}
+  //           className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
+  //         />
+  //       )}
+  //     </div>
+  //   ),
+  // }));
+
+  const tableData = paginatedData.map((item) => {
+    const isOwnAssociateAdmin =
+      user?.role === "associateadmin" && user?._id === item._id;
+
+    return {
+      role: item.role || "N/A",
+      fullName: item.fullName || "N/A",
+      email: item.email || "N/A",
+      status: item.status || "N/A",
+      actions: isOwnAssociateAdmin ? (
+        <span className="text-gray-500 italic">
+          Only Client Admin can change actions
+        </span>
+      ) : (
+        <div className="flex gap-2">
+          <div className="flex flex-wrap gap-1">
+            {(() => {
+              let allowedStatusChanges = [];
+
+              if (item.status === "Active") {
+                allowedStatusChanges = ["Suspended", "Deleted"];
+              } else if (item.status === "Suspended") {
+                allowedStatusChanges = ["Active", "Deleted"];
+              } else if (item.status === "Deleted") {
+                allowedStatusChanges = ["Active", "Suspended"];
+              } else if (item.status === "Pending") {
+                allowedStatusChanges = ["Active", "Suspended", "Deleted"];
               }
-            };
 
-            return allowedStatusChanges.map((status) => (
-              <button
-                key={status}
-                onClick={() => handleStatusChange(item._id, status)}
-                className={` tab ${getButtonStyle(
-                  status
-                )}`}
-              >
-                {status}
-              </button>
-            ));
-          })()}
+              const getButtonStyle = (status) => {
+                switch (status) {
+                  case "Active":
+                    return "tab-success ";
+                  case "Suspended":
+                    return "tab-suspended ";
+                  case "Deleted":
+                    return "tab-danger ";
+                  default:
+                    return "bg-gray-100 text-gray-700 border-[var(--light-gray)] hover:bg-gray-200";
+                }
+              };
+
+              return allowedStatusChanges.map((status) => (
+                <button
+                  key={status}
+                  onClick={() => handleStatusChange(item._id, status)}
+                  className={`tab ${getButtonStyle(status)}`}
+                >
+                  {status}
+                </button>
+              ));
+            })()}
+          </div>
+          <Link to={`/dashboard/admin-list/edit/${item._id}`}>
+            <Icons.Pencil
+              title="Edit"
+              className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
+            />
+          </Link>
+          {selectedTab === "Deleted" && (
+            <Icons.Trash
+              title="Delete"
+              onClick={() => handleDeleteClick(item._id)}
+              className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
+            />
+          )}
         </div>
-        <Link to={`/dashboard/admin-list/edit/${item._id}`}>
-          <Icons.Pencil
-            title="Edit"
-            className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-          />
-        </Link>
-        {selectedTab === "Deleted" && (
-          <Icons.Trash
-            title="Delete"
-            onClick={() => handleDeleteClick(item._id)}
-            className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-          />
-        )}
-      </div>
-    ),
-  }));
+      ),
+    };
+  });
 
   return (
     <>
@@ -186,11 +257,10 @@ const AdminList = () => {
                   setSelectedTab(tab);
                   setPage(1);
                 }}
-                className={`pb-2 whitespace-nowrap transition-all duration-200 ${
-                  selectedTab === tab
+                className={`pb-2 whitespace-nowrap transition-all duration-200 ${selectedTab === tab
                     ? "border-b-2 border-blue-600 text-blue-600"
                     : "text-[var(--dark-gray)] hover:text-blue-500"
-                }`}
+                  }`}
               >
                 {tab} ({tabCounts[tab] || 0})
               </button>

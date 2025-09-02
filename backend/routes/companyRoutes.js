@@ -29,7 +29,7 @@ router.put(
   companyPicture,
   updateCompanyAccount
 );
-router.delete("/:id", protect, authorize("superadmin"), deleteCompanyAccount);
+router.delete("/:id", protect, authorize("superadmin", "clientadmin"), deleteCompanyAccount);
 
 // Get single company by ID
 router.get("/:id", protect, getCompanyById);
