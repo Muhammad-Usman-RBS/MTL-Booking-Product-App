@@ -2,6 +2,17 @@ import Theme from "../../models/settings/Theme.js";
 
 const DEFAULT_THEMES = [
   {
+    name: "Dark Theme 9",
+    themeSettings: {
+      bg: "#1e1e1e",
+      text: "#f1efef",
+      primary: "#ba090a",
+      hover: "#930000",
+      active: "#930000",
+    },
+    isDefault: true,
+  },
+  {
     name: "Light Theme 1",
     themeSettings: {
       bg: "#f5f9fa",
@@ -23,19 +34,7 @@ const DEFAULT_THEMES = [
     },
     isDefault: true,
   },
-  {
-    name: "Dark Theme 3",
-    themeSettings: {
-      bg: "#1e1e1e",
-      text: "#f1efef",
-      primary: "#ba090a",
-      hover: "#930000",
-      active: "#930000",
-    },
-    isDefault: true,
-  },
 ];
-
 export const initializeDefaultThemes = async (companyId) => {
   try {
     // Check if default themes already exist for this company
@@ -45,19 +44,33 @@ export const initializeDefaultThemes = async (companyId) => {
     });
 
     if (existingDefaults.length === 0) {
-      // Create default themes
+      // Step 1: Create all default themes
       const defaultThemesToCreate = DEFAULT_THEMES.map((theme) => ({
         companyId,
         ...theme,
       }));
 
-      await Theme.insertMany(defaultThemesToCreate);
+      const insertedThemes = await Theme.insertMany(defaultThemesToCreate);
       console.log(`Default themes initialized for company: ${companyId}`);
+
+      // Step 2: Automatically apply "Dark Theme 9"
+      const darkTheme9 = insertedThemes.find(
+        (t) => t.name === "Dark Theme 9"
+      );
+
+      if (darkTheme9) {
+        await Theme.updateOne(
+          { _id: darkTheme9._id },
+          { $set: { lastApplied: true, isActive: true } }
+        );
+        console.log(`"Dark Theme 9" applied by default for company: ${companyId}`);
+      }
     }
   } catch (error) {
     console.error("Error initializing default themes:", error);
   }
 };
+
 
 const isValidHexColor = (color) => {
   return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
