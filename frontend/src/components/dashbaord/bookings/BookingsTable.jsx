@@ -1142,7 +1142,9 @@ const BookingsTable = ({
   const [tooltip, setTooltip] = useState({ show: false, text: "", x: 0, y: 0 });
   const [isDeletedTab, setIsDeletedTab] = useState(false);
   const [updateJobStatus] = useUpdateJobStatusMutation();
-
+  const getErrMsg = (e) =>
+    e?.data?.message ||
+    "Failed to update status";
   const allHeaders = [
     { label: "Booking Id", key: "bookingId" },
     { label: "Type", key: "bookingType" },
@@ -1417,7 +1419,8 @@ const BookingsTable = ({
               toast.success("Booking moved to deleted");
               refetch();
             } catch (err) {
-              toast.error("Failed to delete booking");
+              toast.error(getErrMsg(err)); // shows "Cannot cancel a booking that is Completed."
+              console.error(err);
             }
           }
           return;
@@ -2067,12 +2070,8 @@ const BookingsTable = ({
                     toast.success("Status updated");
                     refetch();
                   } catch (err) {
-                    console.error("Status update error:", err);
-                    if (err?.data?.message) {
-                      toast.error(err.data.message);
-                    } else {
-                      toast.error("Failed to update status");
-                    }
+                    toast.error(getErrMsg(err));
+                    console.error(err);
                     refetch();
                   }
                 }}
@@ -2094,7 +2093,8 @@ const BookingsTable = ({
                       toast.success("Booking restored successfully");
                       refetch();
                     } catch (err) {
-                      toast.error("Failed to restore booking");
+                      toast.error(getErrMsg(err));
+                      console.error(err);
                     }
                   }}
                   className="btn btn-reset"
@@ -2202,7 +2202,7 @@ const BookingsTable = ({
                                   setShowEditModal(true);
                                 }
                               } catch (err) {
-                                toast.error("Action failed");
+                                toast.error(getErrMsg(err));
                                 console.error(err);
                               }
                             }}
@@ -2229,7 +2229,7 @@ const BookingsTable = ({
                                 refetch();
                                 setSelectedActionRow(null);
                               } catch (err) {
-                                toast.error("Failed to cancel booking");
+                                toast.error(getErrMsg(err));
                                 console.error(err);
                               }
                             }}

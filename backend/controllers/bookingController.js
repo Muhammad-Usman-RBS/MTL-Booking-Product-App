@@ -4,16 +4,19 @@ import driverModel from "../models/Driver.js";
 import User from "../models/User.js";
 import mongoose from "mongoose";
 import Voucher from "../models/pricings/Voucher.js";
-import { createEventOnGoogleCalendar, deleteEventFromGoogleCalendar } from "../utils/calendarService.js";
+import {
+  createEventOnGoogleCalendar,
+  deleteEventFromGoogleCalendar,
+} from "../utils/calendarService.js";
 import ReviewSetting from "../models/settings/ReviewSetting.js";
 import { compileReviewTemplate } from "../utils/bookings/reviewPlaceholders.js";
 import sendReviewEmail from "../utils/bookings/sendReviewEmail.js";
 import Notification from "../models/Notification.js";
 import CronJob from "../models/settings/CronJob.js";
-import { autoSendReviewEmail } from "../utils/bookings/autoSendReviewEmail.js"
+import { autoSendReviewEmail } from "../utils/bookings/autoSendReviewEmail.js";
 import Company from "../models/Company.js";
-import { driverStatusEmailTemplate } from "../utils/bookings/driverStatusEmailTemplate.js"
-import { customerBookingConfirmation } from "../utils/bookings/customerBookingConfirmation.js"
+import { driverStatusEmailTemplate } from "../utils/bookings/driverStatusEmailTemplate.js";
+import { customerBookingConfirmation } from "../utils/bookings/customerBookingConfirmation.js";
 import { clientadminBookingConfirmation } from "../utils/bookings/clientadminBookingConfirmation.js";
 
 // Create Booking (Dashboard/Widget)
@@ -45,7 +48,11 @@ export const createBooking = async (req, res) => {
       appNotifications = {},
     } = req.body;
 
-    if (!companyId || typeof companyId !== "string" || companyId.length !== 24) {
+    if (
+      !companyId ||
+      typeof companyId !== "string" ||
+      companyId.length !== 24
+    ) {
       return res.status(400).json({ message: "Invalid or missing companyId" });
     }
 
@@ -60,7 +67,12 @@ export const createBooking = async (req, res) => {
       });
 
       const today = new Date();
-      if (v && new Date(v.validity) >= today && v.used < v.quantity && v.status === "Active") {
+      if (
+        v &&
+        new Date(v.validity) >= today &&
+        v.used < v.quantity &&
+        v.status === "Active"
+      ) {
         validVoucher = v.voucher;
         isVoucherApplied = true;
         await Voucher.findByIdAndUpdate(v._id, { $inc: { used: 1 } });
@@ -71,13 +83,17 @@ export const createBooking = async (req, res) => {
     if (!returnJourneyToggle) {
       for (const field of requiredFields) {
         if (!primaryJourney[field]) {
-          return res.status(400).json({ message: `Missing field in primaryJourney: ${field}` });
+          return res
+            .status(400)
+            .json({ message: `Missing field in primaryJourney: ${field}` });
         }
       }
     } else {
       for (const field of requiredFields) {
         if (!returnJourney[field]) {
-          return res.status(400).json({ message: `Missing field in returnJourney: ${field}` });
+          return res
+            .status(400)
+            .json({ message: `Missing field in returnJourney: ${field}` });
         }
       }
     }
@@ -85,7 +101,10 @@ export const createBooking = async (req, res) => {
     const extractDynamicDropoffFields = (journey) => {
       const fields = {};
       Object.keys(journey || {}).forEach((key) => {
-        if (key.startsWith("dropoff_terminal_") || key.startsWith("dropoffDoorNumber")) {
+        if (
+          key.startsWith("dropoff_terminal_") ||
+          key.startsWith("dropoffDoorNumber")
+        ) {
           fields[key] = journey[key] ?? "";
         }
       });
@@ -93,12 +112,18 @@ export const createBooking = async (req, res) => {
     };
 
     const generateNextBookingId = async () => {
-      const lastBooking = await Booking.findOne().sort({ bookingId: -1 }).limit(1);
-      return lastBooking?.bookingId ? (parseInt(lastBooking.bookingId, 10) + 1).toString() : "50301";
+      const lastBooking = await Booking.findOne()
+        .sort({ bookingId: -1 })
+        .limit(1);
+      return lastBooking?.bookingId
+        ? (parseInt(lastBooking.bookingId, 10) + 1).toString()
+        : "50301";
     };
 
     const bookingId = await generateNextBookingId();
-    const source = req.body.source || (referrer?.toLowerCase()?.includes("widget") ? "widget" : "admin");
+    const source =
+      req.body.source ||
+      (referrer?.toLowerCase()?.includes("widget") ? "widget" : "admin");
 
     const baseVehicleInfo = {
       vehicleName: vehicle.vehicleName ?? null,
@@ -114,7 +139,10 @@ export const createBooking = async (req, res) => {
       phone: passenger.phone ?? null,
     };
 
-    const returnIsValid = returnJourneyToggle && returnJourney && requiredFields.every((f) => returnJourney[f]);
+    const returnIsValid =
+      returnJourneyToggle &&
+      returnJourney &&
+      requiredFields.every((f) => returnJourney[f]);
 
     const bookingPayload = {
       bookingId,
@@ -158,8 +186,14 @@ export const createBooking = async (req, res) => {
         notes: primaryJourney.notes ?? "",
         internalNotes: primaryJourney.internalNotes ?? "",
         date: primaryJourney.date ?? "",
-        hour: primaryJourney.hour !== undefined ? parseInt(primaryJourney.hour) : null,
-        minute: primaryJourney.minute !== undefined ? parseInt(primaryJourney.minute) : null,
+        hour:
+          primaryJourney.hour !== undefined
+            ? parseInt(primaryJourney.hour)
+            : null,
+        minute:
+          primaryJourney.minute !== undefined
+            ? parseInt(primaryJourney.minute)
+            : null,
         fare: primaryJourney.fare ?? 0,
         hourlyOption: primaryJourney.hourlyOption ?? null,
         distanceText: primaryJourney.distanceText ?? "",
@@ -184,8 +218,14 @@ export const createBooking = async (req, res) => {
         notes: returnJourney.notes ?? "",
         internalNotes: returnJourney.internalNotes ?? "",
         date: returnJourney.date ?? "",
-        hour: returnJourney.hour !== undefined ? parseInt(returnJourney.hour) : null,
-        minute: returnJourney.minute !== undefined ? parseInt(returnJourney.minute) : null,
+        hour:
+          returnJourney.hour !== undefined
+            ? parseInt(returnJourney.hour)
+            : null,
+        minute:
+          returnJourney.minute !== undefined
+            ? parseInt(returnJourney.minute)
+            : null,
         fare: returnJourney.fare ?? 0,
         hourlyOption: returnJourney.hourlyOption ?? null,
         distanceText: returnJourney.distanceText ?? "",
@@ -198,14 +238,19 @@ export const createBooking = async (req, res) => {
     const savedBooking = await Booking.create(bookingPayload);
 
     // ✅ Fetch Client Admin (account manager) for this company
-    const clientAdminUser = await User.findOne({ companyId, role: "clientadmin" })
+    const clientAdminUser = await User.findOne({
+      companyId,
+      role: "clientadmin",
+    })
       .select("name email contact phone profileImage")
       .lean()
       .catch(() => null);
 
     // ✅ Also fetch the Company document for brand info
     const companyDoc = await Company.findById(companyId)
-      .select("companyName tradingName email contact profileImage address website")
+      .select(
+        "companyName tradingName email contact profileImage address website"
+      )
       .lean()
       .catch(() => null);
 
@@ -218,7 +263,10 @@ export const createBooking = async (req, res) => {
         options: {
           // Prefer Client Admin as frontline contact
           supportEmail: clientAdminUser?.email || companyDoc?.email,
-          supportPhone: clientAdminUser?.contact || clientAdminUser?.phone || companyDoc?.contact,
+          supportPhone:
+            clientAdminUser?.contact ||
+            clientAdminUser?.phone ||
+            companyDoc?.contact,
           website: companyDoc?.website,
           address: companyDoc?.address,
         },
@@ -236,11 +284,12 @@ export const createBooking = async (req, res) => {
       // Notify the Client Admin (fallback to company email) — using generic table template
       const adminEmail = clientAdminUser?.email || companyDoc?.email;
       if (adminEmail) {
-        const { subject, title, subtitle, data, html } = clientadminBookingConfirmation({
-          booking: savedBooking,
-          company: companyDoc || {},
-          clientAdmin: clientAdminUser || {},
-        });
+        const { subject, title, subtitle, data, html } =
+          clientadminBookingConfirmation({
+            booking: savedBooking,
+            company: companyDoc || {},
+            clientAdmin: clientAdminUser || {},
+          });
 
         await sendEmail(
           adminEmail,
@@ -249,7 +298,6 @@ export const createBooking = async (req, res) => {
         );
       }
 
-
       console.log("Booking confirmation emails sent");
     } catch (e) {
       console.error("Error sending booking confirmation email:", e.message);
@@ -257,21 +305,27 @@ export const createBooking = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: returnIsValid ? "Primary and return journeys booked together." : "Primary journey booked.",
+      message: returnIsValid
+        ? "Primary and return journeys booked together."
+        : "Primary journey booked.",
       bookings: [savedBooking],
       // ✅ expose who will manage this customer (useful for UI)
-      clientAdmin: clientAdminUser ? {
-        name: clientAdminUser.name || "",
-        email: clientAdminUser.email || "",
-        phone: clientAdminUser.contact || clientAdminUser.phone || "",
-      } : null,
-      company: companyDoc ? {
-        name: companyDoc.companyName || companyDoc.tradingName || "",
-        email: companyDoc.email || "",
-        phone: companyDoc.contact || "",
-        address: companyDoc.address || "",
-        website: companyDoc.website || "",
-      } : null,
+      clientAdmin: clientAdminUser
+        ? {
+            name: clientAdminUser.name || "",
+            email: clientAdminUser.email || "",
+            phone: clientAdminUser.contact || clientAdminUser.phone || "",
+          }
+        : null,
+      company: companyDoc
+        ? {
+            name: companyDoc.companyName || companyDoc.tradingName || "",
+            email: companyDoc.email || "",
+            phone: companyDoc.contact || "",
+            address: companyDoc.address || "",
+            website: companyDoc.website || "",
+          }
+        : null,
     });
   } catch (error) {
     console.error("❌ createBooking error:", error);
@@ -581,6 +635,18 @@ export const updateBookingStatus = async (req, res) => {
         }
       }
     }
+  
+if (req.user?.role === "clientadmin") {
+  const current = String(booking?.status || "").trim().toLowerCase();
+  const next = String(status || "").trim().toLowerCase();
+
+  if (current === "completed" && (next === "cancelled" )) {
+    return res.status(403).json({
+      message: "Cannot cancel a booking that is Completed.",
+    });
+  }
+}
+
 
     // Apply status update
     booking.status = status === "Late Cancel" ? "Late Cancel" : status;
@@ -594,7 +660,8 @@ export const updateBookingStatus = async (req, res) => {
     }
 
     // Update status audit with current user information
-    const fullName = currentUser?.fullName || currentUser?.name || "Unknown User";
+    const fullName =
+      currentUser?.fullName || currentUser?.name || "Unknown User";
     const updater = `${currentUser?.role || "user"} | ${fullName}`;
     booking.statusAudit = [
       ...(booking.statusAudit || []),
@@ -606,7 +673,9 @@ export const updateBookingStatus = async (req, res) => {
 
     // ===== Send Driver Status Emails for "On Route" and "At Location" =====
     const normalizedStatus = (status || "").trim();
-    const shouldSendDriverEmail = ["On Route", "At Location"].includes(normalizedStatus);
+    const shouldSendDriverEmail = ["On Route", "At Location"].includes(
+      normalizedStatus
+    );
 
     if (shouldSendDriverEmail && booking?.passenger?.email) {
       try {
@@ -617,15 +686,21 @@ export const updateBookingStatus = async (req, res) => {
 
         let assignedDriver = null;
         if (firstDriver) {
-          const driverDocId = firstDriver.driverId || firstDriver._id || firstDriver;
-          if (driverDocId && mongoose.Types.ObjectId.isValid(String(driverDocId))) {
+          const driverDocId =
+            firstDriver.driverId || firstDriver._id || firstDriver;
+          if (
+            driverDocId &&
+            mongoose.Types.ObjectId.isValid(String(driverDocId))
+          ) {
             assignedDriver = await driverModel.findById(driverDocId).lean();
           }
           if (!assignedDriver && firstDriver.employeeNumber) {
-            assignedDriver = await driverModel.findOne({
-              "DriverData.employeeNumber": firstDriver.employeeNumber,
-              companyId: booking.companyId,
-            }).lean();
+            assignedDriver = await driverModel
+              .findOne({
+                "DriverData.employeeNumber": firstDriver.employeeNumber,
+                companyId: booking.companyId,
+              })
+              .lean();
           }
 
           if (assignedDriver) {
@@ -633,10 +708,15 @@ export const updateBookingStatus = async (req, res) => {
             vehicleInfo = assignedDriver.VehicleData || {};
           } else {
             // Fallback from inline driver data on booking (if present)
-            if (firstDriver.name || firstDriver.contact || firstDriver.employeeNumber) {
+            if (
+              firstDriver.name ||
+              firstDriver.contact ||
+              firstDriver.employeeNumber
+            ) {
               driverInfo = {
                 firstName: firstDriver.name?.split(" ")[0] || "Your",
-                surName: firstDriver.name?.split(" ").slice(1).join(" ") || "Driver",
+                surName:
+                  firstDriver.name?.split(" ").slice(1).join(" ") || "Driver",
                 contact: firstDriver.contact || "",
                 email: firstDriver.email || null,
                 privateHireCardNo: firstDriver.pcoLicense || "-",
@@ -688,7 +768,10 @@ export const updateBookingStatus = async (req, res) => {
         );
         console.log(`Sent email to passenger for status: ${normalizedStatus}`);
       } catch (emailError) {
-        console.error(`Failed to send ${normalizedStatus} email:`, emailError?.message || emailError);
+        console.error(
+          `Failed to send ${normalizedStatus} email:`,
+          emailError?.message || emailError
+        );
       }
     }
 
@@ -712,7 +795,8 @@ export const updateBookingStatus = async (req, res) => {
     const io = req.app.get("io");
 
     const audit = booking.statusAudit || [];
-    const prevStatus = audit.length > 1 ? audit[audit.length - 2]?.status : null;
+    const prevStatus =
+      audit.length > 1 ? audit[audit.length - 2]?.status : null;
     const currStatus = booking.status;
     const isStatusChanged = prevStatus !== currStatus;
 
@@ -733,7 +817,8 @@ export const updateBookingStatus = async (req, res) => {
           const uid = d?.userId || d?._id;
           if (uid) {
             const u = await User.findById(uid).lean();
-            if (u?.employeeNumber) employeeNumbers.push(String(u.employeeNumber));
+            if (u?.employeeNumber)
+              employeeNumbers.push(String(u.employeeNumber));
           }
         }
 
@@ -744,15 +829,23 @@ export const updateBookingStatus = async (req, res) => {
             bookingId: booking.bookingId,
             status: currStatus,
             primaryJourney: {
-              pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
-              dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
+              pickup:
+                booking?.primaryJourney?.pickup ||
+                booking?.returnJourney?.pickup ||
+                "",
+              dropoff:
+                booking?.primaryJourney?.dropoff ||
+                booking?.returnJourney?.dropoff ||
+                "",
             },
             bookingSentAt: new Date(),
             createdBy: currentUser?._id,
             companyId: booking.companyId,
           }));
 
-          const docs = await Notification.insertMany(payloads, { ordered: false });
+          const docs = await Notification.insertMany(payloads, {
+            ordered: false,
+          });
           for (const n of docs) {
             io.to(`emp:${n.employeeNumber}`).emit("notification:new", n);
           }
@@ -777,8 +870,14 @@ export const updateBookingStatus = async (req, res) => {
             bookingId: booking.bookingId,
             status: currStatus,
             primaryJourney: {
-              pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
-              dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
+              pickup:
+                booking?.primaryJourney?.pickup ||
+                booking?.returnJourney?.pickup ||
+                "",
+              dropoff:
+                booking?.primaryJourney?.dropoff ||
+                booking?.returnJourney?.dropoff ||
+                "",
             },
             bookingSentAt: new Date(),
             createdBy: currentUser?._id,
@@ -790,10 +889,10 @@ export const updateBookingStatus = async (req, res) => {
         const paxEmail = (booking?.passenger?.email || "").trim().toLowerCase();
         const customerUser = paxEmail
           ? await User.findOne({
-            companyId: booking.companyId,
-            role: "customer",
-            email: paxEmail,
-          }).lean()
+              companyId: booking.companyId,
+              role: "customer",
+              email: paxEmail,
+            }).lean()
           : null;
 
         const custKey = String(customerUser?._id || "");
@@ -803,8 +902,14 @@ export const updateBookingStatus = async (req, res) => {
             bookingId: booking.bookingId,
             status: currStatus,
             primaryJourney: {
-              pickup: booking?.primaryJourney?.pickup || booking?.returnJourney?.pickup || "",
-              dropoff: booking?.primaryJourney?.dropoff || booking?.returnJourney?.dropoff || "",
+              pickup:
+                booking?.primaryJourney?.pickup ||
+                booking?.returnJourney?.pickup ||
+                "",
+              dropoff:
+                booking?.primaryJourney?.dropoff ||
+                booking?.returnJourney?.dropoff ||
+                "",
             },
             bookingSentAt: new Date(),
             createdBy: currentUser?._id,
@@ -814,7 +919,10 @@ export const updateBookingStatus = async (req, res) => {
         }
       }
     } catch (e) {
-      console.error("Admin/Customer notify on driver change failed:", e?.message);
+      console.error(
+        "Admin/Customer notify on driver change failed:",
+        e?.message
+      );
     }
 
     return res.status(200).json({ success: true, booking: updatedBooking });
@@ -1020,33 +1128,6 @@ export const restoreOrDeleteBooking = async (req, res) => {
     });
   }
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import Booking from "../models/Booking.js";
 // import sendEmail from "../utils/sendEmail.js";

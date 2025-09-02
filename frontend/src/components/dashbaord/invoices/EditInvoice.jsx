@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
-import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import {
@@ -51,19 +50,21 @@ const InvoicePage = () => {
       const invoice = invoiceData.invoice;
       const baseFares = invoice.items?.map((item) => item.fare || 0) || [];
       setBaseAmounts(baseFares);
-      const customerText = `${invoice.customer?.name || ""}\n${invoice.customer?.email || ""
-        }\n${invoice.customer?.phone || ""}`;
-      const driverText = `${invoice.driver?.name || ""}\n${invoice.driver?.email || ""
-        }\n${invoice.driver?.phone || ""}`;
-      setBillTo(invoice?.invoiceType === "driver" ?  driverText : customerText);
+      const customerText = `${invoice.customer?.name || ""}\n${
+        invoice.customer?.email || ""
+      }\n${invoice.customer?.phone || ""}`;
+      const driverText = `${invoice.driver?.name || ""}\n${
+        invoice.driver?.email || ""
+      }\n${invoice.driver?.phone || ""}`;
+      setBillTo(invoice?.invoiceType === "driver" ? driverText : customerText);
       const fetchedTaxPercent =
         parseFloat(generalPricingData?.invoiceTaxPercent) || 0;
       setTaxPercent(fetchedTaxPercent);
 
       setInvoiceDate(
         invoice.invoiceDate?.split("T")[0] ||
-        invoice.createdAt?.split("T")[0] ||
-        ""
+          invoice.createdAt?.split("T")[0] ||
+          ""
       );
 
       setDueDate(invoice.items?.[0]?.date?.split("T")[0] || "");
@@ -84,15 +85,15 @@ const InvoicePage = () => {
       setNotes(invoice.notes || "");
 
       const details =
-      invoice.items?.map((item) => {
-        const bookingIdLine = item.bookingId
-          ? `Booking ID: ${item.bookingId}\n`
-          : "";
-        const pickupLine = `Pickup: ${item.pickup || ""}`;
-        const dropoffLine = `Drop off: ${item.dropoff || ""}`;
-        return `${bookingIdLine}${pickupLine}\n\n${dropoffLine}`;
-      }) || [];
-    setItemDetails(details);
+        invoice.items?.map((item) => {
+          const bookingIdLine = item.bookingId
+            ? `Booking ID: ${item.bookingId}\n`
+            : "";
+          const pickupLine = `Pickup: ${item.pickup || ""}`;
+          const dropoffLine = `Drop off: ${item.dropoff || ""}`;
+          return `${bookingIdLine}${pickupLine}\n\n${dropoffLine}`;
+        }) || [];
+      setItemDetails(details);
       // Initialize all item-related states
       const initialItemTaxes = {};
       const initialItemNotes = {};
@@ -131,9 +132,11 @@ const InvoicePage = () => {
         const lines = text.split("\n").filter(Boolean);
 
         const bookingLine = lines.find((line) => line.includes(" - ")) || "";
-        const pickupLine = lines.find((line) => line.startsWith("Pickup:")) || "";
-        const dropoffLine = lines.find((line) => line.startsWith("Drop off:")) || "";
-        
+        const pickupLine =
+          lines.find((line) => line.startsWith("Pickup:")) || "";
+        const dropoffLine =
+          lines.find((line) => line.startsWith("Drop off:")) || "";
+
         const bookingId = bookingLine.split(" - ")[0]?.trim() || "";
         const pickup = pickupLine.replace("Pickup: ", "").trim();
         const dropoff = dropoffLine.replace("Drop off: ", "").trim();
@@ -145,10 +148,10 @@ const InvoicePage = () => {
           pickup: pickup || original.pickup || "",
           dropoff: dropoff || original.dropoff || "",
           totalAmount:
-          itemTaxes[index] === "Tax"
-            ? (parseFloat(baseAmounts[index]) || 0) * (1 + taxPercent / 100)
-            : parseFloat(baseAmounts[index]) || 0,
-        
+            itemTaxes[index] === "Tax"
+              ? (parseFloat(baseAmounts[index]) || 0) * (1 + taxPercent / 100)
+              : parseFloat(baseAmounts[index]) || 0,
+
           tax: itemTaxes[index] || original.tax || "No Tax",
           fare: parseFloat(baseAmounts[index]) || original.fare || 0,
           date: dueDate ? new Date(dueDate) : original.date || new Date(),
@@ -186,29 +189,31 @@ const InvoicePage = () => {
           JSON.stringify(items) !== JSON.stringify(original.items)
             ? items
             : undefined,
-            ...(original.invoiceType === "driver" 
-              ? {
-                  driver: name.trim() !== original.driver?.name ||
-                          email.trim() !== original.driver?.email ||
-                          phone.trim() !== original.driver?.phone
-                    ? {
-                        name: name.trim(),
-                        email: email.trim(),
-                        phone: phone.trim(),
-                      }
-                    : undefined,
-                }
-              : {
-                  customer: name.trim() !== original.customer?.name ||
-                            email.trim() !== original.customer?.email ||
-                            phone.trim() !== original.customer?.phone
-                    ? {
-                        name: name.trim(),
-                        email: email.trim(),
-                        phone: phone.trim(),
-                      }
-                    : undefined,
-                }),
+        ...(original.invoiceType === "driver"
+          ? {
+              driver:
+                name.trim() !== original.driver?.name ||
+                email.trim() !== original.driver?.email ||
+                phone.trim() !== original.driver?.phone
+                  ? {
+                      name: name.trim(),
+                      email: email.trim(),
+                      phone: phone.trim(),
+                    }
+                  : undefined,
+            }
+          : {
+              customer:
+                name.trim() !== original.customer?.name ||
+                email.trim() !== original.customer?.email ||
+                phone.trim() !== original.customer?.phone
+                  ? {
+                      name: name.trim(),
+                      email: email.trim(),
+                      phone: phone.trim(),
+                    }
+                  : undefined,
+            }),
         notes: notes !== original.notes ? notes : undefined,
         discount:
           parseFloat(discount) !== original.discount
@@ -267,6 +272,28 @@ const InvoicePage = () => {
       setGlobalTaxSelection("No Tax");
     }
   }, [checkedItems, itemTaxes]);
+
+  const toNumber = (v) => {
+    const n = parseFloat(v);
+    return Number.isNaN(n) ? 0 : n;
+  };
+
+  // Sum of line items as currently edited (includes tax if selected)
+  const subTotal = useMemo(
+    () => baseAmounts.reduce((sum, amt) => sum + toNumber(amt), 0),
+    [baseAmounts]
+  );
+
+  // Optional: keep your grand total consistent & readable
+  const grandTotal = useMemo(() => {
+    return subTotal - toNumber(discount) + toNumber(deposit);
+  }, [subTotal, discount, deposit]);
+
+  const formatMoney = (n) =>
+    n.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   return (
     <>
       <OutletHeading name="Edit Invoice" />
@@ -350,8 +377,9 @@ const InvoicePage = () => {
                   Object.keys(checkedItems).forEach((key) => {
                     if (checkedItems[key]) {
                       const itemIndex = parseInt(key.replace("item", ""));
-                      const baseAmount = parseFloat(baseAmounts[itemIndex]) || 0;
-                  
+                      const baseAmount =
+                        parseFloat(baseAmounts[itemIndex]) || 0;
+
                       updatedTaxes[itemIndex] = value;
                       updatedAmounts[itemIndex] =
                         value === "Tax" ? baseAmount * taxRate : baseAmount;
@@ -448,21 +476,24 @@ const InvoicePage = () => {
                     value={baseAmounts[index] || ""}
                     onChange={(e) => {
                       const input = e.target.value;
-                    
+
                       const updated = [...baseAmounts];
                       updated[index] = input;
                       setBaseAmounts(updated);
-                    
+
                       const parsed = parseFloat(input);
                       const updatedAmounts = [...itemAmounts];
                       updatedAmounts[index] =
                         itemTaxes[index] === "Tax"
-                          ? (isNaN(parsed) ? 0 : parsed * (1 + taxPercent / 100))
-                          : (isNaN(parsed) ? 0 : parsed);
-                    
+                          ? isNaN(parsed)
+                            ? 0
+                            : parsed * (1 + taxPercent / 100)
+                          : isNaN(parsed)
+                          ? 0
+                          : parsed;
+
                       setItemAmounts(updatedAmounts);
                     }}
-                    
                   />
                 </div>
               </div>
@@ -474,22 +505,11 @@ const InvoicePage = () => {
           {/* Sub Total */}
           <p>
             Sub Total:
-            {/* <strong className="text-blue-800 ml-1">
-              £
-              {invoiceData?.invoice?.items?.reduce(
-                (acc, item) => acc + (item.fare || 0),
-                0
-              )}
-            </strong> */}
             <strong className="text-blue-800 ml-1">
               {currencySymbol}
-              {(invoiceData?.invoice?.items?.reduce(
-                (acc, item) => acc + (item.fare || 0),
-                0
-              ) || 0).toFixed(2)}
+              {formatMoney(subTotal)}
             </strong>
           </p>
-
           {/* Discount */}
           <p className="mt-4 flex justify-end items-center gap-2">
             <span className="text-gray-700">Discount:</span>
@@ -519,11 +539,19 @@ const InvoicePage = () => {
           <p className="mt-3 text-xl font-bold text-blue-800">
             {/* Total: £ */}
             Total: {currencySymbol}
-            {Number((
-              itemAmounts.reduce((sum, amt) => sum + parseFloat(amt || 0), 0) -
-              parseFloat(discount || 0) +
-              parseFloat(deposit || 0)
-            ).toFixed(2)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {Number(
+              (
+                itemAmounts.reduce(
+                  (sum, amt) => sum + parseFloat(amt || 0),
+                  0
+                ) -
+                parseFloat(discount || 0) -
+                parseFloat(deposit || 0)
+              ).toFixed(2)
+            ).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </p>
         </div>
 

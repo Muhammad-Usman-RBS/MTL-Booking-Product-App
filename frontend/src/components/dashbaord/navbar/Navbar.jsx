@@ -22,6 +22,7 @@ import { useGetAllJobsQuery } from "../../../redux/api/jobsApi";
 
 function Navbar() {
   const TimeRef = useRef(null);
+  const usertooltipRef = useRef(null);
   const user = useSelector((state) => state.auth.user);
   const themeBtnRef = useRef(null);
   const email = user?.email || "No Email";
@@ -36,20 +37,29 @@ function Navbar() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
-  const { data: jobData , refetch } = useGetAllJobsQuery(user?.companyId);
+  const { data: jobData, refetch } = useGetAllJobsQuery(user?.companyId);
 
   const dispatch = useDispatch();
   const [applyThemeSettings] = useApplyThemeSettingsMutation();
 
   const JobsList = jobData?.jobs || [];
-useEffect(()=> {
-  const onFocus = () => {
-    refetch();
-  }
-  window.addEventListener("focus", onFocus);
-  return () => window.removeEventListener("focus", onFocus);
 
-} , [refetch])
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (usertooltipRef && !usertooltipRef.current.contains(e.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+  useEffect(() => {
+    const onFocus = () => {
+      refetch();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [refetch]);
   const handleNotificationClick = (jobId) => {
     if (user?.role !== "driver") return;
 
@@ -223,8 +233,7 @@ useEffect(()=> {
               <div
                 onMouseEnter={handleMouseEnterTooltip}
                 onMouseLeave={handleMouseLeave}
-                className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 lg:right-0 -right-1/2   text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden"
-              >
+              className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 lg:right-0 -right-1/2   text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden">
                 <div className="border-b px-4 py-3 text-theme bg-theme">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -439,7 +448,12 @@ useEffect(()=> {
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-lg z-50">
+                <div
+                  ref={usertooltipRef}
+                  onMouseEnter={handleMouseEnterTooltip}
+                  onMouseLeave={handleMouseLeave}
+                  className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-lg z-50"
+                >
                   <div className="border-b   text- ">
                     <div className="ps-4 pt-4 flex items-center space-x-3">
                       {profileImg &&
