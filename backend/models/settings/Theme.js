@@ -1,3 +1,5 @@
+
+
 import mongoose from "mongoose";
 
 const themeSchema = new mongoose.Schema({
@@ -41,16 +43,6 @@ const themeSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-// keep updatedAt fresh
-themeSchema.pre("save", function (next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
-themeSchema.index(
-    { companyId: 1, lastApplied: 1 },
-    { unique: true, partialFilterExpression: { lastApplied: true } }
-  );
 
 const Theme = mongoose.model("Theme", themeSchema);
 export default Theme;

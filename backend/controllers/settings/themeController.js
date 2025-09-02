@@ -38,39 +38,47 @@ const DEFAULT_THEMES = [
 export const initializeDefaultThemes = async (companyId) => {
   try {
     // Check if default themes already exist for this company
-    const existingDefaults = await Theme.find({
+    const existingDefaultThemes = await Theme.find({
       companyId,
       isDefault: true,
     });
 
-    if (existingDefaults.length === 0) {
-      // Step 1: Create all default themes
-      const defaultThemesToCreate = DEFAULT_THEMES.map((theme) => ({
-        companyId,
+    if (existingDefaultThemes.length === 0) {
+      // No default themes found, insert them
+      const defaultThemesWithCompany = DEFAULT_THEMES.map((theme) => ({
         ...theme,
+        companyId,
       }));
-
-      const insertedThemes = await Theme.insertMany(defaultThemesToCreate);
+      await Theme.insertMany(defaultThemesWithCompany);
       console.log(`Default themes initialized for company: ${companyId}`);
+    }
 
-      // Step 2: Automatically apply "Dark Theme 9"
-      const darkTheme9 = insertedThemes.find(
-        (t) => t.name === "Dark Theme 9"
-      );
+    // Check if any theme is already applied for this company
+    const appliedTheme = await Theme.findOne({
+      companyId,
+      $or: [{ lastApplied: true }, { isActive: true }],
+    });
+
+    // If no theme is applied, apply Dark Theme 9 by default
+    if (!appliedTheme) {
+      const darkTheme9 = await Theme.findOne({
+        companyId,
+        name: "Dark Theme 9",
+        isDefault: true,
+      });
 
       if (darkTheme9) {
         await Theme.updateOne(
           { _id: darkTheme9._id },
           { $set: { lastApplied: true, isActive: true } }
         );
-        console.log(`"Dark Theme 9" applied by default for company: ${companyId}`);
+        console.log(`Dark Theme 9 auto-applied for company: ${companyId}`);
       }
     }
   } catch (error) {
-    console.error("Error initializing default themes:", error);
+    console.error("Error initializing user default theme:", error);
   }
 };
-
 
 const isValidHexColor = (color) => {
   return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
@@ -324,19 +332,39 @@ export const deleteTheme = async (req, res) => {
     });
   }
 };
-
 export const applyTheme = async (req, res) => {
   try {
     const { companyId, themeId } = req.params;
 
+    // Check if req.user exists
+    if (!req.user) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    // Check if req.user.companyId exists
+    if (!req.user.companyId) {
+      return res.status(400).json({ message: "User has no company ID" });
+    }
+
     // (optional) authorize company ownership
     if (String(req.user.companyId) !== String(companyId)) {
-      return res.status(403).json({ message: "Forbidden" });
-    } // flip all others off, set this one on + lastApplied
+      return res.status(403).json({
+        message: "Forbidden",
+        debug: {
+          userCompanyId: String(req.user.companyId),
+          requestedCompanyId: String(companyId),
+          userCompanyIdLength: String(req.user.companyId).length,
+          requestedCompanyIdLength: String(companyId).length,
+        },
+      });
+    }
+
+    // flip all others off, set this one on + lastApplied
     await Theme.updateMany(
       { companyId },
       { $set: { lastApplied: false, isActive: false } }
     );
+
     const theme = await Theme.findOneAndUpdate(
       { _id: themeId, companyId },
       { $set: { lastApplied: true, isActive: true } },
@@ -346,6 +374,7 @@ export const applyTheme = async (req, res) => {
     if (!theme) return res.status(404).json({ message: "Theme not found" });
     return res.json({ theme });
   } catch (e) {
+    console.error("Apply theme error:", e);
     return res.status(500).json({ message: e.message });
   }
 };
