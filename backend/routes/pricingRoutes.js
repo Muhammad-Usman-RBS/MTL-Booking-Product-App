@@ -15,65 +15,65 @@ const router = express.Router();
 const vehicleUploader = getUploader("vehicle");
 
 // VEHICLE PRICING
-router.post("/vehicles", protect, authorize("superadmin", "clientadmin"), vehicleUploader.single("image"), createVehicle);
+router.post("/vehicles", protect, authorize("superadmin", "clientadmin", "associateadmin"), vehicleUploader.single("image"), createVehicle);
 router.get("/vehicles", protect, getAllVehicles);
-router.put("/vehicles/:id", protect, authorize("superadmin", "clientadmin"), vehicleUploader.single("image"), updateVehicle);
-router.delete("/vehicles/:id", protect, authorize("superadmin", "clientadmin"), deleteVehicle);
+router.put("/vehicles/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), vehicleUploader.single("image"), updateVehicle);
+router.delete("/vehicles/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), deleteVehicle);
 router.get("/vehicles/public", getVehiclesByCompanyId);
 
 // GENERAL
-router.get("/general", protect, getGeneralPricing);
+router.get("/general", protect, authorize("superadmin", "clientadmin", "associateadmin"), getGeneralPricing);
 router.get("/general/widget", protect, getGeneralPricingWidget);        // For Widget
-router.post("/general", protect, authorize("superadmin", "clientadmin"), updateGeneralPricing);
+router.post("/general", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateGeneralPricing);
 
 // HOURLY PACKAGES
-router.post("/addHourlyPackage", createHourlyPackage);
-router.get("/getAllHourlyRates", getAllHourlyPackages);
-router.get("/getHourlyRateById/:id", getHourlyPackageById);
-router.put("/updateHourlyPackage/:id", updateHourlyPackage);
-router.delete("/delHourlyPackage/:id", deleteHourlyPackage);
+router.post("/addHourlyPackage", protect, authorize("superadmin", "clientadmin", "associateadmin"), createHourlyPackage);
+router.get("/getAllHourlyRates", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllHourlyPackages);
+router.get("/getHourlyRateById/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), getHourlyPackageById);
+router.put("/updateHourlyPackage/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateHourlyPackage);
+router.delete("/delHourlyPackage/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), deleteHourlyPackage);
 
 // FIXED PRICING
-router.get("/fixed-prices", protect, getAllFixedPrices);
+router.get("/fixed-prices", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllFixedPrices);
 router.get("/fixed-widget", getFixedPricesByCompanyId);                   // For Widget
-router.post("/fixed-prices", protect, createFixedPrice);
-router.put("/fixed-prices/:id", protect, updateFixedPrice);
-router.delete("/fixed-prices/:id", protect, deleteFixedPrice);
+router.post("/fixed-prices", protect, authorize("superadmin", "clientadmin", "associateadmin"), createFixedPrice);
+router.put("/fixed-prices/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateFixedPrice);
+router.delete("/fixed-prices/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), deleteFixedPrice);
 
 // POSTCODE PRICING
-router.get("/postcode-prices", protect, getAllPostcodePrices);
+router.get("/postcode-prices", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllPostcodePrices);
 router.get("/widget/postcode-prices", getAllPostcodePricesWidget);    // For Widget
-router.post("/postcode-prices", protect, createPostcodePrice);
-router.put("/postcode-prices/:id", protect, updatePostcodePrice);
-router.delete("/postcode-prices/:id", protect, deletePostcodePrice);
+router.post("/postcode-prices", protect,  authorize("superadmin", "clientadmin", "associateadmin"), createPostcodePrice);
+router.put("/postcode-prices/:id", protect,  authorize("superadmin", "clientadmin", "associateadmin"), updatePostcodePrice);
+router.delete("/postcode-prices/:id", protect,  authorize("superadmin", "clientadmin", "associateadmin"), deletePostcodePrice);
 
 // ZONES CRUD
-router.get("/zones", protect, getAllZones);
-router.post("/zones", protect, createZone);
-router.put("/zones/:id", protect, updateZone);
-router.delete("/zones/:id", protect, deleteZone);
-router.post("/zones/:id/sync", protect, authorize("superadmin", "clientadmin"), syncZoneToDependents);
-router.post("/zones/sync-all", protect, authorize("superadmin", "clientadmin"), syncAllZones);
+router.get("/zones", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllZones);
+router.post("/zones", protect, authorize("superadmin", "clientadmin", "associateadmin"), createZone);
+router.put("/zones/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateZone);
+router.delete("/zones/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), deleteZone);
+router.post("/zones/:id/sync", protect, authorize("superadmin", "clientadmin", "associateadmin"), syncZoneToDependents);
+router.post("/zones/sync-all", protect, authorize("superadmin", "clientadmin", "associateadmin"), syncAllZones);
 
 // EXTRAS PRICING
-router.get("/extras", protect, getAllExtras);
+router.get("/extras", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllExtras);
 router.get("/extras-widget", getExtrasByCompanyId);                  // For Widget
-router.post("/extras", protect, createExtra);
-router.put("/extras/:id", protect, updateExtra);
-router.delete("/extras/:id", protect, deleteExtra);
+router.post("/extras", protect, authorize("superadmin", "clientadmin", "associateadmin"), createExtra);
+router.put("/extras/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateExtra);
+router.delete("/extras/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), deleteExtra);
 
 // DISCOUNT PRICING
-router.get("/discount", protect, getAllDiscounts);
+router.get("/discount", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllDiscounts);
 router.get("/discount/widget", getDiscountsByCompanyId);    // For Widget
-router.post("/discount", protect, createDiscount);
-router.put("/discount/:id", protect, updateDiscount);
-router.delete("/discount/:id", protect, deleteDiscount);
+router.post("/discount", protect, authorize("superadmin", "clientadmin", "associateadmin"), createDiscount);
+router.put("/discount/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateDiscount);
+router.delete("/discount/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), deleteDiscount);
 
 // VOUCHERS PRICING
-router.get("/vouchers", protect, getAllVouchers);
+router.get("/vouchers", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllVouchers);
 router.get("/vouchers/widget", getVoucherByCode);    // For Widget
-router.post("/vouchers", protect, createVoucher);
-router.put("/vouchers/:id", protect, updateVoucher);
-router.delete("/vouchers/:id", protect, deleteVoucher);
+router.post("/vouchers", protect, authorize("superadmin", "clientadmin", "associateadmin"), createVoucher);
+router.put("/vouchers/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateVoucher);
+router.delete("/vouchers/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), deleteVoucher);
 
 export default router;

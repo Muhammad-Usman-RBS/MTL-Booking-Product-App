@@ -290,7 +290,6 @@ const NewAdminUser = () => {
   const getAvailablePermissions = (role) => {
     if (["driver"].includes(role)) {
       return [
-        "Statements",
         "Company Accounts",
         "Drivers",
         "Settings",
@@ -307,7 +306,6 @@ const NewAdminUser = () => {
         "Drivers",
         "Customers",
         "Company Accounts",
-        "Statements",
         "Pricing",
         "Settings",
         "Widget/API",
@@ -320,7 +318,7 @@ const NewAdminUser = () => {
         "Drivers",
         "Customers",
         "Company Accounts",
-        "Statements",
+        "Widget/API",
         "Pricing",
         "Settings",
       ];
@@ -332,7 +330,6 @@ const NewAdminUser = () => {
         "Drivers",
         "Customers",
         "Company Accounts",
-        "Statements",
         "Pricing",
         "Settings",
       ];

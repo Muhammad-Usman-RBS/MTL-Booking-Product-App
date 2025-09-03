@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
@@ -18,6 +19,7 @@ const getFirstAndLastDay = (offset = 0) => {
 };
 
 const NewInvoice = ({ invoiceType = "customer" }) => {
+  const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
   const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
@@ -275,6 +277,8 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
       }
 
       toast.success("Invoices Created Successfully");
+      const mode = invoiceType === "driver" ? "driver" : "customer";
+      navigate(`/dashboard/invoices/list?mode=${mode}`, { replace: true });
     } catch (err) {
       console.error("Invoice creation failed", err);
       toast.error("Failed to create invoices");

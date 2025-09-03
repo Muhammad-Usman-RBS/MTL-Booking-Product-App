@@ -208,10 +208,10 @@ function Navbar() {
             ].includes(user?.role)
               ? "Admin Panel"
               : user?.role === "driver"
-              ? "Driver Portal"
-              : user?.role === "customer"
-              ? "Customer Portal"
-              : "Portal"}
+                ? "Driver Portal"
+                : user?.role === "customer"
+                  ? "Customer Portal"
+                  : "Portal"}
           </h1>
         </div>
         <div className="flex items-center  justify-end gap-2 sm:gap-4 flex-wrap">
@@ -233,7 +233,7 @@ function Navbar() {
               <div
                 onMouseEnter={handleMouseEnterTooltip}
                 onMouseLeave={handleMouseLeave}
-              className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 lg:right-0 -right-1/2   text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden">
+                className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 lg:right-0 -right-1/2   text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden">
                 <div className="border-b px-4 py-3 text-theme bg-theme">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -255,10 +255,10 @@ function Navbar() {
                 </div>
                 {(!Array.isArray(notifications) ||
                   notifications.length === 0) && (
-                  <div className="px-4 py-3 text-gray-500 text-sm">
-                    No new notifications
-                  </div>
-                )}
+                    <div className="px-4 py-3 text-gray-500 text-sm">
+                      No new notifications
+                    </div>
+                  )}
                 {/* Notifications List */}
                 <div className="max-h-64 overflow-y-auto">
                   {Array.isArray(notifications) &&
@@ -269,9 +269,8 @@ function Navbar() {
                           handleNotificationClick(data.jobId);
                           setShowTooltip(false);
                         }}
-                        className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${
-                          data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
-                        }`}
+                        className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
+                          }`}
                       >
                         <div className="flex items-start gap-3">
                           <div className={`flex-1 `}>
@@ -356,11 +355,10 @@ function Navbar() {
                 <div
                   role="dialog"
                   style={{ width: themeBtnWidth || "auto" }}
-                  className={`absolute right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 p-3 ${
-                    isModalOpen && themeBtnRef.current
+                  className={`absolute right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 p-3 ${isModalOpen && themeBtnRef.current
                       ? `w-[${themeBtnRef.current.offsetWidth}px]`
                       : ""
-                  }`}
+                    }`}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {bookmarks && bookmarks.length > 0 ? (
@@ -454,11 +452,11 @@ function Navbar() {
                   onMouseLeave={handleMouseLeave}
                   className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-lg z-50"
                 >
-                  <div className="border-b   text- ">
+                  <div className="border-b">
                     <div className="ps-4 pt-4 flex items-center space-x-3">
                       {profileImg &&
-                      profileImg !== "" &&
-                      profileImg !== "default" ? (
+                        profileImg !== "" &&
+                        profileImg !== "default" ? (
                         <img
                           src={profileImg}
                           alt="Profile"
@@ -472,23 +470,33 @@ function Navbar() {
                         />
                       )}
                       <div className="min-w-0">
-                        <p className="font-semibold truncate ">{displayName}</p>
+                        <p className="font-semibold truncate">{displayName}</p>
                       </div>
                     </div>
 
-                    <div className="ps-4 py-2 ">
-                      <p className="text-sm truncate  text-[var(--dark-gray)]">
+                    <div className="ps-4 py-2">
+                      <p className="text-sm truncate text-[var(--dark-gray)]">
                         {email}
                       </p>
                     </div>
                   </div>
 
-                  <ul className="py-2">
-                    <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                      <Link to="/dashboard/profile">Profile</Link>
+                  <ul className="py-2" role="menu">
+                    <li role="menuitem">
+                      <Link
+                        to="/dashboard/profile"
+                        className="block w-full px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        Profile
+                      </Link>
                     </li>
-                    <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                      <Link to="/dashboard/logout">Logout</Link>
+                    <li role="menuitem">
+                      <Link
+                        to="/dashboard/logout"
+                        className="block w-full px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        Logout
+                      </Link>
                     </li>
                   </ul>
                 </div>

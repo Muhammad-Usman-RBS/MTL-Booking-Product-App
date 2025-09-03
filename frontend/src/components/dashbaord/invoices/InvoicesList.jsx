@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import InvoiceDetails from "./InvoiceDetails";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import { useDeleteInvoiceByIdMutation, useGetAllInvoicesQuery, useUpdateInvoiceMutation } from "../../../redux/api/invoiceApi";
+import {
+  useDeleteInvoiceByIdMutation,
+  useGetAllInvoicesQuery,
+  useUpdateInvoiceMutation,
+} from "../../../redux/api/invoiceApi";
 import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
 import Icons from "../../../assets/icons";
 import { toast } from "react-toastify";
@@ -18,7 +22,7 @@ const InvoicesList = () => {
   const [updateInvoice] = useUpdateInvoiceMutation();
   const user = useSelector((state) => state.auth.user);
 
-   // currency from booking settings
+  // currency from booking settings
   const { data: bookingSettingData } = useGetBookingSettingQuery();
   const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
   const currencySymbol = currencySetting?.symbol || "£";
@@ -40,40 +44,55 @@ const InvoicesList = () => {
 
   const userRole = getUserRole();
 
-  // Set initial invoice mode based on user role
-  const getInitialInvoiceMode = () => {
-    if (userRole === "driver") return "Driver";
-    if (userRole === "customer") return "Customer";
-    return "Customer"; // default for clientadmin
-  };
-
-  const [invoiceMode, setInvoiceMode] = useState(getInitialInvoiceMode());
-
   // Check if customer has VAT (keeping existing logic)
   const isCustomerWithVat =
     (user?.role === "customer" || user?.roles?.includes("customer")) &&
     Boolean(user?.vatnumber || user?.customer?.vatnumber);
 
-  // Update invoice mode based on user role
-  useEffect(() => {
-    if (userRole === "driver") {
-      setInvoiceMode("Driver");
-    } else if (userRole === "customer") {
-      setInvoiceMode("Customer");
-    }
-    // For clientadmin, keep the current mode or default to Customer
-  }, [userRole]);
+  // Read requested mode from URL
+  const location = useLocation();
+  const qs = new URLSearchParams(location.search);
+  const requestedMode = (() => {
+    const m = qs.get("mode");
+    if (!m) return null;
+    if (m.toLowerCase() === "driver") return "Driver";
+    if (m.toLowerCase() === "customer") return "Customer";
+    return null;
+  })();
 
-  // Force mode to Customer if customer with VAT tries to access Driver mode
-  useEffect(() => {
-    if (isCustomerWithVat && invoiceMode === "Driver") {
-      setInvoiceMode("Customer");
+  // Role-based default
+  const baseInitialMode = (() => {
+    if (userRole === "driver") return "Driver";
+    if (userRole === "customer") return "Customer";
+    return "Customer"; // clientadmin default
+  })();
+
+  // FINAL initial mode: URL > role default (VAT guard)
+  const [invoiceMode, setInvoiceMode] = useState(() => {
+    if (userRole === "clientadmin" && requestedMode) {
+      if (requestedMode === "Driver" && isCustomerWithVat) return "Customer";
+      return requestedMode;
     }
-  }, [isCustomerWithVat, invoiceMode]);
+    return baseInitialMode;
+  });
+
+  // Guarded role-based enforcement (don't override URL unless invalid)
+  useEffect(() => {
+    if (userRole === "driver" && invoiceMode !== "Driver") {
+      setInvoiceMode("Driver");
+    } else if (userRole === "customer" && invoiceMode !== "Customer") {
+      setInvoiceMode("Customer");
+    } else if (userRole === "clientadmin") {
+      if (isCustomerWithVat && invoiceMode === "Driver") {
+        setInvoiceMode("Customer");
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userRole, isCustomerWithVat]);
 
   const getTabs = () => {
     if (userRole === "driver" || userRole === "customer") {
-      return []; 
+      return [];
     }
     return ["Customer", ...(isCustomerWithVat ? [] : ["Driver"])];
   };
@@ -82,7 +101,6 @@ const InvoicesList = () => {
   const showTabs = tabs.length > 1;
   const invoices = data?.invoices || [];
 
-  
   const [expandedInvoice, setExpandedInvoice] = useState(null);
   const [deleteInvoiceById] = useDeleteInvoiceByIdMutation();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -119,14 +137,13 @@ const InvoicesList = () => {
 
     return (
       invoiceNo.includes(query) ||
-      customerName.includes(query) ||
-      source.includes(query)
+      customerName.toLowerCase().includes(query) ||
+      source.toLowerCase().includes(query)
     );
   });
 
   const totalPages =
     perPage === "All" ? 1 : Math.ceil(filteredData.length / perPage);
-
 
   const tableHeaders = [
     { label: "Invoice", key: "invoiceNo" },
@@ -145,102 +162,105 @@ const InvoicesList = () => {
 
   const tableData = !filteredData.length
     ? EmptyTableMessage({
-      message: "No invoices available. Create a new one.",
-      colSpan: tableHeaders.length,
-    })
+        message: "No invoices available. Create a new one.",
+        colSpan: tableHeaders.length,
+      })
     : filteredData.map((invoice) => {
-      const invoiceNo = invoice.invoiceNumber || "-";
-      const customerOrDriverName =
-        invoiceMode === "Driver"
-          ? invoice.driver?.name ||
-          invoice.driver?.DriverData?.firstName ||
-          "-"
-          : invoice.customer?.name || "-";
-      const source = invoice.items?.[0]?.source || "-";
-      const date = new Date(invoice.invoiceDate).toLocaleDateString() || "-";
-      const dueDate = invoice.items?.[0]?.date
-        ? new Date(invoice.items[0].date).toLocaleDateString()
-        : "-";
-      const amount =
-        invoice.items?.reduce((sum, item) => sum + item.totalAmount, 0) || 0;
-      const status = invoice.status;
+        const invoiceNo = invoice.invoiceNumber || "-";
+        const customerOrDriverName =
+          invoiceMode === "Driver"
+            ? invoice.driver?.name ||
+              invoice.driver?.DriverData?.firstName ||
+              "-"
+            : invoice.customer?.name || "-";
+        const source = invoice.items?.[0]?.source || "-";
+        const date = new Date(invoice.invoiceDate).toLocaleDateString() || "-";
+        const dueDate = invoice.items?.[0]?.date
+          ? new Date(invoice.items[0].date).toLocaleDateString()
+          : "-";
+        const amount =
+          invoice.items?.reduce((sum, item) => sum + item.totalAmount, 0) || 0;
+        const status = invoice.status;
 
-      return {
-        invoiceNo: (
-          <span
-            className="text-blue-600 font-medium hover:underline cursor-pointer"
-            onClick={() => handleInvoiceClick(invoiceNo)}
-          >
-            {invoiceNo}
-          </span>
-        ),
-        [invoiceMode === "Driver" ? "driver" : "customer"]:
-          customerOrDriverName,
-        source,
-        date,
-        dueDate,
-        // amount: `£${amount.toFixed(2)}`,
-        amount: `${currencySymbol}${amount.toFixed(2)}`,
-        status: userRole === "clientadmin" ? (
-          <SelectOption
-            value={status}
-            options={["Paid", "Unpaid"]}
-            onChange={async (e) => {
-              const newStatus = e.target.value;
-              try {
-                await updateInvoice({
-                  id: invoice._id,
-                  invoiceData: { status: newStatus },
-                }).unwrap();
-                toast.success(`Status updated to "${newStatus}"`);
-                refetch();
-              } catch (err) {
-                toast.error("Failed to update status");
+        return {
+          invoiceNo: (
+            <span
+              className="text-blue-600 font-medium hover:underline cursor-pointer"
+              onClick={() => handleInvoiceClick(invoiceNo)}
+            >
+              {invoiceNo}
+            </span>
+          ),
+          [invoiceMode === "Driver" ? "driver" : "customer"]:
+            customerOrDriverName,
+          source,
+          date,
+          dueDate,
+          amount: `${currencySymbol}${amount.toFixed(2)}`,
+          status:
+            userRole === "clientadmin" ? (
+              <SelectOption
+                value={status}
+                options={["Paid", "Unpaid"]}
+                onChange={async (e) => {
+                  const newStatus = e.target.value;
+                  try {
+                    await updateInvoice({
+                      id: invoice._id,
+                      invoiceData: { status: newStatus },
+                    }).unwrap();
+                    toast.success(`Status updated to "${newStatus}"`);
+                    refetch();
+                  } catch (err) {
+                    toast.error("Failed to update status");
+                  }
+                }}
+              />
+            ) : (
+              // Show only text for customer and driver roles
+              <span
+                className={`px-2 py-1 rounded-full text-sm font-medium ${
+                  status === "Paid"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {status}
+              </span>
+            ),
+
+          // Only include actions for clientadmin
+          ...(userRole === "clientadmin"
+            ? {
+                actions: (
+                  <>
+                    <div>
+                      <div className="flex gap-2">
+                        <Link to={`/dashboard/invoices/edit/${invoice._id}`}>
+                          <Icons.SquarePen className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2" />
+                        </Link>
+                        <Icons.Trash
+                          onClick={() => handleDeleteClick(invoice._id)}
+                          className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
+                        />
+                      </div>
+                    </div>
+                  </>
+                ),
               }
-            }}
-          />
-        ) : (
-          // Show only text for customer and driver roles
-          <span className={`px-2 py-1 rounded-full text-sm font-medium ${status === "Paid"
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-            }`}>
-            {status}
-          </span>
-        ),
-
-        // Only include actions for clientadmin
-        ...(userRole === "clientadmin" ? {
-          actions: (
-            <>
-              <div>
-                <div className="flex gap-2">
-                  <Link to={`/dashboard/invoices/edit/${invoice._id}`}>
-                    <Icons.SquarePen className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2" />
-                  </Link>
-                  <Icons.Trash
-                    onClick={() => handleDeleteClick(invoice._id)}
-                    className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
-                  />
-                </div>
-              </div>
-            </>
-          )
-        } : {}),
-      };
-    });
+            : {}),
+        };
+      });
 
   if (isLoading) return <p>Loading invoices...</p>;
   if (isError) return <p>Failed to load invoices.</p>;
 
   const exportTableData = filteredData.map((item) => ({
-
     invoiceNo: item.invoiceNo,
     customer: item.customer,
     account: item.account,
     date: item.date,
     dueDate: item.dueDate,
-    // amount: `£${item.amount}`,
     amount: `${currencySymbol}${item.amount}`,
     status: item.status,
   }));
@@ -271,6 +291,14 @@ const InvoicesList = () => {
     setDeleteInvoiceId(null);
   };
 
+  // Button label & link based on active mode; only for clientadmin
+  const createBtn =
+    invoiceMode === "Customer"
+      ? { label: "New Customer Invoice", to: "/dashboard/invoices/customer/new" }
+      : { label: "New Driver Invoice", to: "/dashboard/invoices/driver/new" };
+
+  const canShowCreate = userRole === "clientadmin";
+
   return (
     <>
       <div>
@@ -283,10 +311,11 @@ const InvoicesList = () => {
               <button
                 key={tab}
                 onClick={() => setInvoiceMode(tab)}
-                className={`px-6 py-2 font-semibold text-sm border cursor-pointer ${invoiceMode === tab
+                className={`px-6 py-2 font-semibold text-sm border cursor-pointer ${
+                  invoiceMode === tab
                     ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
                     : "bg-[#f9fafb] text-gray-700 border-gray-300"
-                  } ${tab === "Customer" ? "rounded-l-md" : "rounded-r-md"}`}
+                } ${tab === "Customer" ? "rounded-l-md" : "rounded-r-md"}`}
               >
                 {tab}
               </button>
@@ -294,24 +323,33 @@ const InvoicesList = () => {
           </div>
         )}
 
-<CustomTable
-  tableHeaders={tableHeaders}
-  tableData={tableData}
-  exportTableData={exportTableData}
-  showSearch={true}
-  showRefresh={true}
-  showDownload={true}
-  showPagination={true}
-  showSorting={true}
-  search={search}
-  setSearch={setSearch}
-/>
+        <CustomTable
+          tableHeaders={tableHeaders}
+          tableData={tableData}
+          exportTableData={exportTableData}
+          showSearch={true}
+          showRefresh={true}
+          showDownload={true}
+          showPagination={true}
+          showSorting={true}
+          search={search}
+          setSearch={setSearch}
+        />
+
         {expandedInvoice && (
           <InvoiceDetails
             item={invoices.find((i) => i.invoiceNumber === expandedInvoice)}
           />
         )}
       </div>
+
+      {canShowCreate && (
+        <div className="mt-5 flex justify-end">
+          <Link to={createBtn.to} className="btn btn-reset">
+            {createBtn.label}
+          </Link>
+        </div>
+      )}
 
       <DeleteModal
         isOpen={deleteModalOpen}

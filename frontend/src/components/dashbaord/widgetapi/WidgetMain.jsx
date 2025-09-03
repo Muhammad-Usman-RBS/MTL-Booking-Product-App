@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import WidgetBooking from './WidgetBooking';
 import WidgetBookingInformation from './WidgetBookingInformation';
 import WidgetPaymentInformation from './WidgetPaymentInformation';
@@ -312,12 +312,13 @@ const WidgetMain = () => {
                         </p>
 
                         <div className="mt-6 flex flex-col sm:flex-row gap-4">
+                          <Link to="/login">
                             <button
-                                to="/"
                                 className="inline-block px-6 py-3 text-white bg-green-600 hover:bg-green-700 rounded-full font-medium transition"
                             >
                                 Return to Home
                             </button>
+                            </Link>
                             <button
                                 onClick={() => {
                                     navigate("/add-customer", {

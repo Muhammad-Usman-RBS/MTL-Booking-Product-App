@@ -406,7 +406,7 @@ const dropIsAirport   = isAirport(j.dropoff);
           <span className="text-gray-700 font-medium text-sm">
             This booking has been&nbsp;
             <span className="text-green-600 font-semibold">
-              {viewData?.status || "Pending"}
+              {viewData?.status || "Pending"}.
             </span>
           </span>
         </div>

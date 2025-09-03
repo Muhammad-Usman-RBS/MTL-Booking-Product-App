@@ -410,46 +410,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import Icons from '../../../assets/icons';
@@ -465,6 +425,7 @@ import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi
 import PayPalCheckout from "../../../paymentmethod/PayPalCheckout";
 import StripeCheckout from "../../../paymentmethod/StripeCheckout";
 import { useCreateBookingMutation } from "../../../redux/api/bookingApi";
+import { useGetEnabledPaymentOptionsQuery } from "../../../redux/api/paymentOptionsApi";
 
 const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, booking = {} }) => {
     const [passengerDetails, setPassengerDetails] = useState({ name: '', email: '', phone: '' });
@@ -481,6 +442,45 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
     const { data: generalPricing } = useGetGeneralPricingPublicQuery(companyId);
     const { data: bookingSettingData } = useGetBookingSettingQuery();
     const [createBooking] = useCreateBookingMutation();
+
+    // ---- NEW: normalize enabled payment options safely ----
+    const {
+        data: enabledPaymentOptionsResp,
+        isLoading: isPaymentLoading,
+        isError: isPaymentError
+    } = useGetEnabledPaymentOptionsQuery(companyId);
+
+    // Some APIs return an array, others wrap as { paymentOptions: [...] }
+    const enabledPaymentOptions = Array.isArray(enabledPaymentOptionsResp)
+        ? enabledPaymentOptionsResp
+        : (enabledPaymentOptionsResp?.paymentOptions ?? []);
+
+    const PAYMENT_METHOD_UI_MAP = {
+        cash: { label: "Cash", value: "Cash" },
+        paypal: { label: "Paypal", value: "Paypal" },
+        stripe: { label: "Card, Bank", value: "Card, Bank" }, // keep your Stripe label
+        invoice: { label: "Invoice", value: "Invoice" },
+        paymentLink: { label: "Payment Link", value: "Payment Link" }
+    };
+
+    // Only include methods that have a mapping + (optionally) credentials present
+    const enabledOptions = (enabledPaymentOptions || [])
+        .filter(po => PAYMENT_METHOD_UI_MAP[po?.paymentMethod]) // only known methods
+        .map(po => PAYMENT_METHOD_UI_MAP[po.paymentMethod]);
+
+    // Fallback list if nothing comes back from API or there’s an error
+    const fallbackOptions = [
+        { label: "Payment Link", value: "Payment Link" },
+        { label: "Card, Bank", value: "Card, Bank" },
+        { label: "Cash", value: "Cash" },
+        { label: "Invoice", value: "Invoice" },
+        { label: "Paypal", value: "Paypal" },
+    ];
+
+    const selectOptions = [
+        ...((enabledOptions?.length && !isPaymentError) ? enabledOptions : fallbackOptions),
+    ];
+    // ------------------------------------------------------
 
     const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
     const currencySymbol = currencySetting?.symbol || "£";
@@ -620,13 +620,11 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
         return id;
     };
 
-    // ⬇️ Add this inside the component (above return)
     const buildPendingBookingPayload = () => {
         if (!passengerDetails.name || !passengerDetails.email || !passengerDetails.phone) {
             toast.error("Please fill passenger details.");
             throw new Error("Missing passenger details");
         }
-
         const payload = {
             companyId,
             source: "widget",
@@ -650,7 +648,6 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
             driverFare: Number(finalFare || 0),
             // NOTE: paymentMethod set on success page; here we only stage data.
         };
-
         return payload;
     };
 
@@ -717,30 +714,16 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                     {((companyDiscountPercent + voucherDiscountPercent) > 0 || parseInt(formData.childSeat || '0') > 0) ? (
                                         <>
                                             <span className="line-through text-red-400 me-2">
-                                                {/* {(fare || 0).toFixed(2)} GBP */}
                                                 {currencySymbol}{Number(fare || 0).toFixed(2)}
                                             </span>
                                             <span className="text-green-600">
-                                                {/* {finalFare} GBP */}
                                                 {currencySymbol}{Number(finalFare).toFixed(2)}
                                             </span>
                                         </>
                                     ) : (
-                                        // <>FARE: {finalFare} GBP</>4
                                         <>FARE: {currencySymbol}{Number(finalFare).toFixed(2)}</>
                                     )}
                                 </div>
-
-                                {(companyDiscountPercent + voucherDiscountPercent > 0) && (
-                                    <p className="text-sm text-green-600 font-semibold">
-                                        Discount Applied: {companyDiscountPercent + voucherDiscountPercent}% &nbsp;
-                                        <span className="text-xs font-normal text-[var(--dark-gray)]">
-                                            ({companyDiscountPercent > 0 && `Company: ${companyDiscountPercent}%`}
-                                            {companyDiscountPercent > 0 && voucherDiscountPercent > 0 && ' + '}
-                                            {voucherDiscountPercent > 0 && `Voucher: ${voucherDiscountPercent}%`})
-                                        </span>
-                                    </p>
-                                )}
 
                                 <SelectOption
                                     label="Payment Method"
@@ -748,16 +731,8 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                     onChange={(e) =>
                                         setFormData((prev) => ({ ...prev, paymentMethod: e.target.value }))
                                     }
-                                    options={[
-                                        { label: "Select", value: "" },
-                                        { label: "Payment Link", value: "Payment Link" },
-                                        { label: "Card, Bank", value: "Card, Bank" },
-                                        { label: "Cash", value: "Cash" },
-                                        { label: "Invoice", value: "Invoice" },
-                                        { label: "Paypal", value: "Paypal" },
-                                    ]}
+                                    options={selectOptions}
                                 />
-
                             </div>
 
                             {/* Voucher */}
@@ -770,15 +745,13 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                         placeholder="Voucher Code"
                                         className="flex-grow px-3 py-2 rounded border text-sm"
                                     />
-                                    <button
-                                        onClick={handleVoucherApply}
-                                        className="btn btn-cancel"
-                                    >
+                                    <button onClick={handleVoucherApply} className="btn btn-cancel">
                                         Apply
                                     </button>
                                 </div>
                                 <p className="text-xs mt-2 text-[var(--dark-gray)]">Click "Apply" to update the voucher</p>
                             </div>
+
                             {/* Bottom action area */}
                             <div className="mt-4">
                                 {formData.paymentMethod === "Paypal" ? (
@@ -819,15 +792,9 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                             Number(finalFare) <= 0
                                         }
                                         onBeforeRedirect={async () => {
-                                            try {
-                                                const pending = buildPendingBookingPayload();
-                                                // mark: stripe, method will be finalized after success
-                                                pending.paymentMethod = "Card, Bank";
-                                                localStorage.setItem("pendingStripeBookingPayload", JSON.stringify(pending));
-                                            } catch (e) {
-                                                // agar details missing hain to redirect block kar do
-                                                throw e;
-                                            }
+                                            const pending = buildPendingBookingPayload();
+                                            pending.paymentMethod = "Card, Bank";
+                                            localStorage.setItem("pendingStripeBookingPayload", JSON.stringify(pending));
                                         }}
                                         onError={(e) => toast.error(e?.message || "Stripe error")}
                                     />
@@ -848,8 +815,6 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                     />
                                 )}
                             </div>
-
-
                         </div>
                     </div>
 
@@ -857,7 +822,6 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                     <div className="col-span-6">
                         <div className="bg-white border border-gray-200 rounded-xl shadow p-6 mb-6">
                             <OutletHeading name="Vehicle Detail:-" />
-
                             {vehicle?.vehicleName && (
                                 <div className="text-sm text-[var(--dark-gray)] font-medium">
                                     Selected Vehicle:&nbsp;
@@ -865,10 +829,10 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                 </div>
                             )}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-                                <SelectOption label="Passenger" value={formData.passenger} options={passengerOptions} onChange={handleSelectChange('passenger')} />
-                                <SelectOption label="Child Seats" value={formData.childSeat} options={childSeatOptions} onChange={handleSelectChange('childSeat')} />
-                                <SelectOption label="Hand Luggage" value={formData.handLuggage} options={handLuggageOptions} onChange={handleSelectChange('handLuggage')} />
-                                <SelectOption label="Check-in Luggage" value={formData.checkinLuggage} options={checkinLuggageOptions} onChange={handleSelectChange('checkinLuggage')} />
+                                <SelectOption label="Passenger" value={formData.passenger} options={generateOptions(parseIntSafe(vehicle?.passenger))} onChange={handleSelectChange('passenger')} />
+                                <SelectOption label="Child Seats" value={formData.childSeat} options={generateOptions(parseIntSafe(vehicle?.childSeat))} onChange={handleSelectChange('childSeat')} />
+                                <SelectOption label="Hand Luggage" value={formData.handLuggage} options={generateOptions(parseIntSafe(vehicle?.handLuggage))} onChange={handleSelectChange('handLuggage')} />
+                                <SelectOption label="Check-in Luggage" value={formData.checkinLuggage} options={generateOptions(parseIntSafe(vehicle?.checkinLuggage))} onChange={handleSelectChange('checkinLuggage')} />
                             </div>
                         </div>
 
@@ -877,11 +841,9 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                 <Icons.AlertCircle className="w-5 h-5 text-yellow-600" />
                                 Important Notice
                             </h4>
-
                             <p className="text-sm text-yellow-900 mb-3 leading-relaxed">
                                 For your child's safety, please remember to add a child seat when booking.
                             </p>
-
                             <div className="bg-yellow-100 border border-yellow-200 rounded-md p-3 text-center mb-3">
                                 <p className="text-xs text-gray-700">
                                     By clicking <strong>‘BOOK NOW’</strong>, you agree to our{' '}
@@ -889,12 +851,10 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                     <a href="#" className="text-blue-600 underline hover:text-blue-800">Privacy Policy</a>.
                                 </p>
                             </div>
-
                             <p className="text-xs text-[var(--dark-gray)] text-center italic">
                                 Note: Additional charges may apply for waiting time, address changes, or extended routes.
                             </p>
                         </div>
-
                     </div>
                 </div>
             </div>
