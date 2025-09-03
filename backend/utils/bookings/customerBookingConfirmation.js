@@ -20,7 +20,7 @@ export const customerBookingConfirmation = ({
     accentLight: options.accentLight || "#DBEAFE",
   };
 
-  // Company (brand) info
+  // Company  info
   const org = {
     name:
       company?.companyName ||
