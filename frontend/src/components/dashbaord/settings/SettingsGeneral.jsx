@@ -49,12 +49,17 @@ const SettingsGeneral = () => {
     isSuccess: isHistorySuccess,
     refetch: refetchHistory,
   } = useFetchThemeHistoryQuery(companyId ?? skipToken);
+  const [previewColors, setPreviewColors] = useState(colors);
+  const debounceTimeoutRef = useRef(null);
   const [saveThemeSettings] = useSaveThemeSettingsMutation();
   const [deleteThemeSettings] = useDeleteThemeSettingsMutation();
   const [applyThemeSettings] = useApplyThemeSettingsMutation();
   const applyThemeToDOM = useCallback((themeColors) => {
     applyThemeVars(themeColors);
   }, []);
+  useEffect(() => {
+    setPreviewColors(colors);
+  }, [colors]);
 
   useEffect(() => {
     if (
@@ -66,14 +71,31 @@ const SettingsGeneral = () => {
     }
   }, [isHistorySuccess, historyRes]);
 
+  const applyPreviewWithDebounce = useCallback(
+    (newColors) => {
+      // Clear existing timeout
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+
+      // Set new timeout for debounced preview
+      debounceTimeoutRef.current = setTimeout(() => {
+        applyThemeToDOM(newColors);
+      }, 300); // 300ms debounce
+    },
+    [applyThemeToDOM]
+  );
+
+  // Add cleanup effect
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
   const handleSaveThemeSettings = useCallback(
     async (themeColors = colors) => {
-      if (limitReached) {
-        toast.error(
-          "Theme limit reached (max 5). Delete a previous theme to save a new one."
-        );
-        return;
-      }
       if (!companyId) {
         toast.error("Company ID not found!");
         return;
@@ -84,6 +106,15 @@ const SettingsGeneral = () => {
         const selectedDoc = history.find((h) => h._id === selectedThemeId);
         const shouldUpdate = !!selectedDoc && selectedDoc.isDefault !== true;
 
+        // Check if we're trying to create a new theme but limit is reached
+        if (limitReached && !shouldUpdate) {
+          toast.error(
+            "Theme limit reached (max 5). Delete a previous theme to save a new one."
+          );
+          setIsSaving(false);
+          return;
+        }
+
         const result = await saveThemeSettings({
           companyId,
           themeSettings: themeColors,
@@ -92,6 +123,11 @@ const SettingsGeneral = () => {
 
         if (result.success) {
           applyThemeToDOM(themeColors);
+          
+          if (!shouldUpdate && result.theme && result.theme._id) {
+            dispatch(setSelectedThemeId(result.theme._id));
+          }
+          
           toast.success(result.message);
           await refetchHistory();
         } else {
@@ -114,15 +150,19 @@ const SettingsGeneral = () => {
       applyThemeToDOM,
       limitReached,
       refetchHistory,
+      history,
+      selectedThemeId,
     ]
   );
 
   const handleColorChange = useCallback(
     (key, value) => {
       const updatedColors = { ...colors, [key]: value };
+      setPreviewColors(updatedColors);
       dispatch(setThemeColors(updatedColors));
+      applyPreviewWithDebounce(updatedColors);
     },
-    [colors, dispatch]
+    [colors, dispatch, applyPreviewWithDebounce]
   );
 
   const handleApplyThemeFromHistory = async (themeDoc) => {
@@ -203,7 +243,7 @@ const SettingsGeneral = () => {
             <div className="flex items-center space-x-3">
               <div
                 className="w-8 h-8 rounded-full border-2 border-gray-300 shadow-sm"
-                style={{ backgroundColor: colors[key] }}
+                style={{ backgroundColor: previewColors[key] }}
               ></div>
               <label className="font-medium">{label}</label>
             </div>
@@ -286,7 +326,7 @@ const SettingsGeneral = () => {
                         const isPinned = !!bookmarks.find(
                           (b) => b._id === t._id
                         );
-                        if (!isPinned && bookmarks.length >=3) {
+                        if (!isPinned && bookmarks.length >= 3) {
                           toast.error(
                             "You can pin up to 3 themes in the navbar."
                           );
