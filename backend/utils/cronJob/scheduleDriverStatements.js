@@ -4,7 +4,7 @@ import CronJob from "../../models/settings/CronJob.js";
 
 export const scheduleDriverStatements = () => {
   cron.schedule(
-    "* * * * *",
+    "*/30 * * * *",
     async () => {
       console.log("[CRON] Running driver statements check");
 
