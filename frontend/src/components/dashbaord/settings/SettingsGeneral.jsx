@@ -286,9 +286,9 @@ const SettingsGeneral = () => {
                         const isPinned = !!bookmarks.find(
                           (b) => b._id === t._id
                         );
-                        if (!isPinned && bookmarks.length >= 5) {
+                        if (!isPinned && bookmarks.length >=3) {
                           toast.error(
-                            "You can pin up to 5 themes in the navbar."
+                            "You can pin up to 3 themes in the navbar."
                           );
                           return;
                         }

@@ -41,7 +41,7 @@ const themeSlice = createSlice({
         state.bookmarks.splice(idx, 1);
         return;
       }
-      if (state.bookmarks.length >= 5) return;
+      if (state.bookmarks.length >= 3) return;
       state.bookmarks.push({ _id, themeSettings, label: label || "" });
     },
     removeBookmarkById(state, action) {

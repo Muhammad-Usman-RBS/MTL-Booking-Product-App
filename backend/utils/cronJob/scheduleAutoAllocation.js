@@ -5,7 +5,7 @@ import { autoAllocateDrivers } from "./autoAllocateDrivers.js";
 
 export const scheduleAutoAllocation = () => {
   cron.schedule(
-    "* * * * *",
+    "*/30 * * * *",
     async () => {
       console.log("[CRON] Running auto-allocation");
 
