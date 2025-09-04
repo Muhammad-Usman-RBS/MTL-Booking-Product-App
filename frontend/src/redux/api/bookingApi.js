@@ -59,10 +59,10 @@ export const bookingApi = apiSlice.injectEndpoints({
 
     // Send Booking Data
     sendBookingEmail: builder.mutation({
-      query: ({ bookingId, email }) => ({
+      query: ({ bookingId, email, type = "confirmation" }) => ({
         url: "/booking/send-booking-email",
         method: "POST",
-        body: { bookingId, email },
+        body: { bookingId, email, type },
       }),
     }),
 

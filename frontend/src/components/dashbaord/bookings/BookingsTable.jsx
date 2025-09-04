@@ -1101,6 +1101,7 @@ import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import {
   useGetAllBookingsQuery,
   useDeleteBookingMutation,
+  useSendBookingEmailMutation,
   useUpdateBookingStatusMutation,
 } from "../../../redux/api/bookingApi";
 import {
@@ -1202,9 +1203,13 @@ const BookingsTable = ({
     isLoading: isJobsLoading,
     refetch: refetchJobs,
   } = useGetAllJobsQuery(companyId, { skip: !companyId });
+
+  const [sendBookingEmail] = useSendBookingEmailMutation();
+
   const { data: driversData = {} } = useGetAllDriversQuery(companyId, {
     skip: !companyId,
   });
+  
   const refetch = isDriver ? refetchJobs : refetchBookings;
   const [deleteBooking] = useDeleteBookingMutation();
   const [updateBookingStatus] = useUpdateBookingStatusMutation();
@@ -1287,8 +1292,8 @@ const BookingsTable = ({
       !Array.isArray(selectedDrivers) || selectedDrivers.length === 0
         ? true
         : Array.isArray(b.drivers)
-        ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
-        : false;
+          ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
+          : false;
 
     const dateTime =
       !startDate || !endDate ? true : createdAt >= start && createdAt <= end;
@@ -1611,9 +1616,8 @@ const BookingsTable = ({
   const formatVehicle = (v) =>
     !v || typeof v !== "object"
       ? "-"
-      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${
-          v.handLuggage || 0
-        } | ${v.checkinLuggage || 0}`;
+      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${v.handLuggage || 0
+      } | ${v.checkinLuggage || 0}`;
 
   const formatPassenger = (p) =>
     !p || typeof p !== "object"
@@ -1902,8 +1906,8 @@ const BookingsTable = ({
           case "createdAt":
             row[key] = item.createdAt
               ? moment(item.createdAt)
-                  .tz(timezone)
-                  .format("DD/MM/YYYY HH:mm:ss")
+                .tz(timezone)
+                .format("DD/MM/YYYY HH:mm:ss")
               : "-";
             break;
           case "driver":
@@ -2212,7 +2216,7 @@ const BookingsTable = ({
                           </button>
                         ))}
 
-                      {user?.role?.toLowerCase() === "clientadmin" &&
+                      {/* {user?.role?.toLowerCase() === "clientadmin" &&
                         item.status !== "Cancelled" && (
                           <button
                             onClick={async () => {
@@ -2237,7 +2241,53 @@ const BookingsTable = ({
                           >
                             Cancel Booking
                           </button>
+                        )} */}
+                      {user?.role?.toLowerCase() === "clientadmin" &&
+                        item.status !== "Cancelled" && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                // 1) Update booking status
+                                await updateBookingStatus({
+                                  id: item._id,
+                                  status: "Cancelled",
+                                  updatedBy: `${user.role} | ${user.fullName}`,
+                                }).unwrap();
+
+                                toast.success("Booking status set to Cancelled");
+
+                                // 2) Send cancellation email to passenger (if email exists)
+                                if (item?.passenger?.email) {
+                                  try {
+                                    await sendBookingEmail({
+                                      bookingId: item._id,
+                                      email: item.passenger.email,
+                                      type: "cancellation",
+                                    }).unwrap();
+
+                                    toast.success("Cancellation email sent to customer");
+                                  } catch (emailErr) {
+                                    toast.error("Failed to send cancellation email");
+                                    console.error("❌ Email error:", emailErr);
+                                  }
+                                } else {
+                                  toast.info("No passenger email found to send cancellation notice");
+                                }
+
+                                // 3) Refetch table + close menu
+                                refetch();
+                                setSelectedActionRow(null);
+                              } catch (err) {
+                                toast.error(getErrMsg(err));
+                                console.error("❌ Cancel booking error:", err);
+                              }
+                            }}
+                            className="w-full cursor-pointer text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition border-t border-gray-100"
+                          >
+                            Cancel Booking
+                          </button>
                         )}
+
                     </div>
                   )}
                 </div>
@@ -2268,28 +2318,28 @@ const BookingsTable = ({
 
       driver: Array.isArray(item.drivers)
         ? item.drivers
-            .map((driver) => {
-              if (typeof driver === "object") {
-                if (driver.driverInfo?.firstName) {
-                  return driver.driverInfo.firstName;
-                } else if (driver.driverId) {
-                  // Try to match with assignedDrivers using driverId
-                  const matchedDriver = assignedDrivers.find(
-                    (d) => d?._id?.toString() === driver.driverId?.toString()
-                  );
-                  return matchedDriver?.DriverData?.firstName || "Unnamed";
-                }
-              } else {
-                // Legacy structure - try to match with assignedDrivers
-                const driverId = driver;
+          .map((driver) => {
+            if (typeof driver === "object") {
+              if (driver.driverInfo?.firstName) {
+                return driver.driverInfo.firstName;
+              } else if (driver.driverId) {
+                // Try to match with assignedDrivers using driverId
                 const matchedDriver = assignedDrivers.find(
-                  (d) => d?._id?.toString() === driverId?.toString()
+                  (d) => d?._id?.toString() === driver.driverId?.toString()
                 );
                 return matchedDriver?.DriverData?.firstName || "Unnamed";
               }
-              return "Unnamed";
-            })
-            .join(", ")
+            } else {
+              // Legacy structure - try to match with assignedDrivers
+              const driverId = driver;
+              const matchedDriver = assignedDrivers.find(
+                (d) => d?._id?.toString() === driverId?.toString()
+              );
+              return matchedDriver?.DriverData?.firstName || "Unnamed";
+            }
+            return "Unnamed";
+          })
+          .join(", ")
         : "-",
       status: item.statusAudit?.at(-1)?.status || item.status || "-",
     };

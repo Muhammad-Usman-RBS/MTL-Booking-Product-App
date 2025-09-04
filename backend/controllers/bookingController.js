@@ -18,6 +18,8 @@ import Company from "../models/Company.js";
 import { driverStatusEmailTemplate } from "../utils/bookings/driverStatusEmailTemplate.js";
 import { customerBookingConfirmation } from "../utils/bookings/customerBookingConfirmation.js";
 import { clientadminBookingConfirmation } from "../utils/bookings/clientadminBookingConfirmation.js";
+import { driverAssignmentEmailTemplate } from "../utils/bookings/driverAssignmentEmailTemplate.js";
+import { customerCancellationEmailTemplate } from "../utils/bookings/customerCancellationEmailTemplate.js";
 
 // Create Booking (Dashboard/Widget)
 export const createBooking = async (req, res) => {
@@ -361,6 +363,201 @@ export const getAllBookings = async (req, res) => {
 };
 
 // Update Booking by ID
+// export const updateBooking = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { bookingData = {}, PassengerEmail, ClientAdminEmail } = req.body;
+
+//     if (!id || id.length !== 24) {
+//       return res.status(400).json({ message: "Invalid booking ID" });
+//     }
+
+//     const {
+//       mode = "Transfer",
+//       returnJourneyToggle,
+//       companyId,
+//       referrer = "Manual Entry",
+//       vehicle = {},
+//       passenger = {},
+//       primaryJourney = {},
+//       returnJourney = {},
+//       paymentMethod,
+//       cardPaymentReference = null,
+//       paymentGateway = null,
+//       journeyFare = 0,
+//       driverFare = 0,
+//       returnJourneyFare = 0,
+//       returnDriverFare = 0,
+//       emailNotifications = {},
+//       appNotifications = {},
+//       voucher,
+//       voucherApplied,
+//     } = bookingData;
+
+//     if (!companyId || companyId.length !== 24) {
+//       return res.status(400).json({ message: "Invalid or missing companyId" });
+//     }
+
+//     const extractDynamicDropoffFields = (journey = {}) => {
+//       const fields = {};
+//       Object.keys(journey).forEach((key) => {
+//         if (
+//           key.startsWith("dropoff_terminal_") ||
+//           key.startsWith("dropoffDoorNumber")
+//         ) {
+//           fields[key] = journey[key] ?? "";
+//         }
+//       });
+//       return fields;
+//     };
+
+//     const updatedPayload = {
+//       mode,
+//       returnJourneyToggle: !!returnJourneyToggle,
+//       companyId,
+//       referrer,
+//       vehicle: {
+//         vehicleName: vehicle.vehicleName ?? null,
+//         passenger: parseInt(vehicle.passenger) || 0,
+//         childSeat: parseInt(vehicle.childSeat) || 0,
+//         handLuggage: parseInt(vehicle.handLuggage) || 0,
+//         checkinLuggage: parseInt(vehicle.checkinLuggage) || 0,
+//       },
+//       passenger: {
+//         name: passenger.name ?? null,
+//         email: passenger.email ?? null,
+//         phone: passenger.phone ?? null,
+//       },
+//       paymentMethod,
+//       cardPaymentReference,
+//       paymentGateway,
+//       journeyFare: Number(journeyFare),
+//       driverFare: Number(driverFare),
+//       returnJourneyFare: Number(returnJourneyFare),
+//       returnDriverFare: Number(returnDriverFare),
+//       emailNotifications: {
+//         admin: !!emailNotifications.admin,
+//         customer: !!emailNotifications.customer,
+//       },
+//       appNotifications: {
+//         customer: !!appNotifications.customer,
+//       },
+//     };
+
+//     // ✅ Add returnJourney if returnJourneyToggle is true
+//     if (returnJourneyToggle) {
+//       updatedPayload.returnJourney = {
+//         pickup: returnJourney.pickup?.trim() ?? "",
+//         dropoff: returnJourney.dropoff?.trim() ?? "",
+//         additionalDropoff1: returnJourney.additionalDropoff1 ?? null,
+//         additionalDropoff2: returnJourney.additionalDropoff2 ?? null,
+//         pickupDoorNumber: returnJourney.pickupDoorNumber ?? "",
+//         terminal: returnJourney.terminal ?? "",
+//         arrivefrom: returnJourney.arrivefrom ?? "",
+//         flightNumber: returnJourney.flightNumber ?? "",
+//         pickmeAfter: returnJourney.pickmeAfter ?? "",
+//         notes: returnJourney.notes ?? "",
+//         internalNotes: returnJourney.internalNotes ?? "",
+//         date: returnJourney.date ?? "",
+//         hour:
+//           returnJourney.hour !== undefined
+//             ? parseInt(returnJourney.hour)
+//             : null,
+//         minute:
+//           returnJourney.minute !== undefined
+//             ? parseInt(returnJourney.minute)
+//             : null,
+//         fare: returnJourney.fare ?? 0,
+//         hourlyOption: returnJourney.hourlyOption ?? null,
+//         distanceText: returnJourney.distanceText ?? "",
+//         durationText: returnJourney.durationText ?? "",
+//         voucher,
+//         voucherApplied,
+//         ...extractDynamicDropoffFields(returnJourney),
+//       };
+//     }
+
+//     // ✅ Only add primaryJourney if not editing return only
+//     if (
+//       !returnJourneyToggle ||
+//       (primaryJourney?.pickup && primaryJourney?.dropoff)
+//     ) {
+//       updatedPayload.primaryJourney = {
+//         pickup: primaryJourney.pickup?.trim() ?? "",
+//         dropoff: primaryJourney.dropoff?.trim() ?? "",
+//         additionalDropoff1: primaryJourney.additionalDropoff1 ?? null,
+//         additionalDropoff2: primaryJourney.additionalDropoff2 ?? null,
+//         pickupDoorNumber: primaryJourney.pickupDoorNumber ?? "",
+//         terminal: primaryJourney.terminal ?? "",
+//         arrivefrom: primaryJourney.arrivefrom ?? "",
+//         flightNumber: primaryJourney.flightNumber ?? "",
+//         pickmeAfter: primaryJourney.pickmeAfter ?? "",
+//         notes: primaryJourney.notes ?? "",
+//         internalNotes: primaryJourney.internalNotes ?? "",
+//         date: primaryJourney.date ?? "",
+//         hour:
+//           primaryJourney.hour !== undefined
+//             ? parseInt(primaryJourney.hour)
+//             : null,
+//         minute:
+//           primaryJourney.minute !== undefined
+//             ? parseInt(primaryJourney.minute)
+//             : null,
+//         fare: primaryJourney.fare ?? 0,
+//         hourlyOption: primaryJourney.hourlyOption ?? null,
+//         distanceText: primaryJourney.distanceText ?? "",
+//         durationText: primaryJourney.durationText ?? "",
+//         voucher,
+//         voucherApplied,
+//         ...extractDynamicDropoffFields(primaryJourney),
+//       };
+//     }
+
+//     if (bookingData.drivers) {
+//       updatedPayload.drivers = bookingData.drivers;
+//     }
+
+//     // 🔄 Save to DB
+//     const updatedBooking = await Booking.findByIdAndUpdate(id, updatedPayload, {
+//       new: true,
+//     });
+
+//     if (!updatedBooking) {
+//       return res.status(404).json({ message: "Booking not found" });
+//     }
+
+//     const sanitize = (booking) => {
+//       const { _id, __v, createdAt, updatedAt, companyId, ...clean } =
+//         booking.toObject();
+//       return clean;
+//     };
+
+//     const emailData = {
+//       title: "Booking Updated",
+//       data: { Booking: sanitize(updatedBooking) },
+//     };
+
+//     if (PassengerEmail) {
+//       await sendEmail(PassengerEmail, "Your Booking Was Updated", emailData);
+//     }
+
+//     if (ClientAdminEmail) {
+//       await sendEmail(ClientAdminEmail, "Booking Updated", emailData);
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Booking updated successfully",
+//       booking: sanitize(updatedBooking),
+//     });
+//   } catch (error) {
+//     console.error("❌ Error in updateBooking:", error);
+//     return res.status(500).json({
+//       message: "Internal server error",
+//       error: error.message,
+//     });
+//   }
+// };
 export const updateBooking = async (req, res) => {
   try {
     const { id } = req.params;
@@ -369,6 +566,15 @@ export const updateBooking = async (req, res) => {
     if (!id || id.length !== 24) {
       return res.status(400).json({ message: "Invalid booking ID" });
     }
+
+    // Get the existing booking to compare driver changes
+    const existingBooking = await Booking.findById(id);
+    if (!existingBooking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    console.log("🔍 EXISTING BOOKING DRIVERS:", JSON.stringify(existingBooking.drivers, null, 2));
+    console.log("🔍 NEW BOOKING DATA DRIVERS:", JSON.stringify(bookingData.drivers, null, 2));
 
     const {
       mode = "Transfer",
@@ -442,7 +648,7 @@ export const updateBooking = async (req, res) => {
       },
     };
 
-    // ✅ Add returnJourney if returnJourneyToggle is true
+    // Handle journey data
     if (returnJourneyToggle) {
       updatedPayload.returnJourney = {
         pickup: returnJourney.pickup?.trim() ?? "",
@@ -457,14 +663,8 @@ export const updateBooking = async (req, res) => {
         notes: returnJourney.notes ?? "",
         internalNotes: returnJourney.internalNotes ?? "",
         date: returnJourney.date ?? "",
-        hour:
-          returnJourney.hour !== undefined
-            ? parseInt(returnJourney.hour)
-            : null,
-        minute:
-          returnJourney.minute !== undefined
-            ? parseInt(returnJourney.minute)
-            : null,
+        hour: returnJourney.hour !== undefined ? parseInt(returnJourney.hour) : null,
+        minute: returnJourney.minute !== undefined ? parseInt(returnJourney.minute) : null,
         fare: returnJourney.fare ?? 0,
         hourlyOption: returnJourney.hourlyOption ?? null,
         distanceText: returnJourney.distanceText ?? "",
@@ -475,11 +675,7 @@ export const updateBooking = async (req, res) => {
       };
     }
 
-    // ✅ Only add primaryJourney if not editing return only
-    if (
-      !returnJourneyToggle ||
-      (primaryJourney?.pickup && primaryJourney?.dropoff)
-    ) {
+    if (!returnJourneyToggle || (primaryJourney?.pickup && primaryJourney?.dropoff)) {
       updatedPayload.primaryJourney = {
         pickup: primaryJourney.pickup?.trim() ?? "",
         dropoff: primaryJourney.dropoff?.trim() ?? "",
@@ -493,14 +689,8 @@ export const updateBooking = async (req, res) => {
         notes: primaryJourney.notes ?? "",
         internalNotes: primaryJourney.internalNotes ?? "",
         date: primaryJourney.date ?? "",
-        hour:
-          primaryJourney.hour !== undefined
-            ? parseInt(primaryJourney.hour)
-            : null,
-        minute:
-          primaryJourney.minute !== undefined
-            ? parseInt(primaryJourney.minute)
-            : null,
+        hour: primaryJourney.hour !== undefined ? parseInt(primaryJourney.hour) : null,
+        minute: primaryJourney.minute !== undefined ? parseInt(primaryJourney.minute) : null,
         fare: primaryJourney.fare ?? 0,
         hourlyOption: primaryJourney.hourlyOption ?? null,
         distanceText: primaryJourney.distanceText ?? "",
@@ -511,22 +701,253 @@ export const updateBooking = async (req, res) => {
       };
     }
 
-    if (bookingData.drivers) {
+    // Handle drivers field - only update if it exists in request
+    if (bookingData.hasOwnProperty('drivers')) {
       updatedPayload.drivers = bookingData.drivers;
+      console.log("✅ DRIVERS FIELD EXISTS IN REQUEST - Will be updated");
+    } else {
+      console.log("⚠️ NO DRIVERS FIELD IN REQUEST - Keeping existing drivers");
     }
 
-    // 🔄 Save to DB
-    const updatedBooking = await Booking.findByIdAndUpdate(id, updatedPayload, {
-      new: true,
-    });
+    // Save to DB first
+    const updatedBooking = await Booking.findByIdAndUpdate(id, updatedPayload, { new: true });
 
     if (!updatedBooking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
+    console.log("✅ BOOKING UPDATED IN DATABASE");
+
+    // ======= DRIVER EMAIL LOGIC (Only if drivers field was provided) =======
+    let driverEmailResults = {
+      assigned: [],
+      unassigned: [],
+      emailsSent: []
+    };
+
+    if (bookingData.hasOwnProperty('drivers')) {
+      try {
+        console.log("📧 PROCESSING DRIVER EMAIL NOTIFICATIONS...");
+
+        // Get company info for email template
+        const company = await Company.findById(companyId).lean();
+        console.log("🏢 COMPANY INFO:", company ? "Found" : "Not found");
+
+        // Compare existing drivers with new drivers
+        const existingDriverIds = (existingBooking.drivers || []).map(d => {
+          return String(d.driverId || d._id || d);
+        });
+
+        const newDriverIds = (bookingData.drivers || []).map(d => {
+          return String(d.driverId || d._id || d);
+        });
+
+        console.log("📊 DRIVER COMPARISON:");
+        console.log("   Existing IDs:", existingDriverIds);
+        console.log("   New IDs:", newDriverIds);
+
+        // Find newly assigned drivers
+        const newlyAssigned = newDriverIds.filter(id => !existingDriverIds.includes(id));
+        const unassigned = existingDriverIds.filter(id => !newDriverIds.includes(id));
+
+        driverEmailResults.assigned = newlyAssigned;
+        driverEmailResults.unassigned = unassigned;
+
+        console.log("📈 CHANGES:");
+        console.log("   Newly Assigned:", newlyAssigned);
+        console.log("   Unassigned:", unassigned);
+
+        // Helper function to find driver
+        const findDriverById = async (driverId) => {
+          console.log(`🔍 Looking for driver: ${driverId}`);
+          
+          // Try direct ID lookup first
+          if (mongoose.Types.ObjectId.isValid(driverId)) {
+            const driverDoc = await driverModel.findById(driverId).lean();
+            if (driverDoc) {
+              console.log(`   ✅ Found by ID: ${driverDoc.DriverData?.firstName} ${driverDoc.DriverData?.surName}`);
+              return driverDoc;
+            }
+          }
+          
+          // Try finding by employee number
+          const driverByEmployeeNumber = await driverModel.findOne({
+            'DriverData.employeeNumber': driverId,
+            companyId: companyId
+          }).lean();
+          
+          if (driverByEmployeeNumber) {
+            console.log(`   ✅ Found by employee number: ${driverByEmployeeNumber.DriverData?.firstName} ${driverByEmployeeNumber.DriverData?.surName}`);
+            return driverByEmployeeNumber;
+          }
+          
+          console.log(`   ❌ Driver not found: ${driverId}`);
+          return null;
+        };
+
+        // Send assignment emails to newly assigned drivers
+        for (const driverId of newlyAssigned) {
+          try {
+            const driverDoc = await findDriverById(driverId);
+            
+            if (!driverDoc) {
+              driverEmailResults.emailsSent.push({
+                type: 'assigned',
+                driverId,
+                status: 'failed',
+                error: 'Driver not found'
+              });
+              continue;
+            }
+
+            const driverEmail = driverDoc.DriverData?.email;
+            if (!driverEmail) {
+              console.log(`❌ No email for driver ${driverId}`);
+              driverEmailResults.emailsSent.push({
+                type: 'assigned',
+                driverId,
+                status: 'failed',
+                error: 'No email address'
+              });
+              continue;
+            }
+
+            console.log(`📧 Sending assignment email to: ${driverEmail}`);
+
+            // Create assignment email using your template
+            const assignmentHtml = driverAssignmentEmailTemplate({
+              booking: updatedBooking,
+              driver: driverDoc,
+              vehicle: driverDoc.VehicleData || {},
+              company,
+              assignmentType: "assigned",
+              options: {
+                supportEmail: company?.email,
+                supportPhone: company?.contact,
+                companyName: company?.companyName || company?.tradingName,
+                logoUrl: company?.profileImage,
+                address: company?.address,
+              },
+            });
+
+            await sendEmail(
+              driverEmail,
+              `New Job Assignment - Booking #${updatedBooking.bookingId}`,
+              { html: assignmentHtml }
+            );
+
+            driverEmailResults.emailsSent.push({
+              type: 'assigned',
+              driverId,
+              email: driverEmail,
+              driverName: `${driverDoc.DriverData?.firstName || ''} ${driverDoc.DriverData?.surName || ''}`.trim(),
+              status: 'sent'
+            });
+
+            console.log(`✅ Assignment email sent to: ${driverEmail}`);
+
+          } catch (emailError) {
+            console.error(`❌ Failed to send assignment email to driver ${driverId}:`, emailError.message);
+            driverEmailResults.emailsSent.push({
+              type: 'assigned',
+              driverId,
+              status: 'failed',
+              error: emailError.message
+            });
+          }
+        }
+
+        // Send unassignment emails to previously assigned drivers
+        for (const driverId of unassigned) {
+          try {
+            const driverDoc = await findDriverById(driverId);
+            
+            if (!driverDoc) {
+              driverEmailResults.emailsSent.push({
+                type: 'unassigned',
+                driverId,
+                status: 'failed',
+                error: 'Driver not found'
+              });
+              continue;
+            }
+
+            const driverEmail = driverDoc.DriverData?.email;
+            if (!driverEmail) {
+              console.log(`❌ No email for unassigned driver ${driverId}`);
+              driverEmailResults.emailsSent.push({
+                type: 'unassigned',
+                driverId,
+                status: 'failed',
+                error: 'No email address'
+              });
+              continue;
+            }
+
+            console.log(`📧 Sending unassignment email to: ${driverEmail}`);
+
+            const unassignmentHtml = driverAssignmentEmailTemplate({
+              booking: existingBooking, // Use original booking for unassignment
+              driver: driverDoc,
+              vehicle: driverDoc.VehicleData || {},
+              company,
+              assignmentType: "unassigned",
+              options: {
+                supportEmail: company?.email,
+                supportPhone: company?.contact,
+                companyName: company?.companyName || company?.tradingName,
+                logoUrl: company?.profileImage,
+                address: company?.address,
+              },
+            });
+
+            await sendEmail(
+              driverEmail,
+              `Job Unassignment - Booking #${existingBooking.bookingId}`,
+              { html: unassignmentHtml }
+            );
+
+            driverEmailResults.emailsSent.push({
+              type: 'unassigned',
+              driverId,
+              email: driverEmail,
+              driverName: `${driverDoc.DriverData?.firstName || ''} ${driverDoc.DriverData?.surName || ''}`.trim(),
+              status: 'sent'
+            });
+
+            console.log(`✅ Unassignment email sent to: ${driverEmail}`);
+
+          } catch (emailError) {
+            console.error(`❌ Failed to send unassignment email to driver ${driverId}:`, emailError.message);
+            driverEmailResults.emailsSent.push({
+              type: 'unassigned',
+              driverId,
+              status: 'failed',
+              error: emailError.message
+            });
+          }
+        }
+
+        // Log final summary
+        const sentEmails = driverEmailResults.emailsSent.filter(e => e.status === 'sent');
+        const failedEmails = driverEmailResults.emailsSent.filter(e => e.status === 'failed');
+        
+        console.log("📊 DRIVER EMAIL FINAL SUMMARY:");
+        console.log(`   Total drivers assigned: ${newlyAssigned.length}`);
+        console.log(`   Total drivers unassigned: ${unassigned.length}`);
+        console.log(`   Emails sent successfully: ${sentEmails.length}`);
+        console.log(`   Emails failed: ${failedEmails.length}`);
+        console.log("   Details:", driverEmailResults.emailsSent);
+
+      } catch (driverEmailError) {
+        console.error("❌ Driver email process failed:", driverEmailError.message);
+        console.error("❌ Full error:", driverEmailError);
+      }
+    }
+
+    // Send booking update emails to passenger and admin
     const sanitize = (booking) => {
-      const { _id, __v, createdAt, updatedAt, companyId, ...clean } =
-        booking.toObject();
+      const { _id, __v, createdAt, updatedAt, companyId, ...clean } = booking.toObject();
       return clean;
     };
 
@@ -536,18 +957,34 @@ export const updateBooking = async (req, res) => {
     };
 
     if (PassengerEmail) {
-      await sendEmail(PassengerEmail, "Your Booking Was Updated", emailData);
+      try {
+        await sendEmail(PassengerEmail, "Your Booking Was Updated", emailData);
+        console.log(`✅ Passenger update email sent to: ${PassengerEmail}`);
+      } catch (error) {
+        console.error(`❌ Failed to send passenger email: ${error.message}`);
+      }
     }
 
     if (ClientAdminEmail) {
-      await sendEmail(ClientAdminEmail, "Booking Updated", emailData);
+      try {
+        await sendEmail(ClientAdminEmail, "Booking Updated", emailData);
+        console.log(`✅ Admin update email sent to: ${ClientAdminEmail}`);
+      } catch (error) {
+        console.error(`❌ Failed to send admin email: ${error.message}`);
+      }
     }
 
     return res.status(200).json({
       success: true,
       message: "Booking updated successfully",
       booking: sanitize(updatedBooking),
+      driverChanges: {
+        assigned: driverEmailResults.assigned.length,
+        unassigned: driverEmailResults.unassigned.length,
+        emailsSent: driverEmailResults.emailsSent
+      }
     });
+
   } catch (error) {
     console.error("❌ Error in updateBooking:", error);
     return res.status(500).json({
@@ -979,48 +1416,106 @@ export const getAllPassengers = async (req, res) => {
 };
 
 // Send Booking Data
+// export const sendBookingEmail = async (req, res) => {
+//   const { bookingId, email } = req.body;
+
+//   if (!bookingId || !email) {
+//     return res
+//       .status(400)
+//       .json({ message: "Booking ID and email are required." });
+//   }
+
+//   try {
+//     const booking = await Booking.findById(bookingId).lean();
+//     if (!booking) {
+//       return res.status(404).json({ message: "Booking not found." });
+//     }
+
+//     const addMilesToDistanceText = (journey) => {
+//       if (journey?.distanceText && journey.distanceText.includes("km")) {
+//         const km = parseFloat(journey.distanceText);
+//         if (!isNaN(km)) {
+//           const miles = km * 0.621371;
+//           journey.distanceText = `${km} km (${miles} miles)`;
+//         }
+//       }
+//     };
+
+//     addMilesToDistanceText(booking.primaryJourney);
+//     if (booking.returnJourneyToggle && booking.returnJourney) {
+//       addMilesToDistanceText(booking.returnJourney);
+//     }
+
+//     const plainBooking = JSON.parse(JSON.stringify(booking));
+//     const { _id, statusAudit, createdAt, updatedAt, __v, ...cleanedBooking } =
+//       JSON.parse(JSON.stringify(booking));
+//     await sendEmail(email, "Your Booking Confirmation", {
+//       title: "Booking Confirmation",
+//       subtitle: "Here are your booking details:",
+//       data: cleanedBooking,
+//     });
+
+//     res.status(200).json({ message: "Booking email sent successfully." });
+//   } catch (err) {
+//     console.error("Error sending booking email:", err);
+//     res.status(500).json({ message: "Failed to send booking email." });
+//   }
+// };
 export const sendBookingEmail = async (req, res) => {
-  const { bookingId, email } = req.body;
+  const { bookingId, email, type = "confirmation" } = req.body;
 
   if (!bookingId || !email) {
-    return res
-      .status(400)
-      .json({ message: "Booking ID and email are required." });
+    return res.status(400).json({ message: "Booking ID and email are required." });
   }
 
   try {
-    const booking = await Booking.findById(bookingId).lean();
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found." });
+    const booking = await Booking.findById(bookingId)
+      .populate("vehicle passenger")
+      .lean();
+    if (!booking) return res.status(404).json({ message: "Booking not found." });
+
+    const company = await Company.findById(booking.companyId).lean();
+    const clientAdmin = await User.findOne({ companyId: booking.companyId, role: "clientadmin" }).lean();
+
+    let subject, html;
+
+    if (type === "cancellation") {
+      subject = `Booking Cancellation #${booking.bookingId} - ${company?.companyName || "Our Company"}`;
+      html = customerCancellationEmailTemplate({
+        booking,
+        company,
+        clientAdmin,
+        cancelledBy: req.user?.fullName || "Admin",
+        cancellationReason: null,
+        options: {
+          supportEmail: clientAdmin?.email || company?.email,
+          supportPhone: clientAdmin?.phone || company?.contact,
+          logoUrl: company?.profileImage,
+        },
+      });
+    } else {
+      subject = `Booking Confirmation #${booking.bookingId} - ${company?.companyName || "Our Company"}`;
+      html = `
+        <h2>Booking Confirmation</h2>
+        <p>Dear ${booking.passenger?.name || "Customer"},</p>
+        <p>Your booking has been confirmed. Here are the details:</p>
+        <ul>
+          <li><b>Booking ID:</b> ${booking.bookingId}</li>
+          <li><b>Vehicle:</b> ${booking.vehicle?.vehicleName || "N/A"}</li>
+          <li><b>Pick Up:</b> ${booking.primaryJourney?.pickup || "-"}</li>
+          <li><b>Drop Off:</b> ${booking.primaryJourney?.dropoff || "-"}</li>
+          <li><b>Date:</b> ${booking.primaryJourney?.date || "-"}</li>
+        </ul>
+        <p>Thank you for booking with ${company?.companyName || "our company"}.</p>
+      `;
     }
 
-    const addMilesToDistanceText = (journey) => {
-      if (journey?.distanceText && journey.distanceText.includes("km")) {
-        const km = parseFloat(journey.distanceText);
-        if (!isNaN(km)) {
-          const miles = km * 0.621371;
-          journey.distanceText = `${km} km (${miles} miles)`;
-        }
-      }
-    };
+    // ✅ FIXED: ensure sendEmail gets { html }
+    await sendEmail(email, subject, { html });
 
-    addMilesToDistanceText(booking.primaryJourney);
-    if (booking.returnJourneyToggle && booking.returnJourney) {
-      addMilesToDistanceText(booking.returnJourney);
-    }
-
-    const plainBooking = JSON.parse(JSON.stringify(booking));
-    const { _id, statusAudit, createdAt, updatedAt, __v, ...cleanedBooking } =
-      JSON.parse(JSON.stringify(booking));
-    await sendEmail(email, "Your Booking Confirmation", {
-      title: "Booking Confirmation",
-      subtitle: "Here are your booking details:",
-      data: cleanedBooking,
-    });
-
-    res.status(200).json({ message: "Booking email sent successfully." });
+    res.status(200).json({ message: `${type} email sent successfully.` });
   } catch (err) {
-    console.error("Error sending booking email:", err);
+    console.error("❌ Error sending booking email:", err);
     res.status(500).json({ message: "Failed to send booking email." });
   }
 };
