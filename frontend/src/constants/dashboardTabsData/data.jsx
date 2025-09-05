@@ -1460,3 +1460,41 @@ export  const sortList =  [
   { label: "Status Ascending", value: "status-asc" },
   { label: "Status Descending",value: "status-desc"},
 ]
+
+
+
+export const STATIC_THEME_DATA = [
+  {
+    id: "theme-dark-1",
+    name: "Dark Theme 1",
+    colors: {
+      bg: "#07384d",
+      text: "#f1efef",
+      primary: "#01f5fe",
+      hover: "#003353",
+      active: "#064f7c",
+    },
+  },
+  {
+    id: "theme-dark-2",
+    name: "Dark Theme 2",
+    colors: {
+      bg: "#1e1e1e",
+      text: "#f1efef",
+      primary: "#ba090a",
+      hover: "#930000",
+      active: "#930000",
+    },
+  },
+  {
+    id: "theme-light-1",
+    name: "Light Theme 1",
+    colors: {
+      bg: "#f5f9fa",
+      text: "#1e1e1e",
+      primary: "#a5d8dd",
+      hover: "#a5d8dd",
+      active: "#a5d8dd",
+    },
+  },
+];

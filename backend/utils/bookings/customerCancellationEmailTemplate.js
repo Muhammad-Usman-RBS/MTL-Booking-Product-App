@@ -27,7 +27,7 @@ export const customerCancellationEmailTemplate = ({
     // Brand colors (same system as driverStatusEmailTemplate)
     const brand = {
         primary: options.primaryColor || "#0F172A",
-        accent: options.accentColor || "#DC2626", // red accent for cancellation
+        accent: options.accentColor || "#2563EB", // red accent for cancellation
         muted: options.mutedColor || "#6B7280",
         bg: options.bgColor || "#F8FAFC",
         card: options.cardColor || "#FFFFFF",
@@ -76,7 +76,28 @@ export const customerCancellationEmailTemplate = ({
     // Refund info
     const showRefund =
         booking.paymentStatus === "Paid" || booking.paymentMethod === "Card";
-
+        const formatEmail = (email) => {
+          return email.replace('@', '&#8203;@&#8203;').replace(/\./g, '&#8203;.&#8203;');
+        };
+        
+        const locationLine = (addr) => {
+          if (!addr) return "";
+        
+          const safeAddr = safe(String(addr).trim());
+          const words = safeAddr.split(/\s+/);
+        
+          // Split into lines with 4 words per line
+          const lines = [];
+          for (let i = 0; i < words.length; i += 4) {
+            lines.push(words.slice(i, i + 4).join(" "));
+          }
+        
+          // Return HTML with "Location:" on the first line
+          const [firstLine, ...restLines] = lines;
+          const restHtml = restLines.length ? `<br/>${restLines.join("<br/>")}` : "";
+        
+          return `<strong>Location:</strong> ${firstLine}${restHtml}<br/>`;
+        };
     return `<!doctype html>
 <html>
 <head>
@@ -131,22 +152,15 @@ export const customerCancellationEmailTemplate = ({
                       </span>
                     </div>
                     <div style="font:400 13px/2 Arial,sans-serif;color:${brand.muted}">
-                      ${org.email
-            ? `<strong>Email:</strong> <a href="mailto:${safe(
-                org.email
-            )}" style="color:${brand.accent};text-decoration:none">${safe(
-                org.email
-            )}</a><br/>`
-            : ""
-        }
-                      ${org.phone
+            
+                    ${org.email ? `<strong>Email:</strong> ${formatEmail(safe(org.email))}<br/>` : ""}
+                    
+                      ${org.phone 
             ? `<strong>Phone:</strong> +${safe(org.phone)}<br/>`
             : ""
         }
-                      ${org.address
-            ? `<strong>Location:</strong> ${safe(org.address)}<br/>`
-            : ""
-        }
+        ${org.address ? locationLine(org.address) : ""}
+
                     </div>
                   </td>
                 </tr>
@@ -158,7 +172,7 @@ export const customerCancellationEmailTemplate = ({
           <tr>
             <td class="px-22" style="padding:24px 22px 18px;text-align:start">
               <div style="font:500 24px/1.3 Arial,sans-serif;color:${brand.primary};margin:0 0 10px">Your booking has been cancelled</div>
-              <div style="font:600 16px/1.5 Arial,sans-serif;color:${brand.danger};margin:8px 0 0">Reference: #${safe(
+              <div style="font:600 16px/1.5 Arial,sans-serif;color:${brand.accent};margin:8px 0 0">Booking Reference: #${safe(
             booking.bookingId
         )}</div>
               <div style="font:400 14px/1.5 Arial,sans-serif;color:${brand.muted};margin-top:10px">
@@ -173,24 +187,26 @@ export const customerCancellationEmailTemplate = ({
 
           <!-- Journey Summary -->
           <tr>
-            <td class="px-22" style="padding:0 22px 18px">
+            <td class="px-22" style="padding:0 22px 18px;">
               <table role="presentation" width="100%" style="border:1px solid ${brand.border};border-radius:12px;padding:16px">
                 <tr>
                   <td colspan="2" style="font:700 14px Arial,sans-serif;color:${brand.primary};padding-bottom:8px">Journey Details</td>
                 </tr>
-                <tr>
-                  <td style="color:${brand.muted};font:600 13px Arial,sans-serif">From:</td>
-                  <td style="color:${brand.primary};font:400 13px Arial,sans-serif">${safe(pickup)}</td>
+                <tr style="line-height:1.4;margin-bottom:6px;">
+                  <td style="color:${brand.muted};vertical-align:top;font:600 13px Arial,sans-serif;margin-bottom:6px;"><div style="margin-bottom:10px;">From:</div></td>
+                  <td style="color:${brand.primary};margin-bottom:6px;font:400 13px Arial,sans-serif"><div style="margin-bottom:10px;">${safe(pickup)}</div></td>
                 </tr>
                 <tr>
-                  <td style="color:${brand.muted};font:600 13px Arial,sans-serif">To:</td>
-                  <td style="color:${brand.primary};font:400 13px Arial,sans-serif">${safe(dropoff)}</td>
+                  <td style="color:${brand.muted};vertical-align:top;font:600 13px Arial,sans-serif"><div style="margin-bottom:10px;">To:</div></td>
+                  <td style="color:${brand.primary};font:400 13px Arial,sans-serif"><div style="margin-bottom:10px;">${safe(dropoff)}</div></td>
                 </tr>
                 <tr>
-                  <td style="color:${brand.muted};font:600 13px Arial,sans-serif">Date & Time:</td>
-                  <td style="color:${brand.primary};font:400 13px Arial,sans-serif">${safe(
+               
+                  <td style="color:${brand.muted};vertical-align:top;font:600 13px Arial,sans-serif;white-space:nowrap;"> <div style="margin-bottom:10px;">Date & Time:</div></td>
+                  <td style="color:${brand.primary};font:400 13px Arial,sans-serif"> <div style="margin-bottom:10px;">${safe(
             journeyDateTime
-        )}</td>
+        )}</div></td>
+        
                 </tr>
               </table>
             </td>
@@ -226,7 +242,7 @@ export const customerCancellationEmailTemplate = ({
                     ${org.phone
             ? `<br/><a href="tel:${safe(
                 org.phone
-            )}" style="color:${brand.accent};font-weight:600;text-decoration:none">Call ${safe(
+            )}" style="color:${brand.accent};font-weight:600;text-decoration:none">Call +${safe(
                 org.phone
             )}</a>`
             : ""

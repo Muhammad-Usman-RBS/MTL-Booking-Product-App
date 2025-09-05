@@ -5,6 +5,7 @@ import {
   setThemeColors,
   selectSelectedThemeId,
   setSelectedThemeId,
+  toggleBookmarkTheme,
 } from "../../../redux/slices/themeSlice";
 import { Link } from "react-router-dom";
 import Icons from "../../../assets/icons";
@@ -19,11 +20,26 @@ import { useApplyThemeSettingsMutation } from "../../../redux/api/themeApi";
 import DriverPortalHome from "../../../portals/driverportal/home/DriverPortalHome";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { useGetAllJobsQuery } from "../../../redux/api/jobsApi";
+import { STATIC_THEME_DATA } from "../../../constants/dashboardTabsData/data";
+
+const STATIC_THEME_KEY = "anonThemeClass";
+const STATIC_BOOKMARKS_KEY = "anonThemeBookmarks";
+const isStaticId = (id) => ["theme-dark-1","theme-dark-2","theme-light-1"].includes(id);
+const STATIC_THEMES = ["theme-dark-1", "theme-dark-2", "theme-light-1"];
+
+const applyThemeClass = (className) => {
+  const root = document.documentElement;
+  STATIC_THEMES.forEach((c) => root.classList.remove(c));
+  if (className) root.classList.add(className);
+};
+
 
 function Navbar() {
   const TimeRef = useRef(null);
   const usertooltipRef = useRef(null);
   const user = useSelector((state) => state.auth.user);
+  const companyId = user?.companyId
+  const isStaticMode = !user?.companyId;   
   const themeBtnRef = useRef(null);
   const email = user?.email || "No Email";
   const name = user?.fullName || "Guest";
@@ -33,11 +49,13 @@ function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [themeBtnWidth, setThemeBtnWidth] = useState(null);
+  const selectedThemeId = useSelector(selectSelectedThemeId);
+  const [activeBookmarkId, setActiveBookmarkId] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
-  const { data: jobData, refetch } = useGetAllJobsQuery(user?.companyId);
+  const { data: jobData, refetch } = useGetAllJobsQuery(companyId, {skip: !companyId});
 
   const dispatch = useDispatch();
   const [applyThemeSettings] = useApplyThemeSettingsMutation();
@@ -46,7 +64,7 @@ function Navbar() {
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (usertooltipRef && !usertooltipRef.current.contains(e.target)) {
+      if (usertooltipRef && !usertooltipRef?.current?.contains(e.target)) {
         setIsDropdownOpen(false);
       }
     };
@@ -60,6 +78,11 @@ function Navbar() {
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, [refetch]);
+
+
+
+  // --- (Optional but handy) HYDRATE settings page from localStorage on mount ---
+ 
   const handleNotificationClick = (jobId) => {
     if (user?.role !== "driver") return;
 
@@ -81,24 +104,123 @@ function Navbar() {
       setIsBookingModalOpen(true);
     }
   };
+
+  
+  const bookmarks = useSelector(selectBookmarkedThemes);
+
+  useEffect(() => {
+    if (!isStaticMode) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(STATIC_BOOKMARKS_KEY) || "[]");
+  
+      if (saved.length > 0) {
+        // Add any missing saved bookmarks into Redux (no duplicates)
+        saved.forEach((b) => {
+          if (!bookmarks.find((x) => x._id === b._id)) {
+            dispatch(
+              toggleBookmarkTheme({
+                _id: b._id,
+                themeSettings: b.themeSettings || {},
+                label: b.label || b._id,
+              })
+            );
+          }
+        });
+      } else {
+        // First-time seed from STATIC_THEME_DATA
+        const seed = (STATIC_THEME_DATA || []).map((t) => ({
+          _id: t.id,
+          themeSettings: t.colors,
+          label: t.name,
+        }));
+        localStorage.setItem(STATIC_BOOKMARKS_KEY, JSON.stringify(seed));
+        seed.forEach((b) => {
+          if (!bookmarks.find((x) => x._id === b._id)) {
+            dispatch(toggleBookmarkTheme(b));
+          }
+        });
+      }
+    } catch (e) {
+      console.error("Failed to hydrate static bookmarks in navbar:", e);
+    }
+
+  }, [isStaticMode, dispatch]);
+  useEffect(() => {
+    setActiveBookmarkId(selectedThemeId || null);
+  }, [selectedThemeId]);
+  useEffect(() => {
+    if (themeBtnRef.current) {
+      setThemeBtnWidth(themeBtnRef.current.offsetWidth);
+    }
+  }, [isModalOpen]);
+  useEffect(() => {
+    if (!isStaticMode) return;
+    const staticOnly = (bookmarks || []).filter((b) =>
+      ["theme-dark-1", "theme-dark-2", "theme-light-1"].includes(b._id)
+    );
+    localStorage.setItem(STATIC_BOOKMARKS_KEY, JSON.stringify(staticOnly));
+  }, [isStaticMode, bookmarks]);
+  useEffect(() => {
+    if (!isStaticMode) return;
+    if (!bookmarks || bookmarks.length === 0) return;
+  
+    const staticOnly = bookmarks.filter((b) =>
+      ["theme-dark-1", "theme-dark-2", "theme-light-1"].includes(b._id)
+    );
+    localStorage.setItem(STATIC_BOOKMARKS_KEY, JSON.stringify(staticOnly));
+  }, [isStaticMode, bookmarks]);
+  
+  useEffect(() => {
+    if (!isStaticMode) return;
+    const cls = localStorage.getItem(STATIC_THEME_KEY);
+    if (cls) setActiveBookmarkId(cls);
+  }, [isStaticMode]);
+  // const { data: notifications = [], refetch: refetchNotifications } =
+  // useGetUserNotificationsQuery(user?.employeeNumber, {
+  //   skip: !user?.employeeNumber,
+  // });
+
+  useEffect(() => {
+    if (!isStaticMode) return;
+  
+    const saved = JSON.parse(localStorage.getItem(STATIC_BOOKMARKS_KEY) || "[]");
+    const hasAny = (bookmarks?.length ?? 0) > 0 || saved.length > 0;
+    if (hasAny) return;
+  
+    const seed = (STATIC_THEME_DATA || []).map((t) => ({
+      _id: t.id,
+      themeSettings: t.colors,
+      label: t.name,
+    }));
+  
+    localStorage.setItem(STATIC_BOOKMARKS_KEY, JSON.stringify(seed));
+    seed.forEach((b) => dispatch(toggleBookmarkTheme(b)));
+  }, [isStaticMode, bookmarks?.length, dispatch]);
+
   const handleApplyBookmarkedTheme = useCallback(
     async (b) => {
       try {
-        if (!user?.companyId) return;
+        if (!user?.companyId || isStaticId(b._id)) {
+          applyThemeClass(b._id);
+          localStorage.setItem(STATIC_THEME_KEY, b._id);
+  
+          setActiveBookmarkId(b._id);
+  
+          dispatch(setSelectedThemeId(null));
+  
+          setIsModalOpen(false);
+          return;
+        }
         const res = await applyThemeSettings({
           companyId: user.companyId,
           themeId: b._id,
         }).unwrap();
 
         const applied = res?.theme?.themeSettings || b.themeSettings || {};
-
-        // apply to DOM
         const root = document.documentElement;
         ["bg", "text", "primary", "hover", "active"].forEach((k) => {
           if (applied[k]) root.style.setProperty(`--${k}`, applied[k]);
         });
-
-        // update store
         dispatch(setThemeColors(applied));
         dispatch(setSelectedThemeId(b._id));
         setActiveBookmarkId(b._id);
@@ -109,23 +231,6 @@ function Navbar() {
     },
     [applyThemeSettings, dispatch, user?.companyId]
   );
-  const bookmarks = useSelector(selectBookmarkedThemes);
-  const selectedThemeId = useSelector(selectSelectedThemeId);
-  const [activeBookmarkId, setActiveBookmarkId] = useState(null);
-  useEffect(() => {
-    setActiveBookmarkId(selectedThemeId || null);
-  }, [selectedThemeId]);
-  useEffect(() => {
-    if (themeBtnRef.current) {
-      setThemeBtnWidth(themeBtnRef.current.offsetWidth);
-    }
-  }, [isModalOpen]);
-
-  // const { data: notifications = [], refetch: refetchNotifications } =
-  // useGetUserNotificationsQuery(user?.employeeNumber, {
-  //   skip: !user?.employeeNumber,
-  // });
-
   const empArg =
     user?.role === "driver"
       ? String(user?.employeeNumber || "")
@@ -341,7 +446,7 @@ function Navbar() {
             )}
           </div>
           {/* Theme selector - only for admins */}
-          {(user?.role === "clientadmin" || user?.role === "superadmin") && (
+          {(isStaticMode || user?.role === "clientadmin" || user?.role === "superadmin") && (
             <div className="relative" ref={themeBtnRef}>
               <button
                 onClick={() => setIsModalOpen((v) => !v)}
@@ -373,32 +478,36 @@ function Navbar() {
                           const c = b.themeSettings || {};
                           return (
                             <button
-                              key={b._id}
-                              type="button"
-                              onClick={() => {
-                                handleApplyBookmarkedTheme(b);
-                                setIsModalOpen(false);
-                              }}
-                              title={b.label || "Apply theme"}
-                              className={`w-full p-2 border-1 rounded-lg transition-all duration-200 group hover:scale-[1.02] hover:shadow-lg 
-             border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50
-            `}
-                            >
-                              <div className="flex space-x-3 gap-1">
-                                <div
-                                  className="w-4 h-4 rounded-sm  border border-gray-300 shadow-sm"
-                                  style={{ backgroundColor: c.bg }}
-                                />
-                                <div
-                                  className="w-4 h-4  rounded-sm border border-gray-300 shadow-sm"
-                                  style={{ backgroundColor: c.text }}
-                                />
-                                <div
-                                  className="w-4 h-4  rounded-sm   border border-gray-300 shadow-sm"
-                                  style={{ backgroundColor: c.primary }}
-                                />
-                              </div>
-                            </button>
+                            key={b._id}
+                            type="button"
+                            onClick={() => {
+                              handleApplyBookmarkedTheme(b);
+                              setIsModalOpen(false);
+                            }}
+                            title={b.label || "Apply theme"}
+                            className={`relative w-full p-2 rounded-lg transition-all duration-200 group hover:scale-[1.02] hover:shadow-lg 
+                              border ${activeBookmarkId === b._id ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"}
+                            `}
+                          >
+                          
+                          
+                            {/* Color preview */}
+                            <div className="flex space-x-3 gap-1">
+                              <div
+                                className="w-4 h-4 rounded-sm border border-gray-300 shadow-sm"
+                                style={{ backgroundColor: b?.themeSettings?.bg }}
+                              />
+                              <div
+                                className="w-4 h-4 rounded-sm border border-gray-300 shadow-sm"
+                                style={{ backgroundColor: b?.themeSettings?.text }}
+                              />
+                              <div
+                                className="w-4 h-4 rounded-sm border border-gray-300 shadow-sm"
+                                style={{ backgroundColor: b?.themeSettings?.primary }}
+                              />
+                            </div>
+                          </button>
+                          
                           );
                         })}
                       </div>

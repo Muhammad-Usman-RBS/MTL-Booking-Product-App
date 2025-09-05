@@ -104,7 +104,24 @@ export const driverStatusEmailTemplate = ({
 
   const currentStatus = statusConfig[status] || statusConfig["On Route"];
   const journey = booking?.primaryJourney || booking?.returnJourney || {};
+  const formatEmail = (email) => {
+    return email.replace('@', '&#8203;@&#8203;').replace(/\./g, '&#8203;.&#8203;');
+  };
 
+  const locationLine = (addr) => {
+    if (!addr) return "";
+  
+    const safeAddr = safe(String(addr).trim());
+    const words = safeAddr.split(/\s+/);
+    const lines = [];
+    for (let i = 0; i < words.length; i += 4) {
+      lines.push(words.slice(i, i + 4).join(" "));
+    }
+    const [firstLine, ...restLines] = lines;
+    const restHtml = restLines.length ? `<br/>${restLines.join("<br/>")}` : "";
+  
+    return `<strong>Location:</strong> ${firstLine}${restHtml}<br/>`;
+  };
   return `<!doctype html>
 <html>
 <head>
@@ -162,17 +179,10 @@ export const driverStatusEmailTemplate = ({
   </span>
 </div>
  <div style="font:400 13px/2 Arial,sans-serif;color:${brand.muted}">
- ${org.email
-      ? `<strong>Email:</strong> <a href="mailto:${safe(
-        org.email
-      )}" style="color:${brand.accent};text-decoration:none">${safe(
-        org.email
-      )}</a><br/>`
-      : ""
-    }
+   ${org.email ? `<strong>Email:</strong> ${formatEmail(safe(org.email))}<br/>` : ""}
+
     ${org.phone ? `<strong>Phone:</strong> +${safe(org.phone)}<br/>` : ""}
-    ${org.address ? `<strong>Location:</strong> ${safe(org.address)}<br/>` : ""}
-  </div>
+${org.address ? locationLine(org.address) : ""}  </div>
   </td>
  
                 </tr>

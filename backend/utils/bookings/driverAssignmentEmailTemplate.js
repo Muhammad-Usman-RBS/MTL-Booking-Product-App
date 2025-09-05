@@ -91,6 +91,29 @@ export const driverAssignmentEmailTemplate = ({
 
     const config = assignmentConfig[assignmentType] || assignmentConfig.assigned;
 
+
+    const formatEmail = (email) => {
+      return email.replace('@', '&#8203;@&#8203;').replace(/\./g, '&#8203;.&#8203;');
+    };
+  
+    const locationLine = (addr) => {
+      if (!addr) return "";
+    
+      const safeAddr = safe(String(addr).trim());
+      const words = safeAddr.split(/\s+/);
+    
+      // Split into lines with 4 words per line
+      const lines = [];
+      for (let i = 0; i < words.length; i += 10) {
+        lines.push(words.slice(i, i + 10).join(" "));
+      }
+    
+      // Return HTML with "Location:" on the first line
+      const [firstLine, ...restLines] = lines;
+      const restHtml = restLines.length ? `<br/>${restLines.join("<br/>")}` : "";
+    
+      return `<strong>Location:</strong> ${firstLine}${restHtml}<br/>`;
+    };
     return `<!doctype html>
 <html>
 <head>
@@ -130,11 +153,12 @@ export const driverAssignmentEmailTemplate = ({
                         ${assignmentType === "assigned" ? "ASSIGNED" : "UNASSIGNED"}
                       </span>
                     </div>
-                    <div style="font:400 13px/2 Arial,sans-serif;color:${brand.muted}">
-                      ${org.email ? `<strong>Email:</strong> <a href="mailto:${safe(org.email)}" style="color:${brand.accent};text-decoration:none">${safe(org.email)}</a><br/>` : ""}
-                      ${org.phone ? `<strong>Phone:</strong> +${safe(org.phone)}<br/>` : ""}
-                      ${org.address ? `<strong>Location:</strong> ${safe(org.address)}<br/>` : ""}
-                    </div>
+<div style="font:400 13px/2 Arial,sans-serif;color:${brand.muted}">
+  ${org.name  ? `<div style="font:600 15px Arial,sans-serif;color:${brand.primary};margin-bottom:4px;">${safe(org.name)}</div>`  : ""}
+  ${org.email  ? `<div><strong>Email:</strong> ${formatEmail(safe(org.email))}</div>` : ""}
+  ${org.phone  ? `<div><strong>Phone:</strong> +${safe(org.phone)}</div>` : ""}
+</div>
+
                   </td>
                 </tr>
               </table>
@@ -160,28 +184,28 @@ export const driverAssignmentEmailTemplate = ({
               <table role="presentation" width="100%" style="border:1px solid ${brand.border};border-radius:12px;padding:16px">
                 <tr>
                   <td style="font:700 14px Arial,sans-serif;color:${brand.primary};padding-bottom:8px">
-                    <div style="margin-bottom:10px;">Journey Details</div>
+                    <div style="margin-bottom:10px;white-space:nowrap;">Journey Details</div>
                   </td>
                 </tr>
                 <tr>
-                  <td style="color:${brand.muted};font:600 13px Arial,sans-serif">
-                    <div style="margin-bottom:3px;">From:</div>
+                  <td style="color:${brand.muted};vertical-align:top;font:600 13px Arial,sans-serif">
+                    <div style="margin-bottom:6px;">From:</div>
                   </td>
                   <td style="color:${brand.primary};font:400 13px Arial,sans-serif">
                     <div style="margin-bottom:3px;">${safe(journey?.pickup || "-")}</div>
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:4px 8px 4px 0;color:${brand.muted};width:80px;font:600 13px Arial,sans-serif">
-                    <div style="margin-bottom:3px;">To:</div>
+                  <td style="padding:4px 8px 4px 0;color:${brand.muted};vertical-align:top;width:80px;font:600 13px Arial,sans-serif">
+                    <div style="margin-bottom:6px;">To:</div>
                   </td>
                   <td style="padding:4px 0;color:${brand.primary};font:400 13px Arial,sans-serif">
                     <div style="margin-bottom:3px;">${safe(journey?.dropoff || "-")}</div>
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:4px 8px 4px 0;color:${brand.muted};width:80px;font:600 13px Arial,sans-serif">
-                    <div style="margin-bottom:3px;">Date & Time:</div>
+                  <td style="padding:4px 8px 4px 0;color:${brand.muted};vertical-align:top;width:80px;font:600 13px Arial,sans-serif">
+                    <div style="margin-bottom:6px;">Date & Time:</div>
                   </td>
                   <td style="padding:4px 0;color:${brand.primary};font:400 13px Arial,sans-serif">
                     <div style="margin-bottom:3px;">${safe(formatDateTime(journey))}</div>
@@ -201,24 +225,7 @@ export const driverAssignmentEmailTemplate = ({
             </td>
           </tr>
 
-          <!-- Passenger Info -->
-          <tr>
-            <td class="px-22" style="padding:0 22px 18px">
-              <table role="presentation" width="100%" style="background:${brand.card};border:1px solid ${brand.border};border-radius:12px;padding:16px">
-                <tr>
-                  <td style="font:700 14px Arial,sans-serif;color:${brand.primary};padding-bottom:8px">Passenger Information</td>
-                </tr>
-                <tr>
-                  <td style="font:400 13px Arial,sans-serif;color:${brand.primary}">
-                    <div style="margin-bottom:4px;"><strong>Name:</strong> ${safe(booking?.passenger?.name || "N/A")}</div>
-                    <div style="margin-bottom:4px;"><strong>Phone:</strong> ${safe(booking?.passenger?.phone || "N/A")}</div>
-                    <div style="margin-bottom:4px;"><strong>Email:</strong> ${safe(booking?.passenger?.email || "N/A")}</div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
+        
           ${assignmentType === "assigned" ? `
           <!-- Assigned Vehicle Info -->
           <tr>
@@ -228,10 +235,10 @@ export const driverAssignmentEmailTemplate = ({
                   <td style="font:700 14px Arial,sans-serif;color:${brand.primary};padding-bottom:8px">Your Assigned Vehicle</td>
                 </tr>
                 <tr>
-                  <td style="font:400 13px Arial,sans-serif;color:${brand.primary}">
-                    <div style="margin-bottom:4px;"><strong>Registration:</strong> ${safe(vehicleInfo.registration)}</div>
-                    <div style="margin-bottom:4px;"><strong>Make & Model:</strong> ${safe(vehicleInfo.make)} ${safe(vehicleInfo.model)}</div>
-                    <div style="margin-bottom:4px;"><strong>Color:</strong> ${safe(vehicleInfo.color)}</div>
+                  <td style="font:400 13px Arial,sans-serif;line-height:1.5">
+                    <div style="margin-bottom:4px;"><strong style="color:${brand.muted};">Registration:</strong> ${safe(vehicleInfo.registration)}</div>
+                    <div style="margin-bottom:4px;"><strong style="color:${brand.muted};">Make & Model:</strong> ${safe(vehicleInfo.make)} ${safe(vehicleInfo.model)}</div>
+                    <div style="margin-bottom:4px;"><strong style="color:${brand.muted};">Color:</strong> ${safe(vehicleInfo.color)}</div>
                   </td>
                 </tr>
               </table>
@@ -260,6 +267,8 @@ export const driverAssignmentEmailTemplate = ({
           <tr>
             <td style="padding:20px 24px;border-top:1px solid ${brand.border};background:#FAFAFA">
               <div style="font:700 16px/1.4 Arial,sans-serif;color:${brand.primary};margin-bottom:8px">${safe(org.name)}</div>
+               <div style="font:500 12px/1.4 Arial,sans-serif;color:${brand.muted};margin-bottom:8px">📍${org.address ? locationLine(org.address) : ""} </div>
+
               <div style="font:400 11px/1.5 Arial,sans-serif;color:#9CA3AF;margin-top:16px;padding-top:12px;border-top:1px solid ${brand.border}">
                 This is an automated notification email. Please keep this for your records.
               </div>

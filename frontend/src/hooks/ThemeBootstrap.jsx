@@ -4,14 +4,21 @@ import { useSelector, useDispatch } from "react-redux";
 import { useFetchCurrentThemeQuery, useFetchThemeHistoryQuery } from "../redux/api/themeApi";
 import { setSelectedThemeId, setThemeColors, selectBookmarkedThemes, selectThemeHistory, toggleBookmarkTheme, setThemeHistory } from "../redux/slices/themeSlice";
 
+const STATIC_THEME_KEY = "anonThemeClass"; 
+const STATIC_THEMES = ["theme-dark-1", "theme-dark-2", "theme-light-1"];
+const STATIC_DEFAULT = "theme-dark-2";
+
+const applyThemeClass = (className) => {
+  const root = document.documentElement;
+  STATIC_THEMES.forEach((c) => root.classList.remove(c));
+  if (className) root.classList.add(className);
+};
+
 const applyThemeVars = (theme) => {
   if (!theme) return;
   const root = document.documentElement;
-  Object.entries(theme).forEach(([k, v]) =>
-    root.style.setProperty(`--${k}`, v)
-  );
+  Object.entries(theme).forEach(([k, v]) => root.style.setProperty(`--${k}`, v));
 };
-
 const ThemeBootstrap = () => {
   const user = useSelector((s) => s.auth.user);
   const companyId = user?.companyId;
@@ -41,7 +48,33 @@ const ThemeBootstrap = () => {
     dispatch(setThemeColors(t.themeSettings));
     applyThemeVars(t.themeSettings);
   }, [currentThemeRes, dispatch]);
+  useEffect(() => {
+    if (companyId) return; 
+  
+    const saved = localStorage.getItem(STATIC_THEME_KEY);
+    const themeClass = STATIC_THEMES.includes(saved) ? saved : STATIC_DEFAULT;
+  
+    applyThemeClass(themeClass);
+  
+   
+    if (existingBookmarks.length === 0) {
+      STATIC_THEMES.forEach((cls) => {
 
+        dispatch(
+          toggleBookmarkTheme({
+            _id: cls, 
+            themeSettings: {},
+            label: cls.replace("-", " "),
+          })
+        );
+      });
+    }
+  }, [companyId, dispatch]);
+  
+  useEffect(() => {
+    if (!companyId) return; 
+    applyThemeClass(null);
+  }, [companyId]);
   const existingBookmarks = useSelector(selectBookmarkedThemes);
   const history = useSelector(selectThemeHistory);
 

@@ -28,16 +28,7 @@ const Dashboard = () => {
       ) :
         <div className="space-y-6 max-w-full">
           {/* Filter Box */}
-          <div className="bg-gray-100 rounded p-4">
-            <div className="w-full md:w-80">
-              <SelectDateRange
-                startDate={startDate}
-                endDate={endDate}
-                setStartDate={setStartDate}
-                setEndDate={setEndDate}
-              />
-            </div>
-          </div>
+       
 
           {/* <button className="btn btn-primary">Primary</button>
 
