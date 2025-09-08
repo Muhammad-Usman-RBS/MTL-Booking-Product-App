@@ -8,11 +8,11 @@ const router = express.Router();
 const uploader = getUploader("corporate-customer");
 const uploadFields = uploader.fields([{ name: "profile", maxCount: 1 }]);
 
-router.post("/create-corporate-customer", protect, authorize("clientadmin", "manager", "customer"), uploadFields, createCorporateCustomer);
-router.get("/corporate-customers", protect, authorize("clientadmin", "manager", "customer"), getCorporateCustomers);
-router.get("/corporate-customer/:id", protect, authorize("clientadmin", "manager", "customer"), getCorporateCustomer);
-router.get("/by-vat/:vatnumber", protect, authorize("clientadmin", "manager", "customer"), getCorporateCustomerByVat);
-router.put("/corporate-customer/:id", protect, authorize("clientadmin", "manager", "customer"), uploadFields, updateCorporateCustomer);
-router.delete("/corporate-customer/:id", protect, authorize("clientadmin", "manager", "customer"), deleteCorporateCustomer);
+router.post("/create-corporate-customer", protect, authorize("clientadmin", "customer"), uploadFields, createCorporateCustomer);
+router.get("/corporate-customers", protect, authorize("clientadmin",  "customer"), getCorporateCustomers);
+router.get("/corporate-customer/:id", protect, authorize("clientadmin",  "customer"), getCorporateCustomer);
+router.get("/by-vat/:vatnumber", protect, authorize("clientadmin",  "customer"), getCorporateCustomerByVat);
+router.put("/corporate-customer/:id", protect, authorize("clientadmin",  "customer"), uploadFields, updateCorporateCustomer);
+router.delete("/corporate-customer/:id", protect, authorize("clientadmin",  "customer"), deleteCorporateCustomer);
 
 export default router

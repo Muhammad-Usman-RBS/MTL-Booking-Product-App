@@ -18,7 +18,7 @@ const router = express.Router();
 router.post(
   '/create-clientadmin',
   protect,
-  authorize('superadmin', 'clientadmin', 'manager', 'associateadmin', 'customer'),
+  authorize('superadmin', 'clientadmin',  'associateadmin', 'customer'),
   createUserBySuperAdmin
 );
 
@@ -26,7 +26,7 @@ router.post(
 router.get(
   '/create-clientadmin',
   protect,
-  authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'),
+  authorize('superadmin', 'clientadmin',  'associateadmin'),
   getClientAdmins
 );
 
@@ -41,7 +41,7 @@ router.get(
 router.get(
   '/get-All-Users',
   protect,
-  authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'),
+  authorize('superadmin', 'clientadmin', 'associateadmin'),
   getAllUsers
 );
 
@@ -49,7 +49,7 @@ router.get(
 router.put(
   '/create-clientadmin/:id',
   protect,
-  authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'),
+  authorize('superadmin', 'clientadmin', 'associateadmin'),
   updateUserBySuperAdmin
 );
 
@@ -57,7 +57,7 @@ router.put(
 router.delete(
   '/create-clientadmin/:id',
   protect,
-  authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'),
+  authorize('superadmin', 'clientadmin', 'associateadmin'),
   deleteUserBySuperAdmin
 );
 
@@ -65,7 +65,7 @@ router.delete(
 router.get(
   '/get-all-drivers',
   protect,
-  authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'),
+  authorize('superadmin', 'clientadmin', 'associateadmin'),
   getAllDrivers
 );
 
@@ -73,7 +73,7 @@ router.get(
 router.get(
   '/get-all-customers',
   protect,
-  authorize('superadmin', 'clientadmin', 'manager', 'associateadmin'),
+  authorize('superadmin', 'clientadmin', 'associateadmin'),
   getAllCustomers
 );
 

@@ -331,7 +331,6 @@ function Navbar() {
             {[
               "clientadmin",
               "superadmin",
-              "manager",
               "demo",
               "associate admin",
               "staffmember",

@@ -52,7 +52,6 @@ const Login = () => {
           case 'superadmin':
           case 'clientadmin':
           case 'demo':
-          case 'manager':
             navigate('/dashboard/home');
             break;
           default:

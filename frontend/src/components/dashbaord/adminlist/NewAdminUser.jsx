@@ -152,7 +152,7 @@ const NewAdminUser = () => {
           employeeNumber: selectedAccount.employeeNumber,
         };
 
-        if (!["clientadmin", "manager"].includes(payload.role)) {
+        if (!["clientadmin"].includes(payload.role)) {
           delete payload.associateAdminLimit;
         }
 
@@ -235,7 +235,7 @@ const NewAdminUser = () => {
             createdBy: user?._id,
           };
 
-          if (!["clientadmin", "manager"].includes(payload.role)) {
+          if (!["clientadmin"].includes(payload.role)) {
             delete payload.associateAdminLimit;
           }
 
@@ -267,9 +267,7 @@ const NewAdminUser = () => {
 
   let roleOptions = [];
   if (user?.role === "superadmin")
-    roleOptions = ["clientadmin", "manager", "demo"];
-  else if (user?.role === "manager")
-    roleOptions = ["manager", "demo", "driver", "customer"];
+    roleOptions = ["clientadmin", "demo"];
   else if (user?.role === "clientadmin")
     roleOptions = ["associateadmin", "staffmember", "driver", "customer"];
   else if (user?.role === "associateadmin")
@@ -298,7 +296,7 @@ const NewAdminUser = () => {
       ];
     } else if (["customer"].includes(role)) {
       return ["Bookings", "Invoices", "Company Accounts", "Settings"];
-    } else if (["clientadmin", "manager"].includes(role)) {
+    } else if (["clientadmin"].includes(role)) {
       return [
         "Users",
         "Bookings",
@@ -529,7 +527,7 @@ const NewAdminUser = () => {
           </div>
         </div>
 
-        {["clientadmin", "manager"].includes(selectedAccount?.role) && (
+        {["clientadmin"].includes(selectedAccount?.role) && (
           <div className="md:col-span-1">
             <SelectOption
               label="Associate Admin Limit"

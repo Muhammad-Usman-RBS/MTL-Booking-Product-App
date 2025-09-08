@@ -53,7 +53,7 @@ export const createUserBySuperAdmin = async (req, res) => {
 
     // Validate associateAdminLimit only for specific roles
     let parsedLimit;
-    if (["clientadmin", "manager"].includes(role)) {
+    if (["clientadmin"].includes(role)) {
       parsedLimit = parseInt(associateAdminLimit);
       if (![5, 10, 15].includes(parsedLimit)) {
         return res.status(400).json({
@@ -78,18 +78,7 @@ export const createUserBySuperAdmin = async (req, res) => {
       }
     }
 
-    // Role-based limits
-    if (role === "manager") {
-      const count = await User.countDocuments({
-        role: "manager",
-        companyId: creator.companyId || null,
-      });
-      if (count >= 3) {
-        return res.status(400).json({
-          message: "Only 3 Manager accounts allowed per company",
-        });
-      }
-    }
+
 
     if (role === "demo") {
       const count = await User.countDocuments({
@@ -174,7 +163,7 @@ export const createUserBySuperAdmin = async (req, res) => {
       permissions: userPermissions,
       vatnumber: role === "customer" ? vatnumber : undefined,
       createdBy: creator._id,
-      associateAdminLimit: ["clientadmin", "manager"].includes(role)
+      associateAdminLimit: ["clientadmin"].includes(role)
         ? parsedLimit
         : undefined,
       companyId:
@@ -208,14 +197,9 @@ export const getClientAdmins = async (req, res) => {
 
     if (role === "superadmin") {
       query.$or = [
-        { role: { $in: ["clientadmin", "manager", "demo"] } },
+        { role: { $in: ["clientadmin", "demo"] } },
         { role: { $in: ["driver", "customer"] }, companyId: null },
       ];
-    } else if (role === "manager") {
-      query.companyId = companyId;
-      query.role = {
-        $in: ["clientadmin", "manager", "demo", "driver", "customer"],
-      };
     } else if (role === "clientadmin") {
       // Get all associateadmins created by this clientadmin
       const associateAdmins = await User.find({
@@ -351,7 +335,7 @@ export const updateUserBySuperAdmin = async (req, res) => {
     // Validate and assign associateAdminLimit
     if (typeof associateAdminLimit !== "undefined") {
       const parsedLimit = parseInt(associateAdminLimit);
-      if (["clientadmin", "manager"].includes(role)) {
+      if (["clientadmin"].includes(role)) {
         if (![5, 10, 15].includes(parsedLimit)) {
           return res.status(400).json({
             message: "associateAdminLimit must be one of 5, 7, or 10",

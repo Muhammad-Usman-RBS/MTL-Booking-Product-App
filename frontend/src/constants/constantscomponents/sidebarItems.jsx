@@ -16,32 +16,32 @@ const sidebarItems = [
       "customer",
       "clientadmin",
       "associateadmin",
-      "manager",
+      
     ],
     subTabs: [
       {
         title: "Bookings List",
         route: "/dashboard/bookings/list",
         icon: Icons.ListChecks,
-        roles: ["demo","clientadmin", "manager", "customer", "associateadmin" ],
+        roles: ["demo","clientadmin",  "customer", "associateadmin" ],
       },
       {
         title: "New Booking",
         route: "/dashboard/bookings/new",
         icon: Icons.PlusCircle,
-        roles: ["demo","clientadmin", "manager", "customer", "associateadmin"],
+        roles: ["demo","clientadmin",  "customer", "associateadmin"],
       },
       {
         title: "Booking Calendar",
         route: "/dashboard/bookings/calendar",
         icon: Icons.CalendarDays,
-        roles: ["demo","clientadmin", "manager", "associateadmin", "driver", "customer"],
+        roles: ["demo","clientadmin",  "associateadmin", "driver", "customer"],
       },
       {
         title: "Deleted Booking",
         route: "/dashboard/bookings/deleted-booking",
         icon: Icons.Delete,
-        roles: ["demo","clientadmin", "manager", "associateadmin", "superadmin"],
+        roles: ["demo","clientadmin",  "associateadmin", "superadmin"],
       },
     ],
   },
@@ -55,7 +55,7 @@ const sidebarItems = [
       "customer",
       "clientadmin",
       "associateadmin",
-      "manager",
+      
     ],
     subTabs: [
       {
@@ -66,7 +66,7 @@ const sidebarItems = [
           "demo",
           "driver",
           "superadmin",
-          "manager",
+          
           "associateadmin",
           "customer",
           "clientadmin",
@@ -76,13 +76,13 @@ const sidebarItems = [
         title: "New Driver Invoice",
         route: "/dashboard/invoices/driver/new",
         icon: Icons.FilePlus,
-        roles: ["demo","clientadmin", "manager", "associateadmin", "superadmin"],
+        roles: ["demo","clientadmin",  "associateadmin", "superadmin"],
       },
       {
         title: "New Customer Invoice",
         route: "/dashboard/invoices/customer/new",
         icon: Icons.FilePlus,
-        roles: ["demo","clientadmin", "superadmin", "manager", "associateadmin"],
+        roles: ["demo","clientadmin", "superadmin",  "associateadmin"],
       },
     ],
   },
@@ -96,7 +96,7 @@ const sidebarItems = [
       "customer",
       "clientadmin",
       "associateadmin",
-      "manager",
+      
     ],
     subTabs: [
       {
@@ -109,7 +109,7 @@ const sidebarItems = [
           "superadmin",
           "clientadmin",
           "associateadmin",
-          "manager",
+          
         ],
       },
       {
@@ -120,7 +120,7 @@ const sidebarItems = [
           "demo",
           "clientadmin",
           "associateadmin",
-          "manager",
+          
         ],
       },
       // {
@@ -132,13 +132,13 @@ const sidebarItems = [
         title: "Rides",
         icon: Icons.CarFront,
         route: "/dashboard/drivers/all-rides",
-        roles: ["demo","driver", "superadmin", "manager"],
+        roles: ["demo","driver", "superadmin", ],
       },
       {
         title: "Earnings",
         icon: Icons.Activity,
         route: "/dashboard/drivers/earnings",
-        roles: ["demo","driver", "superadmin", "manager"],
+        roles: ["demo","driver", "superadmin", ],
       },
     ],
   },
@@ -152,14 +152,14 @@ const sidebarItems = [
       "customer",
       "clientadmin",
       "associateadmin",
-      "manager",
+      
     ],
     subTabs: [
       {
         title: "Customers List",
         route: "/dashboard/customers/list",
         icon: Icons.List,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "manager"],
+        roles: ["demo","clientadmin", "associateadmin", "superadmin", ],
       },
     ],
   },
@@ -177,7 +177,7 @@ const sidebarItems = [
   //         "superadmin",
   //         "clientadmin",
   //         "associateadmin",
-  //         "manager",
+  //         
   //       ],
   //     },
   //     {
@@ -189,7 +189,7 @@ const sidebarItems = [
   //         "superadmin",
   //         "clientadmin",
   //         "associateadmin",
-  //         "manager",
+  //         
   //         "driver",
   //       ],
   //     },
@@ -204,13 +204,13 @@ const sidebarItems = [
         title: "Admin List",
         icon: Icons.List,
         route: "/dashboard/admin-list",
-        roles: ["demo","superadmin", "clientadmin", "associateadmin", "manager"],
+        roles: ["demo","superadmin", "clientadmin", "associateadmin", ],
       },
       {
         title: "New  User",
         icon: Icons.User,
         route: "/dashboard/admin-list/add-user",
-        roles: ["demo","superadmin", "clientadmin", "associateadmin", "manager"],
+        roles: ["demo","superadmin", "clientadmin", "associateadmin", ],
       },
     ],
   },
@@ -223,13 +223,13 @@ const sidebarItems = [
         title: "Accounts List",
         route: "/dashboard/company-accounts/list",
         icon: Icons.FileText,
-        roles: ["demo","superadmin", "clientadmin", "manager"],
+        roles: ["demo","superadmin", "clientadmin", ],
       },
       {
         title: "Add Account",
         route: "/dashboard/company-accounts/new",
         icon: Icons.PlusCircle,
-        roles: ["demo","superadmin", "manager", "clientadmin"],
+        roles: ["demo","superadmin",  "clientadmin"],
       },
       {
         title: "View Company",
@@ -241,7 +241,7 @@ const sidebarItems = [
           "customer",
           "clientadmin",
           "associateadmin",
-          "manager",
+          
         ],
       },
     ],
@@ -256,62 +256,62 @@ const sidebarItems = [
       "customer",
       "clientadmin",
       "associateadmin",
-      "manager",
+      
     ],
     subTabs: [
       {
         title: "General",
         route: "/dashboard/pricing/general",
         icon: Icons.Settings,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "manager"],
+        roles: ["demo","clientadmin", "associateadmin", "superadmin", ],
       },
       {
         title: "Vehicle Pricing",
         route: "/dashboard/pricing/vehicle",
         icon: Icons.Truck,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "manager"],
+        roles: ["demo","clientadmin", "associateadmin", "superadmin", ],
       },
       {
         title: "Distance Slab",
         route: "/dashboard/pricing/distance-slab",
         icon: Icons.Activity,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "manager"],
+        roles: ["demo","clientadmin", "associateadmin", "superadmin", ],
       },
       {
         title: "Hourly Packages",
         route: "/dashboard/pricing/hourly-packages",
         icon: Icons.Clock,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "manager"],
+        roles: ["demo","clientadmin", "associateadmin", "superadmin", ],
       },
       {
         title: "Fixed Pricing",
         route: "/dashboard/pricing/fixed",
         icon: Icons.Tag,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "manager"],
+        roles: ["demo","clientadmin", "associateadmin", "superadmin", ],
       },
       {
         title: "Postcode District",
         route: "/dashboard/pricing/postcode-district",
         icon: Icons.Map,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "manager"],
+        roles: ["demo","clientadmin", "associateadmin", "superadmin", ],
       },
       {
         title: "Zones",
         route: "/dashboard/pricing/zones",
         icon: Icons.Grid,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "manager"],
+        roles: ["demo","clientadmin", "associateadmin", "superadmin", ],
       },
       {
         title: "Discounts / Surcharge - Date",
         route: "/dashboard/pricing/discounts-date",
         icon: Icons.Calendar,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "manager"],
+        roles: ["demo","clientadmin", "associateadmin", "superadmin", ],
       },
       {
         title: "Vouchers",
         route: "/dashboard/pricing/vouchers",
         icon: Icons.Gift,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "manager"],
+        roles: ["demo","clientadmin", "associateadmin", "superadmin", ],
       },
     ],
   },
@@ -330,7 +330,7 @@ const sidebarItems = [
           "clientadmin",
           "associateadmin",
           "superadmin",
-          "manager",
+          
         ],
       },
 
@@ -343,7 +343,7 @@ const sidebarItems = [
           "clientadmin",
           "associateadmin",
           "superadmin",
-          "manager",
+          
         ],
       },
       // {
@@ -354,7 +354,7 @@ const sidebarItems = [
       //     "clientadmin",
       //     "associateadmin",
       //     "superadmin",
-      //     "manager",
+      //     
       //     "driver",
       //   ],
       // },
@@ -366,7 +366,7 @@ const sidebarItems = [
       //     "clientadmin",
       //     "associateadmin",
       //     "superadmin",
-      //     "manager",
+      //     
       //     "driver",
       //   ],
       // },
@@ -379,7 +379,7 @@ const sidebarItems = [
           "clientadmin",
           "associateadmin",
           "superadmin",
-          "manager",
+          
           "driver",
         ],
       },
@@ -391,7 +391,7 @@ const sidebarItems = [
       //     "clientadmin",
       //     "associateadmin",
       //     "superadmin",
-      //     "manager",
+      //     
       //     "driver",
       //   ],
       // },
@@ -404,7 +404,7 @@ const sidebarItems = [
           "clientadmin",
           "associateadmin",
           "superadmin",
-          "manager",
+          
         ],
       },
       {
@@ -416,7 +416,7 @@ const sidebarItems = [
           "clientadmin",
           "associateadmin",
           "superadmin",
-          "manager",
+          
         ],
       },
       {
@@ -428,7 +428,7 @@ const sidebarItems = [
           "clientadmin",
           "associateadmin",
           "superadmin",
-          "manager",
+          
         ],
       },
       {
@@ -440,7 +440,7 @@ const sidebarItems = [
           "clientadmin",
           "associateadmin",
           "superadmin",
-          "manager",
+          
         ],
       },
       // {
@@ -451,7 +451,7 @@ const sidebarItems = [
       //     "clientadmin",
       //     "associateadmin",
       //     "superadmin",
-      //     "manager",
+      //     
       //     "driver",
       //   ],
       // },
@@ -463,7 +463,7 @@ const sidebarItems = [
       //     "clientadmin",
       //     "associateadmin",
       //     "superadmin",
-      //     "manager",
+      //     
       //     "driver",
       //   ],
       // },
@@ -475,7 +475,7 @@ const sidebarItems = [
       //     "clientadmin",
       //     "associateadmin",
       //     "superadmin",
-      //     "manager",
+      //     
       //     "driver",
       //   ],
       // },
@@ -487,7 +487,7 @@ const sidebarItems = [
       //     "clientadmin",
       //     "associateadmin",
       //     "superadmin",
-      //     "manager",
+      //     
       //     "driver",
       //   ],
       // },
@@ -499,7 +499,7 @@ const sidebarItems = [
       //     "clientadmin",
       //     "associateadmin",
       //     "superadmin",
-      //     "manager",
+      //     
       //     "driver",
       //   ],
       // },
@@ -511,7 +511,7 @@ const sidebarItems = [
       //     "clientadmin",
       //     "associateadmin",
       //     "superadmin",
-      //     "manager",
+      //     
       //     "driver",
       //   ],
       // },
@@ -524,7 +524,7 @@ const sidebarItems = [
           "clientadmin",
           "associateadmin",
           "superadmin",
-          "manager",
+          
         ],
       },
       // {
@@ -535,7 +535,7 @@ const sidebarItems = [
       //     "clientadmin",
       //     "associateadmin",
       //     "superadmin",
-      //     "manager",
+      //     
       //     "driver",
       //   ],
       // },
@@ -548,7 +548,7 @@ const sidebarItems = [
           "clientadmin",
           "associateadmin",
           "superadmin",
-          "manager",
+          
           "driver",
         ],
       },
@@ -562,7 +562,7 @@ const sidebarItems = [
       "demo",
       "clientadmin",
       "associateadmin",
-      "manager",
+      
     ],
   },
   {

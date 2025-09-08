@@ -14,7 +14,6 @@ const DashboardCard = () => {
 
   // Filters
   const filteredClientAdmin = AllUsers?.filter((u) => u?.role === "clientadmin");
-  const managerRoles = AllUsers?.filter((u) => u?.role === "manager");
   const associateAdminRoles = AllUsers?.filter((u) => u?.role === "associateadmin");
   const demoRoles = AllUsers?.filter((u) => u?.role === "demo");
   const customerRoles = AllUsers?.filter((u) => u?.role === "customer");
@@ -45,12 +44,6 @@ const DashboardCard = () => {
       value: filteredDriver?.length || 0,
       gradient: "linear-gradient(135deg, #11998e, #38ef7d)",
       icon: "🚖",
-    },
-    {
-      title: "Total Managers",
-      value: managerRoles?.length || 0,
-      gradient: "linear-gradient(135deg, #f7971e, #ffd200)",
-      icon: "🧑‍💼",
     },
     {
       title: "Total Staff Members",
