@@ -510,7 +510,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     if (hasChangedReturnLocations) return returnFare;
     return localEditData?.returnJourney?.fare || returnFare;
   };
-  const validateAdvanceForJourney = (journey) => {
+  const validateAdvanceForJourney = (journey, journeyType = "primary") => {
     const setting = bookingSettingData?.setting?.advanceBookingMin;
     if (!setting) return true; // no rule configured
 
@@ -535,18 +535,41 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       const timeText = value === 1
         ? (u.endsWith("s") ? u.slice(0, -1) : u)
         : (u.endsWith("s") ? u : `${u}s`);
-      toast.error(`Booking must be made at least ${value} ${timeText} in advance!`);
+      // Only show toast for primary journey
+      if (journeyType === "primary") {
+        toast.error(`Booking must be made at least ${value} ${timeText} in advance!`);}
       return false;
     }
+    return true;
+  };
+  const validateReturnJourneyTime = (primaryJourney, returnJourney) => {
+    if (!primaryJourney.date || !returnJourney.date) return true;
+    if (primaryJourney.hour === "" || primaryJourney.minute === "") return true;
+    if (returnJourney.hour === "" || returnJourney.minute === "") return true;
+  
+    const primaryDateTime = new Date(
+      `${primaryJourney.date}T${String(primaryJourney.hour).padStart(2, "0")}:${String(primaryJourney.minute).padStart(2, "0")}:00`
+    );
+    
+    const returnDateTime = new Date(
+      `${returnJourney.date}T${String(returnJourney.hour).padStart(2, "0")}:${String(returnJourney.minute).padStart(2, "0")}:00`
+    );
+  
+    if (returnDateTime <= primaryDateTime) {
+      toast.error("Return journey must be scheduled after the primary journey!");
+      return false;
+    }
+    
     return true;
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateAdvanceForJourney(primaryJourneyData)) return;
+    if (!validateAdvanceForJourney(primaryJourneyData, "primary")) return;
 
     if (returnJourneyToggle && dropOffs2[0]) {
-      if (!validateAdvanceForJourney(returnJourneyData)) return;
+      if (!validateAdvanceForJourney(returnJourneyData, "return")) return;
+      if (!validateReturnJourneyTime(primaryJourneyData, returnJourneyData)) return;
     }
 
     const isReturnJourney =
@@ -760,14 +783,25 @@ navigate("/dashboard/bookings/list");
     }
   };
   useEffect(() => {
-    validateAdvanceForJourney(primaryJourneyData);
+    validateAdvanceForJourney(primaryJourneyData, "primary");
   }, [primaryJourneyData.date, primaryJourneyData.hour, primaryJourneyData.minute]);
 
   useEffect(() => {
     if (returnJourneyToggle) {
-      validateAdvanceForJourney(returnJourneyData);
+      validateAdvanceForJourney(returnJourneyData, "return");
     }
   }, [returnJourneyToggle, returnJourneyData.date, returnJourneyData.hour, returnJourneyData.minute]);
+  useEffect(() => {
+    if (returnJourneyToggle && 
+        primaryJourneyData.date && primaryJourneyData.hour !== "" && primaryJourneyData.minute !== "" &&
+        returnJourneyData.date && returnJourneyData.hour !== "" && returnJourneyData.minute !== "") {
+      validateReturnJourneyTime(primaryJourneyData, returnJourneyData);
+    }
+  }, [
+    returnJourneyToggle, 
+    primaryJourneyData.date, primaryJourneyData.hour, primaryJourneyData.minute,
+    returnJourneyData.date, returnJourneyData.hour, returnJourneyData.minute
+  ]);
   // Add here:
   const isEditing = !!editBookingData?._id || !!editBookingData?.__copyMode;
 

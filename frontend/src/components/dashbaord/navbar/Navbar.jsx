@@ -295,6 +295,31 @@ function Navbar() {
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
+
+  useEffect(() => {
+    const addGoogleTranslateScript = () => {
+      const script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.src =
+        '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      document.body.appendChild(script);
+    };
+  
+    window.googleTranslateElementInit = () => {
+      new window.google.translate.TranslateElement(
+        {
+          pageLanguage: 'en',
+          includedLanguages: 'en,es,fr,de,hi,zh-CN,ar,pt', 
+          layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
+          autoDisplay: false,
+        },
+        'google_translate_element'
+      );
+    };
+  
+    addGoogleTranslateScript();
+  }, []);
+
   return (
     <>
       <nav className="bg-theme text-theme z-20 relative p-[17.2px] flex  justify-between items-start gap-2 sm:gap-4">
@@ -445,6 +470,8 @@ function Navbar() {
               </div>
             )}
           </div>
+          <div id="google_translate_element" />
+
           {/* Theme selector - only for admins */}
           {(isStaticMode || user?.role === "clientadmin" || user?.role === "superadmin") && (
             <div className="relative" ref={themeBtnRef}>

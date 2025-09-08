@@ -329,7 +329,7 @@ const InvoiceDetails = ({ item }) => {
               {item.items.reduce((acc, i) => acc + i.fare, 0).toFixed(2)}
             </p>
             <p>
-              <strong>{effectiveTaxPercent}%Tax:</strong> 
+              <strong>{effectiveTaxPercent} %Tax: </strong> 
               {currencySymbol}{item.items
                 .reduce((acc, i) => acc + (i.totalAmount - i.fare), 0)
                 .toFixed(2)}

@@ -1437,7 +1437,6 @@ export const driverportalstatusOptions = [
   "Late Cancel",
   "No Show",
   "Completed",
-  "Cancel",
 ];
 
 

@@ -1269,6 +1269,21 @@ const BookingsTable = ({
       });
   }
 
+  const isCancelledByClientadmin = (item) => {
+    if (String(item?.status).toLowerCase() !== "cancelled") return false;
+    if (!Array.isArray(item?.statusAudit)) return false;
+  
+    const entry = item.statusAudit
+      .slice()
+      .reverse()
+      .find((a) => String(a?.status || "").trim().toLowerCase() === "cancelled");
+  
+    if (!entry) return false;
+  
+    const byRaw = String(entry.updatedBy || "").toLowerCase(); // e.g. "clientadmin | Jane Smith"
+    return byRaw.includes("clientadmin");
+  };
+  
   let filteredBookings = bookings.filter((b) => {
     // First filter by tab (Active/Deleted)
     if (b.status === "Deleted") return false;
@@ -1459,6 +1474,10 @@ const BookingsTable = ({
       if (key === "d") {
         if (isDeletedTab) {
           toast.info("This action is disabled in the Deleted tab.");
+          return;
+        }
+        if (isCancelledByClientadmin(selectedBooking)) {
+          toast.info("Driver selection disabled — booking cancelled by Clientadmin");
           return;
         }
         openDriverModal(selectedBooking.driver);
@@ -1911,6 +1930,20 @@ const BookingsTable = ({
               : "-";
             break;
           case "driver":
+            const disabledByClientadmin = isCancelledByClientadmin(item);
+            const content = formatDriver(item)
+            if (disabledByClientadmin) {
+              row[key] = (
+                <div
+                  className="text-gray-400 opacity-60 cursor-not-allowed select-none"
+                  title="Driver selection disabled — booking cancelled by Clientadmin"
+                  aria-disabled="true"
+                >
+                  {content}
+                </div>
+              );
+              break;
+            }
             row[key] =
               user?.role === "customer" ? (
                 formatDriver(item)

@@ -2,8 +2,7 @@ import User from "../models/User.js";
 import Company from "../models/Company.js";
 import bcrypt from "bcryptjs";
 import driver from "../models/Driver.js";
-import mongoose from 'mongoose';
-import { initializeDefaultThemes } from "./settings/themeController.js";
+
 // SuperAdmin or ClientAdmin Creates User
 export const createUserBySuperAdmin = async (req, res) => {
   const {
@@ -190,12 +189,6 @@ export const createUserBySuperAdmin = async (req, res) => {
         }
       }),
     });
-    if (newUser.role === "demo") {
-      newUser.companyId = new mongoose.Types.ObjectId();
-      await newUser.save();
-      await initializeDefaultThemes(newUser.companyId);
-
-    }
 
     res.status(201).json({
       message: "User created successfully",

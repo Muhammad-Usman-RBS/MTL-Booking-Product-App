@@ -23,13 +23,17 @@ const CustomTable = ({
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const tableRef = useRef();
   const persistKey = "customTableColumnOrder";
-  const defaultOrder = useMemo(
-    () => tableHeaders.map((h) => h.key).filter((key) => key !== "actions"),
-    [tableHeaders]
-  );
-
+  const fixedStartCols = ["checkbox"]; // fixed at start
+  const fixedEndCols = ["actions"];    // fixed at end
+  const defaultOrder = useMemo(() => {
+    return tableHeaders
+      .map((h) => h.key)
+      .filter(
+        (key) => !fixedStartCols.includes(key) && !fixedEndCols.includes(key)
+      );
+  }, [tableHeaders]);
   const [internalOrder, setInternalOrder] = useState(defaultOrder);
-
+ 
   // Load saved order (if any) when component mounts or key changes
   useEffect(() => {
     if (!persistKey) return;
@@ -57,10 +61,11 @@ const CustomTable = ({
   // If parent controls order, use it; else internal
   const order = internalOrder;
   const combinedOrder = [
+    ...fixedStartCols.filter((key) => tableHeaders.find((h) => h.key === key)),
     ...order,
-    ...tableHeaders.map((h) => h.key).filter((key) => key === "actions"),
+    ...fixedEndCols.filter((key) => tableHeaders.find((h) => h.key === key)),
   ];
-
+  
   const dragSrcKeyRef = useRef(null);
   const reorder = (arr, srcKey, targetKey) => {
     const next = [...arr];
@@ -86,8 +91,16 @@ const CustomTable = ({
     e.preventDefault();
     const srcKey =
       dragSrcKeyRef.current || e.dataTransfer.getData("text/plain");
-    if (!srcKey || srcKey === targetKey) return;
-
+      if (
+        !srcKey ||
+        srcKey === targetKey ||
+        fixedStartCols.includes(srcKey) ||
+        fixedEndCols.includes(srcKey) ||
+        fixedStartCols.includes(targetKey) ||
+        fixedEndCols.includes(targetKey)
+      ) {
+        return;
+      }
     const newOrder = reorder(order, srcKey, targetKey);
     setInternalOrder(newOrder);
 
@@ -181,36 +194,61 @@ const CustomTable = ({
                 .filter(Boolean)
                 .map((col) => (
                   <th
-                    key={col.key}
-                    draggable={col.key !== "actions"}
-                    onDragStart={
-                      col.key !== "actions"
-                        ? handleDragStart(col.key)
-                        : undefined
-                    }
-                    onDragOver={
-                      col.key !== "actions"
-                        ? handleDragOver(col.key)
-                        : undefined
-                    }
-                    onDrop={
-                      col.key !== "actions" ? handleDrop(col.key) : undefined
-                    }
-                    onClick={() =>
-                      showSorting && col.key && requestSort(col.key)
-                    }
-                    className={`px-2 py-3 text-left align-middle whitespace-nowrap ${
-                      showSorting && col.key
-                        ? "cursor-move bg-[#e7eff0] text-dark transition"
-                        : "cursor-move"
-                    }`}
-                    title="Drag to reorder"
-                  >
-                    <div className="flex items-center gap-1 whitespace-nowrap">
-                      {col.label}
-                      {showSorting && col.key && getSortIcon(col.key)}
-                    </div>
-                  </th>
+                  key={col.key}
+                  draggable={
+                    !fixedStartCols.includes(col.key) &&
+                    !fixedEndCols.includes(col.key)
+                  }
+                  onDragStart={
+                    !fixedStartCols.includes(col.key) &&
+                    !fixedEndCols.includes(col.key)
+                      ? handleDragStart(col.key)
+                      : undefined
+                  }
+                  onDragOver={
+                    !fixedStartCols.includes(col.key) &&
+                    !fixedEndCols.includes(col.key)
+                      ? handleDragOver(col.key)
+                      : undefined
+                  }
+                  onDrop={
+                    !fixedStartCols.includes(col.key) &&
+                    !fixedEndCols.includes(col.key)
+                      ? handleDrop(col.key)
+                      : undefined
+                  }
+                  onClick={() =>
+                    showSorting &&
+                    col.key &&
+                    !fixedStartCols.includes(col.key) &&
+                    !fixedEndCols.includes(col.key)
+                      ? requestSort(col.key)
+                      : undefined
+                  }
+                  className={`px-2 py-3 text-left align-middle whitespace-nowrap ${
+                    showSorting &&
+                    col.key &&
+                    !fixedStartCols.includes(col.key) &&
+                    !fixedEndCols.includes(col.key)
+                      ? "cursor-move bg-[#e7eff0] text-dark transition"
+                      : "cursor-default"
+                  }`}
+                  title={
+                    fixedStartCols.includes(col.key) || fixedEndCols.includes(col.key)
+                      ? ""
+                      : "Drag to reorder"
+                  }
+                >
+                  <div className="flex items-center gap-1 whitespace-nowrap">
+                    {col.label}
+                    {showSorting &&
+                      col.key &&
+                      !fixedStartCols.includes(col.key) &&
+                      !fixedEndCols.includes(col.key) &&
+                      getSortIcon(col.key)}
+                  </div>
+                </th>
+                
                 ))}
             </tr>
           </thead>

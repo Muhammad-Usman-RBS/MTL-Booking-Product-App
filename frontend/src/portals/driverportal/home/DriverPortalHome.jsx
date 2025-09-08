@@ -30,7 +30,7 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
       refetchOnMountOrArgChange: true,
     }
   );
-
+console.log(data)
   const [updateJobStatus] = useUpdateJobStatusMutation();
   const [updateBookingStatus] = useUpdateBookingStatusMutation();
   const [loadingJobId, setLoadingJobId] = useState(null);
@@ -307,7 +307,19 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
     setLoadingJobId(jobId);
     try {
       const job = jobs.find((j) => String(j._id) === String(jobId));
-
+      const current = getCurrentStatus(job, statusMap);
+    
+  
+      if (newStatus === "Completed") {
+        const ok = window.confirm(
+          "Mark this booking as Completed?\nYou won't be able to change it afterwards."
+        );
+        if (!ok) {
+          setLoadingJobId(null);
+          return;
+        }
+      }
+  
       const bookingId = job?.booking?._id;
       const isLockedByAdmin =
         String(job?.booking?.status).toLowerCase() === "accepted" &&
@@ -603,6 +615,14 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
                           ? booking.returnDriverFare
                           : booking.driverFare || "—"}
                       </div>
+                      <div>
+                        <strong className="text-[var(--dark-gray)]">
+                          Notes: 
+                        </strong>
+                         { booking?.returnJourneyToggle
+                          ? booking?.returnJourney.notes
+                          : booking?.primaryJourney.notes || "—"}
+                      </div>
                     </div>
                   </div>
                   <div>
@@ -699,20 +719,24 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
                       currentStatus !== "Rejected" &&
                       currentStatus !== "Already Assigned" && (
                         <div>
-                          <SelectOption
-                            width="32"
-                            label="Current Job Status"
-                            value={currentStatus}
-                            onChange={(e) =>
-                              handleStatusChange(job._id, e.target.value)
-                            }
-                            options={driverportalstatusOptions?.map(
-                              (status) => ({
-                                value: status,
-                                label: status,
-                              })
-                            )}
-                          />
+                           {currentStatus === "Completed" ? (
+      <div className="text-green-600 text-sm bg-green-100 px-3 py-1.5 rounded border border-green-200 w-fit max-w-full">
+        This booking is already marked as <strong>Completed</strong>.
+      </div>
+    ) : (
+      <SelectOption
+        width="32"
+        label="Current Job Status"
+        value={currentStatus}
+        onChange={(e) =>
+          handleStatusChange(job._id, e.target.value)
+        }
+        options={driverportalstatusOptions?.map((status) => ({
+          value: status,
+          label: status,
+        }))}
+      />
+    )}
                         </div>
                       )
                     )}
@@ -723,7 +747,7 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
                     {journey.date
                       ? `${new Date(journey.date).toLocaleDateString()}, ${
                           journey.hour
-                        }:${journey.minute}`
+                        }:${String(journey.minute).padStart(2, "0")}`
                       : "—"}
                   </div>
                 </div>

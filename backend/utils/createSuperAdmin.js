@@ -16,6 +16,7 @@ const createSuperAdmin = async () => {
     const hashed = await bcrypt.hash(password, 10);
     await User.create({
       email,
+      fullName: 'Super Admin',
       password: hashed,
       role: 'superadmin',
       permissions: allowedPermissions 

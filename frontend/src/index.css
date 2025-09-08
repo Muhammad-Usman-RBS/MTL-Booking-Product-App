@@ -21,6 +21,57 @@ p {
   font-weight: 400;
 }
 
+
+span,
+a,
+strong
+ {
+  font-family: "Roboto", sans-serif;
+}
+
+/* Lists */
+ul,
+ol,
+li
+ {
+  font-family: "Poppins", sans-serif;
+}
+
+/* Forms */
+input,
+textarea,
+select,
+option,
+button,
+label
+ {
+  font-family: "Poppins", sans-serif;
+}
+
+table,
+caption,
+th,
+td,
+thead,
+tbody,
+col {
+  font-family: "Poppins", sans-serif;
+}
+
+div,
+section,
+aside,
+main,
+nav,
+header,
+footer
+{
+  font-family: "Poppins", sans-serif;
+}
+
+iframe {
+  font-family: "Poppins", sans-serif;
+}
 /* Theme Colours */
 :root {
   --white: #ffffff;
@@ -288,3 +339,25 @@ p {
 .custom_input::placeholder {
   font-size: 15px;
 }
+
+
+
+.goog-te-gadget-simple {
+  background:#ffffff !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  text-align: center !important;
+  align-items: start !important;
+  justify-content: center !important;
+  border: none !important;
+  padding: 10px 2px !important;
+  color: white !important;
+}
+#google_translate_element .VIpgJd-ZVi9od-xl07Ob-lTBxed :is(
+  img,
+  span[style*="border-left"],
+  span[style*="color: rgb(155, 155, 155)"],
+) {
+  display: none !important;
+}
+

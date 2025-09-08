@@ -17,32 +17,18 @@ import { useSelector } from "react-redux";
 import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 
 const InvoicesList = () => {
+  const user = useSelector((state) => state.auth.user);
+  const userRole = user?.role;
   const [search, setSearch] = useState("");
   const { data, isLoading, isError, refetch } = useGetAllInvoicesQuery();
   const [updateInvoice] = useUpdateInvoiceMutation();
-  const user = useSelector((state) => state.auth.user);
 
   // currency from booking settings
   const { data: bookingSettingData } = useGetBookingSettingQuery();
   const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
   const currencySymbol = currencySetting?.symbol || "£";
-  const currencyCode = currencySetting?.value || "GBP";
 
-  // Determine user role and appropriate mode
-  const getUserRole = () => {
-    if (user?.role === "driver" || user?.roles?.includes("driver")) {
-      return "driver";
-    }
-    if (user?.role === "customer" || user?.roles?.includes("customer")) {
-      return "customer";
-    }
-    if (user?.role === "clientadmin" || user?.roles?.includes("clientadmin")) {
-      return "clientadmin";
-    }
-    return "clientadmin"; // default fallback
-  };
 
-  const userRole = getUserRole();
 
   // Check if customer has VAT (keeping existing logic)
   const isCustomerWithVat =
@@ -52,7 +38,7 @@ const InvoicesList = () => {
   // Read requested mode from URL
   const location = useLocation();
   const qs = new URLSearchParams(location.search);
-  const requestedMode = (() => {
+const requestedMode = (() => {
     const m = qs.get("mode");
     if (!m) return null;
     if (m.toLowerCase() === "driver") return "Driver";
@@ -130,6 +116,25 @@ const InvoicesList = () => {
   const filteredData = invoices.filter((invoice) => {
     if (invoice.invoiceType?.toLowerCase() !== invoiceMode.toLowerCase())
       return false;
+    if (userRole === "driver") {
+      const driverEmail = user?.email;
+      const invoiceDriverEmail = invoice.driver?.email 
+      if (!driverEmail || !invoiceDriverEmail || driverEmail !== invoiceDriverEmail) {
+        return false;
+      }
+    }
+
+    if (userRole === "customer") {
+      const customerEmail = user?.email;
+      const invoiceCustomerEmail = invoice?.customer?.email;
+      if (
+        !customerEmail ||
+        !invoiceCustomerEmail ||
+        customerEmail.toLowerCase() !== invoiceCustomerEmail.toLowerCase()
+      ) {
+        return false;
+      }
+    }
     const query = search.toLowerCase();
     const invoiceNo = invoice.invoiceNumber?.toLowerCase() || "";
     const customerName = invoice.customer?.name || "-";
