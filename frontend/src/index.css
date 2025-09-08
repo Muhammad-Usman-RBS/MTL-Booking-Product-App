@@ -1,8 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
 @import "tailwindcss";
 
 body {
-  font-family: "Roboto", sans-serif;
+  font-family: "Roboto Mono", monospace;
 }
+
 
 /* Headings styling */
 h1,
@@ -11,13 +13,13 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: "Poppins", sans-serif;
+  font-family: "Roboto Mono", monospace;
   font-weight: 600;
 }
 
 /* Paragraphs */
 p {
-  font-family: sans-serif;
+  font-family: "Roboto Mono", monospace;
   font-weight: 400;
 }
 
@@ -26,16 +28,14 @@ span,
 a,
 strong
  {
-  font-family: "Roboto", sans-serif;
-}
+  font-family: "Roboto Mono", monospace;}
 
 /* Lists */
 ul,
 ol,
 li
  {
-  font-family: "Poppins", sans-serif;
-}
+  font-family: "Roboto Mono", monospace;}
 
 /* Forms */
 input,
@@ -45,9 +45,13 @@ option,
 button,
 label
  {
-  font-family: "Poppins", sans-serif;
-}
-
+  font-family: "Roboto Mono", monospace;}
+  label{
+    color: rgb(104, 102, 102);
+    font-size: 15px;
+    margin-bottom: 5px;
+  }
+  
 table,
 caption,
 th,
@@ -55,8 +59,7 @@ td,
 thead,
 tbody,
 col {
-  font-family: "Poppins", sans-serif;
-}
+  font-family: "Roboto Mono", monospace;}
 
 div,
 section,
@@ -66,12 +69,10 @@ nav,
 header,
 footer
 {
-  font-family: "Poppins", sans-serif;
-}
+  font-family: "Roboto Mono", monospace;}
 
 iframe {
-  font-family: "Poppins", sans-serif;
-}
+  font-family: "Roboto Mono", monospace;}
 /* Theme Colours */
 :root {
   --white: #ffffff;
@@ -341,23 +342,37 @@ iframe {
 }
 
 
-
-.goog-te-gadget-simple {
-  background:#ffffff !important;
-  border-radius: 6px !important;
-  display: flex !important;
-  text-align: center !important;
-  align-items: start !important;
-  justify-content: center !important;
-  border: none !important;
-  padding: 10px 2px !important;
-  color: white !important;
+ /* FOR GOOGLE TRANSLATE */
+ .goog-te-gadget span{
+  display: none!important;
 }
-#google_translate_element .VIpgJd-ZVi9od-xl07Ob-lTBxed :is(
-  img,
-  span[style*="border-left"],
-  span[style*="color: rgb(155, 155, 155)"],
-) {
+
+.goog-te-gadget {
+  color: transparent!important;
+  font-size:0px;
+}
+
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
+}
+
+#google_translate_element select{
+  background:#ffffff;
+  color:#000000;
+  border: none;
+  outline: none;
+  border-radius:8px;
+  padding:10px 6px;
+  margin: 0 !important;
+}
+
+.goog-te-gadget {
+  font-size: 0 !important;
+}
+
+.goog-te-gadget span {
   display: none !important;
 }
 
+/* END FOR GOOGLE TRANSLATE */

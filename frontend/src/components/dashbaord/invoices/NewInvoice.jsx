@@ -67,42 +67,71 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
       endDateObj.getTime() !== initialLast.getTime();
     setIsDateRangeChanged(isDateChanged);
   }, [startDate, endDate]);
-  const passengerNames = Array.from(
-    new Set(allBookings.map((b) => b.passenger?.name).filter(Boolean))
-  ).sort();
-
+  const uniqueCustomers = allBookings.reduce((acc, booking) => {
+    const passenger = booking.passenger;
+    if (passenger?.email) {
+      const email = passenger.email;
+      if (!acc[email]) {
+        acc[email] = {
+          name: passenger.name || "Unknown",
+          email: email,
+          displayLabel: `${passenger.name || "Unknown"} (${email})`
+        };
+      }
+    }
+    return acc;
+  }, {});
+  
   const customerList = [
     { label: "All", count: 0 },
-    ...passengerNames.map((name) => ({
-      label: name,
-      count: 0,
-    })),
+    ...Object.values(uniqueCustomers)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((customer) => ({
+        label: customer.displayLabel,
+        value: customer.email, // Use email as the actual value
+        count: 0,
+      })),
   ];
 
-  const driverNames = Array.from(
-    new Set(
-      allBookings
-        .flatMap((b) => b?.drivers?.map((d) => d?.name))
-        .filter(Boolean)
-    )
-  ).sort();
-
+  const uniqueDrivers = allBookings.reduce((acc, booking) => {
+    const drivers = booking?.drivers || [];
+    drivers.forEach(driver => {
+      if (driver?.email) {
+        const email = driver.email;
+        if (!acc[email]) {
+          acc[email] = {
+            name: driver.name || "Unknown",
+            email: email,
+            displayLabel: `${driver.name || "Unknown"} (${email})`
+          };
+        }
+      }
+    });
+    return acc;
+  }, {});
+  
   const driverList = [
     { label: "All", count: 0 },
-    ...driverNames.map((name) => ({ label: name, count: 0 })),
+    ...Object.values(uniqueDrivers)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((driver) => ({
+        label: driver.displayLabel,
+        value: driver.email, // Use email as the actual value
+        count: 0,
+      })),
   ];
   const customerFilteredBookings = filteredBookings.filter((b) => {
     const passengerName = b.passenger?.name;
-    const bookingDrivers = b?.drivers?.map((d) => d?.name) || [];
+    const bookingDriverEmails = b?.drivers?.map((d) => d?.email).filter(Boolean) || [];
     const isCompleted = b.status === "Completed";
 
     const customerMatch =
-      selectedCustomers.includes("All") ||
-      selectedCustomers.includes(passengerName);
+    selectedCustomers.includes("All") ||
+    selectedCustomers.includes(b.passenger?.email);
 
     const driverMatch =
-      selectedDrivers.includes("All") ||
-      bookingDrivers.some((name) => selectedDrivers.includes(name));
+    selectedDrivers.includes("All") ||
+    bookingDriverEmails.some((email) => selectedDrivers.includes(email));
 
     const customerSelected = selectedCustomers.length > 0;
     const driverSelected = selectedDrivers.length > 0;
@@ -167,10 +196,10 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
   const handleCustomerSelection = (newSelection) => {
     const wasAllSelected = selectedCustomers.includes("All");
     const isAllInNewSelection = newSelection.includes("All");
-
+  
     if (isAllInNewSelection && !wasAllSelected) {
-      const allPassengerNames = passengerNames;
-      setSelectedCustomers(["All", ...allPassengerNames]);
+      const allCustomerEmails = Object.keys(uniqueCustomers);
+      setSelectedCustomers(["All", ...allCustomerEmails]);
     } else if (wasAllSelected && !isAllInNewSelection) {
       setSelectedCustomers([]);
     } else {
@@ -293,16 +322,16 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
   const handleDriverSelection = (newSelection) => {
     const wasAllSelected = selectedDrivers.includes("All");
     const isAllInNewSelection = newSelection.includes("All");
-
+  
     if (isAllInNewSelection && !wasAllSelected) {
-      setSelectedDrivers(["All", ...driverNames]);
+      const allDriverEmails = Object.keys(uniqueDrivers);
+      setSelectedDrivers(["All", ...allDriverEmails]);
     } else if (wasAllSelected && !isAllInNewSelection) {
       setSelectedDrivers([]);
     } else {
       setSelectedDrivers(newSelection.filter((item) => item !== "All"));
     }
   };
-
   let tableData = [];
 
   if (customerFilteredBookings.length === 0) {

@@ -21,6 +21,7 @@ import DriverPortalHome from "../../../portals/driverportal/home/DriverPortalHom
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { useGetAllJobsQuery } from "../../../redux/api/jobsApi";
 import { STATIC_THEME_DATA } from "../../../constants/dashboardTabsData/data";
+import GoogleTranslateButton from "../../../utils/GoogleTranslateButton";
 
 const STATIC_THEME_KEY = "anonThemeClass";
 const STATIC_BOOKMARKS_KEY = "anonThemeBookmarks";
@@ -296,29 +297,6 @@ function Navbar() {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-  useEffect(() => {
-    const addGoogleTranslateScript = () => {
-      const script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.src =
-        '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-      document.body.appendChild(script);
-    };
-  
-    window.googleTranslateElementInit = () => {
-      new window.google.translate.TranslateElement(
-        {
-          pageLanguage: 'en',
-          includedLanguages: 'en,es,fr,de,hi,zh-CN,ar,pt', 
-          layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
-          autoDisplay: false,
-        },
-        'google_translate_element'
-      );
-    };
-  
-    addGoogleTranslateScript();
-  }, []);
 
   return (
     <>
@@ -469,8 +447,8 @@ function Navbar() {
               </div>
             )}
           </div>
-          <div id="google_translate_element" />
-
+          {/* Google button  */}
+          <GoogleTranslateButton />
           {/* Theme selector - only for admins */}
           {(isStaticMode || user?.role === "clientadmin" || user?.role === "superadmin") && (
             <div className="relative" ref={themeBtnRef}>
@@ -604,8 +582,8 @@ function Navbar() {
                           className="w-12 h-12 rounded-full object-cover"
                         />
                       )}
-                      <div className="min-w-0">
-                        <p className="font-semibold truncate">{displayName}</p>
+                      <div className="min-w-0 w-24">
+                        <p className="font-semibold truncate whitespace-nowrap">{displayName}</p>
                       </div>
                     </div>
 
