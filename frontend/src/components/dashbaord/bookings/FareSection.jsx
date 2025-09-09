@@ -120,11 +120,8 @@ const FareSection = ({
                   type="number"
                   step="0.01"
                   className="custom_input"
-                  value={
-                    fareDetails[key] === "" || fareDetails[key] === undefined
-                      ? ""
-                      : fareDetails[key]
-                  }
+                  value={fareDetails[key] ?? ""}
+
                   placeholder="0"
                   onChange={(e) =>
                     handleFareChange(key, e.target.value.trim())

@@ -10,6 +10,7 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isEmailLocked, setIsEmailLocked] = useState(false);
+  const [selectedPassengerObj, setSelectedPassengerObj] = useState(null);
 
   const user = useSelector((state) => state.auth.user);
   const role = user?.role;
@@ -44,12 +45,14 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
   );
 
   const handleSelect = (value) => {
-    setSelectedPassenger(value);
     const selected = combinedList.find((p) => buildDisplayValue(p) === value);
+    setSelectedPassenger(value);
+    setSelectedPassengerObj(selected || null);
+  
     if (selected) {
       setPassengerDetails((prev) => ({
         name: selected.name || selected.fullName || "",
-        email: isEmailLocked ? prev.email : (selected.email || ""),
+        email: isEmailLocked ? prev.email : selected.email || "",
         phone: selected.phone || "",
       }));
     } else {
@@ -61,20 +64,18 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
       }));
     }
   };
-
+  
   useEffect(() => {
-    const match = combinedList.find(
-      (p) =>
-        (p.name || p.fullName) === passengerDetails.name &&
-        p.email === passengerDetails.email &&
-        p.phone === passengerDetails.phone
-    );
-    if (!match) {
-      setSelectedPassenger("");
-    } else {
-      setSelectedPassenger(buildDisplayValue(match));
-    }
-  }, [passengerDetails, combinedList]);
+    if (!selectedPassengerObj) return;
+  
+    const normalize = (val) => (val || "").toLowerCase().trim();
+
+    const isSame =
+      normalize(selectedPassengerObj.name || selectedPassengerObj.fullName) === normalize(passengerDetails.name) &&
+      normalize(selectedPassengerObj.email) === normalize(passengerDetails.email) &&
+      normalize(selectedPassengerObj.phone) === normalize(passengerDetails.phone);
+ 
+  }, [passengerDetails, selectedPassengerObj]);
 
   useEffect(() => {
     if (role === "customer") {

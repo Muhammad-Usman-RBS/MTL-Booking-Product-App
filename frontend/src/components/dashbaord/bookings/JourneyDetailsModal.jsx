@@ -359,7 +359,7 @@ const dropIsAirport   = isAirport(j.dropoff);
 
         <div className="text-center">
           <div className="btn btn-primary text-sm px-5 py-1.5">
-            Fare:
+            Fare:&nbsp;
             <span className="text-base">
               {/* {loggedInUser.role === "driver" ? (
                 <>{viewData?.driverFare || viewData?.returnDriverFare} GBP</>
@@ -375,16 +375,12 @@ const dropIsAirport   = isAirport(j.dropoff);
                   {currencySymbol}
                   {Number(
                     viewData?.driverFare ?? viewData?.returnDriverFare ?? 0
-                  ).toFixed(2)}{" "}
+                  ).toFixed(2)}
                   {currencyCode}
                 </>
               ) : (
                 <>
-                  {currencySymbol}
-                  {Number(
-                    viewData?.primaryJourney?.fare ?? viewData?.returnJourneyFare ?? 0
-                  ).toFixed(2)}{" "}
-                  {currencyCode}
+                  {currencySymbol}{viewData?.returnJourneyToggle ? viewData?.returnJourneyFare : viewData?.journeyFare} {currencyCode}
                 </>
               )}
             </span>

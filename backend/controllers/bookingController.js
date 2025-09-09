@@ -1141,8 +1141,14 @@ if (req.user?.role === "clientadmin") {
           }
 
           if (assignedDriver) {
-            driverInfo = assignedDriver.DriverData || {};
-            vehicleInfo = assignedDriver.VehicleData || {};
+            driverInfo = {
+              ...(assignedDriver.DriverData || {}),
+              driverPicture:
+                assignedDriver?.UploadedData?.driverPicture || null,
+            };
+          
+            vehicleInfo = {...(assignedDriver.VehicleData  || {}),
+          vehiclePicture: assignedDriver?.UploadedData?.carPicture || null};
           } else {
             // Fallback from inline driver data on booking (if present)
             if (
@@ -1151,9 +1157,9 @@ if (req.user?.role === "clientadmin") {
               firstDriver.employeeNumber
             ) {
               driverInfo = {
-                firstName: firstDriver.name?.split(" ")[0] || "Your",
+                firstName: firstDriver.name?.split(" ")[0] || "Driver ",
                 surName:
-                  firstDriver.name?.split(" ").slice(1).join(" ") || "Driver",
+                  firstDriver.name?.split(" ").slice(1).join(" ") || "Details",
                 contact: firstDriver.contact || "",
                 email: firstDriver.email || null,
                 privateHireCardNo: firstDriver.pcoLicense || "-",

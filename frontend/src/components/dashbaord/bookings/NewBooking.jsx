@@ -227,7 +227,15 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       setHasChangedPrimaryLocations(checkPrimaryLocationsChanged());
     }
   }, [primaryJourneyData.pickup, dropOffs1]);
-
+  useEffect(() => {
+    if (editBookingData) {
+      setFareDetails((prev) => ({
+        ...prev,
+        journeyFare: editBookingData.journeyFare || "",
+        returnJourneyFare: editBookingData.returnJourneyFare || "",
+      }));
+    }
+  }, [editBookingData]);
   useEffect(() => {
     if (originalReturnLocations) {
       setHasChangedReturnLocations(checkReturnLocationsChanged());
@@ -418,9 +426,9 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       cardPaymentReference: cloned.cardPaymentReference || "",
       paymentGateway: cloned.paymentGateway || "",
       journeyFare: cloned.journeyFare,
-      driverFare: cloned.driverFare || 0,
-      returnJourneyFare: cloned.returnJourneyFare || 0,
-      returnDriverFare: cloned.returnDriverFare || 0,
+      driverFare: cloned.driverFare ,
+      returnJourneyFare: cloned.returnJourneyFare ,
+      returnDriverFare: cloned.returnDriverFare ,
       emailNotifications: {
         admin: cloned?.emailNotifications?.admin || false,
         customer: cloned?.emailNotifications?.customer || false,
@@ -436,7 +444,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
   useEffect(() => {
     if (primaryFare != null && !fareTouched.journey) {
-      setFareDetails((p) => ({ ...p, journeyFare: primaryFare }));
+      setFareDetails((p) => ({
+        ...p,
+        journeyFare: p.journeyFare || primaryFare, // Preserve existing journeyFare if already set
+      }));
     }
   }, [primaryFare, fareTouched.journey]);
 

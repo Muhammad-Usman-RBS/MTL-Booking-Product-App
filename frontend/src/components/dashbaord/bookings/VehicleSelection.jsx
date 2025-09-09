@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Icons from "../../../assets/icons";
 import { useGetAllVehiclesQuery } from "../../../redux/api/vehicleApi";
+import { toast } from "react-toastify";
 
 const VehicleSelection = ({
   setSelectedVehicle,
@@ -67,16 +68,22 @@ const VehicleSelection = ({
       checkinLuggage: 0,
     });
   };
-
   const handleSelectChange = (type, value) => {
-    const updated = {
+    const parsedValue = parseInt(value);
+    if (type === 'childSeat' && parsedValue > 0 && selections.passenger <= 1) {
+      toast.error("Child seats require at least 2 passengers");
+      return;
+    }
+    let updated = {
       ...selections,
-      [type]: parseInt(value),
+      [type]: parsedValue,
     };
+    if (type === 'passenger' && parsedValue <= 1) {
+      updated.childSeat = 0;
+    }
     setSelections(updated);
     setVehicleExtras(updated);
   };
-
   if (isLoading || !localSelectedVehicle) {
     return (
       <div className="text-center text-gray-500 py-10">

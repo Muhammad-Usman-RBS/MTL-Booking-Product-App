@@ -193,6 +193,27 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
     { label: "Tax", key: "tax" },
     { label: "Total Amount", key: "totalAmount" },
   ];
+
+  const calculateFare = (booking, invoiceType = "customer") => {
+    if (!booking) return 0;
+  
+    const { returnJourneyToggle } = booking;
+  
+    if (invoiceType === "customer") {
+      return returnJourneyToggle
+        ? booking.returnJourneyFare || 0
+        : booking.journeyFare || 0;
+    }
+  
+    if (invoiceType === "driver") {
+      return returnJourneyToggle
+        ? booking.returnDriverFare || 0
+        : booking.driverFare || 0;
+    }
+  
+    return 0;
+  };
+  
   const handleCustomerSelection = (newSelection) => {
     const wasAllSelected = selectedCustomers.includes("All");
     const isAllInNewSelection = newSelection.includes("All");
@@ -260,14 +281,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
         const items = bookings.map((booking) => {
           const taxType = bookingTaxes[booking._id] || "No Tax";
 
-          const fare =
-            invoiceType === "driver"
-              ? booking.returnJourneyToggle
-                ? booking.returnDriverFare || 0
-                : booking.driverFare || 0
-              : booking.returnJourney?.fare ||
-              booking.primaryJourney?.fare ||
-              0;
+          const fare = calculateFare(booking, invoiceType);
 
           const totalAmount = taxType === "Tax" ? fare * taxMultiplier : fare;
 
@@ -378,13 +392,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
       totalAmount: (() => {
         const taxType = bookingTaxes[item._id] || "No Tax";
 
-        const fare =
-          invoiceType === "driver"
-            ? item.returnJourneyToggle
-              ? item.returnDriverFare || 0
-              : item.driverFare || 0
-            : item.returnJourney?.fare || item.primaryJourney?.fare || 0;
-
+        const fare = calculateFare(item, invoiceType);
         return taxType === "Tax"
           ? (fare * taxMultiplier).toFixed(2)
           : fare.toFixed(2);
@@ -411,18 +419,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
         invoiceType === "driver"
           ? item?.drivers?.[0]?.name || "-"
           : item.passenger?.name || "-",
-
-      fare: (
-        <span>
-          {invoiceType === "driver"
-            ? item.returnJourneyToggle
-              ? item.returnDriverFare || 0
-              : item.driverFare || 0
-            : item.returnJourney
-              ? item.returnJourney.fare
-              : item.primaryJourney?.fare}
-        </span>
-      ),
+          fare: <span>{calculateFare(item, invoiceType)}</span>,
     }));
   }
   useEffect(() => {

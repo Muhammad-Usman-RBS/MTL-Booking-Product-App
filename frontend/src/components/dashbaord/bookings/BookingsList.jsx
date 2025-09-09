@@ -40,6 +40,10 @@ const BookingsList = () => {
     defaultColumns.journeyFare = false;
     defaultColumns.returnJourneyFare = false;
   }
+  if (user?.role === "customer") {
+    defaultColumns.driverFare = false;
+    defaultColumns.returnDriverFare = false;
+  }
   const ALL_STATUSES = [
     "New",
     "Accepted",
@@ -175,7 +179,11 @@ const BookingsList = () => {
       merged.journeyFare = false;
       merged.returnJourneyFare = false;
     }
-
+    if (user?.role === "customer") {
+      merged.driverFare = false;
+      merged.returnDriverFare = false;
+    }
+    
     return merged;
   });
 
@@ -289,25 +297,30 @@ const BookingsList = () => {
         heading="Column Visibility"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
-          {Object.keys(selectedColumns).map((key) => (
-            <label
-              key={key}
-              className="flex items-center gap-3 p-2 rounded-md cursor-pointer bg-white border border-gray-200 hover:bg-gray-50 transition"
-            >
-              <input
-                type="checkbox"
-                checked={!!selectedColumns[key]}
-                disabled={
-                  user?.role === "driver" &&
-                  (key === "journeyFare" || key === "returnJourneyFare")
-                }
-                onChange={(e) => handleColumnChange(key, e.target.checked)}
-                className="w-4 h-4 text-indigo-600 border-[var(--light-gray)] rounded focus:ring-indigo-500"
-              />
-
-              <span className="text-sm text-gray-800">{key}</span>
-            </label>
-          ))}
+        {Object.keys(selectedColumns)
+  .filter(
+    (key) =>
+      !(user?.role === "customer" &&
+        (key === "driverFare" || key === "returnDriverFare"))
+  )
+  .map((key) => (
+    <label
+      key={key}
+      className="flex items-center gap-3 p-2 rounded-md cursor-pointer bg-white border border-gray-200 hover:bg-gray-50 transition"
+    >
+      <input
+        type="checkbox"
+        checked={!!selectedColumns[key]}
+        disabled={
+          user?.role === "driver" &&
+          (key === "journeyFare" || key === "returnJourneyFare")
+        }
+        onChange={(e) => handleColumnChange(key, e.target.checked)}
+        className="w-4 h-4 text-indigo-600 border-[var(--light-gray)] rounded focus:ring-indigo-500"
+      />
+      <span className="text-sm text-gray-800">{key}</span>
+    </label>
+  ))}
         </div>
       </CustomModal>
 

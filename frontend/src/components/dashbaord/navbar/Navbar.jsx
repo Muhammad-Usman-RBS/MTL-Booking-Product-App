@@ -496,7 +496,7 @@ function Navbar() {
                           
                           
                             {/* Color preview */}
-                            <div className="flex space-x-3 gap-1">
+                            <div className="flex space-x-3 justify-center gap-1">
                               <div
                                 className="w-4 h-4 rounded-sm border border-gray-300 shadow-sm"
                                 style={{ backgroundColor: b?.themeSettings?.bg }}

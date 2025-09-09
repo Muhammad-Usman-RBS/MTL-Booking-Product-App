@@ -1180,8 +1180,7 @@ const BookingsTable = ({
     tableHeaders = allHeaders.filter(
       (header) =>
         header.key !== "driverFare" &&
-        header.key !== "returnDriverFare" &&
-        header.key !== "status"
+        header.key !== "returnDriverFare"
     );
   }
 
@@ -1997,7 +1996,11 @@ const BookingsTable = ({
               );
               break; // IMPORTANT: don't render dropdown
             }
-
+            if (user?.role === "customer") {
+              const displayStatus = item?.status || "No Show";
+              row[key] = <span className="text-gray-700">{displayStatus}</span>;
+              break;
+            }
             // Default: render status dropdown
             row[key] = (
               <SelectStatus

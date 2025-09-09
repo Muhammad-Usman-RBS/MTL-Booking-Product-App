@@ -75,9 +75,10 @@ export const driverStatusEmailTemplate = ({
     surName: driver?.surName || "Driver",
     contact: driver?.contact || "Will contact you shortly",
     pcoLicense: driver?.privateHireCardNo || "-",
+    picture: driver?.driverPicture,
     fullName: driver
       ? `${driver.firstName || ""} ${driver.surName || ""}`.trim() ||
-      "Your Driver"
+        "Your Driver"
       : "Your Driver",
   };
 
@@ -105,7 +106,9 @@ export const driverStatusEmailTemplate = ({
   const currentStatus = statusConfig[status] || statusConfig["On Route"];
   const journey = booking?.primaryJourney || booking?.returnJourney || {};
   const formatEmail = (email) => {
-    return email.replace('@', '&#8203;@&#8203;').replace(/\./g, '&#8203;.&#8203;');
+    return email
+      .replace("@", "&#8203;@&#8203;")
+      .replace(/\./g, "&#8203;.&#8203;");
   };
 
   const locationLine = (addr) => {
@@ -114,14 +117,20 @@ export const driverStatusEmailTemplate = ({
     const safeAddr = safe(String(addr).trim());
     const words = safeAddr.split(/\s+/);
     const lines = [];
-    for (let i = 0; i < words.length; i += 4) {
-      lines.push(words.slice(i, i + 4).join(" "));
+    for (let i = 0; i < words.length; i += 6) {
+      lines.push(words.slice(i, i + 6).join(" "));
     }
-    const [firstLine, ...restLines] = lines;
-    const restHtml = restLines.length ? `<br/>${restLines.join("<br/>")}` : "";
   
-    return `<strong>Location:</strong> ${firstLine}${restHtml}<br/>`;
+    const [firstLine, ...restLines] = lines;
+  
+    // Add tighter line-height to reduce space
+    const restHtml = restLines.length
+      ? `<div style="line-height:1.3;margin:0;padding:0;">${restLines.join("<br/>")}</div>`
+      : "";
+  
+    return `<strong style="color:${brand.primary}">Location:</strong> ${firstLine}${restHtml}`;
   };
+  
   return `<!doctype html>
 <html>
 <head>
@@ -139,29 +148,34 @@ export const driverStatusEmailTemplate = ({
   </style>
 </head>
 <body style="margin:0;padding:0;background:${brand.bg};">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${brand.bg
-    }">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${
+    brand.bg
+  }">
     <tr>
       <td align="center" style="padding:28px 16px">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px;max-width:600px;background:${brand.card
-    };border:1px solid ${brand.border};border-radius:16px;overflow:hidden">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px;max-width:600px;background:${
+          brand.card
+        };border:1px solid ${brand.border};border-radius:16px;overflow:hidden">
 
           <!-- Header -->
           <tr>
-            <td style="padding:0;background:linear-gradient(90deg, ${currentStatus.bg
-    }, #ffffff);border-bottom:1px solid ${brand.border}">
+            <td style="padding:0;background:linear-gradient(90deg, ${
+              currentStatus.bg
+            }, #ffffff);border-bottom:1px solid ${brand.border}">
               <table width="100%" role="presentation" style="padding:18px 22px">
                 <tr>
                   <td align="left" style="vertical-align:middle">
-                    ${org.logoUrl
-      ? `<img src="${safe(
-        org.logoUrl
-      )}"  width="90" style="display:block;max-width:180px;height:auto" alt="${safe(
-        org.name
-      )}" />`
-      : `<div style="font:800 18px/1 Arial,sans-serif;color:${brand.primary
-      }">${safe(org.name)}</div>`
-    }
+                    ${
+                      org.logoUrl
+                        ? `<img src="${safe(
+                            org.logoUrl
+                          )}"  width="90" style="display:block;max-width:180px;height:auto" alt="${safe(
+                            org.name
+                          )}" />`
+                        : `<div style="font:800 18px/1 Arial,sans-serif;color:${
+                            brand.primary
+                          }">${safe(org.name)}</div>`
+                    }
                   </td>
  <td align="right" style="vertical-align:middle">
  
@@ -179,9 +193,13 @@ export const driverStatusEmailTemplate = ({
   </span>
 </div>
  <div style="font:400 13px/2 Arial,sans-serif;color:${brand.muted}">
-   ${org.email ? `<strong>Email:</strong> ${formatEmail(safe(org.email))}<br/>` : ""}
+   ${
+     org.email
+       ? `<strong style="color:${brand.primary}">Email:</strong> ${formatEmail(safe(org.email))}<br/>`
+       : ""
+   }
 
-    ${org.phone ? `<strong>Phone:</strong> +${safe(org.phone)}<br/>` : ""}
+    ${org.phone ? `<strong style="color:${brand.primary}">Phone:</strong> +${safe(org.phone)}<br/>` : ""}
 ${org.address ? locationLine(org.address) : ""}  </div>
   </td>
  
@@ -193,23 +211,29 @@ ${org.address ? locationLine(org.address) : ""}  </div>
           <!-- Main Message -->
           <tr>
             <td class="px-22" style="padding:24px 22px 18px;text-align:start">
-              <div style="font:500 24px/1.3 Arial,sans-serif;color:${brand.primary
-    };margin:0 0 10px">${safe(currentStatus.text)}</div>
-              <div style="font:600 16px/1.5 Arial,sans-serif;color:${brand.accent
-    };margin:8px 0 0">Booking Reference: #${safe(
-      booking?.bookingId
-    )}</div>
+              <div style="font:500 24px/1.3 Arial,sans-serif;color:${
+                brand.primary
+              };margin:0 0 10px">${safe(currentStatus.text)}</div>
+              <div style="font:600 16px/1.5 Arial,sans-serif;color:${
+                brand.accent
+              };margin:8px 0 0">Booking Reference: #${safe(
+    booking?.bookingId
+  )}</div>
             </td>
           </tr>
 
           <!-- Journey Summary -->
           <tr>
             <td class="px-22" style="padding:0 22px 18px">
-              <table role="presentation" width="100%" style="border:1px solid ${brand.border
-    };border-radius:12px;padding:16px">
+              <table role="presentation" width="100%" style="background:${
+                brand.bg
+              };border:1px solid ${
+    brand.border
+  };border-radius:12px;padding:16px">
               <tr>
-        <td style="font:700 14px Arial,sans-serif;width:80px;color:${brand.primary
-    };padding-bottom:8px;white-space:nowrap">
+        <td style="font:700 14px Arial,sans-serif;width:80px;color:${
+          brand.primary
+        };padding-bottom:8px;white-space:nowrap">
         <div style="margin-bottom:10px;"> 
         Your Journey
         </div>  
@@ -218,179 +242,208 @@ ${org.address ? locationLine(org.address) : ""}  </div>
           <tr>
                   
 
-          <td style="color:${brand.muted
-    };font:600 13px Arial,sans-serif"><div style="margin-bottom:3px;"> From: </div></td>
-          <td style="color:${brand.primary
-    };font:400 13px Arial,sans-serif"><div style="margin-bottom:3px;">${safe(
-      journey?.pickup || "-"
-    )}</div></td>
+          <td style="color:${
+            brand.muted
+          };font:600 13px Arial,sans-serif"><div style="margin-bottom:15px;"> From: </div></td>
+          <td style="color:${
+            brand.primary
+          };font:400 13px Arial,sans-serif"><div>${safe(
+    journey?.pickup || "-"
+  )}</div></td>
 
           </tr>
           <tr>
-            <td style="padding:4px 8px 4px 0;color:${brand.muted
-    };width:80px;font:600 13px Arial,sans-serif"><div style="margin-bottom:3px;">To:</div></td>
-            <td style="padding:4px 0;color:${brand.primary
-    };font:400 13px Arial,sans-serif"> <div style="margin-bottom:3px;">${safe(
-      journey?.dropoff || "-"
-    )}</div></td>
+            <td style="padding:4px 8px 4px 0;color:${
+              brand.muted
+            };width:80px;font:600 13px Arial,sans-serif"><div style="margin-bottom:15px;">To:</div></td>
+            <td style="padding:4px 0;color:${
+              brand.primary
+            };font:400 13px Arial,sans-serif"> <div>${safe(
+    journey?.dropoff || "-"
+  )}</div></td>
           </tr>
             <tr>
-              <td style="padding:4px 8px 4px 0;color:${brand.muted
-    };width:80px;font:600 13px Arial,sans-serif"><div style="margin-bottom:3px;">Date:</div></td>
-              <td style="padding:4px 0;color:${brand.primary
-    };font:400 13px Arial,sans-serif"><div style="margin-bottom:3px;">${safe(
-      formatDateTime(journey)
-    )}</div></td>
+              <td style="padding:4px 8px 4px 0;color:${
+                brand.muted
+              };width:80px;font:600 13px Arial,sans-serif"><div style="margin-bottom:3px;">Date:</div></td>
+              <td style="padding:4px 0;color:${
+                brand.primary
+              };font:400 13px Arial,sans-serif"><div style="margin-bottom:2px;">${safe(
+    formatDateTime(journey)
+  )}</div></td>
             </tr>
 
               </table>
             </td>
           </tr>
 
-          <!-- Driver & Vehicle Info -->
-          <tr>
-            <td class="px-22" style="padding:0 22px 18px">
-              <table role="presentation" width="100%" class="grid" style="border-collapse:separate;border-spacing:0 12px">
-                <tr>
-                  <!-- Driver Info -->
-                  <td class="col" width="50%" valign="top" style="width:50%;padding-right:8px">
-                    <table role="presentation" width="100%" style="background:${brand.card
-    };border:1px solid ${brand.border};border-radius:12px;">
-                      <tr>
-                        <td style="font:700 14px Arial,sans-serif;color:${brand.primary
-    };padding:16px 16px 8px">Your Driver</td>
-                      </tr>
-                      <tr>
-<td style="padding:0 16px 16px;height:100%;vertical-align:top">
-                          <table role="presentation" width="100%">
-                            <tr>
-                              <td style="padding:4px 0;color:${brand.muted
-    };font:400 12px Arial,sans-serif">Name</td>
-                              <td style="padding:4px 0;color:${brand.primary
-    };font:600 12px Arial,sans-serif">${safe(
-      driverInfo.fullName
-    )}</td>
-                            </tr>
-                            <tr>
-                              <td style="padding:4px 0;color:${brand.muted
-    };font:400 12px Arial,sans-serif">Contact</td>
-                              <td style="padding:4px 0;color:${brand.primary
-    };font:600 12px Arial,sans-serif">${safe(
-      driverInfo.contact
-    )}</td>
-                            </tr>
-                            <tr>
-                              <td style="padding:4px 0;color:${brand.muted
-    };font:400 12px Arial,sans-serif">PCO License</td>
-                              <td style="padding:4px 0;color:${brand.primary
-    };font:600 12px Arial,sans-serif">${safe(
-      driverInfo.pcoLicense
-    )}</td>
-                            </tr>
-                            <tr>
-  <td style="padding:4px 0;color:${brand.muted
-    };font:400 12px Arial,sans-serif">&nbsp;</td>
-  <td style="padding:4px 0;color:${brand.primary
-    };font:600 12px Arial,sans-serif">&nbsp;</td>
+     <tr>
+  <td class="px-22" style="padding:0 22px 18px;">
+    <table role="presentation" width="100%" style="border:1px solid ${
+      brand.border
+    }; border-radius:12px; padding:16px; background:${brand.card};">
+      
+      <tr>
+        <td colspan="2">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <!-- Driver Image -->
+              <td valign="top" style="width:120px; padding-right:16px;">
+                ${
+                  driverInfo.picture
+                    ? `<img src="${safe(driverInfo.picture)}"
+                          alt="Driver Photo"
+                          style="width:100px;height:100px;border-radius:12px;object-fit:cover;border:1px solid ${
+                            brand.border
+                          };" />`
+                    : ""
+                }
+              </td>
+
+              <!-- Driver Details (Column) -->
+              <td valign="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td style="padding:4px 0;color:${
+                      brand.muted
+                    };font:400 12px Arial,sans-serif;">Name</td>
+                    <td style="padding:4px 0;color:${
+                      brand.primary
+                    };font:600 12px Arial,sans-serif;">${safe(
+    driverInfo.fullName
+  )}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:4px 0;color:${
+                      brand.muted
+                    };font:400 12px Arial,sans-serif;">Contact</td>
+                    <td style="padding:4px 0;color:${
+                      brand.primary
+                    };font:600 12px Arial,sans-serif;">${safe(
+    driverInfo.contact
+  )}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:4px 0;color:${
+                      brand.muted
+                    };font:400 12px Arial,sans-serif;">PCO License</td>
+                    <td style="padding:4px 0;color:${
+                      brand.primary
+                    };font:600 12px Arial,sans-serif;">${safe(
+    driverInfo.pcoLicense
+  )}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+    </table>
+  </td>
 </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
+ <!-- Vehicle Info -->
+ 
+  <tr>
+  <td class="px-22" style="padding:0 22px 18px;">
+    <table role="presentation" width="100%" style="border:1px solid ${
+      brand.border
+    }; border-radius:12px; padding:16px; background:${brand.card};">
+      
+      <!-- Vehicle Image + Details in a row -->
+      <tr>
+        <td colspan="2">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <!-- Vehicle Image -->
+              <td valign="top" style="width:120px; padding-right:16px;">
+                ${
+                  vehicle.vehiclePicture
+                    ? `<img src="${safe(vehicle.vehiclePicture)}"
+                          alt="Vehicle Photo"
+                          style="width:100px;height:100px;border-radius:12px;object-fit:cover;border:1px solid ${
+                            brand.border
+                          };" />`
+                    : ""
+                }
+              </td>
 
-                  <!-- Vehicle Info -->
-                  <td class="col" width="50%" valign="top" style="width:50%;padding-left:8px">
-                    <table role="presentation" width="100%" style="background:${brand.card
-    };border:1px solid ${brand.border
-    };border-radius:12px;height:100%;">
+              <!-- Vehicle Details (Vertical Column) -->
+              <td valign="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td style="padding:4px 0;color:${
+                      brand.muted
+                    };font:400 12px Arial,sans-serif;">Registration</td>
+                    <td style="padding:4px 0;color:${
+                      brand.primary
+                    };font:600 12px Arial,sans-serif;">${safe(
+    vehicleInfo.registration
+  )}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:4px 0;color:${
+                      brand.muted
+                    };font:400 12px Arial,sans-serif;">Make</td>
+                    <td style="padding:4px 0;color:${
+                      brand.primary
+                    };font:600 12px Arial,sans-serif;">${safe(
+    vehicleInfo.make
+  )}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:4px 0;color:${
+                      brand.muted
+                    };font:400 12px Arial,sans-serif;">Model</td>
+                    <td style="padding:4px 0;color:${
+                      brand.primary
+                    };font:600 12px Arial,sans-serif;">${safe(
+    vehicleInfo.model
+  )}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:4px 0;color:${
+                      brand.muted
+                    };font:400 12px Arial,sans-serif;">Color</td>
+                    <td style="padding:4px 0;color:${
+                      brand.primary
+                    };font:600 12px Arial,sans-serif;">${safe(
+    vehicleInfo.color
+  )}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-                      <tr>
-                        <td style="font:700 14px Arial,sans-serif;color:${brand.primary
-    };padding:16px 16px 8px">Your Vehicle</td>
-                      </tr>
-                      <tr>
-<td style="padding:0 16px 16px;height:100%;vertical-align:top">
-                          <table role="presentation" width="100%">
-                            <tr>
-                              <td style="padding:4px 0;color:${brand.muted
-    };font:400 12px Arial,sans-serif">Registration</td>
-                              <td style="padding:4px 0;color:${brand.primary
-    };font:600 12px Arial,sans-serif">${safe(
-      vehicleInfo.registration
-    )}</td>
-                            </tr>
-                            <tr>
-                              <td style="padding:4px 0;color:${brand.muted
-    };font:400 12px Arial,sans-serif">Make </td>
-                              <td style="padding:4px 0;color:${brand.primary
-    };font:600 12px Arial,sans-serif">${safe(
-      vehicleInfo.make
-    )}</td>
-                            </tr>
-                            <tr>
-                              <td style="padding:4px 0;color:${brand.muted
-    };font:400 12px Arial,sans-serif">Model </td>
-                              <td style="padding:4px 0;color:${brand.primary
-    };font:600 12px Arial,sans-serif">${safe(
-      vehicleInfo.model
-    )}</td>
-                            </tr>
-                            <tr>
-                              <td style="padding:4px 0;color:${brand.muted
-    };font:400 12px Arial,sans-serif">Color</td>
-                              <td style="padding:4px 0;color:${brand.primary
-    };font:600 12px Arial,sans-serif">${safe(
-      vehicleInfo.color
-    )}</td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+    </table>
+  </td>
+</tr>
 
-          <!-- Contact Info - Only show if we have actual driver contact -->
-          ${driver?.contact && driver.contact !== "Will contact you shortly"
-      ? `
-          <tr>
-            <td class="px-22" style="padding:0 22px 18px">
-              <table role="presentation" width="100%" style="background:${brand.bg
-      };border:1px solid ${brand.border
-      };border-radius:12px;padding:16px;text-align:center">
-                <tr>
-                  <td style="font:400 14px/1.6 Arial,sans-serif;color:${brand.primary
-      }">
-                    Need to contact your driver?<br/>
-                    <a href="tel:${safe(driver.contact)}" style="color:${brand.accent
-      };text-decoration:none;font-weight:600">${safe(
-        driver.contact
-      )}</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>`
-      : ``
-    }
 
+         
            <!-- Footer with company info -->
-          <tr>
-            <td style="padding:20px 24px;border-top:1px solid ${brand.border
-    };background:#FAFAFA">
-              <div style="font:700 16px/1.4 Arial,sans-serif;color:${brand.primary
-    };margin-bottom:8px">${safe(org.name)}</div>
-            
-              <div style="font:400 11px/1.5 Arial,sans-serif;color:#9CA3AF;margin-top:16px;padding-top:12px;border-top:1px solid ${brand.border
-    }">
-                This is an automated confirmation email. Please keep this for your records.
-              </div>
-            </td>
-          </tr>
+ <tr>
+  <td style="padding:20px 24px;border-top:1px solid ${brand.border};background:#FAFAFA; text-align:center;">
+    
+    <div style="font:700 16px/1.4 Arial,sans-serif;color:${brand.primary};margin-bottom:3px;">
+      ${safe(org.name)}
+    </div>
+    
+    <div style="display:inline-flex;align-items:center;justify-content:center; Arial,sans-serif;color:#9CA3AF;">
+      <span style="font:500 16px">Need to contact the company?</span>
+      <a href="tel:${safe(driver.contact)}"
+         style="margin-left:8px;color:${brand.accent};text-decoration:none;font-weight:600;">
+        +${safe(org.phone)}
+      </a>
+    </div>
+
+  </td>
+</tr>
+
 
 
         </table>
