@@ -1,113 +1,69 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema(
-  {
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true, // removes spaces automatically
-      lowercase: true, // email ko lowercase store karega
-    },
+const VerificationSchema = new mongoose.Schema({
+  otpHash: { type: String, required: true },
+  otpExpiresAt: { type: Date, required: true },
+  attempts: { type: Number, default: 0, min: 0, max: 5 },
+  lastSentAt: { type: Date, default: Date.now },
+  // NEW: store temp plain password only till verification
+  tempPassword: { type: String },
+}, { _id: false });
 
-    password: {
-      type: String,
-      required: true,
-      minlength: 6, // Password validation
-    },
+const EMAIL_MAX = 254;
+const EMAIL_RE = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
-    fullName: {
-      type: String,
-      trim: true,
-    },
-
-    otpCode: { type: String },
-    otpExpiresAt: { type: Date },
-
-    role: {
-      type: String,
-      enum: [
-        "superadmin",
-        "clientadmin",
-        "staffmember",
-        "associateadmin",
-        "driver",
-        "customer",
-        "demo",
-      ], // Full roles
-      default: "customer",
-    },
-
-    status: {
-      type: String,
-      enum: ["Active", "Pending", "Suspended", "Deleted"],
-      default: "Active",
-    },
-
-    permissions: {
-      type: [String],
-      default: ["Home"],
-    },
-
-    profileImage: {
-      type: String,
-      default: "",
-    },
-
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
-
-    associateAdminLimit: {
-      type: Number,
-      enum: [0, 5, 10, 15],
-      default: 0,
-    },
-
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-
-    loginHistory: [
-      {
-        loginAt: {
-          type: Date,
-          default: Date.now,
-        },
-        systemIpAddress: {
-          type: String,
-        },
-        location: {
-          type: String,
-        },
-      },
-    ],
-    employeeNumber: {
-      type: String,
-      default: null,
-    },
-    vatnumber: {
-      type: String,
-      default: null,
-    },
-
-    // ✅ Google Calendar credentials per user
-    googleCalendar: {
-      access_token: { type: String },
-      refresh_token: { type: String },
-      calendarId: { type: String },
-    },
-
-    googleAuthTransactionId: {
-      type: String,
-      default: null,
-      index: true,
-    },
+const userSchema = new mongoose.Schema({
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    lowercase: true,
+    maxlength: EMAIL_MAX,
+    validate: { validator: v => EMAIL_RE.test(v || ""), message: "Invalid email" },
   },
-  { timestamps: true }
-);
+  password: {
+    type: String,
+    required: true,
+    minlength: 6,
+    select: false,
+  },
+  fullName: { type: String, trim: true, required: true },
+
+  role: {
+    type: String,
+    enum: ["superadmin", "clientadmin", "staffmember", "associateadmin", "driver", "customer", "demo"],
+    default: "customer",
+  },
+  status: {
+    type: String,
+    enum: ["Active", "Pending", "Suspended", "Deleted"],
+    default: "Pending",
+  },
+
+  permissions: { type: [String], default: ["Home"] },
+
+  profileImage: { type: String, default: "" },
+  companyId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+  associateAdminLimit: { type: Number, enum: [0, 3, 5, 10], default: 0 },
+
+  googleCalendar: {
+    access_token: { type: String, select: false },
+    refresh_token: { type: String, select: false },
+    calendarId: { type: String },
+  },
+  googleAuthTransactionId: { type: String, default: null, index: true },
+
+  loginHistory: [{
+    loginAt: { type: Date, default: Date.now },
+    systemIpAddress: String,
+    location: String,
+  }],
+
+  verification: { type: VerificationSchema, default: undefined },
+  verifiedAt: { type: Date },
+}, { timestamps: true });
 
 export default mongoose.model("User", userSchema);

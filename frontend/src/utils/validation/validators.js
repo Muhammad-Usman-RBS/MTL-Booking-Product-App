@@ -1,0 +1,159 @@
+// const EMAIL_MAX = 254;
+
+// export const isEmpty = (v) =>
+//     v === undefined || v === null || String(v).trim() === "";
+
+// export const isValidEmail = (email) => {
+//     if (isEmpty(email)) return false;
+//     if (email.length > EMAIL_MAX) return false;
+//     const re = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+//     return re.test(email);
+// };
+
+// export const isValidPassword = (pw) => {
+//     if (isEmpty(pw)) return false;
+//     // must include lowercase, uppercase, number, special char, and be 8–16 chars long
+//     const re =
+//         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,16}$/;
+//     return re.test(pw);
+// };
+
+// export function validateUserAccount(data, { isEdit = false } = {}) {
+//     const errors = {};
+
+//     if (isEmpty(data.role)) errors.role = "Type is required.";
+//     if (isEmpty(data.fullName)) errors.fullName = "Full Name is required.";
+
+//     if (isEmpty(data.email)) errors.email = "Email is required.";
+//     else if (!isValidEmail(data.email))
+//         errors.email = `Enter a valid email (max ${EMAIL_MAX} chars).`;
+
+//     if (isEmpty(data.status)) errors.status = "Status is required.";
+
+//     if (!isEdit && data.role === "clientadmin") {
+//         if (!isValidPassword(data.password))
+//             errors.password =
+//                 "Password must be 8–16 chars with uppercase, lowercase, number & special character.";
+//     } else if (!isEmpty(data.password) && !isValidPassword(data.password)) {
+//         errors.password =
+//             "Password must be 8–16 chars with uppercase, lowercase, number & special character.";
+//     }
+
+//     return { errors, isValid: Object.keys(errors).length === 0 };
+// }
+
+
+
+
+
+
+
+
+// ===== Common Validators =====
+export const EMAIL_MAX = 254;
+
+export const isEmpty = (v) =>
+    v === undefined || v === null || String(v).trim() === "";
+
+export const isValidEmail = (email) => {
+    if (isEmpty(email)) return false;
+    if (email.length > EMAIL_MAX) return false;
+    const re = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+    return re.test(email);
+};
+
+export const isValidPassword = (pw) => {
+    if (isEmpty(pw)) return false;
+    // must include lowercase, uppercase, number, special char, and be 8–16 chars long
+    const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,16}$/;
+    return re.test(pw);
+};
+
+export const isValidPhone = (val) => {
+    if (isEmpty(val)) return false;
+    // keep simple: allow 8–15 digits ignoring non-digits
+    const digits = String(val).replace(/\D/g, "");
+    return digits.length >= 8 && digits.length <= 15;
+};
+
+export const isValidUrl = (url) => {
+    if (isEmpty(url)) return false;
+    try {
+        // allow http/https only
+        const u = new URL(url);
+        return ["http:", "https:"].includes(u.protocol);
+    } catch {
+        return false;
+    }
+};
+
+// ===== Existing: User validation (unchanged) =====
+export function validateUserAccount(data, { isEdit = false } = {}) {
+    const errors = {};
+
+    if (isEmpty(data.role)) errors.role = "Type is required.";
+    if (isEmpty(data.fullName)) errors.fullName = "Full Name is required.";
+
+    if (isEmpty(data.email)) errors.email = "Email is required.";
+    else if (!isValidEmail(data.email))
+        errors.email = `Enter a valid email (max ${EMAIL_MAX} chars).`;
+
+    if (isEmpty(data.status)) errors.status = "Status is required.";
+
+    if (!isEdit && data.role === "clientadmin") {
+        if (!isValidPassword(data.password))
+            errors.password =
+                "Password must be 8–16 chars with uppercase, lowercase, number & special character.";
+    } else if (!isEmpty(data.password) && !isValidPassword(data.password)) {
+        errors.password =
+            "Password must be 8–16 chars with uppercase, lowercase, number & special character.";
+    }
+
+    return { errors, isValid: Object.keys(errors).length === 0 };
+}
+
+// ===== New: Company validation =====
+// NOTE: per your request, profileImage and licensedBy are NOT required.
+// Everything else is required.
+export function validateCompanyAccount(data) {
+    const errors = {};
+
+    if (isEmpty(data.companyName))
+        errors.companyName = "Company Name is required.";
+
+    if (isEmpty(data.tradingName))
+        errors.tradingName = "Trading Name is required.";
+
+    if (isEmpty(data.email)) errors.email = "Email is required.";
+    else if (!isValidEmail(data.email))
+        errors.email = "Enter a valid email.";
+
+    if (isEmpty(data.contact)) errors.contact = "Contact is required.";
+    else if (!isValidPhone(data.contact))
+        errors.contact = "Enter a valid phone number.";
+
+    // licensedBy is optional -> no error
+
+    if (isEmpty(data.licenseNumber) && data.licenseNumber !== 0)
+        errors.licenseNumber = "License Number is required.";
+    else if (Number.isNaN(Number(data.licenseNumber)) || Number(data.licenseNumber) <= 0)
+        errors.licenseNumber = "License Number must be a positive number.";
+
+    if (isEmpty(data.referrerLink))
+        errors.referrerLink = "License Referrer Link is required.";
+    else if (!isValidUrl(data.referrerLink))
+        errors.referrerLink = "Enter a valid URL (http/https).";
+
+    if (isEmpty(data.clientAdminId))
+        errors.clientAdminId = "Please select an admin.";
+
+    if (isEmpty(data.cookieConsent))
+        errors.cookieConsent = "Cookie Consent is required.";
+
+    if (isEmpty(data.address))
+        errors.address = "Company Address is required.";
+
+    // profileImage is optional -> no error
+
+    return { errors, isValid: Object.keys(errors).length === 0 };
+}

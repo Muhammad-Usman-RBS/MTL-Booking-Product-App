@@ -188,7 +188,7 @@ const CustomTable = ({
       >
         <table className="w-full min-w-[700px] border border-gray-200 text-xs sm:text-sm">
           <thead>
-            <tr className="bg-gray-100 text-gray-700">
+            <tr className="bg-[#e7eff0]">
               {combinedOrder
                 .map(headerByKey)
                 .filter(Boolean)
@@ -230,7 +230,7 @@ const CustomTable = ({
                     col.key &&
                     !fixedStartCols.includes(col.key) &&
                     !fixedEndCols.includes(col.key)
-                      ? "cursor-move bg-[#e7eff0] text-dark transition"
+                      ? "cursor-move text-dark transition"
                       : "cursor-default"
                   }`}
                   title={

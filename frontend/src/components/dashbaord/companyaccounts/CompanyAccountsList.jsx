@@ -1,15 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  useFetchAllCompaniesQuery,
-  useSendCompanyEmailMutation,
-  useDeleteCompanyAccountMutation,
-} from "../../../redux/api/companyApi";
-import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
+import CustomTable from "../../../constants/constantscomponents/CustomTable";
+import { useFetchAllCompaniesQuery, useSendCompanyEmailMutation, useDeleteCompanyAccountMutation } from "../../../redux/api/companyApi";
+import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
+import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHeading";
 import "react-toastify/dist/ReactToastify.css";
 import IMAGES from "../../../assets/images";
 import Icons from "../../../assets/icons";
@@ -114,10 +110,12 @@ const CompanyAccountsList = () => {
     <>
       {!selectedAccount ? (
         <>
-          <OutletHeading name="Company Accounts" />
-          <Link to="/dashboard/company-accounts/new">
-            <button className="btn btn-edit mb-4">Add New</button>
-          </Link>
+          <OutletBtnHeading
+            name="Company Accounts"
+            buttonLabel="+ Add New"
+            buttonLink="/dashboard/company-accounts/new"
+            buttonBg="btn btn-reset"
+          />
 
           <CustomTable
             tableHeaders={tableHeaders}
@@ -131,14 +129,125 @@ const CompanyAccountsList = () => {
         </>
       ) : (
         <>
-          <div className="flex justify-between items-center mb-6">
-            <OutletHeading name="Company Account Details" />
+          <OutletBtnHeading
+            name="Company Account Details"
+            buttonLabel="Send Email"
+            buttonBg="btn btn-primary"
+            onButtonClick={handleConfirmSendEmail}
+          />
+          <div id="invoiceToDownload" style={{ width: "100%", padding: "16px", backgroundColor: "#ffffff" }}>
+            {/* Profile image */}
+            <div style={{ display: "flex", marginBottom: "24px" }}>
+              <div style={{ position: "relative", width: "112px", height: "112px" }}>
+                <img
+                  src={
+                    selectedAccount.profileImage?.startsWith("http")
+                      ? selectedAccount.profileImage
+                      : selectedAccount.profileImage
+                        ? `http://localhost:5000/${selectedAccount.profileImage}`
+                        : IMAGES.dummyImg
+                  }
+                  alt="Profile"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    border: "4px solid #2563EB", // main-color
+                    objectFit: "cover",
+                    boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
+                  }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    right: 0,
+                    backgroundColor: "#2563EB", // main-color
+                    padding: "4px",
+                    border: "2px solid #fff",
+                    borderRadius: "4px",
+                  }}
+                >
+                  <svg
+                    style={{ width: "16px", height: "16px", color: "#fff" }}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586l-3.293-3.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Details grid */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                gap: "16px",
+                marginBottom: "24px",
+              }}
+            >
+              {[
+                { label: "Company ID", value: selectedAccount._id },
+                { label: "Company Name", value: selectedAccount.companyName },
+                { label: "Trading Name", value: selectedAccount.tradingName },
+                { label: "Owner Name", value: selectedAccount.fullName },
+                { label: "Company Email", value: selectedAccount.email },
+                {
+                  label: "Phone",
+                  value: selectedAccount.contact?.startsWith("+")
+                    ? selectedAccount.contact
+                    : `+${selectedAccount.contact}`,
+                },
+                { label: "License Number", value: selectedAccount.licenseNumber },
+                { label: "License Referrer Link", value: selectedAccount.referrerLink },
+                { label: "Cookie Consent", value: selectedAccount.cookieConsent },
+                {
+                  label: "Created At",
+                  value: selectedAccount?.createdAt
+                    ? moment(selectedAccount.createdAt).tz(timezone).format("DD/MM/YYYY HH:mm:ss")
+                    : "N/A",
+                },
+                { label: "Company Address", value: selectedAccount.address },
+              ].map(({ label, value }) => (
+                <div
+                  key={label}
+                  style={{
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #e5e7eb",
+                    padding: "12px 16px",
+                    borderRadius: "8px",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                    transition: "all 0.2s ease",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: "11px",
+                      textTransform: "uppercase",
+                      color: "#6b7280",
+                      letterSpacing: "0.05em",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    {label}
+                  </p>
+                  <p style={{ color: "#1f2937", fontWeight: 600, fontSize: "14px" }}>
+                    {value || "N/A"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end items-center mb-6">
             <div className="flex gap-2">
               <button
                 onClick={() =>
                   downloadPDF(
                     "invoiceToDownload",
-                    `Company-${selectedAccount.companyName}.pdf`
+                    `Company-${selectedAccount.companyName || "Account"}.pdf`
                   )
                 }
                 className="btn btn-reset"
@@ -146,91 +255,11 @@ const CompanyAccountsList = () => {
                 Download PDF
               </button>
               <button
-                onClick={handleConfirmSendEmail}
-                className="btn btn-success"
-              >
-                Send Email
-              </button>
-              <button
                 onClick={() => setSelectedAccount(null)}
                 className="btn btn-cancel"
               >
                 Close
               </button>
-            </div>
-          </div>
-          <div className="w-full max-w-2xl mx-auto px-4">
-            <div
-              id="invoiceToDownload"
-              className="bg-white px-6 py-6 rounded-lg shadow-sm border border-gray-200"
-            >
-              <div className="flex justify-center mb-6 mt-4">
-                <div className="relative w-28 h-28">
-                  <img
-                    src={
-                      selectedAccount.profileImage?.startsWith("http")
-                        ? selectedAccount.profileImage
-                        : selectedAccount.profileImage
-                          ? `http://localhost:5000/${selectedAccount.profileImage}`
-                          : IMAGES.dummyImg
-                    }
-                    alt="Profile"
-                    className="w-full h-full rounded-full border-4 border-[var(--main-color)] object-cover shadow-lg"
-                  />
-                  <div className="absolute bottom-0 right-0 bg-[var(--main-color)] p-1 rounded-full border-white border">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586l-3.293-3.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 mb-6">
-                {[
-                  { label: "Company ID", value: selectedAccount._id },
-                  { label: "Company Name", value: selectedAccount.companyName },
-                  { label: "Trading Name", value: selectedAccount.tradingName },
-                  { label: "Owner Name", value: selectedAccount.fullName },
-                  { label: "Company Email", value: selectedAccount.email },
-                  {
-                    label: "Phone",
-                    value: selectedAccount.contact?.startsWith("+")
-                      ? selectedAccount.contact
-                      : `+${selectedAccount.contact}`,
-                  },
-                  { label: "License Number", value: selectedAccount.licenseNumber },
-                  {
-                    label: "License Referrer Link",
-                    value: selectedAccount.referrerLink,
-                  },
-                  { label: "Cookie Consent", value: selectedAccount.cookieConsent },
-                  {
-                    label: "Created At",
-                    value: selectedAccount?.createdAt
-                      ? moment(selectedAccount.createdAt)
-                        .tz(timezone)
-                        .format("DD/MM/YYYY HH:mm:ss")
-                      : "N/A",
-                  },
-                  { label: "Company Address", value: selectedAccount.address },
-                ].map(({ label, value }) => (
-                  <div
-                    key={label}
-                    className="bg-white border border-gray-200 py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-                      {label}
-                    </p>
-                    <p className="text-gray-800 font-semibold">
-                      {value || "N/A"}
-                    </p>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </>

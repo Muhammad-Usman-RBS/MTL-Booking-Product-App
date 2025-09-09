@@ -1,7 +1,7 @@
 import React from "react";
+import Icons from "../../../assets/icons";
 import { useSelector } from "react-redux";
 import { useGetCompanyByIdQuery } from "../../../redux/api/companyApi";
-import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
 const ViewCompany = () => {

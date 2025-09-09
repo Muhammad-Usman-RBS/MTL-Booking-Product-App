@@ -3,6 +3,7 @@ import Company from "../models/Company.js";
 import User from "../models/User.js";
 import sendEmail from "../utils/sendEmail.js";
 import { initializeDefaultThemes } from "./settings/themeController.js";
+import companyAccountEmailTemplate from "../utils/company/companyAccountEmailTemplate.js";
 
 export const createCompanyAccount = async (req, res) => {
   try {
@@ -201,24 +202,24 @@ export const sendCompanyEmail = async (req, res) => {
   const { email, company } = req.body;
 
   if (!email || !company) {
-    return res
-      .status(400)
-      .json({ message: "Email and company data required." });
+    return res.status(400).json({ message: "Email and company data required." });
   }
+
   try {
-    const {
-      _id,
-      clientAdminId,
-      __v,
-      createdAt,
-      updatedAt,
-      ...sanitizedCompany
-    } = company;
-    await sendEmail(email, "📬 Company Account Details", {
-      title: "Company Account Details",
-      subtitle: "Please find the details of your company account below.",
-      data: sanitizedCompany,
+    const baseUrl =
+      process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`;
+
+    // ✅ Build pretty HTML with full details
+    const html = companyAccountEmailTemplate({
+      company,
+      options: {
+        baseUrl,                        // to resolve /uploads/... into absolute URL
+        primaryColor: "#0F172A",
+        accentColor: "#2563EB",
+      },
     });
+
+    await sendEmail(email, "🏢 Company Account Details", { html });
 
     res.status(200).json({ message: "Email sent successfully." });
   } catch (error) {

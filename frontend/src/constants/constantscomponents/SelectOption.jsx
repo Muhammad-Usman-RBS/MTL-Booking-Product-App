@@ -21,7 +21,7 @@ const SelectOption = ({ options, label, width = "full", value, onChange }) => {
       )}
       <div className="relative">
         <select
-          value={value}
+          value={value?.toString() || ""}
           onChange={onChange}
           onFocus={() => setIsOpen(true)}
           onBlur={() => setIsOpen(false)}
@@ -29,9 +29,6 @@ const SelectOption = ({ options, label, width = "full", value, onChange }) => {
         >
           <option disabled value="">Select</option>
           {Array.isArray(options) && options.map((option, idx) => (
-            // <option key={idx} value={option}>
-            //   {option}
-            // </option>
             <option key={idx} value={option.value || option}>
               {option.label || option}
             </option>

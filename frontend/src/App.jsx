@@ -25,6 +25,7 @@ import CompanyAccountsList from "./components/dashbaord/companyaccounts/CompanyA
 import CustomersList from "./components/dashbaord/customers/CustomersList";
 import AdminList from "./components/dashbaord/adminlist/AdminList";
 import NewAdminUser from "./components/dashbaord/adminlist/NewAdminUser";
+import VerificationUser from "./components/dashbaord/adminlist/VerificationUser";
 
 import General from "./components/dashbaord/pricing/General";
 import VehiclePricing from "./components/dashbaord/pricing/VehiclePricing";
@@ -137,6 +138,7 @@ function App() {
               <Route path="admin-list" element={<AdminList />} />
               <Route path="admin-list/add-user" element={<NewAdminUser />} />
               <Route path="admin-list/edit/:id" element={<NewAdminUser />} />
+              <Route path="admin-list/verify-user" element={<VerificationUser />} />
 
               {/* Invoices */}
               <Route path="invoices/list" element={<InvoicesList />} />

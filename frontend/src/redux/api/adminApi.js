@@ -1,119 +1,104 @@
-import { apiSlice } from '../slices/apiSlice';
+import { apiSlice } from "../slices/apiSlice";
 
 export const adminApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // Fetch all client admins
-    fetchClientAdmins: builder.query({
-      query: () => ({
-        url: "/create-clientadmin",
-        method: "GET",
-      }),
-      providesTags: ["ClientAdmins"],
+
+    // ===== OTP FLOW (Create User -> Verification User) =====
+    initiateUserVerification: builder.mutation({
+      query: (payload) => ({ url: "/users/initiate-verification", method: "POST", body: payload }),
+      // verification start pe koi list change nahi ho rahi
+    }),
+    verifyUserOtp: builder.mutation({
+      query: ({ transactionId, otp }) => ({ url: "/users/verify-otp", method: "POST", body: { transactionId, otp } }),
+      // verify ke baad actual user create hota hai -> lists ko refresh karo
+      invalidatesTags: ["Users", "ClientAdmins", "Drivers", "Customers", "AssociateAdmins"],
+    }),
+    resendUserOtp: builder.mutation({
+      query: ({ transactionId }) => ({ url: "/users/resend-otp", method: "POST", body: { transactionId } }),
     }),
 
-    // 🔥 NEW: Fetch associate admins for a given clientadmin (createdBy) and optional companyId filter
-    // Backend route example options (pick the one you actually implemented):
-    //  - /admins/associates?createdBy=<id>&companyId=<id>
-    //  - /get-associate-admins?createdBy=<id>&companyId=<id>
-    // If your baseQuery supports "params", you can use { params: { createdBy, companyId } }.
+    // ===== CLIENT ADMINS =====
+    fetchClientAdmins: builder.query({
+      query: () => ({ url: "/create-clientadmin", method: "GET" }),
+      providesTags: ["ClientAdmins"],
+    }),
+    createClientAdmin: builder.mutation({
+      query: (payload) => ({ url: "/create-clientadmin", method: "POST", body: payload }),
+      invalidatesTags: ["ClientAdmins", "Users"],
+    }),
+    updateClientAdmin: builder.mutation({
+      query: ({ adminId, payload }) => ({ url: `/create-clientadmin/${adminId}`, method: "PUT", body: payload }),
+      invalidatesTags: ["ClientAdmins", "Users"],
+    }),
+    deleteClientAdmin: builder.mutation({
+      query: (adminId) => ({ url: `/create-clientadmin/${adminId}`, method: "DELETE" }),
+      invalidatesTags: ["ClientAdmins", "Users"],
+    }),
+    updateClientAdminStatus: builder.mutation({
+      query: ({ adminId, newStatus }) => ({ url: `/create-clientadmin/${adminId}`, method: "PUT", body: { status: newStatus } }),
+      invalidatesTags: ["ClientAdmins", "Users"],
+    }),
+
+    // ===== ASSOCIATE ADMINS =====
     fetchAssociateAdmins: builder.query({
       query: ({ createdBy, companyId }) => {
         const q = new URLSearchParams();
         if (createdBy) q.set("createdBy", createdBy);
         if (companyId) q.set("companyId", companyId);
-        return {
-          url: `/admins/associates?${q.toString()}`, // <-- adjust path if your server uses a different one
-          method: "GET",
-        };
+        return { url: `/admins/associates?${q.toString()}`, method: "GET" };
       },
       providesTags: ["AssociateAdmins"],
     }),
 
+    // ===== ALL USERS =====
     getAllUsers: builder.query({
-      query: () => ({
-        url: "get-All-Users",
-        method: "GET",
-      }),
-      providesTags: ["Users"]
+      query: () => ({ url: "get-All-Users", method: "GET" }),
+      providesTags: ["Users"],
     }),
 
-    // Get all drivers
+    // ===== DRIVERS =====
     adminGetAllDrivers: builder.query({
-      query: () => ({
-        url: "/get-all-drivers",
-        method: "GET",
-      }),
+      query: () => ({ url: "/get-all-drivers", method: "GET" }),
       providesTags: ["Drivers"],
     }),
 
-    // Get all customers
+    // ===== CUSTOMERS =====
     getAllCustomers: builder.query({
-      query: () => ({
-        url: "/get-all-customers",
-        method: "GET",
-      }),
+      query: () => ({ url: "/get-all-customers", method: "GET" }),
       providesTags: ["Customers"],
     }),
 
-    // Create new client admin
-    createClientAdmin: builder.mutation({
-      query: (payload) => ({
-        url: "/create-clientadmin",
-        method: "POST",
-        body: payload,
-      }),
-      invalidatesTags: ["ClientAdmins"],
-    }),
-
-    // Update client admin
-    updateClientAdmin: builder.mutation({
-      query: ({ adminId, payload }) => ({
-        url: `/create-clientadmin/${adminId}`,
-        method: "PUT",
-        body: payload,
-      }),
-      invalidatesTags: ["ClientAdmins"],
-    }),
-
-    // Delete client admin
-    deleteClientAdmin: builder.mutation({
-      query: (adminId) => ({
-        url: `/create-clientadmin/${adminId}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: ["ClientAdmins"],
-    }),
-
-    // Update client admin status
-    updateClientAdminStatus: builder.mutation({
-      query: ({ adminId, newStatus }) => ({
-        url: `/create-clientadmin/${adminId}`,
-        method: "PUT",
-        body: { status: newStatus },
-      }),
-      invalidatesTags: ["ClientAdmins"],
-    }),
-
-    // Create Customer Via Widget
+    // ===== PUBLIC: CREATE CUSTOMER VIA WIDGET =====
     createCustomerViaWidget: builder.mutation({
-      query: (payload) => ({
-        url: "/create-customer",
-        method: "POST",
-        body: payload,
-      }),
+      query: (payload) => ({ url: "/create-customer", method: "POST", body: payload }),
+      invalidatesTags: ["Customers", "Users"],
     }),
   }),
 });
 
 export const {
-  useGetAllUsersQuery,
+  // OTP
+  useInitiateUserVerificationMutation,
+  useVerifyUserOtpMutation,
+  useResendUserOtpMutation,
+
+  // Client Admins
   useFetchClientAdminsQuery,
-  useFetchAssociateAdminsQuery, // ⬅️ NEW EXPORT
   useCreateClientAdminMutation,
   useUpdateClientAdminMutation,
   useDeleteClientAdminMutation,
   useUpdateClientAdminStatusMutation,
+
+  // Associate Admins
+  useFetchAssociateAdminsQuery,
+
+  // Users
+  useGetAllUsersQuery,
+
+  // Drivers
   useAdminGetAllDriversQuery,
+
+  // Customers
   useGetAllCustomersQuery,
   useCreateCustomerViaWidgetMutation,
 } = adminApi;

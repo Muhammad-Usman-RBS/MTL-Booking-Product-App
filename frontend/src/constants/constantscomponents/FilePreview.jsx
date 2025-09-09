@@ -61,10 +61,17 @@ const FilePreview = ({
 
     // Render no file uploaded box
     const renderNoFile = () => (
-        <div className="w-36 h-36 border border-dashed border-[var(--light-gray)] flex items-center justify-center text-gray-500 text-xs font-light">
-            No File Uploaded
+        <div className="w-36 h-36 border border-dashed border-[var(--light-gray)] flex flex-col items-center justify-center text-gray-500 text-xs font-light p-2">
+            {/* Placeholder image/icon */}
+            <img
+                src="https://cdn-icons-png.flaticon.com/512/685/685686.png"
+                alt="No file"
+                className="w-10 h-10 mb-2 opacity-60"
+            />
+            <span>No File Uploaded</span>
         </div>
     );
+
 
     // Main preview logic
     let previewContent = null;
@@ -96,6 +103,9 @@ const FilePreview = ({
                     </label>
                 </div>
             </div>
+            <p className="text-[11px] text-slate-500 mt-2">
+                Accepted: PNG, JPG, JPEG, PDF(Max 5MB).
+            </p>
         </div>
     );
 };

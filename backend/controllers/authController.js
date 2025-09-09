@@ -131,7 +131,7 @@ export const sendOtpToEmail = async (req, res) => {
   if (!user) return res.status(404).json({ message: "User not found" });
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+  const expires = new Date(Date.now() + 2 * 60 * 1000); // 10 mins
 
   user.otpCode = otp;
   user.otpExpiresAt = expires;
@@ -140,7 +140,7 @@ export const sendOtpToEmail = async (req, res) => {
   const html = `
     <p>Your OTP for password reset is:</p>
     <h2>${otp}</h2>
-    <p>Expires in 10 minutes.</p>
+    <p>Expires in 2 minutes.</p>
   `;
 
   await sendEmail(email, "Password Reset OTP", html);

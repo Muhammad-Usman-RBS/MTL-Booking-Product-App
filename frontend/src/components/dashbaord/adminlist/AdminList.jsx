@@ -1,42 +1,35 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 import Icons from "../../../assets/icons";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import {
-  useDeleteClientAdminMutation,
-  useFetchClientAdminsQuery,
-  useUpdateClientAdminMutation,
-  useUpdateClientAdminStatusMutation,
-} from "../../../redux/api/adminApi";
-import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
+import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHeading";
+
+import { useDeleteClientAdminMutation, useFetchClientAdminsQuery, useUpdateClientAdminStatusMutation } from "../../../redux/api/adminApi";
 
 const tabs = ["Active", "Pending", "Suspended", "Deleted"];
 
 const AdminList = () => {
   const user = useSelector((state) => state.auth.user);
-  const { data: adminsListData = [], refetch } = useFetchClientAdminsQuery();
-  const { data: driversList = [] } = useGetAllDriversQuery(user?.companyId, {
-    skip: !user?.companyId,
-  });
 
-  const [updateAdmin] = useUpdateClientAdminMutation();
+  const { data: adminsListData = [], refetch } = useFetchClientAdminsQuery();
   const [deleteAdmin] = useDeleteClientAdminMutation();
   const [changeStatus] = useUpdateClientAdminStatusMutation();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("Active");
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(9999);
+  const [perPage] = useState(9999);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState(null);
 
   useEffect(() => {
     refetch();
-  }, []);
+  }, [refetch]);
 
   const handleStatusChange = async (adminId, newStatus) => {
     try {
@@ -58,11 +51,11 @@ const AdminList = () => {
       await deleteAdmin(deleteUserId).unwrap();
       toast.success("User deleted successfully");
       refetch();
-      setDeleteModalOpen(false);
-      setDeleteUserId(null);
     } catch (error) {
       toast.error(error?.data?.message || "Failed to delete user");
+    } finally {
       setDeleteModalOpen(false);
+      setDeleteUserId(null);
     }
   };
 
@@ -71,18 +64,26 @@ const AdminList = () => {
     setDeleteUserId(null);
   };
 
-  const tabCounts = tabs.reduce((acc, tab) => {
-    acc[tab] = adminsListData.filter((item) => item.status === tab).length;
-    return acc;
-  }, {});
+  const tabCounts = useMemo(
+    () =>
+      tabs.reduce((acc, tab) => {
+        acc[tab] = adminsListData.filter((item) => item.status === tab).length;
+        return acc;
+      }, {}),
+    [adminsListData]
+  );
 
-  const filteredData = adminsListData.filter(
-    (item) =>
-      item.status === selectedTab &&
-      Object.values(item)
-        .join(" ")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+  const filteredData = useMemo(
+    () =>
+      adminsListData.filter(
+        (item) =>
+          item.status === selectedTab &&
+          Object.values(item)
+            .join(" ")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
+      ),
+    [adminsListData, selectedTab, searchTerm]
   );
 
   const paginatedData =
@@ -98,73 +99,37 @@ const AdminList = () => {
     { label: "Actions", key: "actions" },
   ];
 
-  // const tableData = paginatedData.map((item) => ({
-  //   role: item.role || "N/A",
-  //   fullName: item.fullName || "N/A",
-  //   email: item.email || "N/A",
-  //   status: item.status || "N/A",
-  //   actions: (
-  //     <div className="flex gap-2">
-  //       <div className="flex flex-wrap gap-1">
-  //         {(() => {
-  //           let allowedStatusChanges = [];
-
-  //           if (item.status === "Active") {
-  //             allowedStatusChanges = ["Suspended", "Deleted"];
-  //           } else if (item.status === "Suspended") {
-  //             allowedStatusChanges = ["Active", "Deleted"];
-  //           } else if (item.status === "Deleted") {
-  //             allowedStatusChanges = ["Active", "Suspended"];
-  //           } else if (item.status === "Pending") {
-  //             allowedStatusChanges = ["Active", "Suspended", "Deleted"];
-  //           }
-
-  //           const getButtonStyle = (status) => {
-  //             switch (status) {
-  //               case "Active":
-  //                 return "tab-success ";
-  //               case "Suspended":
-  //                 return " tab-suspended ";
-  //               case "Deleted":
-  //                 return "tab-danger ";
-  //               default:
-  //                 return "bg-gray-100 text-gray-700 border-[var(--light-gray)] hover:bg-gray-200";
-  //             }
-  //           };
-
-  //           return allowedStatusChanges.map((status) => (
-  //             <button
-  //               key={status}
-  //               onClick={() => handleStatusChange(item._id, status)}
-  //               className={` tab ${getButtonStyle(
-  //                 status
-  //               )}`}
-  //             >
-  //               {status}
-  //             </button>
-  //           ));
-  //         })()}
-  //       </div>
-  //       <Link to={`/dashboard/admin-list/edit/${item._id}`}>
-  //         <Icons.Pencil
-  //           title="Edit"
-  //           className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-  //         />
-  //       </Link>
-  //       {selectedTab === "Deleted" && (
-  //         <Icons.Trash
-  //           title="Delete"
-  //           onClick={() => handleDeleteClick(item._id)}
-  //           className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-  //         />
-  //       )}
-  //     </div>
-  //   ),
-  // }));
-
   const tableData = paginatedData.map((item) => {
     const isOwnAssociateAdmin =
       user?.role === "associateadmin" && user?._id === item._id;
+
+    const getButtonStyle = (status) => {
+      switch (status) {
+        case "Active":
+          return "tab-success";
+        case "Suspended":
+          return "tab-suspended";
+        case "Deleted":
+          return "tab-danger";
+        default:
+          return "bg-gray-100 text-gray-700 border-[var(--light-gray)] hover:bg-gray-200";
+      }
+    };
+
+    const getAllowedStatusChanges = (status) => {
+      switch (status) {
+        case "Active":
+          return ["Suspended", "Deleted"];
+        case "Suspended":
+          return ["Active", "Deleted"];
+        case "Deleted":
+          return ["Active", "Suspended"];
+        case "Pending":
+          return ["Active", "Suspended", "Deleted"];
+        default:
+          return [];
+      }
+    };
 
     return {
       role: item.role || "N/A",
@@ -178,42 +143,15 @@ const AdminList = () => {
       ) : (
         <div className="flex gap-2">
           <div className="flex flex-wrap gap-1">
-            {(() => {
-              let allowedStatusChanges = [];
-
-              if (item.status === "Active") {
-                allowedStatusChanges = ["Suspended", "Deleted"];
-              } else if (item.status === "Suspended") {
-                allowedStatusChanges = ["Active", "Deleted"];
-              } else if (item.status === "Deleted") {
-                allowedStatusChanges = ["Active", "Suspended"];
-              } else if (item.status === "Pending") {
-                allowedStatusChanges = ["Active", "Suspended", "Deleted"];
-              }
-
-              const getButtonStyle = (status) => {
-                switch (status) {
-                  case "Active":
-                    return "tab-success ";
-                  case "Suspended":
-                    return "tab-suspended ";
-                  case "Deleted":
-                    return "tab-danger ";
-                  default:
-                    return "bg-gray-100 text-gray-700 border-[var(--light-gray)] hover:bg-gray-200";
-                }
-              };
-
-              return allowedStatusChanges.map((status) => (
-                <button
-                  key={status}
-                  onClick={() => handleStatusChange(item._id, status)}
-                  className={`tab ${getButtonStyle(status)}`}
-                >
-                  {status}
-                </button>
-              ));
-            })()}
+            {getAllowedStatusChanges(item.status).map((status) => (
+              <button
+                key={status}
+                onClick={() => handleStatusChange(item._id, status)}
+                className={`tab ${getButtonStyle(status)}`}
+              >
+                {status}
+              </button>
+            ))}
           </div>
           <Link to={`/dashboard/admin-list/edit/${item._id}`}>
             <Icons.Pencil
@@ -236,20 +174,15 @@ const AdminList = () => {
   return (
     <>
       <div>
-        <OutletHeading name="Admins List" />
-        <div className="flex flex-col sm:flex-row justify-between gap-4 px-4 sm:px-0 mb-4">
-          <Link
-            to="/dashboard/admin-list/add-user"
-            className="w-full sm:w-auto"
-          >
-            <button className="btn btn-edit flex items-center gap-2 w-full sm:w-auto justify-center">
-              Add New
-            </button>
-          </Link>
-        </div>
+        <OutletBtnHeading
+          name="Admins List"
+          buttonLabel="+ Add New"
+          buttonLink="/dashboard/admin-list/add-user"
+          buttonBg="btn btn-reset"
+        />
 
         <div className="w-full overflow-x-auto mb-4 mt-4">
-          <div className="flex gap-4 text-sm font-medium border-b min-w-max sm:text-base px-2">
+          <div className="flex gap-4 text-sm font-medium border-b min-w-max sm:text-base">
             {tabs.map((tab) => (
               <button
                 key={tab}
@@ -257,9 +190,9 @@ const AdminList = () => {
                   setSelectedTab(tab);
                   setPage(1);
                 }}
-                className={`pb-2 whitespace-nowrap transition-all duration-200 ${selectedTab === tab
-                    ? "border-b-2 border-blue-600 text-blue-600"
-                    : "text-[var(--dark-gray)] hover:text-blue-500"
+                className={`pb-2 whitespace-nowrap border-b-2 transition-all duration-200 ${selectedTab === tab
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-[var(--dark-gray)] hover:text-blue-500"
                   }`}
               >
                 {tab} ({tabCounts[tab] || 0})

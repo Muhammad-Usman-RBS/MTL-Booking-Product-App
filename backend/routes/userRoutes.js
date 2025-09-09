@@ -1,83 +1,43 @@
-import express from 'express';
-import {
-  createUserBySuperAdmin,
-  getClientAdmins,
-  updateUserBySuperAdmin,
-  deleteUserBySuperAdmin,
-  getAllUsers,
-  getAllDrivers,
-  getAllCustomers,
-  createCustomerViaWidget,
-  getAssociateAdmins,   // ⬅️ NEW controller
-} from '../controllers/userController.js';
-import { protect, authorize } from '../middleware/authMiddleware.js';
+import express from "express";
+import { createUserBySuperAdmin, getClientAdmins, updateUserBySuperAdmin, deleteUserBySuperAdmin, getAllUsers, getAllDrivers, getAllCustomers, createCustomerViaWidget, getAssociateAdmins, initiateUserVerification, verifyUserOtpAndCreate, resendUserOtp} from "../controllers/userController.js";
+import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Create user (clientadmin, staffmember, driver, etc.)
-router.post(
-  '/create-clientadmin',
-  protect,
-  authorize('superadmin', 'clientadmin',  'associateadmin', 'customer'),
-  createUserBySuperAdmin
-);
+// OTP flow start (Pending user + email OTP) — roles: superadmin|clientadmin|associateadmin
+router.post("/users/initiate-verification", protect, authorize("superadmin","clientadmin","associateadmin"), initiateUserVerification);
 
-// Get client admins
-router.get(
-  '/create-clientadmin',
-  protect,
-  authorize('superadmin', 'clientadmin',  'associateadmin'),
-  getClientAdmins
-);
+// OTP verify (Pending → Active) — roles: superadmin|clientadmin|associateadmin
+router.post("/users/verify-otp", protect, authorize("superadmin","clientadmin","associateadmin"), verifyUserOtpAndCreate);
 
-// 🔥 NEW: Get associate admins for a clientadmin
-router.get(
-  '/admins/associates',
-  protect,
-  authorize('superadmin', 'clientadmin'),   // only superadmin & clientadmin allowed
-  getAssociateAdmins
-);
+// OTP resend (60s throttle) — roles: superadmin|clientadmin|associateadmin
+router.post("/users/resend-otp", protect, authorize("superadmin","clientadmin","associateadmin"), resendUserOtp);
 
-router.get(
-  '/get-All-Users',
-  protect,
-  authorize('superadmin', 'clientadmin', 'associateadmin'),
-  getAllUsers
-);
+// Direct create (trusted/internal) — roles: superadmin|clientadmin|associateadmin|customer
+router.post("/create-clientadmin", protect, authorize("superadmin","clientadmin","associateadmin","customer"), createUserBySuperAdmin);
 
-// Update user by ID (name, email, role, etc.)
-router.put(
-  '/create-clientadmin/:id',
-  protect,
-  authorize('superadmin', 'clientadmin', 'associateadmin'),
-  updateUserBySuperAdmin
-);
+// Fetch users list (scoped to caller role) — roles: superadmin|clientadmin|associateadmin
+router.get("/create-clientadmin", protect, authorize("superadmin","clientadmin","associateadmin"), getClientAdmins);
 
-// Delete user by ID
-router.delete(
-  '/create-clientadmin/:id',
-  protect,
-  authorize('superadmin', 'clientadmin', 'associateadmin'),
-  deleteUserBySuperAdmin
-);
+// Get associate admins of a clientadmin — roles: superadmin|clientadmin
+router.get("/admins/associates", protect, authorize("superadmin","clientadmin"), getAssociateAdmins);
 
-// GET All Users with Role = "driver"
-router.get(
-  '/get-all-drivers',
-  protect,
-  authorize('superadmin', 'clientadmin', 'associateadmin'),
-  getAllDrivers
-);
+// Get all users (excl. superadmin, not Deleted) — roles: superadmin|clientadmin|associateadmin
+router.get("/get-All-Users", protect, authorize("superadmin","clientadmin","associateadmin"), getAllUsers);
 
-// GET All Users with Role = "customer"
-router.get(
-  '/get-all-customers',
-  protect,
-  authorize('superadmin', 'clientadmin', 'associateadmin'),
-  getAllCustomers
-);
+// Update a user by id — roles: superadmin|clientadmin|associateadmin
+router.put("/create-clientadmin/:id", protect, authorize("superadmin","clientadmin","associateadmin"), updateUserBySuperAdmin);
 
-// PUBLIC route for customer creation via widget
-router.post('/create-customer', createCustomerViaWidget);
+// Delete a user by id — roles: superadmin|clientadmin|associateadmin
+router.delete("/create-clientadmin/:id", protect, authorize("superadmin","clientadmin","associateadmin"), deleteUserBySuperAdmin);
+
+// Get all drivers (role=driver, not Deleted) — roles: superadmin|clientadmin|associateadmin
+router.get("/get-all-drivers", protect, authorize("superadmin","clientadmin","associateadmin"), getAllDrivers);
+
+// Get all customers (role=customer, not Deleted) — roles: superadmin|clientadmin|associateadmin
+router.get("/get-all-customers", protect, authorize("superadmin","clientadmin","associateadmin"), getAllCustomers);
+
+// Public widget: create a customer (consider captcha/rate-limit) — public
+router.post("/create-customer", createCustomerViaWidget);
 
 export default router;
