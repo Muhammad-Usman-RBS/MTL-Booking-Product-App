@@ -1,28 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import Icons from "../../../assets/icons";
 import IMAGES from "../../../assets/images";
-import { useUpdateUserProfileMutation } from "../../../redux/api/userApi";
+import "react-toastify/dist/ReactToastify.css";
 import { useSelector, useDispatch } from "react-redux";
 import { setUser } from "../../../redux/slices/authSlice";
-import Icons from "../../../assets/icons";
 import UsePasswordToggle from "../../../hooks/UsePasswordToggle";
+import { useUpdateUserProfileMutation } from "../../../redux/api/userApi";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
 const EditProfile = () => {
-// Two independent instances
-const {
-  type: newPasswordType,
-  visible: newPasswordVisible,
-  toggleVisibility: toggleNewPassword,
-} = UsePasswordToggle();
+  // Password toggle hooks
+  const {
+    type: newPasswordType,
+    visible: newPasswordVisible,
+    toggleVisibility: toggleNewPassword,
+  } = UsePasswordToggle();
 
-const {
-  type: currentPasswordType,
-  visible: currentPasswordVisible,
-  toggleVisibility: toggleCurrentPassword,
-} = UsePasswordToggle();
-  
+  const {
+    type: currentPasswordType,
+    visible: currentPasswordVisible,
+    toggleVisibility: toggleCurrentPassword,
+  } = UsePasswordToggle();
+
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
 
@@ -31,6 +31,11 @@ const {
     name: "",
     newPassword: "",
     currentPassword: "",
+    // 🔹 Superadmin fields
+    superadminCompanyName: "",
+    superadminCompanyAddress: "",
+    superadminCompanyPhoneNumber: "",
+    superadminCompanyEmail: "",
   });
 
   const [profileImg, setProfileImg] = useState(null);
@@ -45,6 +50,11 @@ const {
         name: user.fullName || "",
         newPassword: "",
         currentPassword: "",
+        // 🔹 load superadmin fields only if available
+        superadminCompanyName: user.superadminCompanyName || "",
+        superadminCompanyAddress: user.superadminCompanyAddress || "",
+        superadminCompanyPhoneNumber: user.superadminCompanyPhoneNumber || "",
+        superadminCompanyEmail: user.superadminCompanyEmail || "",
       });
       if (user.profileImage) {
         setPreview(user.profileImage);
@@ -79,8 +89,16 @@ const {
       formData.append("currentPassword", form.currentPassword);
       if (profileImg) formData.append("profileImage", profileImg);
 
+      // 🔹 add superadmin fields if user is superadmin
+      if (user.role === "superadmin") {
+        formData.append("superadminCompanyName", form.superadminCompanyName);
+        formData.append("superadminCompanyAddress", form.superadminCompanyAddress);
+        formData.append("superadminCompanyPhoneNumber", form.superadminCompanyPhoneNumber);
+        formData.append("superadminCompanyEmail", form.superadminCompanyEmail);
+      }
+
       const updatedUser = await updateProfile(formData).unwrap();
-      dispatch(setUser(updatedUser)); // Redux update
+      dispatch(setUser(updatedUser));
       setPreview(updatedUser.profileImage);
 
       toast.success("Profile updated successfully!");
@@ -97,6 +115,10 @@ const {
         name: user.fullName || "",
         newPassword: "",
         currentPassword: "",
+        superadminCompanyName: user.superadminCompanyName || "",
+        superadminCompanyAddress: user.superadminCompanyAddress || "",
+        superadminCompanyPhoneNumber: user.superadminCompanyPhoneNumber || "",
+        superadminCompanyEmail: user.superadminCompanyEmail || "",
       });
       setProfileImg(null);
       setPreview(user.profileImage || null);
@@ -107,20 +129,18 @@ const {
     <>
       <OutletHeading name="Profile Update" />
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-        <img
-          src={preview || IMAGES.dummyImg}
-          alt="Profile-Preview"
-          className="w-22 h-22 rounded-full object-cover border border-[var(--light-gray)]"
-        />
-
-        <div>
-          <label className="block font-medium text-sm mb-1">
+      <div className="inline-flex items-center gap-4 p-4 bg-sky-50 border-2 border-dashed border-sky-300 rounded-xl shadow-sm">
+        <div className="flex flex-col items-center">
+          <img
+            src={preview || IMAGES.dummyImg}
+            alt="Profile-Preview"
+            className="w-24 h-24 rounded-full object-cover border border-sky-200 shadow-md"
+          />
+          <label
+            htmlFor="profile-upload"
+            className="btn btn-reset mt-3 cursor-pointer text-sm"
+          >
             Upload Profile Image
-          </label>
-
-          <label htmlFor="profile-upload" className="btn btn-edit mt-1">
-            Choose File
           </label>
 
           <input
@@ -135,11 +155,12 @@ const {
 
       <form
         onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6"
       >
+        {/* Email */}
         <div>
           <label className="block text-sm font-medium mb-1">
-            Email Address <span className="text-red-500">*</span>
+            Email Address
           </label>
           <input
             type="email"
@@ -151,9 +172,10 @@ const {
           />
         </div>
 
+        {/* Name */}
         <div>
           <label className="block text-sm font-medium mb-1">
-            Name <span className="text-red-500">*</span>
+            Name
           </label>
           <input
             type="text"
@@ -165,52 +187,100 @@ const {
           />
         </div>
 
+        {/* 🔹 Superadmin Extra Fields */}
+        {user.role === "superadmin" && (
+          <>
+            <div>
+              <label className="block text-sm font-medium mb-1">Company Name</label>
+              <input
+                type="text"
+                name="superadminCompanyName"
+                value={form.superadminCompanyName}
+                onChange={handleChange}
+                className="custom_input"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Company Address</label>
+              <input
+                type="text"
+                name="superadminCompanyAddress"
+                value={form.superadminCompanyAddress}
+                onChange={handleChange}
+                className="custom_input"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Company Phone</label>
+              <input
+                type="text"
+                name="superadminCompanyPhoneNumber"
+                value={form.superadminCompanyPhoneNumber}
+                onChange={handleChange}
+                className="custom_input"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Company Email</label>
+              <input
+                type="email"
+                name="superadminCompanyEmail"
+                value={form.superadminCompanyEmail}
+                onChange={handleChange}
+                className="custom_input"
+              />
+            </div>
+          </>
+        )}
+
+        {/* New Password */}
         <div>
           <label className="block text-sm font-medium mb-1">New Password</label>
-         <div className="relative">
-         <input
-  type={newPasswordType}
-  name="newPassword"
-  value={form.newPassword}
-  onChange={handleChange}
-  className="custom_input"
-/>
-<span
-  className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500"
-  onClick={toggleNewPassword}
->
-  {newPasswordVisible ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
-</span>
-
-            </div>
+          <div className="relative">
+            <input
+              type={newPasswordType}
+              name="newPassword"
+              value={form.newPassword}
+              onChange={handleChange}
+              className="custom_input"
+            />
+            <span
+              className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500"
+              onClick={toggleNewPassword}
+            >
+              {newPasswordVisible ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
+            </span>
+          </div>
         </div>
 
+        {/* Current Password */}
         <div>
           <label className="block text-sm font-medium mb-1">
-            Current Password <span className="text-red-500">*</span>
+            Current Password
           </label>
           <div className="relative">
-          <input
-  type={currentPasswordType}
-  name="currentPassword"
-  value={form.currentPassword}
-  onChange={handleChange}
-  required
-  className="custom_input"
-/>
-<span
-  className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500"
-  onClick={toggleCurrentPassword}
->
-  {currentPasswordVisible ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
-</span>
-
-            </div>
-          
+            <input
+              type={currentPasswordType}
+              name="currentPassword"
+              value={form.currentPassword}
+              onChange={handleChange}
+              required
+              className="custom_input"
+            />
+            <span
+              className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500"
+              onClick={toggleCurrentPassword}
+            >
+              {currentPasswordVisible ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-3 col-span-1 md:col-span-2">
-          <button type="button" onClick={handleReset} className="btn btn-reset">
+          <button type="button" onClick={handleReset} className="btn btn-cancel">
             Reset
           </button>
           <button type="submit" className="btn btn-success">

@@ -2,14 +2,16 @@ import { apiSlice } from '../slices/apiSlice';
 
 export const userApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
+
     // Login
     loginUser: builder.mutation({
       query: ({ email, password }) => ({
         url: '/auth/login',
         method: 'POST',
         body: { email, password },
-        credentials: 'include', // for withCredentials: true
+        credentials: 'include', // keep cookies if you use httpOnly JWT
       }),
+      invalidatesTags: ['User'],
     }),
 
     // Forgot Password
@@ -41,10 +43,12 @@ export const userApi = apiSlice.injectEndpoints({
       invalidatesTags: ['User'],
     }),
 
-    // Get Profile (optional)
-    getProfile: builder.query({
-      query: () => '/auth/profile',
-      providesTags: ['User'],
+    // Get Superadmin Info (public)
+    getSuperadminInfo: builder.query({
+      query: () => ({
+        url: '/auth/superadmin-info',
+        method: 'GET',
+      }),
     }),
   }),
 });
@@ -54,5 +58,5 @@ export const {
   useSendForgotPasswordOtpMutation,
   useResetPasswordMutation,
   useUpdateUserProfileMutation,
-  useGetProfileQuery,
+  useGetSuperadminInfoQuery,
 } = userApi;

@@ -1,10 +1,13 @@
 import React from "react";
-import { Outlet, useLocation, Navigate } from "react-router-dom";
-import { useSelector } from 'react-redux';
 import Icons from "../assets/icons";
+import { useSelector } from 'react-redux';
+import { Outlet, useLocation, Navigate } from "react-router-dom";
+import { useGetSuperadminInfoQuery } from "../redux/api/userApi";
 
 const AuthLayout = () => {
   const user = useSelector((state) => state.auth.user);
+  const { data: superadminInfo, isLoading } = useGetSuperadminInfoQuery();
+
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -30,7 +33,7 @@ const AuthLayout = () => {
           <div className="flex items-center justify-center gap-2 text-gray-800">
             <Icons.CarFront className="w-5 h-5" />
             <span className="text-xl font-semibold uppercase">
-              MTL Booking App
+              {isLoading ? "Loading..." : superadminInfo?.superadminCompanyName || "Booking App"}
             </span>
           </div>
           <p className="text-sm text-gray-500 mt-1">

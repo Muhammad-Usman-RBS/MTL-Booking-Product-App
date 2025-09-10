@@ -1,9 +1,10 @@
-import User from '../models/User.js';
-import bcrypt from 'bcryptjs';
-import generateToken from '../utils/generateToken.js';
-import sendEmail from "../utils/sendEmail.js";
 import axios from 'axios';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
+import User from '../models/User.js';
+import sendEmail from "../utils/sendEmail.js";
+import generateToken from '../utils/generateToken.js';
+
 dotenv.config();
 
 // Login Controller
@@ -11,12 +12,12 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
     // Find user by email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
-    }if(user.role === "clientadmin" && !user.companyId) {
-      return res.status(403).json({ message: "Client Admin must have a company assigned. Please contact the administrator."  });
+    } if (user.role === "clientadmin" && !user.companyId) {
+      return res.status(403).json({ message: "Client Admin must have a company assigned. Please contact the administrator." });
 
     }
 
@@ -66,7 +67,14 @@ export const login = async (req, res) => {
       profileImage: user.profileImage || null,
       companyId: user.companyId || null,
       employeeNumber: user.employeeNumber,
-      vatnumber: user.vatnumber || null, 
+      vatnumber: user.vatnumber || null,
+
+      // 🔹 Superadmin fields
+      superadminCompanyName: user.superadminCompanyName || "",
+      superadminCompanyAddress: user.superadminCompanyAddress || "",
+      superadminCompanyPhoneNumber: user.superadminCompanyPhoneNumber || "",
+      superadminCompanyEmail: user.superadminCompanyEmail || "",
+      superadminCompanyWebsite: user.superadminCompanyWebsite || "",
     });
 
   } catch (error) {
@@ -75,13 +83,29 @@ export const login = async (req, res) => {
   }
 };
 
+// Public route to get superadmin company info
+export const getSuperadminInfo = async (req, res) => {
+  try {
+    const superadmin = await User.findOne({ role: "superadmin" }).select(
+      "superadminCompanyName superadminCompanyAddress superadminCompanyPhoneNumber superadminCompanyEmail superadminCompanyWebsite"
+    );
+
+    if (!superadmin) {
+      return res.status(404).json({ message: "Superadmin not found" });
+    }
+
+    res.json(superadmin);
+  } catch (err) {
+    console.error("Get Superadmin Info Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // UpdateProfile Controller
 export const updateProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    const user = await User.findById(req.user._id).select("+password");
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     // Verify current password
     const isMatch = await bcrypt.compare(req.body.currentPassword, user.password);
@@ -93,19 +117,24 @@ export const updateProfile = async (req, res) => {
     user.email = req.body.email || user.email;
     user.fullName = req.body.fullName || user.fullName;
 
-    // If new password provided
     if (req.body.newPassword) {
       user.password = await bcrypt.hash(req.body.newPassword, 10);
     }
 
-    // If profile image uploaded
     if (req.file?.path) {
-      user.profileImage = req.file.path; // Cloudinary full secure URL
+      user.profileImage = req.file.path;
+    }
+
+    // 🔹 Update superadmin fields if role is superadmin
+    if (user.role === "superadmin") {
+      user.superadminCompanyName = req.body.superadminCompanyName || user.superadminCompanyName;
+      user.superadminCompanyAddress = req.body.superadminCompanyAddress || user.superadminCompanyAddress;
+      user.superadminCompanyPhoneNumber = req.body.superadminCompanyPhoneNumber || user.superadminCompanyPhoneNumber;
+      user.superadminCompanyEmail = req.body.superadminCompanyEmail || user.superadminCompanyEmail;
     }
 
     await user.save();
 
-    // Send updated user response
     res.json({
       _id: user._id,
       email: user.email,
@@ -113,10 +142,14 @@ export const updateProfile = async (req, res) => {
       role: user.role,
       permissions: user.permissions,
       profileImage: user.profileImage,
+      vatnumber: user.vatnumber || null,
+      // 🔹 return superadmin fields
+      superadminCompanyName: user.superadminCompanyName || "",
+      superadminCompanyAddress: user.superadminCompanyAddress || "",
+      superadminCompanyPhoneNumber: user.superadminCompanyPhoneNumber || "",
+      superadminCompanyEmail: user.superadminCompanyEmail || "",
       token: generateToken(user._id, user.role),
-      vatnumber: user.vatnumber || null, 
     });
-
   } catch (err) {
     console.error("Update Profile Error:", err);
     res.status(500).json({ message: 'Server error' });
@@ -164,4 +197,3 @@ export const resetPasswordWithOtp = async (req, res) => {
 
   res.json({ message: "Password reset successfully" });
 };
-

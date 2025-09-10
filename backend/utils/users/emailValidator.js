@@ -39,31 +39,31 @@ function reasonMessage(reason, validators) {
   const suggested = validators?.typo?.suggested;
   switch (reason) {
     case "regex":
-      return { code: "invalid_format", msg: "Email format sahi nahin lag raha." };
+      return { code: "invalid_format", msg: "The email format does not look correct." };
     case "typo":
       return {
         code: "typo",
         msg: suggested
-          ? `Kya aapka matlab '${suggested}' tha?`
-          : "Email me typo ho sakta hai.",
+          ? `Did you mean '${suggested}'?`
+          : "There might be a typo in the email.",
       };
     case "disposable":
       return {
         code: "disposable",
-        msg: "Yeh temporary/disposable email lagta hai. Kripya permanent email use karein.",
+        msg: "Invalid email address. Please use a valid email address.",
       };
     case "mx":
       return {
         code: "mx",
-        msg: "Is domain ke MX records nahi milay. Kripya koi aur email try karein.",
+        msg: "MX records for this domain were not found. Please try another email.",
       };
     case "smtp":
       return {
         code: "smtp",
-        msg: "Mail server se connection nahi ho paya. Kripya doosri email try karein.",
+        msg: "Could not connect to the mail server. Please try another email.",
       };
     default:
-      return { code: "undeliverable", msg: "Email reach nahi ho payegi." };
+      return { code: "undeliverable", msg: "The email may not be deliverable." };
   }
 }
 

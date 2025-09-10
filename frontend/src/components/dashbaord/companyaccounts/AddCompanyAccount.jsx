@@ -1,33 +1,18 @@
 import React, { useEffect, useState } from "react";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import FilePreview from "../../../constants/constantscomponents/FilePreview";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import SelectOption from "../../../constants/constantscomponents/SelectOption";
-import { yesNoOptions } from "../../../constants/dashboardTabsData/data";
 import { useSelector } from "react-redux";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import "react-toastify/dist/ReactToastify.css";
 
-import {
-  useFetchClientAdminsQuery,
-  useFetchAssociateAdminsQuery,
-} from "../../../redux/api/adminApi";
-
-import {
-  useCreateCompanyMutation,
-  useGetCompanyByIdQuery,
-  useUpdateCompanyMutation,
-} from "../../../redux/api/companyApi";
-
-// ✅ use ONE shared validators file
-import {
-  validateCompanyAccount,
-} from "../../../utils/validation/validators";
 import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHeading";
+import { useFetchClientAdminsQuery, useFetchAssociateAdminsQuery } from "../../../redux/api/adminApi";
+import { useCreateCompanyMutation, useGetCompanyByIdQuery, useUpdateCompanyMutation } from "../../../redux/api/companyApi";
 
-const Req = () => <span className="text-red-500 ml-0.5">*</span>;
+// shared validators
+import { validateCompanyAccount } from "../../../utils/validation/validators";
+
+// Presentational form
+import CompanyAccountForm from "./CompanyAccountForm";
 
 const AddCompanyAccount = () => {
   const { id } = useParams();
@@ -46,7 +31,7 @@ const AddCompanyAccount = () => {
     tradingName: "",
     email: "",
     contact: "",
-    licensedBy: "",      // OPTIONAL
+    licensedBy: "",
     licenseNumber: "",
     referrerLink: "",
     cookieConsent: "",
@@ -56,7 +41,7 @@ const AddCompanyAccount = () => {
     status: "",
   });
 
-  // ✅ new: error + touched states
+  // errors + touched
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
@@ -79,10 +64,23 @@ const AddCompanyAccount = () => {
         return;
       }
       setFormData((prev) => ({ ...prev, [name]: file }));
-      setFilePreviews((prev) => ({ ...prev, [name]: file ? URL.createObjectURL(file) : "" }));
+      setFilePreviews((prev) => ({
+        ...prev,
+        [name]: file ? URL.createObjectURL(file) : "",
+      }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
+  };
+
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleBlur = (field) => {
+    setFieldTouched(field);
+    const { errors: e } = validateCompanyAccount(formData);
+    setErrors(e);
   };
 
   const { data: rawClientAdmins = [] } = useFetchClientAdminsQuery(undefined, {
@@ -131,41 +129,15 @@ const AddCompanyAccount = () => {
     }
   }, [companyData, isEdit, isError]);
 
-  const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  // ✅ onBlur -> set touched + live-validate field
-  const handleBlur = (field) => {
-    setFieldTouched(field);
-    const { errors: e } = validateCompanyAccount(formData);
-    setErrors(e);
-  };
-
-  const inputBase =
-    "custom_input " +
-    (/* small util: conditional red border via function below */ "");
-
-  const errorClass = (field) =>
-    touched[field] && errors[field] ? "border-red-500 focus:border-red-500" : "";
-
-  const ErrorText = ({ field }) =>
-    touched[field] && errors[field] ? (
-      <p className="text-red-600 text-sm mt-1">{errors[field]}</p>
-    ) : null;
-
   const handleSubmit = async () => {
-    // validate all
     const { errors: e, isValid } = validateCompanyAccount(formData);
     setErrors(e);
 
-    // mark all as touched for showing messages
     setManyTouched([
       "companyName",
       "tradingName",
       "email",
       "contact",
-      // "licensedBy" optional
       "licenseNumber",
       "referrerLink",
       "cookieConsent",
@@ -209,7 +181,8 @@ const AddCompanyAccount = () => {
   };
 
   if (notFound) return <Navigate to="*" replace />;
-  if (isEdit && isLoading) return <div className="text-center mt-10">Loading company data...</div>;
+  if (isEdit && isLoading)
+    return <div className="text-center mt-10">Loading company data...</div>;
 
   return (
     <div>
@@ -220,188 +193,20 @@ const AddCompanyAccount = () => {
         buttonBg="btn btn-primary"
       />
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-        {/* profileImage OPTIONAL — no star or error */}
-        <FilePreview
-          label=""
-          file={formData.profileImage}
-          previewUrl={filePreviews.profileImage}
-          previewName={filePreviews.profileImage}
-          formDataFile={formData.profileImage}
-          name="profileImage"
-          onChange={handleInputChange}
-        />
-      </div>
-
-      {/* Inputs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-        <div>
-          <label className="block mb-1 font-medium">
-            Company Name{!isEdit && <Req />}
-          </label>
-          <input
-            name="companyName"
-            placeholder="Company Name"
-            className={`custom_input ${errorClass("companyName")}`}
-            value={formData.companyName}
-            onChange={(e) => handleChange("companyName", e.target.value)}
-            onBlur={() => handleBlur("companyName")}
-          />
-          <ErrorText field="companyName" />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">
-            Trading Name{!isEdit && <Req />}
-          </label>
-          <input
-            name="tradingName"
-            placeholder="Trading Name"
-            className={`custom_input ${errorClass("tradingName")}`}
-            value={formData.tradingName}
-            onChange={(e) => handleChange("tradingName", e.target.value)}
-            onBlur={() => handleBlur("tradingName")}
-          />
-          <ErrorText field="tradingName" />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">
-            Contact{!isEdit && <Req />}
-          </label>
-          <PhoneInput
-            country={"gb"}
-            inputClass={`w-full custom_input ${errorClass("contact")}`}
-            inputStyle={{ width: "100%" }}
-            value={formData.contact}
-            onChange={(value) => handleChange("contact", value)}
-            onBlur={() => handleBlur("contact")}
-            inputProps={{ name: "contact" }}
-          />
-          <ErrorText field="contact" />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">
-            {isClientAdmin ? "Assign to Associate Admin" : "Assign to Client Admin"}{!isEdit && <Req />}
-          </label>
-          <SelectOption
-            label="" // avoid double labels if your component also shows label
-            value={formData.clientAdminId}
-            options={options}
-            onChange={(e) => {
-              const selectedId = e?.target?.value || e?.value || e;
-              const sel = options.find((o) => o.value === selectedId);
-              handleChange("clientAdminId", selectedId);
-              handleChange("fullName", sel?.label || "");
-              handleChange("email", sel?.email || "");
-              handleChange("status", sel?.status || "");
-            }}
-            onBlur={() => handleBlur("clientAdminId")}
-          />
-          <ErrorText field="clientAdminId" />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">
-            Email{!isEdit && <Req />}
-          </label>
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            className={`custom_input ${errorClass("email")}`}
-            value={formData.email}
-            onChange={(e) => handleChange("email", e.target.value)}
-            onBlur={() => handleBlur("email")}
-          />
-          <ErrorText field="email" />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">
-            Licensed By {/* OPTIONAL — no star */}
-          </label>
-          <input
-            name="licensedBy"
-            placeholder="Licensed By"
-            className="custom_input"
-            value={formData.licensedBy}
-            onChange={(e) => handleChange("licensedBy", e.target.value)}
-            onBlur={() => setFieldTouched("licensedBy")}
-          />
-          {/* no error for optional */}
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">
-            License Number{!isEdit && <Req />}
-          </label>
-          <input
-            type="number"
-            name="licenseNumber"
-            min="1"
-            placeholder="License Number"
-            className={`custom_input ${errorClass("licenseNumber")}`}
-            value={formData.licenseNumber}
-            onChange={(e) => handleChange("licenseNumber", e.target.value)}
-            onBlur={() => handleBlur("licenseNumber")}
-          />
-          <ErrorText field="licenseNumber" />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">
-            License Referrer Link{!isEdit && <Req />}
-          </label>
-          <input
-            name="referrerLink"
-            placeholder="https://example.com/license"
-            className={`custom_input ${errorClass("referrerLink")}`}
-            value={formData.referrerLink}
-            onChange={(e) => handleChange("referrerLink", e.target.value)}
-            onBlur={() => handleBlur("referrerLink")}
-          />
-          <ErrorText field="referrerLink" />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">
-            Cookie Consent{!isEdit && <Req />}
-          </label>
-          <SelectOption
-            label=""
-            options={yesNoOptions}
-            value={formData.cookieConsent}
-            onChange={(e) => handleChange("cookieConsent", e.target.value)}
-            onBlur={() => handleBlur("cookieConsent")}
-          />
-          <ErrorText field="cookieConsent" />
-        </div>
-
-      </div>
-
-      <div className="mt-6">
-        <label className="block mb-1 font-medium">
-          Company Address{!isEdit && <Req />}
-        </label>
-        <textarea
-          name="address"
-          placeholder="Company Address"
-          className={`custom_input w-full ${errorClass("address")}`}
-          rows={3}
-          value={formData.address}
-          onChange={(e) => handleChange("address", e.target.value)}
-          onBlur={() => handleBlur("address")}
-        />
-        <ErrorText field="address" />
-      </div>
-
-      <div className="mt-8 text-right">
-        <button onClick={handleSubmit} className="btn btn-success">
-          {isEdit ? "Update" : "Submit"}
-        </button>
-      </div>
+      <CompanyAccountForm
+        isEdit={isEdit}
+        isClientAdmin={isClientAdmin}
+        formData={formData}
+        filePreviews={filePreviews}
+        errors={errors}
+        touched={touched}
+        options={options}
+        onInputChange={handleInputChange}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        onTouch={setFieldTouched}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 };

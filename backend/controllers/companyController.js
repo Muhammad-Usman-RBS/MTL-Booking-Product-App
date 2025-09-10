@@ -1,10 +1,11 @@
 import mongoose from "mongoose";
-import Company from "../models/Company.js";
 import User from "../models/User.js";
+import Company from "../models/Company.js";
 import sendEmail from "../utils/sendEmail.js";
 import { initializeDefaultThemes } from "./settings/themeController.js";
 import companyAccountEmailTemplate from "../utils/company/companyAccountEmailTemplate.js";
 
+// Create a new company account
 export const createCompanyAccount = async (req, res) => {
   try {
     const {
@@ -82,6 +83,7 @@ export const createCompanyAccount = async (req, res) => {
   }
 };
 
+// Delete a company account
 export const deleteCompanyAccount = async (req, res) => {
   try {
     const company = await Company.findById(req.params.id);
@@ -101,6 +103,7 @@ export const deleteCompanyAccount = async (req, res) => {
   }
 };
 
+// Get all companies
 export const getAllCompanies = async (req, res) => {
   try {
     const currentUser = req.user;
@@ -111,7 +114,7 @@ export const getAllCompanies = async (req, res) => {
       companies = await Company.find({})
         .populate("clientAdminId", "status role fullName")
         .sort({ createdAt: -1 });
-    } 
+    }
     else if (currentUser.role === "clientadmin") {
       // ClientAdmin → apni + associates wali companies
 
@@ -124,13 +127,13 @@ export const getAllCompanies = async (req, res) => {
       companies = await Company.find({ clientAdminId: { $in: allAdminIds } })
         .populate("clientAdminId", "status role fullName")
         .sort({ createdAt: -1 });
-    } 
+    }
     else if (currentUser.role === "associateadmin") {
       // Associate admin → sirf apni companies
       companies = await Company.find({ clientAdminId: currentUser._id })
         .populate("clientAdminId", "status role fullName")
         .sort({ createdAt: -1 });
-    } 
+    }
     else {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -148,6 +151,7 @@ export const getAllCompanies = async (req, res) => {
   }
 };
 
+// Get company by ID
 export const getCompanyById = async (req, res) => {
   try {
     console.log("Fetching company with ID:", req.params.id); // <== Debug
@@ -161,6 +165,7 @@ export const getCompanyById = async (req, res) => {
   }
 };
 
+// Update a company account
 export const updateCompanyAccount = async (req, res) => {
   try {
     // Handle file uploads
@@ -198,6 +203,7 @@ export const updateCompanyAccount = async (req, res) => {
   }
 };
 
+// Send company account details email
 export const sendCompanyEmail = async (req, res) => {
   const { email, company } = req.body;
 

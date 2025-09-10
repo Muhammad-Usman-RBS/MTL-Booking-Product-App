@@ -1,120 +1,120 @@
 export const driverAssignmentEmailTemplate = ({
-    booking,
-    driver,
-    vehicle,
-    company = {},
-    options = {},
-    assignmentType = "assigned", // "assigned" or "unassigned"
+  booking,
+  driver,
+  vehicle,
+  company = {},
+  options = {},
+  assignmentType = "assigned", // "assigned" or "unassigned"
 }) => {
-    // Brand colors
-    const brand = {
-        primary: options.primaryColor || "#0F172A",
-        accent: options.accentColor || "#2563EB",
-        muted: options.mutedColor || "#6B7280",
-        bg: options.bgColor || "#F8FAFC",
-        card: options.cardColor || "#FFFFFF",
-        border: options.borderColor || "#E5E7EB",
-        success: options.successColor || "#16A34A",
-        warning: options.warningColor || "#F59E0B",
-    };
+  // Brand colors
+  const brand = {
+    primary: options.primaryColor || "#0F172A",
+    accent: options.accentColor || "#2563EB",
+    muted: options.mutedColor || "#6B7280",
+    bg: options.bgColor || "#F8FAFC",
+    card: options.cardColor || "#FFFFFF",
+    border: options.borderColor || "#E5E7EB",
+    success: options.successColor || "#16A34A",
+    warning: options.warningColor || "#F59E0B",
+  };
 
-    // Company info
-    const org = {
-        name: company?.companyName || company?.tradingName || options.companyName || "Our Company",
-        logoUrl: options.logoUrl || company?.profileImage || company?.logoUrl || "",
-        email: options.supportEmail || company?.email || "",
-        phone: options.supportPhone || company?.contact || "",
-        address: options.address || company?.address || "",
-    };
+  // Company info
+  const org = {
+    name: company?.companyName || company?.tradingName || options.companyName || "Our Company",
+    logoUrl: options.logoUrl || company?.profileImage || company?.logoUrl || "",
+    email: options.supportEmail || company?.email || "",
+    phone: options.supportPhone || company?.contact || "",
+    address: options.address || company?.address || "",
+  };
 
-    const safe = (v) =>
-        String(v ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
+  const safe = (v) =>
+    String(v ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
 
-    // Driver and vehicle info with fallbacks
-    const driverInfo = {
-        firstName: driver?.DriverData?.firstName || driver?.firstName || "Driver",
-        surName: driver?.DriverData?.surName || driver?.surName || "",
-        email: driver?.DriverData?.email || driver?.email || "",
-        contact: driver?.DriverData?.contact || driver?.contact || "",
-        employeeNumber: driver?.DriverData?.employeeNumber || driver?.employeeNumber || "N/A",
-        fullName: driver
-            ? `${(driver?.DriverData?.firstName || driver?.firstName || "")} ${(driver?.DriverData?.surName || driver?.surName || "")}`.trim() || "Driver"
-            : "Driver",
-    };
+  // Driver and vehicle info with fallbacks
+  const driverInfo = {
+    firstName: driver?.DriverData?.firstName || driver?.firstName || "Driver",
+    surName: driver?.DriverData?.surName || driver?.surName || "",
+    email: driver?.DriverData?.email || driver?.email || "",
+    contact: driver?.DriverData?.contact || driver?.contact || "",
+    employeeNumber: driver?.DriverData?.employeeNumber || driver?.employeeNumber || "N/A",
+    fullName: driver
+      ? `${(driver?.DriverData?.firstName || driver?.firstName || "")} ${(driver?.DriverData?.surName || driver?.surName || "")}`.trim() || "Driver"
+      : "Driver",
+  };
 
-    const vehicleInfo = {
-        registration: vehicle?.carRegistration || driver?.VehicleData?.carRegistration || "TBD",
-        make: vehicle?.carMake || driver?.VehicleData?.carMake || "TBD",
-        model: vehicle?.carModal || driver?.VehicleData?.carModal || "TBD",
-        color: vehicle?.carColor || driver?.VehicleData?.carColor || "TBD",
-    };
+  const vehicleInfo = {
+    registration: vehicle?.carRegistration || driver?.VehicleData?.carRegistration || "TBD",
+    make: vehicle?.carMake || driver?.VehicleData?.carMake || "TBD",
+    model: vehicle?.carModal || driver?.VehicleData?.carModal || "TBD",
+    color: vehicle?.carColor || driver?.VehicleData?.carColor || "TBD",
+  };
 
-    // Journey info
-    const journey = booking?.primaryJourney || booking?.returnJourney || {};
+  // Journey info
+  const journey = booking?.primaryJourney || booking?.returnJourney || {};
 
-    // Format date and time
-    const formatDateTime = (j) => {
-        if (!j?.date) return "-";
-        const date = new Date(j.date);
-        const dateStr = date.toLocaleDateString("en-GB", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
-        const hour = j?.hour ?? 0;
-        const minute = j?.minute ?? 0;
-        const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-        return `${dateStr} at ${timeStr}`;
-    };
+  // Format date and time
+  const formatDateTime = (j) => {
+    if (!j?.date) return "-";
+    const date = new Date(j.date);
+    const dateStr = date.toLocaleDateString("en-GB", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const hour = j?.hour ?? 0;
+    const minute = j?.minute ?? 0;
+    const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    return `${dateStr} at ${timeStr}`;
+  };
 
-    // Assignment-specific styling and messaging
-    const assignmentConfig = {
-        assigned: {
-            color: brand.success,
-            bg: "#DCFCE7",
-            text: "New Job Assignment",
-            message: "You have been assigned to a new booking!",
-            actionColor: brand.success,
-        },
-        unassigned: {
-            color: brand.warning,
-            bg: "#FEF3C7",
-            text: "Job Unassignment",
-            message: "You have been unassigned from this booking.",
-            actionColor: brand.warning,
-        },
-    };
+  // Assignment-specific styling and messaging
+  const assignmentConfig = {
+    assigned: {
+      color: brand.success,
+      bg: "#DCFCE7",
+      text: "New Job Assignment",
+      message: "You have been assigned to a new booking!",
+      actionColor: brand.success,
+    },
+    unassigned: {
+      color: brand.warning,
+      bg: "#FEF3C7",
+      text: "Job Unassignment",
+      message: "You have been unassigned from this booking.",
+      actionColor: brand.warning,
+    },
+  };
 
-    const config = assignmentConfig[assignmentType] || assignmentConfig.assigned;
+  const config = assignmentConfig[assignmentType] || assignmentConfig.assigned;
 
 
-    const formatEmail = (email) => {
-      return email.replace('@', '&#8203;@&#8203;').replace(/\./g, '&#8203;.&#8203;');
-    };
-  
-    const locationLine = (addr) => {
-      if (!addr) return "";
-    
-      const safeAddr = safe(String(addr).trim());
-      const words = safeAddr.split(/\s+/);
-    
-      // Split into lines with 4 words per line
-      const lines = [];
-      for (let i = 0; i < words.length; i += 10) {
-        lines.push(words.slice(i, i + 10).join(" "));
-      }
-    
-      // Return HTML with "Location:" on the first line
-      const [firstLine, ...restLines] = lines;
-      const restHtml = restLines.length ? `<br/>${restLines.join("<br/>")}` : "";
-    
-      return `<strong>Location:</strong> ${firstLine}${restHtml}<br/>`;
-    };
-    return `<!doctype html>
+  const formatEmail = (email) => {
+    return email.replace('@', '&#8203;@&#8203;').replace(/\./g, '&#8203;.&#8203;');
+  };
+
+  const locationLine = (addr) => {
+    if (!addr) return "";
+
+    const safeAddr = safe(String(addr).trim());
+    const words = safeAddr.split(/\s+/);
+
+    // Split into lines with 4 words per line
+    const lines = [];
+    for (let i = 0; i < words.length; i += 10) {
+      lines.push(words.slice(i, i + 10).join(" "));
+    }
+
+    // Return HTML with "Location:" on the first line
+    const [firstLine, ...restLines] = lines;
+    const restHtml = restLines.length ? `<br/>${restLines.join("<br/>")}` : "";
+
+    return `<strong>Location:</strong> ${firstLine}${restHtml}<br/>`;
+  };
+  return `<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -143,9 +143,9 @@ export const driverAssignmentEmailTemplate = ({
                 <tr>
                   <td align="left" style="vertical-align:middle">
                     ${org.logoUrl
-            ? `<img src="${safe(org.logoUrl)}" width="90" style="display:block;max-width:180px;height:auto" alt="${safe(org.name)}" />`
-            : `<div style="font:800 18px/1 Arial,sans-serif;color:${brand.primary}">${safe(org.name)}</div>`
-        }
+      ? `<img src="${safe(org.logoUrl)}" width="90" style="display:block;max-width:180px;height:auto" alt="${safe(org.name)}" />`
+      : `<div style="font:800 18px/1 Arial,sans-serif;color:${brand.primary}">${safe(org.name)}</div>`
+    }
                   </td>
                   <td align="right" style="vertical-align:middle">
                     <div style="margin-bottom:8px;text-align:right;">
@@ -154,9 +154,9 @@ export const driverAssignmentEmailTemplate = ({
                       </span>
                     </div>
 <div style="font:400 13px/2 Arial,sans-serif;color:${brand.muted}">
-  ${org.name  ? `<div style="font:600 15px Arial,sans-serif;color:${brand.primary};margin-bottom:4px;">${safe(org.name)}</div>`  : ""}
-  ${org.email  ? `<div><strong>Email:</strong> ${formatEmail(safe(org.email))}</div>` : ""}
-  ${org.phone  ? `<div><strong>Phone:</strong> +${safe(org.phone)}</div>` : ""}
+  ${org.name ? `<div style="font:600 15px Arial,sans-serif;color:${brand.primary};margin-bottom:4px;">${safe(org.name)}</div>` : ""}
+  ${org.email ? `<div><strong>Email:</strong> ${formatEmail(safe(org.email))}</div>` : ""}
+  ${org.phone ? `<div><strong>Phone:</strong> +${safe(org.phone)}</div>` : ""}
 </div>
 
                   </td>
@@ -172,8 +172,8 @@ export const driverAssignmentEmailTemplate = ({
               <div style="font:600 16px/1.5 Arial,sans-serif;color:${brand.accent};margin:8px 0 0">Booking Reference: #${safe(booking?.bookingId)}</div>
               <div style="font:400 14px/1.5 Arial,sans-serif;color:${brand.muted};margin:8px 0 0">
                 Hello ${safe(driverInfo.firstName)}, ${assignmentType === "assigned"
-            ? "you have been assigned to handle this booking. Please review the details below."
-            : "this booking assignment has been removed from your schedule."}
+      ? "you have been assigned to handle this booking. Please review the details below."
+      : "this booking assignment has been removed from your schedule."}
               </div>
             </td>
           </tr>

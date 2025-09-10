@@ -1,26 +1,35 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import moment from "moment-timezone";
 import { toast } from "react-toastify";
-import { Link, useNavigate } from "react-router-dom";
-import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import CustomTable from "../../../constants/constantscomponents/CustomTable";
-import { useFetchAllCompaniesQuery, useSendCompanyEmailMutation, useDeleteCompanyAccountMutation } from "../../../redux/api/companyApi";
-import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
-import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHeading";
 import "react-toastify/dist/ReactToastify.css";
 import IMAGES from "../../../assets/images";
 import Icons from "../../../assets/icons";
-import { useSelector } from "react-redux";
-import moment from "moment-timezone";
+
+import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
+import CustomTable from "../../../constants/constantscomponents/CustomTable";
+import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHeading";
+import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
+
+import { useFetchAllCompaniesQuery, useSendCompanyEmailMutation, useDeleteCompanyAccountMutation } from "../../../redux/api/companyApi";
 
 const CompanyAccountsList = () => {
+  // API & Hooks
   const { data: companies = [], refetch } = useFetchAllCompaniesQuery();
-  const timezone =
-    useSelector((state) => state.bookingSetting?.timezone) || "UTC";
-  const user = useSelector((state) => state.auth?.user); // ✅ login user
+
+  // Redux States
+  const timezone = useSelector((state) => state.bookingSetting?.timezone) || "UTC";
+  const user = useSelector((state) => state.auth?.user);
+
+  // Navigation
   const navigate = useNavigate();
+
+  // Mutations
   const [sendEmail] = useSendCompanyEmailMutation();
   const [deleteCompany] = useDeleteCompanyAccountMutation();
 
+  // Local States
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -105,7 +114,6 @@ const CompanyAccountsList = () => {
     };
   });
 
-
   return (
     <>
       {!selectedAccount ? (
@@ -135,36 +143,55 @@ const CompanyAccountsList = () => {
             buttonBg="btn btn-primary"
             onButtonClick={handleConfirmSendEmail}
           />
-          <div id="invoiceToDownload" style={{ width: "100%", padding: "16px", backgroundColor: "#ffffff" }}>
-            {/* Profile image */}
-            <div style={{ display: "flex", marginBottom: "24px" }}>
-              <div style={{ position: "relative", width: "112px", height: "112px" }}>
+          <div
+            id="invoiceToDownload"
+            style={{
+              fontFamily: "Inter, Arial, sans-serif",
+              background: "linear-gradient(180deg, #f0f9ff, #ffffff)",
+              padding: "32px",
+              borderRadius: "16px",
+              border: "1px solid #e0f2fe",
+              boxShadow: "0 4px 14px rgba(0,0,0,0.05)",
+            }}
+          >
+            {/* Profile */}
+            <div style={{ textAlign: "center", marginBottom: "40px" }}>
+              <div
+                style={{
+                  display: "inline-block",
+                  position: "relative",
+                  width: "120px",
+                  height: "120px",
+                }}
+              >
                 <img
                   src={
                     selectedAccount.profileImage?.startsWith("http")
                       ? selectedAccount.profileImage
                       : selectedAccount.profileImage
-                        ? `http://localhost:5000/${selectedAccount.profileImage}`
+                        ? `${import.meta.env.VITE_API_BASE_URL}/${selectedAccount.profileImage}`
                         : IMAGES.dummyImg
                   }
                   alt="Profile"
                   style={{
                     width: "100%",
                     height: "100%",
-                    border: "4px solid #2563EB", // main-color
+                    borderRadius: "50%",
+                    border: "4px solid #38bdf8",
                     objectFit: "cover",
-                    boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
+                    boxShadow: "0 6px 18px rgba(56,189,248,0.4)",
                   }}
                 />
                 <div
                   style={{
                     position: "absolute",
-                    bottom: 0,
-                    right: 0,
-                    backgroundColor: "#2563EB", // main-color
-                    padding: "4px",
+                    bottom: "6px",
+                    right: "6px",
+                    backgroundColor: "#0ea5e9",
+                    padding: "6px",
                     border: "2px solid #fff",
-                    borderRadius: "4px",
+                    borderRadius: "50%",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
                   }}
                 >
                   <svg
@@ -176,15 +203,34 @@ const CompanyAccountsList = () => {
                   </svg>
                 </div>
               </div>
+              <h2
+                style={{
+                  marginTop: "18px",
+                  fontSize: "26px",
+                  fontWeight: "700",
+                  color: "#0c4a6e",
+                }}
+              >
+                {selectedAccount.companyName || "Company Account"}
+              </h2>
+              <p
+                style={{
+                  color: "#0369a1",
+                  fontSize: "16px",
+                  fontWeight: "500",
+                  marginTop: "4px",
+                }}
+              >
+                {selectedAccount.tradingName || "Trading Name"}
+              </p>
             </div>
 
-            {/* Details grid */}
+            {/* Details */}
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-                gap: "16px",
-                marginBottom: "24px",
+                gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                gap: "20px",
               }}
             >
               {[
@@ -205,7 +251,9 @@ const CompanyAccountsList = () => {
                 {
                   label: "Created At",
                   value: selectedAccount?.createdAt
-                    ? moment(selectedAccount.createdAt).tz(timezone).format("DD/MM/YYYY HH:mm:ss")
+                    ? moment(selectedAccount.createdAt)
+                      .tz(timezone)
+                      .format("DD/MM/YYYY HH:mm:ss")
                     : "N/A",
                 },
                 { label: "Company Address", value: selectedAccount.address },
@@ -213,35 +261,42 @@ const CompanyAccountsList = () => {
                 <div
                   key={label}
                   style={{
-                    backgroundColor: "#ffffff",
-                    border: "1px solid #e5e7eb",
-                    padding: "12px 16px",
-                    borderRadius: "8px",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                    transition: "all 0.2s ease",
-                    wordBreak: "break-word",
+                    background: "#ffffff",
+                    border: "1px solid #dbeafe",
+                    borderRadius: "12px",
+                    padding: "16px 20px",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
                   }}
                 >
-                  <p
+                  <div
                     style={{
-                      fontSize: "11px",
+                      fontSize: "12px",
+                      fontWeight: "700",
                       textTransform: "uppercase",
-                      color: "#6b7280",
+                      color: "#0284c7",
+                      marginBottom: "6px",
                       letterSpacing: "0.05em",
-                      marginBottom: "4px",
                     }}
                   >
                     {label}
-                  </p>
-                  <p style={{ color: "#1f2937", fontWeight: 600, fontSize: "14px" }}>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: "500",
+                      color: "#111827",
+                      wordBreak: "break-word",
+                    }}
+                  >
                     {value || "N/A"}
-                  </p>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="flex justify-end items-center mb-6">
+          <div className="flex justify-end items-center mb-6 mt-6">
             <div className="flex gap-2">
               <button
                 onClick={() =>

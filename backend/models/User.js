@@ -64,6 +64,14 @@ const userSchema = new mongoose.Schema({
 
   verification: { type: VerificationSchema, default: undefined },
   verifiedAt: { type: Date },
+
+  // NEW FIELDS for SuperAdmin company details
+  superadminCompanyName: { type: String, default: "" },
+  superadminCompanyAddress: { type: String, default: "" },
+  superadminCompanyPhoneNumber: { type: String, default: "" },
+  superadminCompanyEmail: { type: String, default: "" },
+  superadminCompanyWebsite: { type: String, default: "" },
+
 }, { timestamps: true });
 
 export default mongoose.model("User", userSchema);
