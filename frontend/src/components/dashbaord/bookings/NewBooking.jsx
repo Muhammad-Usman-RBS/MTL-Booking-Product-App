@@ -26,6 +26,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const userRole = user?.role || "";
   const vatnumber = user?.vatnumber || "";
 
+  const isEditing = !!editBookingData?._id && !editBookingData?.__copyMode;
+
   const [mode, setMode] = useState("Transfer");
   const [selectedHourly, setSelectedHourly] = useState(null);
 
@@ -205,6 +207,31 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       JSON.stringify(dropOffs2)
     );
   };
+
+  // Journey Fare auto update
+  useEffect(() => {
+    if (primaryFare != null) {
+      setFareDetails((p) => {
+        // agar user ne manually edit nahi kiya
+        if (!fareTouched.journey) {
+          return { ...p, journeyFare: primaryFare };
+        }
+        return p;
+      });
+    }
+  }, [primaryFare, hasChangedPrimaryLocations]);
+
+  // Return Journey Fare auto update
+  useEffect(() => {
+    if (returnJourneyToggle && returnFare != null) {
+      setFareDetails((p) => {
+        if (!fareTouched.return) {
+          return { ...p, returnJourneyFare: returnFare };
+        }
+        return p;
+      });
+    }
+  }, [returnFare, hasChangedReturnLocations, returnJourneyToggle]);
 
   // paymentOptionsInvoice get value only for corporate customer account
   useEffect(() => {
@@ -426,9 +453,9 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       cardPaymentReference: cloned.cardPaymentReference || "",
       paymentGateway: cloned.paymentGateway || "",
       journeyFare: cloned.journeyFare,
-      driverFare: cloned.driverFare ,
-      returnJourneyFare: cloned.returnJourneyFare ,
-      returnDriverFare: cloned.returnDriverFare ,
+      driverFare: cloned.driverFare,
+      returnJourneyFare: cloned.returnJourneyFare,
+      returnDriverFare: cloned.returnDriverFare,
       emailNotifications: {
         admin: cloned?.emailNotifications?.admin || false,
         customer: cloned?.emailNotifications?.customer || false,
@@ -473,6 +500,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       }));
     }
   }, [primaryFare, hasChangedPrimaryLocations]);
+
   useEffect(() => {
     if (primaryFare && !fareDetails.journeyFare) {
       setFareDetails((prev) => ({
@@ -483,13 +511,29 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   }, [primaryFare]);
 
   useEffect(() => {
-    if (returnFare && !fareDetails.returnJourneyFare && returnJourneyToggle) {
-      setFareDetails((prev) => ({
-        ...prev,
-        returnJourneyFare: returnFare,
-      }));
+    if (primaryFare != null) {
+      setFareDetails((prev) => {
+        if (isEditing && !hasChangedPrimaryLocations) {
+          return { ...prev, journeyFare: editBookingData.journeyFare };
+        }
+        return { ...prev, journeyFare: primaryFare };
+      });
     }
-  }, [returnFare, returnJourneyToggle]);
+  }, [primaryFare, isEditing, hasChangedPrimaryLocations, editBookingData?.journeyFare]);
+
+  useEffect(() => {
+    if (returnJourneyToggle && returnFare != null) {
+      setFareDetails((prev) => {
+        // ✅ if editing, always keep DB value unless user changed locations
+        if (isEditing && !hasChangedReturnLocations) {
+          return { ...prev, returnJourneyFare: editBookingData.returnJourneyFare };
+        }
+        // ✅ new booking or changed return locations → allow recalculated fare
+        return { ...prev, returnJourneyFare: returnFare };
+      });
+    }
+  }, [returnFare, returnJourneyToggle, isEditing, hasChangedReturnLocations, editBookingData?.returnJourneyFare]);
+
   const handlePrimaryJourneyDataChange = (newData) => {
     setPrimaryJourneyData(newData);
   };
@@ -548,7 +592,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         : (u.endsWith("s") ? u : `${u}s`);
       // Only show toast for primary journey
       if (journeyType === "primary") {
-        toast.error(`Booking must be made at least ${value} ${timeText} in advance!`);}
+        toast.error(`Booking must be made at least ${value} ${timeText} in advance!`);
+      }
       return false;
     }
     return true;
@@ -557,20 +602,20 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     if (!primaryJourney.date || !returnJourney.date) return true;
     if (primaryJourney.hour === "" || primaryJourney.minute === "") return true;
     if (returnJourney.hour === "" || returnJourney.minute === "") return true;
-  
+
     const primaryDateTime = new Date(
       `${primaryJourney.date}T${String(primaryJourney.hour).padStart(2, "0")}:${String(primaryJourney.minute).padStart(2, "0")}:00`
     );
-    
+
     const returnDateTime = new Date(
       `${returnJourney.date}T${String(returnJourney.hour).padStart(2, "0")}:${String(returnJourney.minute).padStart(2, "0")}:00`
     );
-  
+
     if (returnDateTime <= primaryDateTime) {
       toast.error("Return journey must be scheduled after the primary journey!");
       return false;
     }
-    
+
     return true;
   };
   const handleSubmit = async (e) => {
@@ -585,7 +630,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
     const isReturnJourney =
       !!editBookingData?.__editReturn || !!editBookingData?.__copyReturn;
-    const isEditing = !!editBookingData?._id && !editBookingData?.__copyMode;
 
     if (!companyId) {
       return toast.error("Missing company ID");
@@ -754,7 +798,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         toast.success("Primary booking created successfully");
 
         // Redirect after booking creation
-navigate("/dashboard/bookings/list");
+        navigate("/dashboard/bookings/list");
 
         // ➤ 2. Create return booking if toggle is ON
         if (returnJourneyToggle && dropOffs2[0]) {
@@ -803,18 +847,16 @@ navigate("/dashboard/bookings/list");
     }
   }, [returnJourneyToggle, returnJourneyData.date, returnJourneyData.hour, returnJourneyData.minute]);
   useEffect(() => {
-    if (returnJourneyToggle && 
-        primaryJourneyData.date && primaryJourneyData.hour !== "" && primaryJourneyData.minute !== "" &&
-        returnJourneyData.date && returnJourneyData.hour !== "" && returnJourneyData.minute !== "") {
+    if (returnJourneyToggle &&
+      primaryJourneyData.date && primaryJourneyData.hour !== "" && primaryJourneyData.minute !== "" &&
+      returnJourneyData.date && returnJourneyData.hour !== "" && returnJourneyData.minute !== "") {
       validateReturnJourneyTime(primaryJourneyData, returnJourneyData);
     }
   }, [
-    returnJourneyToggle, 
+    returnJourneyToggle,
     primaryJourneyData.date, primaryJourneyData.hour, primaryJourneyData.minute,
     returnJourneyData.date, returnJourneyData.hour, returnJourneyData.minute
   ]);
-  // Add here:
-  const isEditing = !!editBookingData?._id || !!editBookingData?.__copyMode;
 
   return (
     <>
