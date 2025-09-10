@@ -944,40 +944,83 @@ export const updateBooking = async (req, res) => {
         console.error("❌ Full error:", driverEmailError);
       }
     }
-
-    // Send booking update emails to passenger and admin
-    const sanitize = (booking) => {
-      const { _id, __v, createdAt, updatedAt, companyId, ...clean } = booking.toObject();
-      return clean;
-    };
-
-    const emailData = {
-      title: "Booking Updated",
-      data: { Booking: sanitize(updatedBooking) },
-    };
-
-    if (PassengerEmail) {
-      try {
-        await sendEmail(PassengerEmail, "Your Booking Was Updated", emailData);
-        console.log(`✅ Passenger update email sent to: ${PassengerEmail}`);
-      } catch (error) {
-        console.error(`❌ Failed to send passenger email: ${error.message}`);
+    try {
+      // Fetch who manages this customer + brand info (same as createBooking)
+      const [clientAdminUser, companyDoc] = await Promise.all([
+        User.findOne({ companyId: updatedBooking.companyId, role: "clientadmin" })
+          .select("name email contact phone profileImage")
+          .lean()
+          .catch(() => null),
+        Company.findById(updatedBooking.companyId)
+          .select("companyName tradingName email contact profileImage address website")
+          .lean()
+          .catch(() => null),
+      ]);
+    
+      // Build updated confirmation using the same template used in createBooking
+      const confirmationHtml = customerBookingConfirmation({
+        booking: updatedBooking,
+        company: companyDoc || {},
+        clientAdmin: clientAdminUser || {},
+        options: {
+          // Prefer Client Admin as frontline contact
+          supportEmail: clientAdminUser?.email || companyDoc?.email,
+          supportPhone: clientAdminUser?.contact || clientAdminUser?.phone || companyDoc?.contact,
+          website: companyDoc?.website,
+          address: companyDoc?.address,
+        },
+      });
+    
+      // Always send to the CURRENT passenger email after update
+      const targetPassengerEmail = updatedBooking?.passenger?.email?.trim();
+      if (targetPassengerEmail) {
+        await sendEmail(
+          targetPassengerEmail,
+          `Booking Updated #${updatedBooking.bookingId}`,
+          { html: confirmationHtml }
+        );
+        console.log(`✅ Update confirmation sent to passenger: ${targetPassengerEmail}`);
+      } else {
+        console.log("⚠️ No passenger email present on updated booking — skipping passenger email.");
       }
+    } catch (e) {
+      console.error("❌ Error sending updated passenger confirmation:", e.message);
     }
 
-    if (ClientAdminEmail) {
-      try {
-        await sendEmail(ClientAdminEmail, "Booking Updated", emailData);
-        console.log(`✅ Admin update email sent to: ${ClientAdminEmail}`);
-      } catch (error) {
-        console.error(`❌ Failed to send admin email: ${error.message}`);
-      }
-    }
+    // currently commented out  -->
+    // // Send booking update emails to passenger and admin
+    // const sanitize = (booking) => {
+    //   const { _id, __v, createdAt, updatedAt, companyId, ...clean } = booking.toObject();
+    //   return clean;
+    // };
+
+    // const emailData = {
+    //   title: "Booking Updated",
+    //   data: { Booking: sanitize(updatedBooking) },
+    // };
+
+    // if (PassengerEmail) {
+    //   try {
+    //     await sendEmail(PassengerEmail, "Your Booking Was Updated", emailData);
+    //     console.log(`✅ Passenger update email sent to: ${PassengerEmail}`);
+    //   } catch (error) {
+    //     console.error(`❌ Failed to send passenger email: ${error.message}`);
+    //   }
+    // }
+
+    // if (ClientAdminEmail) {
+    //   try {
+    //     await sendEmail(ClientAdminEmail, "Booking Updated", emailData);
+    //     console.log(`✅ Admin update email sent to: ${ClientAdminEmail}`);
+    //   } catch (error) {
+    //     console.error(`❌ Failed to send admin email: ${error.message}`);
+    //   }
+    // }
 
     return res.status(200).json({
       success: true,
       message: "Booking updated successfully",
-      booking: sanitize(updatedBooking),
+      booking: updatedBooking,
       driverChanges: {
         assigned: driverEmailResults.assigned.length,
         unassigned: driverEmailResults.unassigned.length,

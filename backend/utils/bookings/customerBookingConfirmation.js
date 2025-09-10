@@ -78,7 +78,7 @@ export const customerBookingConfirmation = ({
     return `${currency}${Number(booking?.journeyFare || 0).toFixed(2)}`;
   };
 
-  const journeyCard = (label, j) => `
+  const journeyCard = (label, j, vehicleInfo = {}) => `
     <table role="presentation" width="100%" style="background:${
       brand.card
     };border:1px solid ${brand.border};border-radius:12px;">
@@ -98,6 +98,41 @@ export const customerBookingConfirmation = ({
                 brand.primary
               };font:400 14px Arial,sans-serif">${safe(j?.pickup || "-")}</td>
             </tr>
+
+            <tr>
+  ${
+    j?.flightNumber || j?.pickmeAfter || j?.arrivefrom
+      ? `
+      <tr>
+        ${
+          j?.flightNumber
+            ? `<td style="padding:6px 0;color:${brand.muted};font:600 13px Arial,sans-serif;">
+                Flight No.:<br/>
+                <span style="color:${brand.primary};font-weight:400;font-size:14px;">${safe(j.flightNumber)}</span>
+              </td>`
+            : ``
+        }
+        ${
+          j?.pickmeAfter
+            ? `<td style="padding:6px 0;color:${brand.muted};font:600 13px Arial,sans-serif;">
+                Pick Me After:<br/>
+                <span style="color:${brand.primary};font-weight:400;font-size:14px;">${safe(j.pickmeAfter)}</span>
+              </td>`
+            : ``
+        }
+        ${
+          j?.arrivefrom
+            ? `<td style="padding:6px 0;color:${brand.muted};font:600 13px Arial,sans-serif;">
+                Arrive From:<br/>
+                <span style="color:${brand.primary};font-weight:400;font-size:14px;">${safe(j.arrivefrom)}</span>
+              </td>`
+            : ``
+        }
+      </tr>`
+      : ""
+  }
+</tr>
+
             <tr>
               <td style="padding:6px 0;color:${
                 brand.muted
@@ -114,19 +149,99 @@ export const customerBookingConfirmation = ({
                 brand.primary
               };font:400 14px Arial,sans-serif">${safe(formatDateTime(j))}</td>
             </tr>
+         
             ${
-              j?.flightNumber
+              j?.dropoff_terminal_0
                 ? `
             <tr>
               <td style="padding:6px 0;color:${
                 brand.muted
-              };width:80px;font:600 13px Arial,sans-serif">Flight No.:</td>
+              };width:80px;font:600 13px Arial,sans-serif">Dropoff Terminal-0:</td>
               <td style="padding:6px 0;color:${
                 brand.primary
-              };font:400 14px Arial,sans-serif">${safe(j.flightNumber)}</td>
+              };font:400 14px Arial,sans-serif">${safe(j.dropoff_terminal_0)}</td>
             </tr>`
                 : ``
             }
+            ${
+              j?.dropoff_terminal_1
+                ? `
+            <tr>
+              <td style="padding:6px 0;color:${
+                brand.muted
+              };width:80px;font:600 13px Arial,sans-serif">Dropoff Terminal-1:</td>
+              <td style="padding:6px 0;color:${
+                brand.primary
+              };font:400 14px Arial,sans-serif">${safe(j.dropoff_terminal_1)}</td>
+            </tr>`
+                : ``
+            }
+            ${
+              j?.dropoff_terminal_2
+                ? `
+            <tr>
+              <td style="padding:6px 0;color:${
+                brand.muted
+              };width:80px;font:600 13px Arial,sans-serif">Dropoff Terminal-2:</td>
+              <td style="padding:6px 0;color:${
+                brand.primary
+              };font:400 14px Arial,sans-serif">${safe(j.dropoff_terminal_2)}</td>
+            </tr>`
+                : ``
+            }
+            ${
+              j?.dropoffDoorNumber0
+                ? `
+            <tr>
+              <td style="padding:6px 0;color:${
+                brand.muted
+              };width:80px;font:600 13px Arial,sans-serif">Dropoff Door No-0:</td>
+              <td style="padding:6px 0;color:${
+                brand.primary
+              };font:400 14px Arial,sans-serif">${safe(j.dropoffDoorNumber0)}</td>
+            </tr>`
+                : ``
+            }
+            ${
+              j?.dropoffDoorNumber1
+                ? `
+            <tr>
+              <td style="padding:6px 0;color:${
+                brand.muted
+              };width:80px;font:600 13px Arial,sans-serif">Dropoff Door No-1:</td>
+              <td style="padding:6px 0;color:${
+                brand.primary
+              };font:400 14px Arial,sans-serif">${safe(j.dropoffDoorNumber1)}</td>
+            </tr>`
+                : ``
+            }
+            ${
+              j?.dropoffDoorNumber2
+                ? `
+            <tr>
+              <td style="padding:6px 0;color:${
+                brand.muted
+              };width:80px;font:600 13px Arial,sans-serif">Dropoff Door No.-2:</td>
+              <td style="padding:6px 0;color:${
+                brand.primary
+              };font:400 14px Arial,sans-serif">${safe(j.dropoffDoorNumber2)}</td>
+            </tr>`
+                : ``
+            }
+         ${
+    vehicleInfo?.childSeat && vehicleInfo.childSeat > 0
+      ? `
+      <tr>
+        <td style="padding:6px 0;color:${
+          brand.muted
+        };width:80px;font:600 13px Arial,sans-serif">Child Seat:</td>
+        <td style="padding:6px 0;color:${
+          brand.primary
+        };font:400 14px Arial,sans-serif">${vehicleInfo.childSeat}</td>
+      </tr>`
+      : ``
+  }
+          
             ${
               j?.notes
                 ? `
@@ -229,11 +344,12 @@ export const customerBookingConfirmation = ({
           <!-- Journey Details -->
           <tr>
             <td class="px-22" style="padding:0 24px 16px">
-              ${
-                rj
-                  ? journeyCard("Journey Details (Return)", rj)
-                  : journeyCard("Journey Details (Primary)", pj)
-              }
+            ${
+              rj
+                ? journeyCard("Journey Details (Return)", rj, booking?.vehicle)
+                : journeyCard("Journey Details (Primary)", pj, booking?.vehicle)
+            }
+            
             </td>
           </tr>
 
