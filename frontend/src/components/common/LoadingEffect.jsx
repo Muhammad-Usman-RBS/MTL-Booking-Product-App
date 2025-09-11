@@ -1,11 +1,11 @@
 import React from 'react';
 
-const LoadingEffect = ({ 
-  size = 'medium', 
-  overlay = false, 
-  message = 'Loading...', 
+const LoadingEffect = ({
+  size = 'medium',
+  overlay = false,
+  message = 'Loading...',
   showMessage = true,
-  theme = 'light' 
+  theme = 'light'
 }) => {
   const sizeClasses = {
     small: 'mtl-loading-small',

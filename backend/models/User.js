@@ -62,6 +62,11 @@ const userSchema = new mongoose.Schema({
     location: String,
   }],
 
+  vatnumber: {
+    type: String,
+    default: null,
+  },
+
   verification: { type: VerificationSchema, default: undefined },
   verifiedAt: { type: Date },
 

@@ -37,9 +37,12 @@ export const initiateUserVerification = async (req, res) => {
     if (!role) return res.status(400).json({ message: "Role is required" });
     if (!status) return res.status(400).json({ message: "Status is required" });
 
+    // ✅ Password policy for clientadmin
     if (role === "clientadmin") {
       if (!password || !strongPwRe.test(password)) {
-        return res.status(400).json({ message: "Password must be 8–16 chars with uppercase, lowercase, number & special char." });
+        return res.status(400).json({
+          message: "Password must be 8–16 chars with uppercase, lowercase, number & special char."
+        });
       }
     }
 
@@ -50,9 +53,7 @@ export const initiateUserVerification = async (req, res) => {
       return res.status(409).json({ message: "User already exists" });
     }
 
-    // ...role/caps checks (as in your code)
-
-    // ✅ FIX: define userPermissions before use
+    // ✅ Permission validation
     let userPermissions = [...defaultPermissions];
     if (Array.isArray(permissions)) {
       const invalid = permissions.filter(p => !allowedPermissions.includes(p));
@@ -65,7 +66,7 @@ export const initiateUserVerification = async (req, res) => {
       return res.status(400).json({ message: "Permissions must be an array of strings" });
     }
 
-    // associateAdminLimit parsing (as in your code)
+    // ✅ AssociateAdminLimit validation
     let parsedLimit = 0;
     if (role === "clientadmin") {
       if (associateAdminLimit !== undefined && associateAdminLimit !== null) {
@@ -77,7 +78,58 @@ export const initiateUserVerification = async (req, res) => {
       }
     }
 
-    // OTP + password hash
+    // ✅ 🔑 CONDITION: OTP sirf tab chale jab superadmin → clientadmin/associateadmin
+    const otpRequired =
+      creator.role === "superadmin" &&
+      (role === "clientadmin" || role === "associateadmin");
+
+    if (!otpRequired) {
+      // ✅ Baaki roles ke liye direct create kar dena (no OTP)
+      const hashedPassword = password
+        ? await bcrypt.hash(password, 10)
+        : await bcrypt.hash(Math.random().toString(36), 10);
+
+      const newUser = await User.create({
+        fullName: fullName.trim(),
+        email: emailNorm,
+        password: hashedPassword,
+        role,
+        status,
+        permissions: userPermissions,
+        associateAdminLimit: parsedLimit,
+        employeeNumber: role === "driver" ? (req.body.employeeNumber || employeeNumber) : null,
+        vatnumber: role === "customer" ? (req.body.vatnumber || vatnumber) : null,
+        createdBy: creator._id,
+        companyId:
+          creator.role === "superadmin" && role === "clientadmin" ? null : creator.companyId,
+        ...(googleCalendar && {
+          googleCalendar: {
+            access_token: googleCalendar.access_token,
+            refresh_token: googleCalendar.refresh_token,
+            calendarId: googleCalendar.calendarId || "primary",
+          },
+        }),
+      });
+
+      await sendEmail(newUser.email, "Your Account Has Been Created", {
+        title: "Welcome to MTL",
+        subtitle: "Your account has been created successfully. You can now log in using the details below:",
+        data: {
+          Name: newUser.fullName,
+          Email: newUser.email,
+          Role: newUser.role,
+          ...(password && { Password: password }),
+          Login_Link: `${process.env.BASE_URL_FRONTEND}/login`,
+        },
+      });
+
+      return res.status(201).json({
+        message: "User created successfully (no OTP needed).",
+        user: newUser,
+      });
+    }
+
+    // ✅ OTP flow (superadmin → clientadmin/associateadmin)
     const otp = genOtp();
     const otpHash = await bcrypt.hash(otp, 10);
     const otpExpiresAt = new Date(Date.now() + 2 * 60 * 1000);
@@ -98,7 +150,7 @@ export const initiateUserVerification = async (req, res) => {
           password: passwordHash,
           role,
           status: "Pending",
-          permissions: userPermissions,       // ← now defined
+          permissions: userPermissions,
           associateAdminLimit: parsedLimit,
           employeeNumber: role === "driver" ? (req.body.employeeNumber || employeeNumber) : null,
           vatnumber: role === "customer" ? (req.body.vatnumber || vatnumber) : null,
@@ -116,7 +168,7 @@ export const initiateUserVerification = async (req, res) => {
             otpExpiresAt,
             attempts: 0,
             lastSentAt: new Date(),
-            tempPassword: password || undefined,   // ⬅️ save to include in welcome email
+            tempPassword: password || undefined,
           },
         },
       },

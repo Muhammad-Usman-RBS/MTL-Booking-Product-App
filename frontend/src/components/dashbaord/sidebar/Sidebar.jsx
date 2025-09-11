@@ -75,7 +75,7 @@ const Sidebar = () => {
           <p className="text-sm text-[#1f2937] uppercase tracking-widest font-semibold">
             Welcome!
           </p>
-          <p className="font-semibold text-[#1f2937] truncate">
+          <p className="text-[#1f2937] truncate">
             {user?.fullName || "Guest"}
           </p>
         </div>

@@ -7,7 +7,7 @@ const SelectOption = ({ options, label, width = "full", value, onChange }) => {
 
   const selectClass = classNames(
     `w-${width}`,
-    "appearance-none px-3 py-2 text-sm border border-[var(--light-gray)] rounded-lg shadow-sm",
+    "appearance-none px-3 py-1.5 text-sm border border-[var(--light-gray)] rounded-lg shadow-sm",
     "bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600",
     "focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
   );
@@ -15,7 +15,7 @@ const SelectOption = ({ options, label, width = "full", value, onChange }) => {
   return (
     <div className={`w-${width}`}>
       {label && (
-        <label className="block mb-2 text-sm text-gray-800 dark:text-white">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
           {label}
         </label>
       )}

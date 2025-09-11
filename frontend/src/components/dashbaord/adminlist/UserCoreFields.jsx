@@ -50,7 +50,7 @@ const UserCoreFields = ({
 
             {/* Full Name */}
             <div className="col-span-1 relative">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                     Full Name{!isEdit && <Req />}
                 </label>
                 <input
@@ -105,7 +105,7 @@ const UserCoreFields = ({
             {/* VAT (customer only) */}
             {selectedAccount?.role === "customer" && selectedAccount?.vatnumber && (
                 <div className="col-span-1">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                         VAT Number
                     </label>
                     <input
@@ -152,7 +152,7 @@ const UserCoreFields = ({
 
             {/* Email */}
             <div className="col-span-1">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                     Email{!isEdit && <Req />}
                 </label>
                 <input
@@ -173,10 +173,10 @@ const UserCoreFields = ({
 
             {/* Password */}
             <div className="relative col-span-1">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                     Password{(!isEdit && selectedAccount?.role === "clientadmin") && <Req />}
                 </label>
-                <div className="relative mt-1">
+                <div className="relative">
                     <input
                         name="password"
                         placeholder="Password"

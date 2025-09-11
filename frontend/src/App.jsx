@@ -7,6 +7,10 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import DashboardLayout from "./layouts/DashboardLayout";
 import NotFound from "./pages/emptypages/NotFound";
 
+// Import your LoadingProvider
+import { LoadingProvider } from "./components/common/LoadingProvider";
+
+// All your existing imports...
 import Dashboard from "./components/dashbaord/home/Dashboard";
 import EditProfile from "./components/dashbaord/profile/EditProfile";
 import Logout from "./components/dashbaord/Logout";
@@ -18,8 +22,6 @@ import NewInvoice from "./components/dashbaord/invoices/NewInvoice";
 import EditInvoice from "./components/dashbaord/invoices/EditInvoice";
 import NewDriver from "./components/dashbaord/drivers/NewDriver";
 import DriverList from "./components/dashbaord/drivers/DriverList";
-// import DriverStatements from "./components/dashbaord/statements/DriverStatements";
-// import DriverPayments from "./components/dashbaord/statements/DriverPayments";
 import AddCompanyAccount from "./components/dashbaord/companyaccounts/AddCompanyAccount";
 import CompanyAccountsList from "./components/dashbaord/companyaccounts/CompanyAccountsList";
 import CustomersList from "./components/dashbaord/customers/CustomersList";
@@ -66,7 +68,7 @@ import BookingCalendar from "./components/dashbaord/bookings/BookingCalendar";
 import AddCustomer from "./components/dashbaord/widgetapi/AddCustomer";
 import ViewCompany from "./components/dashbaord/companyaccounts/ViewCompany";
 
-import ProtectedRoute from './layouts/ProtectedRoute';
+import ProtectedRoute from "./layouts/ProtectedRoute";
 import ProtectedAddCustomer from "./layouts/ProtectedAddCustomer";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -101,7 +103,7 @@ function App() {
   }, [isSuccess, data, dispatch]);
 
   return (
-    <>
+    <LoadingProvider>
       <Routes>
         {/* Auth Pages */}
         <Route element={<AuthLayout />}>
@@ -111,6 +113,7 @@ function App() {
         </Route>
 
         <Route path="/widget-form" element={<WidgetMain />} />
+
         {/* Role-Specific Dashboards */}
         <Route
           path="/add-customer"
@@ -143,7 +146,6 @@ function App() {
               {/* Invoices */}
               <Route path="invoices/list" element={<InvoicesList />} />
               <Route path="invoices/edit/:id" element={<EditInvoice />} />
-              {/* <Route path="invoices/new" element={<InvoiceTypeSelector />} />  */}
               <Route path="invoices/customer/new" element={<NewInvoice invoiceType="customer" />} />
               <Route path="invoices/driver/new" element={<NewInvoice invoiceType="driver" />} />
 
@@ -199,10 +201,6 @@ function App() {
               {/* Widget / API */}
               <Route path="widget-api" element={<WidgetAPI />} />
 
-              {/* Statements */}
-              {/* <Route path="statements/driver" element={<DriverStatements />} />
-              <Route path="statements/payments" element={<DriverPayments />} /> */}
-
               {/* Profile */}
               <Route path="profile" element={<EditProfile />} />
 
@@ -217,7 +215,7 @@ function App() {
       </Routes>
 
       <ToastContainer position="top-center" autoClose={2000} />
-    </>
+    </LoadingProvider>
   );
 }
 

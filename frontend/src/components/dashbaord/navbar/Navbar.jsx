@@ -22,6 +22,7 @@ import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { useGetAllJobsQuery } from "../../../redux/api/jobsApi";
 import { STATIC_THEME_DATA } from "../../../constants/dashboardTabsData/data";
 import GoogleTranslateButton from "../../../utils/GoogleTranslateButton";
+import FontSelector from "../../common/FontSelector";
 
 const STATIC_THEME_KEY = "anonThemeClass";
 const STATIC_BOOKMARKS_KEY = "anonThemeBookmarks";
@@ -447,6 +448,7 @@ function Navbar() {
               </div>
             )}
           </div>
+          <FontSelector/>
           {/* Google button  */}
           <GoogleTranslateButton />
           {/* Theme selector - only for admins */}

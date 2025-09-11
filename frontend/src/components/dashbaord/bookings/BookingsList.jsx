@@ -14,9 +14,12 @@ import AuditModal from "./AuditModal";
 import ViewDriver from "./ViewDriver";
 import NewBooking from "./NewBooking";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
+import { useLoading } from '../../common/LoadingProvider';
 
 const BookingsList = () => {
   const user = useSelector((state) => state.auth.user);
+  const { showLoading, hideLoading } = useLoading();
+
   const defaultColumns = {
     bookingType: true,
     bookingId: true,
@@ -44,6 +47,7 @@ const BookingsList = () => {
     defaultColumns.driverFare = false;
     defaultColumns.returnDriverFare = false;
   }
+
   const ALL_STATUSES = [
     "New",
     "Accepted",
@@ -54,6 +58,7 @@ const BookingsList = () => {
     "No Show",
     "Completed",
   ];
+
   const [selectedRow, setSelectedRow] = useState(null);
   const [assignedDrivers, setAssignedDrivers] = useState([]);
 
@@ -80,11 +85,20 @@ const BookingsList = () => {
   );
 
   const dispatch = useDispatch();
-  const { data: companyData } = useGetCompanyByIdQuery(user?.companyId);
-  const { data: bookingData } = useGetAllBookingsQuery(user?.companyId);
-  const { data: driversData, isLoading } = useGetAllDriversQuery(
+  const { data: companyData, isLoading: isCompanyLoading } = useGetCompanyByIdQuery(user?.companyId);
+  const { data: bookingData, isLoading: isBookingsLoading } = useGetAllBookingsQuery(user?.companyId);
+  const { data: driversData, isLoading: isDriversLoading } = useGetAllDriversQuery(
     user?.companyId
   );
+
+  // 🔹 Manage global loading spinner
+  useEffect(() => {
+    if (isCompanyLoading || isBookingsLoading || isDriversLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isCompanyLoading, isBookingsLoading, isDriversLoading, showLoading, hideLoading]);
 
   useEffect(() => {
     if (driversData?.drivers?.length > 0) {
@@ -183,7 +197,7 @@ const BookingsList = () => {
       merged.driverFare = false;
       merged.returnDriverFare = false;
     }
-    
+
     return merged;
   });
 
@@ -297,30 +311,30 @@ const BookingsList = () => {
         heading="Column Visibility"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
-        {Object.keys(selectedColumns)
-  .filter(
-    (key) =>
-      !(user?.role === "customer" &&
-        (key === "driverFare" || key === "returnDriverFare"))
-  )
-  .map((key) => (
-    <label
-      key={key}
-      className="flex items-center gap-3 p-2 rounded-md cursor-pointer bg-white border border-gray-200 hover:bg-gray-50 transition"
-    >
-      <input
-        type="checkbox"
-        checked={!!selectedColumns[key]}
-        disabled={
-          user?.role === "driver" &&
-          (key === "journeyFare" || key === "returnJourneyFare")
-        }
-        onChange={(e) => handleColumnChange(key, e.target.checked)}
-        className="w-4 h-4 text-indigo-600 border-[var(--light-gray)] rounded focus:ring-indigo-500"
-      />
-      <span className="text-sm text-gray-800">{key}</span>
-    </label>
-  ))}
+          {Object.keys(selectedColumns)
+            .filter(
+              (key) =>
+                !(user?.role === "customer" &&
+                  (key === "driverFare" || key === "returnDriverFare"))
+            )
+            .map((key) => (
+              <label
+                key={key}
+                className="flex items-center gap-3 p-2 rounded-md cursor-pointer bg-white border border-gray-200 hover:bg-gray-50 transition"
+              >
+                <input
+                  type="checkbox"
+                  checked={!!selectedColumns[key]}
+                  disabled={
+                    user?.role === "driver" &&
+                    (key === "journeyFare" || key === "returnJourneyFare")
+                  }
+                  onChange={(e) => handleColumnChange(key, e.target.checked)}
+                  className="w-4 h-4 text-indigo-600 border-[var(--light-gray)] rounded focus:ring-indigo-500"
+                />
+                <span className="text-sm text-gray-800">{key}</span>
+              </label>
+            ))}
         </div>
       </CustomModal>
 

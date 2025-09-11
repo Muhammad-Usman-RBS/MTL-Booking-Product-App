@@ -23,25 +23,25 @@ const sidebarItems = [
         title: "Bookings List",
         route: "/dashboard/bookings/list",
         icon: Icons.ListChecks,
-        roles: ["demo","clientadmin",  "customer", "associateadmin" ],
+        roles: ["demo", "clientadmin",  "customer", "associateadmin" ],
       },
       {
         title: "New Booking",
         route: "/dashboard/bookings/new",
         icon: Icons.PlusCircle,
-        roles: ["demo","clientadmin",  "customer", "associateadmin"],
+        roles: ["demo", "clientadmin",  "customer", "associateadmin"],
       },
       {
         title: "Booking Calendar",
         route: "/dashboard/bookings/calendar",
         icon: Icons.CalendarDays,
-        roles: ["demo","clientadmin",  "associateadmin", "driver", "customer"],
+        roles: ["demo", "clientadmin",  "associateadmin", "driver", "customer"],
       },
       {
         title: "Deleted Booking",
         route: "/dashboard/bookings/deleted-booking",
         icon: Icons.Delete,
-        roles: ["demo","clientadmin",  "associateadmin", "superadmin"],
+        roles: ["demo", "clientadmin",  "associateadmin", "superadmin"],
       },
     ],
   },
@@ -330,7 +330,6 @@ const sidebarItems = [
           "clientadmin",
           "associateadmin",
           "superadmin",
-          
         ],
       },
 
@@ -342,8 +341,6 @@ const sidebarItems = [
           "demo",
           "clientadmin",
           "associateadmin",
-          "superadmin",
-          
         ],
       },
       // {
@@ -378,8 +375,6 @@ const sidebarItems = [
           "demo",
           "clientadmin",
           "associateadmin",
-          "superadmin",
-          
           "driver",
         ],
       },
@@ -403,8 +398,6 @@ const sidebarItems = [
           "demo",
           "clientadmin",
           "associateadmin",
-          "superadmin",
-          
         ],
       },
       {
@@ -415,8 +408,6 @@ const sidebarItems = [
           "demo",
           "clientadmin",
           "associateadmin",
-          "superadmin",
-          
         ],
       },
       {
@@ -427,8 +418,6 @@ const sidebarItems = [
           "demo",
           "clientadmin",
           "associateadmin",
-          "superadmin",
-          
         ],
       },
       {
@@ -439,8 +428,6 @@ const sidebarItems = [
           "demo",
           "clientadmin",
           "associateadmin",
-          "superadmin",
-          
         ],
       },
       // {
@@ -523,8 +510,6 @@ const sidebarItems = [
           "demo",
           "clientadmin",
           "associateadmin",
-          "superadmin",
-          
         ],
       },
       // {

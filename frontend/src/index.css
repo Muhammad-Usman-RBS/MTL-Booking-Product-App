@@ -1,78 +1,59 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&family=Open+Sans:wght@300;400;600;700&family=Lato:wght@300;400;700&family=Poppins:wght@400;700&display=swap');
 @import "tailwindcss";
 
-body {
-  font-family: "Roboto Mono", monospace;
+:root {
+  --app-font: 'Roboto', sans-serif;
 }
 
-
-/* Headings styling */
+body,
 h1,
 h2,
 h3,
 h4,
 h5,
-h6 {
-  font-family: "Roboto Mono", monospace;
-  font-weight: 600;
-}
-
-/* Paragraphs */
-p {
-  font-family: "Roboto Mono", monospace;
-  font-weight: 400;
-}
-
-
+h6,
+p,
 span,
 a,
-strong
- {
-  font-family: "Roboto Mono", monospace;}
-
-/* Lists */
+strong,
 ul,
 ol,
-li
- {
-  font-family: "Roboto Mono", monospace;}
-
-/* Forms */
+li,
 input,
 textarea,
 select,
 option,
 button,
-label
- {
-  font-family: "Roboto Mono", monospace;}
-  label{
-    color: rgb(104, 102, 102);
-    font-size: 15px;
-    margin-bottom: 5px;
-  }
-  
+label,
 table,
 caption,
 th,
 td,
 thead,
 tbody,
-col {
-  font-family: "Roboto Mono", monospace;}
-
+col,
 div,
 section,
 aside,
 main,
 nav,
 header,
-footer
-{
-  font-family: "Roboto Mono", monospace;}
-
+footer,
 iframe {
-  font-family: "Roboto Mono", monospace;}
+  font-family: var(--app-font);
+}
+
+select,
+label {
+  font-family: "Roboto", monospace;
+  color: rgb(104, 102, 102);
+  font-size: 15px;
+}
+
+select:disabled {
+  color: red !important; 
+}
+
 /* Theme Colours */
 :root {
   --white: #ffffff;
@@ -169,6 +150,7 @@ iframe {
   font-size: 16px;
   transition: all 0.3s ease;
 }
+
 .tab {
   padding: 5px 12px;
   border-radius: 6px;
@@ -187,36 +169,50 @@ iframe {
 }
 
 .tab-danger {
-  background-color: #fee2e2; /* bg-red-100 */
-  color: #b91c1c; /* text-red-700 */
-  border: 1px solid #fca5a5; /* border-red-300 */
+  background-color: #fee2e2;
+  /* bg-red-100 */
+  color: #b91c1c;
+  /* text-red-700 */
+  border: 1px solid #fca5a5;
+  /* border-red-300 */
 }
 
 .tab-danger:hover {
-  background-color: #fecaca; /* hover:bg-red-200 */
+  background-color: #fecaca;
+  /* hover:bg-red-200 */
   border-color: #fecaca;
 }
 
 .tab-success {
-  background-color: #dcfce7; /* bg-green-100 */
-  color: #15803d; /* text-green-700 */
-  border: 1px solid #86efac; /* border-green-300 */
+  background-color: #dcfce7;
+  /* bg-green-100 */
+  color: #15803d;
+  /* text-green-700 */
+  border: 1px solid #86efac;
+  /* border-green-300 */
 }
 
 .tab-success:hover {
-  background-color: #bbf7d0; /* hover:bg-green-200 */
+  background-color: #bbf7d0;
+  /* hover:bg-green-200 */
   border-color: #bbf7d0;
 }
+
 .tab-suspended {
-  background-color: #fef9c3; /* bg-yellow-100 */
-  color: #a16207; /* text-yellow-700 */
-  border: 1px solid #fcd34d; /* border-yellow-300 */
+  background-color: #fef9c3;
+  /* bg-yellow-100 */
+  color: #a16207;
+  /* text-yellow-700 */
+  border: 1px solid #fcd34d;
+  /* border-yellow-300 */
 }
 
 .tab-suspended:hover {
-  background-color: #fef08a; /* hover:bg-yellow-200 */
+  background-color: #fef08a;
+  /* hover:bg-yellow-200 */
   border-color: #fef08a;
 }
+
 @media screen and (max-width: 576px) {
   .btn {
     font-size: 12px;
@@ -239,9 +235,11 @@ iframe {
   color: white;
   box-shadow: 0 0 10px rgba(89, 89, 89, 0.2);
 }
+
 .nowrap {
   white-space: nowrap;
 }
+
 .btn-success:hover {
   background-color: #046511;
   box-shadow: 0 0 15px rgba(89, 89, 89, 0.4);
@@ -316,8 +314,7 @@ iframe {
 /* Firefox Scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--scroll-thumb, rgba(0, 0, 0, 0.3))
-    var(--scroll-track, transparent);
+  scrollbar-color: var(--scroll-thumb, rgba(0, 0, 0, 0.3)) var(--scroll-track, transparent);
 }
 
 /* Custom Email */
@@ -342,14 +339,14 @@ iframe {
 }
 
 
- /* FOR GOOGLE TRANSLATE */
- .goog-te-gadget span{
-  display: none!important;
+/* FOR GOOGLE TRANSLATE */
+.goog-te-gadget span {
+  display: none !important;
 }
 
 .goog-te-gadget {
-  color: transparent!important;
-  font-size:0px;
+  color: transparent !important;
+  font-size: 0px;
 }
 
 .goog-text-highlight {
@@ -357,13 +354,13 @@ iframe {
   box-shadow: none !important;
 }
 
-#google_translate_element select{
-  background:#ffffff;
-  color:#000000;
+#google_translate_element select {
+  background: #ffffff;
+  color: #000000;
   border: none;
   outline: none;
-  border-radius:8px;
-  padding:10px 6px;
+  border-radius: 8px;
+  padding: 10px 6px;
   margin: 0 !important;
 }
 

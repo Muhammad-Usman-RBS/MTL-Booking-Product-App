@@ -176,7 +176,7 @@ const NewAdminUser = () => {
   useEffect(() => {
     if (selectedAccount?.role === "driver") {
       if (!driversList?.drivers?.length) {
-        toast.warn("⚠️ Please enter Driver details first from the Drivers tab.");
+        toast.warn("Please enter Driver details first from the Drivers tab.");
         setSelectedAccount({ role: roleOptions[0] });
         return;
       }
@@ -208,20 +208,22 @@ const NewAdminUser = () => {
       return;
     }
 
-    const { fullName, email, role, password } = selectedAccount;
+    const { fullName, email, role } = selectedAccount;
     if (!fullName || !email || !role) {
       toast.error("Please fill in all required fields.");
       return;
     }
+
     try {
       if (isEdit && actualAdminId) {
+        // ---- Update flow ----
         const payload = {
           ...selectedAccount,
           vatnumber: selectedAccount.vatnumber || "",
           employeeNumber: selectedAccount.employeeNumber,
         };
 
-        if (!["clientadmin"].includes(payload.role)) {
+        if (payload.role !== "clientadmin") {
           delete payload.associateAdminLimit;
         }
 
@@ -229,35 +231,48 @@ const NewAdminUser = () => {
         toast.success("User updated successfully");
         navigate("/dashboard/admin-list", { replace: true });
       } else {
-        // ⬇️ NEW: OTP INIT FLOW (all roles) — actual user ab Verify pe create hoga
+        // ---- Create flow ----
         const payload = {
           ...selectedAccount,
           vatnumber: selectedAccount.vatnumber || "",
           employeeNumber: selectedAccount.employeeNumber,
           companyId:
-            user?.role === "superadmin" && role === "clientadmin" ? null : user?.companyId || user?._id,
+            user?.role === "superadmin" && role === "clientadmin"
+              ? null
+              : user?.companyId || user?._id,
           createdBy: user?._id,
         };
+
         if (googleConnected) {
           const calendar = JSON.parse(localStorage.getItem("googleCalendarTokens") || "{}");
           if (calendar?.access_token && calendar?.refresh_token) {
             payload.googleCalendar = calendar;
           }
         }
-        // associateAdminLimit only for clientadmin
+
         if (payload.role !== "clientadmin") delete payload.associateAdminLimit;
 
-        const res = await initiateUserVerification(payload).unwrap();
-        toast.success("OTP sent. Please verify.");
-        // Verification page par le jao
-        navigate(`/dashboard/admin-list/verify-user?tid=${res.transactionId}&email=${encodeURIComponent(email)}`);
+        // OTP only if superadmin is creating clientadmin/associateadmin
+        const otpRequired =
+          user?.role === "superadmin" &&
+          (payload.role === "clientadmin" || payload.role === "associateadmin");
+
+        if (otpRequired) {
+          const res = await initiateUserVerification(payload).unwrap();
+          toast.success("OTP sent. Please verify.");
+          navigate(
+            `/dashboard/admin-list/verify-user?tid=${res.transactionId}&email=${encodeURIComponent(email)}`
+          );
+        } else {
+          const res = await createAdmin(payload).unwrap();
+          toast.success("User created successfully");
+          navigate("/dashboard/admin-list");
+        }
       }
 
       // Cleanup
       localStorage.removeItem("googleCalendarTokens");
       localStorage.removeItem("pendingClientAdmin");
-
-      // navigate("/dashboard/admin-list");
     } catch (err) {
       toast.error(err?.data?.message || err?.error);
     }
@@ -328,7 +343,19 @@ const NewAdminUser = () => {
         >
           {isEdit
             ? (isSendingEmail ? "Updating..." : "Update User")
-            : (isSendingEmail ? "Sending OTP..." : "Create User & Send OTP")}
+            : (
+              isSendingEmail
+                ? (
+                  (selectedAccount.role === "clientadmin" || selectedAccount.role === "associateadmin")
+                    ? "Sending OTP..."
+                    : "Creating..."
+                )
+                : (
+                  (selectedAccount.role === "clientadmin" || selectedAccount.role === "associateadmin")
+                    ? "Create User & Send OTP"
+                    : "Create User"
+                )
+            )}
         </button>
       </div>
 
