@@ -124,9 +124,14 @@ const NewAdminUser = () => {
 
   useEffect(() => {
     if (!isEdit && roleOptions.length > 0 && !selectedAccount.role) {
-      setSelectedAccount((prev) => ({ ...prev, role: roleOptions[0] }));
+      setSelectedAccount((prev) => {
+        if (!prev.role) {
+          return { ...prev, role: roleOptions[0] };
+        }
+        return prev;
+      });
     }
-  }, [roleOptions, isEdit, selectedAccount.role]);
+  }, [roleOptions, isEdit]);
 
   // --- Permissions matrix (same logic, shared with child through prop) ---
   const getAvailablePermissions = (role) => {
@@ -176,20 +181,26 @@ const NewAdminUser = () => {
   useEffect(() => {
     if (selectedAccount?.role === "driver") {
       if (!driversList?.drivers?.length) {
-        toast.warn("Please enter Driver details first from the Drivers tab.");
-        setSelectedAccount({ role: roleOptions[0] });
+        if (roleOptions[0] && selectedAccount.role !== roleOptions[0]) {
+          toast.warn("Please enter Driver details first from the Drivers tab.");
+          setSelectedAccount((prev) => ({ ...prev, role: roleOptions[0] }));
+        }
         return;
       }
-      const singleDriver = driversList.drivers[0];
-      const driverData = singleDriver?.DriverData || {};
 
-      setSelectedAccount((prev) => ({
-        ...prev,
-        driverId: singleDriver._id,
-        fullName: `${driverData.firstName || ""} ${driverData.surName || ""}`.trim(),
-        employeeNumber: driverData.employeeNumber || "",
-        email: driverData.email || "",
-      }));
+      // only auto-assign if no driver is selected yet
+      if (!selectedAccount.driverId) {
+        const firstDriver = driversList.drivers[0];
+        const driverData = firstDriver?.DriverData || {};
+
+        setSelectedAccount((prev) => ({
+          ...prev,
+          driverId: firstDriver._id,
+          fullName: `${driverData.firstName || ""} ${driverData.surName || ""}`.trim(),
+          employeeNumber: driverData.employeeNumber || "",
+          email: driverData.email || "",
+        }));
+      }
     }
   }, [selectedAccount?.role, driversList, roleOptions]);
 

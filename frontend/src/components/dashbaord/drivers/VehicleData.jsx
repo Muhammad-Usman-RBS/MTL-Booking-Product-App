@@ -22,9 +22,13 @@ const VehicleData = ({
             onChange={handleInputChange}
           />
         </div>
+
+        {/* Vehicle Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label>Vehicle Make</label>
+            <label className="block mb-1 text-sm font-medium">
+              Vehicle Make <span className="text-red-500">*</span>
+            </label>
             <input
               name="carMake"
               value={formData.carMake || ""}
@@ -33,7 +37,9 @@ const VehicleData = ({
             />
           </div>
           <div>
-            <label>Vehicle Model</label>
+            <label className="block mb-1 text-sm font-medium">
+              Vehicle Model <span className="text-red-500">*</span>
+            </label>
             <input
               name="carModal"
               value={formData.carModal || ""}
@@ -42,7 +48,9 @@ const VehicleData = ({
             />
           </div>
           <div>
-            <label>Vehicle Color</label>
+            <label className="block mb-1 text-sm font-medium">
+              Vehicle Color <span className="text-red-500">*</span>
+            </label>
             <input
               name="carColor"
               value={formData.carColor || ""}
@@ -51,7 +59,9 @@ const VehicleData = ({
             />
           </div>
           <div>
-            <label>Vehicle Reg. No.</label>
+            <label className="block mb-1 text-sm font-medium">
+              Vehicle Reg. No. <span className="text-red-500">*</span>
+            </label>
             <input
               name="carRegistration"
               value={formData.carRegistration || ""}
@@ -61,7 +71,9 @@ const VehicleData = ({
           </div>
 
           <div>
-            <label>Vehicle Insurance Expiry</label>
+            <label className="block mb-1 text-sm font-medium">
+              Vehicle Insurance Expiry <span className="text-red-500">*</span>
+            </label>
             <input
               type="date"
               name="carInsuranceExpiry"
@@ -71,7 +83,9 @@ const VehicleData = ({
             />
           </div>
           <div>
-            <label>Vehicle Private Hire License</label>
+            <label className="block mb-1 text-sm font-medium">
+              Vehicle Private Hire License <span className="text-red-500">*</span>
+            </label>
             <input
               name="carPrivateHireLicense"
               value={formData.carPrivateHireLicense || ""}
@@ -80,7 +94,10 @@ const VehicleData = ({
             />
           </div>
           <div>
-            <label>Vehicle Private Hire License Expiry</label>
+            <label className="block mb-1 text-sm font-medium">
+              Vehicle Private Hire License Expiry
+              <span className="text-red-500">*</span>
+            </label>
             <input
               type="date"
               name="carPrivateHireLicenseExpiry"
@@ -90,7 +107,9 @@ const VehicleData = ({
             />
           </div>
           <div>
-            <label>MOT Expiry</label>
+            <label className="block mb-1 text-sm font-medium">
+              MOT Expiry <span className="text-red-500">*</span>
+            </label>
             <input
               type="date"
               name="motExpiryDate"
@@ -102,6 +121,7 @@ const VehicleData = ({
         </div>
       </div>
 
+      {/* File Uploads */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <FilePreview
@@ -138,7 +158,7 @@ const VehicleData = ({
         </div>
         <div>
           <FilePreview
-            label="MOT Expiry"
+            label="MOT Certificate"
             file={formData.motExpiry}
             previewUrl={filePreviews.motExpiry}
             previewName={filePreviews.motExpiryName}
@@ -159,8 +179,12 @@ const VehicleData = ({
           />
         </div>
       </div>
+
+      {/* Vehicle Types */}
       <div className="mt-6">
-        <label className="block font-semibold mb-2">Vehicle Types</label>
+        <label className="block font-semibold mb-2">
+          Vehicle Types <span className="text-red-500">*</span>
+        </label>
         <div className="grid grid-cols-3 grid-rows-3 gap-2">
           {[
             "Standard Sedan",
@@ -168,23 +192,24 @@ const VehicleData = ({
             "Luxury Saloon",
             "6 Passenger MPV",
             "8 Passenger MPV",
-          ].map((type) => (
-            <div key={type} className="flex items-center">
-              <input
-                type="checkbox"
-                id={type.toLowerCase()}
-                onChange={handleCheckboxChange}
-                checked={formData.vehicleTypes.includes(type.toLowerCase())}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <label
-                className="ml-2 text-sm text-gray-700"
-                htmlFor={type.toLowerCase().replace(/ /g, "")}
-              >
-                {type}
-              </label>
-            </div>
-          ))}
+          ].map((type) => {
+            const value = type.toLowerCase().replace(/ /g, "_");
+            return (
+              <div key={type} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={value}
+                  value={value}
+                  onChange={handleCheckboxChange}
+                  checked={formData.vehicleTypes.includes(value)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <label className="ml-2 text-sm text-gray-700" htmlFor={value}>
+                  {type}
+                </label>
+              </div>
+            );
+          })}
         </div>
       </div>
     </>

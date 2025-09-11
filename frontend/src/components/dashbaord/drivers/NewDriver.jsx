@@ -11,6 +11,8 @@ import { toast } from "react-toastify";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import FilePreview from "../../../constants/constantscomponents/FilePreview";
 import { useSelector } from "react-redux";
+import { validateDriver, validateVehicle } from "../../../utils/validation/validators";
+import IMAGES from "../../../assets/images";
 
 const NewDriver = () => {
   const user = useSelector((state) => state?.auth?.user);
@@ -60,11 +62,25 @@ const NewDriver = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Run both validations
+    const { errors: driverErrors, isValid: isDriverValid } = validateDriver(formData, { isEdit });
+    const { errors: vehicleErrors, isValid: isVehicleValid } = validateVehicle(formData);
+
+    const allErrors = { ...driverErrors, ...vehicleErrors };
+
+    // If either validation fails, show all errors
+    if (!isDriverValid || !isVehicleValid) {
+      Object.values(allErrors).forEach((msg) => toast.error(msg));
+      return;
+    }
+
     try {
       const form = new FormData();
 
       Object.keys(formData).forEach((key) => {
         const value = formData[key];
+
         if (key === "availability") {
           form.append(key, JSON.stringify(value));
         } else if (value instanceof File || value instanceof Blob) {
@@ -73,6 +89,7 @@ const NewDriver = () => {
           form.append(key, value || "");
         }
       });
+
       form.append("companyId", companyId);
 
       if (isEdit) {
@@ -83,7 +100,7 @@ const NewDriver = () => {
         toast.success("Driver created successfully!");
       }
 
-      navigate("/dashboard/drivers/list");
+      navigate("/dashboard/admin-list/add-user");
     } catch (error) {
       console.error("Error creating driver:", error);
       const errorMessage =
@@ -94,6 +111,7 @@ const NewDriver = () => {
       toast.error(errorMessage);
     }
   };
+
   const handleInputChange = (e, index = null, field = null) => {
     const { name, type, files, value } = e.target;
 
@@ -190,11 +208,11 @@ const NewDriver = () => {
         ),
         driverPrivateHireLicenseExpiry: formatDateForInput(
           DriverData.driverPrivateHireLicenseExpiry ||
-            rest.driverPrivateHireLicenseExpiry
+          rest.driverPrivateHireLicenseExpiry
         ),
         carPrivateHireLicenseExpiry: formatDateForInput(
           VehicleData.carPrivateHireLicenseExpiry ||
-            rest.carPrivateHireLicenseExpiry
+          rest.carPrivateHireLicenseExpiry
         ),
         motExpiryDate: formatDateForInput(
           VehicleData.motExpiryDate || rest.motExpiryDate
@@ -225,9 +243,8 @@ const NewDriver = () => {
   return (
     <div>
       <div
-        className={`${
-          isEdit ? "border-[var(--light-gray)] border-b" : ""
-        } flex items-center justify-between `}
+        className={`${isEdit ? "border-[var(--light-gray)] border-b" : ""
+          } flex items-center justify-between `}
       >
         <OutletHeading name={isEdit ? "Edit Driver" : "Add Driver"} />
 
@@ -238,17 +255,30 @@ const NewDriver = () => {
       <hr className="mb-6 border-[var(--light-gray)]" />
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* PROFILE PICTURE */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-          <FilePreview
-            label="Upload Driver Image:"
-            file={formData.driverPicture}
-            previewUrl={filePreviews.driverPicture}
-            previewName={filePreviews.driverPictureName}
-            formDataFile={formData.driverPicture}
-            name="driverPicture"
-            onChange={handleInputChange}
-            customPreviewClass="w-64 h-40"
-          />
+        <div className="inline-flex items-center gap-4 p-4 bg-sky-50 border-2 border-dashed border-sky-300 rounded-xl shadow-sm">
+          <div className="flex flex-col items-center">
+            <img
+              src={filePreviews.driverPicture || IMAGES.dummyImg}
+              alt="Driver-Preview"
+              className="w-24 h-24 rounded-full object-cover border border-sky-200 shadow-md"
+            />
+
+            <label
+              htmlFor="driverPicture"
+              className="btn btn-reset mt-3 cursor-pointer text-sm"
+            >
+              Upload Driver Image
+            </label>
+
+            <input
+              id="driverPicture"
+              type="file"
+              accept="image/*"
+              name="driverPicture"
+              onChange={handleInputChange}
+              className="hidden"
+            />
+          </div>
         </div>
 
         {/* DRIVER SECTION */}

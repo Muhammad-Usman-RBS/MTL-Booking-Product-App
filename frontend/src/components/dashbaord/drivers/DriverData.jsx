@@ -16,7 +16,7 @@ const DriverData = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block mb-1 text-sm font-medium">
-              Employee No. 
+              Employee No.
             </label>
             <input
               type="text"
@@ -24,16 +24,17 @@ const DriverData = ({
               value={formData.employeeNumber}
               onChange={handleInputChange}
               readOnly={user?.role === "driver"}
-              className={`custom_input ${
-                user?.role === "driver"
+              className={`custom_input ${user?.role === "driver"
                   ? "bg-gray-100 cursor-not-allowed opacity-70"
                   : ""
-              }`}
+                }`}
             />
           </div>
 
           <div>
-            <label>First Name</label>
+            <label className="block mb-1 text-sm font-medium">
+              First Name <span className="text-red-500">*</span>
+            </label>
             <input
               className="custom_input"
               name="firstName"
@@ -42,7 +43,9 @@ const DriverData = ({
             />
           </div>
           <div>
-            <label>Sur Name</label>
+            <label className="block mb-1 text-sm font-medium">
+              Sur Name <span className="text-red-500">*</span>
+            </label>
             <input
               className="custom_input"
               name="surName"
@@ -51,23 +54,26 @@ const DriverData = ({
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm font-medium">Email</label>
+            <label className="block mb-1 text-sm font-medium">
+              Email <span className="text-red-500">*</span>
+            </label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
               readOnly={user?.role === "driver"}
-              className={`custom_input ${
-                user?.role === "driver"
+              className={`custom_input ${user?.role === "driver"
                   ? "bg-gray-100 cursor-not-allowed opacity-70"
                   : ""
-              }`}
+                }`}
             />
           </div>
 
           <div>
-            <label>Contact</label>
+            <label className="block mb-1 text-sm font-medium">
+              Contact <span className="text-red-500">*</span>
+            </label>
             <input
               type="tel"
               className="custom_input"
@@ -76,17 +82,19 @@ const DriverData = ({
               onChange={handleInputChange}
             />
           </div>
+
           <div className="w-full">
-            <label htmlFor="status">Status</label>
+            <label htmlFor="status" className="block mb-1 text-sm font-medium">
+              Status <span className="text-red-500">*</span>
+            </label>
             <select
               id="status"
               name="status"
               disabled={user?.role === "driver"}
-              className={`custom_input ${
-                user?.role === "driver"
+              className={`custom_input ${user?.role === "driver"
                   ? "bg-gray-100 cursor-not-allowed opacity-70"
                   : ""
-              }`}
+                }`}
               value={formData.status}
               onChange={handleInputChange}
             >
@@ -99,7 +107,9 @@ const DriverData = ({
             </select>
           </div>
           <div>
-            <label>D.O.B.</label>
+            <label className="block mb-1 text-sm font-medium">
+              D.O.B. <span className="text-red-500">*</span>
+            </label>
             <input
               type="date"
               className="custom_input"
@@ -109,7 +119,9 @@ const DriverData = ({
             />
           </div>
           <div>
-            <label>Driving License</label>
+            <label className="block mb-1 text-sm font-medium">
+              Driving License <span className="text-red-500">*</span>
+            </label>
             <input
               className="custom_input"
               name="driverLicense"
@@ -118,7 +130,9 @@ const DriverData = ({
             />
           </div>
           <div>
-            <label>Driving License Expiry</label>
+            <label className="block mb-1 text-sm font-medium">
+              Driving License Expiry <span className="text-red-500">*</span>
+            </label>
             <input
               type="date"
               className="custom_input"
@@ -128,7 +142,7 @@ const DriverData = ({
             />
           </div>
           <div>
-            <label>Driver Private Hire Card No.</label>
+            <label className="block mb-1 text-sm font-medium">Driver Private Hire Card No.</label>
             <input
               className="custom_input"
               name="privateHireCardNo"
@@ -137,7 +151,7 @@ const DriverData = ({
             />
           </div>
           <div>
-            <label>Driver Private Hire License Expiry</label>
+            <label className="block mb-1 text-sm font-medium">Driver Private Hire License Expiry</label>
             <input
               type="date"
               className="custom_input"
@@ -147,7 +161,7 @@ const DriverData = ({
             />
           </div>
           <div>
-            <label>NI Number</label>
+            <label className="block mb-1 text-sm font-medium">NI Number</label>
             <input
               className="custom_input"
               name="NationalInsurance"
@@ -158,7 +172,9 @@ const DriverData = ({
         </div>
       </div>
       <div>
-        <label>Address</label>
+        <label className="block mb-1 text-sm font-medium">
+          Address <span className="text-red-500">*</span>
+        </label>
         <textarea
           className="custom_input"
           rows="2"
@@ -169,7 +185,7 @@ const DriverData = ({
       </div>
 
       <div>
-        <label>Holidays</label>
+        <label className="block mb-1 text-sm font-medium">Holidays</label>
         {formData.availability?.map((slot, index) => (
           <div
             key={index}
@@ -216,7 +232,7 @@ const DriverData = ({
           <button
             type="button"
             onClick={handleAddAvailability}
-            className="flex items-center mt-2 text-blue-600 hover:text-blue-800 text-sm"
+            className="flex items-center mt-2 text-blue-600 cursor-pointer hover:text-blue-800 text-sm"
           >
             <Icons.Plus size={16} className="mr-1" />
             Add Holidays
