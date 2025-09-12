@@ -1112,6 +1112,7 @@ import Icons from "../../../assets/icons";
 import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 import moment from "moment-timezone";
+import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 
 const BookingsTable = ({
   assignedDrivers,
@@ -1143,6 +1144,7 @@ const BookingsTable = ({
   const [tooltip, setTooltip] = useState({ show: false, text: "", x: 0, y: 0 });
   const [isDeletedTab, setIsDeletedTab] = useState(false);
   const [updateJobStatus] = useUpdateJobStatusMutation();
+  const { data: bookingSettingData } = useGetBookingSettingQuery(companyId, {skip: user?.role !== "customer",});
   const getErrMsg = (e) =>
     e?.data?.message ||
     "Failed to update status";
@@ -1217,6 +1219,53 @@ const BookingsTable = ({
   const [selectedDeleteId, setSelectedDeleteId] = useState(null);
 
   let bookings = [];
+
+
+  const isWithinCancelWindow = (booking, cancelWindow) => {
+    if (!booking || !cancelWindow) return false;
+  
+    const journey = booking.returnJourneyToggle ? booking.returnJourney : booking.primaryJourney;
+    if (!journey?.date || journey.hour === undefined || journey.minute === undefined) {
+      return false;
+    }
+  
+    // Create pickup datetime
+    const pickupDate = new Date(journey.date);
+    pickupDate.setHours(journey.hour);
+    pickupDate.setMinutes(journey.minute);
+    pickupDate.setSeconds(0);
+    pickupDate.setMilliseconds(0);
+  
+    const now = new Date();
+    const timeDiffMs = pickupDate.getTime() - now.getTime();
+  
+    // Convert cancel window to milliseconds
+    let windowMs = cancelWindow.value;
+    switch (cancelWindow.unit) {
+      case "Minutes":
+        windowMs *= 60 * 1000;
+        break;
+      case "Hours":
+        windowMs *= 60 * 60 * 1000;
+        break;
+      case "Days":
+        windowMs *= 24 * 60 * 60 * 1000;
+        break;
+      case "Weeks":
+        windowMs *= 7 * 24 * 60 * 60 * 1000;
+        break;
+      case "Months":
+        windowMs *= 30 * 24 * 60 * 60 * 1000;
+        break;
+      case "Years":
+        windowMs *= 365 * 24 * 60 * 60 * 1000;
+        break;
+      default:
+        windowMs *= 60 * 60 * 1000; // default to hours
+    }
+  
+    return timeDiffMs < windowMs;
+  };
 
   if (!isDriver) {
     bookings = (bookingData?.bookings || []).filter(
@@ -1424,6 +1473,10 @@ const BookingsTable = ({
             toast.info("Drivers are not allowed to delete bookings");
             return;
           }
+          if (user?.role === "customer") {
+            toast.info("Customers are not allowed to delete bookings");
+            return;
+          }
 
           if (isDeletedTab) {
             setSelectedDeleteId(selectedBooking._id);
@@ -1454,6 +1507,20 @@ const BookingsTable = ({
             toast.info("This action is disabled in the Deleted tab.");
             return;
           }
+        
+          const bookingSetting = bookingSettingData?.setting || bookingSettingData?.bookingSetting;
+        
+          if (user?.role === "customer" && bookingSetting?.companyId === user?.companyId) {
+            const cancelWindow = bookingSetting?.cancelBookingWindow;
+            if (cancelWindow && isWithinCancelWindow(selectedBooking, cancelWindow)) {
+              const windowText = `${cancelWindow.value} ${cancelWindow.unit.toLowerCase()}`;
+              toast.error(
+                `Cannot edit booking. Pickup time is within the ${windowText} cancellation window.`
+              );
+              return;
+            }
+          }
+        
           const editedData = { ...selectedBooking };
           editedData.__editReturn = !!selectedBooking.returnJourney;
           setEditBookingData(editedData);
@@ -1474,6 +1541,10 @@ const BookingsTable = ({
         if (isDeletedTab) {
           toast.info("This action is disabled in the Deleted tab.");
           return;
+        }
+        if(user?.role === "customer") {
+          toast.warn("customer cannot access drivers list")
+          return
         }
         if (isCancelledByClientadmin(selectedBooking)) {
           toast.info("Driver selection disabled — booking cancelled by Clientadmin");
@@ -2190,12 +2261,24 @@ const BookingsTable = ({
                                     toast.info("Drivers cannot edit bookings");
                                     return;
                                   }
+                                  
+                                  const bookingSetting = bookingSettingData?.setting || bookingSettingData?.bookingSetting;
+
+                                  if (user?.role === "customer" && bookingSetting?.companyId === user?.companyId) {
+                                    const cancelWindow = bookingSetting?.cancelBookingWindow;
+                                    if (cancelWindow && isWithinCancelWindow(item, cancelWindow)) {
+                                      const windowText = `${cancelWindow.value} ${cancelWindow.unit.toLowerCase()}`;
+                                      toast.error(`Cannot edit booking. Pickup time is within the ${windowText} cancellation window.`);
+                                      return;
+                                    }
+                                  }
+                                  
                                   const editedData = { ...item };
-                                  editedData.__editReturn =
-                                    !!item.returnJourney;
+                                  editedData.__editReturn = !!item.returnJourney;
                                   setEditBookingData(editedData);
                                   setShowEditModal(true);
-                                } else if (action === "Delete") {
+                                }
+                                 else if (action === "Delete") {
                                   if (isDeletedTab) {
                                     setSelectedDeleteId(item._id);
                                     setShowDeleteModal(true);

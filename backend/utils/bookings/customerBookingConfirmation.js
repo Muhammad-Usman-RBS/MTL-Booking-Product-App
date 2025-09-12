@@ -77,7 +77,9 @@ export const customerBookingConfirmation = ({
     }
     return `${currency}${Number(booking?.journeyFare || 0).toFixed(2)}`;
   };
-
+  const isAirportAddress = (address = "") => {
+    return /airport/i.test(address.toLowerCase().trim());
+  };
   const journeyCard = (label, j, vehicleInfo = {}) => `
     <table role="presentation" width="100%" style="background:${
       brand.card
@@ -100,36 +102,52 @@ export const customerBookingConfirmation = ({
             </tr>
 
             <tr>
+            ${
+              j?.flightNumber || j?.pickmeAfter || j?.arrivefrom
+                ? `
+                  <tr>
+                    <td colspan="2" style="padding:6px 0">
+                      <table role="presentation" width="100%" style="table-layout:fixed;">
+                        <tr>
+                          ${
+                            j?.flightNumber
+                              ? `<td style="width:33.33%;padding:4px 8px 4px 0;font:600 13px Arial,sans-serif;color:${brand.muted}">
+                                  Flight No.: 
+                                  <span style="font-weight:400;color:${brand.primary};margin-left:4px">${safe(j.flightNumber)}</span>
+                                </td>`
+                              : `<td style="width:33.33%"></td>`
+                          }
+                          ${
+                            j?.pickmeAfter
+                              ? `<td style="width:33.33%;padding:4px 8px;font:600 13px Arial,sans-serif;color:${brand.muted}">
+                                  Pick Me After: 
+                                  <span style="font-weight:400;color:${brand.primary};margin-left:4px">${safe(j.pickmeAfter)}</span>
+                                </td>`
+                              : `<td style="width:33.33%"></td>`
+                          }
+                          ${
+                            j?.arrivefrom
+                              ? `<td style="width:33.33%;padding:4px 0;font:600 13px Arial,sans-serif;color:${brand.muted}">
+                                  Arrive From: 
+                                  <span style="font-weight:400;color:${brand.primary};margin-left:4px">${safe(j.arrivefrom)}</span>
+                                </td>`
+                              : `<td style="width:33.33%"></td>`
+                          }
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>`
+                : ""
+            }
+            
   ${
-    j?.flightNumber || j?.pickmeAfter || j?.arrivefrom
+    j?.pickupDoorNumber
       ? `
-      <tr>
-        ${
-          j?.flightNumber
-            ? `<td style="padding:6px 0;color:${brand.muted};font:600 13px Arial,sans-serif;">
-                Flight No.:<br/>
-                <span style="color:${brand.primary};font-weight:400;font-size:14px;">${safe(j.flightNumber)}</span>
-              </td>`
-            : ``
-        }
-        ${
-          j?.pickmeAfter
-            ? `<td style="padding:6px 0;color:${brand.muted};font:600 13px Arial,sans-serif;">
-                Pick Me After:<br/>
-                <span style="color:${brand.primary};font-weight:400;font-size:14px;">${safe(j.pickmeAfter)}</span>
-              </td>`
-            : ``
-        }
-        ${
-          j?.arrivefrom
-            ? `<td style="padding:6px 0;color:${brand.muted};font:600 13px Arial,sans-serif;">
-                Arrive From:<br/>
-                <span style="color:${brand.primary};font-weight:400;font-size:14px;">${safe(j.arrivefrom)}</span>
-              </td>`
-            : ``
-        }
-      </tr>`
-      : ""
+        <tr>
+          <td style="padding:6px 0;color:${brand.muted};width:80px;font:600 13px Arial,sans-serif">Pickup Door No.:</td>
+          <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${safe(j.pickupDoorNumber)}</td>
+        </tr>`
+      : ``
   }
 </tr>
 
@@ -151,83 +169,47 @@ export const customerBookingConfirmation = ({
             </tr>
          
             ${
-              j?.dropoff_terminal_0
+              isAirportAddress(j?.dropoff)
                 ? `
-            <tr>
-              <td style="padding:6px 0;color:${
-                brand.muted
-              };width:80px;font:600 13px Arial,sans-serif">Dropoff Terminal-0:</td>
-              <td style="padding:6px 0;color:${
-                brand.primary
-              };font:400 14px Arial,sans-serif">${safe(j.dropoff_terminal_0)}</td>
-            </tr>`
-                : ``
+                  ${j?.dropoff_terminal_0 ? `
+                    <tr>
+                      <td style="padding:6px 0;color:${brand.muted};width:120px;font:600 13px Arial,sans-serif">Dropoff Terminal-0:</td>
+                      <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${safe(j.dropoff_terminal_0)}</td>
+                    </tr>` : ``}
+            
+                  ${j?.dropoff_terminal_1 ? `
+                    <tr>
+                      <td style="padding:6px 0;color:${brand.muted};width:120px;font:600 13px Arial,sans-serif">Dropoff Terminal-1:</td>
+                      <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${safe(j.dropoff_terminal_1)}</td>
+                    </tr>` : ``}
+            
+                  ${j?.dropoff_terminal_2 ? `
+                    <tr>
+                      <td style="padding:6px 0;color:${brand.muted};width:120px;font:600 13px Arial,sans-serif">Dropoff Terminal-2:</td>
+                      <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${safe(j.dropoff_terminal_2)}</td>
+                    </tr>` : ``}
+                `
+                : `
+                  ${j?.dropoffDoorNumber0 ? `
+                    <tr>
+                      <td style="padding:6px 0;color:${brand.muted};width:120px;font:600 13px Arial,sans-serif">Dropoff Door No-0:</td>
+                      <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${safe(j.dropoffDoorNumber0)}</td>
+                    </tr>` : ``}
+            
+                  ${j?.dropoffDoorNumber1 ? `
+                    <tr>
+                      <td style="padding:6px 0;color:${brand.muted};width:120px;font:600 13px Arial,sans-serif">Dropoff Door No-1:</td>
+                      <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${safe(j.dropoffDoorNumber1)}</td>
+                    </tr>` : ``}
+            
+                  ${j?.dropoffDoorNumber2 ? `
+                    <tr>
+                      <td style="padding:6px 0;color:${brand.muted};width:120px;font:600 13px Arial,sans-serif">Dropoff Door No-2:</td>
+                      <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${safe(j.dropoffDoorNumber2)}</td>
+                    </tr>` : ``}
+                `
             }
-            ${
-              j?.dropoff_terminal_1
-                ? `
-            <tr>
-              <td style="padding:6px 0;color:${
-                brand.muted
-              };width:80px;font:600 13px Arial,sans-serif">Dropoff Terminal-1:</td>
-              <td style="padding:6px 0;color:${
-                brand.primary
-              };font:400 14px Arial,sans-serif">${safe(j.dropoff_terminal_1)}</td>
-            </tr>`
-                : ``
-            }
-            ${
-              j?.dropoff_terminal_2
-                ? `
-            <tr>
-              <td style="padding:6px 0;color:${
-                brand.muted
-              };width:80px;font:600 13px Arial,sans-serif">Dropoff Terminal-2:</td>
-              <td style="padding:6px 0;color:${
-                brand.primary
-              };font:400 14px Arial,sans-serif">${safe(j.dropoff_terminal_2)}</td>
-            </tr>`
-                : ``
-            }
-            ${
-              j?.dropoffDoorNumber0
-                ? `
-            <tr>
-              <td style="padding:6px 0;color:${
-                brand.muted
-              };width:80px;font:600 13px Arial,sans-serif">Dropoff Door No-0:</td>
-              <td style="padding:6px 0;color:${
-                brand.primary
-              };font:400 14px Arial,sans-serif">${safe(j.dropoffDoorNumber0)}</td>
-            </tr>`
-                : ``
-            }
-            ${
-              j?.dropoffDoorNumber1
-                ? `
-            <tr>
-              <td style="padding:6px 0;color:${
-                brand.muted
-              };width:80px;font:600 13px Arial,sans-serif">Dropoff Door No-1:</td>
-              <td style="padding:6px 0;color:${
-                brand.primary
-              };font:400 14px Arial,sans-serif">${safe(j.dropoffDoorNumber1)}</td>
-            </tr>`
-                : ``
-            }
-            ${
-              j?.dropoffDoorNumber2
-                ? `
-            <tr>
-              <td style="padding:6px 0;color:${
-                brand.muted
-              };width:80px;font:600 13px Arial,sans-serif">Dropoff Door No.-2:</td>
-              <td style="padding:6px 0;color:${
-                brand.primary
-              };font:400 14px Arial,sans-serif">${safe(j.dropoffDoorNumber2)}</td>
-            </tr>`
-                : ``
-            }
+            
          ${
     vehicleInfo?.childSeat && vehicleInfo.childSeat > 0
       ? `

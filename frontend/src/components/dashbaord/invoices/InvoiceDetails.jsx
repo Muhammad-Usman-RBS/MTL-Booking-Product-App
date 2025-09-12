@@ -142,10 +142,10 @@ const InvoiceDetails = ({ item }) => {
     (acc, i) => acc + (i.totalAmount - i.fare),
     0
   );
-
-  const effectiveTaxPercent =
-    totalFare > 0 ? ((totalTax / totalFare) * 100).toFixed(2) : "0";
-  return (
+  
+  // Calculate tax display - show actual tax amount without percentage
+  const effectiveTaxPercent = totalFare > 0 ? ((totalTax / totalFare) * 100).toFixed(2) : "0";
+const taxDisplay = totalTax > 0 ? `${effectiveTaxPercent}% Tax: ` : `Tax: `;  return (
     <>
       <div>
         <div className="flex flex-wrap gap-2 sm:gap-3 mb-3 mt-8">
@@ -329,11 +329,9 @@ const InvoiceDetails = ({ item }) => {
               {item.items.reduce((acc, i) => acc + i.fare, 0).toFixed(2)}
             </p>
             <p>
-              <strong>{effectiveTaxPercent} %Tax: </strong> 
-              {currencySymbol}{item.items
-                .reduce((acc, i) => acc + (i.totalAmount - i.fare), 0)
-                .toFixed(2)}
-            </p>
+  <strong>{taxDisplay}</strong> 
+  {currencySymbol}{totalTax.toFixed(2)}
+</p>
             <p className="balance">
               {/* Grand Total: £
               {item.items.reduce((acc, i) => acc + i.totalAmount, 0).toFixed(2)} */}

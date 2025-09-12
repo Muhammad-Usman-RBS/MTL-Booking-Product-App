@@ -170,11 +170,15 @@ export const driverAssignmentEmailTemplate = ({
             <td class="px-22" style="padding:24px 22px 18px;text-align:start">
               <div style="font:500 24px/1.3 Arial,sans-serif;color:${brand.primary};margin:0 0 10px">${safe(config.message)}</div>
               <div style="font:600 16px/1.5 Arial,sans-serif;color:${brand.accent};margin:8px 0 0">Booking Reference: #${safe(booking?.bookingId)}</div>
-              <div style="font:400 14px/1.5 Arial,sans-serif;color:${brand.muted};margin:8px 0 0">
-                Hello ${safe(driverInfo.firstName)}, ${assignmentType === "assigned"
-      ? "you have been assigned to handle this booking. Please review the details below."
-      : "this booking assignment has been removed from your schedule."}
-              </div>
+<div style="font:400 14px/1.5 Arial,sans-serif;color:${brand.muted};margin:8px 0 0">
+  Hello ${safe(driverInfo.firstName)}, ${
+    assignmentType === "assigned"
+      ? `you have been assigned to handle this booking. Please review the details below. You can view your job by <a href="https://mtl-booking-product-app.netlify.app/dashboard/home" style="color:${config.actionColor};text-decoration:underline;">Clicking here</a>.`
+      : "this booking assignment has been removed from your schedule."
+  }
+</div>
+
+
             </td>
           </tr>
 
@@ -245,33 +249,13 @@ export const driverAssignmentEmailTemplate = ({
             </td>
           </tr>
           ` : ""}
-
-          <!-- Action Required -->
-          ${assignmentType === "assigned" ? `
-          <tr>
-            <td class="px-22" style="padding:0 22px 18px">
-              <table role="presentation" width="100%" style="background:${brand.bg};border:1px solid ${brand.border};border-radius:12px;padding:16px;text-align:center">
-                <tr>
-                  <td style="font:400 14px/1.6 Arial,sans-serif;color:${brand.primary}">
-                    <strong>Action Required:</strong><br/>
-                    Please review the booking details and prepare for the scheduled pickup time.<br/>
-                    Contact the passenger if you need to confirm any details.
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          ` : ""}
-
           <!-- Footer -->
           <tr>
             <td style="padding:20px 24px;border-top:1px solid ${brand.border};background:#FAFAFA">
               <div style="font:700 16px/1.4 Arial,sans-serif;color:${brand.primary};margin-bottom:8px">${safe(org.name)}</div>
                <div style="font:500 12px/1.4 Arial,sans-serif;color:${brand.muted};margin-bottom:8px">📍${org.address ? locationLine(org.address) : ""} </div>
 
-              <div style="font:400 11px/1.5 Arial,sans-serif;color:#9CA3AF;margin-top:16px;padding-top:12px;border-top:1px solid ${brand.border}">
-                This is an automated notification email. Please keep this for your records.
-              </div>
+            
             </td>
           </tr>
 

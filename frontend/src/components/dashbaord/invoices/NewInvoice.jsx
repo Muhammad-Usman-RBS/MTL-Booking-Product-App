@@ -245,8 +245,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
 
       if (invoiceType === "driver") {
         const driver = booking?.drivers?.[0] || {};
-        uniqueKey =
-          driver._id || `${driver.name}-${driver.phone}` || Math.random();
+        uniqueKey = driver.email
         contact = {
           name: driver.name || "Unknown Driver",
           email: driver.email || "no@email.com",
@@ -254,10 +253,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
         };
       } else {
         const passenger = booking.passenger || {};
-        uniqueKey =
-          passenger._id ||
-          `${passenger.name}-${passenger.phone}` ||
-          Math.random();
+        uniqueKey = passenger.email 
         contact = {
           name: passenger.name || "Unknown Customer",
           email: passenger.email || "no@email.com",
