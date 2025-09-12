@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Icons from "../../../assets/icons";
 import ViewDriver from "./ViewDriver";
-import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import {
@@ -26,23 +25,23 @@ const DriverList = () => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
   const [selectedDriver, setSelectedDriver] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [driverToSendEmail, setDriverToSendEmail] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [driverToDelete, setdriverToDelete] = useState(null);
+
   const { data: getAllDrivers } = useGetAllDriversQuery(companyId);
   const { data: getDriverById } = useGetDriverByIdQuery(selectedDriver, {
     skip: !selectedDriver,
   });
   const [deleteDriverById] = useDeleteDriverByIdMutation();
+
   const driversArray = getAllDrivers?.drivers || [];
   const roleFilteredDrivers =
     user?.role === "driver"
       ? driversArray.filter(
-          (driver) =>
-            driver?.DriverData?.employeeNumber?.toString() ===
-            user?.employeeNumber?.toString()
-        )
+        (driver) =>
+          driver?.DriverData?.employeeNumber?.toString() ===
+          user?.employeeNumber?.toString()
+      )
       : driversArray;
 
   const filteredTabData = roleFilteredDrivers.filter(
@@ -69,7 +68,7 @@ const DriverList = () => {
 
   useEffect(() => {
     if (page > totalPages) setPage(1);
-  }, [filteredData, perPage, activeTab]);
+  }, [filteredData, perPage, activeTab]); // eslint-disable-line
 
   if (selectedDriver) {
     if (!getDriverById) return <p className="p-4">Loading driver details...</p>;
@@ -81,11 +80,6 @@ const DriverList = () => {
       />
     );
   }
-
-  const handleSendEmail = (driver) => {
-    setDriverToSendEmail(driver);
-    setShowModal(true);
-  };
 
   const tableHeaders = [
     { label: "No.", key: "index" },
@@ -113,45 +107,41 @@ const DriverList = () => {
 
   const tableData = !filteredData.length
     ? EmptyTableMessage({
-        message: "No drivers found. Create a new driver.",
-        colSpan: tableHeaders.length,
-      })
+      message: "No drivers found. Create a new driver.",
+      colSpan: tableHeaders.length,
+    })
     : paginatedData.map((driver, index) => ({
-        index:
-          (page - 1) * (perPage === "All" ? filteredData.length : perPage) +
-          index +
-          1,
-        employeeNumber: driver?.DriverData?.employeeNumber,
-        firstName: driver?.DriverData?.firstName,
-        email: driver?.DriverData?.email,
-        carMake: driver?.VehicleData?.carMake,
-        carModal: driver?.VehicleData?.carModal,
-        status: driver?.DriverData?.status,
-        actions: (
-          <div className="flex gap-2">
-            <Icons.Eye
-              className="w-8 h-8 rounded-md hover:bg-blue-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
-              onClick={() => setSelectedDriver(driver._id)}
+      index:
+        (page - 1) * (perPage === "All" ? filteredData.length : perPage) +
+        index +
+        1,
+      employeeNumber: driver?.DriverData?.employeeNumber,
+      firstName: driver?.DriverData?.firstName,
+      email: driver?.DriverData?.email,
+      carMake: driver?.VehicleData?.carMake,
+      carModal: driver?.VehicleData?.carModal,
+      status: driver?.DriverData?.status,
+      actions: (
+        <div className="flex gap-2">
+          <Icons.Eye
+            className="w-8 h-8 rounded-md hover:bg-blue-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
+            onClick={() => setSelectedDriver(driver._id)}
+          />
+          <Link to={`/dashboard/drivers/edit/${driver._id}`}>
+            <Icons.Pencil className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2" />
+          </Link>
+          {user?.role !== "driver" && (
+            <Icons.X
+              onClick={() => {
+                setdriverToDelete(driver);
+                setShowDeleteModal(true);
+              }}
+              className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
             />
-            <Link to={`/dashboard/drivers/edit/${driver._id}`}>
-              <Icons.Pencil className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2" />
-            </Link>
-            <Icons.Send
-              className="w-8 h-8 rounded-md hover:bg-blue-500 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
-              onClick={() => handleSendEmail(driver)}
-            />
-            {user?.role !== "driver" && (
-              <Icons.X
-                onClick={() => {
-                  setdriverToDelete(driver);
-                  setShowDeleteModal(true);
-                }}
-                className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
-              />
-            )}
-          </div>
-        ),
-      }));
+          )}
+        </div>
+      ),
+    }));
 
   return (
     <>
@@ -173,11 +163,10 @@ const DriverList = () => {
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`pb-2 whitespace-nowrap transition-all duration-200 ${
-                      activeTab === tab
-                        ? "border-b-2 border-blue-600 text-blue-600"
-                        : "text-[var(--dark-gray)] hover:text-blue-500"
-                    }`}
+                    className={`pb-2 whitespace-nowrap transition-all duration-200 ${activeTab === tab
+                      ? "border-b-2 border-blue-600 text-blue-600"
+                      : "text-[var(--dark-gray)] hover:text-blue-500"
+                      }`}
                   >
                     {tab} (
                     {
@@ -203,36 +192,8 @@ const DriverList = () => {
           showPagination={true}
           showSorting={true}
         />
-
-        <CustomModal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          heading="SC"
-        >
-          <div className="p-4">
-            <p className="text-sm">
-              Would you like to resend <strong>"Driver Welcome Email"</strong>{" "}
-              to
-              <br />
-              <strong>{driverToSendEmail?.email}</strong>?
-            </p>
-            <p className="text-sm mt-2">
-              Driver will be logged out from all devices and new password will
-              be sent.
-            </p>
-            <div className="mt-4 flex justify-end gap-3">
-              <button
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                onClick={() => {
-                  setShowModal(false);
-                }}
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        </CustomModal>
       </div>
+
       <DeleteModal
         isOpen={showDeleteModal}
         onConfirm={async () => {

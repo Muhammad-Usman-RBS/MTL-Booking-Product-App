@@ -3,6 +3,7 @@ import IMAGES from "../../../assets/images";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import Icons from "../../../assets/icons";
 import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
+import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHeading";
 
 const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
   const driver = selectedDriver?.driver.DriverData || {};
@@ -101,225 +102,222 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
   };
   return (
     <>
-      <div>
-        <div className="md:flex justify-between">
-          <OutletHeading name="View Driver" />
-          <div className="mb-3 flex items-center space-x-3 justify-center md:mb-0">
-            <button
-              className="btn btn-primary mb-2"
-              onClick={() =>
-                downloadPDF(
-                  "driver-details-pdf",
-                  `Driver-${driver.firstName}.pdf`
-                )
-              }
-            >
-              Download Driver Details
-            </button>
+      <OutletBtnHeading
+        name="View Driver"
+        buttonLabel="← Back to Drivers"
+        buttonBg="btn btn-primary"
+        onButtonClick={() => setSelectedDriver(null)}
+      />
 
-            <button
-              onClick={() => setSelectedDriver(null)}
-              className="btn btn-primary mb-2"
-            >
-              ← Back to Driver List
-            </button>
-          </div>
-        </div>
-
-        <hr className="mb-4" />
-
-        <div id="driver-details-pdf">
-          <img
-            src={uploads.driverPicture || IMAGES.dummyImg}
-            alt="Driver"
-            style={{
-              width: "8rem",
-              height: "8rem",
-              borderRadius: "0.25rem",
-              objectFit: "cover",
-              border: "2px solid #d1d5db",
-            }}
-          />
+      <div className="flex justify-end mb-6">
+        <button
+          className="btn btn-reset mb-2"
+          onClick={() =>
+            downloadPDF(
+              "driver-details-pdf",
+              `Driver-${driver.firstName}.pdf`
+            )
+          }
+        >
+          Download Driver Details
+        </button>
+      </div>
+      <div id="driver-details-pdf" >
+        <div style={{ fontFamily: "Arial, sans-serif", color: "#2d3748" }}>
+          {/* Driver Profile */}
           <div
             style={{
-              fontSize: "14px",
-
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              color: "#2d3748",
-              rowGap: "6px",
-              columnGap: "20px",
-              marginTop: "1.4rem",
-              marginBottom: "35px"
+              border: "1px solid #e2e8f0",
+              borderRadius: "8px",
+              padding: "20px",
+              marginBottom: "30px",
+              background: "#fff",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
             }}
           >
-            <p>
-              <strong>Status:  </strong> {driver.status || "N/A"}
-            </p>
-            <p>
-              <strong>Driver No.:  </strong> {driver.employeeNumber || "N/A"}
-            </p>
-            <p>
-              <strong>First Name:  </strong> {driver.firstName || "N/A"}
-            </p>
-            <p>
-              <strong>Sur Name:  </strong> {driver.surName || "N/A"}
-            </p>
-            <p>
-              <strong>Email:  </strong> {driver.email || "N/A"}
-            </p>
-            <p>
-              <strong>Contact:  </strong> {driver.contact || "N/A"}
-            </p>
-            <p>
-              <strong>Address:  </strong> {driver.address || "N/A"}
-            </p>
-            <p>
-              <strong>D.O.B.:  </strong> {formatDate(driver.dateOfBirth)}
-            </p>
-
-            <div style={{ gridColumn: "span 2" }}>{renderAvailability()}</div>
-          </div>
-
-          <h3
-            style={{
-              fontSize: "1.125rem",
-              fontWeight: "bold",
-              color: "#4a5568",
-              marginBottom: "1rem",
-              borderBottom: "1px solid #e2e8f0",
-              paddingBottom: "0.25",
-              marginTop: "30px",
-            }}
-          >
-            Vehicle Details:
-          </h3>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr",
-              gap: "1.5rem",
-              marginBottom: "35px",
-            }}
-          >
-            <img
-              src={uploads.carPicture || IMAGES.dummyImg}
-              alt="Vehicle"
-              // data-html2canvas-ignore="true"
+            <h3
               style={{
-                width: "8rem",
-                height: "8rem",
-                objectFit: "cover",
-                border: "2px solid #d1d5db",
-              }}
-            />
-
-            <div
-              style={{
-                fontSize: "14px",
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                color: "#2d3748",
-                rowGap: "6px",
-                columnGap: "20px",
+                fontSize: "1.25rem",
+                fontWeight: "600",
+                color: "#2b6cb0",
+                borderBottom: "2px solid #edf2f7",
+                paddingBottom: "8px",
+                marginBottom: "20px",
               }}
             >
-              <p>
-                <strong>Make:  </strong> {vehicle.carMake || "N/A"}
-              </p>
-              <p>
-                <strong>Model:  </strong> {vehicle.carModal || "N/A"}
-              </p>
-              <p>
-                <strong>Color:  </strong> {vehicle.carColor || "N/A"}
-              </p>
-              <p>
-                <strong>Reg. No.:  </strong> {vehicle.carRegistration || "N/A"}
-              </p>
-              <p>
-                <strong>Vehicle Insurance Expiry: </strong>
-                {formatDate(vehicle.carInsuranceExpiry)}
-              </p>
-              <p>
-                <strong>MOT Expiry:  </strong> {formatDate(vehicle.motExpiryDate)}
-              </p>
+              Driver Profile Details
+            </h3>
+
+            <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
+              <img
+                src={uploads.driverPicture || IMAGES.dummyImg}
+                alt="Driver"
+                style={{
+                  width: "100px",
+                  height: "100px",
+                  borderRadius: "6px",
+                  objectFit: "cover",
+                  border: "2px solid #cbd5e0",
+                }}
+              />
               <div
                 style={{
-                  gridColumn: "span 2",
-                  display: "flex",
-                  gap: "4px",
-                  alignItems: "center",
+                  fontSize: "14px",
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  rowGap: "8px",
+                  columnGap: "20px",
+                  flex: 1,
                 }}
               >
-                <strong>Vehicle Types:  </strong>
-                <span>
-                  {vehicle.vehicleTypes?.length > 0
-                    ? vehicle.vehicleTypes.join(", ")
-                    : "N/A"}
-                </span>
+                <p><strong>Status:</strong> {driver.status || "N/A"}</p>
+                <p><strong>Driver No.:</strong> {driver.employeeNumber || "N/A"}</p>
+                <p><strong>First Name:</strong> {driver.firstName || "N/A"}</p>
+                <p><strong>Sur Name:</strong> {driver.surName || "N/A"}</p>
+                <p><strong>Email:</strong> {driver.email || "N/A"}</p>
+                <p><strong>Contact:</strong> {driver.contact || "N/A"}</p>
+                <p><strong>Address:</strong> {driver.address || "N/A"}</p>
+                <p><strong>D.O.B.:</strong> {formatDate(driver.dateOfBirth)}</p>
+                <div style={{ gridColumn: "span 2", marginTop: "10px" }}>
+                  {renderAvailability()}
+                </div>
               </div>
             </div>
           </div>
 
-          <h3
-            style={{
-              fontSize: "1.125rem",
-              fontWeight: "bold",
-              color: "#4a5568",
-              borderBottom: "1px solid #e2e8f0",
-              paddingBottom: "0.25rem",
-            }}
-          >
-            License Details:
-          </h3>
+          {/* Vehicle Details */}
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              marginTop: "0.75rem",
+              border: "1px solid #e2e8f0",
+              borderRadius: "8px",
+              padding: "20px",
               marginBottom: "30px",
-              gap: "1.5rem",
+              background: "#fff",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
             }}
           >
-            <div style={{ fontSize: "0.875rem", color: "#2d3748" }}>
-              <p style={{ marginBottom: "0.25rem" }}>
-                <strong>Driver License:  </strong>
-                {driver.driverLicense || "N/A"}
-              </p>
-              <p style={{ marginBottom: "0.25rem" }}>
-                <strong>Driver License Expiry: </strong>
-                {formatDate(driver.driverLicenseExpiry)}
-              </p>
-              <p style={{ marginBottom: "0.25rem" }}>
-                <strong>Driver Private Hire License Expiry: </strong>
-                {formatDate(driver.driverPrivateHireLicenseExpiry)}
-              </p>
-              <p style={{ marginBottom: "0.25rem" }}>
-                <strong>Vehicle Private Hire License Expiry: </strong>
-                {formatDate(vehicle.carPrivateHireLicenseExpiry)}
-              </p>
-            </div>
-            <div style={{ fontSize: "0.875rem", color: "#2d3748" }}>
-              <p style={{ marginBottom: "0.25rem" }}>
-                <strong>National Insurance: </strong>
-                {driver.NationalInsurance || "N/A"}
-              </p>
-              <p style={{ marginBottom: "0.25rem" }}>
-                <strong>Private Hire Card No: </strong>
-                {driver.privateHireCardNo || "N/A"}
-              </p>
-              <p style={{ marginBottom: "0.25rem" }}>
-                <strong>Vehicle Private Hire License: </strong>
-                {vehicle.carPrivateHireLicense || "N/A"}
-              </p>
+            <h3
+              style={{
+                fontSize: "1.25rem",
+                fontWeight: "600",
+                color: "#2b6cb0",
+                borderBottom: "2px solid #edf2f7",
+                paddingBottom: "8px",
+                marginBottom: "20px",
+              }}
+            >
+              Vehicle Details
+            </h3>
 
+            <div style={{ display: "flex", gap: "20px" }}>
+              <img
+                src={uploads.carPicture || IMAGES.dummyImg}
+                alt="Vehicle"
+                style={{
+                  width: "100px",
+                  height: "100px",
+                  objectFit: "cover",
+                  borderRadius: "6px",
+                  border: "2px solid #cbd5e0",
+                }}
+              />
+              <div
+                style={{
+                  fontSize: "14px",
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  rowGap: "8px",
+                  columnGap: "20px",
+                  flex: 1,
+                }}
+              >
+                <p><strong>Make:</strong> {vehicle.carMake || "N/A"}</p>
+                <p><strong>Model:</strong> {vehicle.carModal || "N/A"}</p>
+                <p><strong>Color:</strong> {vehicle.carColor || "N/A"}</p>
+                <p><strong>Reg. No.:</strong> {vehicle.carRegistration || "N/A"}</p>
+                <p><strong>Insurance Expiry:</strong> {formatDate(vehicle.carInsuranceExpiry)}</p>
+                <p><strong>MOT Expiry:</strong> {formatDate(vehicle.motExpiryDate)}</p>
+                <div style={{ gridColumn: "span 2" }}>
+                  <strong>Vehicle Types:</strong>{" "}
+                  {vehicle.vehicleTypes?.length > 0 ? vehicle.vehicleTypes.join(", ") : "N/A"}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <h3 className="text-lg mb-2 font-bold text-[#4a5568] border-b border-b-[#e2e8f0] pb-[0.25rem]">
+          {/* License Details */}
+          <div
+            style={{
+              border: "1px solid #e2e8f0",
+              borderRadius: "8px",
+              padding: "20px",
+              marginBottom: "30px",
+              background: "#fff",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+            }}
+          >
+            <h3
+              style={{
+                fontSize: "1.25rem",
+                fontWeight: "600",
+                color: "#2b6cb0",
+                borderBottom: "2px solid #edf2f7",
+                paddingBottom: "8px",
+                marginBottom: "20px",
+              }}
+            >
+              License Details
+            </h3>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "12px 20px",
+                fontSize: "14px",
+              }}
+            >
+              <div>
+                <p><strong>Driver License:</strong> {driver.driverLicense || "N/A"}</p>
+                <p><strong>License Expiry:</strong> {formatDate(driver.driverLicenseExpiry)}</p>
+                <p><strong>Private Hire License Expiry:</strong> {formatDate(driver.driverPrivateHireLicenseExpiry)}</p>
+                <p><strong>Vehicle Hire License Expiry:</strong> {formatDate(vehicle.carPrivateHireLicenseExpiry)}</p>
+              </div>
+              <div>
+                <p><strong>National Insurance:</strong> {driver.NationalInsurance || "N/A"}</p>
+                <p><strong>Private Hire Card No.:</strong> {driver.privateHireCardNo || "N/A"}</p>
+                <p><strong>Vehicle Hire License:</strong> {vehicle.carPrivateHireLicense || "N/A"}</p>
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+      {/* License Details */}
+      <div
+        style={{
+          border: "1px solid #e2e8f0",
+          borderRadius: "8px",
+          padding: "20px",
+          marginBottom: "30px",
+          background: "#fff",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+        }}
+      >
+        <h3
+          style={{
+            fontSize: "1.25rem",
+            fontWeight: "600",
+            color: "#2b6cb0",
+            borderBottom: "2px solid #edf2f7",
+            paddingBottom: "8px",
+            marginBottom: "20px",
+          }}
+        >
           Uploaded Documents:
         </h3>
+
         <div className="grid grid-cols-4 gap-y-6 mt-4">
           {renderUploadItem(uploads.privateHireCard, "Private Hire Card")}
           {renderUploadItem(uploads.dvlaCard, "DVLA Card")}
