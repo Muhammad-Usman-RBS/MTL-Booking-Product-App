@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-import { useGetAllPassengersQuery } from "../../../redux/api/bookingApi";
-import { useGetCorporateCustomersQuery } from "../../../redux/api/corporateCustomerApi";
+import { useGetAllPassengersQuery } from "../../../../redux/api/bookingApi";
+import { useGetCorporateCustomersQuery } from "../../../../redux/api/corporateCustomerApi";
 
 const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
   const [selectedPassenger, setSelectedPassenger] = useState("");
@@ -48,7 +48,7 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
     const selected = combinedList.find((p) => buildDisplayValue(p) === value);
     setSelectedPassenger(value);
     setSelectedPassengerObj(selected || null);
-  
+
     if (selected) {
       setPassengerDetails((prev) => ({
         name: selected.name || selected.fullName || "",
@@ -64,17 +64,12 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
       }));
     }
   };
-  
+
   useEffect(() => {
     if (!selectedPassengerObj) return;
-  
+
     const normalize = (val) => (val || "").toLowerCase().trim();
 
-    const isSame =
-      normalize(selectedPassengerObj.name || selectedPassengerObj.fullName) === normalize(passengerDetails.name) &&
-      normalize(selectedPassengerObj.email) === normalize(passengerDetails.email) &&
-      normalize(selectedPassengerObj.phone) === normalize(passengerDetails.phone);
- 
   }, [passengerDetails, selectedPassengerObj]);
 
   useEffect(() => {

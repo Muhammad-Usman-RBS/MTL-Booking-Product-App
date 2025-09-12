@@ -1,20 +1,33 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import FareSection from "./FareSection";
-import JourneyCard from "./JourneyCard";
-import "react-toastify/dist/ReactToastify.css";
-import PassengerDetails from "./PassengerDetails";
-import VehicleSelection from "./VehicleSelection";
+
+// Components
+import FareSection from "./createBooking/FareSection";
+import JourneyCard from "./createBooking/JourneyCard";
+import PassengerDetails from "./createBooking/PassengerDetails";
+import VehicleSelection from "./createBooking/VehicleSelection";
+
+// Shared / Reusable Components
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import { useSelector } from "react-redux";
-import { useCreateBookingMutation, useUpdateBookingMutation } from "../../../redux/api/bookingApi";
-import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
+
+// Hooks & Utils
 import { useBookingFare } from "../../../utils/useBookingFare";
+
+// API Hooks
+import {
+  useCreateBookingMutation,
+  useUpdateBookingMutation,
+} from "../../../redux/api/bookingApi";
+import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
 import { useGetGeneralPricingPublicQuery } from "../../../redux/api/generalPricingApi";
 import { useGetCorporateCustomerByVatQuery } from "../../../redux/api/corporateCustomerApi";
 import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
-import { useNavigate } from "react-router-dom";
+
+// Styles
+import "react-toastify/dist/ReactToastify.css";
 
 const NewBooking = ({ editBookingData = null, onClose }) => {
   const navigate = useNavigate();
@@ -37,10 +50,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
   const { data: bookingSettingData, isFetching: isBookingSettingLoading } = useGetBookingSettingQuery();
 
-  // DB me kabhi key 'hourLyPackage' bhi ho sakti hai, isliye fallback:
   const hourlyEnabled = !!(bookingSettingData?.setting?.hourlyPackage ?? bookingSettingData?.setting?.hourLyPackage);
 
-  // Agar hourly disabled ho aur user "Hourly" par ho to Transfer par switch + hourly selection clear
   useEffect(() => {
     if (!hourlyEnabled && mode === "Hourly") {
       setMode("Transfer");
@@ -48,16 +59,13 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     }
   }, [hourlyEnabled, mode]);
 
-  // Tabs list ko settings ke hisaab se set karein
   const TABS = hourlyEnabled ? ["Transfer", "Hourly"] : ["Transfer"];
 
-  // Track if locations have been changed from original values
   const [hasChangedPrimaryLocations, setHasChangedPrimaryLocations] =
     useState(false);
   const [hasChangedReturnLocations, setHasChangedReturnLocations] =
     useState(false);
 
-  // Store original location values for comparison
   const [originalPrimaryLocations, setOriginalPrimaryLocations] =
     useState(null);
   const [originalReturnLocations, setOriginalReturnLocations] = useState(null);
@@ -106,14 +114,12 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const [updateBooking] = useUpdateBookingMutation();
   const [localEditData, setLocalEditData] = useState(null);
 
-  // Calculate additional drop-off pricing manually
   const extraDropoffPrice = (count) => {
-    const base = 0; // fallback if no generalPricing
+    const base = 0; 
     const rate = generalPricing?.minAdditionalDropOff || base;
     return Math.max(0, count - 1) * rate;
   };
 
-  // convert primaryJourneyData date + hour + minute to a JS Date
   const getJourneyDate = (data) => {
     if (!data.date) return null;
     const dt = new Date(data.date);
@@ -128,7 +134,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     !!editBookingData?.__copyReturn ||
     returnJourneyToggle;
 
-  // Only calculate new fare if locations have been changed or it's a new booking
   const shouldCalculatePrimaryFare =
     !editBookingData || hasChangedPrimaryLocations;
   const shouldCalculateReturnFare =
@@ -152,7 +157,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     includeAirportFees: true,
     includeChildSeat: vehicleExtras.childSeat > 0,
     childSeatCount: vehicleExtras.childSeat,
-    enabled: shouldCalculatePrimaryFare, // Only calculate if needed
+    enabled: shouldCalculatePrimaryFare, 
   });
 
   const {
@@ -172,7 +177,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     includeAirportFees: true,
     includeChildSeat: vehicleExtras.childSeat > 0,
     childSeatCount: vehicleExtras.childSeat,
-    enabled: shouldCalculateReturnFare, // Only calculate if needed
+    enabled: shouldCalculateReturnFare, 
   });
 
   const [fareDetails, setFareDetails] = useState({
@@ -187,7 +192,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     appNotifications: { customer: false },
   });
 
-  // Function to check if locations have changed
   const checkPrimaryLocationsChanged = () => {
     if (!originalPrimaryLocations) return false;
 
@@ -208,11 +212,9 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     );
   };
 
-  // Journey Fare auto update
   useEffect(() => {
     if (primaryFare != null) {
       setFareDetails((p) => {
-        // agar user ne manually edit nahi kiya
         if (!fareTouched.journey) {
           return { ...p, journeyFare: primaryFare };
         }
@@ -221,7 +223,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     }
   }, [primaryFare, hasChangedPrimaryLocations]);
 
-  // Return Journey Fare auto update
   useEffect(() => {
     if (returnJourneyToggle && returnFare != null) {
       setFareDetails((p) => {
@@ -233,7 +234,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     }
   }, [returnFare, hasChangedReturnLocations, returnJourneyToggle]);
 
-  // paymentOptionsInvoice get value only for corporate customer account
   useEffect(() => {
     if (customerByVat?.paymentOptionsInvoice) {
       setFareDetails((prevDetails) => ({
@@ -248,7 +248,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     }
   }, [customerByVat]);
 
-  // Watch for location changes
   useEffect(() => {
     if (originalPrimaryLocations) {
       setHasChangedPrimaryLocations(checkPrimaryLocationsChanged());
@@ -272,7 +271,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   useEffect(() => {
     if (!editBookingData) return;
 
-    // Deep clone to safely update fare later
     const cloned = JSON.parse(JSON.stringify(editBookingData));
     setLocalEditData(cloned);
 
@@ -289,23 +287,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       journeyData.additionalDropoff2 || "",
     ].filter(Boolean);
 
-    // const journeyState = {
-    //   pickup: journeyData.pickup || "",
-    //   dropoff: journeyData.dropoff || "",
-    //   date: journeyData.date?.slice(0, 10) || "",
-    //   hour: journeyData.hour?.toString().padStart(2, "0") || "",
-    //   minute: journeyData.minute?.toString().padStart(2, "0") || "",
-    //   notes: journeyData.notes || "",
-    //   internalNotes: journeyData.internalNotes || "",
-    //   arrivefrom: journeyData.arrivefrom || "",
-    //   flightNumber: journeyData.flightNumber || "",
-    //   pickmeAfter: journeyData.pickmeAfter || "",
-    //   fare: journeyData.fare || "",
-    //   pickupDoorNumber: journeyData.pickupDoorNumber || "",
-    //   terminal: journeyData.terminal || "",
-    //   distanceText: journeyData.distanceText || "",
-    //   durationText: journeyData.durationText || "",
-    // };
     const dynamicDropFields = Object.fromEntries(
       dropOffList.map((_, idx) => [
         `dropoffDoorNumber${idx}`,
@@ -343,7 +324,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     if (isReturnJourneyEdit) {
       setReturnJourneyData(journeyState);
       setDropOffs2(dropOffList);
-      // Store original return locations
       setOriginalReturnLocations({
         pickup: journeyState.pickup,
         dropOffs: [...dropOffList],
@@ -351,33 +331,13 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     } else {
       setPrimaryJourneyData(journeyState);
       setDropOffs1(dropOffList);
-      // Store original primary locations
       setOriginalPrimaryLocations({
         pickup: journeyState.pickup,
         dropOffs: [...dropOffList],
       });
     }
 
-    // Also set both journeys if it's a copy mode with return journey
     if (cloned.returnJourney && !isReturnJourneyEdit) {
-      // const returnJourneyState = {
-      //   pickup: cloned.returnJourney.pickup || "",
-      //   dropoff: cloned.returnJourney.dropoff || "",
-      //   date: cloned.returnJourney.date?.slice(0, 10) || "",
-      //   hour: cloned.returnJourney.hour?.toString().padStart(2, "0") || "",
-      //   minute: cloned.returnJourney.minute?.toString().padStart(2, "0") || "",
-      //   notes: cloned.returnJourney.notes || "",
-      //   internalNotes: cloned.returnJourney.internalNotes || "",
-      //   arrivefrom: cloned.returnJourney.arrivefrom || "",
-      //   flightNumber: cloned.returnJourney.flightNumber || "",
-      //   pickmeAfter: cloned.returnJourney.pickmeAfter || "",
-      //   fare: cloned.returnJourney.fare || "",
-      //   pickupDoorNumber: cloned.returnJourney.pickupDoorNumber || "",
-      //   terminal: cloned.returnJourney.terminal || "",
-      //   distanceText: cloned.returnJourney.distanceText || "",
-      //   durationText: cloned.returnJourney.durationText || "",
-      // };
-
       const dynamicDropFieldsReturn = Object.fromEntries(
         returnDropOffList.map((_, idx) => [
           `dropoffDoorNumber${idx}`,
@@ -988,7 +948,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           <div className="bg-white shadow-lg rounded-2xl border border-gray-200 h-full">
             <div className="bg-[#0f192d] px-6 rounded-t-2xl py-3">
               <h2 className="text-xl font-bold text-gray-50">
-                Passenger & Vehicle Details:-
+                Passenger & Fare Details:-
               </h2>
             </div>
             <div className="p-6">
@@ -996,11 +956,20 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
                 passengerDetails={passengerDetails}
                 setPassengerDetails={setPassengerDetails}
               />
-              <hr className="mb-6 mt-6 border-gray-300" />
-              <VehicleSelection
-                setSelectedVehicle={setSelectedVehicle}
-                setVehicleExtras={setVehicleExtras}
+              <hr className="mb-3 mt-5 border-gray-300" />
+              <FareSection
+                returnJourneyToggle={returnJourneyToggle}
+                fareDetails={fareDetails}
+                setFareDetails={setFareDetails}
+                calculatedJourneyFare={primaryFare}
+                calculatedReturnFare={returnFare}
+                setEmailNotify={setEmailNotify}
+                handleSubmit={handleSubmit}
+                isLoading={isLoading}
                 editBookingData={editBookingData}
+                onFareManuallyEdited={(which) =>
+                  setFareTouched((t) => ({ ...t, [which]: true }))
+                }
               />
             </div>
           </div>
@@ -1044,19 +1013,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
               </div>
             </div>
           ) : (
-            <FareSection
-              returnJourneyToggle={returnJourneyToggle}
-              fareDetails={fareDetails}
-              setFareDetails={setFareDetails}
-              calculatedJourneyFare={primaryFare}
-              calculatedReturnFare={returnFare}
-              setEmailNotify={setEmailNotify}
-              handleSubmit={handleSubmit}
-              isLoading={isLoading}
+            <VehicleSelection
+              setSelectedVehicle={setSelectedVehicle}
+              setVehicleExtras={setVehicleExtras}
               editBookingData={editBookingData}
-              onFareManuallyEdited={(which) =>
-                setFareTouched((t) => ({ ...t, [which]: true }))
-              }
             />
           )}
         </div>

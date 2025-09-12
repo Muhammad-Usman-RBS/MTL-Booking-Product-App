@@ -64,7 +64,7 @@
 //     console.log('extrasPricing length:', extrasPricing?.length);
 //     console.log('extrasPricing type:', typeof extrasPricing);
 //     console.log('Is array:', Array.isArray(extrasPricing));
-    
+
 //     if (extrasPricing && extrasPricing.length > 0) {
 //       console.log('Sample zone structure:', extrasPricing[0]);
 //       console.log('Sample zone coordinates:', extrasPricing[0]?.coordinates);
@@ -179,7 +179,7 @@
 //       if (c.lng < minLng) minLng = c.lng;
 //       if (c.lng > maxLng) maxLng = c.lng;
 //     }
-    
+
 //     if (
 //       point.lat < minLat - EPS || point.lat > maxLat + EPS ||
 //       point.lng < minLng - EPS || point.lng > maxLng + EPS
@@ -237,7 +237,7 @@
 //     console.log('Pickup Coord:', pickupCoord);
 //     console.log('Dropoff Coord:', dropoffCoord);
 //     console.log('Extras Pricing Data Length:', extrasPricing?.length);
-    
+
 //     // Validate inputs
 //     if (!pickupCoord || !dropoffCoord) {
 //       console.log('Missing coordinates - returning 0');
@@ -295,14 +295,14 @@
 
 //       if (pickupInZone || dropoffInZone) {
 //         console.log(`✅ ZONE MATCH! ${zone.zone} - Price: ${zonePrice}`);
-        
+
 //         matchedZones.push({
 //           zone: zone.zone,
 //           price: zonePrice,
 //           pickupInZone,
 //           dropoffInZone
 //         });
-        
+
 //         totalZoneFee += zonePrice;
 //       } else {
 //         console.log(`No match for ${zone.zone}`);
@@ -485,7 +485,7 @@
 
 //       const childSeatUnitPrice = includeChildSeat ? parseFloat(generalPricing?.childSeatPrice || 0) : 0;
 //       const totalChildSeatCharge = includeChildSeat ? childSeatCount * childSeatUnitPrice : 0;
-      
+
 //       // Add all fees including zone entry fee
 //       finalFare += dropOffPrice + totalChildSeatCharge + zoneFee + calculatedZoneEntryFee;
 
@@ -698,7 +698,7 @@ export const useBookingFare = ({
     console.log('extrasPricing length:', extrasPricing?.length);
     console.log('extrasPricing type:', typeof extrasPricing);
     console.log('Is array:', Array.isArray(extrasPricing));
-    
+
     if (extrasPricing && extrasPricing.length > 0) {
       console.log('Sample zone structure:', extrasPricing[0]);
       console.log('Sample zone coordinates:', extrasPricing[0]?.coordinates);
@@ -707,9 +707,10 @@ export const useBookingFare = ({
     console.log('=== END EXTRAS PRICING DEBUG ===');
   }, [extrasPricing]);
 
-  const isValidAddress = (address) => {
-    return typeof address === 'string' && address.trim().length > 5 && /[a-zA-Z0-9]/.test(address);
-  };
+  // Mashhood Working
+  // const isValidAddress = (address) => {
+  //   return typeof address === 'string' && address.trim().length > 5 && /[a-zA-Z0-9]/.test(address);
+  // };
 
   // Memoize helper functions to prevent recreating them on every render
   const extractPostcode = useCallback((address) => {
@@ -792,11 +793,11 @@ export const useBookingFare = ({
     }
 
     // Validate coordinates
-    const validPoly = poly.filter(coord => 
-      coord && 
-      typeof coord.lat === 'number' && 
-      typeof coord.lng === 'number' && 
-      !isNaN(coord.lat) && 
+    const validPoly = poly.filter(coord =>
+      coord &&
+      typeof coord.lat === 'number' &&
+      typeof coord.lng === 'number' &&
+      !isNaN(coord.lat) &&
       !isNaN(coord.lng)
     );
 
@@ -813,7 +814,7 @@ export const useBookingFare = ({
       if (c.lng < minLng) minLng = c.lng;
       if (c.lng > maxLng) maxLng = c.lng;
     }
-    
+
     if (
       point.lat < minLat - EPS || point.lat > maxLat + EPS ||
       point.lng < minLng - EPS || point.lng > maxLng + EPS
@@ -871,7 +872,7 @@ export const useBookingFare = ({
     console.log('Pickup Coord:', pickupCoord);
     console.log('Dropoff Coord:', dropoffCoord);
     console.log('Extras Pricing Data Length:', extrasPricing?.length);
-    
+
     // Validate inputs
     if (!pickupCoord || !dropoffCoord) {
       console.log('Missing coordinates - returning 0');
@@ -905,11 +906,11 @@ export const useBookingFare = ({
       }
 
       // Check coordinates format
-      const hasValidCoords = zone.coordinates.every(coord => 
-        coord && 
-        typeof coord.lat === 'number' && 
-        typeof coord.lng === 'number' && 
-        !isNaN(coord.lat) && 
+      const hasValidCoords = zone.coordinates.every(coord =>
+        coord &&
+        typeof coord.lat === 'number' &&
+        typeof coord.lng === 'number' &&
+        !isNaN(coord.lat) &&
         !isNaN(coord.lng)
       );
 
@@ -929,14 +930,14 @@ export const useBookingFare = ({
 
       if (pickupInZone || dropoffInZone) {
         console.log(`✅ ZONE MATCH! ${zone.zone} - Price: ${zonePrice}`);
-        
+
         matchedZones.push({
           zone: zone.zone,
           price: zonePrice,
           pickupInZone,
           dropoffInZone
         });
-        
+
         totalZoneFee += zonePrice;
       } else {
         console.log(`No match for ${zone.zone}`);
@@ -1003,14 +1004,14 @@ export const useBookingFare = ({
     if (!matchedVehicle) return 0;
 
     const raw = matchedVehicle.percentageIncrease ?? 0;
-    
+
     // Handle string percentage values (e.g., "20%")
     const cleanPercentage = typeof raw === "string"
       ? Number(raw.replace("%", ""))
       : Number(raw);
-    
+
     const percentage = isNaN(cleanPercentage) ? 0 : cleanPercentage;
-    
+
     console.log(`🔢 Vehicle: ${vehicleName}, Raw percentage: ${raw}, Clean percentage: ${percentage}`);
     return percentage;
   }, [allVehicles]);
@@ -1020,13 +1021,14 @@ export const useBookingFare = ({
     // Prevent multiple simultaneous calculations
     if (isCalculating.current || !pickup || !dropoff || !selectedVehicle) return;
 
-    if (!isValidAddress(pickup) || !isValidAddress(dropoff)) {
-      if (!hasErrorShown.current) {
-        toast.error("Invalid address entered. Please use a complete location.");
-        hasErrorShown.current = true;
-      }
-      return;
-    }
+    // Mashhood Working
+    // if (!isValidAddress(pickup) || !isValidAddress(dropoff)) {
+    //   if (!hasErrorShown.current) {
+    //     toast.error("Invalid address entered. Please use a complete location.");
+    //     hasErrorShown.current = true;
+    //   }
+    //   return;
+    // }
 
     // Check if we already calculated for this set of parameters
     if (lastCalculationKey.current === calculationKey) {
@@ -1085,7 +1087,7 @@ export const useBookingFare = ({
       let baseFare = 0;
       let pricing = '';
       const vehicleName = selectedVehicle?.vehicleName;
-      
+
       // FIXED: Get percentage for this vehicle
       const markupPercent = getVehiclePercentage(vehicleName);
 
@@ -1100,7 +1102,7 @@ export const useBookingFare = ({
         );
         baseFare = selected?.vehicleRates?.[selectedVehicle.vehicleName] || 0;
         pricing = 'hourly';
-        
+
         console.log(`💰 HOURLY PRICING - Base: ${baseFare}, No markup applied for hourly`);
       } else {
         if (isAvoidActive) {
@@ -1166,7 +1168,7 @@ export const useBookingFare = ({
 
       const childSeatUnitPrice = includeChildSeat ? parseFloat(generalPricing?.childSeatPrice || 0) : 0;
       const totalChildSeatCharge = includeChildSeat ? childSeatCount * childSeatUnitPrice : 0;
-      
+
       // FIXED: Final calculation with proper order
       let finalFare = finalBaseFare + surchargeAmount + totalAirportFee + dropOffPrice + totalChildSeatCharge + zoneFee + calculatedZoneEntryFee;
 
