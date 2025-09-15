@@ -44,9 +44,14 @@ const VerificationUser = () => {
         if (!transactionId) return;
         if (otp.length !== 6) return toast.error("6 digit OTP darj karein.");
         try {
-            await verifyUserOtp({ transactionId, otp }).unwrap();
+            const res = await verifyUserOtp({ transactionId, otp }).unwrap();
             toast.success("User created successfully.");
-            navigate("/dashboard/admin-list");
+            const role = res?.user?.role; 
+            if (role === "clientadmin" || role === "associateadmin") {
+                navigate("/dashboard/company-accounts/list");
+            } else {
+                navigate("/dashboard/admin-list");
+            }
         } catch (e) {
             toast.error(e?.data?.message || "OTP ghalat hai.");
         }

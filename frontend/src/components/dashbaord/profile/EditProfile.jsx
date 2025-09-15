@@ -168,8 +168,13 @@ const EditProfile = () => {
             value={form.email}
             onChange={handleChange}
             required
-            className="custom_input"
+            disabled={user.role !== "superadmin"}
+            className={`custom_input ${user.role !== "superadmin" ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
+              }`}
           />
+          {user.role !== "superadmin" && (
+            <p className="text-red-500 text-sm mt-1">Only a superadmin can change the email.</p>
+          )}
         </div>
 
         {/* Name */}

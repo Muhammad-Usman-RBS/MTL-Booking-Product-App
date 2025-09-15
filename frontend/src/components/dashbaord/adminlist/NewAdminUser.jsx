@@ -21,13 +21,13 @@ const NewAdminUser = () => {
   const actualAdminId = id;
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
-const {showLoading , hideLoading} = useLoading()
+  const { showLoading, hideLoading } = useLoading()
   const [sendGoogleAuthLink] = useSendGoogleAuthLinkMutation();
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [sendCalendarInvite, setSendCalendarInvite] = useState(false);
 
   const { data: adminsListData = [] } = useFetchClientAdminsQuery();
-  const { data: driversList = [] , isLoading } = useGetAllDriversQuery(user?.companyId, {
+  const { data: driversList = [], isLoading } = useGetAllDriversQuery(user?.companyId, {
     skip: !user?.companyId,
   });
 
@@ -49,10 +49,10 @@ const {showLoading , hideLoading} = useLoading()
   const [googleConnected, setGoogleConnected] = useState(false);
   const [initiateUserVerification] = useInitiateUserVerificationMutation();
 
-  useEffect(()=> {
-    if(isLoading) {
+  useEffect(() => {
+    if (isLoading) {
       showLoading()
-    }else {
+    } else {
       hideLoading()
     }
   })
@@ -286,7 +286,11 @@ const {showLoading , hideLoading} = useLoading()
         } else {
           const res = await createAdmin(payload).unwrap();
           toast.success("User created successfully");
-          navigate("/dashboard/admin-list");
+          if (payload.role === "clientadmin" || payload.role === "associateadmin") {
+            navigate("/dashboard/company-accounts/list");
+          } else {
+            navigate("/dashboard/admin-list");
+          }
         }
       }
 

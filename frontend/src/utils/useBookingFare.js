@@ -693,18 +693,11 @@ export const useBookingFare = ({
 
   // Debug extrasPricing data
   useEffect(() => {
-    console.log('=== EXTRAS PRICING DEBUG ===');
-    console.log('extrasPricing:', extrasPricing);
-    console.log('extrasPricing length:', extrasPricing?.length);
-    console.log('extrasPricing type:', typeof extrasPricing);
-    console.log('Is array:', Array.isArray(extrasPricing));
-
     if (extrasPricing && extrasPricing.length > 0) {
       console.log('Sample zone structure:', extrasPricing[0]);
       console.log('Sample zone coordinates:', extrasPricing[0]?.coordinates);
       console.log('Sample zone price:', extrasPricing[0]?.price);
     }
-    console.log('=== END EXTRAS PRICING DEBUG ===');
   }, [extrasPricing]);
 
   // Mashhood Working

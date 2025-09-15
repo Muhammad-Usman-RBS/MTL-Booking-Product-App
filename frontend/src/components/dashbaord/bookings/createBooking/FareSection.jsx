@@ -1,6 +1,5 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import VehicleSelection from "./VehicleSelection";
 
 const FareSection = ({
   fareDetails,
@@ -12,9 +11,6 @@ const FareSection = ({
   isFetching,
   error,
   customerByVat,
-  editBookingData,
-  setSelectedVehicle,
-  setVehicleExtras,
 }) => {
   const { currency } = useSelector((state) => state.currency);
 
@@ -140,25 +136,28 @@ const FareSection = ({
 
       {/* Billing Details OR Vehicle Selection */}
       <div className="mt-6">
-        {isCustomerWithVat ? (
+        {isCustomerWithVat && (
           <div className="bg-white shadow-lg rounded-2xl border border-gray-200 h-full flex flex-col">
+            {/* Header */}
             <div className="bg-[#0f192d] px-6 py-3 rounded-t-2xl">
               <h2 className="text-xl font-bold text-gray-50">Billing Details</h2>
             </div>
 
+            {/* Content */}
             <div className="p-6 flex flex-col gap-4 flex-grow">
               <p className="font-semibold text-gray-700">
                 This is a customer account.
               </p>
 
               {isFetching && (
-                <p className="text-blue-600 font-medium animate-pulse">
-                  Loading…
-                </p>
+                <p className="text-blue-600 font-medium animate-pulse">Loading…</p>
               )}
 
               {error && (
-                <p className="text-red-600 font-semibold bg-red-100 p-3 rounded-md shadow-sm">
+                <p
+                  className="text-red-600 font-semibold bg-red-100 p-3 rounded-md shadow-sm"
+                  role="alert"
+                >
                   Failed to load customer data.
                 </p>
               )}
@@ -168,30 +167,24 @@ const FareSection = ({
                   {customerByVat ? (
                     <div className="bg-gray-50 border border-gray-300 rounded-md p-4 shadow-inner">
                       <p className="text-gray-800 font-medium">
-                        <span className="font-semibold">
-                          Payment Options Invoice:
-                        </span>
-                        &nbsp;
-                        {customerByVat.paymentOptionsInvoice || "—"}
+                        <span className="font-semibold">Payment Options Invoice:</span>
+                        &nbsp;{customerByVat?.paymentOptionsInvoice || "—"}
                       </p>
                     </div>
                   ) : (
-                    <p className="text-amber-700 font-medium mt-2">
-                      VAT match not found. Please check the VAT number for typos
-                      or spacing.
+                    <p
+                      className="text-amber-700 font-medium mt-2"
+                      role="alert"
+                    >
+                      VAT match not found. Please check the VAT number for typos or spacing.
                     </p>
                   )}
                 </>
               )}
             </div>
           </div>
-        ) : (
-          <VehicleSelection
-            setSelectedVehicle={setSelectedVehicle}
-            setVehicleExtras={setVehicleExtras}
-            editBookingData={editBookingData}
-          />
         )}
+
       </div>
     </>
   );
