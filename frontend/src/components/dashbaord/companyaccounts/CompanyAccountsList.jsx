@@ -12,14 +12,24 @@ import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHeading";
 import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
 
-import { useFetchAllCompaniesQuery, useSendCompanyEmailMutation, useDeleteCompanyAccountMutation } from "../../../redux/api/companyApi";
+import {
+  useFetchAllCompaniesQuery,
+  useSendCompanyEmailMutation,
+  useDeleteCompanyAccountMutation,
+} from "../../../redux/api/companyApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const CompanyAccountsList = () => {
   // API & Hooks
-  const { data: companies = [], refetch } = useFetchAllCompaniesQuery();
-
+  const {
+    data: companies = [],
+    refetch,
+    isLoading,
+  } = useFetchAllCompaniesQuery();
+  const { showLoading, hideLoading } = useLoading();
   // Redux States
-  const timezone = useSelector((state) => state.bookingSetting?.timezone) || "UTC";
+  const timezone =
+    useSelector((state) => state.bookingSetting?.timezone) || "UTC";
   const user = useSelector((state) => state.auth?.user);
 
   // Navigation
@@ -36,7 +46,13 @@ const CompanyAccountsList = () => {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
-
+  useEffect(() => {
+    if (isLoading) {
+      showLoading;
+    } else {
+      hideLoading();
+    }
+  }, [hideLoading, showLoading, isLoading]);
   useEffect(() => {
     refetch();
   }, []);
@@ -54,7 +70,10 @@ const CompanyAccountsList = () => {
   };
 
   const filteredData = companies.filter((item) =>
-    Object.values(item).join(" ").toLowerCase().includes(searchTerm.toLowerCase())
+    Object.values(item)
+      .join(" ")
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
   );
 
   const paginatedData =
@@ -75,12 +94,15 @@ const CompanyAccountsList = () => {
   const tableData = paginatedData.map((item) => {
     const canDelete = !(
       user?.role === "clientadmin" &&
-      String(item?.clientAdminId?._id || item?.clientAdminId) === String(user._id)
+      String(item?.clientAdminId?._id || item?.clientAdminId) ===
+        String(user._id)
     );
 
     return {
       ...item,
-      contact: item.contact?.startsWith("+") ? item.contact : `+${item.contact}`,
+      contact: item.contact?.startsWith("+")
+        ? item.contact
+        : `+${item.contact}`,
       createdAt: item.createdAt
         ? moment(item.createdAt).tz(timezone).format("DD/MM/YYYY HH:mm:ss")
         : "N/A",
@@ -169,8 +191,10 @@ const CompanyAccountsList = () => {
                     selectedAccount.profileImage?.startsWith("http")
                       ? selectedAccount.profileImage
                       : selectedAccount.profileImage
-                        ? `${import.meta.env.VITE_API_BASE_URL}/${selectedAccount.profileImage}`
-                        : IMAGES.dummyImg
+                      ? `${import.meta.env.VITE_API_BASE_URL}/${
+                          selectedAccount.profileImage
+                        }`
+                      : IMAGES.dummyImg
                   }
                   alt="Profile"
                   style={{
@@ -245,15 +269,24 @@ const CompanyAccountsList = () => {
                     ? selectedAccount.contact
                     : `+${selectedAccount.contact}`,
                 },
-                { label: "License Number", value: selectedAccount.licenseNumber },
-                { label: "License Referrer Link", value: selectedAccount.referrerLink },
-                { label: "Cookie Consent", value: selectedAccount.cookieConsent },
+                {
+                  label: "License Number",
+                  value: selectedAccount.licenseNumber,
+                },
+                {
+                  label: "License Referrer Link",
+                  value: selectedAccount.referrerLink,
+                },
+                {
+                  label: "Cookie Consent",
+                  value: selectedAccount.cookieConsent,
+                },
                 {
                   label: "Created At",
                   value: selectedAccount?.createdAt
                     ? moment(selectedAccount.createdAt)
-                      .tz(timezone)
-                      .format("DD/MM/YYYY HH:mm:ss")
+                        .tz(timezone)
+                        .format("DD/MM/YYYY HH:mm:ss")
                     : "N/A",
                 },
                 { label: "Company Address", value: selectedAccount.address },

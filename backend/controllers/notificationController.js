@@ -21,7 +21,7 @@ const emitToCompany = (companyId, event, payload = {}) => {
 // ---------- CREATE ----------
 export const createNotification = async (req, res) => {
   try {
-    const { employeeNumber, bookingId, createdBy, companyId , jobId } = req.body || {};
+    const { employeeNumber, bookingId, createdBy, companyId , jobId, status  } = req.body || {};
 
     if (!employeeNumber || !bookingId || !companyId) {
       return res
@@ -55,7 +55,7 @@ export const createNotification = async (req, res) => {
       employeeNumber: toStr(employeeNumber),
       jobId: booking._id,
       bookingId: toStr(bookingId),
-      status: booking.status,
+      status: status || booking.status,
       primaryJourney: { pickup, dropoff },
       bookingSentAt: new Date(),
       createdBy: createdBy ? toStr(createdBy) : undefined,

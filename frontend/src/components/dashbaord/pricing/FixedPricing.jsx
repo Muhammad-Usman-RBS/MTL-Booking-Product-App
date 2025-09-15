@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import Icons from "../../../assets/icons";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
@@ -15,13 +15,15 @@ import {
 import { useGetAllZonesQuery } from "../../../redux/api/zoneApi";
 import ExtrasPrcing from "./ExtrasPrcing";
 import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const FixedPricing = () => {
+  const {showLoading , hideLoading} = useLoading()
   const [selectedItem, setSelectedItem] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [isNew, setIsNew] = useState(true);
 
-  const { data: zones = [] } = useGetAllZonesQuery();
+  const { data: zones = [] , isLoading:isLoadingAllZones } = useGetAllZonesQuery();
   const zoneByName = useMemo(
     () => new Map(zones.map((z) => [z.name, z])),
     [zones]
@@ -31,7 +33,7 @@ const FixedPricing = () => {
     [zones]
   );
 
-  const { data: fixedPrices = [], refetch, isFetching } = useGetAllFixedPricesQuery();
+  const { data: fixedPrices = [], refetch, isFetching , isLoading:isLoadingAllFixedPricing } = useGetAllFixedPricesQuery();
 
   const [createFixedPrice, { isLoading: creating }] = useCreateFixedPriceMutation();
   const [updateFixedPrice, { isLoading: updating }] = useUpdateFixedPriceMutation();
@@ -40,8 +42,15 @@ const FixedPricing = () => {
   const [priceChange, setPriceChange] = useState(0);
   const [deleteItemId, setDeleteItemId] = useState(null);
 
+  const { data: bookingSettingData , isLoading: isLoadingBookingsSettings } = useGetBookingSettingQuery();
+  useEffect(() => {
+    if(isLoadingAllFixedPricing || isLoadingAllZones || isLoadingBookingsSettings) {
+      showLoading()
+    } else{ 
+      hideLoading()
+    }
+  }, [isLoadingAllFixedPricing , isLoadingAllZones , isLoadingBookingsSettings , showLoading , hideLoading])
    // currency from booking settings
-  const { data: bookingSettingData } = useGetBookingSettingQuery();
   const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
   const currencySymbol = currencySetting?.symbol || "£";
   const currencyCode = currencySetting?.value || "GBP";

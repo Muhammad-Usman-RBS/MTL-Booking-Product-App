@@ -13,11 +13,16 @@ import {
   useGetAllVehiclesQuery,
   useUpdateVehicleMutation,
 } from "../../../redux/api/vehicleApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const VehiclePricing = () => {
-  const { data: vehicleData = [], refetch } = useGetAllVehiclesQuery();
+  const {
+    data: vehicleData = [],
+    refetch,
+    isLoading,
+  } = useGetAllVehiclesQuery();
   const companyId = useSelector((state) => state.auth?.user?.companyId);
-
+  const { showLoading, hideLoading } = useLoading();
   const [createVehicle] = useCreateVehicleMutation();
   const [updateVehicle] = useUpdateVehicleMutation();
   const [deleteVehicle] = useDeleteVehicleMutation();
@@ -33,6 +38,14 @@ const VehiclePricing = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [showLoading, hideLoading, isLoading]);
+  
   useEffect(() => {
     refetch();
   }, []);
@@ -82,15 +95,23 @@ const VehiclePricing = () => {
     formData.append("companyId", companyId);
     formData.append("priceType", "Percentage");
 
-    const parsedSlabs = (selectedAccount.slabs || []).map(s => ({
-      from: Number(s.from),
-      to: Number(s.to),
-      price: Number(s.price)
-    })).filter(s => !isNaN(s.from) && !isNaN(s.to) && !isNaN(s.price));
+    const parsedSlabs = (selectedAccount.slabs || [])
+      .map((s) => ({
+        from: Number(s.from),
+        to: Number(s.to),
+        price: Number(s.price),
+      }))
+      .filter((s) => !isNaN(s.from) && !isNaN(s.to) && !isNaN(s.price));
     formData.append("slabs", JSON.stringify(parsedSlabs));
 
     Object.entries(selectedAccount).forEach(([key, value]) => {
-      if (key === "image" || key === "features" || key === "priceType" || key === "slabs") return;
+      if (
+        key === "image" ||
+        key === "features" ||
+        key === "priceType" ||
+        key === "slabs"
+      )
+        return;
       if (value !== undefined && value !== null) {
         formData.append(key, value);
       }
@@ -125,7 +146,10 @@ const VehiclePricing = () => {
   const filteredData = vehicleData
     .filter((item) => item.companyId === companyId)
     .filter((item) =>
-      Object.values(item).join(" ").toLowerCase().includes(searchTerm.toLowerCase())
+      Object.values(item)
+        .join(" ")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
     );
 
   const paginatedData =
@@ -204,7 +228,9 @@ const VehiclePricing = () => {
           ].map((key) => (
             <div key={key}>
               <label className="block text-sm font-medium text-gray-700 capitalize">
-                {key === "percentageIncrease" ? "Percentage Increase (%)" : key.replace(/([A-Z])/g, " $1")}
+                {key === "percentageIncrease"
+                  ? "Percentage Increase (%)"
+                  : key.replace(/([A-Z])/g, " $1")}
               </label>
               <input
                 type={key === "vehicleName" ? "text" : "number"}
@@ -221,7 +247,9 @@ const VehiclePricing = () => {
           ))}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Price Type</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Price Type
+            </label>
             <input
               type="text"
               className="custom_input"
@@ -243,7 +271,10 @@ const VehiclePricing = () => {
                   onChange={(e) => {
                     const updated = [...selectedAccount.features];
                     updated[index] = e.target.value;
-                    setSelectedAccount({ ...selectedAccount, features: updated });
+                    setSelectedAccount({
+                      ...selectedAccount,
+                      features: updated,
+                    });
                   }}
                 />
                 <button
@@ -251,7 +282,10 @@ const VehiclePricing = () => {
                   onClick={() => {
                     const updated = [...selectedAccount.features];
                     updated.splice(index, 1);
-                    setSelectedAccount({ ...selectedAccount, features: updated });
+                    setSelectedAccount({
+                      ...selectedAccount,
+                      features: updated,
+                    });
                   }}
                 >
                   ✖
@@ -279,12 +313,16 @@ const VehiclePricing = () => {
 
           {/* Image Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Image Path or URL</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Image Path or URL
+            </label>
             <div className="flex gap-2 items-center">
               <input
                 type="text"
                 className="custom_input flex-1"
-                value={uploadFile ? uploadFile.name : selectedAccount?.image || ""}
+                value={
+                  uploadFile ? uploadFile.name : selectedAccount?.image || ""
+                }
                 readOnly
               />
               <button
@@ -304,7 +342,9 @@ const VehiclePricing = () => {
                   className="w-32 h-20 object-cover rounded shadow"
                 />
                 {uploadFile && (
-                  <p className="text-xs text-gray-500 mt-1">{uploadFile.name}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {uploadFile.name}
+                  </p>
                 )}
               </div>
             )}
@@ -315,7 +355,10 @@ const VehiclePricing = () => {
             <button onClick={handleSubmit} className="btn btn-reset">
               {selectedAccount?._id ? "Update" : "Create"}
             </button>
-            <button onClick={() => setShowModal(false)} className="btn btn-cancel">
+            <button
+              onClick={() => setShowModal(false)}
+              className="btn btn-cancel"
+            >
               Cancel
             </button>
           </div>

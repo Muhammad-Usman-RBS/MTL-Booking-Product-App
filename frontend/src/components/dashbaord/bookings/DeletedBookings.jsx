@@ -10,10 +10,12 @@ import {
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import Icons from "../../../assets/icons";
+import { useLoading } from "../../common/LoadingProvider";
 
 const DeletedBookings = () => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
+    const { showLoading, hideLoading } = useLoading();
 
   const { data, isLoading, refetch } = useGetAllBookingsQuery(companyId);
   const [restoreOrDeleteBooking] = useRestoreOrDeleteBookingMutation();
@@ -23,7 +25,13 @@ const DeletedBookings = () => {
   const [selectedDeleteId, setSelectedDeleteId] = useState(null);
    const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
-  
+      useEffect(() => {
+          if (isLoading) {
+            showLoading();
+          } else {
+            hideLoading();
+          }
+        }, [isLoading, showLoading, hideLoading]);
  
   const handleDeleteClick = (id) => {
     setSelectedDeleteId(id);

@@ -13,6 +13,7 @@ import { useCreateClientAdminMutation, useFetchClientAdminsQuery, useUpdateClien
 
 import UserCoreFields from "./UserCoreFields";
 import PermissionsPanel from "./PermissionsPanel";
+import { useLoading } from "../../common/LoadingProvider";
 
 const NewAdminUser = () => {
   const { id } = useParams();
@@ -20,15 +21,16 @@ const NewAdminUser = () => {
   const actualAdminId = id;
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
-
+const {showLoading , hideLoading} = useLoading()
   const [sendGoogleAuthLink] = useSendGoogleAuthLinkMutation();
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [sendCalendarInvite, setSendCalendarInvite] = useState(false);
 
   const { data: adminsListData = [] } = useFetchClientAdminsQuery();
-  const { data: driversList = [] } = useGetAllDriversQuery(user?.companyId, {
+  const { data: driversList = [] , isLoading } = useGetAllDriversQuery(user?.companyId, {
     skip: !user?.companyId,
   });
+
 
   const [selectedAccount, setSelectedAccount] = useState({
     fullName: "",
@@ -47,6 +49,13 @@ const NewAdminUser = () => {
   const [googleConnected, setGoogleConnected] = useState(false);
   const [initiateUserVerification] = useInitiateUserVerificationMutation();
 
+  useEffect(()=> {
+    if(isLoading) {
+      showLoading()
+    }else {
+      hideLoading()
+    }
+  })
   // --- Handle Google callback & prefill when returning from OAuth ---
   useEffect(() => {
     if (isEdit) return;

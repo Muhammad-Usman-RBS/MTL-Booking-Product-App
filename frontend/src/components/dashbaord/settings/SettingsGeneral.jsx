@@ -23,6 +23,7 @@ import {
   toggleBookmarkTheme,
   removeBookmarkById,
 } from "../../../redux/slices/themeSlice";
+import { useLoading } from "../../common/LoadingProvider";
 
 const applyThemeVars = (theme) => {
   if (!theme) return;
@@ -63,6 +64,7 @@ const useStaticThemePicker = () => {
 const SettingsGeneral = () => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
+  const {showLoading  , hideLoading} = useLoading()
   const [isSaving, setIsSaving] = useState(false);
   const dispatch = useDispatch();
   const colors = useSelector(selectThemeColors);
@@ -77,7 +79,15 @@ const SettingsGeneral = () => {
     isFetching: isHistoryLoading,
     isSuccess: isHistorySuccess,
     refetch: refetchHistory,
+    isLoading,
   } = useFetchThemeHistoryQuery(companyId ?? skipToken);
+  useEffect(()=> {
+    if(isLoading) {
+      showLoading()
+    } else {
+      hideLoading()
+    }
+  } , [isLoading , hideLoading , showLoading])
   const [previewColors, setPreviewColors] = useState(colors);
   const debounceTimeoutRef = useRef(null);
   const [saveThemeSettings] = useSaveThemeSettingsMutation();

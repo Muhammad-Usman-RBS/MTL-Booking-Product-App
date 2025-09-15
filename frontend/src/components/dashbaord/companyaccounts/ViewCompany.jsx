@@ -1,18 +1,25 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Icons from "../../../assets/icons";
 import { useSelector } from "react-redux";
 import { useGetCompanyByIdQuery } from "../../../redux/api/companyApi";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import { useLoading } from "../../common/LoadingProvider";
 
 const ViewCompany = () => {
     const user = useSelector((state) => state.auth.user);
     const companyId = user?.companyId;
+  const {showLoading , hideLoading } = useLoading()
 
     const { data: company, isLoading, error } = useGetCompanyByIdQuery(companyId, {
         skip: !companyId,
     });
-
-    if (isLoading) return <p className="p-4 text-gray-500">Loading company info...</p>;
+ useEffect(()=> {
+    if(isLoading) {
+        showLoading()
+    } else {
+      hideLoading()
+    }
+  } , [isLoading , hideLoading , showLoading])
     if (error) return <p className="p-4 text-red-500">Failed to load company info</p>;
     if (!company) return <p className="p-4 text-gray-400">No company data found.</p>;
 

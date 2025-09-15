@@ -10,6 +10,7 @@ import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import { useGetGeneralPricingPublicQuery } from "../../../redux/api/generalPricingApi";
 import { useCreateInvoiceMutation } from "../../../redux/api/invoiceApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const getFirstAndLastDay = (offset = 0) => {
   const now = new Date();
@@ -23,6 +24,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
   const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
+    const { showLoading, hideLoading } = useLoading();
   const { data: generalPricingData } = useGetGeneralPricingPublicQuery(
     companyId,
     {
@@ -45,6 +47,14 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
 
   const { data: bookingData } = useGetAllBookingsQuery(user?.companyId);
   console.log("bookingData", bookingData);
+
+        useEffect(() => {
+            if (isCreating) {
+              showLoading();
+            } else {
+              hideLoading();
+            }
+          }, [isCreating, showLoading, hideLoading]);
   const allBookings = bookingData?.bookings || [];
   const filteredBookings = allBookings.filter((b) => {
     const createdAt = new Date(b.createdAt);

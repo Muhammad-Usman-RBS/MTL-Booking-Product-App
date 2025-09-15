@@ -1317,7 +1317,7 @@ const BookingsTable = ({
       });
   }
 
-  const isCancelledByClientadmin = (item) => {
+  const isCancelledByRole = (item, roles = []) => {
     if (String(item?.status).toLowerCase() !== "cancelled") return false;
     if (!Array.isArray(item?.statusAudit)) return false;
   
@@ -1328,8 +1328,8 @@ const BookingsTable = ({
   
     if (!entry) return false;
   
-    const byRaw = String(entry.updatedBy || "").toLowerCase(); // e.g. "clientadmin | Jane Smith"
-    return byRaw.includes("clientadmin");
+    const byRaw = String(entry.updatedBy || "").toLowerCase();
+    return roles.some((role) => byRaw.includes(role.toLowerCase()));
   };
   
   let filteredBookings = bookings.filter((b) => {
@@ -1546,8 +1546,8 @@ const BookingsTable = ({
           toast.warn("customer cannot access drivers list")
           return
         }
-        if (isCancelledByClientadmin(selectedBooking)) {
-          toast.info("Driver selection disabled — booking cancelled by Clientadmin");
+        if (isCancelledByRole(selectedBooking, ["clientadmin", "customer"])) {
+          toast.info("Driver selection disabled — booking was cancelled ");
           return;
         }
         openDriverModal(selectedBooking.driver);
@@ -1557,7 +1557,6 @@ const BookingsTable = ({
       if (key in statusMap) {
         const newStatus = statusMap[key];
 
-        // Apply the same logic as the dropdown for "Accepted" status
         if (newStatus === "Accepted") {
           if (
             !["new", "pending"].includes(
@@ -2000,37 +1999,39 @@ const BookingsTable = ({
               : "-";
             break;
           case "driver":
-            const disabledByClientadmin = isCancelledByClientadmin(item);
-            const content = formatDriver(item)
-            if (disabledByClientadmin) {
-              row[key] = (
-                <div
-                  className="text-gray-400 opacity-60 cursor-not-allowed select-none"
-                  title="Driver selection disabled — booking cancelled by Clientadmin"
-                  aria-disabled="true"
-                >
-                  {content}
-                </div>
-              );
-              break;
-            }
-            row[key] =
-              user?.role === "customer" ? (
-                formatDriver(item)
-              ) : (
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (selectedRow !== item._id) {
-                      setSelectedRow(item._id);
-                    }
-                    openDriverModal(item);
-                  }}
-                >
-                  {formatDriver(item)}
-                </div>
-              );
-            break;
+            const disabledByClientOrCustomer = isCancelledByRole(item, ["clientadmin", "customer"]);
+            const content = formatDriver(item);
+
+  if (disabledByClientOrCustomer) {
+    row[key] = (
+      <div
+        className="text-gray-400 opacity-60 cursor-not-allowed select-none"
+        title="Driver selection disabled — booking cancelled by Clientadmin/Customer"
+        aria-disabled="true"
+      >
+        {content}
+      </div>
+    );
+    break;
+  }
+
+  row[key] =
+    user?.role === "customer" ? (
+      formatDriver(item)
+    ) : (
+      <div
+        onClick={(e) => {
+          e.stopPropagation();
+          if (selectedRow !== item._id) {
+            setSelectedRow(item._id);
+          }
+          openDriverModal(item);
+        }}
+      >
+        {formatDriver(item)}
+      </div>
+    );
+  break;
           case "status": {
             // If the booking is Cancelled, and audit shows who did it (clientadmin/customer),
             // show a message instead of the dropdown.
@@ -2366,7 +2367,6 @@ const BookingsTable = ({
                           <button
                             onClick={async () => {
                               try {
-                                // 1) Update booking status
                                 await updateBookingStatus({
                                   id: item._id,
                                   status: "Cancelled",
@@ -2375,7 +2375,6 @@ const BookingsTable = ({
 
                                 toast.success("Booking status set to Cancelled");
 
-                                // 2) Send cancellation email to passenger (if email exists)
                                 if (item?.passenger?.email) {
                                   try {
                                     await sendBookingEmail({
@@ -2392,7 +2391,26 @@ const BookingsTable = ({
                                 } else {
                                   toast.info("No passenger email found to send cancellation notice");
                                 }
-
+                                if (Array.isArray(item?.drivers) && item.drivers.length > 0) {
+                                  for (const drv of item.drivers) {
+                                    const driverEmail =
+                                      drv?.email || drv?.DriverData?.email || drv?.driverInfo?.email;
+                                    if (driverEmail) {
+                                      try {
+                                        await sendBookingEmail({
+                                          bookingId: item._id,
+                                          email: driverEmail,
+                                          type: "cancellation-driver", // make sure backend template supports this
+                                        }).unwrap();
+                                
+                                        toast.success(`Cancellation email sent to driver: ${driverEmail}`);
+                                      } catch (err) {
+                                        console.error("❌ Driver email error:", err);
+                                        toast.error("Failed to send cancellation email to driver");
+                                      }
+                                    }
+                                  }
+                                }
                                 // 3) Refetch table + close menu
                                 refetch();
                                 setSelectedActionRow(null);

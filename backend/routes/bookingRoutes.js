@@ -5,13 +5,13 @@ import { authorize, protect } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // Create a new booking (public access)
-router.post("/create-booking",  createBooking);
+router.post("/create-booking",protect,  createBooking);
 
 // Get all bookings (admin access)
 router.get("/get-booking", getAllBookings);
 
 // Update a booking by ID
-router.put("/update-booking/:id", updateBooking);
+router.put("/update-booking/:id",protect, updateBooking);
 
 // Delete a booking by ID
 router.delete("/delete-booking/:id", deleteBooking);

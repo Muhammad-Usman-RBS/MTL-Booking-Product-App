@@ -10,12 +10,13 @@ import ViewCorporateCustomer from "./ViewCorporateCustomer";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
+import { useLoading } from "../../common/LoadingProvider";
 
 const DashboardCustomers = () => {
     const user = useSelector((state) => state?.auth?.user);
     const companyId = user?.companyId?.toString();
-
-    const { data: customersData } = useGetCorporateCustomersQuery();
+const  {showLoading , hideLoading}= useLoading()
+    const { data: customersData , isLoading } = useGetCorporateCustomersQuery();
     const { data: bookingsResponse } = useGetAllBookingsQuery(companyId);
 
     const [deleteCustomer] = useDeleteCorporateCustomerMutation();
@@ -31,6 +32,13 @@ const DashboardCustomers = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [customerToDelete, setCustomerToDelete] = useState(null);
 
+    useEffect(()=> {
+        if(isLoading) {
+            showLoading()
+        } else{ 
+            hideLoading()
+        }
+    } , [isLoading  , hideLoading  , showLoading])
     const allCustomers = customersData?.customers || [];
 
     // ✅ Fix: Ensure allBookings is always an array

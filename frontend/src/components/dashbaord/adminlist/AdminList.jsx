@@ -10,13 +10,14 @@ import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHeading";
 
 import { useDeleteClientAdminMutation, useFetchClientAdminsQuery, useUpdateClientAdminStatusMutation } from "../../../redux/api/adminApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const tabs = ["Active", "Pending", "Suspended", "Deleted"];
 
 const AdminList = () => {
   const user = useSelector((state) => state.auth.user);
-
-  const { data: adminsListData = [], refetch } = useFetchClientAdminsQuery();
+  const {showLoading , hideLoading} = useLoading()
+  const { data: adminsListData = [], refetch , isLoading } = useFetchClientAdminsQuery();
   const [deleteAdmin] = useDeleteClientAdminMutation();
   const [changeStatus] = useUpdateClientAdminStatusMutation();
 
@@ -27,6 +28,13 @@ const AdminList = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState(null);
 
+  useEffect(()=> {
+    if(isLoading) {
+      showLoading()
+    } else{ 
+      hideLoading()
+    }
+  } , [showLoading, hideLoading ,isLoading])
   useEffect(() => {
     refetch();
   }, [refetch]);

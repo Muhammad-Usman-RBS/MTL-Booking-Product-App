@@ -15,14 +15,25 @@ import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { useSelector } from "react-redux";
 import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const InvoicesList = () => {
   const user = useSelector((state) => state.auth.user);
   const userRole = user?.role;
+  const { showLoading, hideLoading } = useLoading();
+
+  
   const [search, setSearch] = useState("");
   const { data, isLoading, isError, refetch } = useGetAllInvoicesQuery();
   const [updateInvoice] = useUpdateInvoiceMutation();
 
+          useEffect(() => {
+              if (isLoading) {
+                showLoading();
+              } else {
+                hideLoading();
+              }
+            }, [isLoading, showLoading, hideLoading]);
   // currency from booking settings
   const { data: bookingSettingData } = useGetBookingSettingQuery();
   const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};

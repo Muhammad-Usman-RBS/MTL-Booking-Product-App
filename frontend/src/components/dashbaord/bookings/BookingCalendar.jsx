@@ -5,6 +5,7 @@ import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import Icons from "../../../assets/icons";
 import { useGetDriverJobsQuery } from "../../../redux/api/jobsApi";
 import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const statusColors = {
     "New": {
@@ -60,6 +61,7 @@ const BookingCalendar = () => {
     const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
     const currencySymbol = currencySetting?.symbol || "£";
     const currencyCode = currencySetting?.value || "GBP";
+    const { showLoading, hideLoading } = useLoading();
 
     const { data: bookingsData, isLoading, error } = useGetAllBookingsQuery(user?.companyId);
     const companyId = user?.companyId;
@@ -72,14 +74,19 @@ const BookingCalendar = () => {
             { skip: !companyId }
         );
 
-
-
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedStatus, setSelectedStatus] = useState("All");
     const [hoveredEvent, setHoveredEvent] = useState(null);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [processedBookings, setProcessedBookings] = useState([]);
 
+    useEffect(() => {
+        if (isLoading) {
+          showLoading();
+        } else {
+          hideLoading();
+        }
+      }, [isLoading, showLoading, hideLoading]);
     useEffect(() => {
         // ✅ Bail out early if bookings not loaded yet
         if (!bookingsData || !Array.isArray(bookingsData.bookings)) {

@@ -270,6 +270,56 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
         const ok = await removeDriverJobs(removedDrivers, jobsData?.jobs || []);
         if (!ok) return; // << early exit fixes the double-toast
       }
+      // ✅ Send unassignment notification to removed drivers
+await Promise.all(
+  removedDrivers.map(async (driverUser) => {
+    try {
+      const driver = (drivers?.drivers || []).find(
+        (d) =>
+          d?.DriverData?.email?.toLowerCase().trim() ===
+          driverUser.email?.toLowerCase().trim()
+      );
+
+      if (!driver) return;
+
+      const employeeNumber = driver?.DriverData?.employeeNumber;
+      if (!employeeNumber) {
+        toast.warning(
+          `${driver?.DriverData?.firstName || "Driver"} has no employee number. Skipped unassignment notification.`
+        );
+        return;
+      }
+
+      const notificationPayload = {
+        employeeNumber: employeeNumber,
+        bookingId: selectedBooking?.bookingId,
+        status: "Unassigned", // 👈 FIXED
+        isUnassignment: true,
+        primaryJourney: {
+          pickup:
+            selectedBooking?.primaryJourney?.pickup ||
+            selectedBooking?.returnJourney?.pickup,
+          dropoff:
+            selectedBooking?.primaryJourney?.dropoff ||
+            selectedBooking?.returnJourney?.dropoff,
+        },
+        bookingSentAt: new Date(),
+        createdBy: user?._id,
+        companyId,
+      };
+
+      await createNotification(notificationPayload).unwrap();
+      toast.success(
+        `Unassignment notification sent to ${driver?.DriverData?.firstName}`
+      );
+    } catch (error) {
+      toast.error(
+        `Failed to send unassignment notification to ${driverUser?.firstName}`
+      );
+    }
+  })
+);
+
       if (!companyId) {
         toast.error("Company ID is missing. Please log in again.");
         return;
@@ -432,7 +482,7 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
             const notificationPayload = {
               employeeNumber: DriverData.employeeNumber,
               bookingId: booking.bookingId,
-              status: booking.status,
+              status: "Assigned",
               primaryJourney: {
                 pickup:
                   booking?.primaryJourney?.pickup ||

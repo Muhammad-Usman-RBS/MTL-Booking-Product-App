@@ -14,8 +14,10 @@ import {
 } from "../../../redux/api/hourlyPricingApi";
 import { useGetAllVehiclesQuery } from "../../../redux/api/vehicleApi";
 import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const HourlyPackages = () => {
+  const {showLoading , hideLoading} = useLoading()
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formError, setFormError] = useState("");
@@ -26,7 +28,7 @@ const HourlyPackages = () => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
 
-  const { data: bookingSettingData } = useGetBookingSettingQuery();
+  const { data: bookingSettingData , isLoading: isLoadingBookingsSettings } = useGetBookingSettingQuery();
   const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
   const currencySymbol = currencySetting?.symbol || "£";
   const currencyCode = currencySetting?.value || "GBP";
@@ -46,10 +48,16 @@ const HourlyPackages = () => {
     skip: !companyId,
   });
 
-  const { data: vehicles = [] } = useGetAllVehiclesQuery(companyId, {
+  const { data: vehicles = [], isLoading: isLoadingAllVehicles } = useGetAllVehiclesQuery(companyId, {
     skip: !companyId,
   });
-
+useEffect(() => {
+  if(loading || isLoadingAllVehicles ||  isLoadingBookingsSettings) {
+    showLoading()
+  } else {
+    hideLoading()
+  }
+}, [showLoading , hideLoading , loading , isLoadingAllVehicles, isLoadingBookingsSettings])
   const tableHeaders = [
     { key: "distance", label: "Distance (Miles)" },
     { key: "hours", label: "Hours" },

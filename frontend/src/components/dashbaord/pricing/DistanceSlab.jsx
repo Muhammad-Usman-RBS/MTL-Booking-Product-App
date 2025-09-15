@@ -7,21 +7,28 @@ import "react-toastify/dist/ReactToastify.css";
 import { useSelector } from "react-redux";
 import { useGetAllVehiclesQuery, useUpdateVehicleMutation } from "../../../redux/api/vehicleApi";
 import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const DistanceSlab = () => {
   const companyId = useSelector((state) => state.auth?.user?.companyId);
-  const { data: vehicleList = [] } = useGetAllVehiclesQuery(companyId, {
+  const { data: vehicleList = []  , isLoading} = useGetAllVehiclesQuery(companyId, {
     skip: !companyId,
   });
-
-  const { data: bookingSettingData } = useGetBookingSettingQuery();
+const {showLoading , hideLoading}  = useLoading()
+  const { data: bookingSettingData, isLoading: isLoadingBookingsSettings } = useGetBookingSettingQuery();
   const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
   const currencySymbol = currencySetting?.symbol || "£";
   const currencyCode = currencySetting?.value || "GBP";
 
   const [data, setData] = useState([]);
   const [updateVehicle] = useUpdateVehicleMutation();
-
+  useEffect(() => {
+    if(isLoading || isLoadingBookingsSettings) {
+      showLoading()
+    } else {
+      hideLoading()
+    }
+  }, [isLoading , hideLoading , showLoading, isLoadingBookingsSettings])
   useEffect(() => {
     if (vehicleList.length) {
       const allSlabs = [];
