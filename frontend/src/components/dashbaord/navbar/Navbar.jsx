@@ -61,7 +61,14 @@ function Navbar() {
 
   const dispatch = useDispatch();
   const [applyThemeSettings] = useApplyThemeSettingsMutation();
+  const [isMobile, setIsMobile] = useState(false);
 
+  useEffect(() => {
+    const checkScreen = () => setIsMobile(window.innerWidth <= 768);
+    checkScreen();
+    window.addEventListener("resize", checkScreen);
+    return () => window.removeEventListener("resize", checkScreen);
+  }, []);
   const JobsList = jobData?.jobs || [];
 
   useEffect(() => {
@@ -323,12 +330,13 @@ function Navbar() {
           </h1>
         </div>
         <div className="flex items-center  justify-end gap-2 sm:gap-4 flex-wrap">
+        <FontSelector/>
           <div
-            className="cursor-pointer lg:mt-0 mt-2 relative hover:bg-white/30 backdrop-blur-md p-2 rounded-full"
+            className="cursor-pointer  relative border border-theme bg-theme p-2 rounded-lg "
             onClick={() => setShowTooltip(true)}
             onMouseLeave={handleMouseLeave}
           >
-            <Icons.BellPlus className="size-5" />
+            <Icons.BellPlus className="size-4 text-theme" />
             <div>
               {notifications.length >= 1 && (
                 <span className="absolute -top-2 right-0 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
@@ -341,7 +349,7 @@ function Navbar() {
               <div
                 onMouseEnter={handleMouseEnterTooltip}
                 onMouseLeave={handleMouseLeave}
-                className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 lg:right-0 -right-1/2   text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden">
+                className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 lg:right-0 -right-24    text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden">
                 <div className="border-b px-4 py-3 text-theme bg-theme">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -448,116 +456,79 @@ function Navbar() {
               </div>
             )}
           </div>
-          <FontSelector/>
-          {/* Google button  */}
-          <GoogleTranslateButton />
+         
           {/* Theme selector - only for admins */}
           {(isStaticMode || user?.role === "clientadmin" || user?.role === "superadmin") && (
-            <div className="relative" ref={themeBtnRef}>
-              <button
-                onClick={() => setIsModalOpen((v) => !v)}
-                className="flex items-center gap-2 p-2 rounded-lg bg-white border border-[var(--light-gray)] text-sm shadow-md text-black hover:bg-gray-100 transition duration-200"
-              >
-                <span>🎨</span>
-                <span>Select Theme</span>
-              </button>
+  <div className="relative" ref={themeBtnRef}>
+   
+      <button
+        onClick={() => setIsModalOpen((v) => !v)}
+        className="p-2 rounded-lg border border-theme bg-theme text-black shadow-md hover:bg-gray-100"
+        title="Select Theme"
+      >
+        <Icons.Palette className=" w-4 h-4 text-theme" />
+      </button>
 
-              {isModalOpen && (
-                <div
-                  role="dialog"
-                  style={{ width: themeBtnWidth || "auto" }}
-                  className={`absolute right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 p-3 ${isModalOpen && themeBtnRef.current
-                      ? `w-[${themeBtnRef.current.offsetWidth}px]`
-                      : ""
-                    }`}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {bookmarks && bookmarks.length > 0 ? (
-                    <>
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-xs font-semibold text-gray-700">
-                          Choose Theme
-                        </h3>
-                      </div>
-                      <div className="space-y-2">
-                        {bookmarks.map((b) => {
-                          const c = b.themeSettings || {};
-                          return (
-                            <button
-                            key={b._id}
-                            type="button"
-                            onClick={() => {
-                              handleApplyBookmarkedTheme(b);
-                              setIsModalOpen(false);
-                            }}
-                            title={b.label || "Apply theme"}
-                            className={`relative w-full p-2 rounded-lg transition-all duration-200 group hover:scale-[1.02] hover:shadow-lg 
-                              border ${activeBookmarkId === b._id ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"}
-                            `}
-                          >
-                          
-                          
-                            {/* Color preview */}
-                            <div className="flex space-x-3 justify-center gap-1">
-                              <div
-                                className="w-4 h-4 rounded-sm border border-gray-300 shadow-sm"
-                                style={{ backgroundColor: b?.themeSettings?.bg }}
-                              />
-                              <div
-                                className="w-4 h-4 rounded-sm border border-gray-300 shadow-sm"
-                                style={{ backgroundColor: b?.themeSettings?.text }}
-                              />
-                              <div
-                                className="w-4 h-4 rounded-sm border border-gray-300 shadow-sm"
-                                style={{ backgroundColor: b?.themeSettings?.primary }}
-                              />
-                            </div>
-                          </button>
-                          
-                          );
-                        })}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-center ">
-                      <div className="size-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <span className="text-2xl">🎨</span>
-                      </div>
-                      <Link
-                        to="/dashboard/settings/general"
-                        onClick={() => setIsModalOpen(false)}
-                        className="inline-flex items-center  text-xs text-blue-600 hover:text-blue-700 "
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                          />
-                        </svg>
-                        Add Themes
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+    {/* Modal / Popup */}
+    {isModalOpen && (
+  <div
+    role="dialog"
+    onClick={(e) => e.stopPropagation()}
+    className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 p-3"
+  >
+    {bookmarks && bookmarks.length > 0 ? (
+      <>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold hidden lg:block text-gray-700">Choose Theme</h3>
+         
+        </div>
+        <div className="space-y-2">
+          {bookmarks.map((b) => (
+            <button
+              key={b._id}
+              type="button"
+              onClick={() => {
+                handleApplyBookmarkedTheme(b);
+                setIsModalOpen(false);
+              }}
+              className={`w-full p-2 rounded-lg border transition hover:scale-[1.02] hover:shadow 
+                ${activeBookmarkId === b._id ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"}`}
+            >
+              <div className="flex space-x-3 justify-center">
+                <div className="w-4 h-4 rounded-sm border" style={{ backgroundColor: b?.themeSettings?.bg }} />
+                <div className="w-4 h-4 rounded-sm border" style={{ backgroundColor: b?.themeSettings?.text }} />
+                <div className="w-4 h-4 rounded-sm border" style={{ backgroundColor: b?.themeSettings?.primary }} />
+              </div>
+            </button>
+          ))}
+        </div>
+      </>
+    ) : (
+      <div className="text-center">
+        <span className="text-2xl">🎨</span>
+        <Link
+          to="/dashboard/settings/general"
+          onClick={() => setIsModalOpen(false)}
+          className="block mt-2 text-sm text-blue-600"
+        >
+          Add Themes
+        </Link>
+      </div>
+    )}
+  </div>
+)}
+
+  </div>
+)}
+
 
           <div className="flex lg:flex-row md:flex-row sm:flex-row xs flex-row-reverse">
             <div className="relative">
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[var(--light-gray)] text-sm shadow-md text-black hover:bg-gray-100 transition duration-200"
+                className="flex items-center gap-2 p-2 rounded-lg bg-theme border border-theme text-sm shadow-md text-black hover:bg-gray-100 transition duration-200"
               >
-                <Icons.User className="w-4 h-4 text-dark" />
-                <span>User</span>
+                <Icons.User className="w-4 h-4 text-theme" />
               </button>
 
               {isDropdownOpen && (
@@ -618,6 +589,8 @@ function Navbar() {
               )}
             </div>
           </div>
+          <GoogleTranslateButton />
+
         </div>
       </nav>
       <div className="">

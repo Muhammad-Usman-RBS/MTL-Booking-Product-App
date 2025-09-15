@@ -7,7 +7,6 @@ import { toast } from "react-toastify";
 import FareSection from "./createBooking/FareSection";
 import JourneyCard from "./createBooking/JourneyCard";
 import PassengerDetails from "./createBooking/PassengerDetails";
-import VehicleSelection from "./createBooking/VehicleSelection";
 
 // Shared / Reusable Components
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
@@ -28,6 +27,7 @@ import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi
 
 // Styles
 import "react-toastify/dist/ReactToastify.css";
+import VehicleSelection from "./createBooking/VehicleSelection";
 
 const NewBooking = ({ editBookingData = null, onClose }) => {
   const navigate = useNavigate();

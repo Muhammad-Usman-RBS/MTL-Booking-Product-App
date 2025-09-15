@@ -1,12 +1,16 @@
 import React from "react";
 import FilePreview from "../../../constants/constantscomponents/FilePreview";
+import { useGetPublicVehiclesQuery } from "../../../redux/api/vehicleApi";
 
 const VehicleData = ({
   filePreviews,
   handleInputChange,
   handleCheckboxChange,
   formData,
+  companyId
 }) => {
+  const { data: vehicleList = [], isLoading } = useGetPublicVehiclesQuery(companyId);
+
   return (
     <>
       <div>
@@ -186,31 +190,25 @@ const VehicleData = ({
           Vehicle Types <span className="text-red-500">*</span>
         </label>
         <div className="grid grid-cols-3 grid-rows-3 gap-2">
-          {[
-            "Standard Sedan",
-            "Executive Sedan",
-            "Luxury Saloon",
-            "6 Passenger MPV",
-            "8 Passenger MPV",
-          ].map((type) => {
-            const value = type.toLowerCase().replace(/ /g, "_");
-            return (
-              <div key={type} className="flex items-center">
-                <input
-                  type="checkbox"
-                  id={value}
-                  value={value}
-                  onChange={handleCheckboxChange}
-                  checked={formData.vehicleTypes.includes(value)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <label className="ml-2 text-sm text-gray-700" htmlFor={value}>
-                  {type}
-                </label>
-              </div>
-            );
-          })}
-        </div>
+  {vehicleList.map((vehicle) => {
+    const name = vehicle.vehicleName; 
+    return (
+      <div key={vehicle._id} className="flex items-center">
+        <input
+          type="checkbox"
+          id={name}
+          value={name}
+          onChange={handleCheckboxChange}
+          checked={formData.vehicleTypes.includes(name)}
+          className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+        />
+        <label className="ml-2 text-sm text-gray-700" htmlFor={name}>
+          {name}
+        </label>
+      </div>
+    );
+  })}
+</div>
       </div>
     </>
   );

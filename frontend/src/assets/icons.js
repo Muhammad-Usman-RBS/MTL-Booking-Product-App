@@ -95,9 +95,13 @@ import {
   ChevronLeft,
   Bookmark,
   BookmarkCheck,
+  Palette,
+  CaseSensitive,
 } from "lucide-react";
 
 const Icons = {
+  Palette,
+  CaseSensitive,
   Info,
   Bookmark,
   BookmarkCheck,

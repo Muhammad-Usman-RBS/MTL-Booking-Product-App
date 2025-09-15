@@ -291,6 +291,7 @@ const NewDriver = () => {
         />
 
         <VehicleData
+        companyId={companyId}
           handleCheckboxChange={handleCheckboxChange}
           handleInputChange={handleInputChange}
           formData={formData}

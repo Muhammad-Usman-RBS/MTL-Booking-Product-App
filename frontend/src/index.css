@@ -113,7 +113,9 @@ select:disabled {
 .text-theme {
   color: var(--text);
 }
-
+.border-theme {
+  border: 1px solid var(--light-gray)
+}
 .text-primary {
   color: var(--primary);
 }
@@ -353,15 +355,15 @@ select:disabled {
   background: none !important;
   box-shadow: none !important;
 }
-
+ 
 #google_translate_element select {
   background: #ffffff;
   color: #000000;
   border: none;
   outline: none;
   border-radius: 8px;
-  padding: 10px 6px;
-  margin: 0 !important;
+  padding: 8px 6px;
+  border: 1px solid var(--light-gray);
 }
 
 .goog-te-gadget {
@@ -370,6 +372,13 @@ select:disabled {
 
 .goog-te-gadget span {
   display: none !important;
+}
+
+@media (min-width:300px) and (max-width: 400px) {
+  #google_translate_element select {
+    padding: 8px 1%;
+    width: 100%;
+  } 
 }
 
 /* END FOR GOOGLE TRANSLATE */
