@@ -1,9 +1,8 @@
 import React from "react";
 import IMAGES from "../../../assets/images";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import Icons from "../../../assets/icons";
-import { downloadPDF } from "../../../constants/constantscomponents/pdfDownload";
 import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHeading";
+import RenderDocuments from "./RendorDocument";
+import DriverPDFTemplate from "./DriverPDFTemplate";
 
 const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
   const driver = selectedDriver?.driver.DriverData || {};
@@ -13,93 +12,6 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
   const formatDate = (dateString) =>
     dateString ? dateString.split("T")[0] : "N/A";
 
-  const renderAvailability = () => {
-    if (driver.availability?.length > 0) {
-      return (
-        <div style={{ display: "flex", gap: "0.25rem" }}>
-          <h4 style={{ fontWeight: "600" }}>Availability:</h4>
-          <ul style={{ color: "#374151", fontSize: "0.875rem" }}>
-            {driver.availability.map((slot, idx) => (
-              <li key={idx} style={{ marginBottom: "0.25rem" }}>
-                From: {new Date(slot.from).toLocaleDateString()} - To:
-                {new Date(slot.to).toLocaleDateString()}
-              </li>
-            ))}
-          </ul>
-        </div>
-      );
-    }
-    return (
-      <p>
-        <strong>Availability:  </strong>
-        <span style={{ color: "#6B7280", fontStyle: "italic" }}>
-          Not Added Yet
-        </span>
-      </p>
-    );
-  };
-
-  const renderPreview = (fileUrl, label, fileName = "") => {
-    if (!fileUrl) {
-      return (
-        <div className="flex flex-col items-center">
-          <div className="w-40 h-28 flex items-center justify-center border-2 border-[var(--light-gray)] bg-gray-100">
-            <p className="text-sm text-gray-500">No file</p>
-          </div>
-          <p className="mt-2 text-sm font-medium">{label}</p>
-        </div>
-      );
-    }
-
-    const isImage = /\.(jpeg|jpg|png|webp)$/i.test(fileUrl);
-    const isPdf = /\.pdf$/i.test(fileUrl);
-
-    return (
-      <div >
-        {isImage ? (
-          <img
-            src={fileUrl}
-            alt={label}
-            className="w-40 h-28 object-cover border-2 border-[var(--light-gray)]"
-          />
-        ) : (
-          isPdf && (
-            <div className="w-40 h-28 flex flex-col items-center justify-center border-2 border-[var(--light-gray)] bg-gray-100">
-              <Icons.FileText className="size-8 text-red-800" />
-              {fileName && (
-                <p className="text-xs text-gray-500 mt-3 px-2 text-center break-words w-full">
-                  {fileName}
-                </p>
-              )}
-            </div>
-          )
-        )}
-        <p className="mt-2 text-sm font-medium">{label}</p>
-      </div>
-    );
-  };
-
-  const renderUploadItem = (filePath, label) => {
-    if (!filePath) {
-      return renderPreview(null, label);
-    }
-
-    let actualFilePath = "";
-    let fileName = "";
-
-    if (typeof filePath === "string") {
-      actualFilePath = filePath;
-      fileName = filePath.split("/").pop();
-    } else if (typeof filePath === "object" && filePath !== null) {
-      actualFilePath = filePath.url || "";
-      fileName =
-        filePath.original_filename ||
-        filePath.name ||
-        filePath.url?.split("/").pop();
-    }
-
-    return renderPreview(actualFilePath, label, fileName);
-  };
   return (
     <>
       <OutletBtnHeading
@@ -109,202 +21,156 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
         onButtonClick={() => setSelectedDriver(null)}
       />
 
-      <div className="flex justify-end mb-6">
-        <button
-          className="btn btn-reset mb-2"
-          onClick={() =>
-            downloadPDF(
-              "driver-details-pdf",
-              `Driver-${driver.firstName}.pdf`
-            )
-          }
-        >
-          Download Driver Details
-        </button>
-      </div>
-      <div id="driver-details-pdf" >
-        <div style={{ fontFamily: "Arial, sans-serif", color: "#2d3748" }}>
-          {/* Driver Profile */}
-          <div
-            style={{
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              padding: "20px",
-              marginBottom: "30px",
-              background: "#fff",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-            }}
-          >
-            <h3
-              style={{
-                fontSize: "1.25rem",
-                fontWeight: "600",
-                color: "#2b6cb0",
-                borderBottom: "2px solid #edf2f7",
-                paddingBottom: "8px",
-                marginBottom: "20px",
-              }}
-            >
-              Driver Profile Details
-            </h3>
+      {/* PDF Download & Template */}
+      <DriverPDFTemplate
+        driver={driver}
+        vehicle={vehicle}
+        uploads={uploads}
+        formatDate={formatDate}
+      />
 
-            <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-              <img
-                src={uploads.driverPicture || IMAGES.dummyImg}
-                alt="Driver"
-                style={{
-                  width: "100px",
-                  height: "100px",
-                  borderRadius: "6px",
-                  objectFit: "cover",
-                  border: "2px solid #cbd5e0",
-                }}
-              />
-              <div
-                style={{
-                  fontSize: "14px",
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  rowGap: "8px",
-                  columnGap: "20px",
-                  flex: 1,
-                }}
-              >
-                <p><strong>Status:</strong> {driver.status || "N/A"}</p>
-                <p><strong>Driver No.:</strong> {driver.employeeNumber || "N/A"}</p>
-                <p><strong>First Name:</strong> {driver.firstName || "N/A"}</p>
-                <p><strong>Sur Name:</strong> {driver.surName || "N/A"}</p>
-                <p><strong>Email:</strong> {driver.email || "N/A"}</p>
-                <p><strong>Contact:</strong> {driver.contact || "N/A"}</p>
-                <p><strong>Address:</strong> {driver.address || "N/A"}</p>
-                <p><strong>D.O.B.:</strong> {formatDate(driver.dateOfBirth)}</p>
-                <div style={{ gridColumn: "span 2", marginTop: "10px" }}>
-                  {renderAvailability()}
+      {/* Responsive Display with Tailwind */}
+      <div className="space-y-6">
+        {/* Driver Profile Details */}
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-semibold text-[#2b6cb0] border-b-2 border-gray-200 pb-2 mb-5">
+            Driver Profile Details
+          </h3>
+
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center">
+            <img
+              src={uploads.driverPicture || IMAGES.dummyImg}
+              alt="Driver"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg object-cover border-2 border-gray-300 mx-auto sm:mx-0"
+            />
+            <div className="flex-1 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-6 gap-y-2 text-sm">
+                <div className="flex flex-col sm:flex-row">
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">Status:</span>
+                  <span className="text-gray-600 break-words">{driver.status || "N/A"}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row">
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">Driver No.:</span>
+                  <span className="text-gray-600 break-words">{driver.employeeNumber || "N/A"}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row">
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">First Name:</span>
+                  <span className="text-gray-600 break-words">{driver.firstName || "N/A"}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row">
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">Sur Name:</span>
+                  <span className="text-gray-600 break-words">{driver.surName || "N/A"}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row">
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">Email:</span>
+                  <span className="text-gray-600 break-words">{driver.email || "N/A"}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row">
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">Contact:</span>
+                  <span className="text-gray-600 break-words">{driver.contact || "N/A"}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:col-span-2">
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">Address:</span>
+                  <span className="text-gray-600 break-words">{driver.address || "N/A"}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row">
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">D.O.B.:</span>
+                  <span className="text-gray-600">{formatDate(driver.dateOfBirth)}</span>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Vehicle Details */}
-          <div
-            style={{
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              padding: "20px",
-              marginBottom: "30px",
-              background: "#fff",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-            }}
-          >
-            <h3
-              style={{
-                fontSize: "1.25rem",
-                fontWeight: "600",
-                color: "#2b6cb0",
-                borderBottom: "2px solid #edf2f7",
-                paddingBottom: "8px",
-                marginBottom: "20px",
-              }}
-            >
-              Vehicle Details
-            </h3>
+        {/* Vehicle Details */}
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-semibold text-[#2b6cb0] border-b-2 border-gray-200 pb-2 mb-5">
+            Vehicle Details
+          </h3>
 
-            <div style={{ display: "flex", gap: "20px" }}>
-              <img
-                src={uploads.carPicture || IMAGES.dummyImg}
-                alt="Vehicle"
-                style={{
-                  width: "100px",
-                  height: "100px",
-                  objectFit: "cover",
-                  borderRadius: "6px",
-                  border: "2px solid #cbd5e0",
-                }}
-              />
-              <div
-                style={{
-                  fontSize: "14px",
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  rowGap: "8px",
-                  columnGap: "20px",
-                  flex: 1,
-                }}
-              >
-                <p><strong>Make:</strong> {vehicle.carMake || "N/A"}</p>
-                <p><strong>Model:</strong> {vehicle.carModal || "N/A"}</p>
-                <p><strong>Color:</strong> {vehicle.carColor || "N/A"}</p>
-                <p><strong>Reg. No.:</strong> {vehicle.carRegistration || "N/A"}</p>
-                <p><strong>Insurance Expiry:</strong> {formatDate(vehicle.carInsuranceExpiry)}</p>
-                <p><strong>MOT Expiry:</strong> {formatDate(vehicle.motExpiryDate)}</p>
-                <div style={{ gridColumn: "span 2" }}>
-                  <strong>Vehicle Types:</strong>{" "}
-                  {vehicle.vehicleTypes?.length > 0 ? vehicle.vehicleTypes.join(", ") : "N/A"}
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+            <img
+              src={uploads.carPicture || IMAGES.dummyImg}
+              alt="Vehicle"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg object-cover border-2 border-gray-300 mx-auto sm:mx-0"
+            />
+            <div className="flex-1 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-6 gap-y-2 text-sm">
+                <div className="flex flex-col sm:flex-row">
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[80px]">Make:</span>
+                  <span className="text-gray-600 break-words">{vehicle.carMake || "N/A"}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row">
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[80px]">Model:</span>
+                  <span className="text-gray-600 break-words">{vehicle.carModal || "N/A"}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row">
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[80px]">Color:</span>
+                  <span className="text-gray-600 break-words">{vehicle.carColor || "N/A"}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row">
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[80px]">Reg. No.:</span>
+                  <span className="text-gray-600 break-words">{vehicle.carRegistration || "N/A"}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row">
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[120px]">Insurance Expiry:</span>
+                  <span className="text-gray-600">{formatDate(vehicle.carInsuranceExpiry)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row">
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">MOT Expiry:</span>
+                  <span className="text-gray-600">{formatDate(vehicle.motExpiryDate)}</span>
+                </div>
+                <div className="col-span-1 sm:col-span-2 mt-2">
+                  <span className="font-semibold text-gray-700">Vehicle Types: </span>
+                  <span className="text-gray-600">
+                    {vehicle.vehicleTypes?.length > 0 ? vehicle.vehicleTypes.join(", ") : "N/A"}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* License Details */}
-          <div
-            style={{
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              padding: "20px",
-              marginBottom: "30px",
-              background: "#fff",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-            }}
-          >
-            <h3
-              style={{
-                fontSize: "1.25rem",
-                fontWeight: "600",
-                color: "#2b6cb0",
-                borderBottom: "2px solid #edf2f7",
-                paddingBottom: "8px",
-                marginBottom: "20px",
-              }}
-            >
-              License Details
-            </h3>
+        {/* License Details */}
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-semibold text-[#2b6cb0] border-b-2 border-gray-200 pb-2 mb-5">
+            License Details
+          </h3>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "12px 20px",
-                fontSize: "14px",
-              }}
-            >
-              <div>
-                <p><strong>Driver License:</strong> {driver.driverLicense || "N/A"}</p>
-                <p><strong>License Expiry:</strong> {formatDate(driver.driverLicenseExpiry)}</p>
-                <p><strong>Private Hire License Expiry:</strong> {formatDate(driver.driverPrivateHireLicenseExpiry)}</p>
-                <p><strong>Vehicle Hire License Expiry:</strong> {formatDate(vehicle.carPrivateHireLicenseExpiry)}</p>
-              </div>
-              <div>
-                <p><strong>National Insurance:</strong> {driver.NationalInsurance || "N/A"}</p>
-                <p><strong>Private Hire Card No.:</strong> {driver.privateHireCardNo || "N/A"}</p>
-                <p><strong>Vehicle Hire License:</strong> {vehicle.carPrivateHireLicense || "N/A"}</p>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-6 gap-y-3 text-sm">
+            <div className="flex flex-col sm:flex-row">
+              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[140px]">Driver License:</span>
+              <span className="text-gray-600 break-words">{driver.driverLicense || "N/A"}</span>
+            </div>
+            <div className="flex flex-col sm:flex-row">
+              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[120px]">License Expiry:</span>
+              <span className="text-gray-600">{formatDate(driver.driverLicenseExpiry)}</span>
+            </div>
+            <div className="flex flex-col sm:flex-row">
+              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[180px]">Private Hire License Expiry:</span>
+              <span className="text-gray-600">{formatDate(driver.driverPrivateHireLicenseExpiry)}</span>
+            </div>
+            <div className="flex flex-col sm:flex-row">
+              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[180px]">Vehicle Hire License Expiry:</span>
+              <span className="text-gray-600">{formatDate(vehicle.carPrivateHireLicenseExpiry)}</span>
+            </div>
+            <div className="flex flex-col sm:flex-row">
+              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[140px]">National Insurance:</span>
+              <span className="text-gray-600 break-words">{driver.NationalInsurance || "N/A"}</span>
+            </div>
+            <div className="flex flex-col sm:flex-row">
+              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[160px]">Private Hire Card No.:</span>
+              <span className="text-gray-600 break-words">{driver.privateHireCardNo || "N/A"}</span>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:col-span-2">
+              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[160px]">Vehicle Hire License:</span>
+              <span className="text-gray-600 break-words">{vehicle.carPrivateHireLicense || "N/A"}</span>
             </div>
           </div>
-
-
         </div>
       </div>
-      {/* License Details */}
-      <div
-        style={{
-          border: "1px solid #e2e8f0",
-          borderRadius: "8px",
-          padding: "20px",
-          marginBottom: "30px",
-          background: "#fff",
-          boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-        }}
-      >
+
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-8">
         <h3
           style={{
             fontSize: "1.25rem",
@@ -315,27 +181,13 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
             marginBottom: "20px",
           }}
         >
-          Uploaded Documents:
+          Uploaded Documents
         </h3>
-
-        <div className="grid grid-cols-4 gap-y-6 mt-4">
-          {renderUploadItem(uploads.privateHireCard, "Private Hire Card")}
-          {renderUploadItem(uploads.dvlaCard, "DVLA Card")}
-          {renderUploadItem(
-            uploads.privateHireCarPaper,
-            "Private Hire Car Paper"
-          )}
-          {renderUploadItem(
-            uploads.driverPrivateHirePaper,
-            "Driver Private Hire Paper"
-          )}
-          {renderUploadItem(uploads.insurance, "Insurance")}
-          {renderUploadItem(uploads.motExpiry, "MOT Expiry")}
-          {renderUploadItem(uploads.V5, "V5")}
-        </div>
+        <RenderDocuments uploads={uploads} />
       </div>
     </>
   );
 };
 
 export default ViewDriver;
+

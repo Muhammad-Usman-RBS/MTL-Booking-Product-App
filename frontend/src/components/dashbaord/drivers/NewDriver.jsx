@@ -9,7 +9,6 @@ import {
 } from "../../../redux/api/driverApi";
 import { toast } from "react-toastify";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import FilePreview from "../../../constants/constantscomponents/FilePreview";
 import { useSelector } from "react-redux";
 import { validateDriver, validateVehicle } from "../../../utils/validation/validators";
 import IMAGES from "../../../assets/images";
@@ -282,7 +281,6 @@ const NewDriver = () => {
         </div>
 
         {/* DRIVER SECTION */}
-
         <DriverData
           user={user}
           handleAddAvailability={handleAddAvailability}
@@ -298,7 +296,7 @@ const NewDriver = () => {
           formData={formData}
           filePreviews={filePreviews}
         />
-        {/* SUBMIT */}
+
         <div className="text-center mt-6">
           <button type="submit" className="btn btn-reset">
             {isEdit ? "Update" : "Submit"}

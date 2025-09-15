@@ -1,27 +1,38 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 
+// Components
 import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHeading";
-import { useFetchClientAdminsQuery, useFetchAssociateAdminsQuery } from "../../../redux/api/adminApi";
-import { useCreateCompanyMutation, useGetCompanyByIdQuery, useUpdateCompanyMutation } from "../../../redux/api/companyApi";
-
-// shared validators
-import { validateCompanyAccount } from "../../../utils/validation/validators";
-
-// Presentational form
 import CompanyAccountForm from "./CompanyAccountForm";
 
+// API hooks
+import {
+  useFetchClientAdminsQuery,
+  useFetchAssociateAdminsQuery,
+} from "../../../redux/api/adminApi";
+import {
+  useCreateCompanyMutation,
+  useGetCompanyByIdQuery,
+  useUpdateCompanyMutation,
+} from "../../../redux/api/companyApi";
+
+// Validators
+import { validateCompanyAccount } from "../../../utils/validation/validators";
+
 const AddCompanyAccount = () => {
+  // Router hooks
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
 
+  // Redux state
   const user = useSelector((state) => state.auth?.user);
   const isClientAdmin = user?.role === "clientadmin";
 
+  // Local states
   const [notFound, setNotFound] = useState(false);
   const [filePreviews, setFilePreviews] = useState({});
 
@@ -41,7 +52,7 @@ const AddCompanyAccount = () => {
     status: "",
   });
 
-  // errors + touched
+  // Validation states
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 

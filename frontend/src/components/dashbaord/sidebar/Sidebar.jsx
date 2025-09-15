@@ -29,9 +29,6 @@ const Sidebar = () => {
       const filteredSubTabs = item.subTabs?.filter((sub) => {
         const subHasRole =
           !sub.roles || sub.roles.length === 0 || sub.roles.includes(userRole);
-          if (userRole === "customer" && (!user?.vatnumber) && (sub.route === "/dashboard/bookings/list" || sub.route === "/dashboard/bookings/new") ) {
-            return false;
-          }
         return subHasRole;
       });
 
@@ -75,7 +72,7 @@ const Sidebar = () => {
           <p className="text-sm text-[#1f2937] uppercase tracking-widest font-semibold">
             Welcome!
           </p>
-          <p className="text-[#1f2937] truncate">
+          <p className="font-semibold text-[#1f2937] truncate">
             {user?.fullName || "Guest"}
           </p>
         </div>

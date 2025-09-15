@@ -18,7 +18,7 @@ const DriverRegistrationConfig = () => {
     "Driver Taxi License Expiry",
     "Driver Taxi License Attachments",
 
-    // 🆕 New Driver Fields
+    // New Driver Fields
     "Driver PCO Card",
     "Driver PCO Card Expiry",
     "NI Number",
@@ -38,7 +38,7 @@ const DriverRegistrationConfig = () => {
     "Vehicle Condition Expiry",
     "Vehicle Condition Attachments",
 
-    // 🆕 New Car Fields
+    // New Car Fields
     "Car V5",
     "Car Picture (Front)",
   ];

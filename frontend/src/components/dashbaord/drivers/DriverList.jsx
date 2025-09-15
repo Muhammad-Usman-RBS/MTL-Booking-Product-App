@@ -1,18 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+
 import Icons from "../../../assets/icons";
 import ViewDriver from "./ViewDriver";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import {
-  useDeleteDriverByIdMutation,
-  useGetAllDriversQuery,
-  useGetDriverByIdQuery,
-} from "../../../redux/api/driverApi";
-import { toast } from "react-toastify";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import { useSelector } from "react-redux";
 import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
+
+import { useDeleteDriverByIdMutation, useGetAllDriversQuery, useGetDriverByIdQuery } from "../../../redux/api/driverApi";
 
 const tabOptions = ["Active", "Suspended", "Pending", "Deleted"];
 
@@ -26,13 +24,22 @@ const DriverList = () => {
   const [perPage, setPerPage] = useState(5);
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [driverToDelete, setdriverToDelete] = useState(null);
+  const [driverToDelete, setDriverToDelete] = useState(null);
 
-  const { data: getAllDrivers } = useGetAllDriversQuery(companyId);
-  const { data: getDriverById } = useGetDriverByIdQuery(selectedDriver, {
-    skip: !selectedDriver,
-  });
-  const [deleteDriverById] = useDeleteDriverByIdMutation();
+  // Fetch drivers list
+  const {
+    data: getAllDrivers,
+  } = useGetAllDriversQuery(companyId);
+
+  // Fetch single driver details
+  const { data: getDriverById } =
+    useGetDriverByIdQuery(selectedDriver, {
+      skip: !selectedDriver,
+    });
+
+  // Delete driver mutation
+  const [deleteDriverById] =
+    useDeleteDriverByIdMutation();
 
   const driversArray = getAllDrivers?.drivers || [];
   const roleFilteredDrivers =
@@ -68,7 +75,7 @@ const DriverList = () => {
 
   useEffect(() => {
     if (page > totalPages) setPage(1);
-  }, [filteredData, perPage, activeTab]); // eslint-disable-line
+  }, [filteredData, perPage, activeTab]);
 
   if (selectedDriver) {
     if (!getDriverById) return <p className="p-4">Loading driver details...</p>;
@@ -133,7 +140,7 @@ const DriverList = () => {
           {user?.role !== "driver" && (
             <Icons.X
               onClick={() => {
-                setdriverToDelete(driver);
+                setDriverToDelete(driver);
                 setShowDeleteModal(true);
               }}
               className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
@@ -201,7 +208,7 @@ const DriverList = () => {
             await deleteDriverById(driverToDelete._id).unwrap();
             toast.success("Driver deleted successfully!");
             setShowDeleteModal(false);
-            setdriverToDelete(null);
+            setDriverToDelete(null);
           } catch (err) {
             console.error("Delete failed:", err);
             toast.error("Failed to delete company.");
@@ -209,7 +216,7 @@ const DriverList = () => {
         }}
         onCancel={() => {
           setShowDeleteModal(false);
-          setdriverToDelete(null);
+          setDriverToDelete(null);
         }}
       />
     </>

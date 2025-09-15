@@ -1,9 +1,9 @@
 import React from "react";
-import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
+import IMAGES from "../../../assets/images";
+import PhoneInput from "react-phone-input-2";
 import { yesNoOptions } from "../../../constants/dashboardTabsData/data";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
-import IMAGES from "../../../assets/images";
 
 const Req = () => <span className="text-red-500 ml-0.5">*</span>;
 
@@ -31,18 +31,14 @@ const CompanyAccountForm = ({
 
     return (
         <>
-            {/* Upload box (sky blue dashed, content width) */}
             <div
                 className="inline-flex flex-col items-center gap-3 mb-6 p-4 bg-gradient-to-br from-sky-50 to-sky-100 border-2 border-dashed border-sky-300 rounded-xl shadow-sm w-fit"
             >
-                {/* Profile Image Preview */}
                 <img
                     src={filePreviews.profileImage || IMAGES.dummyImg}
                     alt="Profile Preview"
                     className="w-24 h-24 rounded-full object-cover border border-sky-200 shadow-md"
                 />
-
-                {/* Choose File Button */}
                 <label
                     htmlFor="profile-upload"
                     className="btn btn-reset"
@@ -58,8 +54,6 @@ const CompanyAccountForm = ({
                     className="hidden"
                 />
             </div>
-
-            {/* Inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
                 <div>
                     <label className="block mb-1 font-medium">

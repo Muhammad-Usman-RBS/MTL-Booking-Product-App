@@ -115,7 +115,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const [localEditData, setLocalEditData] = useState(null);
 
   const extraDropoffPrice = (count) => {
-    const base = 0; 
+    const base = 0;
     const rate = generalPricing?.minAdditionalDropOff || base;
     return Math.max(0, count - 1) * rate;
   };
@@ -157,7 +157,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     includeAirportFees: true,
     includeChildSeat: vehicleExtras.childSeat > 0,
     childSeatCount: vehicleExtras.childSeat,
-    enabled: shouldCalculatePrimaryFare, 
+    enabled: shouldCalculatePrimaryFare,
   });
 
   const {
@@ -177,7 +177,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     includeAirportFees: true,
     includeChildSeat: vehicleExtras.childSeat > 0,
     childSeatCount: vehicleExtras.childSeat,
-    enabled: shouldCalculateReturnFare, 
+    enabled: shouldCalculateReturnFare,
   });
 
   const [fareDetails, setFareDetails] = useState({
@@ -253,6 +253,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       setHasChangedPrimaryLocations(checkPrimaryLocationsChanged());
     }
   }, [primaryJourneyData.pickup, dropOffs1]);
+
   useEffect(() => {
     if (editBookingData) {
       setFareDetails((prev) => ({
@@ -262,6 +263,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       }));
     }
   }, [editBookingData]);
+
   useEffect(() => {
     if (originalReturnLocations) {
       setHasChangedReturnLocations(checkReturnLocationsChanged());
@@ -881,10 +883,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             } flex flex-col lg:flex-row`}
         >
           {/* Journey 1 */}
-          {/* {(!isEditing || !isReturnJourney || returnJourneyToggle) && ( */}
-
-
-
           {(!isEditing && !returnJourneyToggle) ||
             (isEditing && !isReturnJourney) ||
             (!isEditing && returnJourneyToggle) ? (
@@ -944,6 +942,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${editBookingData?._id || editBookingData?.__copyMode ? "px-6" : ""
           }`}
       >
+        {/* Left Column - Passenger + Fare */}
         <div className="col-span-6">
           <div className="bg-white shadow-lg rounded-2xl border border-gray-200 h-full">
             <div className="bg-[#0f192d] px-6 rounded-t-2xl py-3">
@@ -970,55 +969,24 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
                 onFareManuallyEdited={(which) =>
                   setFareTouched((t) => ({ ...t, [which]: true }))
                 }
+                userRole={userRole}
+                vatnumber={vatnumber}
+                isFetching={isFetching}
+                error={error}
+                customerByVat={customerByVat}
               />
             </div>
           </div>
         </div>
-        <div className="col-span-6">
-          {userRole === "customer" && vatnumber ? (
-            <div className="bg-white shadow-lg rounded-2xl border border-gray-200 h-full flex flex-col">
-              <div className="bg-[#0f192d] px-6 py-3 rounded-t-2xl">
-                <h2 className="text-xl font-bold text-gray-50">Billing Details</h2>
-              </div>
 
-              <div className="p-6 flex flex-col gap-4 flex-grow">
-                <p className="font-semibold text-gray-700">This is a customer account.</p>
-
-                {isFetching && (
-                  <p className="text-blue-600 font-medium animate-pulse">Loading…</p>
-                )}
-
-                {error && (
-                  <p className="text-red-600 font-semibold bg-red-100 p-3 rounded-md shadow-sm">
-                    Failed to load customer data.
-                  </p>
-                )}
-
-                {!isFetching && !error && (
-                  <>
-                    {customerByVat ? (
-                      <div className="bg-gray-50 border border-gray-300 rounded-md p-4 shadow-inner">
-                        <p className="text-gray-800 font-medium">
-                          <span className="font-semibold">Payment Options Invoice:</span>&nbsp;
-                          {customerByVat.paymentOptionsInvoice || "—"}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-amber-700 font-medium mt-2">
-                        VAT match not found. Please check the VAT number for typos or spacing.
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          ) : (
-            <VehicleSelection
-              setSelectedVehicle={setSelectedVehicle}
-              setVehicleExtras={setVehicleExtras}
-              editBookingData={editBookingData}
-            />
-          )}
+        {/* Right Column - Billing (if customer) + VehicleSelection */}
+        <div className="col-span-6 flex flex-col gap-6">
+          {/* Always show VehicleSelection */}
+          <VehicleSelection
+            setSelectedVehicle={setSelectedVehicle}
+            setVehicleExtras={setVehicleExtras}
+            editBookingData={editBookingData}
+          />
         </div>
       </div>
 

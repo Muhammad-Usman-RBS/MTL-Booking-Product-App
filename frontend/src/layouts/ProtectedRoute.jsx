@@ -21,18 +21,6 @@ const ProtectedRoute = () => {
     userPermissions.includes(item.title)
   );
 
-  useEffect(() => {
-    if (
-      user?.role === "customer" &&
-      !user?.vatnumber?.toLowerCase() && 
-      
-      (currentPath === "/dashboard/bookings/list" || currentPath === "/dashboard/bookings/new")
-    ) {
-      window.location.replace("/dashboard/bookings/calendar");
-      return;
-    }
-  }, [currentPath, user]);
-  
   const authorizedRoutes = authorizedSidebarItems.some((item) => {
     if (currentPath.startsWith(item.route)) return true;
     

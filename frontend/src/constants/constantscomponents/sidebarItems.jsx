@@ -16,7 +16,6 @@ const sidebarItems = [
       "customer",
       "clientadmin",
       "associateadmin",
-      
     ],
     subTabs: [
       {

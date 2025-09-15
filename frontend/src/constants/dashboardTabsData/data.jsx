@@ -4,10 +4,6 @@ import Icons from "../../assets/icons";
 
 export const itemsPerPageOptions = [1, 2, 3, 40, "All"];
 
-
-
-
-
 export const actionMenuItems = [
   "View",
   "Edit",
@@ -23,8 +19,6 @@ export const driverList = [
   { label: "Noman" },
   { label: "Zain Ul Abideen" },
 ];
-
-
 
 export const accountList = [
   { label: "Corporate Account" },
@@ -1056,20 +1050,20 @@ export const receiptData = [
 
 export const timeOptions = {
   autoAllocationHours: [
-   "1 hour","2 hours","3 hours","4 hours","5 hours","6 hours","12 hours","24 hours"
+    "1 hour", "2 hours", "3 hours", "4 hours", "5 hours", "6 hours", "12 hours", "24 hours"
   ],
   reviewHours: [
-    "10 seconds","1 hours","2 hours","3 hours","4 hours","6 hours","12 hours","24 hours"
+    "10 seconds", "1 hours", "2 hours", "3 hours", "4 hours", "6 hours", "12 hours", "24 hours"
   ],
   dailyTimes: [
-    "00:00 - 01:00","01:00 - 02:00","02:00 - 03:00","03:00 - 04:00","04:00 - 05:00",
-    "05:00 - 06:00","06:00 - 07:00","07:00 - 08:00","08:00 - 09:00","09:00 - 10:00",
-    "10:00 - 11:00","11:00 - 12:00","12:00 - 13:00","13:00 - 14:00","14:00 - 15:00",
-    "15:00 - 16:00","16:00 - 17:00","17:00 - 18:00","18:00 - 19:00","19:00 - 20:00",
-    "20:00 - 21:00","21:00 - 22:00","22:00 - 23:00","23:00 - 24:00"
+    "00:00 - 01:00", "01:00 - 02:00", "02:00 - 03:00", "03:00 - 04:00", "04:00 - 05:00",
+    "05:00 - 06:00", "06:00 - 07:00", "07:00 - 08:00", "08:00 - 09:00", "09:00 - 10:00",
+    "10:00 - 11:00", "11:00 - 12:00", "12:00 - 13:00", "13:00 - 14:00", "14:00 - 15:00",
+    "15:00 - 16:00", "16:00 - 17:00", "17:00 - 18:00", "18:00 - 19:00", "19:00 - 20:00",
+    "20:00 - 21:00", "21:00 - 22:00", "22:00 - 23:00", "23:00 - 24:00"
   ],
-  weekDays: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
-frequencies: ["Weekly","Monthly"]
+  weekDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+  frequencies: ["Weekly", "Monthly"]
 };
 
 // Used
@@ -1396,6 +1390,7 @@ export const colorFields = [
   { key: "hover", label: "Hover Color" },
   { key: "active", label: "Active Color" },
 ];
+
 export const ALL_PERMISSIONS = [
   "Home",
   "Users",
@@ -1427,8 +1422,6 @@ export const statusColors = {
   "Rejected": { bg: "var(--alert-red)", text: "#FFFFFF" },
 };
 
-
-
 export const driverportalstatusOptions = [
   "Accepted",
   "On Route",
@@ -1438,8 +1431,6 @@ export const driverportalstatusOptions = [
   "No Show",
   "Completed",
 ];
-
-
 
 export const SCHEDULED_SET = [
   "New",
@@ -1453,14 +1444,12 @@ export const SCHEDULED_SET = [
   "Cancel",
 ];
 
-export  const sortList =  [
-  { label: "Date Descending",  value: "date-desc"  },
-  { label: "Date Ascending",   value: "date-asc"   },
+export const sortList = [
+  { label: "Date Descending", value: "date-desc" },
+  { label: "Date Ascending", value: "date-asc" },
   { label: "Status Ascending", value: "status-asc" },
-  { label: "Status Descending",value: "status-desc"},
+  { label: "Status Descending", value: "status-desc" },
 ]
-
-
 
 export const STATIC_THEME_DATA = [
   {
