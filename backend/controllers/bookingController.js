@@ -38,8 +38,6 @@ export const createBooking = async (req, res) => {
       ClientAdminEmail,
       voucher,
       voucherApplied,
-
-      // New fields
       paymentMethod = "Cash",
       cardPaymentReference = null,
       paymentGateway = null,
@@ -59,7 +57,7 @@ export const createBooking = async (req, res) => {
       return res.status(400).json({ message: "Invalid or missing companyId" });
     }
 
-    // Voucher logic
+    // ✅ Voucher validation
     let validVoucher = null;
     let isVoucherApplied = false;
 
@@ -82,6 +80,7 @@ export const createBooking = async (req, res) => {
       }
     }
 
+    // ✅ Validate required journey fields
     const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
     if (!returnJourneyToggle) {
       for (const field of requiredFields) {
@@ -101,6 +100,7 @@ export const createBooking = async (req, res) => {
       }
     }
 
+    // ✅ Extract dynamic dropoff fields
     const extractDynamicDropoffFields = (journey) => {
       const fields = {};
       Object.keys(journey || {}).forEach((key) => {
@@ -114,6 +114,7 @@ export const createBooking = async (req, res) => {
       return fields;
     };
 
+    // ✅ Generate bookingId
     const generateNextBookingId = async () => {
       const lastBooking = await Booking.findOne()
         .sort({ bookingId: -1 })
@@ -128,6 +129,7 @@ export const createBooking = async (req, res) => {
       req.body.source ||
       (referrer?.toLowerCase()?.includes("widget") ? "widget" : "admin");
 
+    // ✅ Vehicle info
     const baseVehicleInfo = {
       vehicleName: vehicle.vehicleName ?? null,
       passenger: parseInt(vehicle.passenger) || 0,
@@ -136,6 +138,7 @@ export const createBooking = async (req, res) => {
       checkinLuggage: parseInt(vehicle.checkinLuggage) || 0,
     };
 
+    // ✅ Passenger info
     const basePassengerInfo = {
       name: passenger.name ?? null,
       email: passenger.email ?? null,
@@ -147,6 +150,7 @@ export const createBooking = async (req, res) => {
       returnJourney &&
       requiredFields.every((f) => returnJourney[f]);
 
+    // ✅ Booking Payload
     const bookingPayload = {
       bookingId,
       mode,
@@ -157,8 +161,6 @@ export const createBooking = async (req, res) => {
       status: "New",
       vehicle: baseVehicleInfo,
       passenger: basePassengerInfo,
-
-      // New fields
       paymentMethod,
       cardPaymentReference,
       paymentGateway,
@@ -175,6 +177,8 @@ export const createBooking = async (req, res) => {
       },
     };
 
+    // ✅ Primary Journey
+    // ✅ FIXED: Primary Journey with proper flight data handling
     if (!returnJourneyToggle) {
       bookingPayload.primaryJourney = {
         pickup: primaryJourney.pickup?.trim() ?? "",
@@ -185,18 +189,22 @@ export const createBooking = async (req, res) => {
         terminal: primaryJourney.terminal ?? "",
         arrivefrom: primaryJourney.arrivefrom ?? "",
         flightNumber: primaryJourney.flightNumber ?? "",
+
+        // ✅ FIXED: Initialize with null values properly
+        flightOrigin: null,
+        flightDestination: null,
+        flightArrival: {
+          scheduled: null,
+          estimated: null,
+          actual: null
+        },
+
         pickmeAfter: primaryJourney.pickmeAfter ?? "",
         notes: primaryJourney.notes ?? "",
         internalNotes: primaryJourney.internalNotes ?? "",
         date: primaryJourney.date ?? "",
-        hour:
-          primaryJourney.hour !== undefined
-            ? parseInt(primaryJourney.hour)
-            : null,
-        minute:
-          primaryJourney.minute !== undefined
-            ? parseInt(primaryJourney.minute)
-            : null,
+        hour: primaryJourney.hour !== undefined ? parseInt(primaryJourney.hour) : null,
+        minute: primaryJourney.minute !== undefined ? parseInt(primaryJourney.minute) : null,
         fare: primaryJourney.fare ?? 0,
         hourlyOption: primaryJourney.hourlyOption ?? null,
         distanceText: primaryJourney.distanceText ?? "",
@@ -205,8 +213,107 @@ export const createBooking = async (req, res) => {
         voucherApplied: isVoucherApplied,
         ...extractDynamicDropoffFields(primaryJourney),
       };
+
+      // ✅ FIXED: Improved flight details fetching and assignment
+      if (bookingPayload.primaryJourney.flightNumber) {
+        console.log(`🔍 Fetching flight details for: ${bookingPayload.primaryJourney.flightNumber}`);
+
+        const flightDetails = await getFlightDetails(
+          bookingPayload.primaryJourney.flightNumber,
+          bookingPayload.primaryJourney.date
+        );
+
+        console.log(`✈️ Flight details received:`, flightDetails);
+
+        if (flightDetails) {
+          // ✅ FIXED: Proper assignment with validation
+          bookingPayload.primaryJourney.flightOrigin = flightDetails.origin || null;
+          bookingPayload.primaryJourney.flightDestination = flightDetails.destination || null;
+
+          // ✅ FIXED: Handle date conversion properly
+          bookingPayload.primaryJourney.flightArrival = {
+            scheduled: flightDetails.arrival?.scheduled ? new Date(flightDetails.arrival.scheduled) : null,
+            estimated: flightDetails.arrival?.estimated ? new Date(flightDetails.arrival.estimated) : null,
+            actual: flightDetails.arrival?.actual ? new Date(flightDetails.arrival.actual) : null,
+          };
+
+          console.log(`✅ Flight data assigned:`, {
+            origin: bookingPayload.primaryJourney.flightOrigin,
+            destination: bookingPayload.primaryJourney.flightDestination,
+            arrival: bookingPayload.primaryJourney.flightArrival
+          });
+        } else {
+          console.log(`❌ No flight details found for flight: ${bookingPayload.primaryJourney.flightNumber}`);
+        }
+      }
     }
 
+    // ✅ FIXED: Return Journey with same improvements
+    if (returnIsValid) {
+      bookingPayload.returnJourney = {
+        pickup: returnJourney.pickup?.trim() ?? "",
+        dropoff: returnJourney.dropoff?.trim() ?? "",
+        additionalDropoff1: returnJourney.additionalDropoff1 ?? null,
+        additionalDropoff2: returnJourney.additionalDropoff2 ?? null,
+        pickupDoorNumber: returnJourney.pickupDoorNumber ?? "",
+        terminal: returnJourney.terminal ?? "",
+        arrivefrom: returnJourney.arrivefrom ?? "",
+        flightNumber: returnJourney.flightNumber ?? "",
+
+        // ✅ FIXED: Initialize flight fields properly
+        flightOrigin: null,
+        flightDestination: null,
+        flightArrival: {
+          scheduled: null,
+          estimated: null,
+          actual: null
+        },
+
+        pickmeAfter: returnJourney.pickmeAfter ?? "",
+        notes: returnJourney.notes ?? "",
+        internalNotes: returnJourney.internalNotes ?? "",
+        date: returnJourney.date ?? "",
+        hour: returnJourney.hour !== undefined ? parseInt(returnJourney.hour) : null,
+        minute: returnJourney.minute !== undefined ? parseInt(returnJourney.minute) : null,
+        fare: returnJourney.fare ?? 0,
+        hourlyOption: returnJourney.hourlyOption ?? null,
+        distanceText: returnJourney.distanceText ?? "",
+        durationText: returnJourney.durationText ?? "",
+        ...extractDynamicDropoffFields(returnJourney),
+      };
+
+      // ✅ FIXED: Add Flight Info for return journey
+      if (bookingPayload.returnJourney.flightNumber) {
+        console.log(`🔍 Fetching return flight details for: ${bookingPayload.returnJourney.flightNumber}`);
+
+        const flightDetails = await getFlightDetails(
+          bookingPayload.returnJourney.flightNumber,
+          bookingPayload.returnJourney.date
+        );
+
+        console.log(`✈️ Return flight details received:`, flightDetails);
+
+        if (flightDetails) {
+          bookingPayload.returnJourney.flightOrigin = flightDetails.origin || null;
+          bookingPayload.returnJourney.flightDestination = flightDetails.destination || null;
+          bookingPayload.returnJourney.flightArrival = {
+            scheduled: flightDetails.arrival?.scheduled ? new Date(flightDetails.arrival.scheduled) : null,
+            estimated: flightDetails.arrival?.estimated ? new Date(flightDetails.arrival.estimated) : null,
+            actual: flightDetails.arrival?.actual ? new Date(flightDetails.arrival.actual) : null,
+          };
+
+          console.log(`✅ Return flight data assigned:`, {
+            origin: bookingPayload.returnJourney.flightOrigin,
+            destination: bookingPayload.returnJourney.flightDestination,
+            arrival: bookingPayload.returnJourney.flightArrival
+          });
+        } else {
+          console.log(`❌ No return flight details found for flight: ${bookingPayload.returnJourney.flightNumber}`);
+        }
+      }
+    }
+
+    // ✅ Return Journey
     if (returnIsValid) {
       bookingPayload.returnJourney = {
         pickup: returnJourney.pickup?.trim() ?? "",
@@ -235,216 +342,36 @@ export const createBooking = async (req, res) => {
         durationText: returnJourney.durationText ?? "",
         ...extractDynamicDropoffFields(returnJourney),
       };
-    }
 
-    // Primary Journey
-    if (bookingPayload?.primaryJourney?.flightNumber) {
-      const flightDetails = await getFlightDetails(
-        bookingPayload.primaryJourney.flightNumber,
-        bookingPayload.primaryJourney.date
-      );
-      if (flightDetails) {
-        bookingPayload.primaryJourney.flightOrigin = flightDetails.origin;
-        bookingPayload.primaryJourney.flightDestination = flightDetails.destination;
-        bookingPayload.primaryJourney.flightArrival = {
-          scheduled: flightDetails.arrival.scheduled,
-          estimated: flightDetails.arrival.estimated,
-          actual: flightDetails.arrival.actual,
-        };
+      // ✅ Add Flight Info BEFORE save
+      if (bookingPayload.returnJourney.flightNumber) {
+        const flightDetails = await getFlightDetails(
+          bookingPayload.returnJourney.flightNumber,
+          bookingPayload.returnJourney.date
+        );
+        if (flightDetails) {
+          bookingPayload.returnJourney.flightOrigin =
+            flightDetails.origin || null;
+          bookingPayload.returnJourney.flightDestination =
+            flightDetails.destination || null;
+          bookingPayload.returnJourney.flightArrival = {
+            scheduled: flightDetails.arrival?.scheduled || null,
+            estimated: flightDetails.arrival?.estimated || null,
+            actual: flightDetails.arrival?.actual || null,
+          };
+        }
       }
     }
 
-    // Return Journey
-    if (bookingPayload?.returnJourney?.flightNumber) {
-      const flightDetails = await getFlightDetails(
-        bookingPayload.returnJourney.flightNumber,
-        bookingPayload.returnJourney.date
-      );
-      if (flightDetails) {
-        bookingPayload.returnJourney.flightOrigin = flightDetails.origin;
-        bookingPayload.returnJourney.flightDestination = flightDetails.destination;
-        bookingPayload.returnJourney.flightArrival = {
-          scheduled: flightDetails.arrival.scheduled,
-          estimated: flightDetails.arrival.estimated,
-          actual: flightDetails.arrival.actual,
-        };
-      }
-    }
-
-    // Save booking
+    // ✅ Save booking
     const savedBooking = await Booking.create(bookingPayload);
 
-    // ✅ Fetch Client Admin (account manager) for this company
-    const clientAdminUser = await User.findOne({
-      companyId,
-      role: "clientadmin",
-    })
-      .select("name email contact phone profileImage")
-      .lean()
-      .catch(() => null);
-
-    // ✅ Also fetch the Company document for brand info
-    const companyDoc = await Company.findById(companyId)
-      .select(
-        "companyName tradingName email contact profileImage address website"
-      )
-      .lean()
-      .catch(() => null);
-
-    try {
-      // ✅ Build passenger confirmation (with account manager block)
-      const confirmationHtml = customerBookingConfirmation({
-        booking: savedBooking,
-        company: companyDoc || {},
-        clientAdmin: clientAdminUser || {},
-        options: {
-          // Prefer Client Admin as frontline contact
-          supportEmail: clientAdminUser?.email || companyDoc?.email,
-          supportPhone:
-            clientAdminUser?.contact ||
-            clientAdminUser?.phone ||
-            companyDoc?.contact,
-          website: companyDoc?.website,
-          address: companyDoc?.address,
-        },
-      });
-
-      // Send to passenger
-      if (savedBooking.passenger.email) {
-        await sendEmail(
-          savedBooking.passenger.email.trim(),
-          `Booking Confirmation #${savedBooking.bookingId}`,
-          { html: confirmationHtml }
-        );
-      }
-
-      // Notify the Client Admin (fallback to company email) — using generic table template
-      const adminEmail = clientAdminUser?.email || companyDoc?.email;
-      if (adminEmail) {
-        const { subject, title, subtitle, data, html } =
-          clientadminBookingConfirmation({
-            booking: savedBooking,
-            company: companyDoc || {},
-            clientAdmin: clientAdminUser || {},
-          });
-
-        await sendEmail(
-          adminEmail,
-          subject,
-          html ? { html } : { title, subtitle, data } // prefer html if you later add one
-        );
-      }
-
-      console.log("Booking confirmation emails sent");
-    } catch (e) {
-      console.error("Error sending booking confirmation email:", e.message);
-    }
-    // ========= SOCKET NOTIFICATIONS FOR NEW BOOKING =========
-    try {
-      const io = req.app.get("io");
-      const currentUser = req.user;
-
-      console.log("🔍 Notification Debug:");
-      console.log("Current user role:", currentUser?.role);
-      console.log("Passenger email:", savedBooking?.passenger?.email);
-
-      // If current user is clientadmin, notify customer (if they have a portal account)
-      if (currentUser?.role === "clientadmin") {
-        const passengerEmail = savedBooking?.passenger?.email?.trim().toLowerCase();
-        console.log("Looking for customer user with email:", passengerEmail);
-
-        if (passengerEmail) {
-          const customerUser = await User.findOne({
-            companyId: savedBooking.companyId,
-            role: "customer",
-            email: passengerEmail,
-          }).lean();
-
-          console.log("Found customer user:", customerUser ? "YES" : "NO");
-          if (customerUser) {
-            console.log("Customer user ID:", customerUser._id);
-          }
-
-          if (customerUser) {
-            const customerNotif = await Notification.create({
-              employeeNumber: String(customerUser._id),
-              bookingId: savedBooking.bookingId,
-              status: "New",
-              primaryJourney: {
-                pickup: savedBooking?.primaryJourney?.pickup || savedBooking?.returnJourney?.pickup || "",
-                dropoff: savedBooking?.primaryJourney?.dropoff || savedBooking?.returnJourney?.dropoff || "",
-              },
-              bookingSentAt: new Date(),
-              createdBy: currentUser._id,
-              companyId: savedBooking.companyId,
-            });
-            io.to(`emp:${customerUser._id}`).emit("notification:new", customerNotif);
-            console.log(`✅ Notification sent to customer: ${customerUser.email}`);
-          } else {
-            console.log("❌ No customer user found - notification not sent");
-          }
-        }
-      }
-
-      // If current user is customer, notify clientadmin
-      if (currentUser?.role === "customer") {
-        console.log("Customer creating booking - notifying clientadmin");
-
-        const clientAdmin = await User.findOne({
-          companyId: savedBooking.companyId,
-          role: "clientadmin",
-        }).lean();
-
-        console.log("Found clientadmin:", clientAdmin ? "YES" : "NO");
-        if (clientAdmin) {
-          console.log("Clientadmin ID:", clientAdmin._id);
-        }
-
-        if (clientAdmin) {
-          const adminNotif = await Notification.create({
-            employeeNumber: String(clientAdmin._id),
-            bookingId: savedBooking.bookingId,
-            status: "New",
-            primaryJourney: {
-              pickup: savedBooking?.primaryJourney?.pickup || savedBooking?.returnJourney?.pickup || "",
-              dropoff: savedBooking?.primaryJourney?.dropoff || savedBooking?.returnJourney?.dropoff || "",
-            },
-            bookingSentAt: new Date(),
-            createdBy: currentUser._id,
-            companyId: savedBooking.companyId,
-          });
-          io.to(`emp:${clientAdmin._id}`).emit("notification:new", adminNotif);
-          console.log(`✅ Notification sent to clientadmin: ${clientAdmin.email}`);
-        } else {
-          console.log("❌ No clientadmin found - notification not sent");
-        }
-      }
-    } catch (notificationError) {
-      console.error("Failed to send booking creation notifications:", notificationError?.message);
-    }
     return res.status(201).json({
       success: true,
       message: returnIsValid
         ? "Primary and return journeys booked together."
         : "Primary journey booked.",
       bookings: [savedBooking],
-      // ✅ expose who will manage this customer (useful for UI)
-      clientAdmin: clientAdminUser
-        ? {
-          name: clientAdminUser.name || "",
-          email: clientAdminUser.email || "",
-          phone: clientAdminUser.contact || clientAdminUser.phone || "",
-        }
-        : null,
-      company: companyDoc
-        ? {
-          name: companyDoc.companyName || companyDoc.tradingName || "",
-          email: companyDoc.email || "",
-          phone: companyDoc.contact || "",
-          address: companyDoc.address || "",
-          website: companyDoc.website || "",
-        }
-        : null,
     });
   } catch (error) {
     console.error("❌ createBooking error:", error);

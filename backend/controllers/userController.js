@@ -324,8 +324,9 @@ export const createUserBySuperAdmin = async (req, res) => {
     }
 
     const userExists = await User.findOne({ email: emailNorm });
-    if (userExists)
+    if (userExists) {
       return res.status(409).json({ message: "User already exists" });
+    }
 
     const creator = req.user;
 
@@ -354,14 +355,14 @@ export const createUserBySuperAdmin = async (req, res) => {
     if (role === "clientadmin") {
       if (!password || !strongPwRe.test(password)) {
         return res.status(400).json({
-          message: "Password must be 8–16 chars with uppercase, lowercase, number & special char."
+          message: "Password must be 8–16 chars with uppercase, lowercase, number & special char.",
         });
       }
     }
 
-    // associateAdminLimit
+    // associateAdminLimit for *new user being created*
     let parsedLimit;
-    if (["clientadmin"].includes(role)) {
+    if (role === "clientadmin") {
       if (associateAdminLimit !== undefined && associateAdminLimit !== null) {
         parsedLimit = parseInt(associateAdminLimit);
         if (![0, 3, 5, 10].includes(parsedLimit)) {
@@ -376,15 +377,18 @@ export const createUserBySuperAdmin = async (req, res) => {
       parsedLimit = 0;
     }
 
-    // enforce limits
+    // enforce associateadmin creation limits
     if (creator.role === "clientadmin" && role === "associateadmin") {
+      // 🔑 fetch fresh clientadmin record from DB
+      const creatorDoc = await User.findById(creator._id).lean();
+      const allowed = creatorDoc?.associateAdminLimit || 0;
+
       const associateAdminCount = await User.countDocuments({
         createdBy: creator._id,
         role: "associateadmin",
         status: { $ne: "Deleted" },
       });
 
-      const allowed = creator.associateAdminLimit || 0;
       if (allowed === 0) {
         return res.status(400).json({
           message: "This clientadmin is not allowed to create associateadmins (limit is 0).",
@@ -398,6 +402,7 @@ export const createUserBySuperAdmin = async (req, res) => {
       }
     }
 
+    // demo account limit
     if (role === "demo") {
       const count = await User.countDocuments({
         role: "demo",
@@ -410,6 +415,7 @@ export const createUserBySuperAdmin = async (req, res) => {
       }
     }
 
+    // staffmember account limit
     if (role === "staffmember") {
       const count = await User.countDocuments({
         role: "staffmember",
@@ -479,7 +485,7 @@ export const createUserBySuperAdmin = async (req, res) => {
         Email: newUser.email,
         Role: newUser.role,
         Password: password,
-        Login_Link: `${process.env.BASE_URL_FRONTEND}/login`
+        Login_Link: `${process.env.BASE_URL_FRONTEND}/login`,
       },
     });
 
