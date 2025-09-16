@@ -30,11 +30,10 @@ const BookingsList = () => {
 
     // ✈️ Flight Details
     flightNumber: true,
-    originAirport: true,
-    destinationAirport: true,
+    flightOrigin: true,
+    flightDestination: true,
     flightArrivalScheduled: true,
     flightArrivalEstimated: true,
-    flightArrivalActual: true,
 
     vehicle: true,
     payment: true,
