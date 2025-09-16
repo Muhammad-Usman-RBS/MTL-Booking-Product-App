@@ -18,8 +18,16 @@ const JourneySchema = new mongoose.Schema(
     dropoff_terminal_2: { type: String },
 
     arrivefrom: { type: String },
-    flightNumber: { type: String },
     pickmeAfter: { type: String },
+    // ✈️ Flight Info
+    flightNumber: { type: String },
+    flightArrival: {
+      scheduled: { type: Date },
+      estimated: { type: Date },
+      actual: { type: Date },
+    },
+    flightOrigin: { type: String },
+    flightDestination : { type: String },
 
     notes: { type: String },
     internalNotes: { type: String },
@@ -133,9 +141,9 @@ const BookingSchema = new mongoose.Schema(
     referrer: { type: String, default: "Manual Entry" },
 
     paymentMethod: {
-      type: String,
-      enum: ["Cash", "Card, Bank", "Payment Link", "Invoice", "Paypal"],
-    },
+  type: String,
+  enum: ["Cash", "Card, Bank", "Payment Link", "Invoice", "Paypal"],
+},
     cardPaymentReference: { type: String, default: null },
     paymentGateway: { type: String, default: null },
 

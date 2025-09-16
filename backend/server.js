@@ -77,7 +77,7 @@ import { scheduleDriverDocsJobs } from "./utils/settings/cronjobs/driverDocument
 
 // Stripe webhook handler (APP-LEVEL, before json parser!)
 import { handleStripeWebhook } from "./controllers/settings/stripeWebhookController.js";
-import { getPayPalClient } from "./utils/settings/paypalClient.js";
+import { getPaypalClient } from "./utils/settings/paypalClient.js";
 
 // import { scheduleDriverStatementsOnBoot } from "./controllers/settings/cronJobController.js";
 
@@ -218,7 +218,7 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`[BOOT] Using system timezone for CRON: ${systemTZ}`);
-  getPayPalClient();
+  getPaypalClient();
   createSuperAdmin();
   try {
     scheduleDriverStatements();

@@ -20,6 +20,7 @@ import { customerBookingConfirmation } from "../utils/bookings/customerBookingCo
 import { clientadminBookingConfirmation } from "../utils/bookings/clientadminBookingConfirmation.js";
 import { driverAssignmentEmailTemplate } from "../utils/bookings/driverAssignmentEmailTemplate.js";
 import { customerCancellationEmailTemplate } from "../utils/bookings/customerCancellationEmailTemplate.js";
+import { getFlightDetails } from "../utils/bookings/flightApi.js";
 
 // Create Booking (Dashboard/Widget)
 export const createBooking = async (req, res) => {
@@ -236,6 +237,40 @@ export const createBooking = async (req, res) => {
       };
     }
 
+    // Primary Journey
+    if (bookingPayload?.primaryJourney?.flightNumber) {
+      const flightDetails = await getFlightDetails(
+        bookingPayload.primaryJourney.flightNumber,
+        bookingPayload.primaryJourney.date
+      );
+      if (flightDetails) {
+        bookingPayload.primaryJourney.flightOrigin = flightDetails.origin;
+        bookingPayload.primaryJourney.flightDestination = flightDetails.destination;
+        bookingPayload.primaryJourney.flightArrival = {
+          scheduled: flightDetails.arrival.scheduled,
+          estimated: flightDetails.arrival.estimated,
+          actual: flightDetails.arrival.actual,
+        };
+      }
+    }
+
+    // Return Journey
+    if (bookingPayload?.returnJourney?.flightNumber) {
+      const flightDetails = await getFlightDetails(
+        bookingPayload.returnJourney.flightNumber,
+        bookingPayload.returnJourney.date
+      );
+      if (flightDetails) {
+        bookingPayload.returnJourney.flightOrigin = flightDetails.origin;
+        bookingPayload.returnJourney.flightDestination = flightDetails.destination;
+        bookingPayload.returnJourney.flightArrival = {
+          scheduled: flightDetails.arrival.scheduled,
+          estimated: flightDetails.arrival.estimated,
+          actual: flightDetails.arrival.actual,
+        };
+      }
+    }
+
     // Save booking
     const savedBooking = await Booking.create(bookingPayload);
 
@@ -304,89 +339,89 @@ export const createBooking = async (req, res) => {
     } catch (e) {
       console.error("Error sending booking confirmation email:", e.message);
     }
-// ========= SOCKET NOTIFICATIONS FOR NEW BOOKING =========
-try {
-  const io = req.app.get("io");
-  const currentUser = req.user;
-  
-  console.log("🔍 Notification Debug:");
-  console.log("Current user role:", currentUser?.role);
-  console.log("Passenger email:", savedBooking?.passenger?.email);
+    // ========= SOCKET NOTIFICATIONS FOR NEW BOOKING =========
+    try {
+      const io = req.app.get("io");
+      const currentUser = req.user;
 
-  // If current user is clientadmin, notify customer (if they have a portal account)
-  if (currentUser?.role === "clientadmin") {
-    const passengerEmail = savedBooking?.passenger?.email?.trim().toLowerCase();
-    console.log("Looking for customer user with email:", passengerEmail);
-    
-    if (passengerEmail) {
-      const customerUser = await User.findOne({
-        companyId: savedBooking.companyId,
-        role: "customer",
-        email: passengerEmail,
-      }).lean();
+      console.log("🔍 Notification Debug:");
+      console.log("Current user role:", currentUser?.role);
+      console.log("Passenger email:", savedBooking?.passenger?.email);
 
-      console.log("Found customer user:", customerUser ? "YES" : "NO");
-      if (customerUser) {
-        console.log("Customer user ID:", customerUser._id);
+      // If current user is clientadmin, notify customer (if they have a portal account)
+      if (currentUser?.role === "clientadmin") {
+        const passengerEmail = savedBooking?.passenger?.email?.trim().toLowerCase();
+        console.log("Looking for customer user with email:", passengerEmail);
+
+        if (passengerEmail) {
+          const customerUser = await User.findOne({
+            companyId: savedBooking.companyId,
+            role: "customer",
+            email: passengerEmail,
+          }).lean();
+
+          console.log("Found customer user:", customerUser ? "YES" : "NO");
+          if (customerUser) {
+            console.log("Customer user ID:", customerUser._id);
+          }
+
+          if (customerUser) {
+            const customerNotif = await Notification.create({
+              employeeNumber: String(customerUser._id),
+              bookingId: savedBooking.bookingId,
+              status: "New",
+              primaryJourney: {
+                pickup: savedBooking?.primaryJourney?.pickup || savedBooking?.returnJourney?.pickup || "",
+                dropoff: savedBooking?.primaryJourney?.dropoff || savedBooking?.returnJourney?.dropoff || "",
+              },
+              bookingSentAt: new Date(),
+              createdBy: currentUser._id,
+              companyId: savedBooking.companyId,
+            });
+            io.to(`emp:${customerUser._id}`).emit("notification:new", customerNotif);
+            console.log(`✅ Notification sent to customer: ${customerUser.email}`);
+          } else {
+            console.log("❌ No customer user found - notification not sent");
+          }
+        }
       }
 
-      if (customerUser) {
-        const customerNotif = await Notification.create({
-          employeeNumber: String(customerUser._id),
-          bookingId: savedBooking.bookingId,
-          status: "New",
-          primaryJourney: {
-            pickup: savedBooking?.primaryJourney?.pickup || savedBooking?.returnJourney?.pickup || "",
-            dropoff: savedBooking?.primaryJourney?.dropoff || savedBooking?.returnJourney?.dropoff || "",
-          },
-          bookingSentAt: new Date(),
-          createdBy: currentUser._id,
+      // If current user is customer, notify clientadmin
+      if (currentUser?.role === "customer") {
+        console.log("Customer creating booking - notifying clientadmin");
+
+        const clientAdmin = await User.findOne({
           companyId: savedBooking.companyId,
-        });
-        io.to(`emp:${customerUser._id}`).emit("notification:new", customerNotif);
-        console.log(`✅ Notification sent to customer: ${customerUser.email}`);
-      } else {
-        console.log("❌ No customer user found - notification not sent");
+          role: "clientadmin",
+        }).lean();
+
+        console.log("Found clientadmin:", clientAdmin ? "YES" : "NO");
+        if (clientAdmin) {
+          console.log("Clientadmin ID:", clientAdmin._id);
+        }
+
+        if (clientAdmin) {
+          const adminNotif = await Notification.create({
+            employeeNumber: String(clientAdmin._id),
+            bookingId: savedBooking.bookingId,
+            status: "New",
+            primaryJourney: {
+              pickup: savedBooking?.primaryJourney?.pickup || savedBooking?.returnJourney?.pickup || "",
+              dropoff: savedBooking?.primaryJourney?.dropoff || savedBooking?.returnJourney?.dropoff || "",
+            },
+            bookingSentAt: new Date(),
+            createdBy: currentUser._id,
+            companyId: savedBooking.companyId,
+          });
+          io.to(`emp:${clientAdmin._id}`).emit("notification:new", adminNotif);
+          console.log(`✅ Notification sent to clientadmin: ${clientAdmin.email}`);
+        } else {
+          console.log("❌ No clientadmin found - notification not sent");
+        }
       }
+    } catch (notificationError) {
+      console.error("Failed to send booking creation notifications:", notificationError?.message);
     }
-  }
-
-  // If current user is customer, notify clientadmin
-  if (currentUser?.role === "customer") {
-    console.log("Customer creating booking - notifying clientadmin");
-    
-    const clientAdmin = await User.findOne({
-      companyId: savedBooking.companyId,
-      role: "clientadmin",
-    }).lean();
-
-    console.log("Found clientadmin:", clientAdmin ? "YES" : "NO");
-    if (clientAdmin) {
-      console.log("Clientadmin ID:", clientAdmin._id);
-    }
-
-    if (clientAdmin) {
-      const adminNotif = await Notification.create({
-        employeeNumber: String(clientAdmin._id),
-        bookingId: savedBooking.bookingId,
-        status: "New",
-        primaryJourney: {
-          pickup: savedBooking?.primaryJourney?.pickup || savedBooking?.returnJourney?.pickup || "",
-          dropoff: savedBooking?.primaryJourney?.dropoff || savedBooking?.returnJourney?.dropoff || "",
-        },
-        bookingSentAt: new Date(),
-        createdBy: currentUser._id,
-        companyId: savedBooking.companyId,
-      });
-      io.to(`emp:${clientAdmin._id}`).emit("notification:new", adminNotif);
-      console.log(`✅ Notification sent to clientadmin: ${clientAdmin.email}`);
-    } else {
-      console.log("❌ No clientadmin found - notification not sent");
-    }
-  }
-} catch (notificationError) {
-  console.error("Failed to send booking creation notifications:", notificationError?.message);
-}
     return res.status(201).json({
       success: true,
       message: returnIsValid
@@ -396,19 +431,19 @@ try {
       // ✅ expose who will manage this customer (useful for UI)
       clientAdmin: clientAdminUser
         ? {
-            name: clientAdminUser.name || "",
-            email: clientAdminUser.email || "",
-            phone: clientAdminUser.contact || clientAdminUser.phone || "",
-          }
+          name: clientAdminUser.name || "",
+          email: clientAdminUser.email || "",
+          phone: clientAdminUser.contact || clientAdminUser.phone || "",
+        }
         : null,
       company: companyDoc
         ? {
-            name: companyDoc.companyName || companyDoc.tradingName || "",
-            email: companyDoc.email || "",
-            phone: companyDoc.contact || "",
-            address: companyDoc.address || "",
-            website: companyDoc.website || "",
-          }
+          name: companyDoc.companyName || companyDoc.tradingName || "",
+          email: companyDoc.email || "",
+          phone: companyDoc.contact || "",
+          address: companyDoc.address || "",
+          website: companyDoc.website || "",
+        }
         : null,
     });
   } catch (error) {
@@ -842,7 +877,7 @@ export const updateBooking = async (req, res) => {
         // Helper function to find driver
         const findDriverById = async (driverId) => {
           console.log(`🔍 Looking for driver: ${driverId}`);
-          
+
           // Try direct ID lookup first
           if (mongoose.Types.ObjectId.isValid(driverId)) {
             const driverDoc = await driverModel.findById(driverId).lean();
@@ -851,18 +886,18 @@ export const updateBooking = async (req, res) => {
               return driverDoc;
             }
           }
-          
+
           // Try finding by employee number
           const driverByEmployeeNumber = await driverModel.findOne({
             'DriverData.employeeNumber': driverId,
             companyId: companyId
           }).lean();
-          
+
           if (driverByEmployeeNumber) {
             console.log(`   ✅ Found by employee number: ${driverByEmployeeNumber.DriverData?.firstName} ${driverByEmployeeNumber.DriverData?.surName}`);
             return driverByEmployeeNumber;
           }
-          
+
           console.log(`   ❌ Driver not found: ${driverId}`);
           return null;
         };
@@ -871,7 +906,7 @@ export const updateBooking = async (req, res) => {
         for (const driverId of newlyAssigned) {
           try {
             const driverDoc = await findDriverById(driverId);
-            
+
             if (!driverDoc) {
               driverEmailResults.emailsSent.push({
                 type: 'assigned',
@@ -939,43 +974,43 @@ export const updateBooking = async (req, res) => {
           }
         }
 
-// ===== Send Unassignment Notifications =====
-for (const driverId of unassigned) {
-  try {
-    const driverDoc = await findDriverById(driverId);
-    if (!driverDoc) continue;
+        // ===== Send Unassignment Notifications =====
+        for (const driverId of unassigned) {
+          try {
+            const driverDoc = await findDriverById(driverId);
+            if (!driverDoc) continue;
 
-    const employeeNumber = driverDoc?.DriverData?.employeeNumber;
-    if (!employeeNumber) {
-      console.log(`⚠️ Skipped notification: no employee number for driver ${driverId}`);
-      continue;
-    }
+            const employeeNumber = driverDoc?.DriverData?.employeeNumber;
+            if (!employeeNumber) {
+              console.log(`⚠️ Skipped notification: no employee number for driver ${driverId}`);
+              continue;
+            }
 
-    const notificationPayload = {
-      employeeNumber,
-      bookingId: updatedBooking.bookingId,
-      status: "Unassigned",   // 👈 mark as unassigned
-      primaryJourney: {
-        pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
-        dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
-      },
-      bookingSentAt: new Date(),
-      createdBy: req.user?._id || null,
-      companyId,
-    };
+            const notificationPayload = {
+              employeeNumber,
+              bookingId: updatedBooking.bookingId,
+              status: "Unassigned",   // 👈 mark as unassigned
+              primaryJourney: {
+                pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
+                dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
+              },
+              bookingSentAt: new Date(),
+              createdBy: req.user?._id || null,
+              companyId,
+            };
 
-    await Notification.create(notificationPayload);
-    console.log(`🔔 Unassignment notification sent to ${employeeNumber}`);
-  } catch (err) {
-    console.error(`❌ Failed to send unassignment notification for driver ${driverId}:`, err.message);
-  }
-}
+            await Notification.create(notificationPayload);
+            console.log(`🔔 Unassignment notification sent to ${employeeNumber}`);
+          } catch (err) {
+            console.error(`❌ Failed to send unassignment notification for driver ${driverId}:`, err.message);
+          }
+        }
 
 
         // Log final summary
         const sentEmails = driverEmailResults.emailsSent.filter(e => e.status === 'sent');
         const failedEmails = driverEmailResults.emailsSent.filter(e => e.status === 'failed');
-        
+
         console.log("📊 DRIVER EMAIL FINAL SUMMARY:");
         console.log(`   Total drivers assigned: ${newlyAssigned.length}`);
         console.log(`   Total drivers unassigned: ${unassigned.length}`);
@@ -1000,7 +1035,7 @@ for (const driverId of unassigned) {
           .lean()
           .catch(() => null),
       ]);
-    
+
       // Build updated confirmation using the same template used in createBooking
       const confirmationHtml = customerBookingConfirmation({
         booking: updatedBooking,
@@ -1014,7 +1049,7 @@ for (const driverId of unassigned) {
           address: companyDoc?.address,
         },
       });
-    
+
       // Always send to the CURRENT passenger email after update
       const targetPassengerEmail = updatedBooking?.passenger?.email?.trim();
       if (targetPassengerEmail) {
@@ -1060,240 +1095,240 @@ for (const driverId of unassigned) {
     //     console.error(`❌ Failed to send admin email: ${error.message}`);
     //   }
     // }
-// ========= SOCKET NOTIFICATIONS ON BOOKING UPDATE =========
-try {
-  const io = req.app.get("io");
-  const currentUser = req.user;
-  const currRole = currentUser?.role;
-  const bookingId = updatedBooking.bookingId;
+    // ========= SOCKET NOTIFICATIONS ON BOOKING UPDATE =========
+    try {
+      const io = req.app.get("io");
+      const currentUser = req.user;
+      const currRole = currentUser?.role;
+      const bookingId = updatedBooking.bookingId;
 
-  // 🔎 Detect if only driver assignment changed
-  const driversWereChanged = bookingData.hasOwnProperty("drivers");
+      // 🔎 Detect if only driver assignment changed
+      const driversWereChanged = bookingData.hasOwnProperty("drivers");
 
-  if (driversWereChanged) {
-    console.log("⏭️ Skipping update notifications: driver assignment was updated");
-  } else {
-
-// Notify based on who updated the booking
-if (currRole === "clientadmin") {
-  // ClientAdmin updated: notify customer and drivers only
-  
-  // Notify Customer (but not if current user is the customer)
-  if (updatedBooking?.passenger?.email) {
-    const customerUser = await User.findOne({
-      companyId: updatedBooking.companyId,
-      role: "customer",
-      email: updatedBooking.passenger.email,
-    }).lean();
-
-    if (customerUser?._id) {
-      // Skip if the customer is the current user updating the booking
-      if (String(customerUser._id) === String(currentUser._id)) {
-        console.log(`⏭️ Skipping customer notification: user is updating their own booking`);
+      if (driversWereChanged) {
+        console.log("⏭️ Skipping update notifications: driver assignment was updated");
       } else {
-        const notif = await Notification.create({
-          employeeNumber: String(customerUser._id),
-          bookingId,
-          status: "Updated",
-          primaryJourney: {
-            pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
-            dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
-          },
-          bookingSentAt: new Date(),
-          createdBy: currentUser?._id,
-          companyId: updatedBooking.companyId,
-        });
 
-        io.to(`emp:${customerUser._id}`).emit("notification:new", notif);
-        console.log(`📡 Customer notified: emp:${customerUser._id}`);
-      }
-    }
-  }
+        // Notify based on who updated the booking
+        if (currRole === "clientadmin") {
+          // ClientAdmin updated: notify customer and drivers only
 
-  // Notify Drivers (but not if current user is the driver)
-  if (Array.isArray(updatedBooking.drivers) && updatedBooking.drivers.length > 0) {
-    for (const drv of updatedBooking.drivers) {
-      const drvUserId = typeof drv === "object" ? drv.userId || drv._id : drv;
-      if (!drvUserId) continue;
+          // Notify Customer (but not if current user is the customer)
+          if (updatedBooking?.passenger?.email) {
+            const customerUser = await User.findOne({
+              companyId: updatedBooking.companyId,
+              role: "customer",
+              email: updatedBooking.passenger.email,
+            }).lean();
 
-      const driverUser = await User.findOne({
-        _id: drvUserId,
-        companyId: updatedBooking.companyId,
-        role: "driver",
-      }).lean();
+            if (customerUser?._id) {
+              // Skip if the customer is the current user updating the booking
+              if (String(customerUser._id) === String(currentUser._id)) {
+                console.log(`⏭️ Skipping customer notification: user is updating their own booking`);
+              } else {
+                const notif = await Notification.create({
+                  employeeNumber: String(customerUser._id),
+                  bookingId,
+                  status: "Updated",
+                  primaryJourney: {
+                    pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
+                    dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
+                  },
+                  bookingSentAt: new Date(),
+                  createdBy: currentUser?._id,
+                  companyId: updatedBooking.companyId,
+                });
 
-      if (driverUser?._id) {
-        // Skip if the driver is the current user updating the booking
-        if (String(driverUser._id) === String(currentUser._id)) {
-          console.log(`⏭️ Skipping driver notification: user is updating their own booking`);
-        } else {
-          const notif = await Notification.create({
-            employeeNumber: String(driverUser._id),
-            bookingId,
-            status: "Updated",
-            primaryJourney: {
-              pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
-              dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
-            },
-            bookingSentAt: new Date(),
-            createdBy: currentUser?._id,
+                io.to(`emp:${customerUser._id}`).emit("notification:new", notif);
+                console.log(`📡 Customer notified: emp:${customerUser._id}`);
+              }
+            }
+          }
+
+          // Notify Drivers (but not if current user is the driver)
+          if (Array.isArray(updatedBooking.drivers) && updatedBooking.drivers.length > 0) {
+            for (const drv of updatedBooking.drivers) {
+              const drvUserId = typeof drv === "object" ? drv.userId || drv._id : drv;
+              if (!drvUserId) continue;
+
+              const driverUser = await User.findOne({
+                _id: drvUserId,
+                companyId: updatedBooking.companyId,
+                role: "driver",
+              }).lean();
+
+              if (driverUser?._id) {
+                // Skip if the driver is the current user updating the booking
+                if (String(driverUser._id) === String(currentUser._id)) {
+                  console.log(`⏭️ Skipping driver notification: user is updating their own booking`);
+                } else {
+                  const notif = await Notification.create({
+                    employeeNumber: String(driverUser._id),
+                    bookingId,
+                    status: "Updated",
+                    primaryJourney: {
+                      pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
+                      dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
+                    },
+                    bookingSentAt: new Date(),
+                    createdBy: currentUser?._id,
+                    companyId: updatedBooking.companyId,
+                  });
+
+                  io.to(`emp:${driverUser._id}`).emit("notification:new", notif);
+                  console.log(`📡 Driver notified: emp:${driverUser._id}`);
+                }
+              }
+            }
+          }
+
+        } else if (currRole === "customer") {
+          // Customer updated: notify clientadmin and drivers only
+
+          // Notify ClientAdmin (but not if current user is the clientAdmin)
+          const clientAdmin = await User.findOne({
             companyId: updatedBooking.companyId,
-          });
+            role: "clientadmin",
+          }).lean();
 
-          io.to(`emp:${driverUser._id}`).emit("notification:new", notif);
-          console.log(`📡 Driver notified: emp:${driverUser._id}`);
+          if (clientAdmin?._id) {
+            // Skip if the clientAdmin is the current user updating the booking
+            if (String(clientAdmin._id) === String(currentUser._id)) {
+              console.log(`⏭️ Skipping clientAdmin notification: user is updating their own booking`);
+            } else {
+              const notif = await Notification.create({
+                employeeNumber: String(clientAdmin._id),
+                bookingId,
+                status: "Updated",
+                primaryJourney: {
+                  pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
+                  dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
+                },
+                bookingSentAt: new Date(),
+                createdBy: currentUser?._id,
+                companyId: updatedBooking.companyId,
+              });
+
+              io.to(`emp:${clientAdmin._id}`).emit("notification:new", notif);
+              console.log(`📡 ClientAdmin notified: emp:${clientAdmin._id}`);
+            }
+          }
+
+          // Notify Drivers (but not if current user is the driver)
+          if (Array.isArray(updatedBooking.drivers) && updatedBooking.drivers.length > 0) {
+            for (const drv of updatedBooking.drivers) {
+              const drvUserId = typeof drv === "object" ? drv.userId || drv._id : drv;
+              if (!drvUserId) continue;
+
+              const driverUser = await User.findOne({
+                _id: drvUserId,
+                companyId: updatedBooking.companyId,
+                role: "driver",
+              }).lean();
+
+              if (driverUser?._id) {
+                // Skip if the driver is the current user updating the booking
+                if (String(driverUser._id) === String(currentUser._id)) {
+                  console.log(`⏭️ Skipping driver notification: user is updating their own booking`);
+                } else {
+                  const notif = await Notification.create({
+                    employeeNumber: String(driverUser._id),
+                    bookingId,
+                    status: "Updated",
+                    primaryJourney: {
+                      pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
+                      dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
+                    },
+                    bookingSentAt: new Date(),
+                    createdBy: currentUser?._id,
+                    companyId: updatedBooking.companyId,
+                  });
+
+                  io.to(`emp:${driverUser._id}`).emit("notification:new", notif);
+                  console.log(`📡 Driver notified: emp:${driverUser._id}`);
+                }
+              }
+            }
+          }
+
+        } else {
+          // For other roles (like driver), notify everyone except themselves
+          // Notify Customer (but not if current user is the customer)
+          if (updatedBooking?.passenger?.email) {
+            const customerUser = await User.findOne({
+              companyId: updatedBooking.companyId,
+              role: "customer",
+              email: updatedBooking.passenger.email,
+            }).lean();
+
+            if (customerUser?._id) {
+              // Skip if the customer is the current user updating the booking
+              if (String(customerUser._id) === String(currentUser._id)) {
+                console.log(`⏭️ Skipping customer notification: user is updating their own booking`);
+              } else {
+                const notif = await Notification.create({
+                  employeeNumber: String(customerUser._id),
+                  bookingId,
+                  status: "Updated",
+                  primaryJourney: {
+                    pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
+                    dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
+                  },
+                  bookingSentAt: new Date(),
+                  createdBy: currentUser?._id,
+                  companyId: updatedBooking.companyId,
+                });
+
+                io.to(`emp:${customerUser._id}`).emit("notification:new", notif);
+                console.log(`📡 Customer notified: emp:${customerUser._id}`);
+              }
+            }
+          }
+
+          // Notify ClientAdmin (but not if current user is the clientAdmin)
+          const clientAdmin = await User.findOne({
+            companyId: updatedBooking.companyId,
+            role: "clientadmin",
+          }).lean();
+
+          if (clientAdmin?._id) {
+            // Skip if the clientAdmin is the current user updating the booking
+            if (String(clientAdmin._id) === String(currentUser._id)) {
+              console.log(`⏭️ Skipping clientAdmin notification: user is updating their own booking`);
+            } else {
+              const notif = await Notification.create({
+                employeeNumber: String(clientAdmin._id),
+                bookingId,
+                status: "Updated",
+                primaryJourney: {
+                  pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
+                  dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
+                },
+                bookingSentAt: new Date(),
+                createdBy: currentUser?._id,
+                companyId: updatedBooking.companyId,
+              });
+
+              io.to(`emp:${clientAdmin._id}`).emit("notification:new", notif);
+              console.log(`📡 ClientAdmin notified: emp:${clientAdmin._id}`);
+            }
+          }
         }
       }
+    } catch (notifyErr) {
+      console.error("❌ Error sending socket notifications on booking update:", notifyErr.message);
     }
-  }
-
-} else if (currRole === "customer") {
-  // Customer updated: notify clientadmin and drivers only
-  
-  // Notify ClientAdmin (but not if current user is the clientAdmin)
-  const clientAdmin = await User.findOne({
-    companyId: updatedBooking.companyId,
-    role: "clientadmin",
-  }).lean();
-
-  if (clientAdmin?._id) {
-    // Skip if the clientAdmin is the current user updating the booking
-    if (String(clientAdmin._id) === String(currentUser._id)) {
-      console.log(`⏭️ Skipping clientAdmin notification: user is updating their own booking`);
-    } else {
-      const notif = await Notification.create({
-        employeeNumber: String(clientAdmin._id),
-        bookingId,
-        status: "Updated",
-        primaryJourney: {
-          pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
-          dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
-        },
-        bookingSentAt: new Date(),
-        createdBy: currentUser?._id,
-        companyId: updatedBooking.companyId,
-      });
-
-      io.to(`emp:${clientAdmin._id}`).emit("notification:new", notif);
-      console.log(`📡 ClientAdmin notified: emp:${clientAdmin._id}`);
-    }
-  }
-
-  // Notify Drivers (but not if current user is the driver)
-  if (Array.isArray(updatedBooking.drivers) && updatedBooking.drivers.length > 0) {
-    for (const drv of updatedBooking.drivers) {
-      const drvUserId = typeof drv === "object" ? drv.userId || drv._id : drv;
-      if (!drvUserId) continue;
-
-      const driverUser = await User.findOne({
-        _id: drvUserId,
-        companyId: updatedBooking.companyId,
-        role: "driver",
-      }).lean();
-
-      if (driverUser?._id) {
-        // Skip if the driver is the current user updating the booking
-        if (String(driverUser._id) === String(currentUser._id)) {
-          console.log(`⏭️ Skipping driver notification: user is updating their own booking`);
-        } else {
-          const notif = await Notification.create({
-            employeeNumber: String(driverUser._id),
-            bookingId,
-            status: "Updated",
-            primaryJourney: {
-              pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
-              dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
-            },
-            bookingSentAt: new Date(),
-            createdBy: currentUser?._id,
-            companyId: updatedBooking.companyId,
-          });
-
-          io.to(`emp:${driverUser._id}`).emit("notification:new", notif);
-          console.log(`📡 Driver notified: emp:${driverUser._id}`);
-        }
-      }
-    }
-  }
-
-} else {
-  // For other roles (like driver), notify everyone except themselves
-  // Notify Customer (but not if current user is the customer)
-  if (updatedBooking?.passenger?.email) {
-    const customerUser = await User.findOne({
-      companyId: updatedBooking.companyId,
-      role: "customer",
-      email: updatedBooking.passenger.email,
-    }).lean();
-
-    if (customerUser?._id) {
-      // Skip if the customer is the current user updating the booking
-      if (String(customerUser._id) === String(currentUser._id)) {
-        console.log(`⏭️ Skipping customer notification: user is updating their own booking`);
-      } else {
-        const notif = await Notification.create({
-          employeeNumber: String(customerUser._id),
-          bookingId,
-          status: "Updated",
-          primaryJourney: {
-            pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
-            dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
-          },
-          bookingSentAt: new Date(),
-          createdBy: currentUser?._id,
-          companyId: updatedBooking.companyId,
-        });
-
-        io.to(`emp:${customerUser._id}`).emit("notification:new", notif);
-        console.log(`📡 Customer notified: emp:${customerUser._id}`);
-      }
-    }
-  }
-
-  // Notify ClientAdmin (but not if current user is the clientAdmin)
-  const clientAdmin = await User.findOne({
-    companyId: updatedBooking.companyId,
-    role: "clientadmin",
-  }).lean();
-
-  if (clientAdmin?._id) {
-    // Skip if the clientAdmin is the current user updating the booking
-    if (String(clientAdmin._id) === String(currentUser._id)) {
-      console.log(`⏭️ Skipping clientAdmin notification: user is updating their own booking`);
-    } else {
-      const notif = await Notification.create({
-        employeeNumber: String(clientAdmin._id),
-        bookingId,
-        status: "Updated",
-        primaryJourney: {
-          pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
-          dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
-        },
-        bookingSentAt: new Date(),
-        createdBy: currentUser?._id,
-        companyId: updatedBooking.companyId,
-      });
-
-      io.to(`emp:${clientAdmin._id}`).emit("notification:new", notif);
-      console.log(`📡 ClientAdmin notified: emp:${clientAdmin._id}`);
-    }
-  }
-}
-  }
-} catch (notifyErr) {
-  console.error("❌ Error sending socket notifications on booking update:", notifyErr.message);
-}
 
 
     return res.status(200).json({
       success: true,
       message: "Booking updated successfully",
       booking: updatedBooking,
-     driverChanges: {
-    assigned: driverEmailResults.assigned.length,
-    unassigned: driverEmailResults.unassigned.length,
-    emailsSent: driverEmailResults.emailsSent.filter(e => e.type === 'assigned' || e.type === 'unassigned') // only driver-related emails
-  }
+      driverChanges: {
+        assigned: driverEmailResults.assigned.length,
+        unassigned: driverEmailResults.unassigned.length,
+        emailsSent: driverEmailResults.emailsSent.filter(e => e.type === 'assigned' || e.type === 'unassigned') // only driver-related emails
+      }
     });
 
   } catch (error) {
@@ -1383,17 +1418,17 @@ export const updateBookingStatus = async (req, res) => {
         }
       }
     }
-  
-if (req.user?.role === "clientadmin") {
-  const current = String(booking?.status || "").trim().toLowerCase();
-  const next = String(status || "").trim().toLowerCase();
 
-  if (current === "completed" && (next === "cancelled" )) {
-    return res.status(403).json({
-      message: "Cannot cancel a booking that is Completed.",
-    });
-  }
-}
+    if (req.user?.role === "clientadmin") {
+      const current = String(booking?.status || "").trim().toLowerCase();
+      const next = String(status || "").trim().toLowerCase();
+
+      if (current === "completed" && (next === "cancelled")) {
+        return res.status(403).json({
+          message: "Cannot cancel a booking that is Completed.",
+        });
+      }
+    }
 
 
     // Apply status update
@@ -1457,9 +1492,11 @@ if (req.user?.role === "clientadmin") {
               driverPicture:
                 assignedDriver?.UploadedData?.driverPicture || null,
             };
-          
-            vehicleInfo = {...(assignedDriver.VehicleData  || {}),
-          vehiclePicture: assignedDriver?.UploadedData?.carPicture || null};
+
+            vehicleInfo = {
+              ...(assignedDriver.VehicleData || {}),
+              vehiclePicture: assignedDriver?.UploadedData?.carPicture || null
+            };
           } else {
             // Fallback from inline driver data on booking (if present)
             if (
@@ -1554,20 +1591,20 @@ if (req.user?.role === "clientadmin") {
     const currStatus = booking.status;
     const isStatusChanged = prevStatus !== currStatus;
 
- 
+
     // When DRIVER changed status, notify clientadmin (+ optional customer portal user)
     try {
-      if (isStatusChanged &&( currentUser?.role === "driver" || currentUser?.role === "clientadmin")) {
+      if (isStatusChanged && (currentUser?.role === "driver" || currentUser?.role === "clientadmin")) {
         const clientAdmin = await User.findOne({
           companyId: booking.companyId,
           role: "clientadmin",
         }).lean();
         const adminKey = String(clientAdmin?._id || "");
-       const isSelf =
-    currentUser?.role === "clientadmin" &&
-    String(currentUser?._id) === String(clientAdmin?._id);
+        const isSelf =
+          currentUser?.role === "clientadmin" &&
+          String(currentUser?._id) === String(clientAdmin?._id);
 
-  if (adminKey && !isSelf) {
+        if (adminKey && !isSelf) {
           const adminNotif = await Notification.create({
             employeeNumber: adminKey,
             bookingId: booking.bookingId,
@@ -1592,10 +1629,10 @@ if (req.user?.role === "clientadmin") {
         const paxEmail = (booking?.passenger?.email || "").trim().toLowerCase();
         const customerUser = paxEmail
           ? await User.findOne({
-              companyId: booking.companyId,
-              role: "customer",
-              email: paxEmail,
-            }).lean()
+            companyId: booking.companyId,
+            role: "customer",
+            email: paxEmail,
+          }).lean()
           : null;
 
         const custKey = String(customerUser?._id || "");
@@ -1620,80 +1657,80 @@ if (req.user?.role === "clientadmin") {
           });
           io.to(`emp:${custKey}`).emit("notification:new", customerNotif);
         }
-// === Notify assigned drivers when clientadmin cancels ===
-// === Notify assigned drivers when clientadmin updates status ===
-if (
-  isStatusChanged &&
-  currentUser?.role === "clientadmin"
-) {
-  console.log("🔔 Entered driver notification block for status:", currStatus);
-  console.log("Booking drivers array:", booking.drivers);
+        // === Notify assigned drivers when clientadmin cancels ===
+        // === Notify assigned drivers when clientadmin updates status ===
+        if (
+          isStatusChanged &&
+          currentUser?.role === "clientadmin"
+        ) {
+          console.log("🔔 Entered driver notification block for status:", currStatus);
+          console.log("Booking drivers array:", booking.drivers);
 
-  if (Array.isArray(booking.drivers) && booking.drivers.length > 0) {
-    for (const drv of booking.drivers) {
-      console.log("➡️ Processing driver entry:", drv);
+          if (Array.isArray(booking.drivers) && booking.drivers.length > 0) {
+            for (const drv of booking.drivers) {
+              console.log("➡️ Processing driver entry:", drv);
 
-      // always prefer userId (that points to User collection)
-      const drvUserId = typeof drv === "object" ? drv.userId || drv._id : drv;
+              // always prefer userId (that points to User collection)
+              const drvUserId = typeof drv === "object" ? drv.userId || drv._id : drv;
 
-      console.log("👉 Extracted drvUserId:", drvUserId);
+              console.log("👉 Extracted drvUserId:", drvUserId);
 
-      if (!drvUserId) {
-        console.warn("⚠️ No drvUserId found, skipping this driver");
-        continue;
-      }
+              if (!drvUserId) {
+                console.warn("⚠️ No drvUserId found, skipping this driver");
+                continue;
+              }
 
-      const driverUser = await User.findOne({
-        _id: drvUserId,
-        companyId: booking.companyId,
-        role: "driver",
-      }).lean();
+              const driverUser = await User.findOne({
+                _id: drvUserId,
+                companyId: booking.companyId,
+                role: "driver",
+              }).lean();
 
-      console.log("🔍 Queried User for driver:", {
-        drvUserId,
-        companyId: booking.companyId,
-        found: !!driverUser,
-      });
+              console.log("🔍 Queried User for driver:", {
+                drvUserId,
+                companyId: booking.companyId,
+                found: !!driverUser,
+              });
 
-      if (!driverUser) continue;
+              if (!driverUser) continue;
 
-      try {
-        const driverNotif = await Notification.create({
-          employeeNumber: String(driverUser.employeeNumber), 
-          bookingId: booking.bookingId,
-          status: currStatus, 
-          primaryJourney: {
-            pickup:
-              booking?.primaryJourney?.pickup ||
-              booking?.returnJourney?.pickup ||
-              "",
-            dropoff:
-              booking?.primaryJourney?.dropoff ||
-              booking?.returnJourney?.dropoff ||
-              "",
-          },
-          bookingSentAt: new Date(),
-          createdBy: currentUser?._id,
-          companyId: booking.companyId,
-        });
+              try {
+                const driverNotif = await Notification.create({
+                  employeeNumber: String(driverUser.employeeNumber),
+                  bookingId: booking.bookingId,
+                  status: currStatus,
+                  primaryJourney: {
+                    pickup:
+                      booking?.primaryJourney?.pickup ||
+                      booking?.returnJourney?.pickup ||
+                      "",
+                    dropoff:
+                      booking?.primaryJourney?.dropoff ||
+                      booking?.returnJourney?.dropoff ||
+                      "",
+                  },
+                  bookingSentAt: new Date(),
+                  createdBy: currentUser?._id,
+                  companyId: booking.companyId,
+                });
 
-        console.log("✅ Driver Notification created:", driverNotif);
+                console.log("✅ Driver Notification created:", driverNotif);
 
-        io.to(`emp:${driverUser._id}`).emit("notification:new", driverNotif);
-        console.log(
-          `📡 Emitted driver notification to socket room emp:${driverUser.employeeNumber}`
-        );
-      } catch (e) {
-        console.error("❌ Driver notify failed:", e?.message || e);
-      }
-    }
-  } else {
-    console.warn("⚠️ booking.drivers is empty or not an array");
-  }
-}
+                io.to(`emp:${driverUser._id}`).emit("notification:new", driverNotif);
+                console.log(
+                  `📡 Emitted driver notification to socket room emp:${driverUser.employeeNumber}`
+                );
+              } catch (e) {
+                console.error("❌ Driver notify failed:", e?.message || e);
+              }
+            }
+          } else {
+            console.warn("⚠️ booking.drivers is empty or not an array");
+          }
+        }
 
 
-        
+
       }
     } catch (e) {
       console.error(

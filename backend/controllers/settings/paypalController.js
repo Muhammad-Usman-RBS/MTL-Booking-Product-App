@@ -1,5 +1,5 @@
-// Environment Variables Based PayPal Controller
-import { getPayPalClient, paypal } from "../../utils/settings/paypalClient.js";
+// Environment Variables Based Paypal Controller
+import { getPaypalClient, paypal } from "../../utils/settings/paypalClient.js";
 
 /** ──────────────────────────────────────────────────────────────
  * Single source of truth: currency backend decide karega
@@ -8,7 +8,7 @@ const DEFAULT_CCY = "GBP";
 const rawCcy = process.env.PAYPAL_CURRENCY || process.env.CURRENCY || DEFAULT_CCY;
 const MERCHANT_CCY = String(rawCcy).trim().toUpperCase();
 
-// Zero-decimal currencies (PayPal requires integer string)
+// Zero-decimal currencies (Paypal requires integer string)
 const ZERO_DEC = new Set(["JPY", "TWD", "HUF"]);
 const fmtAmount = (val, ccy) =>
   ZERO_DEC.has((ccy || "").toUpperCase())
@@ -29,13 +29,13 @@ export const getConfig = (req, res) => {
     if (!cfg.clientId) {
       return res
         .status(500)
-        .json({ message: "PayPal client ID not found in environment variables" });
+        .json({ message: "Paypal client ID not found in environment variables" });
     }
 
     res.json(cfg);
   } catch (error) {
-    console.error("[PayPal] Config error:", error);
-    res.status(500).json({ message: "Failed to get PayPal config" });
+    console.error("[Paypal] Config error:", error);
+    res.status(500).json({ message: "Failed to get Paypal config" });
   }
 };
 
@@ -63,7 +63,7 @@ export const createOrder = async (req, res) => {
         .json({ message: `Currency mismatch. Expected ${MERCHANT_CCY}` });
     }
 
-    const client = getPayPalClient();
+    const client = getPaypalClient();
     const request = new paypal.orders.OrdersCreateRequest();
     request.prefer("return=representation");
     request.requestBody({
@@ -87,8 +87,8 @@ export const createOrder = async (req, res) => {
     const response = await client.execute(request);
     return res.json({ id: response.result.id, status: response.result.status });
   } catch (error) {
-    console.error("[PayPal] createOrder error:", error);
-    return res.status(500).json({ message: "Failed to create PayPal order" });
+    console.error("[Paypal] createOrder error:", error);
+    return res.status(500).json({ message: "Failed to create Paypal order" });
   }
 };
 
@@ -102,7 +102,7 @@ export const captureOrder = async (req, res) => {
       return res.status(400).json({ message: "Order ID is required" });
     }
 
-    const client = getPayPalClient();
+    const client = getPaypalClient();
     const request = new paypal.orders.OrdersCaptureRequest(orderID);
     request.requestBody({});
 
@@ -114,10 +114,10 @@ export const captureOrder = async (req, res) => {
     const capCcy = cap?.amount?.currency_code;
     const capVal = cap?.amount?.value;
 
-    // Safety log if PayPal ne kisi reason se dusri currency capture ki ho
+    // Safety log if Paypal ne kisi reason se dusri currency capture ki ho
     if (capCcy && capCcy !== MERCHANT_CCY) {
       console.warn(
-        `[PayPal] Currency mismatch on capture. Expected ${MERCHANT_CCY}, got ${capCcy}`
+        `[Paypal] Currency mismatch on capture. Expected ${MERCHANT_CCY}, got ${capCcy}`
       );
     }
 
@@ -129,9 +129,9 @@ export const captureOrder = async (req, res) => {
       value: capVal,
     });
   } catch (error) {
-    console.error("[PayPal] captureOrder error:", error);
+    console.error("[Paypal] captureOrder error:", error);
     return res.status(500).json({
-      message: "Failed to capture PayPal order",
+      message: "Failed to capture Paypal order",
       error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }

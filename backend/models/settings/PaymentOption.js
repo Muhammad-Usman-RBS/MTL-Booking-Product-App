@@ -10,7 +10,7 @@ const paymentOptionSchema = new mongoose.Schema(
     paymentMethod: {
       type: String,
       required: true,
-      enum: ["cash", "paypal", "stripe", "invoice", "paymentLink"],
+      enum: ["Cash", "Paypal", "Stripe", "Invoice", "PaymentLink"],
     },
     isEnabled: {
       type: Boolean,
@@ -25,7 +25,6 @@ const paymentOptionSchema = new mongoose.Schema(
       required: true,
     },
     settings: {
-      // For PayPal
       clientId: { type: String },
       clientSecret: { type: String },
       

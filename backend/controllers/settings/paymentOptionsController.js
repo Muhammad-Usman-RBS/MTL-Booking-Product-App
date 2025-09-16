@@ -69,7 +69,7 @@ export const getAllPaymentOptions = async (req, res) => {
     // If no payment options exist, return default structure
     if (!paymentOptions || paymentOptions.length === 0) {
       const defaultPaymentMethods = [
-        "cash", "paypal", "stripe", "invoice", "paymentLink"
+        "Cash", "Paypal", "Stripe", "Invoice", "PaymentLink"
       ];
       
       const defaultOptions = defaultPaymentMethods.map(method => ({

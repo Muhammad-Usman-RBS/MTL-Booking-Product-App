@@ -765,7 +765,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                             Number(finalFare) <= 0
                                         }
                                         onSuccess={(capture) => {
-                                            toast.success("PayPal payment successful!");
+                                            toast.success("Paypal payment successful!");
                                             onBookNow?.({
                                                 passengerDetails,
                                                 fare: finalFare,
@@ -777,7 +777,7 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                                 selectedVehicle: { ...vehicle },
                                             });
                                         }}
-                                        onError={(e) => toast.error(e?.message || "PayPal error")}
+                                        onError={(e) => toast.error(e?.message || "Paypal error")}
                                         onCancel={() => toast.info("Payment cancelled")}
                                     />
                                 ) : formData.paymentMethod === "Card, Bank" ? (

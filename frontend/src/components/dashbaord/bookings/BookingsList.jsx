@@ -27,6 +27,15 @@ const BookingsList = () => {
     date: true,
     pickUp: true,
     dropOff: true,
+
+    // ✈️ Flight Details
+    flightNumber: true,
+    originAirport: true,
+    destinationAirport: true,
+    flightArrivalScheduled: true,
+    flightArrivalEstimated: true,
+    flightArrivalActual: true,
+
     vehicle: true,
     payment: true,
     journeyFare: true,

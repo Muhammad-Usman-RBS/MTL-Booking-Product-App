@@ -257,7 +257,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
               className="custom_input"
             >
               <option>Cash</option>
-              <option>PayPal</option>
+              <option>Paypal</option>
               <option>Invoice</option>
               <option>Card, Bank</option>
               <option>Payment Link</option>

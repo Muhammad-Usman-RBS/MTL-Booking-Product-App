@@ -90,7 +90,7 @@ const PaymentOptions = () => {
   const getDefaultTitle = (method) => {
     const titles = {
       cash: "Cash",
-      paypal: "Pay Via PayPal",
+      paypal: "Pay Via Paypal",
       stripe: "Pay Via Debit/Credit Card",
       invoice: "Pay Via Invoice",
       paymentLink: "Pay Via Payment Link",

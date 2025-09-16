@@ -1,7 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import { getPayPalClient } from './paypalClient.js';
+import { getPaypalClient } from './paypalClient.js';
 
 dotenv.config();
 const app = express();
@@ -26,7 +26,7 @@ app.post('/api/paypal/create-order', async (req, res) => {
     // const total = await calculateBookingTotal(bookingId);
     const total = 49.99; // demo value — isay DB se laen
 
-    const client = getPayPalClient();
+    const client = getPaypalClient();
     const request = new paypal.orders.OrdersCreateRequest();
     request.prefer('return=representation');
     request.requestBody({
@@ -35,7 +35,7 @@ app.post('/api/paypal/create-order', async (req, res) => {
         {
           amount: {
             currency_code: 'GBP',
-            // PayPal amount string hona chahiye, do decimals
+            // Paypal amount string hona chahiye, do decimals
             value: total.toFixed(2),
           },
         },
@@ -54,7 +54,7 @@ app.post('/api/paypal/create-order', async (req, res) => {
 app.post('/api/paypal/capture-order', async (req, res) => {
   try {
     const { orderID } = req.query; // or req.body.orderID
-    const client = getPayPalClient();
+    const client = getPaypalClient();
     const request = new paypal.orders.OrdersCaptureRequest(orderID);
     request.requestBody({});
 

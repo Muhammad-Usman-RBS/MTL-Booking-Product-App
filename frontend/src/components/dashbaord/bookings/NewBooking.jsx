@@ -16,14 +16,11 @@ import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 import { useBookingFare } from "../../../utils/useBookingFare";
 
 // API Hooks
-import {
-  useCreateBookingMutation,
-  useUpdateBookingMutation,
-} from "../../../redux/api/bookingApi";
 import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
+import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 import { useGetGeneralPricingPublicQuery } from "../../../redux/api/generalPricingApi";
 import { useGetCorporateCustomerByVatQuery } from "../../../redux/api/corporateCustomerApi";
-import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
+import { useCreateBookingMutation, useUpdateBookingMutation } from "../../../redux/api/bookingApi";
 
 // Styles
 import "react-toastify/dist/ReactToastify.css";
