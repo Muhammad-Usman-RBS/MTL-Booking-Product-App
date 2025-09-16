@@ -20,6 +20,7 @@ import { customerBookingConfirmation } from "../utils/bookings/customerBookingCo
 import { clientadminBookingConfirmation } from "../utils/bookings/clientadminBookingConfirmation.js";
 import { driverAssignmentEmailTemplate } from "../utils/bookings/driverAssignmentEmailTemplate.js";
 import { customerCancellationEmailTemplate } from "../utils/bookings/customerCancellationEmailTemplate.js";
+import fetchFlightTimes from "../utils/bookings/fetchFlightTimes.js";
 
 // Create Booking (Dashboard/Widget)
 export const createBooking = async (req, res) => {
@@ -236,7 +237,20 @@ export const createBooking = async (req, res) => {
       };
     }
 
-    // Save booking
+if (primaryJourney.flightNumber) {
+  const flightInfo = await fetchFlightTimes(primaryJourney.flightNumber);
+  if (flightInfo) {
+    bookingPayload.primaryJourney.flightArrival = {
+      scheduled: flightInfo.scheduled,
+      estimated: flightInfo.estimated,
+      actual: flightInfo.actual,
+    };
+    bookingPayload.primaryJourney.flightOrigin = flightInfo.origin;
+    bookingPayload.primaryJourney.flightDestination = flightInfo.destination;
+  }
+}
+
+// Save booking
     const savedBooking = await Booking.create(bookingPayload);
 
     // ✅ Fetch Client Admin (account manager) for this company

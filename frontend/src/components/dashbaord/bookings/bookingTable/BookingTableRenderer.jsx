@@ -386,66 +386,51 @@ export const BookingTableRenderer = ({
             row[key] =
               item.returnDriverFare !== undefined ? item.returnDriverFare : "-";
             break;
-            
-     case "flightNumber": {
-  const journey = item.returnJourneyToggle ? item.returnJourney : item.primaryJourney;
-  row[key] = journey?.flightNumber || "-";
-  break;
-}
 
-case "originAirport": {
-  const journey = item.returnJourneyToggle ? item.returnJourney : item.primaryJourney;
-  row[key] = journey?.originAirport || "-";
-  break;
-}
+          case "flightNumber": {
+            const journey = item.returnJourneyToggle ? item.returnJourney : item.primaryJourney;
+            const flightNo = journey?.flightNumber || "-";
+            const origin = journey?.flightOrigin || "-";
+            const destination = journey?.flightDestination || "-";
 
-case "destinationAirport": {
-  const journey = item.returnJourneyToggle ? item.returnJourney : item.primaryJourney;
-  row[key] = journey?.destinationAirport || "-";
-  break;
-}
+            row[key] = (
+              <div className="flex flex-col">
+                <span className="font-medium">{flightNo}</span>
+                <span className="text-xs text-gray-500">
+                  {origin} → {destination}
+                </span>
+              </div>
+            );
+            break;
+          }
 
-case "flightArrivalScheduled": {
-  const journey = item.returnJourneyToggle ? item.returnJourney : item.primaryJourney;
-  row[key] = journey?.flightArrival?.scheduled
-    ? new Date(journey.flightArrival.scheduled).toLocaleString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : "-";
-  break;
-}
+          case "flightArrivalScheduled": {
+            const journey = item.returnJourneyToggle ? item.returnJourney : item.primaryJourney;
+            row[key] = journey?.flightArrival?.scheduled
+              ? new Date(journey.flightArrival.scheduled).toLocaleString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })
+              : "-";
+            break;
+          }
 
-case "flightArrivalEstimated": {
-  const journey = item.returnJourneyToggle ? item.returnJourney : item.primaryJourney;
-  row[key] = journey?.flightArrival?.estimated
-    ? new Date(journey.flightArrival.estimated).toLocaleString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : "-";
-  break;
-}
-
-case "flightArrivalActual": {
-  const journey = item.returnJourneyToggle ? item.returnJourney : item.primaryJourney;
-  row[key] = journey?.flightArrival?.actual
-    ? new Date(journey.flightArrival.actual).toLocaleString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : "-";
-  break;
-}
+          case "flightArrivalEstimated": {
+            const journey = item.returnJourneyToggle ? item.returnJourney : item.primaryJourney;
+            row[key] = journey?.flightArrival?.estimated
+              ? new Date(journey.flightArrival.estimated).toLocaleString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })
+              : "-";
+            break;
+          }
 
           case "createdAt":
             row[key] = item.createdAt

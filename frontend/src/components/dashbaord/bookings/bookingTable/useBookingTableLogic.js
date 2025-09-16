@@ -30,33 +30,30 @@ export const useBookingTableLogic = ({
   const getIdStr = (v) =>
     v?._id?.toString?.() || v?.$oid || v?.toString?.() || String(v || "");
 
-const allHeaders = [
-  { label: "Booking Id", key: "bookingId" },
-  { label: "Type", key: "bookingType" },
-  { label: "Pick Up", key: "pickUp" },
-  { label: "Drop Off", key: "dropOff" },
-  { label: "Passenger", key: "passenger" },
-  { label: "Date & Time", key: "date" },
-  { label: "Vehicle", key: "vehicle" },
-  { label: "Payment", key: "payment" },
-  { label: "Journey Fare", key: "journeyFare" },
-  { label: "Driver Fare", key: "driverFare" },
-  { label: "Return Fare", key: "returnJourneyFare" },
-  { label: "Return DR Fare", key: "returnDriverFare" },
-  { label: "Driver", key: "driver" },
+  const allHeaders = [
+    { label: "Booking Id", key: "bookingId" },
+    { label: "Type", key: "bookingType" },
+    { label: "Pick Up", key: "pickUp" },
+    { label: "Drop Off", key: "dropOff" },
+    { label: "Passenger", key: "passenger" },
+    { label: "Date & Time", key: "date" },
+    { label: "Vehicle", key: "vehicle" },
+    { label: "Payment", key: "payment" },
+    { label: "Journey Fare", key: "journeyFare" },
+    { label: "Driver Fare", key: "driverFare" },
+    { label: "Return Fare", key: "returnJourneyFare" },
+    { label: "Return DR Fare", key: "returnDriverFare" },
+    { label: "Driver", key: "driver" },
 
-  // ✈️ Flight Details
-  { label: "Flight No.", key: "flightNumber" },
-  { label: "Origin", key: "originAirport" },
-  { label: "Destination", key: "destinationAirport" },
-  { label: "Arrival (Scheduled)", key: "flightArrivalScheduled" },
-  { label: "Arrival (Estimated)", key: "flightArrivalEstimated" },
-  { label: "Arrival (Actual)", key: "flightArrivalActual" },
+    // ✈️ Flight Details
+    { label: "Flight No.", key: "flightNumber" },
+    { label: "Arrival (Scheduled)", key: "flightArrivalScheduled" },
+    { label: "Arrival (Estimated)", key: "flightArrivalEstimated" },
 
-  { label: "Created At", key: "createdAt" },
-  { label: "Status", key: "status" },
-  { label: "Actions", key: "actions" },
-];
+    { label: "Created At", key: "createdAt" },
+    { label: "Status", key: "status" },
+    { label: "Actions", key: "actions" },
+  ];
 
   // Filter table headers based on user role
   let tableHeaders = allHeaders;
@@ -316,78 +313,46 @@ const allHeaders = [
         dropOff: item.primaryJourney?.dropoff || "-",
         vehicle: formatVehicle(item.vehicle),
         payment: item.paymentMethod || "-",
-     flightNumber:
-  item.primaryJourney?.flightNumber ||
-  item.returnJourney?.flightNumber ||
-  "-",
-
-originAirport:
-  item.primaryJourney?.originAirport ||
-  item.returnJourney?.originAirport ||
-  "-",
-
-destinationAirport:
-  item.primaryJourney?.destinationAirport ||
-  item.returnJourney?.destinationAirport ||
-  "-",
-
-flightArrivalScheduled:
-  item.primaryJourney?.flightArrival?.scheduled
-    ? new Date(item.primaryJourney.flightArrival.scheduled).toLocaleString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : item.returnJourney?.flightArrival?.scheduled
-    ? new Date(item.returnJourney.flightArrival.scheduled).toLocaleString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : "-",
-
-flightArrivalEstimated:
-  item.primaryJourney?.flightArrival?.estimated
-    ? new Date(item.primaryJourney.flightArrival.estimated).toLocaleString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : item.returnJourney?.flightArrival?.estimated
-    ? new Date(item.returnJourney.flightArrival.estimated).toLocaleString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : "-",
-
-flightArrivalActual:
-  item.primaryJourney?.flightArrival?.actual
-    ? new Date(item.primaryJourney.flightArrival.actual).toLocaleString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : item.returnJourney?.flightArrival?.actual
-    ? new Date(item.returnJourney.flightArrival.actual).toLocaleString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : "-",
-
+        flightNumber:
+          item.primaryJourney?.flightNumber ||
+          item.returnJourney?.flightNumber ||
+          "-",
+        flightArrivalScheduled:
+          item.primaryJourney?.flightArrival?.scheduled
+            ? new Date(item.primaryJourney.flightArrival.scheduled).toLocaleString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })
+            : item.returnJourney?.flightArrival?.scheduled
+              ? new Date(item.returnJourney.flightArrival.scheduled).toLocaleString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })
+              : "-",
+        flightArrivalEstimated:
+          item.primaryJourney?.flightArrival?.estimated
+            ? new Date(item.primaryJourney.flightArrival.estimated).toLocaleString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })
+            : item.returnJourney?.flightArrival?.estimated
+              ? new Date(item.returnJourney.flightArrival.estimated).toLocaleString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })
+              : "-",
         driverFare: item.driverFare !== undefined ? item.driverFare : "-",
         returnDriverFare:
           item.returnDriverFare !== undefined ? item.returnDriverFare : "-",
