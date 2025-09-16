@@ -15,10 +15,12 @@ import {
   useSyncZoneMutation, // keep for Update+Sync
 } from "../../../redux/api/zoneApi";
 import { useLazySearchGooglePlacesQuery, useGetMapKeyQuery } from "../../../redux/api/googleApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const LIBRARIES = ["drawing", "places"];
 
 const Zones = () => {
+  const {showLoading, hideLoading}= useLoading()
   const user = useSelector((state) => state.auth.user);
 
   const [selectedZone, setSelectedZone] = useState(null);
@@ -40,6 +42,15 @@ const Zones = () => {
   const [deleteZone, { isLoading: deleting }] = useDeleteZoneMutation();
 
   const [syncZone, { isLoading: syncingOne }] = useSyncZoneMutation(); // used only for Update+Sync
+
+ useEffect(()=> {
+    if(creating  || zonesLoading) {
+      showLoading()
+    } else {
+      hideLoading()
+    }
+  },[creating,  zonesLoading])
+
 
   const [triggerSearchGooglePlaces] = useLazySearchGooglePlacesQuery();
 

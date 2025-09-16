@@ -4,6 +4,8 @@ import { timeOptions } from "../../../constants/dashboardTabsData/data";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import { useGetCronJobQuery, useUpdateCronJobByCompanyMutation, useToggleCronJobFeatureMutation, useRunDriverDocsNowMutation} from "../../../redux/api/cronJobsApi";
+import { useLoading } from "../../common/LoadingProvider";
+import { useSelector } from "react-redux";
 
 // ---- helpers ----
 function isWithinTimeWindow(timeRange) {
@@ -24,8 +26,9 @@ function isWithinTimeWindow(timeRange) {
 }
 
 const CronJob = () => {
+  const {showLoading, hideLoading} = useLoading()
   // Get user and company info from your auth state
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = useSelector((state)=> state?.auth?.user)
   const companyId = user?.companyId || "";
   const userId = user?._id || "";
 
@@ -68,7 +71,13 @@ const CronJob = () => {
       notifications: { sms: false, email: false },
     },
   });
-
+  useEffect(()=> {
+       if(isLoading) {
+         showLoading()
+       } else {
+         hideLoading()
+       }
+     },[isLoading])
   // Helper function to ensure proper nested object structure
   const ensureNestedStructure = (data) => {
     const defaultStructure = {

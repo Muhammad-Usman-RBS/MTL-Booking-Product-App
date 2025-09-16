@@ -6,8 +6,10 @@ import {
   useGetReviewSettingsQuery,
   useUpdateReviewSettingsMutation,
 } from "../../../redux/api/reviewsApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const ReviewSettings = () => {
+  const {showLoading, hideLoading}= useLoading()
   const companyId = useSelector((s) => s?.auth?.user?.companyId);
 
   const { data, isLoading, isError, error } = useGetReviewSettingsQuery(companyId, {
@@ -19,6 +21,14 @@ const ReviewSettings = () => {
   const [subject, setSubject] = useState("");
   const [template, setTemplate] = useState("");
   const [reviewLink, setReviewLink] = useState(""); // NEW
+
+    useEffect(()=> {
+         if(isLoading) {
+           showLoading()
+         } else {
+           hideLoading()
+         }
+       },[isLoading])
 
   useEffect(() => {
     if (isError && error) {

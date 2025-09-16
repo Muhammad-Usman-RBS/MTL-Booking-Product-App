@@ -66,6 +66,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  employeeNumber: {
+    type: String,
+    default: null,
+  },
 
   verification: { type: VerificationSchema, default: undefined },
   verifiedAt: { type: Date },

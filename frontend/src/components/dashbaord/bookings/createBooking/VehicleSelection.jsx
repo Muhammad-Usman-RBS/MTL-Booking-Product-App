@@ -71,16 +71,21 @@ const VehicleSelection = ({
 
   const handleSelectChange = (type, value) => {
     const parsedValue = parseInt(value);
-    if (type === "childSeat" && parsedValue > 0 && selections.passenger <= 1) {
-      toast.error("Child seats require at least 2 passengers");
-      return;
+    
+    if (type === "childSeat") {
+      if (parsedValue >= selections.passenger) {
+        toast.error("Child seats must be less than the number of passengers.");
+        return;
+      }
     }
     let updated = {
       ...selections,
       [type]: parsedValue,
     };
-    if (type === "passenger" && parsedValue <= 1) {
-      updated.childSeat = 0;
+    if (type === "passenger") {
+      if (updated.childSeat >= parsedValue) {
+        updated.childSeat = Math.max(0, parsedValue - 1);
+      }
     }
     setSelections(updated);
     setVehicleExtras(updated);

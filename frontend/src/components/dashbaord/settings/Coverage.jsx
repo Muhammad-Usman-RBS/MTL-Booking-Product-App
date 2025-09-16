@@ -10,8 +10,10 @@ import { useCreateCoverageMutation, useDeleteCoverageMutation, useGetAllCoverage
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import { useGetAllZonesQuery } from "../../../redux/api/zoneApi";
 import { useLazySearchPostcodeSuggestionsQuery } from "../../../redux/api/googleApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const Coverage = () => {
+  const {showLoading, hideLoading} = useLoading()
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
   
@@ -42,7 +44,15 @@ const Coverage = () => {
   
   // API hooks
   const [triggerPostcodeSuggestions] = useLazySearchPostcodeSuggestionsQuery();
-
+  
+   useEffect(()=> {
+        if(isLoading || zonesLoading) {
+          showLoading()
+        } else {
+          hideLoading()
+        }
+      },[isLoading, zonesLoading])
+      
   const handleEdit = (item) => {
     setSelectedItem(item);
     setIsEditMode(true);

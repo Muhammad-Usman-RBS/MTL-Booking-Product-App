@@ -245,22 +245,9 @@ const BookingCalendar = () => {
                         ))}
                     </div>
                 </div>
-
-
-
-
-
-                {/* Legend */}
-
-
                 {/* Main Calendar */}
                 <section className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-x-auto">
-                    {isLoading ? (
-                        <div className="py-20 flex justify-center items-center gap-4">
-                            <div className="animate-spin h-10 w-10 border-4 border-purple-600 border-t-transparent rounded-full" />
-                            <p className="text-gray-600">Loading bookings...</p>
-                        </div>
-                    ) : error ? (
+                    { error ? (
                         <div className="py-20 text-center text-red-500">
                             <h3 className="text-lg font-semibold">Error loading bookings</h3>
                             <p>{error.message || "Unexpected error occurred."}</p>

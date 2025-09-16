@@ -469,18 +469,33 @@ await Promise.all(
         await Promise.all(
           selectedDrivers.map(async (driver) => {
             const { DriverData } = driver;
-
-            if (!DriverData?.employeeNumber) {
-              toast.warning(
-                `${
-                  DriverData?.firstName || "Driver"
-                } has no employee number. Skipped.`
-              );
+      
+            console.log(`🔍 Processing notification for driver: ${DriverData?.firstName} (ID: ${driver._id})`);
+      
+            // Find the corresponding user account for this driver
+            const driverEmail = DriverData?.email?.toLowerCase().trim();
+            if (!driverEmail) {
+              console.log(`❌ No email found for driver ${DriverData?.firstName}`);
+              toast.warning(`${DriverData?.firstName || "Driver"} has no email. Skipped notification.`);
               return;
             }
-
+      
+            const correspondingUser = (allUsers?.drivers || []).find(
+              (user) =>
+                user.email?.toLowerCase().trim() === driverEmail &&
+                user.role?.toLowerCase() === "driver" &&
+                user.companyId === companyId
+            );
+            if (!correspondingUser) {
+              console.log(`❌ No user account found for driver ${DriverData?.firstName} with email ${driverEmail}`);
+              toast.warning(`${DriverData?.firstName || "Driver"} has no user account. Skipped notification.`);
+              return;
+            }
+      
+            console.log(`✅ Found user account for ${DriverData?.firstName}: ${correspondingUser._id}`);
+      
             const notificationPayload = {
-              employeeNumber: DriverData.employeeNumber,
+              employeeNumber: DriverData.employeeNumber, 
               bookingId: booking.bookingId,
               status: "Assigned",
               primaryJourney: {
@@ -495,12 +510,21 @@ await Promise.all(
               createdBy: user?._id,
               companyId,
             };
-
+            
+            console.log("📨 Sending Assignment Notification:", {
+              driverName: DriverData?.firstName,
+              employeeNumber: DriverData.employeeNumber,
+              bookingId: booking.bookingId,
+              companyId
+            });
+      
             try {
               await createNotification(notificationPayload).unwrap();
-              toast.success(`Notification sent to ${DriverData?.firstName}`);
+              console.log(`✅ Assignment notification created successfully for ${DriverData?.firstName}`);
+              toast.success(`Assignment notification sent to ${DriverData?.firstName}`);
             } catch (error) {
-              toast.error(`Failed to notify ${DriverData?.firstName}`);
+              console.error(`❌ Failed to create assignment notification for ${DriverData?.firstName}:`, error);
+              toast.error(`Failed to send assignment notification to ${DriverData?.firstName}`);
             }
           })
         );
@@ -616,11 +640,29 @@ await Promise.all(
           </label>
         </div>
 
-          {filteredDriver.length === 0 ? (
-            <>
-              <span className="italics text-gray-400 text-sm  h-48">Kindly create your driver's accounts first</span>
-            </>
-          ) : (
+       {filteredDriver.length === 0 ? (
+  <div className="flex flex-col items-center justify-center h-48 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+    {(drivers?.drivers || []).length === 0 ? (
+      <>
+        <div className="text-4xl mb-3">👥</div>
+        <p className="text-gray-600 font-medium mb-1">No Driver Accounts Found</p>
+        <p className="text-gray-500 text-sm text-center">Please create driver accounts to assign bookings</p>
+      </>
+    ) : showMatching ? (
+      <>
+        <div className="text-4xl mb-3">🚗</div>
+        <p className="text-gray-600 font-medium mb-1">No Matching Drivers</p>
+        <p className="text-gray-500 text-sm text-center">No drivers available for this vehicle type</p>
+      </>
+    ) : (
+      <>
+        <div className="text-4xl mb-3">🔍</div>
+        <p className="text-gray-600 font-medium mb-1">No Results Found</p>
+        <p className="text-gray-500 text-sm text-center">Try adjusting your search terms</p>
+      </>
+    )}
+  </div>
+) : (
             <>
             <div className="max-h-48 overflow-y-auto pr-1 space-y-3 custom-scroll border border-gray-500 rounded-md">
               {Array.isArray(filteredDriver) &&

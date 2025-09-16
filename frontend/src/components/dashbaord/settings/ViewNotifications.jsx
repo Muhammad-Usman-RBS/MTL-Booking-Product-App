@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useSelector } from "react-redux";
 import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
@@ -8,10 +8,11 @@ import {
   useMarkAllAsReadMutation,
   useMarkAsReadMutation,
 } from "../../../redux/api/notificationApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const ViewNotifications = () => {
+  const {showLoading, hideLoading} = useLoading()
   const user = useSelector((state) => state?.auth?.user);
-
   const {
     data: notifications = [],
     refetch: refetchNotifications,
@@ -20,10 +21,19 @@ const ViewNotifications = () => {
     skip: !user?.employeeNumber,
   });
 
+  
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
-
+  
   const [deleteNotificationMutation] = useDeleteNotificationMutation();
+  
+  useEffect(()=> {
+       if(isLoading) {
+         showLoading()
+       } else {
+         hideLoading()
+       }
+     },[isLoading])
 
   const deleteNotification = async (id) => {
     try {
@@ -114,11 +124,7 @@ const ViewNotifications = () => {
       <hr className="mb-6 border-[var(--light-gray)]" />
 
       <main>
-        {isLoading ? (
-          <p className="text-center text-[var(--medium-grey)]">
-            Loading notifications...
-          </p>
-        ) : notifications.length === 0 ? (
+        { notifications.length === 0 ? (
           <div className="bg-cream rounded-xl shadow-sm border border-medium-grey p-12 text-center">
             <Icons.Bell className="w-16 h-16 mx-auto mb-4 text-[var(--medium-grey)]" />
             <h2 className="text-xl font-semibold mb-2 text-[var(--dark-black)]">

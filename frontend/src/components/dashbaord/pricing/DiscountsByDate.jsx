@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Icons from "../../../assets/icons";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
@@ -8,6 +8,7 @@ import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useGetAllDiscountsQuery, useCreateDiscountMutation, useUpdateDiscountMutation, useDeleteDiscountMutation } from "../../../redux/api/discountApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 // Utility Functions
 const toISOStringWithTimezone = (dateString) => {
@@ -34,6 +35,7 @@ const formatDate = (dateStr) => {
 };
 
 const DiscountsByDate = () => {
+  const {showLoading, hideLoading}= useLoading()
   const { data = [], isLoading, isError } = useGetAllDiscountsQuery();
   const [createDiscount] = useCreateDiscountMutation();
   const [updateDiscount] = useUpdateDiscountMutation();
@@ -44,6 +46,14 @@ const DiscountsByDate = () => {
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [deleteItemId, setDeleteItemId] = useState(null);
 
+  useEffect(()=> {
+        if(isLoading) {
+          showLoading()
+        } else {
+          hideLoading()
+        }
+      },[isLoading])
+  
   const processedData = data.map((item) => {
     const dynamicStatus = new Date(item.toDate).getTime() < Date.now() ? "Expired" : "Active";
     return { ...item, dynamicStatus };
@@ -189,9 +199,7 @@ const DiscountsByDate = () => {
           />
         </div>
 
-        {isLoading ? (
-          <div>Loading discounts...</div>
-        ) : isError ? (
+        {isError ? (
           <div className="text-red-500">Failed to load discounts.</div>
         ) : (
           <CustomTable

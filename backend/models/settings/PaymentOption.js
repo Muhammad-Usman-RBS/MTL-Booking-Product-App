@@ -62,8 +62,6 @@ const paymentOptionSchema = new mongoose.Schema(
   }
 );
 
-// Ensure unique payment method per company
-paymentOptionSchema.index({ companyId: 1, paymentMethod: 1 }, { unique: true });
 
 const PaymentOption = mongoose.model("PaymentOption", paymentOptionSchema);
 

@@ -11,6 +11,4 @@ const ReviewSettingSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-ReviewSettingSchema.index({ companyId: 1 }, { unique: true });
-
 export default mongoose.model("ReviewSetting", ReviewSettingSchema);

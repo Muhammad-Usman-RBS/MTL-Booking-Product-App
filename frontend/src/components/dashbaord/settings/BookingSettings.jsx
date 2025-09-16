@@ -12,6 +12,7 @@ import countries from "../../../constants/constantscomponents/countries";
 import timezoneOptions from "../../../constants/constantscomponents/timezones";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import currencyOptions from "../../../constants/constantscomponents/currencyOptions";
+import { useLoading } from "../../common/LoadingProvider";
 
 const YES_NO = ["Yes", "No"];
 const DISTANCE_UNITS = ["Miles", "KMs"];
@@ -21,6 +22,7 @@ const TIME_UNITS_MIN = ["Hours"];        // advance min
 const TIME_UNITS_CANCEL = ["Hours", "Days"];        // cancel window
 
 const BookingSettings = () => {
+  const {showLoading, hideLoading}= useLoading()
   const dispatch = useDispatch();
   const { data, isLoading } = useGetBookingSettingQuery();
   const [updateBookingSetting] = useUpdateBookingSettingMutation();
@@ -57,6 +59,13 @@ const BookingSettings = () => {
 
   const [cancelBookingTerms, setCancelBookingTerms] = useState("");
 
+   useEffect(()=> {
+        if(isLoading) {
+          showLoading()
+        } else {
+          hideLoading()
+        }
+      },[isLoading])
   // hydrate from API
   useEffect(() => {
     const setting = data?.setting;
@@ -150,7 +159,6 @@ const BookingSettings = () => {
   const handleCurrencyChange = (e) => setCurrencyState(e.target.value);
   const handleTimezoneChange = (e) => setTimezoneState(e.target.value);
 
-  if (isLoading) return <div>Loading...</div>;
 
   return (
     <div>

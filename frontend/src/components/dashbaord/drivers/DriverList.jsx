@@ -11,10 +11,12 @@ import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
 
 import { useDeleteDriverByIdMutation, useGetAllDriversQuery, useGetDriverByIdQuery } from "../../../redux/api/driverApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const tabOptions = ["Active", "Suspended", "Pending", "Deleted"];
 
 const DriverList = () => {
+  const {showLoading, hideLoading} = useLoading()
   const user = useSelector((state) => state?.auth?.user);
   const companyId = user?.companyId;
 
@@ -29,8 +31,16 @@ const DriverList = () => {
   // Fetch drivers list
   const {
     data: getAllDrivers,
+    isLoading,
   } = useGetAllDriversQuery(companyId);
-
+ 
+  useEffect(()=> {
+    if(isLoading) {
+      showLoading()
+    } else {
+      hideLoading()
+    }
+  },[isLoading])
   // Fetch single driver details
   const { data: getDriverById } =
     useGetDriverByIdQuery(selectedDriver, {

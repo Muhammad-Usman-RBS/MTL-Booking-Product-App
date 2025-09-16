@@ -8,12 +8,14 @@ import { useSelector } from "react-redux";
 import { useLazySearchPostcodeSuggestionsQuery } from "../../../redux/api/googleApi";
 import { useFetchAllPostcodePricesQuery, useCreatePostcodePriceMutation, useUpdatePostcodePriceMutation, useDeletePostcodePriceMutation} from "../../../redux/api/postcodePriceApi";
 import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 const PostcodeDistrict = () => {
+  const {showLoading, hideLoading}= useLoading()
   const companyId = useSelector((state) => state.auth?.user?.companyId);
 
   // currency from booking settings
-  const { data: bookingSettingData } = useGetBookingSettingQuery();
+  const { data: bookingSettingData, isLoading } = useGetBookingSettingQuery();
   const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
   const currencySymbol = currencySetting?.symbol || "£";
  const currencyCode = currencySetting?.value || "GBP";
@@ -31,6 +33,14 @@ const PostcodeDistrict = () => {
   const [dropoffSuggestions, setDropoffSuggestions] = useState([]);
 
   const [triggerPostcodeSuggestions] = useLazySearchPostcodeSuggestionsQuery();
+
+   useEffect(()=> {
+      if(isLoading) {
+        showLoading()
+      } else {
+        hideLoading()
+      }
+    },[isLoading])
 
   useEffect(() => {
     refetch();
