@@ -557,7 +557,7 @@ function Navbar() {
                       )}
                       <div className="min-w-0 w-24">
                         <p className="font-semibold truncate whitespace-nowrap">{displayName}</p>
-                        <p className="font-light text-xs">{user?.role}</p>
+                        <p className="font-light text-sm">{user?.role}</p>
                       </div>
                     </div>
 
