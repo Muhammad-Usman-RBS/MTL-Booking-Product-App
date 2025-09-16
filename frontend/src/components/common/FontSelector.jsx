@@ -39,7 +39,7 @@ function FontSelector() {
     <div ref={fontRef} className="relative">
 
       <button
-        className="py-1 px-[5px] rounded-md border border-theme bg-theme flex items-center justify-center"
+        className="py-1 px-[5px] cursor-pointer rounded-md border border-theme bg-theme flex items-center justify-center"
         onClick={() => setShowList((prev) => !prev)}
       >
         <Icons.CaseSensitive className="text-theme" size={23} />

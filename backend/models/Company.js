@@ -13,7 +13,9 @@ const companySchema = new mongoose.Schema(
       type: String,
       enum: ["Yes", "No"],
     },
+
     address: String,
+    
     profileImage: String,
     clientAdminId: {
       type: mongoose.Schema.Types.ObjectId,

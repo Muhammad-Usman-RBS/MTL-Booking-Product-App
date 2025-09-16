@@ -12,8 +12,10 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { validateDriver, validateVehicle } from "../../../utils/validation/validators";
 import IMAGES from "../../../assets/images";
+import { useLoading } from "../../common/LoadingProvider";
 
 const NewDriver = () => {
+  const {showLoading, hideLoading}= useLoading()
   const user = useSelector((state) => state?.auth?.user);
   const companyId = user?.companyId;
   const { id } = useParams();
@@ -22,7 +24,7 @@ const NewDriver = () => {
   const [filePreviews, setFilePreviews] = useState({});
   const [createDriver] = useCreateDriverMutation();
 
-  const { data: driverData } = useGetDriverByIdQuery(id, { skip: !isEdit });
+  const { data: driverData, isLoading } = useGetDriverByIdQuery(id, { skip: !isEdit });
   const [updateDriver] = useUpdateDriverByIdMutation();
   const [formData, setFormData] = useState({
     motExpiryDate: "",
@@ -58,7 +60,15 @@ const NewDriver = () => {
     driverLicenseExpiry: "",
     availability: [{ from: "", to: "" }],
   });
-
+  
+   useEffect(()=> {
+      if(isLoading) {
+        showLoading()
+      } else {
+        hideLoading()
+      }
+    },[isLoading])
+    
   const handleSubmit = async (e) => {
     e.preventDefault();
 

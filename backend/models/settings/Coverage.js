@@ -51,7 +51,5 @@ const coverageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Add index for better performance
-coverageSchema.index({ companyId: 1, category: 1, value: 1 });
 
 export default mongoose.model("Coverage", coverageSchema);

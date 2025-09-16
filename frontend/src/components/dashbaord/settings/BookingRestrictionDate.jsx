@@ -1,5 +1,5 @@
 // src/pages/settings/BookingRestrictionDate.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import Icons from "../../../assets/icons";
@@ -14,6 +14,7 @@ import {
   useGetAllBookingRestrictionsQuery,
   useUpdateBookingRestrictionMutation,
 } from "../../../redux/api/bookingRestrictionDateApi";
+import { useLoading } from "../../common/LoadingProvider";
 
 /* ---------- Helpers (timezone-safe) ---------- */
 
@@ -58,6 +59,7 @@ const formatDateForTable = (dateString) => {
 /* --------------------------------------------- */
 
 const BookingRestrictionDate = () => {
+  const {showLoading, hideLoading}= useLoading()
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
 
@@ -75,6 +77,13 @@ const BookingRestrictionDate = () => {
   const [showModal, setShowModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState("Any Status");
 
+    useEffect(()=> {
+         if(isLoading) {
+           showLoading()
+         } else {
+           hideLoading()
+         }
+       },[isLoading])
   const handleEdit = (item) => {
     setSelectedItem({
       ...item,
@@ -175,9 +184,7 @@ const BookingRestrictionDate = () => {
     ),
   }));
 
-  if (isLoading) {
-    return <p className="text-center py-10">Loading booking restrictions...</p>;
-  }
+
   if (!companyId) {
     return (
       <p className="text-center text-red-600 py-10">

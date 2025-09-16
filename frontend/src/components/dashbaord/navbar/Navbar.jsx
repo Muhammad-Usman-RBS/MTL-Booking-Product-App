@@ -463,7 +463,7 @@ function Navbar() {
    
       <button
         onClick={() => setIsModalOpen((v) => !v)}
-        className="p-2 rounded-lg border border-theme bg-theme text-black shadow-md hover:bg-gray-100"
+        className="p-2 rounded-lg cursor-pointer border border-theme bg-theme text-black shadow-md hover:bg-gray-100"
         title="Select Theme"
       >
         <Icons.Palette className=" w-4 h-4 text-theme" />
@@ -526,7 +526,7 @@ function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 p-2 rounded-lg bg-theme border border-theme text-sm shadow-md text-black hover:bg-gray-100 transition duration-200"
+                className="flex cursor-pointer items-center gap-2 p-2 rounded-lg bg-theme border border-theme text-sm shadow-md text-black hover:bg-gray-100 transition duration-200"
               >
                 <Icons.User className="w-4 h-4 text-theme" />
               </button>
@@ -557,6 +557,7 @@ function Navbar() {
                       )}
                       <div className="min-w-0 w-24">
                         <p className="font-semibold truncate whitespace-nowrap">{displayName}</p>
+                        <p className="font-light text-xs">{user?.role}</p>
                       </div>
                     </div>
 

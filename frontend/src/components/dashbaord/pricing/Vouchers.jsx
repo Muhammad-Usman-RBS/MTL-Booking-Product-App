@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import Icons from "../../../assets/icons";
@@ -10,6 +10,7 @@ import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import { useGetAllVouchersQuery, useCreateVoucherMutation, useUpdateVoucherMutation, useDeleteVoucherMutation } from "../../../redux/api/vouchersApi";
 import "react-toastify/dist/ReactToastify.css";
+import { useLoading } from "../../common/LoadingProvider";
 
 // Format readable date string
 const formatDate = (isoDate) => {
@@ -33,6 +34,7 @@ const toLocalDateTime = (isoDate) => {
 };
 
 const Vouchers = () => {
+  const {showLoading, hideLoading} = useLoading()
   const user = useSelector((state) => state.auth.user);
 
   const companyId = user?.companyId || "";
@@ -58,6 +60,14 @@ const Vouchers = () => {
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [deleteItemId, setDeleteItemId] = useState(null);
 
+  useEffect(()=> {
+      if(bookingsLoading || isLoading) {
+        showLoading()
+      } else {
+        hideLoading()
+      }
+    },[bookingsLoading, isLoading])
+  
   const handleEdit = (item) => {
     const discountValue = parseFloat(item.discountValue?.toString().replace("%", "")) || 0;
 
