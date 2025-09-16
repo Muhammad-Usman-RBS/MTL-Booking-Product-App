@@ -203,7 +203,7 @@ const sidebarItems = [
         title: "Admin List",
         icon: Icons.List,
         route: "/dashboard/admin-list",
-        roles: ["demo","superadmin", "clientadmin", "associateadmin", ],
+        roles: ["demo", "superadmin", "clientadmin", "associateadmin", ],
       },
       {
         title: "New  User",

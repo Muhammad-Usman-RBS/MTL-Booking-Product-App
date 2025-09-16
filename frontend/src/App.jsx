@@ -138,7 +138,7 @@ function App() {
               <Route path="bookings/deleted-booking" element={<DeletedBookings />} />
 
               {/* Users/Admin List */}
-              <Route path="" element={<AdminList />} />
+              <Route path="admin-list" element={<AdminList />} />
               <Route path="admin-list/add-user" element={<NewAdminUser />} />
               <Route path="admin-list/edit/:id" element={<NewAdminUser />} />
               <Route path="admin-list/verify-user" element={<VerificationUser />} />
