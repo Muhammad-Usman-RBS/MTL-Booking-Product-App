@@ -67,8 +67,16 @@ const DeletedBookings = () => {
     _id: b._id,
     bookingId: b.bookingId || "-",
     passenger: formatPassenger(b.passenger),
-    pickup: b.primaryJourney?.pickup || "-",
-    dropoff: b.primaryJourney?.dropoff || "-",
+    pickup:
+    b.returnJourneyToggle && b.returnJourney
+      ? b.returnJourney.pickup || "-"
+      : b.primaryJourney?.pickup || "-",
+  
+  dropoff:
+    b.returnJourneyToggle && b.returnJourney
+      ? b.returnJourney.dropoff || "-"
+      : b.primaryJourney?.dropoff || "-",
+  
     date: b.createdAt ? new Date(b.createdAt).toLocaleString() : "-",
     status: b.status || "-",
     actions: (

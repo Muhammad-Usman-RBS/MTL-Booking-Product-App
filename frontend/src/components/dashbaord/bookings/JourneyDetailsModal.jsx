@@ -260,25 +260,45 @@ const dropIsAirport   = isAirport(j.dropoff);
             </div>
             <div>
               <strong>Drop Off:</strong>
-              <div className="ml-4 mt-1 space-y-1">
-  <div>
-    <strong>Address:</strong> {j.dropoff || "N/A"}
-  </div>
+              <div className="ml-4 mt-1 space-y-3">
+  {[0, 1, 2].map((idx) => {
+    let drop;
+    if (idx === 0) {
+      drop = j.dropoff; 
+    } else if (idx === 1) {
+      drop = j.additionalDropoff1;
+    } else if (idx === 2) {
+      drop = j.additionalDropoff2;
+    }
 
-  {/* NON-airport dropoff field */}
-  {!dropIsAirport && j.dropoffDoorNumber0 && (
-    <div>
-      <strong>Door No.:</strong> {j.dropoffDoorNumber0}
-    </div>
-  )}
+    if (!drop) return null;
 
-  {/* Airport dropoff field */}
-  {dropIsAirport && j.dropoff_terminal_0 && (
-    <div>
-      <strong>Terminal No.:</strong> {j.dropoff_terminal_0}
-    </div>
-  )}
+    const isAirport = (drop || "").toLowerCase().includes("airport");
+
+    return (
+      <div key={idx} className="space-y-1 border-b border-gray-200 pb-2 last:border-none">
+        <div>
+          <strong>Address {idx + 1}:</strong> {drop}
+        </div>
+
+        {/* Location extra */}
+        {!isAirport && j[`dropoffDoorNumber${idx}`] && (
+          <div>
+            <strong>Door No.:</strong> {j[`dropoffDoorNumber${idx}`]}
+          </div>
+        )}
+
+        {/* Airport extra */}
+        {isAirport && j[`dropoff_terminal_${idx}`] && (
+          <div>
+            <strong>Terminal No.:</strong> {j[`dropoff_terminal_${idx}`]}
+          </div>
+        )}
+      </div>
+    );
+  })}
 </div>
+
 
               {(viewData?.primaryJourney?.terminal ||
                 viewData?.returnJourney?.terminal) && (

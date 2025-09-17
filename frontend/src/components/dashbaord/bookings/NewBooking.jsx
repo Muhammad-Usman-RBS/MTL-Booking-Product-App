@@ -106,7 +106,10 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   });
   const [dropOffs1, setDropOffs1] = useState([""]);
   const [dropOffs2, setDropOffs2] = useState([""]);
-
+  const [pickupType1, setPickupType1] = useState(null);
+  const [pickupType2, setPickupType2] = useState(null);
+  const [dropOffTypes1, setDropOffTypes1] = useState({});
+  const [dropOffTypes2, setDropOffTypes2] = useState({});
   const [createBooking, { isLoading }] = useCreateBookingMutation();
   const [updateBooking] = useUpdateBookingMutation();
   const [localEditData, setLocalEditData] = useState(null);
@@ -580,11 +583,13 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateAdvanceForJourney(primaryJourneyData, "primary")) return;
-
-    if (returnJourneyToggle && dropOffs2[0]) {
-      if (!validateAdvanceForJourney(returnJourneyData, "return")) return;
-      if (!validateReturnJourneyTime(primaryJourneyData, returnJourneyData)) return;
+    if (userRole !== "clientadmin") {
+      if (!validateAdvanceForJourney(primaryJourneyData, "primary")) return;
+    
+      if (returnJourneyToggle && dropOffs2[0]) {
+        if (!validateAdvanceForJourney(returnJourneyData, "return")) return;
+        if (!validateReturnJourneyTime(primaryJourneyData, returnJourneyData)) return;
+      }
     }
 
     const isReturnJourney =
@@ -797,14 +802,16 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     }
   };
   useEffect(() => {
-    validateAdvanceForJourney(primaryJourneyData, "primary");
+    if (userRole !== "clientadmin") {
+      validateAdvanceForJourney(primaryJourneyData, "primary");
+    }
   }, [primaryJourneyData.date, primaryJourneyData.hour, primaryJourneyData.minute]);
-
+  
   useEffect(() => {
-    if (returnJourneyToggle) {
+    if (userRole !== "clientadmin" && returnJourneyToggle) {
       validateAdvanceForJourney(returnJourneyData, "return");
     }
-  }, [returnJourneyToggle, returnJourneyData.date, returnJourneyData.hour, returnJourneyData.minute]);
+  }, [userRole, returnJourneyToggle, returnJourneyData.date, returnJourneyData.hour, returnJourneyData.minute]);
   useEffect(() => {
     if (returnJourneyToggle &&
       primaryJourneyData.date && primaryJourneyData.hour !== "" && primaryJourneyData.minute !== "" &&
@@ -817,6 +824,40 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
     returnJourneyData.date, returnJourneyData.hour, returnJourneyData.minute
   ]);
 
+
+  useEffect(() => {
+    if (returnJourneyToggle && primaryJourneyData.pickup && dropOffs1[0]) {
+      const primaryPickup = primaryJourneyData.pickup;
+      const primaryDropoff = dropOffs1[0] || "";
+  
+      const primaryPickupIsAirport = primaryPickup.toLowerCase().includes("airport");
+      const primaryDropoffIsAirport = primaryDropoff.toLowerCase().includes("airport");
+  
+      setReturnJourneyData(prev => ({
+        ...prev,
+        pickup: primaryDropoff,
+        pickupDoorNumber: "",
+        arrivefrom: "",
+        pickmeAfter: "",
+        flightNumber: "",
+        dropoffDoorNumber0: "",
+        dropoff_terminal_0: "",
+        ...(primaryDropoffIsAirport
+          ? { arrivefrom: primaryJourneyData.dropoff_terminal_0 || "" }
+          : { pickupDoorNumber: primaryJourneyData.dropoffDoorNumber0 || "" }),
+        ...(primaryPickupIsAirport
+          ? { dropoff_terminal_0: primaryJourneyData.terminal || primaryJourneyData.arrivefrom || "" }
+          : { dropoffDoorNumber0: primaryJourneyData.pickupDoorNumber || "" }),
+      }));
+  
+      setDropOffs2([primaryPickup]);
+      setPickupType2(primaryDropoffIsAirport ? "airport" : "location");
+      setDropOffTypes2(prev => ({
+        ...prev,
+        0: primaryPickupIsAirport ? "airport" : "location",
+      }));
+    }
+  }, [returnJourneyToggle, primaryJourneyData, dropOffs1]);
   return (
     <>
       {!editBookingData && <OutletHeading name="New Booking" />}
@@ -895,6 +936,11 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
               pricingMode={primaryFareMode}
               selectedVehicle={selectedVehicle}
               mode={mode}
+              pickupType={pickupType1}
+              setPickupType={setPickupType1}
+              dropOffTypes={dropOffTypes1}
+              setDropOffTypes={setDropOffTypes1}
+            
             />
           ) : null}
           {/* Journey 2 (conditionally shown) */}
@@ -913,27 +959,72 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
                 pricingMode={returnFareMode}
                 selectedVehicle={selectedVehicle}
                 mode={mode}
+                pickupType={pickupType2}
+                setPickupType={setPickupType2}
+                dropOffTypes={dropOffTypes2}
+                setDropOffTypes={setDropOffTypes2}
               />
             </div>
           ) : null}
         </div>
 
         {/* Toggle Switch */}
-        <div className="flex items-center mt-6 mb-6">
-          <label className="flex items-center cursor-pointer relative">
-            <input
-              type="checkbox"
-              className="sr-only peer"
-              checked={returnJourneyToggle}
-              onChange={(e) => setreturnJourneyToggle(e.target.checked)}
-            />
-            <div className="w-12 h-6 bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-colors duration-300"></div>
-            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transform peer-checked:translate-x-6 transition-transform duration-300"></div>
-            <span className="ml-4 text-sm font-medium text-gray-800">
-              Return Journey
-            </span>
-          </label>
-        </div>
+        <div className="flex  items-center mt-6 mb-6 gap-3">
+  <div className="flex items-center">
+    <label className="flex items-center cursor-pointer relative">
+    <input
+  type="checkbox"
+  className="sr-only peer"
+  checked={returnJourneyToggle}
+  onChange={(e) => {
+    const checked = e.target.checked;
+    setreturnJourneyToggle(checked);
+
+    if (checked && primaryJourneyData.pickup && dropOffs1[0]) {
+      // 🔄 Perform swap logic here (was in handleSwapLocations)
+      const primaryPickup = primaryJourneyData.pickup;
+      const primaryDropoff = dropOffs1[0] || "";
+
+      const primaryPickupIsAirport = primaryPickup.toLowerCase().includes('airport');
+      const primaryDropoffIsAirport = primaryDropoff.toLowerCase().includes('airport');
+
+      setReturnJourneyData(prev => ({
+        ...prev,
+        pickup: primaryDropoff,
+        pickupDoorNumber: "",
+        arrivefrom: "",
+        pickmeAfter: "",
+        flightNumber: "",
+        dropoffDoorNumber0: "",
+        dropoff_terminal_0: "",
+        ...(primaryDropoffIsAirport
+          ? { arrivefrom: primaryJourneyData.dropoff_terminal_0 || "" }
+          : { pickupDoorNumber: primaryJourneyData.dropoffDoorNumber0 || "" }),
+        ...(primaryPickupIsAirport
+          ? { dropoff_terminal_0: primaryJourneyData.terminal || primaryJourneyData.arrivefrom || "" }
+          : { dropoffDoorNumber0: primaryJourneyData.pickupDoorNumber || "" }),
+      }));
+
+      setDropOffs2([primaryPickup]);
+      setPickupType2(primaryDropoffIsAirport ? "airport" : "location");
+      setDropOffTypes2(prev => ({
+        ...prev,
+        0: primaryPickupIsAirport ? "airport" : "location",
+      }));
+
+      toast.success("Locations swapped for return journey");
+    }
+  }}
+/>
+      <div className="w-12 h-6 bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-colors duration-300"></div>
+      <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transform peer-checked:translate-x-6 transition-transform duration-300"></div>
+      <span className="ml-4 text-sm font-medium text-gray-800">
+        Return Journey
+      </span>
+    </label>
+  </div>
+
+</div>
       </div>
       <div
         className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${editBookingData?._id || editBookingData?.__copyMode ? "px-6" : ""

@@ -16,13 +16,17 @@ const JourneyCard = ({
   matchedPostcodePrice,
   pricingMode,
   isEditMode,
+  pickupType,
+  setPickupType,
+  dropOffTypes,
+  setDropOffTypes,
 }) => {
   // Local state
   const [pickupSuggestions, setPickupSuggestions] = useState([]);
   const [dropOffSuggestions, setDropOffSuggestions] = useState([]);
-  const [dropOffTypes, setDropOffTypes] = useState({});
+  // const [dropOffTypes, setDropOffTypes] = useState({});
   const [activeDropIndex, setActiveDropIndex] = useState(null);
-  const [pickupType, setPickupType] = useState(null);
+  // const [pickupType, setPickupType] = useState(null);
   const [pickupCoords, setPickupCoords] = useState(null);
   const [dropoffCoords, setDropoffCoords] = useState({});
   const inputRef = useRef(null);
@@ -266,11 +270,11 @@ const JourneyCard = ({
                       })
                     }
                   >
-                    <option value="">MM</option>
-                    {[...Array(60).keys()].map((m) => (
-                      <option key={m} value={m.toString().padStart(2, "0")}>
-                        {m.toString().padStart(2, "0")}
-                      </option>
+<option value="">MM</option>
+{Array.from({ length: 12 }, (_, i) => (i + 1) * 5).map((m) => (
+  <option key={m} value={m.toString().padStart(2, "0")}>
+    {m.toString().padStart(2, "0")}
+  </option>
                     ))}
                   </select>
 
@@ -310,7 +314,11 @@ const JourneyCard = ({
                       if (!checkCoverage(val, "pickup", coords)) return;
 
                       setJourneyData((prev) => ({ ...prev, pickup: val }));
-                      setPickupType("location");
+                      if (val.toLowerCase().includes("airport")) {
+                        setPickupType("airport");
+                      } else {
+                        setPickupType("location");
+                      }
                       setPickupCoords(coords);
                       setPickupSuggestions([]);
                     }}
@@ -351,17 +359,17 @@ const JourneyCard = ({
                   onChange={handleChange}
                   className="custom_input"
                 />
-                <input
-                  name="pickmeAfter"
-                  placeholder="Pick Me After"
-                  value={journeyData.pickmeAfter || ""}
+                    <input
+                  name="flightNumber"
+                  placeholder="Flight No."
+                  value={journeyData.flightNumber || ""}
                   onChange={handleChange}
                   className="custom_input"
                 />
                 <input
-                  name="flightNumber"
-                  placeholder="Flight No."
-                  value={journeyData.flightNumber || ""}
+                  name="pickmeAfter"
+                  placeholder="Pick Me After"
+                  value={journeyData.pickmeAfter || ""}
                   onChange={handleChange}
                   className="custom_input"
                 />

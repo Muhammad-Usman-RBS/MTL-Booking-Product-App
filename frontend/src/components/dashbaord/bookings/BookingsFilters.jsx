@@ -68,6 +68,7 @@ const BookingsFilters = ({
           <div className="w-full sm:w-72">
             <SelectDateRange
               startDate={startDate}
+              placeholder="Select Driver"
               endDate={endDate}
               setStartDate={setStartDate}
               setEndDate={setEndDate}

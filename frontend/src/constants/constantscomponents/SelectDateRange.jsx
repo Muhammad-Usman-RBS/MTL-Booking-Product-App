@@ -32,14 +32,16 @@ const getLastNDays = (n) => {
 
 const getThisMonth = () => {
   const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 1);
-  return [start.toISOString().split("T")[0], now.toISOString().split("T")[0]];
+  const start = new Date(now.getFullYear(), now.getMonth(), 2);    
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);  
+  return [start.toISOString().split("T")[0], end.toISOString().split("T")[0]];
 };
+
 
 const getLastMonth = () => {
   const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const end = new Date(now.getFullYear(), now.getMonth(), 0);
+  const start = new Date(now.getFullYear(), now.getMonth() - 1, 2);
+  const end = new Date(now.getFullYear(), now.getMonth(), 1);
   return [start.toISOString().split("T")[0], end.toISOString().split("T")[0]];
 };
 
@@ -93,8 +95,10 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
 >
         <Icons.CalendarDays className="w-4 h-4 text-black" />
         <span className="flex-1 text-xs md:text-sm whitespace-nowrap overflow-hidden text-ellipsis">
-          {formatDate(startDate)} - {formatDate(endDate)}
-        </span>
+  {startDate && endDate
+    ? `${formatDate(startDate)} - ${formatDate(endDate)}`
+    : "Select Date Range"}
+</span>
         <Icons.ChevronDown
           className={`w-4 h-4 text-black transition-transform duration-200 ${
             dropdownOpen ? "rotate-180" : ""
@@ -119,13 +123,13 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
               type="date"
               value={customStart}
               onChange={(e) => setCustomStart(e.target.value)}
-              className="border rounded px-2 py-1"
+              className="border rounded px-2 text-gray-700 py-1"
             />
             <input
               type="date"
               value={customEnd}
               onChange={(e) => setCustomEnd(e.target.value)}
-              className="border rounded px-2 py-1"
+              className="border rounded px-2 text-gray-700 py-1"
             />
             <button
               onClick={applyCustomRange}
