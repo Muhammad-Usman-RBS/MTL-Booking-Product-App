@@ -11,18 +11,18 @@ import moment from "moment-timezone";
 import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 
 const JourneyDetailsModal = ({ viewData = {} }) => {
- const { data: bookingSettingData } = useGetBookingSettingQuery();
+  const { data: bookingSettingData } = useGetBookingSettingQuery();
   const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
   const currencySymbol = currencySetting?.symbol || "£";
-  const currencyCode   = currencySetting?.value  || "GBP";
+  const currencyCode = currencySetting?.value || "GBP";
 
   const j = viewData?.returnJourneyToggle
-  ? viewData?.returnJourney || {}
-  : viewData?.primaryJourney || {};
+    ? viewData?.returnJourney || {}
+    : viewData?.primaryJourney || {};
 
-const isAirport = (s = "") => s.toLowerCase().includes("airport");
-const pickupIsAirport = isAirport(j.pickup);
-const dropIsAirport   = isAirport(j.dropoff);
+  const isAirport = (s = "") => s.toLowerCase().includes("airport");
+  const pickupIsAirport = isAirport(j.pickup);
+  const dropIsAirport = isAirport(j.dropoff);
   const [sendBookingEmail, { isLoading: isSending }] =
     useSendBookingEmailMutation();
   const [selectedType, setSelectedType] = useState("Send Customer");
@@ -136,19 +136,19 @@ const dropIsAirport   = isAirport(j.dropoff);
   const pickupTime =
     viewData?.primaryJourney?.date && viewData?.primaryJourney?.hour
       ? formatDateTime(
-          viewData.primaryJourney.date,
-          viewData.primaryJourney.hour,
-          viewData.primaryJourney.minute
-        )
+        viewData.primaryJourney.date,
+        viewData.primaryJourney.hour,
+        viewData.primaryJourney.minute
+      )
       : viewData?.returnJourneyToggle &&
         viewData?.returnJourney?.date &&
         viewData?.returnJourney?.hour
-      ? formatDateTime(
+        ? formatDateTime(
           viewData.returnJourney.date,
           viewData.returnJourney.hour,
           viewData.returnJourney.minute
         )
-      : "N/A";
+        : "N/A";
 
   return (
     <>
@@ -158,9 +158,8 @@ const dropIsAirport   = isAirport(j.dropoff);
       >
         {/* Header */}
         <div
-          className={`${
-            loggedInUser.role === "driver" ? "hidden" : "flex"
-          } flex-col md:flex-row md:items-center gap-3 md:gap-4`}
+          className={`${loggedInUser.role === "driver" ? "hidden" : "flex"
+            } flex-col md:flex-row md:items-center gap-3 md:gap-4`}
         >
           <SelectOption
             options={["Send Customer", "Send Client Admin"]}
@@ -208,8 +207,8 @@ const dropIsAirport   = isAirport(j.dropoff);
               <strong>Booked On:</strong>
               {viewData?.createdAt
                 ? moment(viewData.createdAt)
-                    .tz(timezone)
-                    .format("DD/MM/YYYY HH:mm:ss")
+                  .tz(timezone)
+                  .format("DD/MM/YYYY HH:mm:ss")
                 : "N/A"}
             </div>
             <div>
@@ -219,97 +218,97 @@ const dropIsAirport   = isAirport(j.dropoff);
             <div>
               <strong>Pick Up:</strong>
               <div className="ml-4 mt-1 space-y-1">
-  <div>
-    <strong>Date & Time:</strong> {pickupTime}
-  </div>
+                <div>
+                  <strong>Date & Time:</strong> {pickupTime}
+                </div>
 
-  <div>
-    <strong>Address:</strong> {j.pickup || "N/A"}
-  </div>
+                <div>
+                  <strong>Address:</strong> {j.pickup || "N/A"}
+                </div>
 
-  {/* NON-airport pickup fields */}
-  {!pickupIsAirport && j.pickupDoorNumber && (
-    <div>
-      <strong>Door No.:</strong> {j.pickupDoorNumber}
-    </div>
-  )}
+                {/* NON-airport pickup fields */}
+                {!pickupIsAirport && j.pickupDoorNumber && (
+                  <div>
+                    <strong>Door No.:</strong> {j.pickupDoorNumber}
+                  </div>
+                )}
 
-  {/* Airport pickup fields */}
-  {pickupIsAirport && (j.arrivefrom || j.pickmeAfter || j.flightNumber) && (
-    <>
-      {j.arrivefrom && (
-        <div>
-          <strong>Arrive From:</strong> {j.arrivefrom}
-        </div>
-      )}
-      {j.pickmeAfter && (
-        <div>
-          <strong>Pick Me After:</strong> {j.pickmeAfter}
-        </div>
-      )}
-      {j.flightNumber && (
-        <div>
-          <strong>Flight No.:</strong> {j.flightNumber}
-        </div>
-      )}
-    </>
-  )}
-</div>
+                {/* Airport pickup fields */}
+                {pickupIsAirport && (j.arrivefrom || j.pickmeAfter || j.flightNumber) && (
+                  <>
+                    {j.arrivefrom && (
+                      <div>
+                        <strong>Arrive From:</strong> {j.arrivefrom}
+                      </div>
+                    )}
+                    {j.flightNumber && (
+                      <div>
+                        <strong>Flight No.:</strong> {j.flightNumber}
+                      </div>
+                    )}
+                    {j.pickmeAfter && (
+                      <div>
+                        <strong>Pick Me After:</strong> {j.pickmeAfter}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
 
               <hr className="text-[var(--light-gray)] my-2" />
             </div>
             <div>
               <strong>Drop Off:</strong>
               <div className="ml-4 mt-1 space-y-3">
-  {[0, 1, 2].map((idx) => {
-    let drop;
-    if (idx === 0) {
-      drop = j.dropoff; 
-    } else if (idx === 1) {
-      drop = j.additionalDropoff1;
-    } else if (idx === 2) {
-      drop = j.additionalDropoff2;
-    }
+                {[0, 1, 2].map((idx) => {
+                  let drop;
+                  if (idx === 0) {
+                    drop = j.dropoff;
+                  } else if (idx === 1) {
+                    drop = j.additionalDropoff1;
+                  } else if (idx === 2) {
+                    drop = j.additionalDropoff2;
+                  }
 
-    if (!drop) return null;
+                  if (!drop) return null;
 
-    const isAirport = (drop || "").toLowerCase().includes("airport");
+                  const isAirport = (drop || "").toLowerCase().includes("airport");
 
-    return (
-      <div key={idx} className="space-y-1 border-b border-gray-200 pb-2 last:border-none">
-        <div>
-          <strong>Address {idx + 1}:</strong> {drop}
-        </div>
+                  return (
+                    <div key={idx} className="space-y-1 border-b border-gray-200 pb-2 last:border-none">
+                      <div>
+                        <strong>Address {idx + 1}:</strong> {drop}
+                      </div>
 
-        {/* Location extra */}
-        {!isAirport && j[`dropoffDoorNumber${idx}`] && (
-          <div>
-            <strong>Door No.:</strong> {j[`dropoffDoorNumber${idx}`]}
-          </div>
-        )}
+                      {/* Location extra */}
+                      {!isAirport && j[`dropoffDoorNumber${idx}`] && (
+                        <div>
+                          <strong>Door No.:</strong> {j[`dropoffDoorNumber${idx}`]}
+                        </div>
+                      )}
 
-        {/* Airport extra */}
-        {isAirport && j[`dropoff_terminal_${idx}`] && (
-          <div>
-            <strong>Terminal No.:</strong> {j[`dropoff_terminal_${idx}`]}
-          </div>
-        )}
-      </div>
-    );
-  })}
-</div>
+                      {/* Airport extra */}
+                      {isAirport && j[`dropoff_terminal_${idx}`] && (
+                        <div>
+                          <strong>Terminal No.:</strong> {j[`dropoff_terminal_${idx}`]}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
 
 
               {(viewData?.primaryJourney?.terminal ||
                 viewData?.returnJourney?.terminal) && (
-                <div>
-                  <strong>Terminal:</strong>
-                  {viewData?.primaryJourney?.terminal ||
-                    (viewData?.returnJourneyToggle &&
-                      viewData?.returnJourney?.terminal) ||
-                    "—"}
-                </div>
-              )}
+                  <div>
+                    <strong>Terminal:</strong>
+                    {viewData?.primaryJourney?.terminal ||
+                      (viewData?.returnJourneyToggle &&
+                        viewData?.returnJourney?.terminal) ||
+                      "—"}
+                  </div>
+                )}
               <hr className="text-[var(--light-gray)] my-2" />
             </div>
           </div>
@@ -318,24 +317,24 @@ const dropIsAirport   = isAirport(j.dropoff);
             {!(
               loggedInUser?.role === "driver" && viewData?.status !== "Accepted"
             ) && (
-              <div>
-                <strong>Passenger Details:</strong>
-                <div className="ml-4 mt-1 space-y-1">
-                  <div>
-                    <strong>Name:</strong> {viewData?.passenger?.name || "N/A"}
+                <div>
+                  <strong>Passenger Details:</strong>
+                  <div className="ml-4 mt-1 space-y-1">
+                    <div>
+                      <strong>Name:</strong> {viewData?.passenger?.name || "N/A"}
+                    </div>
+                    <div>
+                      <strong>Email:</strong>
+                      {viewData?.passenger?.email || "N/A"}
+                    </div>
+                    <div>
+                      <strong>Phone:</strong> +
+                      {viewData?.passenger?.phone || "N/A"}
+                    </div>
                   </div>
-                  <div>
-                    <strong>Email:</strong>
-                    {viewData?.passenger?.email || "N/A"}
-                  </div>
-                  <div>
-                    <strong>Phone:</strong> +
-                    {viewData?.passenger?.phone || "N/A"}
-                  </div>
+                  <hr className="text-[var(--light-gray)] my-2" />
                 </div>
-                <hr className="text-[var(--light-gray)] my-2" />
-              </div>
-            )}
+              )}
 
             <div>
               <strong>Vehicle Details:</strong>
@@ -390,7 +389,7 @@ const dropIsAirport   = isAirport(j.dropoff);
                  &nbsp; GBP
                 </>
               )} */}
-                {loggedInUser.role === "driver" ? (
+              {loggedInUser.role === "driver" ? (
                 <>
                   {currencySymbol}
                   {Number(
@@ -412,8 +411,8 @@ const dropIsAirport   = isAirport(j.dropoff);
             Approx. Distance:
             {convertKmToMiles(
               viewData?.primaryJourney?.distanceText ||
-                (viewData?.returnJourneyToggle &&
-                  viewData?.returnJourney?.distanceText)
+              (viewData?.returnJourneyToggle &&
+                viewData?.returnJourney?.distanceText)
             )}
           </div>
         </div>
