@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setCompanies } from "../../../redux/slices/companySlice";
 import { useGetCompanyByIdQuery } from "../../../redux/api/companyApi";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
-import { actionMenuItems } from "../../../constants/dashboardTabsData/data";
+import { actionMenuItems, columnLabels } from "../../../constants/dashboardTabsData/data";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import JourneyDetailsModal from "./JourneyDetailsModal";
@@ -85,12 +85,8 @@ const BookingsList = () => {
   const [showKeyboardModal, setShowKeyboardModal] = useState(false);
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState(null);
-  const [startDate, setStartDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [endDate, setEndDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
 
   const dispatch = useDispatch();
   const { data: companyData, isLoading: isCompanyLoading } = useGetCompanyByIdQuery(user?.companyId);
@@ -340,7 +336,9 @@ const BookingsList = () => {
                   onChange={(e) => handleColumnChange(key, e.target.checked)}
                   className="w-4 h-4 text-indigo-600 border-[var(--light-gray)] rounded focus:ring-indigo-500"
                 />
-                <span className="text-sm text-gray-800">{key}</span>
+                <span className="text-sm text-gray-800">
+                  {columnLabels[key] || key}
+                </span>
               </label>
             ))}
         </div>

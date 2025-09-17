@@ -5,7 +5,7 @@ const VerificationSchema = new mongoose.Schema({
   otpExpiresAt: { type: Date, required: true },
   attempts: { type: Number, default: 0, min: 0, max: 5 },
   lastSentAt: { type: Date, default: Date.now },
-  // NEW: store temp plain password only till verification
+  // store temp plain password only till verification
   tempPassword: { type: String },
 }, { _id: false });
 
@@ -16,7 +16,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
     trim: true,
     lowercase: true,
     maxlength: EMAIL_MAX,
@@ -32,7 +31,15 @@ const userSchema = new mongoose.Schema({
 
   role: {
     type: String,
-    enum: ["superadmin", "clientadmin", "staffmember", "associateadmin", "driver", "customer", "demo"],
+    enum: [
+      "superadmin",
+      "clientadmin",
+      "staffmember",
+      "associateadmin",
+      "driver",
+      "customer",
+      "demo",
+    ],
     default: "customer",
   },
   status: {
@@ -56,31 +63,30 @@ const userSchema = new mongoose.Schema({
   },
   googleAuthTransactionId: { type: String, default: null, index: true },
 
-  loginHistory: [{
-    loginAt: { type: Date, default: Date.now },
-    systemIpAddress: String,
-    location: String,
-  }],
+  loginHistory: [
+    {
+      loginAt: { type: Date, default: Date.now },
+      systemIpAddress: String,
+      location: String,
+    },
+  ],
 
-  vatnumber: {
-    type: String,
-    default: null,
-  },
-  employeeNumber: {
-    type: String,
-    default: null,
-  },
+  vatnumber: { type: String, default: null },
+  employeeNumber: { type: String, default: null },
 
   verification: { type: VerificationSchema, default: undefined },
   verifiedAt: { type: Date },
 
-  // NEW FIELDS for SuperAdmin company details
+  // SuperAdmin company details
   superadminCompanyName: { type: String, default: "" },
   superadminCompanyAddress: { type: String, default: "" },
   superadminCompanyPhoneNumber: { type: String, default: "" },
   superadminCompanyEmail: { type: String, default: "" },
   superadminCompanyWebsite: { type: String, default: "" },
-
 }, { timestamps: true });
+
+
+// ✅ Compound index: email must be unique within the same company
+userSchema.index({ email: 1, companyId: 1 }, { unique: true });
 
 export default mongoose.model("User", userSchema);

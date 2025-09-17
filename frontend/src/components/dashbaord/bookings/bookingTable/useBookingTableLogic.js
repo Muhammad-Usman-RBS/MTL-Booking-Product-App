@@ -270,7 +270,14 @@ export const useBookingTableLogic = ({
     return type === "Return";
   });
 
-  // Filter table headers based on available data and selected columns
+  // Check if any booking has flight number
+  const hasFlightNumber = filteredBookings.some(
+    (b) =>
+      b?.primaryJourney?.flightNumber ||
+      b?.returnJourney?.flightNumber
+  );
+
+  // Filter table headers
   const filteredTableHeaders = useMemo(() => {
     return tableHeaders.filter((header) => {
       const key = header.key;
@@ -280,15 +287,22 @@ export const useBookingTableLogic = ({
 
       if (!hasPrimary && (key === "journeyFare" || key === "driverFare"))
         return false;
-      if (
-        !hasReturn &&
-        (key === "returnJourneyFare" || key === "returnDriverFare")
-      )
+      if (!hasReturn && (key === "returnJourneyFare" || key === "returnDriverFare"))
         return false;
+
+      // 👇 flight fields hide if no flightNumber
+      if (
+        !hasFlightNumber &&
+        (key === "flightNumber" ||
+          key === "flightArrivalScheduled" ||
+          key === "flightArrivalEstimated")
+      ) {
+        return false;
+      }
 
       return true;
     });
-  }, [tableHeaders, isDeletedTab, selectedColumns, hasPrimary, hasReturn]);
+  }, [tableHeaders, isDeletedTab, selectedColumns, hasPrimary, hasReturn, hasFlightNumber]);
 
   // Export table data
   const exportTableData = useMemo(() => {

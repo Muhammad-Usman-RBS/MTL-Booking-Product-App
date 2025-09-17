@@ -12,6 +12,30 @@ export const actionMenuItems = [
   "Status Audit",
 ];
 
+export const columnLabels = {
+  bookingId: "Booking ID",
+  bookingType: "Booking Type",
+  pickUp: "Pickup Location",
+  dropOff: "Dropoff Location",
+  flightNumber: "Flight Number",
+  flightOrigin: "Flight Origin",
+  flightDestination: "Flight Destination",
+  flightArrivalScheduled: "Flight Arrival Scheduled",
+  flightArrivalEstimated: "Flight Arrival Estimated",
+  journeyFare: "Journey Fare",
+  returnJourneyFare: "Return Journey Fare",
+  driverFare: "Driver Fare",
+  returnDriverFare: "Return Driver Fare",
+  createdAt: "Created At",
+  passenger: "Passenger",
+  date: "Date",
+  driver: "Driver",
+  vehicle: "Vehicle",
+  payment: "Payment",
+  status: "Status",
+  actions: "Actions",
+};
+
 export const driverList = [
   { label: "Usman Ahmed" },
   { label: "Khizer Khan" },

@@ -48,7 +48,16 @@ export const initiateUserVerification = async (req, res) => {
 
     await ensureDeliverableEmailOrThrow(emailNorm);
 
-    const existing = await User.findOne({ email: emailNorm });
+    let existing;
+
+    if (role === "clientadmin") {
+      // clientadmins must be globally unique
+      existing = await User.findOne({ email: emailNorm, role: "clientadmin" });
+    } else {
+      // others only need to be unique inside company
+      existing = await User.findOne({ email: emailNorm, companyId: creator.companyId || null });
+    }
+
     if (existing && existing.status !== "Pending") {
       return res.status(409).json({ message: "User already exists" });
     }
@@ -307,6 +316,8 @@ export const createUserBySuperAdmin = async (req, res) => {
   } = req.body;
 
   try {
+    const creator = req.user; // ✅ defined early
+
     // basic gates
     if (!fullName?.trim()) {
       return res.status(400).json({ message: "Full Name is required" });
@@ -320,14 +331,30 @@ export const createUserBySuperAdmin = async (req, res) => {
     try {
       await ensureDeliverableEmailOrThrow(emailNorm);
     } catch (e) {
-      return res.status(e?.status || 400).json({ message: e?.message || "Email undeliverable" });
+      return res
+        .status(e?.status || 400)
+        .json({ message: e?.message || "Email undeliverable" });
     }
 
-    const userExists = await User.findOne({ email: emailNorm });
+    // ✅ Duplicate checks
+    let userExists;
+    if (role === "clientadmin") {
+      // clientadmins must be globally unique
+      userExists = await User.findOne({
+        email: emailNorm,
+        role: "clientadmin",
+      });
+    } else {
+      // other roles must be unique per company
+      userExists = await User.findOne({
+        email: emailNorm,
+        companyId: creator.companyId || null,
+      });
+    }
+
     if (userExists) {
       return res.status(409).json({ message: "User already exists" });
     }
-    const creator = req.user;
 
     // Role controls
     if (["driver", "customer"].includes(role)) {
@@ -350,16 +377,17 @@ export const createUserBySuperAdmin = async (req, res) => {
       }
     }
 
-    // clientadmin password policy (optional: enforce for direct create too)
+    // clientadmin password policy
     if (role === "clientadmin") {
       if (!password || !strongPwRe.test(password)) {
         return res.status(400).json({
-          message: "Password must be 8–16 chars with uppercase, lowercase, number & special char.",
+          message:
+            "Password must be 8–16 chars with uppercase, lowercase, number & special char.",
         });
       }
     }
 
-    // associateAdminLimit for *new user being created*
+    // associateAdminLimit
     let parsedLimit;
     if (role === "clientadmin") {
       if (associateAdminLimit !== undefined && associateAdminLimit !== null) {
@@ -378,7 +406,6 @@ export const createUserBySuperAdmin = async (req, res) => {
 
     // enforce associateadmin creation limits
     if (creator.role === "clientadmin" && role === "associateadmin") {
-      // 🔑 fetch fresh clientadmin record from DB
       const creatorDoc = await User.findById(creator._id).lean();
       const allowed = creatorDoc?.associateAdminLimit || 0;
 
@@ -390,7 +417,8 @@ export const createUserBySuperAdmin = async (req, res) => {
 
       if (allowed === 0) {
         return res.status(400).json({
-          message: "This clientadmin is not allowed to create associateadmins (limit is 0).",
+          message:
+            "This clientadmin is not allowed to create associateadmins (limit is 0).",
         });
       }
 
@@ -433,14 +461,20 @@ export const createUserBySuperAdmin = async (req, res) => {
     let userPermissions = [...defaultPermissionsLocal];
 
     if (permissions && Array.isArray(permissions)) {
-      const invalidPermissions = permissions.filter((p) => !allowedPermissionsLocal.includes(p));
+      const invalidPermissions = permissions.filter(
+        (p) => !allowedPermissionsLocal.includes(p)
+      );
       if (invalidPermissions.length > 0) {
         return res.status(400).json({
-          message: `Invalid permissions provided: ${invalidPermissions.join(", ")}`,
+          message: `Invalid permissions provided: ${invalidPermissions.join(
+            ", "
+          )}`,
         });
       }
 
-      const filteredPermissions = permissions.filter((p) => !defaultPermissionsLocal.includes(p));
+      const filteredPermissions = permissions.filter(
+        (p) => !defaultPermissionsLocal.includes(p)
+      );
       userPermissions = [...defaultPermissionsLocal, ...filteredPermissions];
     } else if (permissions !== undefined) {
       return res.status(400).json({
@@ -478,7 +512,8 @@ export const createUserBySuperAdmin = async (req, res) => {
     // Send email with credentials
     await sendEmail(newUser.email, "Your Account Has Been Created", {
       title: "Welcome to MTL",
-      subtitle: "Your account has been created successfully. You can now log in using the details below:",
+      subtitle:
+        "Your account has been created successfully. You can now log in using the details below:",
       data: {
         Name: newUser.fullName,
         Email: newUser.email,
@@ -494,7 +529,8 @@ export const createUserBySuperAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error("Create User Error:", error);
-    if (error?.status) return res.status(error.status).json({ message: error.message });
+    if (error?.status)
+      return res.status(error.status).json({ message: error.message });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -610,17 +646,7 @@ export const updateUserBySuperAdmin = async (req, res) => {
   try {
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
-    if (
-      status === "Active" && 
-      (user.status === "Pending" || user.status === "Deleted") && 
-      user.role === "clientadmin" && 
-      user.verification
-    ) {
-      return res.status(400).json({ 
-        message: "Cannot activate pending clientadmin. Please recreate the account from scratch to complete OTP verification.",
-        requiresRecreation: true 
-      });
-    } 
+
     // fullName
     if (fullName?.trim()) user.fullName = fullName.trim();
 
@@ -632,7 +658,16 @@ export const updateUserBySuperAdmin = async (req, res) => {
       const emailNorm = normEmail(email);
 
       // duplicate?
-      const dup = await User.findOne({ email: emailNorm, _id: { $ne: user._id } });
+      let dup;
+      if (user.role === "clientadmin") {
+        dup = await User.findOne({ email: emailNorm, role: "clientadmin", _id: { $ne: user._id } });
+      } else {
+        dup = await User.findOne({
+          email: emailNorm,
+          companyId: user.companyId || null,
+          _id: { $ne: user._id }
+        });
+      }
       if (dup) return res.status(409).json({ message: "Email already in use" });
 
       // deliverability
