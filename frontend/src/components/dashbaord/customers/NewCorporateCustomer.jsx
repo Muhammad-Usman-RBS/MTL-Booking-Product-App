@@ -42,6 +42,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
 
   useEffect(() => {
     if (customerData) {
+      // Edit mode - populate with existing data
       setFormData({
         name: customerData.name || "",
         companyname: customerData.companyname || "",
@@ -65,8 +66,34 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
         vatnumber: customerData.vatnumber || "",
       });
       setPreview(customerData.profile || "");
+    } else if (isOpen) {
+      // Create mode - reset to initial values ONLY when modal opens
+      setFormData({
+        name: "",
+        companyname: "",
+        email: "",
+        phone: "",
+        address: "",
+        homeAddress: "",
+        primaryContactName: "",
+        primaryContactDesignation: "",
+        website: "",
+        city: "",
+        stateCounty: "",
+        postcode: "",
+        country: "United Kingdom",
+        locationsDisplay: "Yes",
+        paymentOptionsBooking: [],
+        paymentOptionsInvoice: "Pay Via Debit/Credit Card, Bank",
+        invoiceDueDays: "1",
+        invoiceTerms: "",
+        passphrase: "",
+        vatnumber: "",
+      });
+      setPreview("");
+      setImageFile(null);
     }
-  }, [customerData]);
+  }, [customerData, isOpen]); 
 
   const handleChange = (e) => {
     const { name, value } = e.target;

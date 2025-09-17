@@ -69,20 +69,52 @@ const NewDriver = () => {
       }
     },[isLoading])
     
+    const validateExpiryDates = (formData) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const expiryFields = [
+        { field: 'driverLicenseExpiry', label: 'Driving License Expiry' },
+        { field: 'driverPrivateHireLicenseExpiry', label: 'Driver Private Hire License Expiry' },
+        { field: 'carInsuranceExpiry', label: 'Vehicle Insurance Expiry' },
+        { field: 'carPrivateHireLicenseExpiry', label: 'Vehicle Private Hire License Expiry' },
+        { field: 'motExpiryDate', label: 'MOT Expiry' }
+      ];
+      
+      const invalidFields = [];
+      
+      expiryFields.forEach(({ field, label }) => {
+        if (formData[field]) {
+          const expiryDate = new Date(formData[field]);
+          if (expiryDate < today) {
+            invalidFields.push(label);
+          }
+        }
+      });
+      
+      return invalidFields;
+    };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+  // Run all validations
+  const { errors: driverErrors, isValid: isDriverValid } = validateDriver(formData, { isEdit });
+  const { errors: vehicleErrors, isValid: isVehicleValid } = validateVehicle(formData);
+  const invalidExpiryFields = validateExpiryDates(formData);
 
-    // Run both validations
-    const { errors: driverErrors, isValid: isDriverValid } = validateDriver(formData, { isEdit });
-    const { errors: vehicleErrors, isValid: isVehicleValid } = validateVehicle(formData);
+  const allErrors = { ...driverErrors, ...vehicleErrors };
 
-    const allErrors = { ...driverErrors, ...vehicleErrors };
-
-    // If either validation fails, show all errors
-    if (!isDriverValid || !isVehicleValid) {
-      Object.values(allErrors).forEach((msg) => toast.error(msg));
-      return;
+  if (!isDriverValid || !isVehicleValid || invalidExpiryFields.length > 0) {
+    Object.values(allErrors).forEach((msg) => toast.error(msg));
+    
+    if (invalidExpiryFields.length > 0) {
+      const fieldsText = invalidExpiryFields.join(', ');
+      toast.error(`The following expiry dates cannot be in the past: ${fieldsText}`);
     }
+    
+    return;
+  }
+
 
     try {
       const form = new FormData();
@@ -108,8 +140,12 @@ const NewDriver = () => {
         await createDriver(form).unwrap();
         toast.success("Driver created successfully!");
       }
+      if(isEdit) {
 
-      navigate("/dashboard/admin-list/add-user");
+        navigate("/dashboard/drivers/list");
+      } else{
+        navigate("/dashboard/admin-list/add-user");
+      }
     } catch (error) {
       console.error("Error creating driver:", error);
       const errorMessage =

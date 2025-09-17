@@ -34,18 +34,18 @@ const DriverList = () => {
     isLoading,
   } = useGetAllDriversQuery(companyId);
  
+  // Fetch single driver details
+  const { data: getDriverById ,isLoading: isDriverLoading} =
+  useGetDriverByIdQuery(selectedDriver, {
+    skip: !selectedDriver,
+  });
   useEffect(()=> {
-    if(isLoading) {
+    if(isLoading || isDriverLoading) {
       showLoading()
     } else {
       hideLoading()
     }
-  },[isLoading])
-  // Fetch single driver details
-  const { data: getDriverById } =
-    useGetDriverByIdQuery(selectedDriver, {
-      skip: !selectedDriver,
-    });
+  },[isLoading , isDriverLoading])
 
   // Delete driver mutation
   const [deleteDriverById] =
@@ -88,7 +88,6 @@ const DriverList = () => {
   }, [filteredData, perPage, activeTab]);
 
   if (selectedDriver) {
-    if (!getDriverById) return <p className="p-4">Loading driver details...</p>;
 
     return (
       <ViewDriver
@@ -123,15 +122,12 @@ const DriverList = () => {
   }));
 
   const tableData = !filteredData.length
-    ? EmptyTableMessage({
+  ? EmptyTableMessage({
       message: "No drivers found. Create a new driver.",
       colSpan: tableHeaders.length,
     })
-    : paginatedData.map((driver, index) => ({
-      index:
-        (page - 1) * (perPage === "All" ? filteredData.length : perPage) +
-        index +
-        1,
+  : filteredData.map((driver, index) => ({
+      index: index + 1,
       employeeNumber: driver?.DriverData?.employeeNumber,
       firstName: driver?.DriverData?.firstName,
       email: driver?.DriverData?.email,

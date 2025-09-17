@@ -327,7 +327,6 @@ export const createUserBySuperAdmin = async (req, res) => {
     if (userExists) {
       return res.status(409).json({ message: "User already exists" });
     }
-
     const creator = req.user;
 
     // Role controls
@@ -611,7 +610,17 @@ export const updateUserBySuperAdmin = async (req, res) => {
   try {
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
-
+    if (
+      status === "Active" && 
+      (user.status === "Pending" || user.status === "Deleted") && 
+      user.role === "clientadmin" && 
+      user.verification
+    ) {
+      return res.status(400).json({ 
+        message: "Cannot activate pending clientadmin. Please recreate the account from scratch to complete OTP verification.",
+        requiresRecreation: true 
+      });
+    } 
     // fullName
     if (fullName?.trim()) user.fullName = fullName.trim();
 

@@ -44,8 +44,13 @@ const AdminList = () => {
       await changeStatus({ adminId, newStatus }).unwrap();
       toast.success(`User status updated to ${newStatus}`);
       refetch();
-    } catch (error) {
-      toast.error(error?.data?.message || "Failed to update status");
+    }  catch (error) {
+      // Check for the specific pending clientadmin error
+      if (error?.data?.requiresRecreation) {
+        toast.error("Cannot activate pending clientadmin. Please recreate the account from scratch to complete OTP verification.");
+      } else {
+        toast.error(error?.data?.message || "Failed to update status");
+      }
     }
   };
 
@@ -131,9 +136,9 @@ const AdminList = () => {
         case "Suspended":
           return ["Active", "Deleted"];
         case "Deleted":
-          return ["Active", "Suspended"];
+          return ["Active"];
         case "Pending":
-          return ["Active", "Suspended", "Deleted"];
+          return ["Active",  "Deleted"];
         default:
           return [];
       }
