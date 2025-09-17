@@ -20,7 +20,7 @@ const VerificationUser = () => {
     // Guard: required params
     useEffect(() => {
         if (!transactionId || !email) {
-            toast.error("Verification link incomplete. Please start again.");
+            toast.error("Verification link is incomplete. Please try again.");
             navigate("/dashboard/admin-list");
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -42,10 +42,10 @@ const VerificationUser = () => {
 
     const onVerify = async () => {
         if (!transactionId) return;
-        if (otp.length !== 6) return toast.error("6 digit OTP darj karein.");
+        if (otp.length !== 6) return toast.error("Please enter a 6-digit OTP.");
         try {
             const res = await verifyUserOtp({ transactionId, otp }).unwrap();
-            toast.success("User created successfully.");
+            toast.success("User has been verified successfully.");
             const role = res?.user?.role; 
             if (role === "clientadmin" || role === "associateadmin") {
                 navigate("/dashboard/company-accounts/list");
@@ -53,7 +53,7 @@ const VerificationUser = () => {
                 navigate("/dashboard/admin-list");
             }
         } catch (e) {
-            toast.error(e?.data?.message || "OTP ghalat hai.");
+            toast.error(e?.data?.message || "Invalid OTP. Please try again.");
         }
     };
 
@@ -62,11 +62,11 @@ const VerificationUser = () => {
         if (!canResend) return;
         try {
             await resendUserOtp({ transactionId }).unwrap();
-            toast.success("Naya OTP bhej diya gaya.");
+            toast.success("A new OTP has been sent to your email.");
             setTimer(60);
             setOtp("");
         } catch (e) {
-            toast.error(e?.data?.message || "OTP resend nahi hua.");
+            toast.error(e?.data?.message || "Failed to resend OTP. Please try again.");
         }
     };
 
