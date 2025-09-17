@@ -236,14 +236,14 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                 {/* Airport pickup fields */}
                 {pickupIsAirport && (j.arrivefrom || j.pickmeAfter || j.flightNumber) && (
                   <>
-                    {j.arrivefrom && (
-                      <div>
-                        <strong>Arrive From:</strong> {j.arrivefrom}
-                      </div>
-                    )}
                     {j.flightNumber && (
                       <div>
                         <strong>Flight No.:</strong> {j.flightNumber}
+                      </div>
+                    )}
+                    {j.arrivefrom && (
+                      <div>
+                        <strong>Arrive From:</strong> {j.arrivefrom}
                       </div>
                     )}
                     {j.pickmeAfter && (
