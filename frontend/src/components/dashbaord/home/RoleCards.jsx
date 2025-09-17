@@ -71,8 +71,8 @@ const RoleCards = () => {
 
   // Debugging logs
   useEffect(() => {
-    console.log("Driver Bookings:", driverBookings);
-    console.log("Earnings Data:", earningsData);
+    // console.log("Driver Bookings:", driverBookings);
+    // console.log("Earnings Data:", earningsData);
   }, [driverBookings, earningsData]);
 
   // All cards

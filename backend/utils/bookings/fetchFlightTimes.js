@@ -60,22 +60,30 @@ const airlineMap = {
   "air new zealand": "ANZ",
 };
 
+// Normalize flight number input
+function normalizeFlightNumber(input) {
+  // Remove all spaces and make uppercase
+  return input.replace(/\s+/g, "").toUpperCase();
+}
+
 async function fetchFlightTimes(query) {
   try {
     let url = "";
     let userInput = query.trim();
 
-    // Check if user typed a flight number (starts with letters + digits, e.g. BA6)
-    if (/^[A-Za-z]{2,3}\d+$/i.test(userInput)) {
-      url = `${process.env.FLIGHTAWARE_BASE_URL}/${userInput}`;
+    // Normalize to handle VS8 / VS 8 / vs8 / vs 8
+    const normalizedInput = normalizeFlightNumber(userInput);
+
+    // Check if it's a flight number
+    if (/^[A-Z]{2,3}\d+$/i.test(normalizedInput)) {
+      url = `${process.env.FLIGHTAWARE_BASE_URL}/${normalizedInput}`;
     } else {
-      // If it's airline name, map it to ICAO code
+      // Airline name -> ICAO
       const code = airlineMap[userInput.toLowerCase()];
       if (!code) {
         console.warn("⚠️ Airline not in mapping table:", userInput);
         return null;
       }
-      // Use flight search endpoint with airline code
       url = `${process.env.FLIGHTAWARE_BASE_URL}/search?query=-airline ${code}`;
     }
 
@@ -83,7 +91,7 @@ async function fetchFlightTimes(query) {
 
     const response = await axios.get(url, {
       headers: {
-        "Accept": "application/json",
+        Accept: "application/json",
         "x-apikey": process.env.FLIGHTAWARE_API_KEY,
       },
     });
@@ -96,10 +104,16 @@ async function fetchFlightTimes(query) {
 
     const parsedData = {
       airline: flightData?.airline_name || "N/A",
-      flightNumber: flightData?.ident || query,
-      scheduled: flightData?.scheduled_in ? new Date(flightData.scheduled_in) : null,
-      estimated: flightData?.estimated_in ? new Date(flightData.estimated_in) : null,
-      actual: flightData?.actual_in ? new Date(flightData.actual_in) : null,
+      flightNumber: flightData?.ident || normalizedInput,
+      scheduled: flightData?.scheduled_in
+        ? new Date(flightData.scheduled_in)
+        : null,
+      estimated: flightData?.estimated_in
+        ? new Date(flightData.estimated_in)
+        : null,
+      actual: flightData?.actual_in
+        ? new Date(flightData.actual_in)
+        : null,
       origin: flightData?.origin?.code_iata || null,
       destination: flightData?.destination?.code_iata || null,
     };
@@ -107,7 +121,10 @@ async function fetchFlightTimes(query) {
     console.log("📦 Parsed Flight Data:", parsedData);
     return parsedData;
   } catch (err) {
-    console.error("❌ Error fetching flight data:", err.response?.data || err.message);
+    console.error(
+      "❌ Error fetching flight data:",
+      err.response?.data || err.message
+    );
     return null;
   }
 }

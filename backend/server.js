@@ -205,8 +205,8 @@ io.on("connection", (socket) => {
   if (emp) socket.join(`emp:${emp}`);
   if (co) socket.join(`co:${co}`);
 
-  console.log("[SOCKET] connected:", socket.id, "emp:", emp, "co:", co);
-  console.log("[SOCKET] rooms:", [...socket.rooms]);
+  // console.log("[SOCKET] connected:", socket.id, "emp:", emp, "co:", co);
+  // console.log("[SOCKET] rooms:", [...socket.rooms]);
   socket.emit("socket:ready", { ok: true, emp, co });
 
   socket.on("disconnect", (reason) => {
