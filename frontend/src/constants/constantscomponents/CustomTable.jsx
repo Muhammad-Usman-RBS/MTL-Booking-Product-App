@@ -33,7 +33,7 @@ const CustomTable = ({
       );
   }, [tableHeaders]);
   const [internalOrder, setInternalOrder] = useState(defaultOrder);
- 
+
   // Load saved order (if any) when component mounts or key changes
   useEffect(() => {
     if (!persistKey) return;
@@ -45,7 +45,7 @@ const CustomTable = ({
         const missing = defaultOrder.filter((k) => !valid.includes(k));
         setInternalOrder([...valid, ...missing]);
         return;
-      } catch {}
+      } catch { }
     }
     setInternalOrder(defaultOrder);
   }, [persistKey]);
@@ -65,7 +65,7 @@ const CustomTable = ({
     ...order,
     ...fixedEndCols.filter((key) => tableHeaders.find((h) => h.key === key)),
   ];
-  
+
   const dragSrcKeyRef = useRef(null);
   const reorder = (arr, srcKey, targetKey) => {
     const next = [...arr];
@@ -91,16 +91,16 @@ const CustomTable = ({
     e.preventDefault();
     const srcKey =
       dragSrcKeyRef.current || e.dataTransfer.getData("text/plain");
-      if (
-        !srcKey ||
-        srcKey === targetKey ||
-        fixedStartCols.includes(srcKey) ||
-        fixedEndCols.includes(srcKey) ||
-        fixedStartCols.includes(targetKey) ||
-        fixedEndCols.includes(targetKey)
-      ) {
-        return;
-      }
+    if (
+      !srcKey ||
+      srcKey === targetKey ||
+      fixedStartCols.includes(srcKey) ||
+      fixedEndCols.includes(srcKey) ||
+      fixedStartCols.includes(targetKey) ||
+      fixedEndCols.includes(targetKey)
+    ) {
+      return;
+    }
     const newOrder = reorder(order, srcKey, targetKey);
     setInternalOrder(newOrder);
 
@@ -194,61 +194,60 @@ const CustomTable = ({
                 .filter(Boolean)
                 .map((col) => (
                   <th
-                  key={col.key}
-                  draggable={
-                    !fixedStartCols.includes(col.key) &&
-                    !fixedEndCols.includes(col.key)
-                  }
-                  onDragStart={
-                    !fixedStartCols.includes(col.key) &&
-                    !fixedEndCols.includes(col.key)
-                      ? handleDragStart(col.key)
-                      : undefined
-                  }
-                  onDragOver={
-                    !fixedStartCols.includes(col.key) &&
-                    !fixedEndCols.includes(col.key)
-                      ? handleDragOver(col.key)
-                      : undefined
-                  }
-                  onDrop={
-                    !fixedStartCols.includes(col.key) &&
-                    !fixedEndCols.includes(col.key)
-                      ? handleDrop(col.key)
-                      : undefined
-                  }
-                  onClick={() =>
-                    showSorting &&
-                    col.key &&
-                    !fixedStartCols.includes(col.key) &&
-                    !fixedEndCols.includes(col.key)
-                      ? requestSort(col.key)
-                      : undefined
-                  }
-                  className={`px-2 py-3 text-left align-middle whitespace-nowrap ${
-                    showSorting &&
-                    col.key &&
-                    !fixedStartCols.includes(col.key) &&
-                    !fixedEndCols.includes(col.key)
-                      ? "cursor-move text-dark transition"
-                      : "cursor-default"
-                  }`}
-                  title={
-                    fixedStartCols.includes(col.key) || fixedEndCols.includes(col.key)
-                      ? ""
-                      : "Drag to reorder"
-                  }
-                >
-                  <div className="flex items-center gap-1 whitespace-nowrap">
-                    {col.label}
-                    {showSorting &&
-                      col.key &&
+                    key={col.key}
+                    draggable={
                       !fixedStartCols.includes(col.key) &&
-                      !fixedEndCols.includes(col.key) &&
-                      getSortIcon(col.key)}
-                  </div>
-                </th>
-                
+                      !fixedEndCols.includes(col.key)
+                    }
+                    onDragStart={
+                      !fixedStartCols.includes(col.key) &&
+                        !fixedEndCols.includes(col.key)
+                        ? handleDragStart(col.key)
+                        : undefined
+                    }
+                    onDragOver={
+                      !fixedStartCols.includes(col.key) &&
+                        !fixedEndCols.includes(col.key)
+                        ? handleDragOver(col.key)
+                        : undefined
+                    }
+                    onDrop={
+                      !fixedStartCols.includes(col.key) &&
+                        !fixedEndCols.includes(col.key)
+                        ? handleDrop(col.key)
+                        : undefined
+                    }
+                    onClick={() =>
+                      showSorting &&
+                        col.key &&
+                        !fixedStartCols.includes(col.key) &&
+                        !fixedEndCols.includes(col.key)
+                        ? requestSort(col.key)
+                        : undefined
+                    }
+                    className={`px-2 py-3 text-left align-middle whitespace-nowrap ${showSorting &&
+                        col.key &&
+                        !fixedStartCols.includes(col.key) &&
+                        !fixedEndCols.includes(col.key)
+                        ? "cursor-pointer text-dark transition"
+                        : "cursor-default"
+                      }`}
+                    title={
+                      fixedStartCols.includes(col.key) || fixedEndCols.includes(col.key)
+                        ? ""
+                        : "Drag to reorder"
+                    }
+                  >
+                    <div className="flex items-center gap-1 whitespace-nowrap">
+                      {col.label}
+                      {showSorting &&
+                        col.key &&
+                        !fixedStartCols.includes(col.key) &&
+                        !fixedEndCols.includes(col.key) &&
+                        getSortIcon(col.key)}
+                    </div>
+                  </th>
+
                 ))}
             </tr>
           </thead>
@@ -262,33 +261,31 @@ const CustomTable = ({
                   onClick={
                     setSelectedRow
                       ? () =>
-                          setSelectedRow(
-                            selectedRow === item._id ? null : item._id
-                          )
+                        setSelectedRow(
+                          selectedRow === item._id ? null : item._id
+                        )
                       : undefined
                   }
                   onDoubleClick={() => onRowDoubleClick?.(item)}
-                  className={`border-b border-[var(--light-gray)] hover:bg-[#CFE2FF] transition ${
-                    setSelectedRow ? "cursor-pointer " : ""
-                  } ${
-                    setSelectedRow && selectedRow === item._id
+                  className={`border-b border-[var(--light-gray)] hover:bg-[#CFE2FF] transition ${setSelectedRow ? "cursor-pointer " : ""
+                    } ${setSelectedRow && selectedRow === item._id
                       ? "bg-[#CFE2FF] text-white"
                       : rowIdx % 2 === 0
-                      ? "bg-gray-50"
-                      : "bg-[#EDEDED]"
-                  }`}
+                        ? "bg-gray-50"
+                        : "bg-[#EDEDED]"
+                    }`}
                 >
-          {combinedOrder
-  .map(headerByKey)
-  .filter(Boolean)
-  .map((col, colIdx) => (
-    <td
-      key={colIdx}
-      className="px-2 py-2 text-sm text-gray-700 text-left align-middle break-words"
-    >
-      {item[col.key] ?? "-"}
-    </td>
-  ))}
+                  {combinedOrder
+                    .map(headerByKey)
+                    .filter(Boolean)
+                    .map((col, colIdx) => (
+                      <td
+                        key={colIdx}
+                        className="px-2 py-2 text-sm text-gray-700 text-left align-middle break-words"
+                      >
+                        {item[col.key] ?? "-"}
+                      </td>
+                    ))}
                 </tr>
               ))
             )}

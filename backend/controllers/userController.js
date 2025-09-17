@@ -37,7 +37,7 @@ export const initiateUserVerification = async (req, res) => {
     if (!role) return res.status(400).json({ message: "Role is required" });
     if (!status) return res.status(400).json({ message: "Status is required" });
 
-    // ✅ Password policy for clientadmin
+    // Password policy for clientadmin
     if (role === "clientadmin") {
       if (!password || !strongPwRe.test(password)) {
         return res.status(400).json({
@@ -62,7 +62,7 @@ export const initiateUserVerification = async (req, res) => {
       return res.status(409).json({ message: "User already exists" });
     }
 
-    // ✅ Permission validation
+    // Permission validation
     let userPermissions = [...defaultPermissions];
     if (Array.isArray(permissions)) {
       const invalid = permissions.filter(p => !allowedPermissions.includes(p));
@@ -75,7 +75,7 @@ export const initiateUserVerification = async (req, res) => {
       return res.status(400).json({ message: "Permissions must be an array of strings" });
     }
 
-    // ✅ AssociateAdminLimit validation
+    // AssociateAdminLimit validation
     let parsedLimit = 0;
     if (role === "clientadmin") {
       if (associateAdminLimit !== undefined && associateAdminLimit !== null) {
@@ -87,13 +87,13 @@ export const initiateUserVerification = async (req, res) => {
       }
     }
 
-    // ✅ 🔑 CONDITION: OTP sirf tab chale jab superadmin → clientadmin/associateadmin
+    // CONDITION: OTP sirf tab chale jab superadmin → clientadmin/associateadmin
     const otpRequired =
-      creator.role === "superadmin" &&
-      (role === "clientadmin" || role === "associateadmin");
+      (creator.role === "superadmin" && role === "clientadmin") ||
+      (creator.role === "clientadmin" && role === "associateadmin");
 
     if (!otpRequired) {
-      // ✅ Baaki roles ke liye direct create kar dena (no OTP)
+      // Baaki roles ke liye direct create kar dena (no OTP)
       const hashedPassword = password
         ? await bcrypt.hash(password, 10)
         : await bcrypt.hash(Math.random().toString(36), 10);
@@ -138,7 +138,7 @@ export const initiateUserVerification = async (req, res) => {
       });
     }
 
-    // ✅ OTP flow (superadmin → clientadmin/associateadmin)
+    // OTP flow (superadmin → clientadmin/associateadmin)
     const otp = genOtp();
     const otpHash = await bcrypt.hash(otp, 10);
     const otpExpiresAt = new Date(Date.now() + 2 * 60 * 1000);
@@ -316,7 +316,7 @@ export const createUserBySuperAdmin = async (req, res) => {
   } = req.body;
 
   try {
-    const creator = req.user; // ✅ defined early
+    const creator = req.user; // defined early
 
     // basic gates
     if (!fullName?.trim()) {
@@ -336,7 +336,7 @@ export const createUserBySuperAdmin = async (req, res) => {
         .json({ message: e?.message || "Email undeliverable" });
     }
 
-    // ✅ Duplicate checks
+    // Duplicate checks
     let userExists;
     if (role === "clientadmin") {
       // clientadmins must be globally unique
@@ -417,8 +417,7 @@ export const createUserBySuperAdmin = async (req, res) => {
 
       if (allowed === 0) {
         return res.status(400).json({
-          message:
-            "This clientadmin is not allowed to create associateadmins (limit is 0).",
+          message: "This clientadmin is not allowed to create associateadmins (limit is 0).",
         });
       }
 

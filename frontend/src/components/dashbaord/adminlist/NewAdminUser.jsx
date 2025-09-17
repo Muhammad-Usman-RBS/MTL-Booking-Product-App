@@ -274,8 +274,8 @@ const NewAdminUser = () => {
 
         // OTP only if superadmin is creating clientadmin/associateadmin
         const otpRequired =
-          user?.role === "superadmin" &&
-          (payload.role === "clientadmin" || payload.role === "associateadmin");
+          (user?.role === "superadmin" && payload.role === "clientadmin") ||
+          (user?.role === "clientadmin" && payload.role === "associateadmin");
 
         if (otpRequired) {
           const res = await initiateUserVerification(payload).unwrap();
