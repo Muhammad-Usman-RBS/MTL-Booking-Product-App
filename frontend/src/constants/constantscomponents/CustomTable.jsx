@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import Icons from "../../assets/icons";
 import DownloadExcel from "../constantscomponents/DownloadExcel";
 
-const itemsPerPageOptions = [5, 10, 20, "All"];
+const itemsPerPageOptions = [10, 20, 30, 40, 50, "All"];
 
 const CustomTable = ({
   tableHeaders = [],
