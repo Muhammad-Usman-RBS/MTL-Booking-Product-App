@@ -244,19 +244,25 @@ const BookingsTable = ({
         c: "Completed",
       };
 
- 
       if (key === "d") {
         if (isDeletedTab) {
           toast.info("This action is disabled in the Deleted tab.");
           return;
         }
-        if(user?.role === "customer") {
-          toast.warn("customer cannot access drivers list")
-          return
+      
+        if (user?.role === "customer") {
+          toast.warn("Customer cannot access drivers list");
+          return;
+        }
+      
+        if (String(selectedBooking.status).toLowerCase() === "cancelled") {
+          toast.error("This booking has been cancelled. Driver selection is disabled.");
+          return;
         }
       
         openDriverModal(selectedBooking.driver);
-      } else if (key === "enter") {
+      }
+      else if (key === "enter") {
         openViewModal(selectedBooking);
       }
       
