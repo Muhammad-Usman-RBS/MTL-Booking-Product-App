@@ -44,16 +44,7 @@ export const getAllJobs = async (req, res) => {
     }
 
     const jobs = await Job.find({ companyId }).populate("driverId").lean();
-
-    if (!jobs || jobs.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No jobs found for this company" });
-    }
-
-    return res
-      .status(200)
-      .json({ success: true, message: "Jobs fetched successfully", jobs });
+    if (!jobs || jobs.length === 0) {return res.status(200).json({ success: true, message: "No jobs found for this company", jobs: [] });}return res.status(200).json({ success: true, message: "Jobs fetched successfully", jobs });
   } catch (err) {
     console.error("Error fetching all jobs:", err);
     return res

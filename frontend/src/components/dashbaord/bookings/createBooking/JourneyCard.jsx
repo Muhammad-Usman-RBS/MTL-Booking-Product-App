@@ -2,8 +2,14 @@ import React, { useEffect, useState, useRef, useMemo } from "react";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import { useGetAllCoveragesQuery } from "../../../../redux/api/coverageApi";
-import { normalizeCoverageRules, decideCoverage } from "../../../../utils/coverageUtils";
-import { useLazySearchGooglePlacesQuery, useLazyGeocodeQuery } from "../../../../redux/api/googleApi";
+import {
+  normalizeCoverageRules,
+  decideCoverage,
+} from "../../../../utils/coverageUtils";
+import {
+  useLazySearchGooglePlacesQuery,
+  useLazyGeocodeQuery,
+} from "../../../../redux/api/googleApi";
 
 const JourneyCard = ({
   title,
@@ -39,9 +45,7 @@ const JourneyCard = ({
 
   const companyId = useSelector(
     (s) =>
-      s?.auth?.user?.companyId ||
-      s?.auth?.user?.company?._id ||
-      s?.company?.id
+      s?.auth?.user?.companyId || s?.auth?.user?.company?._id || s?.company?.id
   );
 
   // API hooks
@@ -63,7 +67,9 @@ const JourneyCard = ({
   const checkCoverage = (text, scope, coords) => {
     const res = decideCoverage(text, scope, coverageRules, coords);
     if (!res.allowed) {
-      toast.warning(`We currently don't serve this ${scope} area. (${res.reason})`);
+      toast.warning(
+        `We currently don't serve this ${scope} area. (${res.reason})`
+      );
       return false;
     }
     return true;
@@ -101,7 +107,8 @@ const JourneyCard = ({
         place_id: r.place_id, // KEEP THIS
         name: r.name || r.structured_formatting?.main_text,
         formatted_address: r.formatted_address || r.description,
-        source: r.source || (r.types?.includes("airport") ? "airport" : "location"),
+        source:
+          r.source || (r.types?.includes("airport") ? "airport" : "location"),
         location: r.location || null,
       }));
       setter(results);
@@ -121,7 +128,9 @@ const JourneyCard = ({
   // Handle pickup suggestion select
   const handlePickupSelect = async (sug) => {
     const full = `${sug.name} - ${sug.formatted_address}`;
-    const coords = sug.location ? { lat: Number(sug.location.lat), lng: Number(sug.location.lng) } : null;
+    const coords = sug.location
+      ? { lat: Number(sug.location.lat), lng: Number(sug.location.lng) }
+      : null;
 
     if (!checkCoverage(full, "pickup", coords)) return;
 
@@ -144,7 +153,9 @@ const JourneyCard = ({
   // Handle dropoff suggestion select
   const handleDropOffSelect = async (idx, sug) => {
     const full = `${sug.name} - ${sug.formatted_address}`;
-    const coords = sug.location ? { lat: Number(sug.location.lat), lng: Number(sug.location.lng) } : null;
+    const coords = sug.location
+      ? { lat: Number(sug.location.lat), lng: Number(sug.location.lng) }
+      : null;
 
     if (!checkCoverage(full, "dropoff", coords)) return;
 
@@ -197,7 +208,8 @@ const JourneyCard = ({
             <h2 className="text-xl font-bold text-[#f5f5f5]">{title}:-</h2>
             <div className="text-left sm:text-right w-full sm:w-auto">
               <span className="inline-block px-4 py-1.5 text-base font-semibold text-white border border-white rounded-md bg-transparent">
-                Fare: {symbol}{fare?.toFixed(2) || "0.00"}
+                Fare: {symbol}
+                {fare?.toFixed(2) || "0.00"}
               </span>
               {pricingMode === "postcode" &&
                 matchedPostcodePrice?.price &&
@@ -216,7 +228,10 @@ const JourneyCard = ({
                 Pick Up Date & Time
               </label>
               <div className="flex flex-col sm:flex-row gap-3">
-                <label onClick={handleClick} style={{ display: "block", width: "100%", cursor: "pointer" }}>
+                <label
+                  onClick={handleClick}
+                  style={{ display: "block", width: "100%", cursor: "pointer" }}
+                >
                   <input
                     type="date"
                     name="date"
@@ -257,7 +272,8 @@ const JourneyCard = ({
                     name="minute"
                     className="custom_input w-full"
                     value={
-                      journeyData.minute === "" || journeyData.minute === undefined
+                      journeyData.minute === "" ||
+                      journeyData.minute === undefined
                         ? ""
                         : journeyData.minute.toString().padStart(2, "0")
                     }
@@ -270,14 +286,13 @@ const JourneyCard = ({
                       })
                     }
                   >
-<option value="">MM</option>
-{Array.from({ length: 12 }, (_, i) => (i + 1) * 5).map((m) => (
-  <option key={m} value={m.toString().padStart(2, "0")}>
-    {m.toString().padStart(2, "0")}
-  </option>
+                    <option value="">MM</option>
+                    {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => (
+                      <option key={m} value={m.toString().padStart(2, "0")}>
+                        {m.toString().padStart(2, "0")}
+                      </option>
                     ))}
                   </select>
-
                 </div>
               </div>
             </div>
@@ -289,7 +304,10 @@ const JourneyCard = ({
                 placeholder="Pickup Location"
                 value={journeyData.pickup}
                 onChange={handlePickupChange}
-                onBlur={() => journeyData.pickup && checkCoverage(journeyData.pickup, "pickup", pickupCoords)}
+                onBlur={() =>
+                  journeyData.pickup &&
+                  checkCoverage(journeyData.pickup, "pickup", pickupCoords)
+                }
                 className="custom_input w-full"
               />
 
@@ -303,13 +321,22 @@ const JourneyCard = ({
                       let coords = null;
                       try {
                         const g = await triggerGeocode(val).unwrap();
-                        if (g?.location && Number.isFinite(g.location.lat) && Number.isFinite(g.location.lng)) {
-                          coords = { lat: Number(g.location.lat), lng: Number(g.location.lng) };
+                        if (
+                          g?.location &&
+                          Number.isFinite(g.location.lat) &&
+                          Number.isFinite(g.location.lng)
+                        ) {
+                          coords = {
+                            lat: Number(g.location.lat),
+                            lng: Number(g.location.lng),
+                          };
                         }
                       } catch (err) {
-                        console.warn("Geocode failed, falling back to text-only coverage check", err);
+                        console.warn(
+                          "Geocode failed, falling back to text-only coverage check",
+                          err
+                        );
                       }
-
 
                       if (!checkCoverage(val, "pickup", coords)) return;
 
@@ -326,7 +353,6 @@ const JourneyCard = ({
                   >
                     ➕ Use: "{journeyData.pickup}"
                   </li>
-
 
                   {pickupSuggestions.map((sug, idx) => (
                     <li
@@ -359,7 +385,7 @@ const JourneyCard = ({
                   onChange={handleChange}
                   className="custom_input"
                 />
-                    <input
+                <input
                   name="flightNumber"
                   placeholder="Flight No."
                   value={journeyData.flightNumber || ""}
@@ -388,7 +414,8 @@ const JourneyCard = ({
                   onChange={(e) => handleDropOffChange(idx, e.target.value)}
                   onBlur={() => {
                     const coords = dropoffCoords[idx] || null;
-                    dropOffs[idx] && checkCoverage(dropOffs[idx], "dropoff", coords);
+                    dropOffs[idx] &&
+                      checkCoverage(dropOffs[idx], "dropoff", coords);
                   }}
                   className="custom_input w-full"
                 />
@@ -402,11 +429,21 @@ const JourneyCard = ({
                         let coords = null;
                         try {
                           const g = await triggerGeocode(val).unwrap();
-                          if (g?.location && Number.isFinite(g.location.lat) && Number.isFinite(g.location.lng)) {
-                            coords = { lat: Number(g.location.lat), lng: Number(g.location.lng) };
+                          if (
+                            g?.location &&
+                            Number.isFinite(g.location.lat) &&
+                            Number.isFinite(g.location.lng)
+                          ) {
+                            coords = {
+                              lat: Number(g.location.lat),
+                              lng: Number(g.location.lng),
+                            };
                           }
                         } catch (err) {
-                          console.warn("Dropoff geocode failed, fallback to text-only check", err);
+                          console.warn(
+                            "Dropoff geocode failed, fallback to text-only check",
+                            err
+                          );
                         }
 
                         if (!checkCoverage(val, "dropoff", coords)) return;
@@ -415,7 +452,10 @@ const JourneyCard = ({
                         updated[idx] = val;
                         setDropOffs(updated);
 
-                        setDropOffTypes((prev) => ({ ...prev, [idx]: "location" }));
+                        setDropOffTypes((prev) => ({
+                          ...prev,
+                          [idx]: "location",
+                        }));
 
                         setDropoffCoords((prev) => ({
                           ...prev,

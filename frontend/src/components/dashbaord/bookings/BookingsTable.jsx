@@ -172,6 +172,10 @@ const BookingsTable = ({
         }
 
         if (key === "d") {
+          if (selectedBooking.status === "Cancelled" && (user?.role === "clientadmin" || user?.role === "customer")) {
+            toast.error("You cannot delete a cancelled booking.");
+            return;
+          }
           if (user?.role === "driver") {
             toast.info("Drivers are not allowed to delete bookings");
             return;
@@ -180,7 +184,7 @@ const BookingsTable = ({
             toast.info("Customers are not allowed to delete bookings");
             return;
           }
-
+    
           if (isDeletedTab) {
             setSelectedDeleteId(selectedBooking._id);
             setShowDeleteModal(true);
@@ -240,6 +244,7 @@ const BookingsTable = ({
         c: "Completed",
       };
 
+ 
       if (key === "d") {
         if (isDeletedTab) {
           toast.info("This action is disabled in the Deleted tab.");
@@ -249,10 +254,7 @@ const BookingsTable = ({
           toast.warn("customer cannot access drivers list")
           return
         }
-        if (isCancelledByRole(selectedBooking, ["clientadmin", "customer"])) {
-          toast.info("Driver selection disabled — booking was cancelled ");
-          return;
-        }
+      
         openDriverModal(selectedBooking.driver);
       } else if (key === "enter") {
         openViewModal(selectedBooking);

@@ -98,7 +98,7 @@ const EditProfile = () => {
       }
 
       const updatedUser = await updateProfile(formData).unwrap();
-      dispatch(setUser(updatedUser));
+      dispatch(setUser({ ...user, ...updatedUser }));
       setPreview(updatedUser.profileImage);
 
       toast.success("Profile updated successfully!");

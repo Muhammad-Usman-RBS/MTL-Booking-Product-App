@@ -73,7 +73,7 @@ const Sidebar = () => {
             Welcome!
           </p>
           <p className="font-semibold text-[#1f2937] truncate">
-            {user?.fullName || "Guest"}
+            {user?.fullName.split(" ").map((part)=> part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(" ") || "Guest"}
           </p>
         </div>
       )}

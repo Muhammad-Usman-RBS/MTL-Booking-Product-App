@@ -82,7 +82,10 @@ function Navbar() {
   }, []);
   useEffect(() => {
     const onFocus = () => {
-      refetch();
+      if (companyId && refetch) {
+        refetch();
+      }
+  
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
@@ -90,7 +93,6 @@ function Navbar() {
 
 
 
-  // --- (Optional but handy) HYDRATE settings page from localStorage on mount ---
  
   const handleNotificationClick = (jobId) => {
     if (user?.role !== "driver") return;
@@ -253,9 +255,9 @@ function Navbar() {
   // continues to use ids returned from the list, and for markAllAsRead
   // pass the SAME empArg:
 
-  const [firstName, lastName] = name.split(" ");
-  const displayName = `${firstName || ""} ${lastName || ""}`.trim();
-
+  
+  const displayName = (name || "").split(" ").map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+  .join(" ");
   const handleMouseLeave = () => {
     TimeRef.current = setTimeout(() => {
       setShowTooltip(false);
@@ -557,7 +559,7 @@ function Navbar() {
                       )}
                       <div className="min-w-0 w-24">
                         <p className="font-semibold truncate whitespace-nowrap">{displayName}</p>
-                        <p className="font-light text-sm">{user?.role}</p>
+                        <p className="font-light text-sm">{user?.role === 'clientadmin'  ? "Admin" : user?.role}</p>
                       </div>
                     </div>
 

@@ -645,7 +645,11 @@ export const updateUserBySuperAdmin = async (req, res) => {
   try {
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
-
+    if ((user.status === "Pending" || user.status === "Deleted") && user.verification && status === "Active") {
+      return res.status(400).json({
+        message: "Cannot set status to Active — user has not completed OTP verification.",
+      });
+    }
     // fullName
     if (fullName?.trim()) user.fullName = fullName.trim();
 

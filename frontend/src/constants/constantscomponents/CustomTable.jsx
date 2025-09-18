@@ -18,13 +18,19 @@ const CustomTable = ({
   onRowDoubleClick,
 }) => {
   const [search, setSearch] = useState("");
-  const [perPage, setPerPage] = useState(5);
+  const [perPage, setPerPage] = useState(() => {
+    const saved = localStorage.getItem("customTablePerPage");
+    if (saved) {
+      return saved === "All" ? "All" : Number(saved);
+    }
+    return 10;
+  });
   const [page, setPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const tableRef = useRef();
   const persistKey = "customTableColumnOrder";
   const fixedStartCols = ["checkbox"]; // fixed at start
-  const fixedEndCols = ["actions"];    // fixed at end
+  const fixedEndCols = ["actions"]; // fixed at end
   const defaultOrder = useMemo(() => {
     return tableHeaders
       .map((h) => h.key)
@@ -33,6 +39,10 @@ const CustomTable = ({
       );
   }, [tableHeaders]);
   const [internalOrder, setInternalOrder] = useState(defaultOrder);
+
+  useEffect(() => {
+    localStorage.setItem("customTablePerPage", perPage);
+  }, [perPage]);
 
   // Load saved order (if any) when component mounts or key changes
   useEffect(() => {
@@ -45,7 +55,7 @@ const CustomTable = ({
         const missing = defaultOrder.filter((k) => !valid.includes(k));
         setInternalOrder([...valid, ...missing]);
         return;
-      } catch { }
+      } catch {}
     }
     setInternalOrder(defaultOrder);
   }, [persistKey]);
@@ -129,6 +139,8 @@ const CustomTable = ({
     );
   });
 
+  // REPLACE the sortedData section in CustomTable.jsx with this improved version:
+
   const sortedData = [...filteredData].sort((a, b) => {
     if (showSorting && sortConfig.key) {
       const aVal = a[sortConfig.key] || "";
@@ -138,7 +150,40 @@ const CustomTable = ({
         : String(bVal).localeCompare(String(aVal));
     }
 
-    return new Date(a.createdAt) - new Date(b.createdAt);
+    const getBookingDateTime = (item) => {
+      if (item.date && item.date !== "-") {
+        try {
+          const dateStr =
+            typeof item.date === "string" ? item.date : String(item.date);
+
+          const parts = dateStr.split(", ");
+          if (parts.length === 2) {
+            const [datePart, timePart] = parts;
+            const [day, month, year] = datePart.split("/");
+            const isoString = `${year}-${month.padStart(2, "0")}-${day.padStart(
+              2,
+              "0"
+            )}T${timePart}`;
+            const parsedDate = new Date(isoString);
+            if (!isNaN(parsedDate.getTime())) {
+              return parsedDate;
+            }
+          }
+          const fallbackDate = new Date(dateStr);
+          if (!isNaN(fallbackDate.getTime())) {
+            return fallbackDate;
+          }
+        } catch (error) {
+          console.warn("Date parsing failed:", error, item.date);
+        }
+      }
+      return new Date(item.createdAt || 0);
+    };
+
+    const dateA = getBookingDateTime(a);
+    const dateB = getBookingDateTime(b);
+
+    return dateA - dateB;
   });
 
   const totalPages =
@@ -166,9 +211,6 @@ const CustomTable = ({
               onChange={(e) => setSearch(e.target.value)}
             />
           )}
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
           {showRefresh && (
             <button
               className="border py-2 px-3 rounded cursor-pointer border-[var(--light-gray)]"
@@ -177,6 +219,58 @@ const CustomTable = ({
             >
               <Icons.RefreshCcw size={16} />
             </button>
+          )}
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2  w-full sm:w-auto">
+          {showPagination && (
+            <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full sm:w-auto ">
+              <button
+                className="btn btn-reset"
+                disabled={page === 1}
+                onClick={() => setPage(page - 1)}
+              >
+                <Icons.SkipBack size={16} />
+              </button>
+
+              <input
+                type="number"
+                value={page}
+                onChange={(e) => {
+                  const newPage = Number(e.target.value);
+                  if (newPage >= 1 && newPage <= totalPages) setPage(newPage);
+                }}
+                className="border w-16 text-center py-1 px-2 rounded border-[var(--light-gray)]"
+              />
+              <span className="text-[var(--dark-gray)] whitespace-nowrap">
+                of {totalPages}
+              </span>
+
+              <button
+                className="btn btn-reset"
+                disabled={page === totalPages}
+                onClick={() => setPage(page + 1)}
+              >
+                <Icons.SkipForward size={16} />
+              </button>
+
+              <select
+                className="border py-1 px-3 rounded border-[var(--light-gray)]"
+                value={perPage.toString()}
+                onChange={(e) => {
+                  const value =
+                    e.target.value === "All" ? "All" : Number(e.target.value);
+                  setPerPage(value);
+                  setPage(1);
+                }}
+              >
+                {itemsPerPageOptions.map((item, i) => (
+                  <option key={i} value={item.toString()}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
         </div>
       </div>
@@ -201,39 +295,41 @@ const CustomTable = ({
                     }
                     onDragStart={
                       !fixedStartCols.includes(col.key) &&
-                        !fixedEndCols.includes(col.key)
+                      !fixedEndCols.includes(col.key)
                         ? handleDragStart(col.key)
                         : undefined
                     }
                     onDragOver={
                       !fixedStartCols.includes(col.key) &&
-                        !fixedEndCols.includes(col.key)
+                      !fixedEndCols.includes(col.key)
                         ? handleDragOver(col.key)
                         : undefined
                     }
                     onDrop={
                       !fixedStartCols.includes(col.key) &&
-                        !fixedEndCols.includes(col.key)
+                      !fixedEndCols.includes(col.key)
                         ? handleDrop(col.key)
                         : undefined
                     }
                     onClick={() =>
                       showSorting &&
-                        col.key &&
-                        !fixedStartCols.includes(col.key) &&
-                        !fixedEndCols.includes(col.key)
+                      col.key &&
+                      !fixedStartCols.includes(col.key) &&
+                      !fixedEndCols.includes(col.key)
                         ? requestSort(col.key)
                         : undefined
                     }
-                    className={`px-2 py-3 text-left align-middle whitespace-nowrap ${showSorting &&
-                        col.key &&
-                        !fixedStartCols.includes(col.key) &&
-                        !fixedEndCols.includes(col.key)
+                    className={`px-2 py-3 text-left align-middle whitespace-nowrap ${
+                      showSorting &&
+                      col.key &&
+                      !fixedStartCols.includes(col.key) &&
+                      !fixedEndCols.includes(col.key)
                         ? "cursor-pointer text-dark transition"
                         : "cursor-default"
-                      }`}
+                    }`}
                     title={
-                      fixedStartCols.includes(col.key) || fixedEndCols.includes(col.key)
+                      fixedStartCols.includes(col.key) ||
+                      fixedEndCols.includes(col.key)
                         ? ""
                         : "Drag to reorder"
                     }
@@ -247,7 +343,6 @@ const CustomTable = ({
                         getSortIcon(col.key)}
                     </div>
                   </th>
-
                 ))}
             </tr>
           </thead>
@@ -261,19 +356,21 @@ const CustomTable = ({
                   onClick={
                     setSelectedRow
                       ? () =>
-                        setSelectedRow(
-                          selectedRow === item._id ? null : item._id
-                        )
+                          setSelectedRow(
+                            selectedRow === item._id ? null : item._id
+                          )
                       : undefined
                   }
                   onDoubleClick={() => onRowDoubleClick?.(item)}
-                  className={`border-b border-[var(--light-gray)] hover:bg-[#CFE2FF] transition ${setSelectedRow ? "cursor-pointer " : ""
-                    } ${setSelectedRow && selectedRow === item._id
+                  className={`border-b border-[var(--light-gray)] hover:bg-[#CFE2FF] transition ${
+                    setSelectedRow ? "cursor-pointer " : ""
+                  } ${
+                    setSelectedRow && selectedRow === item._id
                       ? "bg-[#CFE2FF] text-white"
                       : rowIdx % 2 === 0
-                        ? "bg-gray-50"
-                        : "bg-[#EDEDED]"
-                    }`}
+                      ? "bg-gray-50"
+                      : "bg-[#EDEDED]"
+                  }`}
                 >
                   {combinedOrder
                     .map(headerByKey)
@@ -294,67 +391,18 @@ const CustomTable = ({
       </div>
 
       {/* Bottom Bar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 gap-4 text-sm w-full">
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-start sm:items-center w-full sm:w-auto">
-          <div className="btn btn-outline w-full sm:w-auto text-center">
-            Total Records: {filteredData.length}
-          </div>
-          {showDownload && (
-            <div className="w-full sm:w-auto">
-              <DownloadExcel
-                tableData={exportTableData || tableData}
-                tableHeaders={tableHeaders}
-              />
-            </div>
-          )}
-        </div>
-
-        {showPagination && (
-          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full sm:w-auto">
-            <button
-              className="btn btn-reset"
-              disabled={page === 1}
-              onClick={() => setPage(page - 1)}
-            >
-              <Icons.SkipBack size={16} />
-            </button>
-
-            <input
-              type="number"
-              value={page}
-              onChange={(e) => {
-                const newPage = Number(e.target.value);
-                if (newPage >= 1 && newPage <= totalPages) setPage(newPage);
-              }}
-              className="border w-16 text-center py-1 px-2 rounded border-[var(--light-gray)]"
+      <div className="flex justify-end gap-2 sm:gap-3 items-center w-full">
+        {showDownload && (
+          <div>
+            <DownloadExcel
+              tableData={exportTableData || tableData}
+              tableHeaders={tableHeaders}
             />
-            <span className="text-[var(--dark-gray)]">of {totalPages}</span>
-
-            <button
-              className="btn btn-reset"
-              disabled={page === totalPages}
-              onClick={() => setPage(page + 1)}
-            >
-              <Icons.SkipForward size={16} />
-            </button>
-
-            <select
-              className="border py-1 px-3 rounded border-[var(--light-gray)]"
-              value={perPage}
-              onChange={(e) => {
-                const value =
-                  e.target.value === "All" ? "All" : Number(e.target.value);
-                setPerPage(value);
-              }}
-            >
-              {itemsPerPageOptions.map((item, i) => (
-                <option key={i} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
           </div>
         )}
+        <div className="btn btn-outline text-center">
+          Total Records: {filteredData.length}
+        </div>
       </div>
     </div>
   );
