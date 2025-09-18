@@ -541,37 +541,39 @@ export const getClientAdmins = async (req, res) => {
     let query = {};
 
     if (role === "superadmin") {
+      // Superadmin -> sab clientadmins aur demo accounts
       query.$or = [
         { role: { $in: ["clientadmin", "demo"] } },
         { role: { $in: ["driver", "customer"] }, companyId: null },
       ];
     } else if (role === "clientadmin") {
-      // Get all associateadmins created by this clientadmin
-      const associateAdmins = await User.find({
-        createdBy: userId,
-        role: "associateadmin",
-      });
-
+      // Clientadmin -> apne associateadmins, staffmembers, drivers aur customers
       query = {
         $or: [
           {
             createdBy: userId,
-            role: { $in: ["associateadmin", "staffmember", "driver", "customer"] }
+            role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
           },
           {
             role: "customer",
             companyId: companyId,
-            createdBy: null // widget-based customers for this company only
-          }
-        ]
+            createdBy: null, // widget-based customers for this company only
+          },
+        ],
       };
     } else if (role === "associateadmin") {
-      // Associateadmin can only see users they created + their own record
+      // Associateadmin -> sirf apne banaye huay users + khud ka record
       query = {
         $or: [
-          { createdBy: userId }, // Users created by this associateadmin
-          { _id: userId }, // Their own record
+          { createdBy: userId },
+          { _id: userId },
         ],
+        role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
+      };
+    } else if (role === "staffmember") {
+      // Staffmember -> apne clientadmin ka pura company data
+      query = {
+        companyId: companyId,
         role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
       };
     } else {
