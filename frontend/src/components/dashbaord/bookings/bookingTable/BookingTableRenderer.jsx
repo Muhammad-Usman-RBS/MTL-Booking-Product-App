@@ -110,7 +110,7 @@ export const BookingTableRenderer = ({
   const formatPassenger = (p) =>
     !p || typeof p !== "object"
       ? "-"
-      : `${p.name || "N/A"} | ${p.email || 0} | +${p.phone || 0}`;
+      : `${p.name || "N/A"}`;
 
   const formatDriver = (item) => {
     const allDrivers = driversData?.drivers || [];

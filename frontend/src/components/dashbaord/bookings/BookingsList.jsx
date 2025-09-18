@@ -3,7 +3,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { setCompanies } from "../../../redux/slices/companySlice";
 import { useGetCompanyByIdQuery } from "../../../redux/api/companyApi";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
-import { actionMenuItems, columnLabels } from "../../../constants/dashboardTabsData/data";
+import {
+  actionMenuItems,
+  columnLabels,
+} from "../../../constants/dashboardTabsData/data";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import JourneyDetailsModal from "./JourneyDetailsModal";
@@ -14,7 +17,7 @@ import AuditModal from "./AuditModal";
 import ViewDriver from "./ViewDriver";
 import NewBooking from "./NewBooking";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
-import { useLoading } from '../../common/LoadingProvider';
+import { useLoading } from "../../common/LoadingProvider";
 
 const BookingsList = () => {
   const user = useSelector((state) => state.auth.user);
@@ -89,11 +92,12 @@ const BookingsList = () => {
   const [endDate, setEndDate] = useState(null);
 
   const dispatch = useDispatch();
-  const { data: companyData, isLoading: isCompanyLoading } = useGetCompanyByIdQuery(user?.companyId);
-  const { data: bookingData, isLoading: isBookingsLoading } = useGetAllBookingsQuery(user?.companyId);
-  const { data: driversData, isLoading: isDriversLoading } = useGetAllDriversQuery(
-    user?.companyId
-  );
+  const { data: companyData, isLoading: isCompanyLoading } =
+    useGetCompanyByIdQuery(user?.companyId);
+  const { data: bookingData, isLoading: isBookingsLoading } =
+    useGetAllBookingsQuery(user?.companyId);
+  const { data: driversData, isLoading: isDriversLoading } =
+    useGetAllDriversQuery(user?.companyId);
 
   // 🔹 Manage global loading spinner
   useEffect(() => {
@@ -102,7 +106,13 @@ const BookingsList = () => {
     } else {
       hideLoading();
     }
-  }, [isCompanyLoading, isBookingsLoading, isDriversLoading, showLoading, hideLoading]);
+  }, [
+    isCompanyLoading,
+    isBookingsLoading,
+    isDriversLoading,
+    showLoading,
+    hideLoading,
+  ]);
 
   useEffect(() => {
     if (driversData?.drivers?.length > 0) {
@@ -118,6 +128,7 @@ const BookingsList = () => {
 
   allBookings.forEach((booking) => {
     const status = booking.status || "Unknown";
+    if (status === "Deleted") return;
     if (statusCountMap.hasOwnProperty(status)) {
       statusCountMap[status]++;
     } else {
@@ -318,8 +329,10 @@ const BookingsList = () => {
           {Object.keys(selectedColumns)
             .filter(
               (key) =>
-                !(user?.role === "customer" &&
-                  (key === "driverFare" || key === "returnDriverFare"))
+                !(
+                  user?.role === "customer" &&
+                  (key === "driverFare" || key === "returnDriverFare")
+                )
             )
             .map((key) => (
               <label
@@ -351,8 +364,8 @@ const BookingsList = () => {
           editBookingData?.__copyMode
             ? "Copy Booking"
             : editBookingData?._id
-              ? "Edit Booking"
-              : "New Booking"
+            ? "Edit Booking"
+            : "New Booking"
         }
       >
         <NewBooking

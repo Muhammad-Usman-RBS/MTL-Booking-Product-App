@@ -58,6 +58,11 @@ const getNextNDays = (n) => {
   end.setDate(end.getDate() + (n - 1));
   return [start.toISOString().split("T")[0], end.toISOString().split("T")[0]];
 };
+const getFromTodayOnwards = () => {
+  const start = new Date();
+  const end = new Date("2100-12-31"); // a far future date
+  return [start.toISOString().split("T")[0], end.toISOString().split("T")[0]];
+};
 
 // Get next 7 days
 const getNext7Days = () => getNextNDays(7);
@@ -65,6 +70,7 @@ const getNext7Days = () => getNextNDays(7);
 // Get next 30 days
 const getNext30Days = () => getNextNDays(30);
 const ranges = [
+  { label: "Scheduled (Onwards Today)", getRange: getFromTodayOnwards },
   { label: "Today", getRange: getToday },
   { label: "Tomorrow", getRange: getTomorrow },     
   { label: "Yesterday", getRange: getYesterday },
