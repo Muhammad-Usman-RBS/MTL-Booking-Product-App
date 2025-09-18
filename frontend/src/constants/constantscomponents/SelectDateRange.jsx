@@ -44,12 +44,34 @@ const getLastMonth = () => {
   const end = new Date(now.getFullYear(), now.getMonth(), 1);
   return [start.toISOString().split("T")[0], end.toISOString().split("T")[0]];
 };
+const getTomorrow = () => {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  const iso = date.toISOString().split("T")[0];
+  return [iso, iso];
+};
 
+// Get next N days (including today)
+const getNextNDays = (n) => {
+  const start = new Date();
+  const end = new Date();
+  end.setDate(end.getDate() + (n - 1));
+  return [start.toISOString().split("T")[0], end.toISOString().split("T")[0]];
+};
+
+// Get next 7 days
+const getNext7Days = () => getNextNDays(7);
+
+// Get next 30 days
+const getNext30Days = () => getNextNDays(30);
 const ranges = [
   { label: "Today", getRange: getToday },
+  { label: "Tomorrow", getRange: getTomorrow },     
   { label: "Yesterday", getRange: getYesterday },
   { label: "Last 7 Days", getRange: () => getLastNDays(7) },
+  { label: "Next 7 Days", getRange: getNext7Days },
   { label: "Last 30 Days", getRange: () => getLastNDays(30) },
+  { label: "Next 30 Days", getRange: getNext30Days },
   { label: "This Month", getRange: getThisMonth },
   { label: "Last Month", getRange: getLastMonth },
 ];

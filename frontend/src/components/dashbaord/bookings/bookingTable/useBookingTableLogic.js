@@ -192,26 +192,30 @@ export const useBookingTableLogic = ({
     return bookings;
   }, [bookingData, jobData, user, companyId, isDriver]);
 
-  // Filter bookings
   const filteredBookings = useMemo(() => {
     let filtered = processedBookings.filter((b) => {
       if (b.status === "Deleted") return false;
-
-      const createdAt = new Date(b.createdAt);
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-
+      const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
+      if (!journey?.date) return false;
+      const bookingDateStr = new Date(journey.date).toISOString().split("T")[0];
+      const startStr = startDate
+        ? new Date(startDate).toISOString().split("T")[0]
+        : null;
+      const endStr = endDate
+        ? new Date(endDate).toISOString().split("T")[0]
+        : null;
+      const dateTime =
+        !startStr || !endStr
+          ? true
+          : bookingDateStr >= startStr && bookingDateStr <= endStr;
       const statusMatch =
         selectedStatus.includes("All") || selectedStatus.length === 0
           ? true
           : selectedStatus.includes(b.status);
-
       const passengerMatch =
         selectedPassengers.length === 0
           ? true
           : selectedPassengers.includes(b.passenger?.name);
-
       const driverMatch =
         !Array.isArray(selectedDrivers) || selectedDrivers.length === 0
           ? true
@@ -219,16 +223,11 @@ export const useBookingTableLogic = ({
             ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
             : false;
 
-      const dateTime =
-        !startDate || !endDate ? true : createdAt >= start && createdAt <= end;
-
       return statusMatch && passengerMatch && driverMatch && dateTime;
     });
-
     if (user?.role === "driver" && user?.employeeNumber) {
       filtered = filtered.filter((booking) => {
         if (!Array.isArray(booking.drivers)) return false;
-
         return booking.drivers.some((driverId) => {
           const id = typeof driverId === "object" ? driverId._id : driverId;
           const driver = assignedDrivers.find((d) => d._id === id);
@@ -236,8 +235,6 @@ export const useBookingTableLogic = ({
         });
       });
     }
-
-    // Sort by vehicle type match
     filtered.sort((a, b) => {
       let aMatch = 0;
       let bMatch = 0;

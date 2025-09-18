@@ -320,14 +320,16 @@ function Navbar() {
               "clientadmin",
               "superadmin",
               "demo",
-              "associate admin",
-              "staffmember",
             ].includes(user?.role)
               ? "Admin Panel"
               : user?.role === "driver"
                 ? "Driver Portal"
                 : user?.role === "customer"
                   ? "Customer Portal"
+                : user?.role === "staffmember"
+                  ? "Manager Portal"
+                : user?.role === "associateadmin"
+                  ? "associate admin"
                   : "Portal"}
           </h1>
         </div>
@@ -559,7 +561,7 @@ function Navbar() {
                       )}
                       <div className="min-w-0 w-24">
                         <p className="font-semibold truncate whitespace-nowrap">{displayName}</p>
-                        <p className="font-light text-sm">{user?.role === 'clientadmin'  ? "Admin" : user?.role}</p>
+                        <p className="font-light text-sm">{user?.role === 'clientadmin'  ? "Admin" : user?.role.charAt(0).toUpperCase() + user?.role.slice(1)}</p>
                       </div>
                     </div>
 
