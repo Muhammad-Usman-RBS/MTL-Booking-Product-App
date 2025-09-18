@@ -53,7 +53,7 @@ label {
 select:disabled {
   color: red !important; 
 }
-
+    
 /* Theme Colours */
 :root {
   --white: #ffffff;
