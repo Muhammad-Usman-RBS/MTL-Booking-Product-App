@@ -585,30 +585,30 @@ console.log(data)
                   {/* Booking Details */}
                   <div>
                     <strong className="block mb-3 text-lg font-bold text-[var(--dark-gray)]">
-                      Booking Details:
+                      Booking Details:&nbsp;
                     </strong>
                     <div className="space-y-2 text-sm">
                       <div>
                         <strong className="mr-1 text-[var(--dark-gray)]">
-                          Booking Type:
+                          Booking Type:&nbsp;
                         </strong>
                         {booking?.returnJourneyToggle ? "Return" : "Primary"}
                       </div>
                       <div>
                         <strong className="mr-1 text-[var(--dark-gray)]">
-                          Distance:
+                          Distance:&nbsp;
                         </strong>
                         {convertKmToMiles(journey?.distanceText) || "—"}
                       </div>
                       <div>
                         <strong className="mr-1 text-[var(--dark-gray)]">
-                          Payment:
+                          Payment:&nbsp;
                         </strong>
                         {booking.paymentMethod || "—"}
                       </div>
                       <div>
                         <strong className="text-[var(--dark-gray)]">
-                          Driver Fare:
+                          Driver Fare:&nbsp;
                         </strong>
                         £
                         {booking?.returnJourneyToggle
@@ -617,11 +617,19 @@ console.log(data)
                       </div>
                       <div>
                         <strong className="text-[var(--dark-gray)]">
-                          Notes: 
+                          Notes:&nbsp;
                         </strong>
                          { booking?.returnJourneyToggle
                           ? booking?.returnJourney.notes
                           : booking?.primaryJourney.notes || "—"}
+                      </div>
+                      <div>
+                        <strong className="text-[var(--dark-gray)]">
+                          Internal Notes:&nbsp; 
+                        </strong>
+                         { booking?.returnJourneyToggle
+                          ? booking?.returnJourney.internalNotes
+                          : booking?.primaryJourney.internalNotes || "—"}
                       </div>
                     </div>
                   </div>
@@ -636,19 +644,19 @@ console.log(data)
                       <div className="text-sm space-y-2">
                         <div>
                           <strong className="text-[var(--dark-gray)]">
-                            Name:
+                            Name:&nbsp;
                           </strong>
                           {booking.passenger.name}
                         </div>
                         <div>
                           <strong className="text-[var(--dark-gray)]">
-                            Contact:
+                            Contact:&nbsp;
                           </strong>
                           +{booking.passenger.phone || "N/A"}
                         </div>
                         <div>
                           <strong className="text-[var(--dark-gray)]">
-                            Email:
+                            Email:&nbsp;
                           </strong>
                           {booking.passenger.email || "N/A"}
                         </div>

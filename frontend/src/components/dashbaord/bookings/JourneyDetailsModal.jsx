@@ -201,10 +201,10 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
         <div className="grid md:grid-cols-2 gap-5 text-xs text-gray-800">
           <div className="space-y-2.5">
             <div>
-              <strong>Booking ID:</strong> {viewData?.bookingId || "N/A"}
+              <strong>Booking ID:&nbsp;</strong>{viewData?.bookingId || "N/A"}
             </div>
             <div>
-              <strong>Booked On:</strong>
+              <strong>Booked On:&nbsp;</strong>
               {viewData?.createdAt
                 ? moment(viewData.createdAt)
                   .tz(timezone)
@@ -212,24 +212,24 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                 : "N/A"}
             </div>
             <div>
-              <strong>Payment Reference:</strong>
+              <strong>Payment Reference:&nbsp;</strong>
               {viewData?.paymentMethod || "N/A"}
             </div>
             <div>
-              <strong>Pick Up:</strong>
+              <strong>Pick Up:&nbsp;</strong>
               <div className="ml-4 mt-1 space-y-1">
                 <div>
-                  <strong>Date & Time:</strong> {pickupTime}
+                  <strong>Date & Time:&nbsp;</strong> {pickupTime}
                 </div>
 
                 <div>
-                  <strong>Address:</strong> {j.pickup || "N/A"}
+                  <strong>Address:&nbsp;</strong> {j.pickup || "N/A"}
                 </div>
 
                 {/* NON-airport pickup fields */}
                 {!pickupIsAirport && j.pickupDoorNumber && (
                   <div>
-                    <strong>Door No.:</strong> {j.pickupDoorNumber}
+                    <strong>Door No.:&nbsp;</strong> {j.pickupDoorNumber}
                   </div>
                 )}
 
@@ -238,17 +238,17 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                   <>
                     {j.flightNumber && (
                       <div>
-                        <strong>Flight No.:</strong> {j.flightNumber}
+                        <strong>Flight No.:&nbsp;</strong> {j.flightNumber}
                       </div>
                     )}
                     {j.arrivefrom && (
                       <div>
-                        <strong>Arrive From:</strong> {j.arrivefrom}
+                        <strong>Arrive From:&nbsp;</strong> {j.arrivefrom}
                       </div>
                     )}
                     {j.pickmeAfter && (
                       <div>
-                        <strong>Pick Me After:</strong> {j.pickmeAfter}
+                        <strong>Pick Me After:&nbsp;</strong> {j.pickmeAfter}
                       </div>
                     )}
                   </>
@@ -298,11 +298,10 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                 })}
               </div>
 
-
               {(viewData?.primaryJourney?.terminal ||
                 viewData?.returnJourney?.terminal) && (
                   <div>
-                    <strong>Terminal:</strong>
+                    <strong>Terminal:&nbsp;</strong>
                     {viewData?.primaryJourney?.terminal ||
                       (viewData?.returnJourneyToggle &&
                         viewData?.returnJourney?.terminal) ||
@@ -321,14 +320,14 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
                   <strong>Passenger Details:</strong>
                   <div className="ml-4 mt-1 space-y-1">
                     <div>
-                      <strong>Name:</strong> {viewData?.passenger?.name || "N/A"}
+                      <strong>Name:&nbsp;</strong>{viewData?.passenger?.name || "N/A"}
                     </div>
                     <div>
-                      <strong>Email:</strong>
+                      <strong>Email:&nbsp;</strong>
                       {viewData?.passenger?.email || "N/A"}
                     </div>
                     <div>
-                      <strong>Phone:</strong> +
+                      <strong>Phone:&nbsp;</strong> +
                       {viewData?.passenger?.phone || "N/A"}
                     </div>
                   </div>
@@ -340,23 +339,23 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
               <strong>Vehicle Details:</strong>
               <div className="ml-4 mt-1 space-y-1">
                 <div>
-                  <strong>Vehicle:</strong>
+                  <strong>Vehicle:&nbsp;</strong>
                   {viewData?.vehicle?.vehicleName || "N/A"}
                 </div>
                 <div>
-                  <strong>Passengers:</strong>
+                  <strong>Passengers:&nbsp;</strong>
                   {viewData?.vehicle?.passenger || 0}
                 </div>
                 <div>
-                  <strong>Child Seats:</strong>
+                  <strong>Child Seats:&nbsp;</strong>
                   {viewData?.vehicle?.childSeat || 0}
                 </div>
                 <div>
-                  <strong>Small Luggage:</strong>
+                  <strong>Small Luggage:&nbsp;</strong>
                   {viewData?.vehicle?.handLuggage || 0}
                 </div>
                 <div>
-                  <strong>Large Luggage:</strong>
+                  <strong>Large Luggage:&nbsp;</strong>
                   {viewData?.vehicle?.checkinLuggage || 0}
                 </div>
               </div>
@@ -364,13 +363,22 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
             </div>
 
             <div>
-              <strong>Special Notes:</strong>
+              <strong>Notes:&nbsp;</strong>
               <div className="ml-4 mt-1 italic text-gray-500">
                 {viewData?.primaryJourney?.notes ||
                   (viewData?.returnJourneyToggle &&
                     viewData?.returnJourney?.notes) ||
                   "None"}
               </div>
+             <div className="mt-3">
+               <strong>Internal Notes:&nbsp;</strong>
+              <div className="ml-4 mt-1 italic text-gray-500">
+                {viewData?.primaryJourney?.internalNotes ||
+                  (viewData?.returnJourneyToggle &&
+                    viewData?.returnJourney?.internalNotes) ||
+                  "None"}
+              </div>
+             </div>
               <hr className="text-[var(--light-gray)] my-2" />
             </div>
           </div>
