@@ -195,7 +195,7 @@ export const useBookingTableLogic = ({
   // Replace the driverMatch logic in your useBookingTableLogic hook with this:
   const filteredBookings = useMemo(() => {
     let filtered = processedBookings.filter((b) => {
-      if (b.status === "Deleted") return false;
+      if (b.status === "Deleted" || b.status === "Completed") return false;
       const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
       if (!journey?.date) return false;
 

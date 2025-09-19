@@ -11,6 +11,7 @@ import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
 import { useGetGeneralPricingPublicQuery } from "../../../redux/api/generalPricingApi";
 import { useCreateInvoiceMutation } from "../../../redux/api/invoiceApi";
 import { useLoading } from "../../common/LoadingProvider";
+import DateRange from "../../../constants/constantscomponents/DateRange";
 
 const getFirstAndLastDay = (offset = 0) => {
   const now = new Date();
@@ -24,21 +25,14 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
   const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
-    const { showLoading, hideLoading } = useLoading();
-  const { data: generalPricingData } = useGetGeneralPricingPublicQuery(
-    companyId,
-    {
-      skip: !companyId,
-    }
-  );
+  const { showLoading, hideLoading } = useLoading();
+  const { data: generalPricingData } = useGetGeneralPricingPublicQuery(companyId, {skip: !companyId});
   const [selectedRows, setSelectedRows] = useState([]);
   const [globalTaxSelection, setGlobalTaxSelection] = useState("No Tax");
   const [bookingTaxes, setBookingTaxes] = useState({});
-
-  const [startDate, setStartDate] = useState(new Date());
   const [selectedDrivers, setSelectedDrivers] = useState([]);
-
-  const [endDate, setEndDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
   const [selectedCustomers, setSelectedCustomers] = useState([]);
   const [isDateRangeChanged, setIsDateRangeChanged] = useState(false);
 
@@ -48,26 +42,30 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
   const { data: bookingData } = useGetAllBookingsQuery(user?.companyId);
   console.log("bookingData", bookingData);
 
-        useEffect(() => {
-            if (isCreating) {
-              showLoading();
-            } else {
-              hideLoading();
-            }
-          }, [isCreating, showLoading, hideLoading]);
+  useEffect(() => {
+    if (isCreating) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isCreating, showLoading, hideLoading]);
   const allBookings = bookingData?.bookings || [];
-  const filteredBookings = allBookings.filter((b) => {
-    const createdAt = new Date(b.createdAt);
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
-    return createdAt >= start && createdAt <= end;
-  });
+  const filteredBookings = allBookings
+    .filter((b) => {
+      if (!startDate || !endDate) return true;
+
+      const createdAt = new Date(b.createdAt);
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      return createdAt >= start && createdAt <= end;
+    })
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
   useEffect(() => {
     const [initialFirst, initialLast] = getFirstAndLastDay(0);
 
-    // Ensure startDate and endDate are Date objects
     const startDateObj =
       startDate instanceof Date ? startDate : new Date(startDate);
     const endDateObj = endDate instanceof Date ? endDate : new Date(endDate);
@@ -85,13 +83,12 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
         acc[email] = {
           name: passenger.name || "Unknown",
           email: email,
-          displayLabel: `${passenger.name || "Unknown"} (${email})`
+          displayLabel: `${passenger.name || "Unknown"} (${email})`,
         };
       }
     }
     return acc;
   }, {});
-  
   const customerList = [
     { label: "All", count: 0 },
     ...Object.values(uniqueCustomers)
@@ -105,21 +102,21 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
 
   const uniqueDrivers = allBookings.reduce((acc, booking) => {
     const drivers = booking?.drivers || [];
-    drivers.forEach(driver => {
+    drivers.forEach((driver) => {
       if (driver?.email) {
         const email = driver.email;
         if (!acc[email]) {
           acc[email] = {
             name: driver.name || "Unknown",
             email: email,
-            displayLabel: `${driver.name || "Unknown"} (${email})`
+            displayLabel: `${driver.name || "Unknown"} (${email})`,
           };
         }
       }
     });
     return acc;
   }, {});
-  
+
   const driverList = [
     { label: "All", count: 0 },
     ...Object.values(uniqueDrivers)
@@ -132,16 +129,17 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
   ];
   const customerFilteredBookings = filteredBookings.filter((b) => {
     const passengerName = b.passenger?.name;
-    const bookingDriverEmails = b?.drivers?.map((d) => d?.email).filter(Boolean) || [];
+    const bookingDriverEmails =
+      b?.drivers?.map((d) => d?.email).filter(Boolean) || [];
     const isCompleted = b.status === "Completed";
 
     const customerMatch =
-    selectedCustomers.includes("All") ||
-    selectedCustomers.includes(b.passenger?.email);
+      selectedCustomers.includes("All") ||
+      selectedCustomers.includes(b.passenger?.email);
 
     const driverMatch =
-    selectedDrivers.includes("All") ||
-    bookingDriverEmails.some((email) => selectedDrivers.includes(email));
+      selectedDrivers.includes("All") ||
+      bookingDriverEmails.some((email) => selectedDrivers.includes(email));
 
     const customerSelected = selectedCustomers.length > 0;
     const driverSelected = selectedDrivers.length > 0;
@@ -206,28 +204,28 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
 
   const calculateFare = (booking, invoiceType = "customer") => {
     if (!booking) return 0;
-  
+
     const { returnJourneyToggle } = booking;
-  
+
     if (invoiceType === "customer") {
       return returnJourneyToggle
         ? booking.returnJourneyFare || 0
         : booking.journeyFare || 0;
     }
-  
+
     if (invoiceType === "driver") {
       return returnJourneyToggle
         ? booking.returnDriverFare || 0
         : booking.driverFare || 0;
     }
-  
+
     return 0;
   };
-  
+
   const handleCustomerSelection = (newSelection) => {
     const wasAllSelected = selectedCustomers.includes("All");
     const isAllInNewSelection = newSelection.includes("All");
-  
+
     if (isAllInNewSelection && !wasAllSelected) {
       const allCustomerEmails = Object.keys(uniqueCustomers);
       setSelectedCustomers(["All", ...allCustomerEmails]);
@@ -255,7 +253,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
 
       if (invoiceType === "driver") {
         const driver = booking?.drivers?.[0] || {};
-        uniqueKey = driver.email
+        uniqueKey = driver.email;
         contact = {
           name: driver.name || "Unknown Driver",
           email: driver.email || "no@email.com",
@@ -263,7 +261,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
         };
       } else {
         const passenger = booking.passenger || {};
-        uniqueKey = passenger.email 
+        uniqueKey = passenger.email;
         contact = {
           name: passenger.name || "Unknown Customer",
           email: passenger.email || "no@email.com",
@@ -334,15 +332,11 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
     }
   };
 
-  useEffect(() => {
-    const [first, last] = getFirstAndLastDay(0);
-    setStartDate(first);
-    setEndDate(last);
-  }, []);
+
   const handleDriverSelection = (newSelection) => {
     const wasAllSelected = selectedDrivers.includes("All");
     const isAllInNewSelection = newSelection.includes("All");
-  
+
     if (isAllInNewSelection && !wasAllSelected) {
       const allDriverEmails = Object.keys(uniqueDrivers);
       setSelectedDrivers(["All", ...allDriverEmails]);
@@ -425,7 +419,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
         invoiceType === "driver"
           ? item?.drivers?.[0]?.name || "-"
           : item.passenger?.name || "-",
-          fare: <span>{calculateFare(item, invoiceType)}</span>,
+      fare: <span>{calculateFare(item, invoiceType)}</span>,
     }));
   }
   useEffect(() => {
@@ -457,16 +451,14 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
 
       <div className="flex    gap-4">
         {/* Filter Section */}
-        <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full">
-          <div className="flex min-w-[255px] max-w-xs">
-            <SelectDateRange
-              startDate={startDate}
-              endDate={endDate}
-              setStartDate={setStartDate}
-              setEndDate={setEndDate}
-            />
-          </div>
+        <div className="flex flex-col  sm:flex-row flex-wrap gap-x-2 w-full">
 
+          <DateRange
+            startDate={startDate}
+            endDate={endDate}
+            setStartDate={setStartDate}
+            setEndDate={setEndDate}
+          />
           {invoiceType === "customer" && (
             <div className="w-full sm:w-64">
               <SelectedSearch
