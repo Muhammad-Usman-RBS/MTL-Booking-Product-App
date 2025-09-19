@@ -7,6 +7,7 @@ import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 import { useSelector } from "react-redux";
 
 const BookingsFilters = ({
+  futureCount,
   selectedStatus,
   setSelectedStatus,
   selectedDrivers,
@@ -67,6 +68,7 @@ const BookingsFilters = ({
           </div>
           <div className="w-full sm:w-72">
             <SelectDateRange
+            futureCount={futureCount}
               startDate={startDate}
               placeholder="Select Driver"
               endDate={endDate}

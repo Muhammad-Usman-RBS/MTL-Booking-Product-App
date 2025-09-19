@@ -121,6 +121,15 @@ const BookingsList = () => {
   }, [driversData]);
   const allBookings = bookingData?.bookings || [];
 
+  const  rawfutureBookingsCount = allBookings.filter((b) => {
+    const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
+    if (!journey?.date) return false;
+    const today = new Date();
+    const bookingDate = new Date(journey.date);
+    return bookingDate >= today;
+  });
+  const futureBookingsCount = rawfutureBookingsCount.length;
+
   const statusCountMap = ALL_STATUSES.reduce((acc, status) => {
     acc[status] = 0;
     return acc;
@@ -231,8 +240,8 @@ const BookingsList = () => {
   return (
     <>
       <OutletHeading name="Bookings List" />
-
       <BookingsFilters
+       futureCount={futureBookingsCount}
         assignedDrivers={assignedDrivers}
         selectedStatus={selectedStatus}
         setSelectedStatus={setSelectedStatus}

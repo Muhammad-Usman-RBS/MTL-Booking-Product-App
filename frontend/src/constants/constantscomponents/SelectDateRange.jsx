@@ -51,7 +51,6 @@ const getTomorrow = () => {
   return [iso, iso];
 };
 
-// Get next N days (including today)
 const getNextNDays = (n) => {
   const start = new Date();
   const end = new Date();
@@ -60,29 +59,30 @@ const getNextNDays = (n) => {
 };
 const getFromTodayOnwards = () => {
   const start = new Date();
-  const end = new Date("2100-12-31"); // a far future date
-  return [start.toISOString().split("T")[0], end.toISOString().split("T")[0]];
+  const farFutureDate = new Date('2099-12-31');
+  return [start.toISOString().split("T")[0], farFutureDate.toISOString().split("T")[0]]; 
 };
 
-// Get next 7 days
+
+
 const getNext7Days = () => getNextNDays(7);
 
-// Get next 30 days
 const getNext30Days = () => getNextNDays(30);
-const ranges = [
-  { label: "Scheduled (Onwards Today)", getRange: getFromTodayOnwards },
-  { label: "Today", getRange: getToday },
-  { label: "Tomorrow", getRange: getTomorrow },     
-  { label: "Yesterday", getRange: getYesterday },
-  { label: "Last 7 Days", getRange: () => getLastNDays(7) },
-  { label: "Next 7 Days", getRange: getNext7Days },
-  { label: "Last 30 Days", getRange: () => getLastNDays(30) },
-  { label: "Next 30 Days", getRange: getNext30Days },
-  { label: "This Month", getRange: getThisMonth },
-  { label: "Last Month", getRange: getLastMonth },
-];
+const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate , futureCount }) => {
+  const ranges = [
+    { label: `Scheduled`, getRange: getFromTodayOnwards, count: futureCount },
+    { label: "Today", getRange: getToday },
+    { label: "Tomorrow", getRange: getTomorrow },
+    { label: "Yesterday", getRange: getYesterday },
+    { label: "Last 7 Days", getRange: () => getLastNDays(7) },
+    { label: "Next 7 Days", getRange: getNext7Days },
+    { label: "Last 30 Days", getRange: () => getLastNDays(30) },
+    { label: "Next 30 Days", getRange: getNext30Days },
+    { label: "This Month", getRange: getThisMonth },
+    { label: "Last Month", getRange: getLastMonth },
+  ];
+  
 
-const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
@@ -136,15 +136,18 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
 
       {dropdownOpen && (
         <div className="absolute mt-1 w-full bg-white border border-[var(--light-gray)] rounded shadow-md z-10 p-2 space-y-1">
-          {ranges.map((r) => (
-            <div
-              key={r.label}
-              className="px-4 py-2 hover:bg-blue-100 cursor-pointer rounded"
-              onClick={() => handleRangeClick(r.getRange)}
-            >
-              {r.label}
-            </div>
-          ))}
+        {ranges.map((r) => (
+  <div
+    key={r.label}
+    className="flex justify-between items-center px-4 py-2 hover:bg-blue-100 cursor-pointer rounded"
+    onClick={() => handleRangeClick(r.getRange)}
+  >
+    <span>{r.label}</span>
+    {r.count !== undefined && (
+      <span className="text-sm text-black">{r.count}</span>
+    )}
+  </div>
+))}
           <div className="pt-2 px-4 text-sm text-gray-700">Custom Range:</div>
           <div className="flex flex-col gap-2 px-4 pb-2">
             <input
