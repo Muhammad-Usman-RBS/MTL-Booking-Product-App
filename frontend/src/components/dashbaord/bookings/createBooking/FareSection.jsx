@@ -11,6 +11,7 @@ const FareSection = ({
   isFetching,
   error,
   customerByVat,
+  editBookingData,
 }) => {
   const { currency } = useSelector((state) => state.currency);
 
@@ -26,16 +27,27 @@ const FareSection = ({
     setFareDetails((prev) => ({ ...prev, [key]: next }));
   };
 
-  const fareFields = [
-    { key: "journeyFare", label: "Journey Fare" },
-    { key: "driverFare", label: "Driver Fare" },
-    ...(returnJourneyToggle
-      ? [
-        { key: "returnJourneyFare", label: "Return Journey Fare" },
-        { key: "returnDriverFare", label: "Return Driver Fare" },
-      ]
-      : []),
-  ];
+  const isEditMode = !!editBookingData?._id;
+
+  let fareFields = [];
+  
+  if (isEditMode && returnJourneyToggle) {
+    fareFields = [
+      { key: "returnJourneyFare", label: "Return Journey Fare" },
+      { key: "returnDriverFare", label: "Return Driver Fare" },
+    ];
+  } else {
+    fareFields = [
+      { key: "journeyFare", label: "Journey Fare" },
+      { key: "driverFare", label: "Driver Fare" },
+      ...(returnJourneyToggle
+        ? [
+            { key: "returnJourneyFare", label: "Return Journey Fare" },
+            { key: "returnDriverFare", label: "Return Driver Fare" },
+          ]
+        : []),
+    ];
+  }
 
   const isCustomerWithVat = userRole === "customer" && vatnumber;
 

@@ -114,7 +114,6 @@ const {
   refetchJobs,
 });
 
-// Keyboard shortcuts effect
 useEffect(() => {
   async function handleKeyDown(event) {
     if (event.key === "Escape") {
@@ -172,10 +171,7 @@ useEffect(() => {
       }
 
       if (key === "d") {
-        if (selectedBooking.status === "Cancelled" && (user?.role === "clientadmin" || user?.role === "customer")) {
-          toast.error("You cannot delete a cancelled booking.");
-          return;
-        }
+      
         if (user?.role === "driver") {
           toast.info("Drivers are not allowed to delete bookings");
           return;

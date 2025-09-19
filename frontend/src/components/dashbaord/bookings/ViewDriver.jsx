@@ -470,12 +470,9 @@ await Promise.all(
           selectedDrivers.map(async (driver) => {
             const { DriverData } = driver;
       
-            console.log(`🔍 Processing notification for driver: ${DriverData?.firstName} (ID: ${driver._id})`);
-      
             // Find the corresponding user account for this driver
             const driverEmail = DriverData?.email?.toLowerCase().trim();
             if (!driverEmail) {
-              console.log(`❌ No email found for driver ${DriverData?.firstName}`);
               toast.warning(`${DriverData?.firstName || "Driver"} has no email. Skipped notification.`);
               return;
             }
@@ -487,12 +484,10 @@ await Promise.all(
                 user.companyId === companyId
             );
             if (!correspondingUser) {
-              console.log(`❌ No user account found for driver ${DriverData?.firstName} with email ${driverEmail}`);
               toast.warning(`${DriverData?.firstName || "Driver"} has no user account. Skipped notification.`);
               return;
             }
       
-            console.log(`✅ Found user account for ${DriverData?.firstName}: ${correspondingUser._id}`);
       
             const notificationPayload = {
               employeeNumber: DriverData.employeeNumber, 
@@ -510,20 +505,10 @@ await Promise.all(
               createdBy: user?._id,
               companyId,
             };
-            
-            console.log("📨 Sending Assignment Notification:", {
-              driverName: DriverData?.firstName,
-              employeeNumber: DriverData.employeeNumber,
-              bookingId: booking.bookingId,
-              companyId
-            });
-      
             try {
               await createNotification(notificationPayload).unwrap();
-              console.log(`✅ Assignment notification created successfully for ${DriverData?.firstName}`);
               toast.success(`Assignment notification sent to ${DriverData?.firstName}`);
             } catch (error) {
-              console.error(`❌ Failed to create assignment notification for ${DriverData?.firstName}:`, error);
               toast.error(`Failed to send assignment notification to ${DriverData?.firstName}`);
             }
           })

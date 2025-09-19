@@ -762,7 +762,6 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         toast.success("Primary booking created successfully");
 
         // Redirect after booking creation
-        navigate("/dashboard/bookings/list");
 
         // ➤ 2. Create return booking if toggle is ON
         if (returnJourneyToggle && dropOffs2[0]) {
@@ -791,7 +790,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
           await createBooking(returnPayload).unwrap();
           toast.success("Return journey booking created successfully");
-          navigate("/dashboard/bookings/list");
+          // navigate("/dashboard/bookings/list");
         }
       }
 

@@ -45,8 +45,14 @@ export const BookingTableRenderer = ({
   const isWithinCancelWindow = (booking, cancelWindow) => {
     if (!booking || !cancelWindow) return false;
 
-    const journey = booking.returnJourneyToggle ? booking.returnJourney : booking.primaryJourney;
-    if (!journey?.date || journey.hour === undefined || journey.minute === undefined) {
+    const journey = booking.returnJourneyToggle
+      ? booking.returnJourney
+      : booking.primaryJourney;
+    if (
+      !journey?.date ||
+      journey.hour === undefined ||
+      journey.minute === undefined
+    ) {
       return false;
     }
 
@@ -93,7 +99,12 @@ export const BookingTableRenderer = ({
     const entry = item.statusAudit
       .slice()
       .reverse()
-      .find((a) => String(a?.status || "").trim().toLowerCase() === "cancelled");
+      .find(
+        (a) =>
+          String(a?.status || "")
+            .trim()
+            .toLowerCase() === "cancelled"
+      );
 
     if (!entry) return false;
 
@@ -104,13 +115,12 @@ export const BookingTableRenderer = ({
   const formatVehicle = (v) =>
     !v || typeof v !== "object"
       ? "-"
-      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${v.handLuggage || 0
-      } | ${v.checkinLuggage || 0}`;
+      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${
+          v.handLuggage || 0
+        } | ${v.checkinLuggage || 0}`;
 
   const formatPassenger = (p) =>
-    !p || typeof p !== "object"
-      ? "-"
-      : `${p.name || "N/A"}`;
+    !p || typeof p !== "object" ? "-" : `${p.name || "N/A"}`;
 
   const formatDriver = (item) => {
     const allDrivers = driversData?.drivers || [];
@@ -184,7 +194,9 @@ export const BookingTableRenderer = ({
           )[0];
 
         if (rejectedJob) {
-          driverName = resolveDriverNameByRef(rejectedJob.driverId);
+          driverName =
+            rejectedJob?.driverId?.fullName ||
+            resolveDriverNameByRef(rejectedJob.driverId);
         }
       }
 
@@ -318,7 +330,7 @@ export const BookingTableRenderer = ({
             const pickupLocation = item.returnJourney
               ? item.returnJourney?.pickup || "-"
               : item.primaryJourney?.pickup || "-";
-
+          
             row[key] = (
               <div
                 className="w-full max-w-[250px] truncate whitespace-nowrap cursor-default"
@@ -338,32 +350,38 @@ export const BookingTableRenderer = ({
                 {pickupLocation}
               </div>
             );
+          
+            // 🔹 Add a plain text field just for searching
+            row[`${key}_searchText`] = pickupLocation;
             break;
-          case "dropOff":
-            const dropoffLocation = item.returnJourney
-              ? item.returnJourney?.dropoff || "-"
-              : item.primaryJourney?.dropoff || "-";
-
-            row[key] = (
-              <div
-                className="w-full max-w-[250px] truncate whitespace-nowrap cursor-default"
-                onMouseEnter={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setTooltip({
-                    show: true,
-                    text: dropoffLocation,
-                    x: rect.left + rect.width / 2,
-                    y: rect.top - 10,
-                  });
-                }}
-                onMouseLeave={() =>
-                  setTooltip({ show: false, text: "", x: 0, y: 0 })
-                }
-              >
-                {dropoffLocation}
-              </div>
-            );
-            break;
+            case "dropOff":
+              const dropoffLocation = item.returnJourney
+                ? item.returnJourney?.dropoff || "-"
+                : item.primaryJourney?.dropoff || "-";
+            
+              row[key] = (
+                <div
+                  className="w-full max-w-[250px] truncate whitespace-nowrap cursor-default"
+                  onMouseEnter={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTooltip({
+                      show: true,
+                      text: dropoffLocation,
+                      x: rect.left + rect.width / 2,
+                      y: rect.top - 10,
+                    });
+                  }}
+                  onMouseLeave={() =>
+                    setTooltip({ show: false, text: "", x: 0, y: 0 })
+                  }
+                >
+                  {dropoffLocation}
+                </div>
+              );
+            
+              // 🔹 Add a plain text field just for searching
+              row[`${key}_searchText`] = dropoffLocation;
+              break;
           case "vehicle":
             row[key] = item.vehicle?.vehicleName || "-";
             break;
@@ -388,7 +406,9 @@ export const BookingTableRenderer = ({
             break;
 
           case "flightNumber": {
-            const journey = item.returnJourneyToggle ? item.returnJourney : item.primaryJourney;
+            const journey = item.returnJourneyToggle
+              ? item.returnJourney
+              : item.primaryJourney;
             const flightNo = journey?.flightNumber || "-";
             const origin = journey?.flightOrigin || "-";
             const destination = journey?.flightDestination || "-";
@@ -405,29 +425,39 @@ export const BookingTableRenderer = ({
           }
 
           case "flightArrivalScheduled": {
-            const journey = item.returnJourneyToggle ? item.returnJourney : item.primaryJourney;
+            const journey = item.returnJourneyToggle
+              ? item.returnJourney
+              : item.primaryJourney;
             row[key] = journey?.flightArrival?.scheduled
-              ? new Date(journey.flightArrival.scheduled).toLocaleString("en-GB", {
-                hour: "2-digit",
-                minute: "2-digit",
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              })
+              ? new Date(journey.flightArrival.scheduled).toLocaleString(
+                  "en-GB",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  }
+                )
               : "-";
             break;
           }
 
           case "flightArrivalEstimated": {
-            const journey = item.returnJourneyToggle ? item.returnJourney : item.primaryJourney;
+            const journey = item.returnJourneyToggle
+              ? item.returnJourney
+              : item.primaryJourney;
             row[key] = journey?.flightArrival?.estimated
-              ? new Date(journey.flightArrival.estimated).toLocaleString("en-GB", {
-                hour: "2-digit",
-                minute: "2-digit",
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              })
+              ? new Date(journey.flightArrival.estimated).toLocaleString(
+                  "en-GB",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  }
+                )
               : "-";
             break;
           }
@@ -435,45 +465,58 @@ export const BookingTableRenderer = ({
           case "createdAt":
             row[key] = item.createdAt
               ? moment(item.createdAt)
-                .tz(timezone)
-                .format("DD/MM/YYYY HH:mm:ss")
+                  .tz(timezone)
+                  .format("DD/MM/YYYY HH:mm:ss")
               : "-";
             break;
-          case "driver":
-            const disabledByClientOrCustomer = isCancelledByRole(item, ["clientadmin", "customer"]);
-            const content = formatDriver(item);
-
-            if (disabledByClientOrCustomer) {
-              row[key] = (
-                <div
-                  className="text-gray-400 opacity-60 cursor-not-allowed select-none"
-                  title="Driver selection disabled — booking cancelled by Clientadmin/Customer"
-                  aria-disabled="true"
-                >
-                  {content}
-                </div>
-              );
+            case "driver": {
+              const disabledByClientOrCustomer = isCancelledByRole(item, [
+                "clientadmin",
+                "customer",
+              ]);
+              const content = formatDriver(item);
+              let driverPlainText = "-";
+              if (Array.isArray(item.drivers) && item.drivers.length > 0) {
+                driverPlainText = item.drivers
+                  .map((d) => d?.name || d?.fullName || "Unnamed Driver")
+                  .join(", ");
+              }
+            
+              if (disabledByClientOrCustomer) {
+                row[key] = (
+                  <div
+                    className="text-gray-400 opacity-60 cursor-not-allowed select-none"
+                    title="Driver selection disabled — booking cancelled by Clientadmin/Customer"
+                    aria-disabled="true"
+                  >
+                    {content}
+                  </div>
+                );
+                row[`${key}_searchText`] = driverPlainText; // ✅ searchable string
+                break;
+              }
+            
+              row[key] =
+                user?.role === "customer" ? (
+                  content
+                ) : (
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (selectedRow !== item._id) {
+                        setSelectedRow(item._id);
+                      }
+                      openDriverModal(item);
+                    }}
+                  >
+                    {content}
+                  </div>
+                );
+            
+              row[`${key}_searchText`] = driverPlainText; // ✅ searchable string
               break;
             }
-
-            row[key] =
-              user?.role === "customer" ? (
-                formatDriver(item)
-              ) : (
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (selectedRow !== item._id) {
-                      setSelectedRow(item._id);
-                    }
-                    openDriverModal(item);
-                  }}
-                >
-                  {formatDriver(item)}
-                </div>
-              );
-            break;
-          case "status": {
+                      case "status": {
             const latestCancelledBy = (() => {
               if (
                 item.status !== "Cancelled" ||
@@ -647,7 +690,8 @@ export const BookingTableRenderer = ({
             } else {
               // 🔹 Internal Notes check (primaryJourney / returnJourney)
               const journeyNotes =
-                item?.primaryJourney?.internalNotes || item?.returnJourney?.internalNotes;
+                item?.primaryJourney?.internalNotes ||
+                item?.returnJourney?.internalNotes;
 
               row[key] = (
                 <div className="flex items-center justify-center gap-2">
@@ -668,11 +712,16 @@ export const BookingTableRenderer = ({
                   <div className="text-center">
                     <button
                       onClick={() =>
-                        setSelectedActionRow(selectedActionRow === index ? null : index)
+                        setSelectedActionRow(
+                          selectedActionRow === index ? null : index
+                        )
                       }
                       className="p-2 rounded hover:bg-gray-100 transition js-actions-trigger"
                     >
-                      <GripHorizontal size={18} className="text-[var(--dark-gray)]" />
+                      <GripHorizontal
+                        size={18}
+                        className="text-[var(--dark-gray)]"
+                      />
                     </button>
 
                     {selectedActionRow === index && (
@@ -680,9 +729,14 @@ export const BookingTableRenderer = ({
                         {actionMenuItems
                           .filter((action) => {
                             if (user?.role === "driver") {
-                              return action === "View" || action === "Status Audit";
+                              return (
+                                action === "View" || action === "Status Audit"
+                              );
                             }
-                            if (user?.role === "customer" && action === "Delete") {
+                            if (
+                              user?.role === "customer" &&
+                              action === "Delete"
+                            ) {
                               return false;
                             }
                             return true;
@@ -698,7 +752,9 @@ export const BookingTableRenderer = ({
                                     openViewModal(item);
                                   } else if (action === "Edit") {
                                     if (user?.role === "driver") {
-                                      toast.info("Drivers cannot edit bookings");
+                                      toast.info(
+                                        "Drivers cannot edit bookings"
+                                      );
                                       return;
                                     }
 
@@ -708,7 +764,8 @@ export const BookingTableRenderer = ({
 
                                     if (
                                       user?.role === "customer" &&
-                                      bookingSetting?.companyId === user?.companyId
+                                      bookingSetting?.companyId ===
+                                        user?.companyId
                                     ) {
                                       const cancelWindow =
                                         bookingSetting?.cancelBookingWindow;
@@ -716,7 +773,9 @@ export const BookingTableRenderer = ({
                                         cancelWindow &&
                                         isWithinCancelWindow(item, cancelWindow)
                                       ) {
-                                        const windowText = `${cancelWindow.value} ${cancelWindow.unit.toLowerCase()}`;
+                                        const windowText = `${
+                                          cancelWindow.value
+                                        } ${cancelWindow.unit.toLowerCase()}`;
                                         toast.error(
                                           `Cannot edit booking. Pickup time is within the ${windowText} cancellation window.`
                                         );
@@ -725,7 +784,8 @@ export const BookingTableRenderer = ({
                                     }
 
                                     const editedData = { ...item };
-                                    editedData.__editReturn = !!item.returnJourney;
+                                    editedData.__editReturn =
+                                      !!item.returnJourney;
                                     setEditBookingData(editedData);
                                     setShowEditModal(true);
                                   } else if (action === "Delete") {
@@ -745,8 +805,10 @@ export const BookingTableRenderer = ({
                                   } else if (action === "Copy Booking") {
                                     const copied = { ...item };
                                     delete copied._id;
-                                    if (copied.passenger?._id) delete copied.passenger._id;
-                                    if (copied.vehicle?._id) delete copied.vehicle._id;
+                                    if (copied.passenger?._id)
+                                      delete copied.passenger._id;
+                                    if (copied.vehicle?._id)
+                                      delete copied.vehicle._id;
                                     if (copied.primaryJourney?._id)
                                       delete copied.primaryJourney._id;
                                     if (copied.returnJourney?._id)
@@ -794,7 +856,9 @@ export const BookingTableRenderer = ({
                                     updatedBy: `${user.role} | ${user.fullName}`,
                                   }).unwrap();
 
-                                  toast.success("Booking status set to Cancelled");
+                                  toast.success(
+                                    "Booking status set to Cancelled"
+                                  );
 
                                   if (item?.passenger?.email) {
                                     try {
@@ -804,10 +868,17 @@ export const BookingTableRenderer = ({
                                         type: "cancellation",
                                       }).unwrap();
 
-                                      toast.success("Cancellation email sent to customer");
+                                      toast.success(
+                                        "Cancellation email sent to customer"
+                                      );
                                     } catch (emailErr) {
-                                      toast.error("Failed to send cancellation email");
-                                      console.error("❌ Email error:", emailErr);
+                                      toast.error(
+                                        "Failed to send cancellation email"
+                                      );
+                                      console.error(
+                                        "❌ Email error:",
+                                        emailErr
+                                      );
                                     }
                                   } else {
                                     toast.info(
@@ -836,7 +907,10 @@ export const BookingTableRenderer = ({
                                             `Cancellation email sent to driver: ${driverEmail}`
                                           );
                                         } catch (err) {
-                                          console.error("❌ Driver email error:", err);
+                                          console.error(
+                                            "❌ Driver email error:",
+                                            err
+                                          );
                                           toast.error(
                                             "Failed to send cancellation email to driver"
                                           );
@@ -849,7 +923,10 @@ export const BookingTableRenderer = ({
                                   setSelectedActionRow(null);
                                 } catch (err) {
                                   toast.error(getErrMsg(err));
-                                  console.error("❌ Cancel booking error:", err);
+                                  console.error(
+                                    "❌ Cancel booking error:",
+                                    err
+                                  );
                                 }
                               }}
                               className="w-full cursor-pointer text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition border-t border-gray-100"
@@ -885,9 +962,7 @@ export const BookingTableRenderer = ({
       selectedRow={selectedRow}
       setSelectedRow={setSelectedRow}
       onRowDoubleClick={(row) => {
-        const selectedBooking = filteredBookings.find(
-          (b) => b._id === row._id
-        );
+        const selectedBooking = filteredBookings.find((b) => b._id === row._id);
         if (selectedBooking) {
           openViewModal(selectedBooking);
         }
