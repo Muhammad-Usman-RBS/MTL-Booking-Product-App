@@ -257,6 +257,31 @@ const UserCoreFields = ({
                 )}
             </div>
 
+            {selectedAccount?.role === "customer" && (
+                <div className="col-span-1">
+                    <SelectOption
+                        label="Email Preference"
+                        value={
+                            selectedAccount?.emailPreference === true
+                                ? "true"
+                                : selectedAccount?.emailPreference === false
+                                    ? "false"
+                                    : ""
+                        }
+                        onChange={(e) =>
+                            setSelectedAccount({
+                                ...selectedAccount,
+                                emailPreference: e.target.value === "true",
+                            })
+                        }
+                        options={[
+                            { label: "True", value: "true" },
+                            { label: "False", value: "false" },
+                        ]}
+                    />
+                </div>
+            )}
+
             {/* Google Calendar Invite toggle */}
             {user?.role === "superadmin" && selectedAccount.role === "clientadmin" && (
                 <div className="col-span-1 flex items-center justify-between sm:justify-start gap-4">

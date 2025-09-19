@@ -49,6 +49,7 @@ const userSchema = new mongoose.Schema({
   },
 
   permissions: { type: [String], default: ["Home"] },
+  emailPreference: { type: Boolean, default: false },
 
   profileImage: { type: String, default: "" },
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },

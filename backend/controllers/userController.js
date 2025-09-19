@@ -108,6 +108,7 @@ export const initiateUserVerification = async (req, res) => {
         associateAdminLimit: parsedLimit,
         employeeNumber: role === "driver" ? (req.body.employeeNumber || employeeNumber) : null,
         vatnumber: role === "customer" ? (req.body.vatnumber || vatnumber) : null,
+        emailPreference: role === "customer" ? req.body.emailPreference ?? false : undefined,
         createdBy: creator._id,
         companyId:
           creator.role === "superadmin" && role === "clientadmin" ? null : creator.companyId,
@@ -493,6 +494,7 @@ export const createUserBySuperAdmin = async (req, res) => {
       status,
       permissions: userPermissions,
       vatnumber: role === "customer" ? vatnumber : undefined,
+      emailPreference: role === "customer" ? req.body.emailPreference ?? false : undefined,
       createdBy: creator._id,
       associateAdminLimit: parsedLimit,
       companyId:
@@ -593,7 +595,8 @@ export const getClientAdmins = async (req, res) => {
         companyId: user.companyId,
         associateAdminLimit: user.associateAdminLimit,
         vatnumber: user.vatnumber || null,
-        createdBy: user.createdBy, // Include this for debugging
+        createdBy: user.createdBy,
+        emailPreference: user.emailPreference,
       }))
     );
   } catch (error) {
@@ -685,6 +688,10 @@ export const updateUserBySuperAdmin = async (req, res) => {
       user.email = emailNorm;
     }
 
+    if (role === "customer" && req.body.emailPreference !== undefined) {
+      user.emailPreference = req.body.emailPreference;
+    }
+
     // role/status
     if (role) user.role = role;
     if (status) user.status = status;
@@ -719,7 +726,12 @@ export const updateUserBySuperAdmin = async (req, res) => {
     }
 
     // customer-only VAT
-    if (role === "customer") user.vatnumber = vatnumber ?? user.vatnumber;
+    if (role === "customer") {
+      user.vatnumber = vatnumber ?? user.vatnumber;
+      if (req.body.emailPreference !== undefined) {
+        user.emailPreference = req.body.emailPreference; // ✅ added
+      }
+    }
 
     await user.save();
 
@@ -875,6 +887,7 @@ export const createCustomerViaWidget = async (req, res) => {
       createdBy: null, // widget
       companyId,
       associateAdminLimit: 0,
+      emailPreference: emailPreference ?? false,
     });
 
     // (optional) send welcome email

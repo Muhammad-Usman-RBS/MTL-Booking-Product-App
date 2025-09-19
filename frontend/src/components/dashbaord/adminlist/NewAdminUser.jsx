@@ -41,6 +41,7 @@ const NewAdminUser = () => {
     permissions: [],
     associateAdminLimit: "",
     vatnumber: "",
+    emailPreference: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -116,6 +117,7 @@ const NewAdminUser = () => {
           driverId: adminToEdit.driverId || "",
           employeeNumber: adminToEdit.employeeNumber || "",
           vatnumber: adminToEdit.vatnumber || "",
+          emailPreference: adminToEdit.emailPreference,
         });
       }
     }
@@ -239,6 +241,7 @@ const NewAdminUser = () => {
         // ---- Update flow ----
         const payload = {
           ...selectedAccount,
+          emailPreference: selectedAccount.emailPreference,
           vatnumber: selectedAccount.vatnumber || "",
           employeeNumber: selectedAccount.employeeNumber,
         };
@@ -254,6 +257,7 @@ const NewAdminUser = () => {
         // ---- Create flow ----
         const payload = {
           ...selectedAccount,
+          emailPreference: selectedAccount.emailPreference,
           vatnumber: selectedAccount.vatnumber || "",
           employeeNumber: selectedAccount.employeeNumber,
           companyId:
