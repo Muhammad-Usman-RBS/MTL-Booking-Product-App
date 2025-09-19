@@ -790,7 +790,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
 
           await createBooking(returnPayload).unwrap();
           toast.success("Return journey booking created successfully");
-          // navigate("/dashboard/bookings/list");
+          navigate("/dashboard/bookings/list");
         }
       }
 
