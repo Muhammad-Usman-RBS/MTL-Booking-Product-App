@@ -67,7 +67,6 @@ const BookingsList = () => {
     "Ride Started",
     "Late Cancel",
     "No Show",
-    "Completed",
   ];
 
   const [selectedRow, setSelectedRow] = useState(null);

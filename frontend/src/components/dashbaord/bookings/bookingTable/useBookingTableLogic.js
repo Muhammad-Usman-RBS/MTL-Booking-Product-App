@@ -192,11 +192,13 @@ export const useBookingTableLogic = ({
     return bookings;
   }, [bookingData, jobData, user, companyId, isDriver]);
 
+  // Replace the driverMatch logic in your useBookingTableLogic hook with this:
   const filteredBookings = useMemo(() => {
     let filtered = processedBookings.filter((b) => {
       if (b.status === "Deleted") return false;
       const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
       if (!journey?.date) return false;
+
       const bookingDateStr = new Date(journey.date).toISOString().split("T")[0];
       const startStr = startDate
         ? new Date(startDate).toISOString().split("T")[0]
@@ -204,37 +206,90 @@ export const useBookingTableLogic = ({
       const endStr = endDate
         ? new Date(endDate).toISOString().split("T")[0]
         : null;
+
       const dateTime =
         !startStr || !endStr
           ? true
           : bookingDateStr >= startStr && bookingDateStr <= endStr;
+
       const statusMatch =
         selectedStatus.includes("All") || selectedStatus.length === 0
           ? true
           : selectedStatus.includes(b.status);
+
       const passengerMatch =
         selectedPassengers.length === 0
           ? true
           : selectedPassengers.includes(b.passenger?.name);
-      const driverMatch =
-        !Array.isArray(selectedDrivers) || selectedDrivers.length === 0
-          ? true
-          : Array.isArray(b.drivers)
-            ? b.drivers.some((d) => selectedDrivers.includes(d?._id || d))
-            : false;
 
-      return statusMatch && passengerMatch && driverMatch && dateTime;
+      // 🔧 FIXED DRIVER FILTER LOGIC
+      const driverMatch = (() => {
+        // If no drivers selected, show all
+        if (!Array.isArray(selectedDrivers) || selectedDrivers.length === 0) {
+          return true;
+        }
+
+        // Check multiple possible driver data structures
+        const driverIds = [];
+
+        // 1. Check assignedDriverId from job data
+        if (b.assignedDriverId) {
+          const driverId = typeof b.assignedDriverId === 'object'
+            ? b.assignedDriverId._id || b.assignedDriverId
+            : b.assignedDriverId;
+          driverIds.push(driverId.toString());
+        }
+
+        // 2. Check drivers array
+        if (Array.isArray(b.drivers) && b.drivers.length > 0) {
+          b.drivers.forEach((driver) => {
+            if (typeof driver === "object") {
+              // Driver object with _id
+              if (driver._id) {
+                driverIds.push(driver._id.toString());
+              }
+              // Driver object with driverId
+              if (driver.driverId) {
+                const id = typeof driver.driverId === 'object'
+                  ? driver.driverId._id || driver.driverId
+                  : driver.driverId;
+                driverIds.push(id.toString());
+              }
+            } else {
+              // Driver is just an ID string/ObjectId
+              driverIds.push(driver.toString());
+            }
+          });
+        }
+
+        // 3. Check direct driver field (if exists)
+        if (b.driver) {
+          const id = typeof b.driver === 'object'
+            ? b.driver._id || b.driver
+            : b.driver;
+          driverIds.push(id.toString());
+        }
+
+        // Remove duplicates
+        const uniqueDriverIds = [...new Set(driverIds)];
+
+        // Check if any of the booking's driver IDs match selected drivers
+        return uniqueDriverIds.some(driverId =>
+          selectedDrivers.some(selectedId =>
+            selectedId.toString() === driverId
+          )
+        );
+      })();
+
+      const vehicleMatch =
+        selectedVehicleTypes.length === 0
+          ? true
+          : selectedVehicleTypes.includes(b.vehicle?.vehicleName);
+
+      return statusMatch && passengerMatch && driverMatch && vehicleMatch && dateTime;
     });
-    if (user?.role === "driver" && user?.employeeNumber) {
-      filtered = filtered.filter((booking) => {
-        if (!Array.isArray(booking.drivers)) return false;
-        return booking.drivers.some((driverId) => {
-          const id = typeof driverId === "object" ? driverId._id : driverId;
-          const driver = assignedDrivers.find((d) => d._id === id);
-          return driver?.DriverData?.employeeNumber === user.employeeNumber;
-        });
-      });
-    }
+
+    // Sorting (optional)
     filtered.sort((a, b) => {
       let aMatch = 0;
       let bMatch = 0;
