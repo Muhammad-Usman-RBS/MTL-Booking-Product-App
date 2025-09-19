@@ -97,9 +97,11 @@ import {
   BookmarkCheck,
   Palette,
   CaseSensitive,
+  CheckCheck,
 } from "lucide-react";
 
 const Icons = {
+  CheckCheck,
   Palette,
   CaseSensitive,
   Info,

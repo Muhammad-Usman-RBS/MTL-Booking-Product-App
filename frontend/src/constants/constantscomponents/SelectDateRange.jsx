@@ -32,8 +32,8 @@ const getLastNDays = (n) => {
 
 const getThisMonth = () => {
   const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 2);    
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);  
+  const start = new Date(now.getFullYear(), now.getMonth(), 2);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
   return [start.toISOString().split("T")[0], end.toISOString().split("T")[0]];
 };
 
@@ -60,7 +60,7 @@ const getNextNDays = (n) => {
 const getFromTodayOnwards = () => {
   const start = new Date();
   const farFutureDate = new Date('2099-12-31');
-  return [start.toISOString().split("T")[0], farFutureDate.toISOString().split("T")[0]]; 
+  return [start.toISOString().split("T")[0], farFutureDate.toISOString().split("T")[0]];
 };
 
 
@@ -68,7 +68,7 @@ const getFromTodayOnwards = () => {
 const getNext7Days = () => getNextNDays(7);
 
 const getNext30Days = () => getNextNDays(30);
-const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate , futureCount }) => {
+const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate, futureCount }) => {
   const ranges = [
     { label: `Scheduled`, getRange: getFromTodayOnwards, count: futureCount },
     { label: "Today", getRange: getToday },
@@ -81,7 +81,7 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate , future
     { label: "This Month", getRange: getThisMonth },
     { label: "Last Month", getRange: getLastMonth },
   ];
-  
+
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [customStart, setCustomStart] = useState("");
@@ -118,36 +118,35 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate , future
   return (
     <div ref={dropdownRef} className="relative inline-block w-full">
       <div
-  className="flex items-center gap-2 border border-[var(--light-gray)] px-2 py-[7px] bg-white rounded cursor-pointer min-w-0"
-  onClick={() => setDropdownOpen(!dropdownOpen)}
->
+        className="flex items-center gap-2 border border-[var(--light-gray)] px-2 py-[7px] bg-white rounded cursor-pointer min-w-0"
+        onClick={() => setDropdownOpen(!dropdownOpen)}
+      >
         <Icons.CalendarDays className="w-4 h-4 text-black" />
         <span className="flex-1 text-xs md:text-sm whitespace-nowrap overflow-hidden text-ellipsis">
-  {startDate && endDate
-    ? `${formatDate(startDate)} - ${formatDate(endDate)}`
-    : "Select Date Range"}
-</span>
+          {startDate && endDate
+            ? `${formatDate(startDate)} - ${formatDate(endDate)}`
+            : "Select Date Range"}
+        </span>
         <Icons.ChevronDown
-          className={`w-4 h-4 text-black transition-transform duration-200 ${
-            dropdownOpen ? "rotate-180" : ""
-          }`}
+          className={`w-4 h-4 text-black transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""
+            }`}
         />
       </div>
 
       {dropdownOpen && (
         <div className="absolute mt-1 w-full bg-white border border-[var(--light-gray)] rounded shadow-md z-10 p-2 space-y-1">
-        {ranges.map((r) => (
-  <div
-    key={r.label}
-    className="flex justify-between items-center px-4 py-2 hover:bg-blue-100 cursor-pointer rounded"
-    onClick={() => handleRangeClick(r.getRange)}
-  >
-    <span>{r.label}</span>
-    {r.count !== undefined && (
-      <span className="text-sm text-black">{r.count}</span>
-    )}
-  </div>
-))}
+          {ranges.map((r) => (
+            <div
+              key={r.label}
+              className="flex justify-between items-center px-4 py-2 hover:bg-blue-100 cursor-pointer rounded"
+              onClick={() => handleRangeClick(r.getRange)}
+            >
+              <span>{r.label}</span>
+              {r.count !== undefined && (
+                <span className="text-sm text-black">({r.count})</span>
+              )}
+            </div>
+          ))}
           <div className="pt-2 px-4 text-sm text-gray-700">Custom Range:</div>
           <div className="flex flex-col gap-2 px-4 pb-2">
             <input

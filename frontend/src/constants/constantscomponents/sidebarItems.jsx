@@ -23,25 +23,31 @@ const sidebarItems = [
         title: "Bookings List",
         route: "/dashboard/bookings/list",
         icon: Icons.ListChecks,
-        roles: ["demo", "clientadmin",  "customer", "associateadmin", "staffmember" ],
+        roles: ["demo", "clientadmin", "customer", "associateadmin", "staffmember"],
       },
       {
         title: "New Booking",
         route: "/dashboard/bookings/new",
         icon: Icons.PlusCircle,
-        roles: ["demo", "clientadmin",  "customer", "associateadmin", "staffmember"],
+        roles: ["demo", "clientadmin", "customer", "associateadmin", "staffmember"],
       },
       {
         title: "Booking Calendar",
         route: "/dashboard/bookings/calendar",
         icon: Icons.CalendarDays,
-        roles: ["demo", "clientadmin",  "associateadmin", "driver", "customer", "staffmember"],
+        roles: ["demo", "clientadmin", "associateadmin", "driver", "customer", "staffmember"],
+      },
+      {
+        title: "Completed Booking",
+        route: "/dashboard/bookings/completed-booking",
+        icon: Icons.CheckCheck,
+        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember"],
       },
       {
         title: "Deleted Booking",
         route: "/dashboard/bookings/deleted-booking",
         icon: Icons.Delete,
-        roles: ["demo", "clientadmin",  "associateadmin", "superadmin", "staffmember"],
+        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember"],
       },
     ],
   },
@@ -55,7 +61,7 @@ const sidebarItems = [
       "customer",
       "clientadmin",
       "associateadmin",
-     "staffmember"
+      "staffmember"
     ],
     subTabs: [
       {
@@ -66,7 +72,7 @@ const sidebarItems = [
           "demo",
           "driver",
           "superadmin",
-           "staffmember",
+          "staffmember",
           "associateadmin",
           "customer",
           "clientadmin",
@@ -76,13 +82,13 @@ const sidebarItems = [
         title: "New Driver Invoice",
         route: "/dashboard/invoices/driver/new",
         icon: Icons.FilePlus,
-        roles: ["demo","clientadmin",  "associateadmin", "superadmin", "staffmember"],
+        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember"],
       },
       {
         title: "New Customer Invoice",
         route: "/dashboard/invoices/customer/new",
         icon: Icons.FilePlus,
-        roles: ["demo","clientadmin", "superadmin",  "associateadmin", "staffmember"],
+        roles: ["demo", "clientadmin", "superadmin", "associateadmin", "staffmember"],
       },
     ],
   },
@@ -96,7 +102,7 @@ const sidebarItems = [
       "customer",
       "clientadmin",
       "associateadmin",
-       "staffmember"
+      "staffmember"
     ],
     subTabs: [
       {
@@ -109,7 +115,7 @@ const sidebarItems = [
           "superadmin",
           "clientadmin",
           "associateadmin",
-           "staffmember"
+          "staffmember"
         ],
       },
       {
@@ -132,13 +138,13 @@ const sidebarItems = [
         title: "Rides",
         icon: Icons.CarFront,
         route: "/dashboard/drivers/all-rides",
-        roles: ["demo","driver", "superadmin", ],
+        roles: ["demo", "driver", "superadmin",],
       },
       {
         title: "Earnings",
         icon: Icons.Activity,
         route: "/dashboard/drivers/earnings",
-        roles: ["demo","driver", "superadmin", ],
+        roles: ["demo", "driver", "superadmin",],
       },
     ],
   },
@@ -152,14 +158,14 @@ const sidebarItems = [
       "customer",
       "clientadmin",
       "associateadmin",
-     "staffmember"
+      "staffmember"
     ],
     subTabs: [
       {
         title: "Customers List",
         route: "/dashboard/customers/list",
         icon: Icons.List,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "staffmember"],
+        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember"],
       },
     ],
   },
@@ -204,13 +210,13 @@ const sidebarItems = [
         title: "Admin List",
         icon: Icons.List,
         route: "/dashboard/admin-list",
-        roles: ["demo", "superadmin", "clientadmin", "associateadmin", "staffmember" ],
+        roles: ["demo", "superadmin", "clientadmin", "associateadmin", "staffmember"],
       },
       {
         title: "New  User",
         icon: Icons.User,
         route: "/dashboard/admin-list/add-user",
-        roles: ["demo","superadmin", "clientadmin", "associateadmin", "staffmember" ],
+        roles: ["demo", "superadmin", "clientadmin", "associateadmin", "staffmember"],
       },
     ],
   },
@@ -223,13 +229,13 @@ const sidebarItems = [
         title: "Accounts List",
         route: "/dashboard/company-accounts/list",
         icon: Icons.FileText,
-        roles: ["demo","superadmin", "clientadmin", "staffmember" ],
+        roles: ["demo", "superadmin", "clientadmin", "staffmember"],
       },
       {
         title: "Add Account",
         route: "/dashboard/company-accounts/new",
         icon: Icons.PlusCircle,
-        roles: ["demo","superadmin",  "clientadmin", "staffmember"],
+        roles: ["demo", "superadmin", "clientadmin", "staffmember"],
       },
       {
         title: "View Company",
@@ -263,55 +269,55 @@ const sidebarItems = [
         title: "General",
         route: "/dashboard/pricing/general",
         icon: Icons.Settings,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "staffmember"],
+        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember"],
       },
       {
         title: "Vehicle Pricing",
         route: "/dashboard/pricing/vehicle",
         icon: Icons.Truck,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "staffmember" ],
+        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember"],
       },
       {
         title: "Distance Slab",
         route: "/dashboard/pricing/distance-slab",
         icon: Icons.Activity,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "staffmember" ],
+        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember"],
       },
       {
         title: "Hourly Packages",
         route: "/dashboard/pricing/hourly-packages",
         icon: Icons.Clock,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "staffmember" ],
+        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember"],
       },
       {
         title: "Fixed Pricing",
         route: "/dashboard/pricing/fixed",
         icon: Icons.Tag,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "staffmember" ],
+        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember"],
       },
       {
         title: "Postcode District",
         route: "/dashboard/pricing/postcode-district",
         icon: Icons.Map,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "staffmember", ],
+        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember",],
       },
       {
         title: "Zones",
         route: "/dashboard/pricing/zones",
         icon: Icons.Grid,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "staffmember" ],
+        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember"],
       },
       {
         title: "Discounts / Surcharge - Date",
         route: "/dashboard/pricing/discounts-date",
         icon: Icons.Calendar,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "staffmember" ],
+        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember"],
       },
       {
         title: "Vouchers",
         route: "/dashboard/pricing/vouchers",
         icon: Icons.Gift,
-        roles: ["demo","clientadmin", "associateadmin", "superadmin", "staffmember"],
+        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember"],
       },
     ],
   },
@@ -378,7 +384,7 @@ const sidebarItems = [
           "clientadmin",
           "associateadmin",
           "driver",
-       "staffmember"
+          "staffmember"
         ],
       },
       // {
@@ -400,7 +406,7 @@ const sidebarItems = [
         roles: [
           "demo",
           "clientadmin",
-           "staffmember",
+          "staffmember",
           "associateadmin",
         ],
       },
@@ -434,7 +440,7 @@ const sidebarItems = [
           "demo",
           "clientadmin",
           "associateadmin",
-           "staffmember"
+          "staffmember"
         ],
       },
       // {
