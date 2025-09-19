@@ -570,12 +570,6 @@ console.log(data)
                             <strong>Notes:</strong> {booking.notes}
                           </div>
                         )}
-                        {booking?.internalNotes && (
-                          <div className="md:col-span-2">
-                            <strong>Internal Notes:</strong>
-                            {booking.internalNotes}
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -622,14 +616,6 @@ console.log(data)
                          { booking?.returnJourneyToggle
                           ? booking?.returnJourney.notes
                           : booking?.primaryJourney.notes || "—"}
-                      </div>
-                      <div>
-                        <strong className="text-[var(--dark-gray)]">
-                          Internal Notes:&nbsp; 
-                        </strong>
-                         { booking?.returnJourneyToggle
-                          ? booking?.returnJourney.internalNotes
-                          : booking?.primaryJourney.internalNotes || "—"}
                       </div>
                     </div>
                   </div>
