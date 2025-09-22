@@ -2,9 +2,9 @@ import React from "react";
 import CustomTable from "../../../../constants/constantscomponents/CustomTable";
 
 export const BookingTableRenderer = ({
+  emptyMessage,
   filteredTableHeaders,
   filteredBookings,
-  emptyTableRows,
   exportTableData,
   selectedRow,
   setSelectedRow,
@@ -279,7 +279,7 @@ export const BookingTableRenderer = ({
   // Generate table data
   let tableData = [];
   if (!filteredBookings || filteredBookings.length === 0) {
-    tableData = emptyTableRows;
+    tableData = [];
   } else {
     tableData = filteredBookings.map((item, index) => {
       const row = { _id: item._id };
@@ -964,6 +964,7 @@ export const BookingTableRenderer = ({
       showSearch
       showRefresh
       showDownload
+      emptyMessage={emptyMessage}
       showPagination
       showSorting
       selectedRow={selectedRow}

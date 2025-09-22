@@ -16,7 +16,6 @@ import {
   useUpdateJobStatusMutation,
 } from "../../../redux/api/jobsApi";
 import Icons from "../../../assets/icons";
-import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 import moment from "moment-timezone";
 import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
@@ -422,7 +421,7 @@ const BookingsTable = ({
         GripHorizontal={GripHorizontal}
         moment={moment}
         timezone={timezone}
-        emptyMessage="No bookings found sadweqdas" 
+        emptyMessage="No bookings found..." 
       />
 
       <DeleteModal

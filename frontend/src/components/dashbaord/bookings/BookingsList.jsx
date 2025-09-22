@@ -134,25 +134,30 @@ const BookingsList = () => {
     acc[status] = 0;
     return acc;
   }, {});
-const today = new Date();
-today.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-const scheduledCount = allBookings.filter((b) => {
-  if(b?.status=== "Deleted") return
-  const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
-  if (!journey?.date) return false;
-  const bookingDate = new Date(journey.date);
-  return bookingDate >= today; 
-}).length;
-const dynamicStatusList = Object.entries(statusCountMap).map(
-  ([label, count]) => ({ label, count })
-);
-const scheduledIndex = dynamicStatusList.findIndex((s) => s.label === "Scheduled");
-if (scheduledIndex >= 0) {
-  dynamicStatusList[scheduledIndex].count = scheduledCount;
-}
-dynamicStatusList.push({ label: "All", count: allBookings.length });
+  const scheduledCount = allBookings.filter((b) => {
+    if (b?.status === "Deleted") return;
+    const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
+    if (!journey?.date) return false;
+    const bookingDate = new Date(journey.date);
+    return bookingDate >= today;
+  }).length;
+  const dynamicStatusList = Object.entries(statusCountMap).map(
+    ([label, count]) => ({ label, count })
+  );
+  const scheduledIndex = dynamicStatusList.findIndex(
+    (s) => s.label === "Scheduled"
+  );
+  if (scheduledIndex >= 0) {
+    dynamicStatusList[scheduledIndex].count = scheduledCount;
+  }
+  const allActiveBookingsCount = allBookings.filter(
+    (b) => b.status !== "Deleted" && b.status !== "Completed"
+  ).length;
 
+  dynamicStatusList.push({ label: "All", count: allActiveBookingsCount });
 
   const passengerMap = new Map();
   allBookings.forEach((booking) => {
@@ -242,7 +247,7 @@ dynamicStatusList.push({ label: "All", count: allBookings.length });
     <>
       <OutletHeading name="Bookings List" />
       <BookingsFilters
-       futureCount={futureBookingsCount}
+        futureCount={futureBookingsCount}
         assignedDrivers={assignedDrivers}
         selectedStatus={selectedStatus}
         setSelectedStatus={setSelectedStatus}

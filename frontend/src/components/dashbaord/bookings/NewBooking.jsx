@@ -728,6 +728,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
           `${isReturnJourney ? "Return" : "Primary"
           } booking updated successfully`
         );
+        navigate("/dashboard/bookings/list");
+
       }
 
       // ✅ CREATE MODE (Copy or New)
@@ -762,6 +764,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         toast.success("Primary booking created successfully");
 
         // Redirect after booking creation
+        navigate("/dashboard/bookings/list");
 
         // ➤ 2. Create return booking if toggle is ON
         if (returnJourneyToggle && dropOffs2[0]) {
