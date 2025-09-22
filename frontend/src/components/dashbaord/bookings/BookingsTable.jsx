@@ -361,7 +361,7 @@ const BookingsTable = ({
         )}
         tableData={[]}
         exportTableData={[]}
-        emptyMessage="Invalid company ID"
+        emptyMessage={emptyMessage} 
         showSearch
         showRefresh
       />
@@ -422,6 +422,7 @@ const BookingsTable = ({
         GripHorizontal={GripHorizontal}
         moment={moment}
         timezone={timezone}
+        emptyMessage="No bookings found sadweqdas" 
       />
 
       <DeleteModal

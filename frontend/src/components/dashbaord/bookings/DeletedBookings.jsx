@@ -148,7 +148,7 @@ const DeletedBookings = () => {
         tableHeaders={tableHeaders}
         tableData={tableData}
         exportTableData={tableData}
-        emptyMessage="No deleted bookings found"
+        emptyMessage="No deleted bookings found..."
         showSearch
         showRefresh
         showDownload

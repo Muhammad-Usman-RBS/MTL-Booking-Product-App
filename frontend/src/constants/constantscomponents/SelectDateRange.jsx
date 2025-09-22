@@ -37,7 +37,6 @@ const getThisMonth = () => {
   return [start.toISOString().split("T")[0], end.toISOString().split("T")[0]];
 };
 
-
 const getLastMonth = () => {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth() - 1, 2);
@@ -63,8 +62,6 @@ const getFromTodayOnwards = () => {
   return [start.toISOString().split("T")[0], farFutureDate.toISOString().split("T")[0]];
 };
 
-
-
 const getNext7Days = () => getNextNDays(7);
 
 const getNext30Days = () => getNextNDays(30);
@@ -81,7 +78,6 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate, futureC
     { label: "This Month", getRange: getThisMonth },
     { label: "Last Month", getRange: getLastMonth },
   ];
-
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [customStart, setCustomStart] = useState("");
@@ -134,14 +130,14 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate, futureC
       </div>
 
       {dropdownOpen && (
-        <div className="absolute mt-1 w-full bg-white border border-[var(--light-gray)] rounded shadow-md z-10 p-2 space-y-1">
+        <div className="absolute mt-1 w-full bg-white border border-[var(--light-gray)] shadow-md z-10 space-y-1">
           {ranges.map((r) => (
             <div
               key={r.label}
-              className="flex justify-between items-center px-4 py-2 hover:bg-blue-100 cursor-pointer rounded"
+              className="flex justify-between items-center px-4 py-1.5 hover:bg-blue-100 cursor-pointer"
               onClick={() => handleRangeClick(r.getRange)}
             >
-              <span>{r.label}</span>
+              <span className="text-sm text-black">{r.label}</span>
               {r.count !== undefined && (
                 <span className="text-sm text-black">({r.count})</span>
               )}
