@@ -133,7 +133,7 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
               className="flex justify-between items-center px-4 py-1.5 hover:bg-blue-100 cursor-pointer"
               onClick={() => handleRangeClick(r.getRange)}
             >
-              <span>{r.label}</span>
+              <span className="text-sm text-black">{r.label}</span>
             </div>
           ))}
           <div className="pt-2 px-4 text-sm text-gray-700">Custom Range:</div>
