@@ -549,6 +549,7 @@ const sidebarItems = [
           "superadmin",
           "staffmember",
           "driver",
+          "customer"
         ],
       },
     ],
