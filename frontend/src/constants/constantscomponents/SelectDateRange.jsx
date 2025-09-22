@@ -37,7 +37,6 @@ const getThisMonth = () => {
   return [start.toISOString().split("T")[0], end.toISOString().split("T")[0]];
 };
 
-
 const getLastMonth = () => {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth() - 1, 2);
@@ -57,20 +56,13 @@ const getNextNDays = (n) => {
   end.setDate(end.getDate() + (n - 1));
   return [start.toISOString().split("T")[0], end.toISOString().split("T")[0]];
 };
-const getFromTodayOnwards = () => {
-  const start = new Date();
-  const farFutureDate = new Date('2099-12-31');
-  return [start.toISOString().split("T")[0], farFutureDate.toISOString().split("T")[0]];
-};
-
 
 
 const getNext7Days = () => getNextNDays(7);
 
 const getNext30Days = () => getNextNDays(30);
-const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate, futureCount }) => {
+const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
   const ranges = [
-    { label: `Scheduled`, getRange: getFromTodayOnwards, count: futureCount },
     { label: "Today", getRange: getToday },
     { label: "Tomorrow", getRange: getTomorrow },
     { label: "Yesterday", getRange: getYesterday },
@@ -81,7 +73,6 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate, futureC
     { label: "This Month", getRange: getThisMonth },
     { label: "Last Month", getRange: getLastMonth },
   ];
-
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [customStart, setCustomStart] = useState("");
@@ -128,8 +119,9 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate, futureC
             : "Select Date Range"}
         </span>
         <Icons.ChevronDown
-          className={`w-4 h-4 text-black transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""
-            }`}
+          className={`w-4 h-4 text-black transition-transform duration-200 ${
+            dropdownOpen ? "rotate-180" : ""
+          }`}
         />
       </div>
 
@@ -142,9 +134,6 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate, futureC
               onClick={() => handleRangeClick(r.getRange)}
             >
               <span>{r.label}</span>
-              {r.count !== undefined && (
-                <span className="text-sm text-black">({r.count})</span>
-              )}
             </div>
           ))}
           <div className="pt-2 px-4 text-sm text-gray-700">Custom Range:</div>

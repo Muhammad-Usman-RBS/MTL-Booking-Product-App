@@ -60,6 +60,7 @@ const BookingsList = () => {
   }
 
   const ALL_STATUSES = [
+    "Scheduled",
     "New",
     "Accepted",
     "On Route",
@@ -120,7 +121,7 @@ const BookingsList = () => {
   }, [driversData]);
   const allBookings = bookingData?.bookings || [];
 
-  const  rawfutureBookingsCount = allBookings.filter((b) => {
+  const rawfutureBookingsCount = allBookings.filter((b) => {
     const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
     if (!journey?.date) return false;
     const today = new Date();
@@ -133,25 +134,25 @@ const BookingsList = () => {
     acc[status] = 0;
     return acc;
   }, {});
+const today = new Date();
+today.setHours(0, 0, 0, 0);
 
-  allBookings.forEach((booking) => {
-    const status = booking.status || "Unknown";
-    if (status === "Deleted" || status === "Completed") return;
-    if (statusCountMap.hasOwnProperty(status)) {
-      statusCountMap[status]++;
-    } else {
-      statusCountMap[status] = 1;
-    }
-  });
+const scheduledCount = allBookings.filter((b) => {
+  if(b?.status=== "Deleted") return
+  const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
+  if (!journey?.date) return false;
+  const bookingDate = new Date(journey.date);
+  return bookingDate >= today; 
+}).length;
+const dynamicStatusList = Object.entries(statusCountMap).map(
+  ([label, count]) => ({ label, count })
+);
+const scheduledIndex = dynamicStatusList.findIndex((s) => s.label === "Scheduled");
+if (scheduledIndex >= 0) {
+  dynamicStatusList[scheduledIndex].count = scheduledCount;
+}
+dynamicStatusList.push({ label: "All", count: allBookings.length });
 
-  const dynamicStatusList = Object.entries(statusCountMap).map(
-    ([label, count]) => ({
-      label,
-      count,
-    })
-  );
-
-  dynamicStatusList.push({ label: "All", count: allBookings.length });
 
   const passengerMap = new Map();
   allBookings.forEach((booking) => {
@@ -236,6 +237,7 @@ const BookingsList = () => {
     showKeyboardModal ||
     showColumnModal ||
     showEditModal;
+
   return (
     <>
       <OutletHeading name="Bookings List" />

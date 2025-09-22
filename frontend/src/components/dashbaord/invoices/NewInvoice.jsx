@@ -4,7 +4,6 @@ import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
-import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
 import SelectedSearch from "../../../constants/constantscomponents/SelectedSearch";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
@@ -12,6 +11,7 @@ import { useGetGeneralPricingPublicQuery } from "../../../redux/api/generalPrici
 import { useCreateInvoiceMutation } from "../../../redux/api/invoiceApi";
 import { useLoading } from "../../common/LoadingProvider";
 import DateRange from "../../../constants/constantscomponents/DateRange";
+import { useGetCorporateCustomersQuery } from "../../../redux/api/corporateCustomerApi";
 
 const getFirstAndLastDay = (offset = 0) => {
   const now = new Date();
@@ -26,7 +26,10 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
   const companyId = user?.companyId;
   const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
   const { showLoading, hideLoading } = useLoading();
-  const { data: generalPricingData } = useGetGeneralPricingPublicQuery(companyId, {skip: !companyId});
+  const { data: generalPricingData } = useGetGeneralPricingPublicQuery(
+    companyId,
+    { skip: !companyId }
+  );
   const [selectedRows, setSelectedRows] = useState([]);
   const [globalTaxSelection, setGlobalTaxSelection] = useState("No Tax");
   const [bookingTaxes, setBookingTaxes] = useState({});
@@ -40,8 +43,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
   const taxMultiplier = 1 + taxPercent / 100;
 
   const { data: bookingData } = useGetAllBookingsQuery(user?.companyId);
-  console.log("bookingData", bookingData);
-
+  const { data: corporateCustomersData } = useGetCorporateCustomersQuery();
   useEffect(() => {
     if (isCreating) {
       showLoading();
@@ -222,6 +224,26 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
     return 0;
   };
 
+  const getCorporateCustomerByEmail = (email) => {
+    // Debug: Log the API response structure
+    console.log("corporateCustomersData:", corporateCustomersData);
+    
+    if (!corporateCustomersData?.customers || !email) {
+      console.log("No customers data or email:", { 
+        hasCustomers: !!corporateCustomersData?.customers, 
+        email 
+      });
+      return null;
+    }
+    
+    const found = corporateCustomersData.customers.find(
+      (customer) => customer.email.toLowerCase() === email.toLowerCase()
+    );
+    
+    console.log("Found corporate customer:", found);
+    return found;
+  };
+
   const handleCustomerSelection = (newSelection) => {
     const wasAllSelected = selectedCustomers.includes("All");
     const isAllInNewSelection = newSelection.includes("All");
@@ -310,7 +332,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
             internalNotes: internalNotes,
           };
         });
-        const payload = {
+        let payload = {
           invoiceNumber: "",
           companyId: user.companyId,
           invoiceType,
@@ -319,6 +341,20 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
             : { customer: contact }),
           items,
         };
+
+        if (invoiceType === "customer") {
+          console.log("Checking for corporate customer with email:", contact.email);
+          const corporateCustomer = getCorporateCustomerByEmail(contact.email);
+          console.log("Corporate customer found:", corporateCustomer);
+          
+          if (corporateCustomer && corporateCustomer.vatnumber) {
+            console.log("Adding VAT number:", corporateCustomer.vatnumber);
+            payload.customer.vatnumber = corporateCustomer.vatnumber;
+            console.log("Final payload customer:", payload.customer);
+          } else {
+            console.log("No VAT number to add");
+          }
+        }
 
         await createInvoice(payload).unwrap();
       }
@@ -331,7 +367,6 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
       toast.error("Failed to create invoices");
     }
   };
-
 
   const handleDriverSelection = (newSelection) => {
     const wasAllSelected = selectedDrivers.includes("All");

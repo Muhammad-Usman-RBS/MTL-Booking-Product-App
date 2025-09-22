@@ -288,7 +288,17 @@ export const useBookingTableLogic = ({
 
       return statusMatch && passengerMatch && driverMatch && vehicleMatch && dateTime;
     });
-
+    if (selectedStatus.includes("Scheduled")) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // normalize to midnight
+    
+      filtered = filtered.filter((b) => {
+        const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
+        if (!journey?.date) return false;
+        const bookingDate = new Date(journey.date);
+        return bookingDate >= today;
+      });
+    }
     // Sorting (optional)
     filtered.sort((a, b) => {
       let aMatch = 0;
