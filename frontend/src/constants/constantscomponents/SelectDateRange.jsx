@@ -126,11 +126,11 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
       </div>
 
       {dropdownOpen && (
-        <div className="absolute mt-1 w-full bg-white border border-[var(--light-gray)] rounded shadow-md z-10 p-2 space-y-1">
+        <div className="absolute mt-1 w-full bg-white border border-[var(--light-gray)] shadow-md z-10 space-y-1">
           {ranges.map((r) => (
             <div
               key={r.label}
-              className="flex justify-between items-center px-4 py-2 hover:bg-blue-100 cursor-pointer rounded"
+              className="flex justify-between items-center px-4 py-1.5 hover:bg-blue-100 cursor-pointer"
               onClick={() => handleRangeClick(r.getRange)}
             >
               <span>{r.label}</span>

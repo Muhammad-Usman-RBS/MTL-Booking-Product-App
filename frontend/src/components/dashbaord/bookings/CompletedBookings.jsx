@@ -191,7 +191,7 @@ const CompletedBookings = () => {
         tableHeaders={allHeaders}
         tableData={tableData}
         exportTableData={tableData}
-        emptyMessage="No completed bookings found"
+        emptyMessage="No completed bookings found..."
         showSearch
         showRefresh
         showDownload

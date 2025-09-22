@@ -16,6 +16,7 @@ const CustomTable = ({
   selectedRow,
   setSelectedRow,
   onRowDoubleClick,
+  emptyMessage = null,
 }) => {
   const [search, setSearch] = useState("");
   const [perPage, setPerPage] = useState(() => {
@@ -39,6 +40,15 @@ const CustomTable = ({
       );
   }, [tableHeaders]);
   const [internalOrder, setInternalOrder] = useState(defaultOrder);
+
+  // Local EmptyTableMessage
+  const EmptyTableMessage = ({ message, colSpan }) => (
+    <tr>
+      <td colSpan={colSpan} className="text-center py-3 text-gray-500">
+        {message}
+      </td>
+    </tr>
+  );
 
   useEffect(() => {
     localStorage.setItem("customTablePerPage", perPage);
@@ -346,8 +356,8 @@ const CustomTable = ({
             </tr>
           </thead>
           <tbody>
-            {paginatedData.length === 1 && paginatedData[0].customRow ? (
-              <tr>{paginatedData[0].content}</tr>
+            {paginatedData.length === 0 && emptyMessage ? (
+              <EmptyTableMessage message={emptyMessage} colSpan={combinedOrder.length} />
             ) : (
               paginatedData.map((item, rowIdx) => (
                 <tr
