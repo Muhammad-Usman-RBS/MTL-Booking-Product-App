@@ -382,3 +382,107 @@ select:disabled {
 }
 
 /* END FOR GOOGLE TRANSLATE */
+
+/* ICONS START */
+/* Base Div for Icons or Badges */
+.icon-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Primary */
+.icon-box-primary {
+  background-color: var(--main-color);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(44, 155, 230, 0.2);
+}
+.icon-box-primary:hover {
+  background-color: #1c7dc7;
+  box-shadow: 0 0 15px rgba(44, 155, 230, 0.4);
+}
+
+/* Success */
+.icon-box-success {
+  background-color: var(--success-color);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(89, 89, 89, 0.2);
+}
+.icon-box-success:hover {
+  background-color: #046511;
+  box-shadow: 0 0 15px rgba(89, 89, 89, 0.4);
+}
+
+/* Danger */
+.icon-box-danger {
+  background-color: var(--primary-dark-red);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(186, 9, 10, 0.2);
+}
+.icon-box-danger:hover {
+  background-color: var(--alert-red);
+  box-shadow: 0 0 15px rgba(186, 9, 10, 0.4);
+}
+
+/* Warning */
+.icon-box-warning {
+  background-color: #fef9c3;
+  color: #a16207;
+  border: 1px solid #fcd34d;
+}
+.icon-box-warning:hover {
+  background-color: #fef08a;
+  border-color: #fef08a;
+}
+
+/* Info */
+.icon-box-info {
+  background-color: var(--light-blue);
+  color: var(--dark-black);
+  box-shadow: 0 0 10px rgba(44, 155, 230, 0.2);
+}
+.icon-box-info:hover {
+  background-color: #cfe2e3;
+  box-shadow: 0 0 15px #cfe2e3;
+}
+
+/* Outline */
+.icon-box-outline {
+  background-color: transparent;
+  color: var(--navy-blue);
+  border: 2px solid var(--navy-blue);
+  box-shadow: 0 0 10px rgba(13, 23, 88, 0.1);
+}
+.icon-box-outline:hover {
+  background-color: var(--navy-blue);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(13, 23, 88, 0.3);
+}
+
+/* Size Variants */
+.icon-box-sm {
+  padding: 4px;
+  font-size: 14px;
+}
+.icon-box-lg {
+  padding: 12px;
+  font-size: 22px;
+}
+.icon-box-xl {
+  padding: 16px;
+  font-size: 28px;
+}
+/* ICONS END */
+
+/* 
+<div class="icon-box icon-box-primary">P</div>
+<div class="icon-box icon-box-success">S</div>
+<div class="icon-box icon-box-danger">D</div>
+<div class="icon-box icon-box-warning">W</div>
+<div class="icon-box icon-box-info">I</div>
+<div class="icon-box icon-box-outline">O</div> */

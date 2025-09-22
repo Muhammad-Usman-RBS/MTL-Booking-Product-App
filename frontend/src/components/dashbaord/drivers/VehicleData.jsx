@@ -190,25 +190,26 @@ const VehicleData = ({
           Vehicle Types <span className="text-red-500">*</span>
         </label>
         <div className="grid grid-cols-3 grid-rows-3 gap-2">
-  {vehicleList.map((vehicle) => {
-    const name = vehicle.vehicleName; 
-    return (
-      <div key={vehicle._id} className="flex items-center">
-        <input
-          type="checkbox"
-          id={name}
-          value={name}
-          onChange={handleCheckboxChange}
-          checked={formData.vehicleTypes.includes(name)}
-          className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-        />
-        <label className="ml-2 text-sm text-gray-700" htmlFor={name}>
-          {name}
-        </label>
-      </div>
-    );
-  })}
-</div>
+          {vehicleList.map((vehicle) => {
+            const name = vehicle.vehicleName;
+            const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
+            return (
+              <div key={vehicle._id} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={name}
+                  value={name}
+                  onChange={handleCheckboxChange}
+                  checked={formData.vehicleTypes.includes(name)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <label className="ml-2 text-sm text-gray-700" htmlFor={name}>
+                  {capitalizedName}
+                </label>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </>
   );
