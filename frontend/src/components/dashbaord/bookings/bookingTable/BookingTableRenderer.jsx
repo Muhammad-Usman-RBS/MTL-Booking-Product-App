@@ -711,8 +711,9 @@ export const BookingTableRenderer = ({
                     </button>
 
                     {selectedActionRow === index && (
-                      <div className="mt-2 w-56 bg-white border border-gray-200 rounded-lg js-actions-menu shadow-lg animate-slide-in">
-                        {actionMenuItems
+  // <div className="mt-2 w-56 bg-white border border-gray-200 rounded-lg js-actions-menu shadow-lg animate-slide-in">
+<div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg js-actions-menu shadow-lg animate-slide-in z-50">
+                      {actionMenuItems
                           .filter((action) => {
                             if (user?.role === "driver") {
                               return (
@@ -963,7 +964,7 @@ export const BookingTableRenderer = ({
       exportTableData={exportTableData}
       showSearch
       showRefresh
-      showDownload
+      showDownload  
       emptyMessage={emptyMessage}
       showPagination
       showSorting

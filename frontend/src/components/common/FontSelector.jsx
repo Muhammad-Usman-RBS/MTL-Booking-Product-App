@@ -50,8 +50,8 @@ function FontSelector() {
           {fonts.map((font) => (
             <button
               key={font.value}
-              className={`w-full text-left px-3 text-black py-2 hover:bg-gray-100 ${
-                selectedFont === font.value ? "font-bold" : ""
+              className={`w-full text-left px-3 cursor-pointer text-black py-2 hover:bg-gray-100 ${
+                selectedFont === font.value ? " bg-gray-100" : ""
               }`}
               onClick={() => handleChange(font)}
             >

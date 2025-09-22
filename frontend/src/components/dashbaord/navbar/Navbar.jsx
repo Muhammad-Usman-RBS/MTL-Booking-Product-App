@@ -343,7 +343,7 @@ function Navbar() {
             <Icons.BellPlus className="size-4 text-theme" />
             <div>
               {notifications.length >= 1 && (
-                <span className="absolute -top-2 right-0 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
+                <span className="absolute -top-2 -right-2 bg-red-400 text-xs py-[0.5px] px-1 rounded-full">
                   {notifications.filter((n) => !n.isRead).length}
                 </span>
               )}
@@ -483,7 +483,7 @@ function Navbar() {
     {bookmarks && bookmarks.length > 0 ? (
       <>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold hidden lg:block text-gray-700">Choose Theme</h3>
+          <h3 className="text-sm font-semibold hidden lg:block text-gray-700">Choose&nbsp;Theme</h3>
          
         </div>
         <div className="space-y-2">
@@ -495,13 +495,13 @@ function Navbar() {
                 handleApplyBookmarkedTheme(b);
                 setIsModalOpen(false);
               }}
-              className={`w-full p-2 rounded-lg border transition hover:scale-[1.02] hover:shadow 
+              className={`w-full p-2 rounded-lg cursor-pointer border transition hover:scale-[1.02] hover:shadow 
                 ${activeBookmarkId === b._id ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"}`}
             >
-              <div className="flex space-x-3 justify-center">
-                <div className="w-4 h-4 rounded-sm border" style={{ backgroundColor: b?.themeSettings?.bg }} />
-                <div className="w-4 h-4 rounded-sm border" style={{ backgroundColor: b?.themeSettings?.text }} />
-                <div className="w-4 h-4 rounded-sm border" style={{ backgroundColor: b?.themeSettings?.primary }} />
+              <div className="flex space-x-3  justify-center">
+                <div className="w-4 h-4  rounded-sm border" style={{ backgroundColor: b?.themeSettings?.bg }} />
+                <div className="w-4 h-4  rounded-sm border" style={{ backgroundColor: b?.themeSettings?.text }} />
+                <div className="w-4 h-4  rounded-sm border" style={{ backgroundColor: b?.themeSettings?.primary }} />
               </div>
             </button>
           ))}

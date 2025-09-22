@@ -336,12 +336,8 @@ const CustomTable = ({
                       ? "cursor-pointer text-dark transition"
                       : "cursor-default"
                       }`}
-                    title={
-                      fixedStartCols.includes(col.key) ||
-                        fixedEndCols.includes(col.key)
-                        ? ""
-                        : "Drag to reorder"
-                    }
+                      title={col.label}
+
                   >
                     <div className="flex items-center gap-1 whitespace-nowrap">
                       {col.label}

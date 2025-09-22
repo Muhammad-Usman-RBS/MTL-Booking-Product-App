@@ -68,7 +68,7 @@ const Sidebar = () => {
       </div>
 
       {isOpen && (
-        <div className="ps-7 pt-2 mt-[-8px] border-b pb-2 w-full bg-gray-300">
+        <div className="ps-4 pt-2 mt-[-8px] border-b pb-2 w-full bg-gray-300">
           <p className="text-sm text-[#1f2937] uppercase tracking-widest font-semibold">
             Welcome!
           </p>

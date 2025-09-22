@@ -55,7 +55,7 @@ const DriverStatements = () => {
   const handleDownload = (item) => {
     setViewModalData(item);
     setTimeout(() => {
-      downloadPDF("invoice-content", `${item.driver}_statement.pdf`);
+      downloadPDF("invoice-content", `Driver ${item.driver}_statement.pdf`);
     }, 500);
   };
 
