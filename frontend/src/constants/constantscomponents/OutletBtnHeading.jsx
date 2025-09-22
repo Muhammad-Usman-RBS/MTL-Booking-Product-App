@@ -6,7 +6,8 @@ const OutletBtnHeading = ({
   buttonLabel,
   buttonLink,
   onButtonClick,
-  buttonBg = "bg-[var(--primary-color)]" // default background
+  disabled = false,
+  buttonBg = "bg-[var(--primary-color)]",
 }) => {
   return (
     <>
@@ -23,7 +24,10 @@ const OutletBtnHeading = ({
           buttonLink ? (
             <Link to={buttonLink} className="w-full sm:w-auto">
               <button
-                className={`btn ${buttonBg} text-white px-4 py-2 rounded-md`}
+                disabled={disabled}
+                className={`btn ${buttonBg} text-white px-4 py-2 rounded-md ${
+                  disabled ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 {buttonLabel}
               </button>
@@ -31,7 +35,10 @@ const OutletBtnHeading = ({
           ) : (
             <button
               onClick={onButtonClick}
-              className={`btn ${buttonBg} text-white px-4 py-2 rounded-md`}
+              disabled={disabled}
+              className={`btn ${buttonBg} text-white px-4 py-2 rounded-md ${
+                disabled ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               {buttonLabel}
             </button>

@@ -55,7 +55,7 @@ const CustomTable = ({
         const missing = defaultOrder.filter((k) => !valid.includes(k));
         setInternalOrder([...valid, ...missing]);
         return;
-      } catch {}
+      } catch { }
     }
     setInternalOrder(defaultOrder);
   }, [persistKey]);
@@ -295,41 +295,40 @@ const CustomTable = ({
                     }
                     onDragStart={
                       !fixedStartCols.includes(col.key) &&
-                      !fixedEndCols.includes(col.key)
+                        !fixedEndCols.includes(col.key)
                         ? handleDragStart(col.key)
                         : undefined
                     }
                     onDragOver={
                       !fixedStartCols.includes(col.key) &&
-                      !fixedEndCols.includes(col.key)
+                        !fixedEndCols.includes(col.key)
                         ? handleDragOver(col.key)
                         : undefined
                     }
                     onDrop={
                       !fixedStartCols.includes(col.key) &&
-                      !fixedEndCols.includes(col.key)
+                        !fixedEndCols.includes(col.key)
                         ? handleDrop(col.key)
                         : undefined
                     }
                     onClick={() =>
                       showSorting &&
-                      col.key &&
-                      !fixedStartCols.includes(col.key) &&
-                      !fixedEndCols.includes(col.key)
+                        col.key &&
+                        !fixedStartCols.includes(col.key) &&
+                        !fixedEndCols.includes(col.key)
                         ? requestSort(col.key)
                         : undefined
                     }
-                    className={`px-2 py-3 text-left align-middle whitespace-nowrap ${
-                      showSorting &&
+                    className={`px-2 py-3 text-left align-middle whitespace-nowrap ${showSorting &&
                       col.key &&
                       !fixedStartCols.includes(col.key) &&
                       !fixedEndCols.includes(col.key)
-                        ? "cursor-pointer text-dark transition"
-                        : "cursor-default"
-                    }`}
+                      ? "cursor-pointer text-dark transition"
+                      : "cursor-default"
+                      }`}
                     title={
                       fixedStartCols.includes(col.key) ||
-                      fixedEndCols.includes(col.key)
+                        fixedEndCols.includes(col.key)
                         ? ""
                         : "Drag to reorder"
                     }
@@ -356,21 +355,19 @@ const CustomTable = ({
                   onClick={
                     setSelectedRow
                       ? () =>
-                          setSelectedRow(
-                            selectedRow === item._id ? null : item._id
-                          )
+                        setSelectedRow(
+                          selectedRow === item._id ? null : item._id
+                        )
                       : undefined
                   }
                   onDoubleClick={() => onRowDoubleClick?.(item)}
-                  className={`border-b border-[var(--light-gray)] hover:bg-[#CFE2FF] transition ${
-                    setSelectedRow ? "cursor-pointer " : ""
-                  } ${
-                    setSelectedRow && selectedRow === item._id
+                  className={`border-b border-[var(--light-gray)] hover:bg-[#CFE2FF] transition ${setSelectedRow ? "cursor-pointer " : ""
+                    } ${setSelectedRow && selectedRow === item._id
                       ? "bg-[#CFE2FF] text-white"
                       : rowIdx % 2 === 0
-                      ? "bg-gray-50"
-                      : "bg-[#EDEDED]"
-                  }`}
+                        ? "bg-gray-50"
+                        : "bg-[#EDEDED]"
+                    }`}
                 >
                   {combinedOrder
                     .map(headerByKey)
@@ -401,7 +398,7 @@ const CustomTable = ({
           </div>
         )}
         <div className="btn btn-outline text-center">
-          Total Records: {filteredData.length}
+          Total Records: {filteredData.filter(item => !item.customRow).length}
         </div>
       </div>
     </div>

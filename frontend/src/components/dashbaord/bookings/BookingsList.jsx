@@ -136,7 +136,7 @@ const BookingsList = () => {
 
   allBookings.forEach((booking) => {
     const status = booking.status || "Unknown";
-    if (status === "Deleted") return;
+    if (status === "Deleted" || status === "Completed") return;
     if (statusCountMap.hasOwnProperty(status)) {
       statusCountMap[status]++;
     } else {

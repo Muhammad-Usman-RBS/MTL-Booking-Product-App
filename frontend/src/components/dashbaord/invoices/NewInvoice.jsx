@@ -449,10 +449,9 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
         }
       />
 
-      <div className="flex    gap-4">
+      <div className="flex gap-4">
         {/* Filter Section */}
         <div className="flex flex-col  sm:flex-row flex-wrap gap-x-2 w-full">
-
           <DateRange
             startDate={startDate}
             endDate={endDate}
@@ -482,7 +481,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
               />
             </div>
           )}
-          <div className="flex  mb-1   ">
+          <div className="flex mb-1">
             <div className="w-full sm:w-64">
               <SelectOption
                 options={["No Tax", "Tax"]}
@@ -503,7 +502,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
             </div>
           </div>
         </div>
-        <div className=" whitespace-nowrap">
+        <div className="whitespace-nowrap">
           <button
             onClick={handleCreateInvoice}
             disabled={isCreating}
@@ -513,10 +512,10 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
           </button>
         </div>
       </div>
-      <div>
+      <div className="mt-8">
         <CustomTable
-          showSearch={false}
-          showRefresh={false}
+          showSearch={true}
+          showRefresh={true}
           tableHeaders={tableHeaders}
           tableData={tableData}
         />

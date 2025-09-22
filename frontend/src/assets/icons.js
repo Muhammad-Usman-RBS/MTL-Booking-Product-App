@@ -98,9 +98,13 @@ import {
   Palette,
   CaseSensitive,
   CheckCheck,
+  RotateCcw,
+  Trash2,
 } from "lucide-react";
 
 const Icons = {
+  RotateCcw,
+  Trash2,
   CheckCheck,
   Palette,
   CaseSensitive,

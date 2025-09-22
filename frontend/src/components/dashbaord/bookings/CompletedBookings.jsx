@@ -73,17 +73,6 @@ const CompletedBookings = () => {
     },
     { label: "Passenger", key: "passenger" },
     { label: "Date & Time", key: "date" },
-    { label: "Vehicle", key: "vehicle" },
-    { label: "Payment", key: "payment" },
-    { label: "Journey Fare", key: "journeyFare" },
-    { label: "Driver Fare", key: "driverFare" },
-    { label: "Return Fare", key: "returnJourneyFare" },
-    { label: "Return DR Fare", key: "returnDriverFare" },
-    { label: "Driver", key: "driver" },
-    { label: "Flight No.", key: "flightNumber" },
-    { label: "Arrival (Scheduled)", key: "flightArrivalScheduled" },
-    { label: "Arrival (Estimated)", key: "flightArrivalEstimated" },
-    { label: "Created At", key: "createdAt" },
     { label: "Status", key: "status" },
     { label: "Actions", key: "actions" },
   ];
@@ -127,8 +116,8 @@ const CompletedBookings = () => {
       passenger: formatPassenger(b.passenger),
       date:
         journey?.date &&
-        journey?.hour !== undefined &&
-        journey?.minute !== undefined
+          journey?.hour !== undefined &&
+          journey?.minute !== undefined
           ? new Date(journey.date).toLocaleString()
           : "-",
       vehicle: formatVehicle(b.vehicle),
@@ -164,11 +153,11 @@ const CompletedBookings = () => {
                     )
                     ? null
                     : completedBookings.findIndex(
-                        (booking) => booking._id === b._id
-                      )
+                      (booking) => booking._id === b._id
+                    )
                 )
               }
-              className="p-2 rounded hover:bg-gray-100 transition js-actions-trigger"
+              className="relative p-2 rounded-lg bg-blue-50  cursor-pointer hover:bg-blue-100 border border-blue-200 hover:border-blue-300 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
             >
               <GripHorizontal size={18} className="text-[var(--dark-gray)]" />
             </button>
@@ -177,17 +166,17 @@ const CompletedBookings = () => {
               completedBookings.findIndex(
                 (booking) => booking._id === b._id
               ) && (
-              <div className="absolute top-full right-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg js-actions-menu shadow-lg animate-slide-in z-50">
-                <button
-                  onClick={() => {
-                    openViewModal(b);
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
-                >
-                  View
-                </button>
-              </div>
-            )}
+                <div className="absolute top-full right-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg js-actions-menu shadow-lg animate-slide-in z-50">
+                  <button
+                    onClick={() => {
+                      openViewModal(b);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
+                  >
+                    View
+                  </button>
+                </div>
+              )}
           </div>
         </div>
       ),

@@ -651,12 +651,6 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
                           ? booking?.returnJourney.notes
                           : booking?.primaryJourney.notes || "—"}
                       </div>
-                      {journey?.internalNotes && (
-                        <div className="text-[var(--dark-gray)]">
-                          <strong>Internal Notes:</strong>{" "}
-                          {journey.internalNotes}
-                        </div>
-                      )}
                     </div>
                   </div>
                   <div>

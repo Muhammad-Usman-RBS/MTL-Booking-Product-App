@@ -115,9 +115,8 @@ export const BookingTableRenderer = ({
   const formatVehicle = (v) =>
     !v || typeof v !== "object"
       ? "-"
-      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${
-          v.handLuggage || 0
-        } | ${v.checkinLuggage || 0}`;
+      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${v.handLuggage || 0
+      } | ${v.checkinLuggage || 0}`;
 
   const formatPassenger = (p) =>
     !p || typeof p !== "object" ? "-" : `${p.name || "N/A"}`;
@@ -330,7 +329,7 @@ export const BookingTableRenderer = ({
             const pickupLocation = item.returnJourney
               ? item.returnJourney?.pickup || "-"
               : item.primaryJourney?.pickup || "-";
-          
+
             row[key] = (
               <div
                 className="w-full max-w-[250px] truncate whitespace-nowrap cursor-default"
@@ -350,38 +349,38 @@ export const BookingTableRenderer = ({
                 {pickupLocation}
               </div>
             );
-          
-            // 🔹 Add a plain text field just for searching
+
+            // Add a plain text field just for searching
             row[`${key}_searchText`] = pickupLocation;
             break;
-            case "dropOff":
-              const dropoffLocation = item.returnJourney
-                ? item.returnJourney?.dropoff || "-"
-                : item.primaryJourney?.dropoff || "-";
-            
-              row[key] = (
-                <div
-                  className="w-full max-w-[250px] truncate whitespace-nowrap cursor-default"
-                  onMouseEnter={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setTooltip({
-                      show: true,
-                      text: dropoffLocation,
-                      x: rect.left + rect.width / 2,
-                      y: rect.top - 10,
-                    });
-                  }}
-                  onMouseLeave={() =>
-                    setTooltip({ show: false, text: "", x: 0, y: 0 })
-                  }
-                >
-                  {dropoffLocation}
-                </div>
-              );
-            
-              // 🔹 Add a plain text field just for searching
-              row[`${key}_searchText`] = dropoffLocation;
-              break;
+          case "dropOff":
+            const dropoffLocation = item.returnJourney
+              ? item.returnJourney?.dropoff || "-"
+              : item.primaryJourney?.dropoff || "-";
+
+            row[key] = (
+              <div
+                className="w-full max-w-[250px] truncate whitespace-nowrap cursor-default"
+                onMouseEnter={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setTooltip({
+                    show: true,
+                    text: dropoffLocation,
+                    x: rect.left + rect.width / 2,
+                    y: rect.top - 10,
+                  });
+                }}
+                onMouseLeave={() =>
+                  setTooltip({ show: false, text: "", x: 0, y: 0 })
+                }
+              >
+                {dropoffLocation}
+              </div>
+            );
+
+            // Add a plain text field just for searching
+            row[`${key}_searchText`] = dropoffLocation;
+            break;
           case "vehicle":
             row[key] = item.vehicle?.vehicleName || "-";
             break;
@@ -430,15 +429,15 @@ export const BookingTableRenderer = ({
               : item.primaryJourney;
             row[key] = journey?.flightArrival?.scheduled
               ? new Date(journey.flightArrival.scheduled).toLocaleString(
-                  "en-GB",
-                  {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  }
-                )
+                "en-GB",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                }
+              )
               : "-";
             break;
           }
@@ -449,15 +448,15 @@ export const BookingTableRenderer = ({
               : item.primaryJourney;
             row[key] = journey?.flightArrival?.estimated
               ? new Date(journey.flightArrival.estimated).toLocaleString(
-                  "en-GB",
-                  {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  }
-                )
+                "en-GB",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                }
+              )
               : "-";
             break;
           }
@@ -465,58 +464,58 @@ export const BookingTableRenderer = ({
           case "createdAt":
             row[key] = item.createdAt
               ? moment(item.createdAt)
-                  .tz(timezone)
-                  .format("DD/MM/YYYY HH:mm:ss")
+                .tz(timezone)
+                .format("DD/MM/YYYY HH:mm:ss")
               : "-";
             break;
-            case "driver": {
-              const disabledByClientOrCustomer = isCancelledByRole(item, [
-                "clientadmin",
-                "customer",
-              ]);
-              const content = formatDriver(item);
-              let driverPlainText = "-";
-              if (Array.isArray(item.drivers) && item.drivers.length > 0) {
-                driverPlainText = item.drivers
-                  .map((d) => d?.name || d?.fullName || "Unnamed Driver")
-                  .join(", ");
-              }
-            
-              if (disabledByClientOrCustomer) {
-                row[key] = (
-                  <div
-                    className="text-gray-400 opacity-60 cursor-not-allowed select-none"
-                    title="Driver selection disabled — booking cancelled by Clientadmin/Customer"
-                    aria-disabled="true"
-                  >
-                    {content}
-                  </div>
-                );
-                row[`${key}_searchText`] = driverPlainText; // ✅ searchable string
-                break;
-              }
-            
-              row[key] =
-                user?.role === "customer" ? (
-                  content
-                ) : (
-                  <div
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (selectedRow !== item._id) {
-                        setSelectedRow(item._id);
-                      }
-                      openDriverModal(item);
-                    }}
-                  >
-                    {content}
-                  </div>
-                );
-            
+          case "driver": {
+            const disabledByClientOrCustomer = isCancelledByRole(item, [
+              "clientadmin",
+              "customer",
+            ]);
+            const content = formatDriver(item);
+            let driverPlainText = "-";
+            if (Array.isArray(item.drivers) && item.drivers.length > 0) {
+              driverPlainText = item.drivers
+                .map((d) => d?.name || d?.fullName || "Unnamed Driver")
+                .join(", ");
+            }
+
+            if (disabledByClientOrCustomer) {
+              row[key] = (
+                <div
+                  className="text-gray-400 opacity-60 cursor-not-allowed select-none"
+                  title="Driver selection disabled — booking cancelled by Clientadmin/Customer"
+                  aria-disabled="true"
+                >
+                  {content}
+                </div>
+              );
               row[`${key}_searchText`] = driverPlainText; // ✅ searchable string
               break;
             }
-                      case "status": {
+
+            row[key] =
+              user?.role === "customer" ? (
+                content
+              ) : (
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (selectedRow !== item._id) {
+                      setSelectedRow(item._id);
+                    }
+                    openDriverModal(item);
+                  }}
+                >
+                  {content}
+                </div>
+              );
+
+            row[`${key}_searchText`] = driverPlainText; // ✅ searchable string
+            break;
+          }
+          case "status": {
             const latestCancelledBy = (() => {
               if (
                 item.status !== "Cancelled" ||
@@ -688,27 +687,14 @@ export const BookingTableRenderer = ({
                 </button>
               );
             } else {
-              // 🔹 Internal Notes check (primaryJourney / returnJourney)
+              // Internal Notes check (primaryJourney / returnJourney)
               const journeyNotes =
                 item?.primaryJourney?.internalNotes ||
                 item?.returnJourney?.internalNotes;
 
               row[key] = (
                 <div className="flex items-center justify-center gap-2">
-                  {/* 🔹 Internal Notes Icon */}
-                  {journeyNotes && journeyNotes.trim() !== "" && (
-                    <button
-                      onClick={() => {
-                        toast.info(journeyNotes); // modal bhi khol sakte ho
-                      }}
-                      title="Internal Notes Available"
-                      className="p-2 rounded hover:bg-gray-100 transition"
-                    >
-                      <Icons.FileText size={18} className="text-blue-600" />
-                    </button>
-                  )}
-
-                  {/* 🔹 Action Button + Dropdown */}
+                  {/* Action Button + Dropdown */}
                   <div className="text-center">
                     <button
                       onClick={() =>
@@ -716,7 +702,7 @@ export const BookingTableRenderer = ({
                           selectedActionRow === index ? null : index
                         )
                       }
-                      className="p-2 rounded hover:bg-gray-100 transition js-actions-trigger"
+                      className="relative p-2 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 hover:border-blue-300 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
                     >
                       <GripHorizontal
                         size={18}
@@ -765,7 +751,7 @@ export const BookingTableRenderer = ({
                                     if (
                                       user?.role === "customer" &&
                                       bookingSetting?.companyId ===
-                                        user?.companyId
+                                      user?.companyId
                                     ) {
                                       const cancelWindow =
                                         bookingSetting?.cancelBookingWindow;
@@ -773,9 +759,8 @@ export const BookingTableRenderer = ({
                                         cancelWindow &&
                                         isWithinCancelWindow(item, cancelWindow)
                                       ) {
-                                        const windowText = `${
-                                          cancelWindow.value
-                                        } ${cancelWindow.unit.toLowerCase()}`;
+                                        const windowText = `${cancelWindow.value
+                                          } ${cancelWindow.unit.toLowerCase()}`;
                                         toast.error(
                                           `Cannot edit booking. Pickup time is within the ${windowText} cancellation window.`
                                         );
@@ -937,6 +922,28 @@ export const BookingTableRenderer = ({
                       </div>
                     )}
                   </div>
+                  {/* Enhanced Internal Notes Icon */}
+                  {journeyNotes && journeyNotes.trim() !== "" && (
+                    <button
+                      onClick={() => toast.info(journeyNotes)}
+                      title="Internal Notes"
+                      className="relative p-2 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 hover:border-blue-300 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
+                    >
+                      <Icons.FileText size={18} className="text-blue-600 hover:text-blue-700" />
+
+                      {/* Red dot */}
+                      <span
+                        className="absolute bg-red-500 rounded-full border-2 border-white"
+                        style={{
+                          width: '10px',
+                          height: '10px',
+                          top: '-2px',
+                          right: '-2px',
+                          animation: 'pulse 2s infinite',
+                        }}
+                      />
+                    </button>
+                  )}
                 </div>
               );
             }

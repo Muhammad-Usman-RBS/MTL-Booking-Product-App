@@ -2,20 +2,18 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
-import {
-  useDeleteBookingMutation,
-  useGetAllBookingsQuery,
-  useRestoreOrDeleteBookingMutation,
-} from "../../../redux/api/bookingApi";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import { useDeleteBookingMutation, useGetAllBookingsQuery, useRestoreOrDeleteBookingMutation } from "../../../redux/api/bookingApi";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import Icons from "../../../assets/icons";
+import CustomModal from "../../../constants/constantscomponents/CustomModal";
 import { useLoading } from "../../common/LoadingProvider";
+import JourneyDetailsModal from "./JourneyDetailsModal";
+import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHeading";
+import Icons from "../../../assets/icons";
 
 const DeletedBookings = () => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
-    const { showLoading, hideLoading } = useLoading();
+  const { showLoading, hideLoading } = useLoading();
 
   const { data, isLoading, refetch } = useGetAllBookingsQuery(companyId);
   const [restoreOrDeleteBooking] = useRestoreOrDeleteBookingMutation();
@@ -23,20 +21,32 @@ const DeletedBookings = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteBooking] = useDeleteBookingMutation();
   const [selectedDeleteId, setSelectedDeleteId] = useState(null);
-   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
-   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
-      useEffect(() => {
-          if (isLoading) {
-            showLoading();
-          } else {
-            hideLoading();
-          }
-        }, [isLoading, showLoading, hideLoading]);
- 
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
+  // Add these states for modal functionality
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewData, setViewData] = useState([]);
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
   const handleDeleteClick = (id) => {
     setSelectedDeleteId(id);
     setShowDeleteModal(true);
   };
+
+  // Add this function for opening view modal
+  const openViewModal = (view) => {
+    setViewData(view || []);
+    setShowViewModal(true);
+  };
+
   useEffect(() => {
     if (data?.bookings) {
       const deleted = data.bookings.filter(
@@ -61,27 +71,28 @@ const DeletedBookings = () => {
   const formatPassenger = (p) =>
     !p || typeof p !== "object"
       ? "-"
-      : `${p.name || "N/A"} | ${p.email || "N/A"} | ${p.phone || "N/A"}`;
+      : `${p.name || "N/A"}`;
 
   const tableData = deletedBookings.map((b) => ({
     _id: b._id,
     bookingId: b.bookingId || "-",
     passenger: formatPassenger(b.passenger),
     pickup:
-    b.returnJourneyToggle && b.returnJourney
-      ? b.returnJourney.pickup || "-"
-      : b.primaryJourney?.pickup || "-",
-  
-  dropoff:
-    b.returnJourneyToggle && b.returnJourney
-      ? b.returnJourney.dropoff || "-"
-      : b.primaryJourney?.dropoff || "-",
-  
+      b.returnJourneyToggle && b.returnJourney
+        ? b.returnJourney.pickup || "-"
+        : b.primaryJourney?.pickup || "-",
+
+    dropoff:
+      b.returnJourneyToggle && b.returnJourney
+        ? b.returnJourney.dropoff || "-"
+        : b.primaryJourney?.dropoff || "-",
+
     date: b.createdAt ? new Date(b.createdAt).toLocaleString() : "-",
     status: b.status || "-",
     actions: (
       <>
         <div className="flex gap-2">
+          {/* Restore Button */}
           <button
             onClick={async () => {
               try {
@@ -97,11 +108,28 @@ const DeletedBookings = () => {
               }
             }}
             className="btn btn-reset"
+            title="Restore Booking"
           >
-            Restore
+            <Icons.RotateCcw size={16} />
           </button>
-          <button className="btn btn-cancel" onClick={() => handleDeleteClick(b._id)}>Delete</button>
 
+          {/* Delete Button */}
+          <button
+            className="btn btn-cancel"
+            title="Delete Booking"
+            onClick={() => handleDeleteClick(b._id)}
+          >
+            <Icons.Trash2 size={16} />
+          </button>
+
+          {/* View Button */}
+          <button
+            className="btn btn-edit !text-white"
+            title="View Booking Details"
+            onClick={() => openViewModal(b)}
+          >
+            <Icons.Eye size={16} />
+          </button>
         </div>
       </>
     ),
@@ -109,16 +137,13 @@ const DeletedBookings = () => {
 
   return (
     <>
-      <OutletHeading name="Deleted Bookings " />
-           <div className="flex items-center justify-end mb-3">
-        <button
-         className="btn btn-cancel"
-          disabled={!deletedBookings.length}
-          onClick={() => setShowBulkDeleteModal(true)}
-         title={deletedBookings.length > 0 && "Delete all permanently" }       >
-          Delete All Permanently
-        </button>
-     </div>
+      <OutletBtnHeading
+        name="Deleted Bookings"
+        buttonLabel="Delete All Permanently"
+        buttonBg="btn btn-cancel"
+        onButtonClick={() => setShowBulkDeleteModal(true)}
+        disabled={!deletedBookings.length}
+      />
       <CustomTable
         tableHeaders={tableHeaders}
         tableData={tableData}
@@ -127,6 +152,15 @@ const DeletedBookings = () => {
         showSearch
         showRefresh
         showDownload
+        // Add onRowDoubleClick functionality
+        onRowDoubleClick={(row) => {
+          const selectedBooking = deletedBookings.find(
+            (b) => b._id === row._id
+          );
+          if (selectedBooking) {
+            openViewModal(selectedBooking);
+          }
+        }}
       />
       <DeleteModal
         isOpen={showDeleteModal}
@@ -146,27 +180,35 @@ const DeletedBookings = () => {
           setSelectedDeleteId(null);
         }}
       />
-   <DeleteModal
-  isOpen={showBulkDeleteModal}
-  onConfirm={async () => {
-    try {
-      setIsBulkDeleting(true);
-      const ids = (deletedBookings || []).map((b) => b._id);
-      await Promise.all(ids.map((id) => deleteBooking(id).unwrap()));
-      toast.success("All deleted bookings permanently removed");
-      setShowBulkDeleteModal(false);
-      refetch();
-    } catch (e) {
-      toast.error("Bulk deletion failed");
-    } finally {
-      setIsBulkDeleting(false);
-    }
-  }}
-  onCancel={() => {
-    setShowBulkDeleteModal(false);
-  }}
-/>
+      <DeleteModal
+        isOpen={showBulkDeleteModal}
+        onConfirm={async () => {
+          try {
+            setIsBulkDeleting(true);
+            const ids = (deletedBookings || []).map((b) => b._id);
+            await Promise.all(ids.map((id) => deleteBooking(id).unwrap()));
+            toast.success("All deleted bookings permanently removed");
+            setShowBulkDeleteModal(false);
+            refetch();
+          } catch (e) {
+            toast.error("Bulk deletion failed");
+          } finally {
+            setIsBulkDeleting(false);
+          }
+        }}
+        onCancel={() => {
+          setShowBulkDeleteModal(false);
+        }}
+      />
 
+      {/* Add CustomModal for viewing journey details */}
+      <CustomModal
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        heading="Deleted Booking Details"
+      >
+        <JourneyDetailsModal viewData={viewData} />
+      </CustomModal>
     </>
   );
 };
