@@ -17,7 +17,7 @@ const termsSchema = new mongoose.Schema(
     },
     createdByRole: {
       type: String,
-      enum: ["superadmin", "clientadmin", "driver", "customer","associateadmin"],
+      enum: ["superadmin", "clientadmin", "driver", "customer", "associateadmin"],
     },
     targetAudience: {
       type: [String],

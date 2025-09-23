@@ -100,11 +100,12 @@ import {
   CheckCheck,
   RotateCcw,
   Trash2,
-  
+  FileSignature,
 } from "lucide-react";
 
 const Icons = {
   RotateCcw,
+  FileSignature,
   Trash2,
   CheckCheck,
   Palette,

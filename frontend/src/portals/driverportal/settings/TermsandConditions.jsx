@@ -1,15 +1,11 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
-import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import { toast } from "react-toastify";
-import {
-  useCreateTermsAndConditionsMutation,
-  useDeleteTermsAndConditionsMutation,
-  useGetTermsAndConditionsQuery,
-  useUpdateTermsAndConditionsMutation,
-} from "../../../redux/api/TermsandConditionsApi";
+import { useSelector } from "react-redux";
 import Icons from "../../../assets/icons";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
+import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
+import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHeading";
+import { useCreateTermsAndConditionsMutation, useDeleteTermsAndConditionsMutation, useGetTermsAndConditionsQuery, useUpdateTermsAndConditionsMutation } from "../../../redux/api/TermsandConditionsApi";
 
 const TermsandConditions = () => {
   const user = useSelector((state) => state?.auth?.user);
@@ -28,6 +24,9 @@ const TermsandConditions = () => {
     content: "",
   });
   const [targetAudience, setTargetAudience] = useState([]);
+
+  const canCreateOrEdit = () =>
+    ["superadmin", "clientadmin"].includes(userRole);
 
   const handleSubmit = async () => {
     if (!formData.title || !formData.content) {
@@ -49,10 +48,13 @@ const TermsandConditions = () => {
         await createTerm({ ...formData, targetAudience }).unwrap();
       }
       resetForm();
+      refetch();
     } catch (err) {
       console.error("Error submitting term:", err);
+      toast.error("Failed to save the term. Please try again.");
     }
   };
+
   const handleCheckboxChange = (event) => {
     const { value, checked } = event.target;
     if (checked) {
@@ -64,39 +66,83 @@ const TermsandConditions = () => {
 
   const resetForm = () => {
     setFormData({ title: "", content: "" });
+    setTargetAudience([]);
     setIsCreating(false);
     setEditingId(null);
   };
 
-  const canCreateOrEdit = () =>
-    ["superadmin", "clientadmin"].includes(userRole);
+  const getAudienceLabel = (role, targetAudience = [], userRole) => {
+    if (role === "superadmin") return "For Admins";
+
+    if (role === "clientadmin" || role === "associateadmin") {
+      if (userRole === "driver" && targetAudience.includes("driver")) {
+        return "For Drivers";
+      }
+      if (userRole === "customer" && targetAudience.includes("customer")) {
+        return "For Customers";
+      }
+      if (["clientadmin", "associateadmin"].includes(userRole)) {
+        if (
+          targetAudience.includes("driver") &&
+          targetAudience.includes("customer")
+        ) {
+          return "For Drivers & Customers";
+        }
+        if (targetAudience.includes("driver")) {
+          return "For Drivers";
+        }
+        if (targetAudience.includes("customer")) {
+          return "For Customers";
+        }
+        if (targetAudience.includes("associateadmin")) {
+          return "For Associate Admins";
+        }
+      }
+    }
+
+    return "";
+  };
 
   return (
     <div>
-      <OutletHeading name="Terms & Conditions" />
-
-      {canCreateOrEdit() && (
-        <div className="mb-6">
-          {!isCreating ? (
-            <button
-              onClick={() => setIsCreating(true)}
-              className=" flex items-center btn btn-success"
-            >
-              Add New Terms
-            </button>
+      {/* Header / Form */}
+      <div className="mb-4">
+        {!isCreating ? (
+          userRole === "driver" || userRole === "customer" ? (
+            <>
+              <OutletHeading name="Terms & Conditions" />
+              <p className="text-sm text-gray-600">
+                Please review the latest terms and conditions.
+              </p>
+            </>
+          ) : canCreateOrEdit() ? (
+            <>
+              <OutletBtnHeading
+                name="Terms & Conditions"
+                buttonLabel="+ Add New Terms"
+                buttonBg="btn btn-reset"
+                onButtonClick={() => setIsCreating(true)}
+              />
+              <p className="text-sm text-gray-600">
+                You can create and share Terms & Conditions for your drivers and
+                customers.
+              </p>
+            </>
           ) : (
+            <OutletHeading name="Terms & Conditions" />
+          )
+        ) : (
+          <>
+            <OutletBtnHeading
+              name="Terms & Conditions"
+              buttonLabel="← Back to Terms List"
+              buttonBg="btn btn-edit"
+              onButtonClick={resetForm}
+            />
             <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">
-                  {editingId ? "Edit Terms" : "Create New Terms"}
-                </h3>
-                <button
-                  onClick={resetForm}
-                  className="text-gray-500 cursor-pointer hover:text-gray-700"
-                >
-                  <Icons.X className="w-5 h-5" />
-                </button>
-              </div>
+              <h3 className="text-xl font-bold text-[var(--dark-gray)] mb-4">
+                {editingId ? "Edit Terms" : "Create New Terms"}
+              </h3>
 
               <div className="space-y-4">
                 <input
@@ -106,7 +152,7 @@ const TermsandConditions = () => {
                     setFormData({ ...formData, title: e.target.value })
                   }
                   placeholder="Enter title"
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="custom_input"
                 />
 
                 <textarea
@@ -116,20 +162,9 @@ const TermsandConditions = () => {
                   }
                   rows={6}
                   placeholder="Enter terms and conditions content"
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="custom_input"
                 />
 
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleSubmit}
-                    className="btn btn-primary inline-flex items-center gap-2"
-                  >
-                    <span>{editingId ? "Update" : "Create"}</span>
-                  </button>
-                  <button onClick={resetForm} className="btn btn-cancel">
-                    Cancel
-                  </button>
-                </div>
                 {userRole === "clientadmin" && (
                   <div className="mb-4">
                     <label className="block font-semibold mb-2">
@@ -154,76 +189,127 @@ const TermsandConditions = () => {
                     </div>
                   </div>
                 )}
+
+                <div className="flex gap-3 justify-end mt-4">
+                  <button
+                    onClick={handleSubmit}
+                    className="btn btn-success inline-flex items-center gap-2"
+                  >
+                    <span>{editingId ? "Update" : "Create"}</span>
+                  </button>
+                  <button onClick={resetForm} className="btn btn-cancel">
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
+          </>
+        )}
+      </div>
+
+      {!isCreating && (
+        <div className="space-y-6">
+          {isLoading && <p className="text-gray-500">Loading terms...</p>}
+          {error && <p className="text-red-500">Failed to load terms.</p>}
+
+          {data?.data?.length > 0 ? (
+            data.data
+              .filter((term) => {
+                const createdByRole = term.createdBy?.role;
+
+                if (
+                  createdByRole === "superadmin" &&
+                  ["superadmin", "clientadmin"].includes(userRole)
+                ) {
+                  return true;
+                }
+
+                if (["clientadmin", "associateadmin"].includes(createdByRole)) {
+                  if (["clientadmin", "associateadmin"].includes(userRole))
+                    return true;
+                  if (term.targetAudience?.includes(userRole)) return true;
+                }
+
+                const isTargeted = term.targetAudience?.includes(userRole);
+                const isCreator =
+                  term.createdBy?._id?.toString() === user?._id?.toString() ||
+                  term.createdBy?.toString() === user?._id?.toString();
+                return isTargeted || isCreator || canCreateOrEdit();
+              })
+              .map((term) => (
+                <article
+                  key={term._id}
+                  className="bg-white border-l-4 border-l-[var(--main-color)] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 px-4 sm:px-6 flex flex-col justify-between"
+                >
+                  <div className="flex flex-col sm:flex-row justify-between w-full gap-4 mt-4">
+                    <div className="flex gap-3 flex-1">
+                      <div className="flex-shrink-0">
+                        <Icons.FileSignature className="w-6 h-6 text-[var(--main-color)]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-[var(--navy-blue)] text-base truncate">
+                          {term.title || "Untitled Term"}
+                        </h3>
+                        <p className="text-sm mt-1 text-[var(--dark-grey)] leading-snug whitespace-pre-wrap">
+                          {term.content}
+                        </p>
+                      </div>
+                    </div>
+
+                    {canCreateOrEdit() && term.createdBy?._id === user?._id && (
+                      <div className="flex gap-2 self-start sm:self-center">
+                        <button
+                          onClick={() => {
+                            setEditingId(term._id);
+                            setFormData({
+                              title: term.title,
+                              content: term.content,
+                            });
+                            setTargetAudience(term.targetAudience || []);
+                            setIsCreating(true);
+                          }}
+                          className="p-2 rounded-lg cursor-pointer hover:bg-[var(--light-blue)] text-[var(--main-color)] transition-colors"
+                          title="Edit"
+                        >
+                          <Icons.Edit className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            setTermToDelete(term._id);
+                            setShowConfirmModal(true);
+                          }}
+                          className="p-2 rounded-lg cursor-pointer hover:bg-red-100 text-[var(--alert-red)] transition-colors"
+                          title="Delete"
+                        >
+                          <Icons.Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bottom Section */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-6 border-t border-[var(--light-gray)] pb-3 pt-2">
+                    <time className="text-xs text-[var(--dark-grey)] italic">
+                      {term.createdAt
+                        ? new Date(term.createdAt).toLocaleDateString()
+                        : "—"}
+                    </time>
+                    <span className="text-xs text-white bg-[var(--main-color)] px-2 py-1 rounded-md mt-2 sm:mt-0">
+                      {getAudienceLabel(
+                        term.createdBy?.role,
+                        term.targetAudience,
+                        userRole
+                      )}
+                    </span>
+                  </div>
+                </article>
+              ))
+          ) : (
+            <p className="text-gray-500 underline">No terms and conditions found.</p>
           )}
         </div>
       )}
-      <div className="space-y-6">
-        {isLoading && <p className="text-gray-500">Loading terms...</p>}
-        {error && <p className="text-red-500">Failed to load terms.</p>}
 
-        {data?.data?.length > 0 ? (
-          data.data
-            .filter((term) => {
-              const isTargeted = term.targetAudience?.includes(userRole);
-              const isCreator =
-                term.createdBy?._id?.toString() === user?._id?.toString() ||
-                term.createdBy?.toString() === user?._id?.toString();
-              return isTargeted || isCreator;
-            })
-            .map((term) => (
-              <div key={term._id} className="bg-white p-3 shadow-sm relative">
-                <h3 className="text-lg font-semibold">{term.title}</h3>
-                <p className="text-gray-700 whitespace-pre-wrap mt-2">
-                  {term.content}
-                </p>
-
-                {canCreateOrEdit() && term.createdBy?._id === user?._id && (
-                  <div className="absolute top-4 right-4 flex gap-3">
-                    <button
-                      onClick={() => {
-                        setEditingId(term._id);
-                        setFormData({
-                          title: term.title,
-                          content: term.content,
-                        });
-                        setTargetAudience(term.targetAudience || []);
-                        setIsCreating(true);
-                      }}
-                      className="text-blue-600 hover:text-blue-800"
-                      title="Edit"
-                    >
-                      <Icons.Edit className="size-5 cursor-pointer" />
-                    </button>
-                    <button
-                      onClick={async () => {
-                        setTermToDelete(term._id);
-                        setShowConfirmModal(true);
-
-                        try {
-                          await deleteTerm({ id: term._id }).unwrap();
-                          refetch();
-                        } catch (err) {
-                          console.error("Error deleting term:", err);
-                          toast.error(
-                            "Failed to delete the term. Please try again."
-                          );
-                        }
-                      }}
-                      className="text-red-600 hover:text-red-800"
-                      title="Delete"
-                    >
-                      <Icons.Trash2 className="size-5 cursor-pointer" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))
-        ) : (
-          <p className="text-gray-500">No terms and conditions found.</p>
-        )}
-      </div>
       <DeleteModal
         isOpen={showConfirmModal}
         onConfirm={async () => {

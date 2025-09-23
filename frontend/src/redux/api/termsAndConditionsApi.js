@@ -1,8 +1,8 @@
 import { apiSlice } from "../slices/apiSlice";
 
-// redux/api/TermsandConditionsApi.js
 export const termsAndConditionsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
+
     createTermsAndConditions: builder.mutation({
       query: (formData) => ({
         url: `/terms-and-conditions/create`,
@@ -10,12 +10,14 @@ export const termsAndConditionsApi = apiSlice.injectEndpoints({
         body: formData,
       }),
     }),
+
     getTermsAndConditions: builder.query({
       query: () => ({
         url: `/terms-and-conditions/get`,
         method: "GET",
       }),
     }),
+
     updateTermsAndConditions: builder.mutation({
       query: ({ id, formData }) => ({
         url: `/terms-and-conditions/update/${id}`,
@@ -23,6 +25,7 @@ export const termsAndConditionsApi = apiSlice.injectEndpoints({
         body: formData,
       }),
     }),
+
     deleteTermsAndConditions: builder.mutation({
       query: ({ id }) => ({
         url: `/terms-and-conditions/delete/${id}`,
@@ -30,6 +33,7 @@ export const termsAndConditionsApi = apiSlice.injectEndpoints({
         body: { id },
       }),
     }),
+    
   }),
 });
 

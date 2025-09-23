@@ -1,6 +1,6 @@
-// controllers/termsAndConditionsController.js
 import TermsAndConditions from "../../models/settings/TermsandCondition.js";
 
+//  CREATE TermsAndConditions
 export const createTerms = async (req, res) => {
   try {
     const { title, content, targetAudience: requestedAudience } = req.body;
@@ -56,6 +56,7 @@ export const createTerms = async (req, res) => {
   }
 };
 
+//  GET TermsAndConditions
 export const getTerms = async (req, res) => {
   try {
     const userRole = req.user.role;
@@ -108,6 +109,7 @@ export const getTerms = async (req, res) => {
   }
 };
 
+//  UPDATE TermsAndConditions
 export const updateTerms = async (req, res) => {
   try {
     const termId = req.params.id;
@@ -169,7 +171,7 @@ export const updateTerms = async (req, res) => {
   }
 };
 
-
+//  DELETE TermsAndConditions
 export const deleteTerms = async (req, res) => {
   const { id } = req.params;
   const companyId = req.user.companyId;

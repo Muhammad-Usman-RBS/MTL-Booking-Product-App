@@ -1,16 +1,12 @@
-// routes/termsAndConditions.js
 import express from "express";
 const router = express.Router();
-import {
-  createTerms,
-  deleteTerms,
-  getTerms,
-  updateTerms,
-} from "../controllers/settings/termsandConditionsController.js";
-import { protect } from "../middleware/authMiddleware.js";
 
-router.post("/create", protect, createTerms);
-router.get("/get", protect, getTerms);
-router.put("/update/:id", protect, updateTerms);
-router.delete("/delete/:id", protect, deleteTerms);
+import { protect, authorize } from "../middleware/authMiddleware.js";
+import { createTerms, deleteTerms, getTerms, updateTerms } from "../controllers/settings/termsandConditionsController.js";
+
+router.post("/create", protect, authorize("superadmin", "clientadmin", "asscoiateadmin", "staffmember"), createTerms);
+router.get("/get", protect, authorize("superadmin", "clientadmin", "asscoiateadmin", "staffmember", "customer", "driver"), getTerms);
+router.put("/update/:id", protect, authorize("superadmin", "clientadmin", "asscoiateadmin", "staffmember"), updateTerms);
+router.delete("/delete/:id", protect, authorize("superadmin", "clientadmin", "asscoiateadmin", "staffmember"), deleteTerms);
+
 export default router;
