@@ -19,10 +19,10 @@ export const termsAndConditionsApi = apiSlice.injectEndpoints({
     }),
 
     updateTermsAndConditions: builder.mutation({
-      query: ({ id, formData }) => ({
+      query: ({ id, ...body }) => ({
         url: `/terms-and-conditions/update/${id}`,
         method: "PUT",
-        body: formData,
+        body,
       }),
     }),
 
@@ -33,7 +33,7 @@ export const termsAndConditionsApi = apiSlice.injectEndpoints({
         body: { id },
       }),
     }),
-    
+
   }),
 });
 
