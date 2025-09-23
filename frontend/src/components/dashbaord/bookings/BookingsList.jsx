@@ -66,6 +66,8 @@ const BookingsList = () => {
     "On Route",
     "At Location",
     "Ride Started",
+    "Completed",
+    "Deleted",
     "Late Cancel",
     "No Show",
   ];
@@ -134,11 +136,16 @@ const BookingsList = () => {
     acc[status] = 0;
     return acc;
   }, {});
+  
+  allBookings.forEach((b) => {
+    if (b?.status && statusCountMap.hasOwnProperty(b.status)) {
+      statusCountMap[b.status] += 1;
+    }
+  });
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const scheduledCount = allBookings.filter((b) => {
-    if (b?.status === "Deleted") return;
     const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
     if (!journey?.date) return false;
     const bookingDate = new Date(journey.date);
@@ -153,9 +160,7 @@ const BookingsList = () => {
   if (scheduledIndex >= 0) {
     dynamicStatusList[scheduledIndex].count = scheduledCount;
   }
-  const allActiveBookingsCount = allBookings.filter(
-    (b) => b.status !== "Deleted" && b.status !== "Completed"
-  ).length;
+  const allActiveBookingsCount = allBookings.length;
 
   dynamicStatusList.push({ label: "All", count: allActiveBookingsCount });
 

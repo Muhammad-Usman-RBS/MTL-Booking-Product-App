@@ -50,7 +50,6 @@ const BookingsTable = ({
   const timezone = useSelector((state) => state.timezone?.timezone) || "UTC";
   const companyId = user?.companyId;
   const [tooltip, setTooltip] = useState({ show: false, text: "", x: 0, y: 0 });
-  const [isDeletedTab, setIsDeletedTab] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedDeleteId, setSelectedDeleteId] = useState(null);
 
@@ -108,7 +107,6 @@ const BookingsTable = ({
     selectedColumns,
     startDate,
     endDate,
-    isDeletedTab,
     timezone,
     bookingSettingData,
     refetchBookings,
@@ -172,6 +170,7 @@ const BookingsTable = ({
         }
 
         if (key === "d") {
+          
           if (user?.role === "driver") {
             toast.info("Drivers are not allowed to delete bookings");
             return;
@@ -181,22 +180,17 @@ const BookingsTable = ({
             return;
           }
 
-          if (isDeletedTab) {
-            setSelectedDeleteId(selectedBooking._id);
-            setShowDeleteModal(true);
-          } else {
-            try {
-              await updateBookingStatus({
-                id: selectedBooking._id,
-                status: "Deleted",
-                updatedBy: `${user.role} | ${user.fullName}`,
-              }).unwrap();
-              toast.success("Booking moved to deleted");
-              refetch();
-            } catch (err) {
-              toast.error(getErrMsg(err));
-              console.error(err);
-            }
+          try {
+            await updateBookingStatus({
+              id: selectedBooking._id,
+              status: "Deleted",
+              updatedBy: `${user.role} | ${user.fullName}`,
+            }).unwrap();
+            toast.success("Booking marked as Deleted");
+            refetch();
+          } catch (err) {
+            toast.error(getErrMsg(err));
+            console.error(err);
           }
           return;
         }
@@ -204,10 +198,6 @@ const BookingsTable = ({
         if (key === "e") {
           if (user?.role === "driver") {
             toast.info("Drivers are not allowed to edit bookings");
-            return;
-          }
-          if (isDeletedTab) {
-            toast.info("This action is disabled in the Deleted tab.");
             return;
           }
 
@@ -250,8 +240,8 @@ const BookingsTable = ({
       };
 
       if (key === "d") {
-        if (isDeletedTab) {
-          toast.info("This action is disabled in the Deleted tab.");
+        if (selectedBooking?.status === "Deleted") {
+          toast.error("Booking already deleted – Driver assignment disabled");
           return;
         }
 
@@ -315,7 +305,6 @@ const BookingsTable = ({
     isAnyModalOpen,
     assignedDrivers,
     selectedDeleteId,
-    isDeletedTab,
   ]);
 
   // Window focus effect
@@ -360,7 +349,7 @@ const BookingsTable = ({
         )}
         tableData={[]}
         exportTableData={[]}
-        emptyMessage={emptyMessage} 
+        emptyMessage={emptyMessage}
         showSearch
         showRefresh
       />
@@ -405,7 +394,6 @@ const BookingsTable = ({
         setEditBookingData={setEditBookingData}
         setShowEditModal={setShowEditModal}
         actionMenuItems={actionMenuItems}
-        isDeletedTab={isDeletedTab}
         setSelectedDeleteId={setSelectedDeleteId}
         setShowDeleteModal={setShowDeleteModal}
         toast={toast}
@@ -421,24 +409,19 @@ const BookingsTable = ({
         GripHorizontal={GripHorizontal}
         moment={moment}
         timezone={timezone}
-        emptyMessage="No bookings found..." 
+        emptyMessage="No bookings found..."
       />
 
       <DeleteModal
         isOpen={showDeleteModal}
         onConfirm={async () => {
           try {
-            if (isDeletedTab) {
-              await deleteBooking(selectedDeleteId).unwrap();
-              toast.success("Booking permanently deleted");
-            } else {
-              await updateBookingStatus({
-                id: selectedDeleteId,
-                status: "Deleted",
-                updatedBy: `${user.role} | ${user.fullName}`,
-              }).unwrap();
-              toast.success("Booking moved to deleted");
-            }
+            await updateBookingStatus({
+              id: selectedDeleteId,
+              status: "Deleted",
+              updatedBy: `${user.role} | ${user.fullName}`,
+            }).unwrap();
+            toast.success("Booking marked as Deleted");
             setShowDeleteModal(false);
             setSelectedDeleteId(null);
             refetch();

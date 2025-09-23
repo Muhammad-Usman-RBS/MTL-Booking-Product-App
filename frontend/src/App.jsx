@@ -17,8 +17,6 @@ import EditProfile from "./components/dashbaord/profile/EditProfile";
 import Logout from "./components/dashbaord/Logout";
 import BookingsList from "./components/dashbaord/bookings/BookingsList";
 import NewBooking from "./components/dashbaord/bookings/NewBooking";
-import CompletedBookings from "./components/dashbaord/bookings/CompletedBookings";
-import DeletedBookings from "./components/dashbaord/bookings/DeletedBookings";
 import InvoicesList from "./components/dashbaord/invoices/InvoicesList";
 import NewInvoice from "./components/dashbaord/invoices/NewInvoice";
 import EditInvoice from "./components/dashbaord/invoices/EditInvoice";
@@ -138,8 +136,7 @@ function App() {
               <Route path="bookings/list" element={<BookingsList />} />
               <Route path="bookings/new" element={<NewBooking />} />
               <Route path="bookings/calendar" element={<BookingCalendar />} />
-              <Route path="bookings/completed-booking" element={<CompletedBookings />} />
-              <Route path="bookings/deleted-booking" element={<DeletedBookings />} />
+
 
               {/* Users/Admin List */}
               <Route path="admin-list" element={<AdminList />} />

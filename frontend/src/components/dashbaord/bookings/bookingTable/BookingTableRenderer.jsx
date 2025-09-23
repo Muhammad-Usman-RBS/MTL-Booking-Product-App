@@ -1,5 +1,6 @@
 import React from "react";
 import CustomTable from "../../../../constants/constantscomponents/CustomTable";
+import { useRestoreOrDeleteBookingMutation } from "../../../../redux/api/bookingApi";
 
 export const BookingTableRenderer = ({
   emptyMessage,
@@ -22,7 +23,6 @@ export const BookingTableRenderer = ({
   setEditBookingData,
   setShowEditModal,
   actionMenuItems,
-  isDeletedTab,
   setSelectedDeleteId,
   setShowDeleteModal,
   toast,
@@ -39,6 +39,7 @@ export const BookingTableRenderer = ({
   moment,
   timezone,
 }) => {
+  const [restoreOrDeleteBooking] = useRestoreOrDeleteBookingMutation();
   const getIdStr = (v) =>
     v?._id?.toString?.() || v?.$oid || v?.toString?.() || String(v || "");
 
@@ -111,12 +112,6 @@ export const BookingTableRenderer = ({
     const byRaw = String(entry.updatedBy || "").toLowerCase();
     return roles.some((role) => byRaw.includes(role.toLowerCase()));
   };
-
-  const formatVehicle = (v) =>
-    !v || typeof v !== "object"
-      ? "-"
-      : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${v.handLuggage || 0
-      } | ${v.checkinLuggage || 0}`;
 
   const formatPassenger = (p) =>
     !p || typeof p !== "object" ? "-" : `${p.name || "N/A"}`;
@@ -429,15 +424,15 @@ export const BookingTableRenderer = ({
               : item.primaryJourney;
             row[key] = journey?.flightArrival?.scheduled
               ? new Date(journey.flightArrival.scheduled).toLocaleString(
-                "en-GB",
-                {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                }
-              )
+                  "en-GB",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  }
+                )
               : "-";
             break;
           }
@@ -448,15 +443,15 @@ export const BookingTableRenderer = ({
               : item.primaryJourney;
             row[key] = journey?.flightArrival?.estimated
               ? new Date(journey.flightArrival.estimated).toLocaleString(
-                "en-GB",
-                {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                }
-              )
+                  "en-GB",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  }
+                )
               : "-";
             break;
           }
@@ -464,8 +459,8 @@ export const BookingTableRenderer = ({
           case "createdAt":
             row[key] = item.createdAt
               ? moment(item.createdAt)
-                .tz(timezone)
-                .format("DD/MM/YYYY HH:mm:ss")
+                  .tz(timezone)
+                  .format("DD/MM/YYYY HH:mm:ss")
               : "-";
             break;
           case "driver": {
@@ -479,6 +474,15 @@ export const BookingTableRenderer = ({
               driverPlainText = item.drivers
                 .map((d) => d?.name || d?.fullName || "Unnamed Driver")
                 .join(", ");
+            }
+            if (item?.status === "Deleted") {
+              row[key] = (
+                <div className="text-red-500 text-xs italic">
+                  Booking Deleted – Driver assignment disabled
+                </div>
+              );
+              row[`${key}_searchText`] = "Booking Deleted";
+              break;
             }
 
             if (disabledByClientOrCustomer) {
@@ -546,6 +550,34 @@ export const BookingTableRenderer = ({
                 <span className="text-red-500 text-xs italic">
                   {`Booking Cancelled by ${latestCancelledBy.role}: ${latestCancelledBy.name}`}
                 </span>
+              );
+              break;
+            }
+
+            if (item?.status === "Deleted") {
+              row[key] = (
+                <div className="flex flex-col  items-center space-x-3 gap-2">
+                  <p className="tab tab-danger italic">Booking Deleted</p>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await restoreOrDeleteBooking({
+                          id: item._id,
+                          action: "restore",
+                          updatedBy: `${user.role} | ${user.fullName}`,
+                        }).unwrap();
+                        toast.success("Booking restored successfully");
+                        refetch();
+                      } catch (error) {
+                        toast.error("Failed to restore booking");
+                      }
+                    }}
+                    className="underline cursor-pointer text-blue-500"
+                    title="Restore Booking"
+                  >
+                    Restore
+                  </button>
+                </div>
               );
               break;
             }
@@ -663,293 +695,259 @@ export const BookingTableRenderer = ({
             );
             break;
           }
+
           case "actions":
-            if (isDeletedTab) {
-              row[key] = (
-                <button
-                  onClick={async () => {
-                    try {
-                      await updateBookingStatus({
-                        id: item._id,
-                        status: "Pending",
-                        updatedBy: `${user.role} | ${user.fullName}`,
-                      }).unwrap();
-                      toast.success("Booking restored successfully");
-                      refetch();
-                    } catch (err) {
-                      toast.error(getErrMsg(err));
-                      console.error(err);
+            // Internal Notes check (primaryJourney / returnJourney)
+            const journeyNotes =
+              item?.primaryJourney?.internalNotes ||
+              item?.returnJourney?.internalNotes;
+          
+            row[key] = (
+              <div className="flex items-center justify-center gap-2">
+                {/* Action Button + Dropdown */}
+                <div className="text-center">
+                  <button
+                    onClick={() =>
+                      setSelectedActionRow(
+                        selectedActionRow === index ? null : index
+                      )
                     }
-                  }}
-                  className="btn btn-reset"
-                >
-                  Restore
-                </button>
-              );
-            } else {
-              // Internal Notes check (primaryJourney / returnJourney)
-              const journeyNotes =
-                item?.primaryJourney?.internalNotes ||
-                item?.returnJourney?.internalNotes;
-
-              row[key] = (
-                <div className="flex items-center justify-center gap-2">
-                  {/* Action Button + Dropdown */}
-                  <div className="text-center">
-                    <button
-                      onClick={() =>
-                        setSelectedActionRow(
-                          selectedActionRow === index ? null : index
-                        )
-                      }
-                      className="relative p-2 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 hover:border-blue-300 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
-                    >
-                      <GripHorizontal
-                        size={18}
-                        className="text-[var(--dark-gray)]"
-                      />
-                    </button>
-
-                    {selectedActionRow === index && (
-  // <div className="mt-2 w-56 bg-white border border-gray-200 rounded-lg js-actions-menu shadow-lg animate-slide-in">
-<div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg js-actions-menu shadow-lg animate-slide-in z-50">
+                    className="relative p-2 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 hover:border-blue-300 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
+                  >
+                    <GripHorizontal
+                      size={18}
+                      className="text-[var(--dark-gray)]"
+                    />
+                  </button>
+          
+                  {selectedActionRow === index && (
+                    <div className="mt-2 w-56 bg-white border border-gray-200 rounded-lg js-actions-menu shadow-lg animate-slide-in">
                       {actionMenuItems
-                          .filter((action) => {
-                            if (user?.role === "driver") {
-                              return (
-                                action === "View" || action === "Status Audit"
-                              );
-                            }
-                            if (
-                              user?.role === "customer" &&
-                              action === "Delete"
-                            ) {
-                              return false;
-                            }
-                            return true;
-                          })
-                          .map((action, i) => (
-                            <button
-                              key={i}
-                              onClick={async () => {
-                                try {
-                                  if (action === "Status Audit") {
-                                    openAuditModal(item.statusAudit);
-                                  } else if (action === "View") {
-                                    openViewModal(item);
-                                  } else if (action === "Edit") {
-                                    if (user?.role === "driver") {
-                                      toast.info(
-                                        "Drivers cannot edit bookings"
+                        .filter((action) => {
+                          if (user?.role === "driver") {
+                            return (
+                              action === "View" || action === "Status Audit"
+                            );
+                          }
+                          if (
+                            user?.role === "customer" &&
+                            action === "Delete"
+                          ) {
+                            return false;
+                          }
+                          return true;
+                        })
+                        .map((action, i) => (
+                          <button
+                            key={i}
+                            onClick={async () => {
+                              try {
+                                if (action === "Status Audit") {
+                                  openAuditModal(item.statusAudit);
+                                } else if (action === "View") {
+                                  openViewModal(item);
+                                } else if (action === "Edit") {
+                                  if (user?.role === "driver") {
+                                    toast.info("Drivers cannot edit bookings");
+                                    return;
+                                  }
+          
+                                  const bookingSetting =
+                                    bookingSettingData?.setting ||
+                                    bookingSettingData?.bookingSetting;
+          
+                                  if (
+                                    user?.role === "customer" &&
+                                    bookingSetting?.companyId ===
+                                      user?.companyId
+                                  ) {
+                                    const cancelWindow =
+                                      bookingSetting?.cancelBookingWindow;
+                                    if (
+                                      cancelWindow &&
+                                      isWithinCancelWindow(item, cancelWindow)
+                                    ) {
+                                      const windowText = `${
+                                        cancelWindow.value
+                                      } ${cancelWindow.unit.toLowerCase()}`;
+                                      toast.error(
+                                        `Cannot edit booking. Pickup time is within the ${windowText} cancellation window.`
                                       );
                                       return;
                                     }
-
-                                    const bookingSetting =
-                                      bookingSettingData?.setting ||
-                                      bookingSettingData?.bookingSetting;
-
-                                    if (
-                                      user?.role === "customer" &&
-                                      bookingSetting?.companyId ===
-                                      user?.companyId
-                                    ) {
-                                      const cancelWindow =
-                                        bookingSetting?.cancelBookingWindow;
-                                      if (
-                                        cancelWindow &&
-                                        isWithinCancelWindow(item, cancelWindow)
-                                      ) {
-                                        const windowText = `${cancelWindow.value
-                                          } ${cancelWindow.unit.toLowerCase()}`;
-                                        toast.error(
-                                          `Cannot edit booking. Pickup time is within the ${windowText} cancellation window.`
-                                        );
-                                        return;
-                                      }
-                                    }
-
-                                    const editedData = { ...item };
-                                    editedData.__editReturn =
-                                      !!item.returnJourney;
-                                    setEditBookingData(editedData);
-                                    setShowEditModal(true);
-                                  } else if (action === "Delete") {
-                                    if (isDeletedTab) {
-                                      setSelectedDeleteId(item._id);
-                                      setShowDeleteModal(true);
-                                    } else {
-                                      await updateBookingStatus({
-                                        id: item._id,
-                                        status: "Deleted",
-                                        updatedBy: `${user.role} | ${user.fullName}`,
-                                      }).unwrap();
-                                      toast.success("Booking moved to deleted");
-                                      refetch();
-                                      setSelectedActionRow(null);
-                                    }
-                                  } else if (action === "Copy Booking") {
-                                    const copied = { ...item };
-                                    delete copied._id;
-                                    if (copied.passenger?._id)
-                                      delete copied.passenger._id;
-                                    if (copied.vehicle?._id)
-                                      delete copied.vehicle._id;
-                                    if (copied.primaryJourney?._id)
-                                      delete copied.primaryJourney._id;
-                                    if (copied.returnJourney?._id)
-                                      delete copied.returnJourney._id;
-
-                                    copied.bookingId = "";
-                                    copied.status = "Pending";
-                                    copied.statusAudit = [];
-                                    copied.createdAt = new Date().toISOString();
-                                    copied.drivers = [];
-                                    copied.__copyMode = true;
-
-                                    if (item.returnJourney) {
-                                      copied.primaryJourney = {
-                                        ...item.returnJourney,
-                                      };
-                                      delete copied.returnJourney;
-                                      copied.__copyReturn = false;
-                                    } else {
-                                      copied.__copyReturn = false;
-                                    }
-
-                                    setEditBookingData(copied);
-                                    setShowEditModal(true);
                                   }
-                                } catch (err) {
-                                  toast.error(getErrMsg(err));
-                                  console.error(err);
-                                }
-                              }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
-                            >
-                              {action}
-                            </button>
-                          ))}
-
-                        {user?.role?.toLowerCase() === "clientadmin" &&
-                          item.status !== "Cancelled" && (
-                            <button
-                              onClick={async () => {
-                                try {
+          
+                                  const editedData = { ...item };
+                                  editedData.__editReturn =
+                                    !!item.returnJourney;
+                                  setEditBookingData(editedData);
+                                  setShowEditModal(true);
+                                } else if (action === "Delete") {
                                   await updateBookingStatus({
                                     id: item._id,
-                                    status: "Cancelled",
+                                    status: "Deleted",
                                     updatedBy: `${user.role} | ${user.fullName}`,
                                   }).unwrap();
-
-                                  toast.success(
-                                    "Booking status set to Cancelled"
-                                  );
-
-                                  if (item?.passenger?.email) {
-                                    try {
-                                      await sendBookingEmail({
-                                        bookingId: item._id,
-                                        email: item.passenger.email,
-                                        type: "cancellation",
-                                      }).unwrap();
-
-                                      toast.success(
-                                        "Cancellation email sent to customer"
-                                      );
-                                    } catch (emailErr) {
-                                      toast.error(
-                                        "Failed to send cancellation email"
-                                      );
-                                      console.error(
-                                        "❌ Email error:",
-                                        emailErr
-                                      );
-                                    }
+                                  toast.success("Booking marked as Deleted");
+                                  refetch();
+                                  setSelectedActionRow(null);
+                                } else if (action === "Copy Booking") {
+                                  const copied = { ...item };
+                                  delete copied._id;
+                                  if (copied.passenger?._id)
+                                    delete copied.passenger._id;
+                                  if (copied.vehicle?._id)
+                                    delete copied.vehicle._id;
+                                  if (copied.primaryJourney?._id)
+                                    delete copied.primaryJourney._id;
+                                  if (copied.returnJourney?._id)
+                                    delete copied.returnJourney._id;
+          
+                                  copied.bookingId = "";
+                                  copied.status = "Pending";
+                                  copied.statusAudit = [];
+                                  copied.createdAt = new Date().toISOString();
+                                  copied.drivers = [];
+                                  copied.__copyMode = true;
+          
+                                  if (item.returnJourney) {
+                                    copied.primaryJourney = {
+                                      ...item.returnJourney,
+                                    };
+                                    delete copied.returnJourney;
+                                    copied.__copyReturn = false;
                                   } else {
-                                    toast.info(
-                                      "No passenger email found to send cancellation notice"
-                                    );
+                                    copied.__copyReturn = false;
                                   }
-
-                                  if (
-                                    Array.isArray(item?.drivers) &&
-                                    item.drivers.length > 0
-                                  ) {
-                                    for (const drv of item.drivers) {
-                                      const driverEmail =
-                                        drv?.email ||
-                                        drv?.DriverData?.email ||
-                                        drv?.driverInfo?.email;
-                                      if (driverEmail) {
-                                        try {
-                                          await sendBookingEmail({
-                                            bookingId: item._id,
-                                            email: driverEmail,
-                                            type: "cancellation-driver",
-                                          }).unwrap();
-
-                                          toast.success(
-                                            `Cancellation email sent to driver: ${driverEmail}`
-                                          );
-                                        } catch (err) {
-                                          console.error(
-                                            "❌ Driver email error:",
-                                            err
-                                          );
-                                          toast.error(
-                                            "Failed to send cancellation email to driver"
-                                          );
-                                        }
+          
+                                  setEditBookingData(copied);
+                                  setShowEditModal(true);
+                                }
+                              } catch (err) {
+                                toast.error(getErrMsg(err));
+                                console.error(err);
+                              }
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
+                          >
+                            {action}
+                          </button>
+                        ))}
+          
+                      {user?.role?.toLowerCase() === "clientadmin" &&
+                        item.status !== "Cancelled" && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await updateBookingStatus({
+                                  id: item._id,
+                                  status: "Cancelled",
+                                  updatedBy: `${user.role} | ${user.fullName}`,
+                                }).unwrap();
+          
+                                toast.success(
+                                  "Booking status set to Cancelled"
+                                );
+          
+                                if (item?.passenger?.email) {
+                                  try {
+                                    await sendBookingEmail({
+                                      bookingId: item._id,
+                                      email: item.passenger.email,
+                                      type: "cancellation",
+                                    }).unwrap();
+          
+                                    toast.success(
+                                      "Cancellation email sent to customer"
+                                    );
+                                  } catch (emailErr) {
+                                    toast.error(
+                                      "Failed to send cancellation email"
+                                    );
+                                    console.error("❌ Email error:", emailErr);
+                                  }
+                                } else {
+                                  toast.info(
+                                    "No passenger email found to send cancellation notice"
+                                  );
+                                }
+          
+                                if (
+                                  Array.isArray(item?.drivers) &&
+                                  item.drivers.length > 0
+                                ) {
+                                  for (const drv of item.drivers) {
+                                    const driverEmail =
+                                      drv?.email ||
+                                      drv?.DriverData?.email ||
+                                      drv?.driverInfo?.email;
+                                    if (driverEmail) {
+                                      try {
+                                        await sendBookingEmail({
+                                          bookingId: item._id,
+                                          email: driverEmail,
+                                          type: "cancellation-driver",
+                                        }).unwrap();
+          
+                                        toast.success(
+                                          `Cancellation email sent to driver: ${driverEmail}`
+                                        );
+                                      } catch (err) {
+                                        console.error(
+                                          "❌ Driver email error:",
+                                          err
+                                        );
+                                        toast.error(
+                                          "Failed to send cancellation email to driver"
+                                        );
                                       }
                                     }
                                   }
-
-                                  refetch();
-                                  setSelectedActionRow(null);
-                                } catch (err) {
-                                  toast.error(getErrMsg(err));
-                                  console.error(
-                                    "❌ Cancel booking error:",
-                                    err
-                                  );
                                 }
-                              }}
-                              className="w-full cursor-pointer text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition border-t border-gray-100"
-                            >
-                              Cancel Booking
-                            </button>
-                          )}
-                      </div>
-                    )}
-                  </div>
-                  {/* Enhanced Internal Notes Icon */}
-                  {journeyNotes && journeyNotes.trim() !== "" && (
-                    <button
-                      onClick={() => toast.info(journeyNotes)}
-                      title="Internal Notes"
-                      className="relative p-2 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 hover:border-blue-300 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
-                    >
-                      <Icons.FileText size={18} className="text-blue-600 hover:text-blue-700" />
-
-                      {/* Red dot */}
-                      <span
-                        className="absolute bg-red-500 rounded-full border-2 border-white"
-                        style={{
-                          width: '10px',
-                          height: '10px',
-                          top: '-2px',
-                          right: '-2px',
-                          animation: 'pulse 2s infinite',
-                        }}
-                      />
-                    </button>
+          
+                                refetch();
+                                setSelectedActionRow(null);
+                              } catch (err) {
+                                toast.error(getErrMsg(err));
+                                console.error("❌ Cancel booking error:", err);
+                              }
+                            }}
+                            className="w-full cursor-pointer text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition border-t border-gray-100"
+                          >
+                            Cancel Booking
+                          </button>
+                        )}
+                    </div>
                   )}
                 </div>
-              );
-            }
-            break;
-          default:
+                {/* Enhanced Internal Notes Icon */}
+                {journeyNotes && journeyNotes.trim() !== "" && (
+                  <button
+                    onClick={() => toast.info(journeyNotes)}
+                    title="Internal Notes"
+                    className="relative p-2 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 hover:border-blue-300 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
+                  >
+                    <Icons.FileText
+                      size={18}
+                      className="text-blue-600 hover:text-blue-700"
+                    />
+          
+                    {/* Red dot */}
+                    <span
+                      className="absolute bg-red-500 rounded-full border-2 border-white"
+                      style={{
+                        width: "10px",
+                        height: "10px",
+                        top: "-2px",
+                        right: "-2px",
+                        animation: "pulse 2s infinite",
+                      }}
+                    />
+                  </button>
+                )}
+              </div>
+            );
+            break;     default:
             row[key] = item[key] || "-";
         }
       });
@@ -964,7 +962,7 @@ export const BookingTableRenderer = ({
       exportTableData={exportTableData}
       showSearch
       showRefresh
-      showDownload  
+      showDownload
       emptyMessage={emptyMessage}
       showPagination
       showSorting

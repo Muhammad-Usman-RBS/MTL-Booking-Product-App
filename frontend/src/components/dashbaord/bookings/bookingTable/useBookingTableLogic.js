@@ -15,7 +15,6 @@ export const useBookingTableLogic = ({
   selectedColumns,
   startDate,
   endDate,
-  isDeletedTab,
   timezone,
   bookingSettingData,
   refetchBookings,
@@ -195,7 +194,6 @@ export const useBookingTableLogic = ({
   // Replace the driverMatch logic in your useBookingTableLogic hook with this:
   const filteredBookings = useMemo(() => {
     let filtered = processedBookings.filter((b) => {
-      if (b.status === "Deleted" || b.status === "Completed") return false;
       const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
       if (!journey?.date) return false;
 
@@ -212,10 +210,23 @@ export const useBookingTableLogic = ({
           ? true
           : bookingDateStr >= startStr && bookingDateStr <= endStr;
 
-      const statusMatch =
-        selectedStatus.includes("All") || selectedStatus.length === 0
-          ? true
-          : selectedStatus.includes(b.status);
+          const statusMatch = (() => {
+            if (selectedStatus.includes("All") || selectedStatus.length === 0) {
+              return true;
+            }
+            if (selectedStatus.includes("Scheduled")) {
+              const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
+              if (journey?.date) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const bookingDate = new Date(journey.date);
+                if (bookingDate >= today) {
+                  return true; 
+                }
+              }
+            }
+            return selectedStatus.includes(b.status);
+          })();
 
       const passengerMatch =
         selectedPassengers.length === 0
@@ -344,7 +355,6 @@ export const useBookingTableLogic = ({
     return tableHeaders.filter((header) => {
       const key = header.key;
 
-      if (isDeletedTab && key === "status") return false;
       if (!selectedColumns[key]) return false;
 
       if (!hasPrimary && (key === "journeyFare" || key === "driverFare"))
@@ -364,7 +374,7 @@ export const useBookingTableLogic = ({
 
       return true;
     });
-  }, [tableHeaders, isDeletedTab, selectedColumns, hasPrimary, hasReturn, hasFlightNumber]);
+  }, [tableHeaders,  selectedColumns, hasPrimary, hasReturn, hasFlightNumber]);
 
   // Export table data
   const exportTableData = useMemo(() => {

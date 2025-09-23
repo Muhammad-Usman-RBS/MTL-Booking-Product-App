@@ -37,18 +37,6 @@ const sidebarItems = [
         icon: Icons.CalendarDays,
         roles: ["demo", "clientadmin", "associateadmin", "driver", "customer", "staffmember"],
       },
-      {
-        title: "Completed Booking",
-        route: "/dashboard/bookings/completed-booking",
-        icon: Icons.CheckCheck,
-        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember"],
-      },
-      {
-        title: "Deleted Booking",
-        route: "/dashboard/bookings/deleted-booking",
-        icon: Icons.Delete,
-        roles: ["demo", "clientadmin", "associateadmin", "superadmin", "staffmember"],
-      },
     ],
   },
   {
