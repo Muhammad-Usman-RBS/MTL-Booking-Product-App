@@ -5,7 +5,7 @@ import Icons from "../../../assets/icons";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHeading";
-import { useCreateTermsAndConditionsMutation, useDeleteTermsAndConditionsMutation, useGetTermsAndConditionsQuery, useUpdateTermsAndConditionsMutation } from "../../../redux/api/TermsandConditionsApi";
+import { useCreateTermsAndConditionsMutation, useDeleteTermsAndConditionsMutation, useGetTermsAndConditionsQuery, useUpdateTermsAndConditionsMutation } from "../../../redux/api/termsAndConditionsApi";
 
 const TermsandConditions = () => {
   const user = useSelector((state) => state?.auth?.user);
