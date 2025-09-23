@@ -252,6 +252,7 @@ const {showLoading , hideLoading}  = useLoading()
       </div>
 
       <CustomTable
+      filename="Distance-Slab-list"
         tableHeaders={tableHeaders}
         tableData={tableData}
         showPagination={true}

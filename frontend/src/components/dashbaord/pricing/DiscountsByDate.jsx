@@ -203,6 +203,7 @@ const DiscountsByDate = () => {
           <div className="text-red-500">Failed to load discounts.</div>
         ) : (
           <CustomTable
+          filename="Discounts-by-date-list"
             tableHeaders={tableHeaders}
             tableData={tableData}
             showPagination={true}

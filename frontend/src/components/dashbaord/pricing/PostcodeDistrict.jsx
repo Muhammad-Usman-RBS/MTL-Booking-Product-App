@@ -198,7 +198,7 @@ const PostcodeDistrict = () => {
         <button className="btn btn-edit" onClick={handleAddNew}>Add New</button>
       </div>
 
-      <CustomTable tableHeaders={tableHeaders} tableData={tableData} showPagination={true} showSorting={true} />
+      <CustomTable filename='Postcode-District-list' tableHeaders={tableHeaders} tableData={tableData} showPagination={true} showSorting={true} />
 
       <CustomModal isOpen={showModal} onClose={() => setShowModal(false)} heading={`${isNew ? "Add" : "Edit"} Postcode Price`}>
         <div className="space-y-6 w-96 px-2 sm:px-4 pt-2 text-sm">

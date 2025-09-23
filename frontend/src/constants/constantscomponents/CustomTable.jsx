@@ -16,7 +16,8 @@ const CustomTable = ({
   selectedRow,
   setSelectedRow,
   onRowDoubleClick,
-  emptyMessage = null,
+  filename,
+  emptyMessage = "No Data Found",
 }) => {
   const [search, setSearch] = useState("");
   const [perPage, setPerPage] = useState(() => {
@@ -352,7 +353,7 @@ const CustomTable = ({
             </tr>
           </thead>
           <tbody>
-            {paginatedData.length === 0 && emptyMessage ? (
+            {paginatedData.length === 0  ? (
               <EmptyTableMessage message={emptyMessage} colSpan={combinedOrder.length} />
             ) : (
               paginatedData.map((item, rowIdx) => (
@@ -400,6 +401,7 @@ const CustomTable = ({
             <DownloadExcel
               tableData={exportTableData || tableData}
               tableHeaders={tableHeaders}
+              filename={filename}
             />
           </div>
         )}

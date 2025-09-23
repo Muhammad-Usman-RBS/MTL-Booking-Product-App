@@ -383,21 +383,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
   };
   let tableData = [];
 
-  if (customerFilteredBookings.length === 0) {
-    tableData = [
-      {
-        customRow: true,
-        content: (
-          <td
-            colSpan={tableHeaders.length}
-            className="text-center py-2.5 text-[var(--dark-gray)] font-semibold text-md"
-          >
-            Apply filtration to see bookings
-          </td>
-        ),
-      },
-    ];
-  } else {
+
     tableData = customerFilteredBookings.map((item) => ({
       checkbox: (
         <input
@@ -456,7 +442,6 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
           : item.passenger?.name || "-",
       fare: <span>{calculateFare(item, invoiceType)}</span>,
     }));
-  }
   useEffect(() => {
     if (
       !generalPricingData?.invoiceTaxPercent ||
@@ -549,6 +534,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
       </div>
       <div className="mt-8">
         <CustomTable
+        emptyMessage="No Invoices Found"
           showSearch={true}
           showRefresh={true}
           tableHeaders={tableHeaders}

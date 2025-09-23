@@ -4,12 +4,12 @@ import { useSelector } from "react-redux";
 const ShortcutkeysModal = () => {
   const user = useSelector((state) => state?.auth?.user);
   const shortcuts = [
-    { key: "D", label: "Driver allocation" },
-    { key: "A", label: "Accepted" },
-    { key: "O", label: "On Route" },
-    { key: "L", label: "At Location" },
-    { key: "N", label: "No Show" },
-    { key: "C", label: "Completed" },
+    { key: "CTRL +D", label: "Driver allocation" },
+    { key: "SHIFT + A", label: "Accepted" },
+    { key: "SHIFT + O", label: "On Route" },
+    { key: "SHIFT + L", label: "At Location" },
+    { key: "SHIFT + N", label: "No Show" },
+    { key: "CTRL + C", label: "Completed" },
     { key: "SHIFT + R", label: "Ride Started" },
     { key: "Enter", label: "View booking" },
     { key: "Shift + C", label: "Cancel booking" },

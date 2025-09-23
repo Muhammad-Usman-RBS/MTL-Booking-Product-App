@@ -203,6 +203,7 @@ const Vouchers = () => {
         </div>
 
         <CustomTable
+        filename="Vouchers-list"
           tableHeaders={tableHeaders}
           tableData={tableData}
           showPagination

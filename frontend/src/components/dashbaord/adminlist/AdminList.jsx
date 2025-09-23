@@ -9,15 +9,23 @@ import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHeading";
 
-import { useDeleteClientAdminMutation, useFetchClientAdminsQuery, useUpdateClientAdminStatusMutation } from "../../../redux/api/adminApi";
+import {
+  useDeleteClientAdminMutation,
+  useFetchClientAdminsQuery,
+  useUpdateClientAdminStatusMutation,
+} from "../../../redux/api/adminApi";
 import { useLoading } from "../../common/LoadingProvider";
 
 const tabs = ["Active", "Pending", "Suspended", "Deleted"];
 
 const AdminList = () => {
   const user = useSelector((state) => state.auth.user);
-  const {showLoading , hideLoading} = useLoading()
-  const { data: adminsListData = [], refetch , isLoading } = useFetchClientAdminsQuery();
+  const { showLoading, hideLoading } = useLoading();
+  const {
+    data: adminsListData = [],
+    refetch,
+    isLoading,
+  } = useFetchClientAdminsQuery();
   const [deleteAdmin] = useDeleteClientAdminMutation();
   const [changeStatus] = useUpdateClientAdminStatusMutation();
 
@@ -29,12 +37,12 @@ const AdminList = () => {
   const [deleteUserId, setDeleteUserId] = useState(null);
 
   useEffect(()=> {
-    if(isLoading) {
-      showLoading()
-    } else{ 
-      hideLoading()
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
     }
-  } , [showLoading, hideLoading ,isLoading])
+  }, [showLoading, hideLoading, isLoading]);
   useEffect(() => {
     refetch();
   }, [refetch]);
@@ -167,17 +175,19 @@ const AdminList = () => {
             ))}
           </div>
           <Link to={`/dashboard/admin-list/edit/${item._id}`}>
-            <Icons.Pencil
-              title="Edit"
-              className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-            />
+            <div className="icon-box icon-box-outline">
+              <Icons.Pencil title="Edit" className="size-4" />
+            </div>
           </Link>
           {selectedTab === "Deleted" && (
+             <div className="icon-box icon-box-danger">
             <Icons.Trash
               title="Delete"
               onClick={() => handleDeleteClick(item._id)}
-              className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
+              className="size-4"
             />
+            </div>
+
           )}
         </div>
       ),
@@ -203,10 +213,11 @@ const AdminList = () => {
                   setSelectedTab(tab);
                   setPage(1);
                 }}
-                className={`pb-2 whitespace-nowrap border-b-2 transition-all duration-200 ${selectedTab === tab
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-[var(--dark-gray)] hover:text-blue-500"
-                  }`}
+                className={`pb-2 whitespace-nowrap border-b-2 transition-all duration-200 ${
+                  selectedTab === tab
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-[var(--dark-gray)] hover:text-blue-500"
+                }`}
               >
                 {tab} ({tabCounts[tab] || 0})
               </button>
@@ -215,6 +226,7 @@ const AdminList = () => {
         </div>
 
         <CustomTable
+        filename='Users-list'
           tableHeaders={tableHeaders}
           tableData={tableData}
           showPagination={true}

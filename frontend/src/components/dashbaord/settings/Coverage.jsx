@@ -202,6 +202,7 @@ const Coverage = () => {
           Add New
         </button>
         <CustomTable
+        filename='Coverages-list'
           tableHeaders={tableHeaders}
           tableData={tableData}
           showPagination={true}

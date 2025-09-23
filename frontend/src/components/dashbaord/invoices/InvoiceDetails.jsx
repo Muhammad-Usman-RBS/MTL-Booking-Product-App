@@ -154,7 +154,7 @@ const InvoiceDetails = ({ item }) => {
           {/* Download Button */}
           <button
             onClick={handleDownload}
-            className="p-2.5 cursor-pointer bg-[var(--dark-gray)] text-white rounded-md hover:bg-gray-700 transition"
+            className="icon-box icon-box-outline"
           >
             <Icons.Download size={16} />
           </button>
@@ -163,7 +163,7 @@ const InvoiceDetails = ({ item }) => {
           {userRole === "clientadmin" && (
             <button
               onClick={openModal}
-              className="p-2.5 cursor-pointer bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+              className="icon-box icon-box-primary"
             >
               <Icons.Mail size={16} />
             </button>

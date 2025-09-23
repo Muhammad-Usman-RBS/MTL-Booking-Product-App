@@ -215,6 +215,7 @@ useEffect(() => {
         </div>
       ) : (
         <CustomTable
+        filename="Hourly-Package-list"
           tableHeaders={tableHeaders}
           tableData={formattedData}
           showPagination={true}

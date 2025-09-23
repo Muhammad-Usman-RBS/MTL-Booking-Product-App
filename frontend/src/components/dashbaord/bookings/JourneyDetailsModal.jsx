@@ -96,7 +96,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
       heightLeft -= pdf.internal.pageSize.getHeight();
     }
 
-    pdf.save("Booking-Confirmation.pdf");
+    pdf.save(`#${viewData?.bookingId} Booking-Information.pdf`);
 
     input.style.opacity = "0";
     input.style.position = "absolute";

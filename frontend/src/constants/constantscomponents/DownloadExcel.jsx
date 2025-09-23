@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
 import Icons from "../../assets/icons";
 
-const DownloadExcel = ({ tableData = [], tableHeaders = [], filename = "table-data.xlsx" }) => {
+const DownloadExcel = ({ tableData = [], tableHeaders = [], filename = "table-data" }) => {
     const handleDownload = () => {
         if (!tableData || tableData.length === 0) {
             toast.error("No data to download.");
@@ -35,7 +35,7 @@ const DownloadExcel = ({ tableData = [], tableHeaders = [], filename = "table-da
         const worksheet = XLSX.utils.json_to_sheet(data);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet 1");
-        XLSX.writeFile(workbook, filename);
+        XLSX.writeFile(workbook, `${filename}.xlsx`);
         toast.success("Excel downloaded!");
     };
 

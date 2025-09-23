@@ -319,6 +319,12 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       terminal: journeyData.terminal || "",
       distanceText: journeyData.distanceText || "",
       durationText: journeyData.durationText || "",
+      flightArrival: journeyData.flightArrival ? {
+        scheduled: journeyData.flightArrival.scheduled || null,
+        estimated: journeyData.flightArrival.estimated || null,
+      } : null,
+      flightOrigin: journeyData.flightOrigin || "",
+      flightDestination: journeyData.flightDestination || "",
       ...dynamicDropFields,
       ...dynamicTerminalFields,
     };
@@ -370,6 +376,12 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         terminal: cloned.returnJourney.terminal || "",
         distanceText: cloned.returnJourney.distanceText || "",
         durationText: cloned.returnJourney.durationText || "",
+        flightArrival: cloned.returnJourney.flightArrival ? {
+          scheduled: cloned.returnJourney.flightArrival.scheduled || null,
+          estimated: cloned.returnJourney.flightArrival.estimated || null,
+        } : null,
+        flightOrigin: cloned.returnJourney.flightOrigin || "",
+        flightDestination: cloned.returnJourney.flightDestination || "",
         ...dynamicDropFieldsReturn,
         ...dynamicTerminalFieldsReturn,
       };
@@ -701,6 +713,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
                 ? selectedHourly.label
                 : null,
             fare: getDisplayReturnFare(),
+            flightArrival: returnJourneyData.flightArrival || null,
             ...dynamicFields2,
           };
           updatePayload.returnJourneyToggle = true;
@@ -715,6 +728,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
                 ? selectedHourly.label
                 : null,
             fare: getDisplayPrimaryFare(),
+            flightArrival: primaryJourneyData.flightArrival || null,
             ...dynamicFields1,
           };
         }

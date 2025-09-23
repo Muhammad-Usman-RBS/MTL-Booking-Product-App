@@ -258,16 +258,16 @@ const BookingCalendar = () => {
                             <div className="flex justify-between items-center mb-6">
                                 <button
                                     onClick={() => navigateMonth(-1)}
-                                    className="p-2 rounded-lg bg-gradient-to-r from-orange-400 to-red-500 text-white hover:scale-105"
+                                    className="icon-box  icon-box-primary"
                                 >
                                     <Icons.ChevronLeft />
                                 </button>
-                                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+                                <h2 className="text-xl">
                                     {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
                                 </h2>
                                 <button
                                     onClick={() => navigateMonth(1)}
-                                    className="p-2 rounded-lg bg-gradient-to-r from-orange-400 to-red-500 text-white hover:scale-105"
+                                    className="icon-box  icon-box-primary"
                                 >
                                     <Icons.ChevronRight />
                                 </button>
@@ -275,7 +275,7 @@ const BookingCalendar = () => {
                             {/* Weekdays */}
                             <div className="grid grid-cols-7 gap-1 mb-2 text-xs sm:text-sm">
                                 {dayNames.map((day) => (
-                                    <div key={day} className="text-center font-semibold p-2 rounded-lg bg-gradient-to-r from-orange-400 to-red-500 text-white">
+                                    <div key={day} className="text-center text-white py-1 rounded-lg bg-[var(--main-color)]">
                                         {day}
                                     </div>
                                 ))}

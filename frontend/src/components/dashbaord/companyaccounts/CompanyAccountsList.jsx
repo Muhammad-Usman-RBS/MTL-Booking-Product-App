@@ -148,6 +148,7 @@ const CompanyAccountsList = () => {
           />
 
           <CustomTable
+          filename="Company-Accounts-list"
             tableHeaders={tableHeaders}
             tableData={tableData}
             showPagination={true}

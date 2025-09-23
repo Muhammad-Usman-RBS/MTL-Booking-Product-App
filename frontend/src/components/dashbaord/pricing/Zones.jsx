@@ -292,6 +292,7 @@ const Zones = () => {
             </div>
 
             <CustomTable
+            filename='Zones-list'
               tableHeaders={tableHeaders}
               tableData={tableData}
               showPagination={true}

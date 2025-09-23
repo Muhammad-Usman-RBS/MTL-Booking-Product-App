@@ -10,13 +10,17 @@ import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
 
-import { useDeleteDriverByIdMutation, useGetAllDriversQuery, useGetDriverByIdQuery } from "../../../redux/api/driverApi";
+import {
+  useDeleteDriverByIdMutation,
+  useGetAllDriversQuery,
+  useGetDriverByIdQuery,
+} from "../../../redux/api/driverApi";
 import { useLoading } from "../../common/LoadingProvider";
 
 const tabOptions = ["Active", "Suspended", "Pending", "Deleted"];
 
 const DriverList = () => {
-  const {showLoading, hideLoading} = useLoading()
+  const { showLoading, hideLoading } = useLoading();
   const user = useSelector((state) => state?.auth?.user);
   const companyId = user?.companyId;
 
@@ -29,36 +33,32 @@ const DriverList = () => {
   const [driverToDelete, setDriverToDelete] = useState(null);
 
   // Fetch drivers list
-  const {
-    data: getAllDrivers,
-    isLoading,
-  } = useGetAllDriversQuery(companyId);
- 
+  const { data: getAllDrivers, isLoading } = useGetAllDriversQuery(companyId);
+
   // Fetch single driver details
-  const { data: getDriverById ,isLoading: isDriverLoading} =
-  useGetDriverByIdQuery(selectedDriver, {
-    skip: !selectedDriver,
-  });
-  useEffect(()=> {
-    if(isLoading || isDriverLoading) {
-      showLoading()
+  const { data: getDriverById, isLoading: isDriverLoading } =
+    useGetDriverByIdQuery(selectedDriver, {
+      skip: !selectedDriver,
+    });
+  useEffect(() => {
+    if (isLoading || isDriverLoading) {
+      showLoading();
     } else {
-      hideLoading()
+      hideLoading();
     }
-  },[isLoading , isDriverLoading])
+  }, [isLoading, isDriverLoading]);
 
   // Delete driver mutation
-  const [deleteDriverById] =
-    useDeleteDriverByIdMutation();
+  const [deleteDriverById] = useDeleteDriverByIdMutation();
 
   const driversArray = getAllDrivers?.drivers || [];
   const roleFilteredDrivers =
     user?.role === "driver"
       ? driversArray.filter(
-        (driver) =>
-          driver?.DriverData?.employeeNumber?.toString() ===
-          user?.employeeNumber?.toString()
-      )
+          (driver) =>
+            driver?.DriverData?.employeeNumber?.toString() ===
+            user?.employeeNumber?.toString()
+        )
       : driversArray;
 
   const filteredTabData = roleFilteredDrivers.filter(
@@ -88,7 +88,6 @@ const DriverList = () => {
   }, [filteredData, perPage, activeTab]);
 
   if (selectedDriver) {
-
     return (
       <ViewDriver
         selectedDriver={getDriverById}
@@ -121,40 +120,41 @@ const DriverList = () => {
     documents: item.documents,
   }));
 
-  const tableData = !filteredData.length
-  ? EmptyTableMessage({
-      message: "No drivers found. Create a new driver.",
-      colSpan: tableHeaders.length,
-    })
-  : filteredData.map((driver, index) => ({
-      index: index + 1,
-      employeeNumber: driver?.DriverData?.employeeNumber,
-      firstName: driver?.DriverData?.firstName,
-      email: driver?.DriverData?.email,
-      carMake: driver?.VehicleData?.carMake,
-      carModal: driver?.VehicleData?.carModal,
-      status: driver?.DriverData?.status,
-      actions: (
-        <div className="flex gap-2">
+  const tableData = filteredData.map((driver, index) => ({
+    index: index + 1,
+    employeeNumber: driver?.DriverData?.employeeNumber,
+    firstName: driver?.DriverData?.firstName,
+    email: driver?.DriverData?.email,
+    carMake: driver?.VehicleData?.carMake,
+    carModal: driver?.VehicleData?.carModal,
+    status: driver?.DriverData?.status,
+    actions: (
+      <div className="flex gap-2">
+        <div className="icon-box icon-box-info">
           <Icons.Eye
-            className="w-8 h-8 rounded-md hover:bg-blue-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
+            className="size-4"
             onClick={() => setSelectedDriver(driver._id)}
           />
-          <Link to={`/dashboard/drivers/edit/${driver._id}`}>
-            <Icons.Pencil className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2" />
-          </Link>
-          {user?.role !== "driver" && (
+        </div>
+        <Link to={`/dashboard/drivers/edit/${driver._id}`}>
+          <div className="icon-box icon-box-warning">
+            <Icons.Pencil className="size-4" />
+          </div>
+        </Link>
+        {user?.role !== "driver" && (
+          <div className="icon-box icon-box-danger">
             <Icons.X
               onClick={() => {
                 setDriverToDelete(driver);
                 setShowDeleteModal(true);
               }}
-              className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
+              className="size-4"
             />
-          )}
-        </div>
-      ),
-    }));
+          </div>
+        )}
+      </div>
+    ),
+  }));
 
   return (
     <>
@@ -176,10 +176,11 @@ const DriverList = () => {
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`pb-2 whitespace-nowrap transition-all duration-200 ${activeTab === tab
-                      ? "border-b-2 border-blue-600 text-blue-600"
-                      : "text-[var(--dark-gray)] hover:text-blue-500"
-                      }`}
+                    className={`pb-2 whitespace-nowrap transition-all duration-200 ${
+                      activeTab === tab
+                        ? "border-b-2 border-blue-600 text-blue-600"
+                        : "text-[var(--dark-gray)] hover:text-blue-500"
+                    }`}
                   >
                     {tab} (
                     {
@@ -196,6 +197,8 @@ const DriverList = () => {
         )}
 
         <CustomTable
+        filename="Drivers-list"
+          emptyMessage="No Drivers Found"
           tableHeaders={tableHeaders}
           tableData={tableData}
           exportTableData={exportTableData}

@@ -648,8 +648,8 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
                           Notes:&nbsp;
                         </strong>
                         {booking?.returnJourneyToggle
-                          ? booking?.returnJourney.notes
-                          : booking?.primaryJourney.notes || "—"}
+                          ? booking?.returnJourney?.notes
+                          : booking?.primaryJourney?.notes || "—"}
                       </div>
                     </div>
                   </div>

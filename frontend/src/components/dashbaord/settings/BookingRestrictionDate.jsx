@@ -219,6 +219,7 @@ const BookingRestrictionDate = () => {
         </div>
 
         <CustomTable
+        filename="Booking-Restrictions-list"
           tableHeaders={tableHeaders}
           tableData={tableData}
           showPagination={true}

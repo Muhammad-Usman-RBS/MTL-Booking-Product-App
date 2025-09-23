@@ -556,8 +556,27 @@ export const BookingTableRenderer = ({
 
             if (item?.status === "Deleted") {
               row[key] = (
-                <div className="flex flex-col  items-center space-x-3 gap-2">
-                  <p className="tab tab-danger italic">Booking Deleted</p>
+                <div className="flex flex-col items-start gap-2">
+                  <p
+                    className="text-[#b91c1c] bg-[#fee2e2] p-1 text-xs border border-[#fca5a5] rounded-md italic cursor-pointer hover:bg-[#fecaca] transition"
+                    title="Click to permanently delete"
+                    onClick={async () => {
+                      try {
+                        await restoreOrDeleteBooking({
+                          id: item._id,
+                          action: "delete", 
+                          updatedBy: `${user.role} | ${user.fullName}`,
+                        }).unwrap();
+                        toast.success("Booking permanently removed");
+                        refetch();
+                      } catch (error) {
+                        toast.error("Failed to permanently delete booking");
+                      }
+                    }}
+                  >
+                    Booking Deleted
+                  </p>
+            
                   <button
                     onClick={async () => {
                       try {
@@ -581,6 +600,7 @@ export const BookingTableRenderer = ({
               );
               break;
             }
+            
 
             if (user?.role === "customer") {
               const displayStatus = item?.status || "No Show";
@@ -703,7 +723,7 @@ export const BookingTableRenderer = ({
               item?.returnJourney?.internalNotes;
           
             row[key] = (
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-start  gap-2">
                 {/* Action Button + Dropdown */}
                 <div className="text-center">
                   <button
@@ -778,20 +798,55 @@ export const BookingTableRenderer = ({
                                   }
           
                                   const editedData = { ...item };
-                                  editedData.__editReturn =
-                                    !!item.returnJourney;
+                                  editedData.__editReturn = !!item.returnJourney;
+                                  if (item.primaryJourney?.flightArrival) {
+                                    editedData.primaryJourney = {
+                                      ...editedData.primaryJourney,
+                                      flightArrival: { ...item.primaryJourney.flightArrival }
+                                    };
+                                  }
+                                  if (item.returnJourney?.flightArrival) {
+                                    editedData.returnJourney = {
+                                      ...editedData.returnJourney,
+                                      flightArrival: { ...item.returnJourney.flightArrival }
+                                    };
+                                  }
+                                  
                                   setEditBookingData(editedData);
                                   setShowEditModal(true);
+                                  
                                 } else if (action === "Delete") {
-                                  await updateBookingStatus({
-                                    id: item._id,
-                                    status: "Deleted",
-                                    updatedBy: `${user.role} | ${user.fullName}`,
-                                  }).unwrap();
-                                  toast.success("Booking marked as Deleted");
-                                  refetch();
-                                  setSelectedActionRow(null);
-                                } else if (action === "Copy Booking") {
+                                  if (item?.status === "Deleted") {
+                                    try {
+                                      await restoreOrDeleteBooking({
+                                        id: item._id,
+                                        action: "delete",
+                                        updatedBy: `${user.role} | ${user.fullName}`,
+                                      }).unwrap();
+                                      toast.success("Booking permanently deleted");
+                                      refetch();
+                                      setSelectedActionRow(null);
+                                    } catch (err) {
+                                      toast.error("Failed to permanently delete booking");
+                                      console.error(err);
+                                    }
+                                  } else {
+                                    try {
+                                      await updateBookingStatus({
+                                        id: item._id,
+                                        status: "Deleted",
+                                        updatedBy: `${user.role} | ${user.fullName}`,
+                                      }).unwrap();
+                                      toast.success("Booking marked as Deleted");
+                                      refetch();
+                                      setSelectedActionRow(null);
+                                    } catch (err) {
+                                      toast.error("Failed to mark booking as Deleted");
+                                      console.error(err);
+                                    }
+                                  }
+                                }
+                                else if (action === "Copy Booking") {
                                   const copied = { ...item };
                                   delete copied._id;
                                   if (copied.passenger?._id)
@@ -957,6 +1012,7 @@ export const BookingTableRenderer = ({
 
   return (
     <CustomTable
+    filename="Bookings-list"
       tableHeaders={filteredTableHeaders}
       tableData={tableData}
       exportTableData={exportTableData}

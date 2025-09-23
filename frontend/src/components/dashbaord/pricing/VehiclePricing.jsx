@@ -197,6 +197,7 @@ const VehiclePricing = () => {
       </button>
 
       <CustomTable
+      filename='Vehicle-Pricing-list'
         tableHeaders={tableHeaders}
         tableData={tableData}
         showPagination={true}

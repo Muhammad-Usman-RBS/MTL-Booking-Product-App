@@ -245,6 +245,7 @@ const FixedPricing = () => {
         </div>
 
         <CustomTable
+          filename="Fixed-Pricing-list"
           tableHeaders={tableHeaders}
           tableData={tableData}
           showPagination={true}
