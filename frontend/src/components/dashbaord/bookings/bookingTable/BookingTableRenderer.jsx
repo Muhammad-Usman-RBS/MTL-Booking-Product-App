@@ -636,15 +636,7 @@ export const BookingTableRenderer = ({
                     }
 
                     if (String(newStatus).toLowerCase() === "accepted") {
-                      if (
-                        !["new", "pending"].includes(
-                          String(item?.status).toLowerCase()
-                        )
-                      ) {
-                        toast.error("You can only mark 'Accepted' from 'New'.");
-                        return;
-                      }
-
+                   
                       const driversArr = Array.isArray(item.drivers)
                         ? item.drivers
                         : [];

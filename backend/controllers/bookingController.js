@@ -1209,34 +1209,28 @@ export const updateBookingStatus = async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    // Guard: Prevent 'clientadmin' from reverting to "New" or "Accepted" after a driver accepts
     if (currentUser?.role === "clientadmin") {
       const s = (status || "").trim().toLowerCase();
       if (s === "new" || s === "accepted") {
         const driverAcceptedEver = (booking.statusAudit || []).some((e) => {
+          const updatedBy = (e?.updatedBy || "").toLowerCase();
           return (
             (e?.status || "").toLowerCase() === "accepted" &&
-            (e?.updatedBy || "").toLowerCase().startsWith("driver")
+            (updatedBy.startsWith("driver") ||
+              updatedBy.startsWith("clientadmin"))
           );
         });
         if (driverAcceptedEver) {
           return res.status(403).json({
             message:
-              "A driver has already accepted this job. You cannot set status to 'New' or 'Accepted'.",
+              "This job has already been accepted. You cannot set status to 'New' or 'Accepted'.",
           });
         }
       }
-    }
-
-    if (req.user?.role === "clientadmin") {
       const current = String(booking?.status || "")
         .trim()
         .toLowerCase();
-      const next = String(status || "")
-        .trim()
-        .toLowerCase();
-
-      if (current === "completed" && next === "cancelled") {
+      if (current === "completed" && s === "cancelled") {
         return res.status(403).json({
           message: "Cannot cancel a booking that is Completed.",
         });

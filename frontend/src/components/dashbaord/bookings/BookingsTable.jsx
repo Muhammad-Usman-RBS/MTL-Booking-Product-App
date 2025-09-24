@@ -146,51 +146,151 @@ const BookingsTable = ({
 
       if (event.shiftKey) {
         if (key === "a") {
-          if (selectedBooking.drivers.length === 0) {
-            toast.error("Select a single driver first.");
+          const wasAlreadyAccepted = (selectedBooking.statusAudit || []).some(
+            (audit) => String(audit.status || "").toLowerCase() === "accepted"
+          );
+
+          if (wasAlreadyAccepted) {
+            toast.error("This booking has already been accepted previously.");
             return;
           }
-          if (
-            Array.isArray(selectedBooking.drivers) &&
-            selectedBooking.drivers.length > 1
-          ) {
+
+          const getIdStr = (v) =>
+            v?._id?.toString?.() ||
+            v?.$oid ||
+            v?.toString?.() ||
+            String(v || "");
+
+          const driversArr = Array.isArray(selectedBooking.drivers)
+            ? selectedBooking.drivers
+            : [];
+
+          if (driversArr.length !== 1) {
             toast.error(
-              "Cannot accept booking with multiple drivers assigned. Please select only one driver."
+              "Select a single driver before marking booking as Accepted."
             );
             return;
           }
 
-          updateBookingStatus({
-            id: selectedBooking._id,
-            status: "Accepted",
-            updatedBy: `${user.role} | ${user.fullName}`,
-          })
-            .unwrap()
-            .then(() => {
-              toast.success('Status updated to "Accepted"');
-              refetch();
-            })
-            .catch(() => {
-              toast.error("Failed to update status");
-            });
+          const singleDriver = driversArr[0];
+          const singleDriverId = getIdStr(
+            typeof singleDriver === "object" ? singleDriver._id : singleDriver
+          );
+
+          const jobsArray = jobData?.jobs || [];
+          const jobForDriver = jobsArray.find(
+            (j) =>
+              getIdStr(j?.bookingId) === getIdStr(selectedBooking?._id) &&
+              getIdStr(j?.driverId) === singleDriverId
+          );
+
+          if (!jobForDriver?._id) {
+            toast.error(
+              "No job found for the selected driver. Create/assign the job first."
+            );
+            return;
+          }
+
+          try {
+            await updateJobStatus({
+              jobId: jobForDriver._id,
+              jobStatus: "Accepted",
+            }).unwrap();
+
+            const siblingJobs = jobsArray.filter(
+              (j) =>
+                getIdStr(j?.bookingId) === getIdStr(selectedBooking?._id) &&
+                getIdStr(j?._id) !== getIdStr(jobForDriver._id)
+            );
+            await Promise.all(
+              siblingJobs.map((j) =>
+                updateJobStatus({
+                  jobId: j._id,
+                  jobStatus: "Already Assigned",
+                })
+              )
+            );
+
+            await updateBookingStatus({
+              id: selectedBooking._id,
+              status: "Accepted",
+              updatedBy: `${user.role} | ${user.fullName}`,
+            }).unwrap();
+
+            toast.success("Status updated to Accepted");
+            refetch();
+          } catch (err) {
+            toast.error(getErrMsg(err));
+            console.error(err);
+            refetch();
+          }
           return;
         }
         if (key === "c") {
-          updateBookingStatus({
-            id: selectedBooking._id,
-            status: "Cancel",
-            updatedBy: `${user.role} | ${user.fullName}`,
-          })
-            .unwrap()
-            .then(() => {
-              toast.success('Status updated to "Cancel"');
-              refetch();
-            })
-            .catch(() => {
-              toast.error("Failed to update status");
-            });
+          try {
+            await updateBookingStatus({
+              id: selectedBooking._id,
+              status: "Cancelled",
+              updatedBy: `${user.role} | ${user.fullName}`,
+            }).unwrap();
+
+            toast.success("Booking status set to Cancelled");
+
+            // 📧 Send email to passenger
+            if (selectedBooking?.passenger?.email) {
+              try {
+                await sendBookingEmail({
+                  bookingId: selectedBooking._id,
+                  email: selectedBooking.passenger.email,
+                  type: "cancellation",
+                }).unwrap();
+                toast.success("Cancellation email sent to customer");
+              } catch (err) {
+                toast.error("Failed to send cancellation email to customer");
+                console.error("❌ Email error:", err);
+              }
+            } else {
+              toast.info(
+                "No passenger email found to send cancellation notice"
+              );
+            }
+
+            // 📧 Send email to all assigned drivers
+            if (
+              Array.isArray(selectedBooking?.drivers) &&
+              selectedBooking.drivers.length > 0
+            ) {
+              for (const drv of selectedBooking.drivers) {
+                const driverEmail =
+                  drv?.email ||
+                  drv?.DriverData?.email ||
+                  drv?.driverInfo?.email;
+                if (driverEmail) {
+                  try {
+                    await sendBookingEmail({
+                      bookingId: selectedBooking._id,
+                      email: driverEmail,
+                      type: "cancellation-driver",
+                    }).unwrap();
+                    toast.success(
+                      `Cancellation email sent to driver: ${driverEmail}`
+                    );
+                  } catch (err) {
+                    console.error("❌ Driver email error:", err);
+                    toast.error("Failed to send cancellation email to driver");
+                  }
+                }
+              }
+            }
+
+            refetch();
+          } catch (err) {
+            toast.error(getErrMsg(err));
+            console.error("❌ Cancel booking error:", err);
+          }
           return;
         }
+
         if (key === "r") {
           const newStatus = "Ride Started";
           updateStatus(selectedBooking._id, newStatus);
