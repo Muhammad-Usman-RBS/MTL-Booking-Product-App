@@ -92,8 +92,14 @@ const EditProfile = () => {
       // 🔹 add superadmin fields if user is superadmin
       if (user.role === "superadmin") {
         formData.append("superadminCompanyName", form.superadminCompanyName);
-        formData.append("superadminCompanyAddress", form.superadminCompanyAddress);
-        formData.append("superadminCompanyPhoneNumber", form.superadminCompanyPhoneNumber);
+        formData.append(
+          "superadminCompanyAddress",
+          form.superadminCompanyAddress
+        );
+        formData.append(
+          "superadminCompanyPhoneNumber",
+          form.superadminCompanyPhoneNumber
+        );
         formData.append("superadminCompanyEmail", form.superadminCompanyEmail);
       }
 
@@ -169,19 +175,22 @@ const EditProfile = () => {
             onChange={handleChange}
             required
             disabled={user.role !== "superadmin"}
-            className={`custom_input ${user.role !== "superadmin" ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
-              }`}
+            className={`custom_input ${
+              user.role !== "superadmin"
+                ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                : ""
+            }`}
           />
           {user.role !== "superadmin" && (
-            <p className="text-red-500 text-sm mt-1">Only a superadmin can change the email.</p>
+            <p className="text-red-500 text-sm mt-1">
+              Only admin can change the email.
+            </p>
           )}
         </div>
 
         {/* Name */}
         <div>
-          <label className="block text-sm font-medium mb-1">
-            Name
-          </label>
+          <label className="block text-sm font-medium mb-1">Name</label>
           <input
             type="text"
             name="name"
@@ -196,7 +205,9 @@ const EditProfile = () => {
         {user.role === "superadmin" && (
           <>
             <div>
-              <label className="block text-sm font-medium mb-1">Company Name</label>
+              <label className="block text-sm font-medium mb-1">
+                Company Name
+              </label>
               <input
                 type="text"
                 name="superadminCompanyName"
@@ -207,7 +218,9 @@ const EditProfile = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Company Address</label>
+              <label className="block text-sm font-medium mb-1">
+                Company Address
+              </label>
               <input
                 type="text"
                 name="superadminCompanyAddress"
@@ -218,7 +231,9 @@ const EditProfile = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Company Phone</label>
+              <label className="block text-sm font-medium mb-1">
+                Company Phone
+              </label>
               <input
                 type="text"
                 name="superadminCompanyPhoneNumber"
@@ -229,7 +244,9 @@ const EditProfile = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Company Email</label>
+              <label className="block text-sm font-medium mb-1">
+                Company Email
+              </label>
               <input
                 type="email"
                 name="superadminCompanyEmail"
@@ -256,7 +273,11 @@ const EditProfile = () => {
               className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500"
               onClick={toggleNewPassword}
             >
-              {newPasswordVisible ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
+              {newPasswordVisible ? (
+                <Icons.EyeOff size={18} />
+              ) : (
+                <Icons.Eye size={18} />
+              )}
             </span>
           </div>
         </div>
@@ -279,13 +300,21 @@ const EditProfile = () => {
               className="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500"
               onClick={toggleCurrentPassword}
             >
-              {currentPasswordVisible ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
+              {currentPasswordVisible ? (
+                <Icons.EyeOff size={18} />
+              ) : (
+                <Icons.Eye size={18} />
+              )}
             </span>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-3 col-span-1 md:col-span-2">
-          <button type="button" onClick={handleReset} className="btn btn-cancel">
+          <button
+            type="button"
+            onClick={handleReset}
+            className="btn btn-cancel"
+          >
             Reset
           </button>
           <button type="submit" className="btn btn-success">
