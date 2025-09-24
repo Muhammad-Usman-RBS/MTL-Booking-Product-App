@@ -9,18 +9,18 @@ const SelectedSearch = ({
 }) => {
   const dropdownRef = useRef(null);
 
-useEffect(() => {
-  const handleClickOutside = (event) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-      setDropdownOpen(false);
-    }
-  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
 
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-  };
-}, [])
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   const [searchTerm, setSearchTerm] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -39,7 +39,7 @@ useEffect(() => {
   );
 
   return (
-    <div ref={dropdownRef}  className="relative inline-block text-left w-full">
+    <div ref={dropdownRef} className="relative inline-block text-left w-full">
       <button
         onClick={() => setDropdownOpen(!dropdownOpen)}
         className="border px-3 py-1 rounded bg-white cursor-pointer border-[var(--light-gray)] w-full text-left"
@@ -76,7 +76,9 @@ useEffect(() => {
                       onChange={() => toggleCheckbox(value)}
                     />
 
-                    <span>{item.label}</span>
+                    <span className="truncate overflow-hidden whitespace-nowrap max-w-[200px]">
+                      {item.label}
+                    </span>
                   </div>
                   {showCount && (
                     <span className="text-gray-500 text-xs">

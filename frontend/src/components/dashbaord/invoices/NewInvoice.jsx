@@ -167,7 +167,6 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
     // If no filters are applied, return false
     return false;
   });
-  console.log(customerFilteredBookings);
   const tableHeaders = [
     {
       label: (
@@ -225,22 +224,15 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
   };
 
   const getCorporateCustomerByEmail = (email) => {
-    // Debug: Log the API response structure
-    console.log("corporateCustomersData:", corporateCustomersData);
-    
     if (!corporateCustomersData?.customers || !email) {
-      console.log("No customers data or email:", { 
-        hasCustomers: !!corporateCustomersData?.customers, 
-        email 
-      });
+
       return null;
     }
-    
+
     const found = corporateCustomersData.customers.find(
       (customer) => customer.email.toLowerCase() === email.toLowerCase()
     );
-    
-    console.log("Found corporate customer:", found);
+
     return found;
   };
 
@@ -343,17 +335,10 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
         };
 
         if (invoiceType === "customer") {
-          console.log("Checking for corporate customer with email:", contact.email);
           const corporateCustomer = getCorporateCustomerByEmail(contact.email);
-          console.log("Corporate customer found:", corporateCustomer);
-          
           if (corporateCustomer && corporateCustomer.vatnumber) {
-            console.log("Adding VAT number:", corporateCustomer.vatnumber);
             payload.customer.vatnumber = corporateCustomer.vatnumber;
-            console.log("Final payload customer:", payload.customer);
-          } else {
-            console.log("No VAT number to add");
-          }
+          } 
         }
 
         await createInvoice(payload).unwrap();
@@ -383,65 +368,63 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
   };
   let tableData = [];
 
+  tableData = customerFilteredBookings.map((item) => ({
+    checkbox: (
+      <input
+        type="checkbox"
+        checked={selectedRows.includes(item._id)}
+        onChange={(e) => {
+          const updatedSelectedRows = e.target.checked
+            ? [...selectedRows, item._id]
+            : selectedRows.filter((id) => id !== item._id);
 
-    tableData = customerFilteredBookings.map((item) => ({
-      checkbox: (
-        <input
-          type="checkbox"
-          checked={selectedRows.includes(item._id)}
-          onChange={(e) => {
-            const updatedSelectedRows = e.target.checked
-              ? [...selectedRows, item._id]
-              : selectedRows.filter((id) => id !== item._id);
+          setSelectedRows(updatedSelectedRows);
 
-            setSelectedRows(updatedSelectedRows);
+          // Set globalTaxSelection based on first selected row's tax
+          if (updatedSelectedRows.length > 0) {
+            const firstSelectedBookingId = updatedSelectedRows[0];
+            const firstSelectedTax =
+              bookingTaxes[firstSelectedBookingId] || "No Tax";
+            setGlobalTaxSelection(firstSelectedTax);
+          } else {
+            setGlobalTaxSelection("No Tax");
+          }
+        }}
+      />
+    ),
 
-            // Set globalTaxSelection based on first selected row's tax
-            if (updatedSelectedRows.length > 0) {
-              const firstSelectedBookingId = updatedSelectedRows[0];
-              const firstSelectedTax =
-                bookingTaxes[firstSelectedBookingId] || "No Tax";
-              setGlobalTaxSelection(firstSelectedTax);
-            } else {
-              setGlobalTaxSelection("No Tax");
-            }
-          }}
-        />
-      ),
+    bookingId: item.bookingId || "-",
+    totalAmount: (() => {
+      const taxType = bookingTaxes[item._id] || "No Tax";
 
-      bookingId: item.bookingId || "-",
-      totalAmount: (() => {
-        const taxType = bookingTaxes[item._id] || "No Tax";
-
-        const fare = calculateFare(item, invoiceType);
-        return taxType === "Tax"
-          ? (fare * taxMultiplier).toFixed(2)
-          : fare.toFixed(2);
-      })(),
-      pickUp: item.primaryJourney?.pickup || item.returnJourney?.pickup || "-",
-      dropOff:
-        item.primaryJourney?.dropoff || item.returnJourney?.dropoff || "-",
-      tax: (
-        <SelectOption
-          width="w-full md:w-24"
-          options={["No Tax", "Tax"]}
-          value={bookingTaxes[item._id] || "No Tax"}
-          onChange={(e) => {
-            const value = e.target.value;
-            setBookingTaxes((prev) => ({
-              ...prev,
-              [item._id]: value,
-            }));
-          }}
-        />
-      ),
-      date: item.createdAt ? new Date(item.createdAt).toLocaleString() : "-",
-      passenger:
-        invoiceType === "driver"
-          ? item?.drivers?.[0]?.name || "-"
-          : item.passenger?.name || "-",
-      fare: <span>{calculateFare(item, invoiceType)}</span>,
-    }));
+      const fare = calculateFare(item, invoiceType);
+      return taxType === "Tax"
+        ? (fare * taxMultiplier).toFixed(2)
+        : fare.toFixed(2);
+    })(),
+    pickUp: item.primaryJourney?.pickup || item.returnJourney?.pickup || "-",
+    dropOff: item.primaryJourney?.dropoff || item.returnJourney?.dropoff || "-",
+    tax: (
+      <SelectOption
+        width="w-full md:w-24"
+        options={["No Tax", "Tax"]}
+        value={bookingTaxes[item._id] || "No Tax"}
+        onChange={(e) => {
+          const value = e.target.value;
+          setBookingTaxes((prev) => ({
+            ...prev,
+            [item._id]: value,
+          }));
+        }}
+      />
+    ),
+    date: item.createdAt ? new Date(item.createdAt).toLocaleString() : "-",
+    passenger:
+      invoiceType === "driver"
+        ? item?.drivers?.[0]?.name || "-"
+        : item.passenger?.name || "-",
+    fare: <span>{calculateFare(item, invoiceType)}</span>,
+  }));
   useEffect(() => {
     if (
       !generalPricingData?.invoiceTaxPercent ||
@@ -534,7 +517,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
       </div>
       <div className="mt-8">
         <CustomTable
-        emptyMessage="No Invoices Found"
+          emptyMessage="No Invoices Found"
           showSearch={true}
           showRefresh={true}
           tableHeaders={tableHeaders}
