@@ -564,7 +564,7 @@ export const BookingTableRenderer = ({
                       try {
                         await restoreOrDeleteBooking({
                           id: item._id,
-                          action: "delete", 
+                          action: "delete",
                           updatedBy: `${user.role} | ${user.fullName}`,
                         }).unwrap();
                         toast.success("Booking permanently removed");
@@ -576,7 +576,7 @@ export const BookingTableRenderer = ({
                   >
                     Booking Deleted
                   </p>
-            
+
                   <button
                     onClick={async () => {
                       try {
@@ -600,7 +600,6 @@ export const BookingTableRenderer = ({
               );
               break;
             }
-            
 
             if (user?.role === "customer") {
               const displayStatus = item?.status || "No Show";
@@ -721,7 +720,7 @@ export const BookingTableRenderer = ({
             const journeyNotes =
               item?.primaryJourney?.internalNotes ||
               item?.returnJourney?.internalNotes;
-          
+
             row[key] = (
               <div className="flex items-start  gap-2">
                 {/* Action Button + Dropdown */}
@@ -739,7 +738,7 @@ export const BookingTableRenderer = ({
                       className="text-[var(--dark-gray)]"
                     />
                   </button>
-          
+
                   {selectedActionRow === index && (
                     <div className="mt-2 w-56 bg-white border border-gray-200 rounded-lg js-actions-menu shadow-lg animate-slide-in">
                       {actionMenuItems
@@ -771,11 +770,11 @@ export const BookingTableRenderer = ({
                                     toast.info("Drivers cannot edit bookings");
                                     return;
                                   }
-          
+
                                   const bookingSetting =
                                     bookingSettingData?.setting ||
                                     bookingSettingData?.bookingSetting;
-          
+
                                   if (
                                     user?.role === "customer" &&
                                     bookingSetting?.companyId ===
@@ -796,25 +795,29 @@ export const BookingTableRenderer = ({
                                       return;
                                     }
                                   }
-          
+
                                   const editedData = { ...item };
-                                  editedData.__editReturn = !!item.returnJourney;
+                                  editedData.__editReturn =
+                                    !!item.returnJourney;
                                   if (item.primaryJourney?.flightArrival) {
                                     editedData.primaryJourney = {
                                       ...editedData.primaryJourney,
-                                      flightArrival: { ...item.primaryJourney.flightArrival }
+                                      flightArrival: {
+                                        ...item.primaryJourney.flightArrival,
+                                      },
                                     };
                                   }
                                   if (item.returnJourney?.flightArrival) {
                                     editedData.returnJourney = {
                                       ...editedData.returnJourney,
-                                      flightArrival: { ...item.returnJourney.flightArrival }
+                                      flightArrival: {
+                                        ...item.returnJourney.flightArrival,
+                                      },
                                     };
                                   }
-                                  
+
                                   setEditBookingData(editedData);
                                   setShowEditModal(true);
-                                  
                                 } else if (action === "Delete") {
                                   if (item?.status === "Deleted") {
                                     try {
@@ -823,11 +826,15 @@ export const BookingTableRenderer = ({
                                         action: "delete",
                                         updatedBy: `${user.role} | ${user.fullName}`,
                                       }).unwrap();
-                                      toast.success("Booking permanently deleted");
+                                      toast.success(
+                                        "Booking permanently deleted"
+                                      );
                                       refetch();
                                       setSelectedActionRow(null);
                                     } catch (err) {
-                                      toast.error("Failed to permanently delete booking");
+                                      toast.error(
+                                        "Failed to permanently delete booking"
+                                      );
                                       console.error(err);
                                     }
                                   } else {
@@ -837,16 +844,19 @@ export const BookingTableRenderer = ({
                                         status: "Deleted",
                                         updatedBy: `${user.role} | ${user.fullName}`,
                                       }).unwrap();
-                                      toast.success("Booking marked as Deleted");
+                                      toast.success(
+                                        "Booking marked as Deleted"
+                                      );
                                       refetch();
                                       setSelectedActionRow(null);
                                     } catch (err) {
-                                      toast.error("Failed to mark booking as Deleted");
+                                      toast.error(
+                                        "Failed to mark booking as Deleted"
+                                      );
                                       console.error(err);
                                     }
                                   }
-                                }
-                                else if (action === "Copy Booking") {
+                                } else if (action === "Copy Booking") {
                                   const copied = { ...item };
                                   delete copied._id;
                                   if (copied.passenger?._id)
@@ -857,14 +867,14 @@ export const BookingTableRenderer = ({
                                     delete copied.primaryJourney._id;
                                   if (copied.returnJourney?._id)
                                     delete copied.returnJourney._id;
-          
+
                                   copied.bookingId = "";
                                   copied.status = "Pending";
                                   copied.statusAudit = [];
                                   copied.createdAt = new Date().toISOString();
                                   copied.drivers = [];
                                   copied.__copyMode = true;
-          
+
                                   if (item.returnJourney) {
                                     copied.primaryJourney = {
                                       ...item.returnJourney,
@@ -874,7 +884,7 @@ export const BookingTableRenderer = ({
                                   } else {
                                     copied.__copyReturn = false;
                                   }
-          
+
                                   setEditBookingData(copied);
                                   setShowEditModal(true);
                                 }
@@ -888,7 +898,7 @@ export const BookingTableRenderer = ({
                             {action}
                           </button>
                         ))}
-          
+
                       {user?.role?.toLowerCase() === "clientadmin" &&
                         item.status !== "Cancelled" && (
                           <button
@@ -899,11 +909,11 @@ export const BookingTableRenderer = ({
                                   status: "Cancelled",
                                   updatedBy: `${user.role} | ${user.fullName}`,
                                 }).unwrap();
-          
+
                                 toast.success(
                                   "Booking status set to Cancelled"
                                 );
-          
+
                                 if (item?.passenger?.email) {
                                   try {
                                     await sendBookingEmail({
@@ -911,7 +921,7 @@ export const BookingTableRenderer = ({
                                       email: item.passenger.email,
                                       type: "cancellation",
                                     }).unwrap();
-          
+
                                     toast.success(
                                       "Cancellation email sent to customer"
                                     );
@@ -926,7 +936,7 @@ export const BookingTableRenderer = ({
                                     "No passenger email found to send cancellation notice"
                                   );
                                 }
-          
+
                                 if (
                                   Array.isArray(item?.drivers) &&
                                   item.drivers.length > 0
@@ -943,7 +953,7 @@ export const BookingTableRenderer = ({
                                           email: driverEmail,
                                           type: "cancellation-driver",
                                         }).unwrap();
-          
+
                                         toast.success(
                                           `Cancellation email sent to driver: ${driverEmail}`
                                         );
@@ -959,7 +969,7 @@ export const BookingTableRenderer = ({
                                     }
                                   }
                                 }
-          
+
                                 refetch();
                                 setSelectedActionRow(null);
                               } catch (err) {
@@ -986,7 +996,7 @@ export const BookingTableRenderer = ({
                       size={18}
                       className="text-blue-600 hover:text-blue-700"
                     />
-          
+
                     {/* Red dot */}
                     <span
                       className="absolute bg-red-500 rounded-full border-2 border-white"
@@ -1002,7 +1012,8 @@ export const BookingTableRenderer = ({
                 )}
               </div>
             );
-            break;     default:
+            break;
+          default:
             row[key] = item[key] || "-";
         }
       });
@@ -1012,7 +1023,7 @@ export const BookingTableRenderer = ({
 
   return (
     <CustomTable
-    filename="Bookings-list"
+      filename="Bookings-list"
       tableHeaders={filteredTableHeaders}
       tableData={tableData}
       exportTableData={exportTableData}

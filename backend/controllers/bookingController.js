@@ -120,10 +120,12 @@ export const createBooking = async (req, res) => {
     const bookingId = await generateNextBookingId();
     let source = "widget";
 
-    if (req.user?.role === "clientadmin" || req.user?.role === "associateadmin") {
+    if (
+      req.user?.role === "clientadmin" ||
+      req.user?.role === "associateadmin"
+    ) {
       source = "admin";
     }
-
 
     const baseVehicleInfo = {
       vehicleName: vehicle.vehicleName ?? null,
@@ -243,7 +245,8 @@ export const createBooking = async (req, res) => {
           actual: flightInfo.actual,
         };
         bookingPayload.primaryJourney.flightOrigin = flightInfo.origin;
-        bookingPayload.primaryJourney.flightDestination = flightInfo.destination;
+        bookingPayload.primaryJourney.flightDestination =
+          flightInfo.destination;
       }
     }
 
@@ -287,14 +290,19 @@ export const createBooking = async (req, res) => {
 
       // Send to passenger (only if preference is true)
       if (savedBooking.passenger.email) {
-        const allow = await shouldSendCustomerEmail(companyId, savedBooking.passenger.email);
+        const allow = await shouldSendCustomerEmail(
+          companyId,
+          savedBooking.passenger.email
+        );
         if (allow) {
           await sendEmail(
             savedBooking.passenger.email.trim(),
             `Booking Confirmation #${savedBooking.bookingId}`,
             { html: confirmationHtml }
           );
-          console.log(`Email sent to passenger: ${savedBooking.passenger.email}`);
+          console.log(
+            `Email sent to passenger: ${savedBooking.passenger.email}`
+          );
         } else {
           console.log(`Skipped email: Customer emailPreference = false`);
         }
@@ -344,7 +352,9 @@ export const createBooking = async (req, res) => {
 
       // If current user is clientadmin, notify customer (if they have a portal account)
       if (currentUser?.role === "clientadmin") {
-        const passengerEmail = savedBooking?.passenger?.email?.trim().toLowerCase();
+        const passengerEmail = savedBooking?.passenger?.email
+          ?.trim()
+          .toLowerCase();
         console.log("Looking for customer user with email:", passengerEmail);
 
         if (passengerEmail) {
@@ -365,14 +375,23 @@ export const createBooking = async (req, res) => {
               bookingId: savedBooking.bookingId,
               status: "New",
               primaryJourney: {
-                pickup: savedBooking?.primaryJourney?.pickup || savedBooking?.returnJourney?.pickup || "",
-                dropoff: savedBooking?.primaryJourney?.dropoff || savedBooking?.returnJourney?.dropoff || "",
+                pickup:
+                  savedBooking?.primaryJourney?.pickup ||
+                  savedBooking?.returnJourney?.pickup ||
+                  "",
+                dropoff:
+                  savedBooking?.primaryJourney?.dropoff ||
+                  savedBooking?.returnJourney?.dropoff ||
+                  "",
               },
               bookingSentAt: new Date(),
               createdBy: currentUser._id,
               companyId: savedBooking.companyId,
             });
-            io.to(`emp:${customerUser._id}`).emit("notification:new", customerNotif);
+            io.to(`emp:${customerUser._id}`).emit(
+              "notification:new",
+              customerNotif
+            );
             console.log(`Notification sent to customer: ${customerUser.email}`);
           } else {
             console.log("No customer user found - notification not sent");
@@ -400,8 +419,14 @@ export const createBooking = async (req, res) => {
             bookingId: savedBooking.bookingId,
             status: "New",
             primaryJourney: {
-              pickup: savedBooking?.primaryJourney?.pickup || savedBooking?.returnJourney?.pickup || "",
-              dropoff: savedBooking?.primaryJourney?.dropoff || savedBooking?.returnJourney?.dropoff || "",
+              pickup:
+                savedBooking?.primaryJourney?.pickup ||
+                savedBooking?.returnJourney?.pickup ||
+                "",
+              dropoff:
+                savedBooking?.primaryJourney?.dropoff ||
+                savedBooking?.returnJourney?.dropoff ||
+                "",
             },
             bookingSentAt: new Date(),
             createdBy: currentUser._id,
@@ -414,7 +439,10 @@ export const createBooking = async (req, res) => {
         }
       }
     } catch (notificationError) {
-      console.error("Failed to send booking creation notifications:", notificationError?.message);
+      console.error(
+        "Failed to send booking creation notifications:",
+        notificationError?.message
+      );
     }
     return res.status(201).json({
       success: true,
@@ -425,19 +453,19 @@ export const createBooking = async (req, res) => {
       // expose who will manage this customer (useful for UI)
       clientAdmin: clientAdminUser
         ? {
-          name: clientAdminUser.name || "",
-          email: clientAdminUser.email || "",
-          phone: clientAdminUser.contact || clientAdminUser.phone || "",
-        }
+            name: clientAdminUser.name || "",
+            email: clientAdminUser.email || "",
+            phone: clientAdminUser.contact || clientAdminUser.phone || "",
+          }
         : null,
       company: companyDoc
         ? {
-          name: companyDoc.companyName || companyDoc.tradingName || "",
-          email: companyDoc.email || "",
-          phone: companyDoc.contact || "",
-          address: companyDoc.address || "",
-          website: companyDoc.website || "",
-        }
+            name: companyDoc.companyName || companyDoc.tradingName || "",
+            email: companyDoc.email || "",
+            phone: companyDoc.contact || "",
+            address: companyDoc.address || "",
+            website: companyDoc.website || "",
+          }
         : null,
     });
   } catch (error) {
@@ -477,7 +505,7 @@ export const getAllBookings = async (req, res) => {
 export const updateBooking = async (req, res) => {
   try {
     const { id } = req.params;
-    const { bookingData = {}, PassengerEmail, ClientAdminEmail } = req.body;
+    const { bookingData = {}} = req.body;
 
     if (!id || id.length !== 24) {
       return res.status(400).json({ message: "Invalid booking ID" });
@@ -489,8 +517,14 @@ export const updateBooking = async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    console.log("EXISTING BOOKING DRIVERS:", JSON.stringify(existingBooking.drivers, null, 2));
-    console.log("NEW BOOKING DATA DRIVERS:", JSON.stringify(bookingData.drivers, null, 2));
+    console.log(
+      "EXISTING BOOKING DRIVERS:",
+      JSON.stringify(existingBooking.drivers, null, 2)
+    );
+    console.log(
+      "NEW BOOKING DATA DRIVERS:",
+      JSON.stringify(bookingData.drivers, null, 2)
+    );
 
     const {
       mode = "Transfer",
@@ -566,32 +600,61 @@ export const updateBooking = async (req, res) => {
 
     // Handle journey data
     if (returnJourneyToggle) {
+      const prevReturn = existingBooking.returnJourney?.toObject?.() || existingBooking.returnJourney || {};
+    
       updatedPayload.returnJourney = {
-        pickup: returnJourney.pickup?.trim() ?? "",
-        dropoff: returnJourney.dropoff?.trim() ?? "",
-        additionalDropoff1: returnJourney.additionalDropoff1 ?? null,
-        additionalDropoff2: returnJourney.additionalDropoff2 ?? null,
-        pickupDoorNumber: returnJourney.pickupDoorNumber ?? "",
-        terminal: returnJourney.terminal ?? "",
-        arrivefrom: returnJourney.arrivefrom ?? "",
-        flightNumber: returnJourney.flightNumber ?? "",
-        pickmeAfter: returnJourney.pickmeAfter ?? "",
-        notes: returnJourney.notes ?? "",
-        internalNotes: returnJourney.internalNotes ?? "",
-        date: returnJourney.date ?? "",
-        hour: returnJourney.hour !== undefined ? parseInt(returnJourney.hour) : null,
-        minute: returnJourney.minute !== undefined ? parseInt(returnJourney.minute) : null,
-        fare: returnJourney.fare ?? 0,
-        hourlyOption: returnJourney.hourlyOption ?? null,
-        distanceText: returnJourney.distanceText ?? "",
-        durationText: returnJourney.durationText ?? "",
+        ...prevReturn, // keep old fields (like flightArrival)
+        pickup: returnJourney.pickup?.trim() ?? prevReturn.pickup ?? "",
+        dropoff: returnJourney.dropoff?.trim() ?? prevReturn.dropoff ?? "",
+        additionalDropoff1: returnJourney.additionalDropoff1 ?? prevReturn.additionalDropoff1 ?? null,
+        additionalDropoff2: returnJourney.additionalDropoff2 ?? prevReturn.additionalDropoff2 ?? null,
+        pickupDoorNumber: returnJourney.pickupDoorNumber ?? prevReturn.pickupDoorNumber ?? "",
+        terminal: returnJourney.terminal ?? prevReturn.terminal ?? "",
+        arrivefrom: returnJourney.arrivefrom ?? prevReturn.arrivefrom ?? "",
+        flightNumber: returnJourney.flightNumber ?? prevReturn.flightNumber ?? "",
+        pickmeAfter: returnJourney.pickmeAfter ?? prevReturn.pickmeAfter ?? "",
+        notes: returnJourney.notes ?? prevReturn.notes ?? "",
+        internalNotes: returnJourney.internalNotes ?? prevReturn.internalNotes ?? "",
+        date: returnJourney.date ?? prevReturn.date ?? "",
+        hour:
+          returnJourney.hour !== undefined
+            ? parseInt(returnJourney.hour)
+            : prevReturn.hour ?? null,
+        minute:
+          returnJourney.minute !== undefined
+            ? parseInt(returnJourney.minute)
+            : prevReturn.minute ?? null,
+        fare: returnJourney.fare ?? prevReturn.fare ?? 0,
+        hourlyOption: returnJourney.hourlyOption ?? prevReturn.hourlyOption ?? null,
+        distanceText: returnJourney.distanceText ?? prevReturn.distanceText ?? "",
+        durationText: returnJourney.durationText ?? prevReturn.durationText ?? "",
         voucher,
         voucherApplied,
         ...extractDynamicDropoffFields(returnJourney),
       };
+    
+      // Only re-fetch arrivals if flight number changed
+      if (
+        updatedPayload.returnJourney.flightNumber &&
+        updatedPayload.returnJourney.flightNumber !== prevReturn.flightNumber
+      ) {
+        const flightInfo = await fetchFlightTimes(updatedPayload.returnJourney.flightNumber);
+        if (flightInfo) {
+          updatedPayload.returnJourney.flightArrival = {
+            scheduled: flightInfo.scheduled,
+            estimated: flightInfo.estimated,
+            actual: flightInfo.actual,
+          };
+          updatedPayload.returnJourney.flightOrigin = flightInfo.origin;
+          updatedPayload.returnJourney.flightDestination = flightInfo.destination;
+        }
+      }
     }
 
-    if (!returnJourneyToggle || (primaryJourney?.pickup && primaryJourney?.dropoff)) {
+    if (
+      !returnJourneyToggle ||
+      (primaryJourney?.pickup && primaryJourney?.dropoff)
+    ) {
       updatedPayload.primaryJourney = {
         pickup: primaryJourney.pickup?.trim() ?? "",
         dropoff: primaryJourney.dropoff?.trim() ?? "",
@@ -605,8 +668,14 @@ export const updateBooking = async (req, res) => {
         notes: primaryJourney.notes ?? "",
         internalNotes: primaryJourney.internalNotes ?? "",
         date: primaryJourney.date ?? "",
-        hour: primaryJourney.hour !== undefined ? parseInt(primaryJourney.hour) : null,
-        minute: primaryJourney.minute !== undefined ? parseInt(primaryJourney.minute) : null,
+        hour:
+          primaryJourney.hour !== undefined
+            ? parseInt(primaryJourney.hour)
+            : null,
+        minute:
+          primaryJourney.minute !== undefined
+            ? parseInt(primaryJourney.minute)
+            : null,
         fare: primaryJourney.fare ?? 0,
         hourlyOption: primaryJourney.hourlyOption ?? null,
         distanceText: primaryJourney.distanceText ?? "",
@@ -616,9 +685,40 @@ export const updateBooking = async (req, res) => {
         ...extractDynamicDropoffFields(primaryJourney),
       };
     }
+    // Add this block right after building updatedPayload and before findByIdAndUpdate
+    // Handle flight arrival times for updated flight numbers
+    if (!returnJourneyToggle && updatedPayload.primaryJourney?.flightNumber) {
+      const flightInfo = await fetchFlightTimes(
+        updatedPayload.primaryJourney.flightNumber
+      );
+      if (flightInfo) {
+        updatedPayload.primaryJourney.flightArrival = {
+          scheduled: flightInfo.scheduled,
+          estimated: flightInfo.estimated,
+          actual: flightInfo.actual,
+        };
+        updatedPayload.primaryJourney.flightOrigin = flightInfo.origin;
+        updatedPayload.primaryJourney.flightDestination =
+          flightInfo.destination;
+      }
+    }
 
+    if (returnJourneyToggle && updatedPayload.returnJourney?.flightNumber) {
+      const flightInfo = await fetchFlightTimes(
+        updatedPayload.returnJourney.flightNumber
+      );
+      if (flightInfo) {
+        updatedPayload.returnJourney.flightArrival = {
+          scheduled: flightInfo.scheduled,
+          estimated: flightInfo.estimated,
+          actual: flightInfo.actual,
+        };
+        updatedPayload.returnJourney.flightOrigin = flightInfo.origin;
+        updatedPayload.returnJourney.flightDestination = flightInfo.destination;
+      }
+    }
     // Handle drivers field - only update if it exists in request
-    if (bookingData.hasOwnProperty('drivers')) {
+    if (bookingData.hasOwnProperty("drivers")) {
       updatedPayload.drivers = bookingData.drivers;
       console.log("DRIVERS FIELD EXISTS IN REQUEST - Will be updated");
     } else {
@@ -626,7 +726,9 @@ export const updateBooking = async (req, res) => {
     }
 
     // Save to DB first
-    const updatedBooking = await Booking.findByIdAndUpdate(id, updatedPayload, { new: true });
+    const updatedBooking = await Booking.findByIdAndUpdate(id, updatedPayload, {
+      new: true,
+    });
 
     if (!updatedBooking) {
       return res.status(404).json({ message: "Booking not found" });
@@ -638,10 +740,10 @@ export const updateBooking = async (req, res) => {
     let driverEmailResults = {
       assigned: [],
       unassigned: [],
-      emailsSent: []
+      emailsSent: [],
     };
 
-    if (bookingData.hasOwnProperty('drivers')) {
+    if (bookingData.hasOwnProperty("drivers")) {
       try {
         console.log("PROCESSING DRIVER EMAIL NOTIFICATIONS...");
 
@@ -650,11 +752,11 @@ export const updateBooking = async (req, res) => {
         console.log("COMPANY INFO:", company ? "Found" : "Not found");
 
         // Compare existing drivers with new drivers
-        const existingDriverIds = (existingBooking.drivers || []).map(d => {
+        const existingDriverIds = (existingBooking.drivers || []).map((d) => {
           return String(d.driverId || d._id || d);
         });
 
-        const newDriverIds = (bookingData.drivers || []).map(d => {
+        const newDriverIds = (bookingData.drivers || []).map((d) => {
           return String(d.driverId || d._id || d);
         });
 
@@ -663,8 +765,12 @@ export const updateBooking = async (req, res) => {
         console.log("New IDs:", newDriverIds);
 
         // Find newly assigned drivers
-        const newlyAssigned = newDriverIds.filter(id => !existingDriverIds.includes(id));
-        const unassigned = existingDriverIds.filter(id => !newDriverIds.includes(id));
+        const newlyAssigned = newDriverIds.filter(
+          (id) => !existingDriverIds.includes(id)
+        );
+        const unassigned = existingDriverIds.filter(
+          (id) => !newDriverIds.includes(id)
+        );
 
         driverEmailResults.assigned = newlyAssigned;
         driverEmailResults.unassigned = unassigned;
@@ -681,19 +787,25 @@ export const updateBooking = async (req, res) => {
           if (mongoose.Types.ObjectId.isValid(driverId)) {
             const driverDoc = await driverModel.findById(driverId).lean();
             if (driverDoc) {
-              console.log(`   Found by ID: ${driverDoc.DriverData?.firstName} ${driverDoc.DriverData?.surName}`);
+              console.log(
+                `   Found by ID: ${driverDoc.DriverData?.firstName} ${driverDoc.DriverData?.surName}`
+              );
               return driverDoc;
             }
           }
 
           // Try finding by employee number
-          const driverByEmployeeNumber = await driverModel.findOne({
-            'DriverData.employeeNumber': driverId,
-            companyId: companyId
-          }).lean();
+          const driverByEmployeeNumber = await driverModel
+            .findOne({
+              "DriverData.employeeNumber": driverId,
+              companyId: companyId,
+            })
+            .lean();
 
           if (driverByEmployeeNumber) {
-            console.log(`   Found by employee number: ${driverByEmployeeNumber.DriverData?.firstName} ${driverByEmployeeNumber.DriverData?.surName}`);
+            console.log(
+              `   Found by employee number: ${driverByEmployeeNumber.DriverData?.firstName} ${driverByEmployeeNumber.DriverData?.surName}`
+            );
             return driverByEmployeeNumber;
           }
 
@@ -708,10 +820,10 @@ export const updateBooking = async (req, res) => {
 
             if (!driverDoc) {
               driverEmailResults.emailsSent.push({
-                type: 'assigned',
+                type: "assigned",
                 driverId,
-                status: 'failed',
-                error: 'Driver not found'
+                status: "failed",
+                error: "Driver not found",
               });
               continue;
             }
@@ -720,10 +832,10 @@ export const updateBooking = async (req, res) => {
             if (!driverEmail) {
               console.log(`No email for driver ${driverId}`);
               driverEmailResults.emailsSent.push({
-                type: 'assigned',
+                type: "assigned",
                 driverId,
-                status: 'failed',
-                error: 'No email address'
+                status: "failed",
+                error: "No email address",
               });
               continue;
             }
@@ -753,22 +865,26 @@ export const updateBooking = async (req, res) => {
             );
 
             driverEmailResults.emailsSent.push({
-              type: 'assigned',
+              type: "assigned",
               driverId,
               email: driverEmail,
-              driverName: `${driverDoc.DriverData?.firstName || ''} ${driverDoc.DriverData?.surName || ''}`.trim(),
-              status: 'sent'
+              driverName: `${driverDoc.DriverData?.firstName || ""} ${
+                driverDoc.DriverData?.surName || ""
+              }`.trim(),
+              status: "sent",
             });
 
             console.log(`Assignment email sent to: ${driverEmail}`);
-
           } catch (emailError) {
-            console.error(`Failed to send assignment email to driver ${driverId}:`, emailError.message);
+            console.error(
+              `Failed to send assignment email to driver ${driverId}:`,
+              emailError.message
+            );
             driverEmailResults.emailsSent.push({
-              type: 'assigned',
+              type: "assigned",
               driverId,
-              status: 'failed',
-              error: emailError.message
+              status: "failed",
+              error: emailError.message,
             });
           }
         }
@@ -781,17 +897,23 @@ export const updateBooking = async (req, res) => {
 
             const employeeNumber = driverDoc?.DriverData?.employeeNumber;
             if (!employeeNumber) {
-              console.log(`Skipped notification: no employee number for driver ${driverId}`);
+              console.log(
+                `Skipped notification: no employee number for driver ${driverId}`
+              );
               continue;
             }
 
             const notificationPayload = {
               employeeNumber,
               bookingId: updatedBooking.bookingId,
-              status: "Unassigned",   // mark as unassigned
+              status: "Unassigned", // mark as unassigned
               primaryJourney: {
-                pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
-                dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
+                pickup:
+                  updatedBooking?.primaryJourney?.pickup ||
+                  updatedBooking?.returnJourney?.pickup,
+                dropoff:
+                  updatedBooking?.primaryJourney?.dropoff ||
+                  updatedBooking?.returnJourney?.dropoff,
               },
               bookingSentAt: new Date(),
               createdBy: req.user?._id || null,
@@ -801,14 +923,20 @@ export const updateBooking = async (req, res) => {
             await Notification.create(notificationPayload);
             console.log(`Unassignment notification sent to ${employeeNumber}`);
           } catch (err) {
-            console.error(`Failed to send unassignment notification for driver ${driverId}:`, err.message);
+            console.error(
+              `Failed to send unassignment notification for driver ${driverId}:`,
+              err.message
+            );
           }
         }
 
-
         // Log final summary
-        const sentEmails = driverEmailResults.emailsSent.filter(e => e.status === 'sent');
-        const failedEmails = driverEmailResults.emailsSent.filter(e => e.status === 'failed');
+        const sentEmails = driverEmailResults.emailsSent.filter(
+          (e) => e.status === "sent"
+        );
+        const failedEmails = driverEmailResults.emailsSent.filter(
+          (e) => e.status === "failed"
+        );
 
         console.log("DRIVER EMAIL FINAL SUMMARY:");
         console.log(`Total drivers assigned: ${newlyAssigned.length}`);
@@ -816,7 +944,6 @@ export const updateBooking = async (req, res) => {
         console.log(`Emails sent successfully: ${sentEmails.length}`);
         console.log(`Emails failed: ${failedEmails.length}`);
         console.log("Details:", driverEmailResults.emailsSent);
-
       } catch (driverEmailError) {
         console.error("Driver email process failed:", driverEmailError.message);
         console.error("Full error:", driverEmailError);
@@ -825,12 +952,17 @@ export const updateBooking = async (req, res) => {
     try {
       // Fetch who manages this customer + brand info (same as createBooking)
       const [clientAdminUser, companyDoc] = await Promise.all([
-        User.findOne({ companyId: updatedBooking.companyId, role: "clientadmin" })
+        User.findOne({
+          companyId: updatedBooking.companyId,
+          role: "clientadmin",
+        })
           .select("name email contact phone profileImage")
           .lean()
           .catch(() => null),
         Company.findById(updatedBooking.companyId)
-          .select("companyName tradingName email contact profileImage address website")
+          .select(
+            "companyName tradingName email contact profileImage address website"
+          )
           .lean()
           .catch(() => null),
       ]);
@@ -843,7 +975,10 @@ export const updateBooking = async (req, res) => {
         options: {
           // Prefer Client Admin as frontline contact
           supportEmail: clientAdminUser?.email || companyDoc?.email,
-          supportPhone: clientAdminUser?.contact || clientAdminUser?.phone || companyDoc?.contact,
+          supportPhone:
+            clientAdminUser?.contact ||
+            clientAdminUser?.phone ||
+            companyDoc?.contact,
           website: companyDoc?.website,
           address: companyDoc?.address,
         },
@@ -852,19 +987,26 @@ export const updateBooking = async (req, res) => {
       // Always send to the CURRENT passenger email after update
       const targetPassengerEmail = updatedBooking?.passenger?.email?.trim();
       if (targetPassengerEmail) {
-        const allow = await shouldSendCustomerEmail(updatedBooking.companyId, targetPassengerEmail);
+        const allow = await shouldSendCustomerEmail(
+          updatedBooking.companyId,
+          targetPassengerEmail
+        );
         if (allow) {
           await sendEmail(
             targetPassengerEmail,
             `Booking Updated #${updatedBooking.bookingId}`,
             { html: confirmationHtml }
           );
-          console.log(`Update confirmation sent to passenger: ${targetPassengerEmail}`);
+          console.log(
+            `Update confirmation sent to passenger: ${targetPassengerEmail}`
+          );
         } else {
           console.log(`Skipped update email: Customer emailPreference = false`);
         }
       } else {
-        console.log("No passenger email present on updated booking — skipping passenger email.");
+        console.log(
+          "No passenger email present on updated booking — skipping passenger email."
+        );
       }
     } catch (e) {
       console.error("Error sending updated passenger confirmation:", e.message);
@@ -881,9 +1023,10 @@ export const updateBooking = async (req, res) => {
       const driversWereChanged = bookingData.hasOwnProperty("drivers");
 
       if (driversWereChanged) {
-        console.log("Skipping update notifications: driver assignment was updated");
+        console.log(
+          "Skipping update notifications: driver assignment was updated"
+        );
       } else {
-
         // Notify based on who updated the booking
         if (currRole === "clientadmin") {
           // ClientAdmin updated: notify customer and drivers only
@@ -899,31 +1042,44 @@ export const updateBooking = async (req, res) => {
             if (customerUser?._id) {
               // Skip if the customer is the current user updating the booking
               if (String(customerUser._id) === String(currentUser._id)) {
-                console.log(`Skipping customer notification: user is updating their own booking`);
+                console.log(
+                  `Skipping customer notification: user is updating their own booking`
+                );
               } else {
                 const notif = await Notification.create({
                   employeeNumber: String(customerUser._id),
                   bookingId,
                   status: "Updated",
                   primaryJourney: {
-                    pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
-                    dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
+                    pickup:
+                      updatedBooking?.primaryJourney?.pickup ||
+                      updatedBooking?.returnJourney?.pickup,
+                    dropoff:
+                      updatedBooking?.primaryJourney?.dropoff ||
+                      updatedBooking?.returnJourney?.dropoff,
                   },
                   bookingSentAt: new Date(),
                   createdBy: currentUser?._id,
                   companyId: updatedBooking.companyId,
                 });
 
-                io.to(`emp:${customerUser._id}`).emit("notification:new", notif);
+                io.to(`emp:${customerUser._id}`).emit(
+                  "notification:new",
+                  notif
+                );
                 console.log(`Customer notified: emp:${customerUser._id}`);
               }
             }
           }
 
           // Notify Drivers (but not if current user is the driver)
-          if (Array.isArray(updatedBooking.drivers) && updatedBooking.drivers.length > 0) {
+          if (
+            Array.isArray(updatedBooking.drivers) &&
+            updatedBooking.drivers.length > 0
+          ) {
             for (const drv of updatedBooking.drivers) {
-              const drvUserId = typeof drv === "object" ? drv.userId || drv._id : drv;
+              const drvUserId =
+                typeof drv === "object" ? drv.userId || drv._id : drv;
               if (!drvUserId) continue;
 
               const driverUser = await User.findOne({
@@ -935,28 +1091,36 @@ export const updateBooking = async (req, res) => {
               if (driverUser?._id) {
                 // Skip if the driver is the current user updating the booking
                 if (String(driverUser._id) === String(currentUser._id)) {
-                  console.log(`Skipping driver notification: user is updating their own booking`);
+                  console.log(
+                    `Skipping driver notification: user is updating their own booking`
+                  );
                 } else {
                   const notif = await Notification.create({
                     employeeNumber: String(driverUser._id),
                     bookingId,
                     status: "Updated",
                     primaryJourney: {
-                      pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
-                      dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
+                      pickup:
+                        updatedBooking?.primaryJourney?.pickup ||
+                        updatedBooking?.returnJourney?.pickup,
+                      dropoff:
+                        updatedBooking?.primaryJourney?.dropoff ||
+                        updatedBooking?.returnJourney?.dropoff,
                     },
                     bookingSentAt: new Date(),
                     createdBy: currentUser?._id,
                     companyId: updatedBooking.companyId,
                   });
 
-                  io.to(`emp:${driverUser._id}`).emit("notification:new", notif);
+                  io.to(`emp:${driverUser._id}`).emit(
+                    "notification:new",
+                    notif
+                  );
                   console.log(`Driver notified: emp:${driverUser._id}`);
                 }
               }
             }
           }
-
         } else if (currRole === "customer") {
           // Notify ClientAdmin (but not if current user is the clientAdmin)
           const clientAdmin = await User.findOne({
@@ -967,15 +1131,21 @@ export const updateBooking = async (req, res) => {
           if (clientAdmin?._id) {
             // Skip if the clientAdmin is the current user updating the booking
             if (String(clientAdmin._id) === String(currentUser._id)) {
-              console.log(`Skipping clientAdmin notification: user is updating their own booking`);
+              console.log(
+                `Skipping clientAdmin notification: user is updating their own booking`
+              );
             } else {
               const notif = await Notification.create({
                 employeeNumber: String(clientAdmin._id),
                 bookingId,
                 status: "Updated",
                 primaryJourney: {
-                  pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
-                  dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
+                  pickup:
+                    updatedBooking?.primaryJourney?.pickup ||
+                    updatedBooking?.returnJourney?.pickup,
+                  dropoff:
+                    updatedBooking?.primaryJourney?.dropoff ||
+                    updatedBooking?.returnJourney?.dropoff,
                 },
                 bookingSentAt: new Date(),
                 createdBy: currentUser?._id,
@@ -988,9 +1158,13 @@ export const updateBooking = async (req, res) => {
           }
 
           // Notify Drivers (but not if current user is the driver)
-          if (Array.isArray(updatedBooking.drivers) && updatedBooking.drivers.length > 0) {
+          if (
+            Array.isArray(updatedBooking.drivers) &&
+            updatedBooking.drivers.length > 0
+          ) {
             for (const drv of updatedBooking.drivers) {
-              const drvUserId = typeof drv === "object" ? drv.userId || drv._id : drv;
+              const drvUserId =
+                typeof drv === "object" ? drv.userId || drv._id : drv;
               if (!drvUserId) continue;
 
               const driverUser = await User.findOne({
@@ -1002,28 +1176,36 @@ export const updateBooking = async (req, res) => {
               if (driverUser?._id) {
                 // Skip if the driver is the current user updating the booking
                 if (String(driverUser._id) === String(currentUser._id)) {
-                  console.log(`Skipping driver notification: user is updating their own booking`);
+                  console.log(
+                    `Skipping driver notification: user is updating their own booking`
+                  );
                 } else {
                   const notif = await Notification.create({
                     employeeNumber: String(driverUser._id),
                     bookingId,
                     status: "Updated",
                     primaryJourney: {
-                      pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
-                      dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
+                      pickup:
+                        updatedBooking?.primaryJourney?.pickup ||
+                        updatedBooking?.returnJourney?.pickup,
+                      dropoff:
+                        updatedBooking?.primaryJourney?.dropoff ||
+                        updatedBooking?.returnJourney?.dropoff,
                     },
                     bookingSentAt: new Date(),
                     createdBy: currentUser?._id,
                     companyId: updatedBooking.companyId,
                   });
 
-                  io.to(`emp:${driverUser._id}`).emit("notification:new", notif);
+                  io.to(`emp:${driverUser._id}`).emit(
+                    "notification:new",
+                    notif
+                  );
                   console.log(`Driver notified: emp:${driverUser._id}`);
                 }
               }
             }
           }
-
         } else {
           // For other roles (like driver), notify everyone except themselves
           // Notify Customer (but not if current user is the customer)
@@ -1037,22 +1219,31 @@ export const updateBooking = async (req, res) => {
             if (customerUser?._id) {
               // Skip if the customer is the current user updating the booking
               if (String(customerUser._id) === String(currentUser._id)) {
-                console.log(`Skipping customer notification: user is updating their own booking`);
+                console.log(
+                  `Skipping customer notification: user is updating their own booking`
+                );
               } else {
                 const notif = await Notification.create({
                   employeeNumber: String(customerUser._id),
                   bookingId,
                   status: "Updated",
                   primaryJourney: {
-                    pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
-                    dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
+                    pickup:
+                      updatedBooking?.primaryJourney?.pickup ||
+                      updatedBooking?.returnJourney?.pickup,
+                    dropoff:
+                      updatedBooking?.primaryJourney?.dropoff ||
+                      updatedBooking?.returnJourney?.dropoff,
                   },
                   bookingSentAt: new Date(),
                   createdBy: currentUser?._id,
                   companyId: updatedBooking.companyId,
                 });
 
-                io.to(`emp:${customerUser._id}`).emit("notification:new", notif);
+                io.to(`emp:${customerUser._id}`).emit(
+                  "notification:new",
+                  notif
+                );
                 console.log(`Customer notified: emp:${customerUser._id}`);
               }
             }
@@ -1067,15 +1258,21 @@ export const updateBooking = async (req, res) => {
           if (clientAdmin?._id) {
             // Skip if the clientAdmin is the current user updating the booking
             if (String(clientAdmin._id) === String(currentUser._id)) {
-              console.log(`Skipping clientAdmin notification: user is updating their own booking`);
+              console.log(
+                `Skipping clientAdmin notification: user is updating their own booking`
+              );
             } else {
               const notif = await Notification.create({
                 employeeNumber: String(clientAdmin._id),
                 bookingId,
                 status: "Updated",
                 primaryJourney: {
-                  pickup: updatedBooking?.primaryJourney?.pickup || updatedBooking?.returnJourney?.pickup,
-                  dropoff: updatedBooking?.primaryJourney?.dropoff || updatedBooking?.returnJourney?.dropoff,
+                  pickup:
+                    updatedBooking?.primaryJourney?.pickup ||
+                    updatedBooking?.returnJourney?.pickup,
+                  dropoff:
+                    updatedBooking?.primaryJourney?.dropoff ||
+                    updatedBooking?.returnJourney?.dropoff,
                 },
                 bookingSentAt: new Date(),
                 createdBy: currentUser?._id,
@@ -1089,7 +1286,10 @@ export const updateBooking = async (req, res) => {
         }
       }
     } catch (notifyErr) {
-      console.error("Error sending socket notifications on booking update:", notifyErr.message);
+      console.error(
+        "Error sending socket notifications on booking update:",
+        notifyErr.message
+      );
     }
 
     return res.status(200).json({
@@ -1099,10 +1299,11 @@ export const updateBooking = async (req, res) => {
       driverChanges: {
         assigned: driverEmailResults.assigned.length,
         unassigned: driverEmailResults.unassigned.length,
-        emailsSent: driverEmailResults.emailsSent.filter(e => e.type === 'assigned' || e.type === 'unassigned') // only driver-related emails
-      }
+        emailsSent: driverEmailResults.emailsSent.filter(
+          (e) => e.type === "assigned" || e.type === "unassigned"
+        ), // only driver-related emails
+      },
     });
-
   } catch (error) {
     console.error("Error in updateBooking:", error);
     return res.status(500).json({
@@ -1192,10 +1393,14 @@ export const updateBookingStatus = async (req, res) => {
     }
 
     if (req.user?.role === "clientadmin") {
-      const current = String(booking?.status || "").trim().toLowerCase();
-      const next = String(status || "").trim().toLowerCase();
+      const current = String(booking?.status || "")
+        .trim()
+        .toLowerCase();
+      const next = String(status || "")
+        .trim()
+        .toLowerCase();
 
-      if (current === "completed" && (next === "cancelled")) {
+      if (current === "completed" && next === "cancelled") {
         return res.status(403).json({
           message: "Cannot cancel a booking that is Completed.",
         });
@@ -1266,7 +1471,7 @@ export const updateBookingStatus = async (req, res) => {
 
             vehicleInfo = {
               ...(assignedDriver.VehicleData || {}),
-              vehiclePicture: assignedDriver?.UploadedData?.carPicture || null
+              vehiclePicture: assignedDriver?.UploadedData?.carPicture || null,
             };
           } else {
             // Fallback from inline driver data on booking (if present)
@@ -1323,18 +1528,22 @@ export const updateBookingStatus = async (req, res) => {
         });
 
         // Only send if emailPreference = true
-        const allow = await shouldSendCustomerEmail(booking.companyId, booking.passenger.email);
+        const allow = await shouldSendCustomerEmail(
+          booking.companyId,
+          booking.passenger.email
+        );
         if (allow) {
           await sendEmail(
             booking.passenger.email.trim(),
             `Driver Update - ${normalizedStatus} | Booking #${booking.bookingId}`,
             { html }
           );
-          console.log(`Sent email to passenger for status: ${normalizedStatus}`);
+          console.log(
+            `Sent email to passenger for status: ${normalizedStatus}`
+          );
         } else {
           console.log(`Skipped passenger email (emailPreference = false)`);
         }
-
       } catch (emailError) {
         console.error(
           `Failed to send ${normalizedStatus} email:`,
@@ -1347,7 +1556,10 @@ export const updateBookingStatus = async (req, res) => {
     try {
       const normalized = (status || "").trim().toLowerCase();
       if (normalized === "completed" && booking?.passenger?.email) {
-        const allow = await shouldSendCustomerEmail(booking.companyId, booking.passenger.email);
+        const allow = await shouldSendCustomerEmail(
+          booking.companyId,
+          booking.passenger.email
+        );
         if (allow) {
           if (!booking.reviewEmailScheduledAt && !booking.reviewEmailSent) {
             booking.reviewEmailScheduledAt = new Date();
@@ -1375,7 +1587,10 @@ export const updateBookingStatus = async (req, res) => {
 
     // When DRIVER changed status, notify clientadmin (+ optional customer portal user)
     try {
-      if (isStatusChanged && (currentUser?.role === "driver" || currentUser?.role === "clientadmin")) {
+      if (
+        isStatusChanged &&
+        (currentUser?.role === "driver" || currentUser?.role === "clientadmin")
+      ) {
         const clientAdmin = await User.findOne({
           companyId: booking.companyId,
           role: "clientadmin",
@@ -1410,10 +1625,10 @@ export const updateBookingStatus = async (req, res) => {
         const paxEmail = (booking?.passenger?.email || "").trim().toLowerCase();
         const customerUser = paxEmail
           ? await User.findOne({
-            companyId: booking.companyId,
-            role: "customer",
-            email: paxEmail,
-          }).lean()
+              companyId: booking.companyId,
+              role: "customer",
+              email: paxEmail,
+            }).lean()
           : null;
 
         const custKey = String(customerUser?._id || "");
@@ -1440,11 +1655,11 @@ export const updateBookingStatus = async (req, res) => {
         }
         // === Notify assigned drivers when clientadmin cancels ===
         // === Notify assigned drivers when clientadmin updates status ===
-        if (
-          isStatusChanged &&
-          currentUser?.role === "clientadmin"
-        ) {
-          console.log("Entered driver notification block for status:", currStatus);
+        if (isStatusChanged && currentUser?.role === "clientadmin") {
+          console.log(
+            "Entered driver notification block for status:",
+            currStatus
+          );
           console.log("Booking drivers array:", booking.drivers);
 
           if (Array.isArray(booking.drivers) && booking.drivers.length > 0) {
@@ -1452,7 +1667,8 @@ export const updateBookingStatus = async (req, res) => {
               console.log("Processing driver entry:", drv);
 
               // always prefer userId (that points to User collection)
-              const drvUserId = typeof drv === "object" ? drv.userId || drv._id : drv;
+              const drvUserId =
+                typeof drv === "object" ? drv.userId || drv._id : drv;
 
               console.log("Extracted drvUserId:", drvUserId);
 
@@ -1497,7 +1713,10 @@ export const updateBookingStatus = async (req, res) => {
 
                 console.log("Driver Notification created:", driverNotif);
 
-                io.to(`emp:${driverUser._id}`).emit("notification:new", driverNotif);
+                io.to(`emp:${driverUser._id}`).emit(
+                  "notification:new",
+                  driverNotif
+                );
                 console.log(
                   `Emitted driver notification to socket room emp:${driverUser.employeeNumber}`
                 );
@@ -1509,9 +1728,6 @@ export const updateBookingStatus = async (req, res) => {
             console.warn("booking.drivers is empty or not an array");
           }
         }
-
-
-
       }
     } catch (e) {
       console.error(
@@ -1577,22 +1793,30 @@ export const sendBookingEmail = async (req, res) => {
   const { bookingId, email, type = "confirmation" } = req.body;
 
   if (!bookingId || !email) {
-    return res.status(400).json({ message: "Booking ID and email are required." });
+    return res
+      .status(400)
+      .json({ message: "Booking ID and email are required." });
   }
 
   try {
     const booking = await Booking.findById(bookingId)
       .populate("vehicle passenger")
       .lean();
-    if (!booking) return res.status(404).json({ message: "Booking not found." });
+    if (!booking)
+      return res.status(404).json({ message: "Booking not found." });
 
     const company = await Company.findById(booking.companyId).lean();
-    const clientAdmin = await User.findOne({ companyId: booking.companyId, role: "clientadmin" }).lean();
+    const clientAdmin = await User.findOne({
+      companyId: booking.companyId,
+      role: "clientadmin",
+    }).lean();
 
     let subject, html;
 
     if (type === "cancellation") {
-      subject = `Booking Cancellation #${booking.bookingId} - ${company?.companyName || "Our Company"}`;
+      subject = `Booking Cancellation #${booking.bookingId} - ${
+        company?.companyName || "Our Company"
+      }`;
       html = customerCancellationEmailTemplate({
         booking,
         company,
@@ -1606,7 +1830,9 @@ export const sendBookingEmail = async (req, res) => {
         },
       });
     } else {
-      subject = `Booking Confirmation #${booking.bookingId} - ${company?.companyName || "Our Company"}`;
+      subject = `Booking Confirmation #${booking.bookingId} - ${
+        company?.companyName || "Our Company"
+      }`;
       html = `
         <h2>Booking Confirmation</h2>
         <p>Dear ${booking.passenger?.name || "Customer"},</p>
@@ -1618,7 +1844,9 @@ export const sendBookingEmail = async (req, res) => {
           <li><b>Drop Off:</b> ${booking.primaryJourney?.dropoff || "-"}</li>
           <li><b>Date:</b> ${booking.primaryJourney?.date || "-"}</li>
         </ul>
-        <p>Thank you for booking with ${company?.companyName || "our company"}.</p>
+        <p>Thank you for booking with ${
+          company?.companyName || "our company"
+        }.</p>
       `;
     }
 
@@ -1630,16 +1858,21 @@ export const sendBookingEmail = async (req, res) => {
           const allow = await shouldSendCustomerEmail(booking.companyId, email);
           if (allow) {
             await sendEmail(email, subject, { html });
-            res.status(200).json({ message: `${type} email sent successfully.` });
+            res
+              .status(200)
+              .json({ message: `${type} email sent successfully.` });
           } else {
-            return res.status(200).json({ message: "Skipped: customer emailPreference = false" });
+            return res
+              .status(200)
+              .json({ message: "Skipped: customer emailPreference = false" });
           }
         }
       } else {
-        return res.status(200).json({ message: "Skipped: customer emailPreference = false" });
+        return res
+          .status(200)
+          .json({ message: "Skipped: customer emailPreference = false" });
       }
     }
-
   } catch (err) {
     console.error("Error sending booking email:", err);
     res.status(500).json({ message: "Failed to send booking email." });
