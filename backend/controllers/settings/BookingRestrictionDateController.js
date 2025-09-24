@@ -25,19 +25,11 @@ const isActiveYearlyNow = (fromISO, toISO, now = new Date()) => {
     t.getHours(), t.getMinutes(), 0, 0
   );
 
-  console.log('Yearly check debug:', {
-    original: { from: fromISO, to: toISO },
-    thisYear: { from: fThis, to: tThis },
-    now: now,
-    nowTime: now.getTime(),
-    fThisTime: fThis.getTime(),
-    tThisTime: tThis.getTime()
-  });
+
 
   if (tThis >= fThis) {
     // Normal case: doesn't wrap around year
     const result = isBetween(now.getTime(), fThis, tThis);
-    console.log('Normal yearly check result:', result);
     return result;
   }
   
@@ -45,33 +37,23 @@ const isActiveYearlyNow = (fromISO, toISO, now = new Date()) => {
   const endOfYear = new Date(y, 11, 31, 23, 59, 59, 999);
   const startOfYear = new Date(y, 0, 1, 0, 0, 0, 0);
   const result = isBetween(now.getTime(), fThis, endOfYear) || isBetween(now.getTime(), startOfYear, tThis);
-  console.log('Year-wrap yearly check result:', result);
   return result;
 };
 
 const computeDesiredStatus = (doc, now = new Date()) => {
   const rec = String(doc.recurring || "").toLowerCase();
-  console.log('Computing status for:', {
-    caption: doc.caption,
-    recurring: rec,
-    from: doc.from,
-    to: doc.to,
-    now: now
-  });
-  
+
   const active = rec === "yearly"
     ? isActiveYearlyNow(doc.from, doc.to, now)
     : isActiveOneOffNow(doc.from, doc.to, now);
     
   const status = active ? "Active" : "Inactive";
-  console.log('Computed status:', status);
   return status;
 };
 
 const normalizeStatusNow = async (doc) => {
   const desired = computeDesiredStatus(doc);
   if (doc.status !== desired) {
-    console.log(`Status change for ${doc.caption}: ${doc.status} -> ${desired}`);
     doc.status = desired;
     doc.updatedAt = new Date();
     await doc.save();
@@ -125,26 +107,22 @@ export const getAllBookingRestrictions = async (req, res) => {
 
     // Auto-sync statuses in DB if needed (minimal writes)
     const now = new Date();
-    console.log('Current time for status check:', now);
-    
     const ops = [];
     const mapped = docs.map((d) => {
       const desired = computeDesiredStatus(d, now);
       if (d.status !== desired) {
-        console.log(`Bulk update needed for ${d.caption}: ${d.status} -> ${desired}`);
         ops.push({
           updateOne: {
             filter: { _id: d._id },
             update: { $set: { status: desired, updatedAt: new Date() } },
           },
         });
-        d.status = desired; // reflect in response without requery
+        d.status = desired; 
       }
       return d;
     });
     
     if (ops.length) {
-      console.log(`Performing ${ops.length} bulk status updates`);
       await BookingRestriction.bulkWrite(ops);
     }
 

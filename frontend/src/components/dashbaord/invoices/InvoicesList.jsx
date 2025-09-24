@@ -246,13 +246,18 @@ const InvoicesList = () => {
               <>
                 <div>
                   <div className="flex gap-2">
-                    <Link to={`/dashboard/invoices/edit/${invoice._id}`}>
-                      <Icons.SquarePen className="w-8 h-8 rounded-md hover:bg-yellow-600 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2" />
+                    <Link
+                      className="icon-box icon-box-warning"
+                      to={`/dashboard/invoices/edit/${invoice._id}`}
+                    >
+                      <Icons.SquarePen className="size-4 " />
                     </Link>
-                    <Icons.Trash
-                      onClick={() => handleDeleteClick(invoice._id)}
-                      className="w-8 h-8 rounded-md hover:bg-red-800 hover:text-white text-[var(--dark-gray)] cursor-pointer border border-[var(--light-gray)] p-2"
-                    />
+                    <div className="icon-box icon-box-danger">
+                      <Icons.Trash
+                        onClick={() => handleDeleteClick(invoice._id)}
+                        className="size-4 "
+                      />
+                    </div>
                   </div>
                 </div>
               </>

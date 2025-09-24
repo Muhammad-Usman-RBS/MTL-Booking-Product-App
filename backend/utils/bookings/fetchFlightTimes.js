@@ -3,10 +3,10 @@ import axios from "axios";
 // Airline name -> ICAO codes mapping
 const airlineMap = {
   "british airways": "BAW",
-  "emirates": "UAE",
+  emirates: "UAE",
   "qatar airways": "QTR",
   "american airlines": "AAL",
-  "lufthansa": "DLH",
+  lufthansa: "DLH",
   "air france": "AFR",
   "etihad airways": "ETD",
   "turkish airlines": "THY",
@@ -23,31 +23,31 @@ const airlineMap = {
   "air china": "CCA",
   "korean air": "KAL",
   "asiana airlines": "AAR",
-  "aeroflot": "AFL",
+  aeroflot: "AFL",
   "air india": "AIC",
-  "indigo": "IGO",
-  "spicejet": "SEJ",
-  "easyjet": "EZY",
-  "ryanair": "RYR",
+  indigo: "IGO",
+  spicejet: "SEJ",
+  easyjet: "EZY",
+  ryanair: "RYR",
   "southwest airlines": "SWA",
   "delta air lines": "DAL",
   "united airlines": "UAL",
   "alaska airlines": "ASA",
   "aer lingus": "EIN",
-  "iberia": "IBE",
+  iberia: "IBE",
   "austrian airlines": "AUA",
   "swiss international air lines": "SWR",
-  "finnair": "FIN",
+  finnair: "FIN",
   "norwegian air shuttle": "NAX",
   "saudi arabian airlines": "SVA",
-  "egyptair": "MSR",
+  egyptair: "MSR",
   "ethiopian airlines": "ETH",
   "kenya airways": "KQA",
   "south african airways": "SAA",
   "latam airlines": "LAN",
-  "avianca": "AVA",
-  "aeromexico": "AMX",
-  "westjet": "WJA",
+  avianca: "AVA",
+  aeromexico: "AMX",
+  westjet: "WJA",
   "air canada": "ACA",
   "philippine airlines": "PAL",
   "garuda indonesia": "GIA",
@@ -70,11 +70,7 @@ async function fetchFlightTimes(query) {
   try {
     let url = "";
     let userInput = query.trim();
-
-    // Normalize to handle VS8 / VS 8 / vs8 / vs 8
     const normalizedInput = normalizeFlightNumber(userInput);
-
-    // Check if it's a flight number
     if (/^[A-Z]{2,3}\d+$/i.test(normalizedInput)) {
       url = `${process.env.FLIGHTAWARE_BASE_URL}/${normalizedInput}`;
     } else {
@@ -86,9 +82,6 @@ async function fetchFlightTimes(query) {
       }
       url = `${process.env.FLIGHTAWARE_BASE_URL}/search?query=-airline ${code}`;
     }
-
-    console.log("🔍 Fetching from URL:", url);
-
     const response = await axios.get(url, {
       headers: {
         Accept: "application/json",
@@ -111,14 +104,10 @@ async function fetchFlightTimes(query) {
       estimated: flightData?.estimated_in
         ? new Date(flightData.estimated_in)
         : null,
-      actual: flightData?.actual_in
-        ? new Date(flightData.actual_in)
-        : null,
+      actual: flightData?.actual_in ? new Date(flightData.actual_in) : null,
       origin: flightData?.origin?.code_iata || null,
       destination: flightData?.destination?.code_iata || null,
     };
-
-    console.log("📦 Parsed Flight Data:", parsedData);
     return parsedData;
   } catch (err) {
     console.error(

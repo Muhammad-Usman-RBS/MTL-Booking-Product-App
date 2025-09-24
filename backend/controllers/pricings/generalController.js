@@ -28,7 +28,6 @@ export const getGeneralPricing = async (req, res) => {
 
     res.status(200).json(pricing);
   } catch (error) {
-    console.log(error);
     res.status(500).json({ message: "Failed to fetch pricing", error });
   }
 };
@@ -77,7 +76,6 @@ export const updateGeneralPricing = async (req, res) => {
 
     res.status(200).json(pricing);
   } catch (error) {
-    console.log(error);
     res.status(500).json({ message: "Failed to update pricing", error });
   }
 };
@@ -105,7 +103,6 @@ export const getGeneralPricingWidget = async (req, res) => {
     // Return the pricing details
     res.status(200).json(pricing);
   } catch (err) {
-    console.log(err);
 
     res.status(500).json({
       message: "Failed to fetch widget general pricing",

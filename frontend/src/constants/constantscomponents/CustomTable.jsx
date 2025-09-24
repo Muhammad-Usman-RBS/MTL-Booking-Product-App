@@ -224,7 +224,7 @@ const CustomTable = ({
           )}
           {showRefresh && (
             <button
-              className="border py-2 px-3 rounded cursor-pointer border-[var(--light-gray)]"
+              className="icon-box icon-box-outline"
               onClick={() => window.location.reload()}
               title="Reload"
             >

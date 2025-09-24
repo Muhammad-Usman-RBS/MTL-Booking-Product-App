@@ -389,7 +389,7 @@ select:disabled {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 9px 8px ;
+  padding: 9px 7px ;
   border-radius: 6px;
   font-size: 18px;
   cursor: pointer;

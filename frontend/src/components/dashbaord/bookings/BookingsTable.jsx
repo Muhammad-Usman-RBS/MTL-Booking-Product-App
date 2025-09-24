@@ -146,10 +146,13 @@ const BookingsTable = ({
 
       if (event.shiftKey) {
         if (key === "a") {
-          // Only trigger when Shift + A is pressed
+          if (selectedBooking.drivers.length === 0) {
+            toast.error("Select a single driver first.");
+            return;
+          }
           if (
             Array.isArray(selectedBooking.drivers) &&
-            selectedBooking.drivers.length !== 1
+            selectedBooking.drivers.length > 1
           ) {
             toast.error(
               "Cannot accept booking with multiple drivers assigned. Please select only one driver."
@@ -195,7 +198,7 @@ const BookingsTable = ({
           refetch();
           return;
         }
-        
+
         if (key === "o") {
           const newStatus = "On Route";
           await updateStatus(selectedBooking._id, newStatus);
@@ -291,26 +294,25 @@ const BookingsTable = ({
         return;
       }
       if (event.ctrlKey && key === "d") {
-          if (selectedBooking?.status === "Deleted") {
-            toast.error("Booking already deleted – Driver assignment disabled");
-            return;
-          }
+        if (selectedBooking?.status === "Deleted") {
+          toast.error("Booking already deleted – Driver assignment disabled");
+          return;
+        }
 
-          if (user?.role === "customer") {
-            toast.warn("Customer cannot access drivers list");
-            return;
-          }
+        if (user?.role === "customer") {
+          toast.warn("Customer cannot access drivers list");
+          return;
+        }
 
-          if (String(selectedBooking.status).toLowerCase() === "cancelled") {
-            toast.error(
-              "This booking has been cancelled. Driver selection is disabled."
-            );
-            return;
-          }
+        if (String(selectedBooking.status).toLowerCase() === "cancelled") {
+          toast.error(
+            "This booking has been cancelled. Driver selection is disabled."
+          );
+          return;
+        }
 
-          openDriverModal(selectedBooking.driver);
+        openDriverModal(selectedBooking.driver);
       }
-
     }
 
     window.addEventListener("keydown", handleKeyDown);

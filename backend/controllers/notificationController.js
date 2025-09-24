@@ -6,7 +6,6 @@ import { io } from "../server.js";
 
 const emitToEmployee = (employeeNumber, event, payload = {}) => {
   const emp = String(employeeNumber || "");
-  console.log("[EMIT]", event, "-> room:", `emp:${emp}`, "payload:", payload?._id || "");
   io.to(`emp:${emp}`).emit(event, payload);
 };
 

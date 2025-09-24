@@ -59,7 +59,7 @@ const formatDateForTable = (dateString) => {
 /* --------------------------------------------- */
 
 const BookingRestrictionDate = () => {
-  const {showLoading, hideLoading}= useLoading()
+  const { showLoading, hideLoading } = useLoading();
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
 
@@ -68,8 +68,11 @@ const BookingRestrictionDate = () => {
   const [itemToDelete, setItemToDelete] = useState(null);
 
   const [createBookingRestriction] = useCreateBookingRestrictionMutation();
-  const { data: apiData, isLoading, isError } =
-    useGetAllBookingRestrictionsQuery(companyId);
+  const {
+    data: apiData,
+    isLoading,
+    isError,
+  } = useGetAllBookingRestrictionsQuery(companyId);
   const [updateBookingRestriction] = useUpdateBookingRestrictionMutation();
   const [deleteBookingRestriction] = useDeleteBookingRestrictionMutation();
 
@@ -77,13 +80,13 @@ const BookingRestrictionDate = () => {
   const [showModal, setShowModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState("Any Status");
 
-    useEffect(()=> {
-         if(isLoading) {
-           showLoading()
-         } else {
-           hideLoading()
-         }
-       },[isLoading])
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
   const handleEdit = (item) => {
     setSelectedItem({
       ...item,
@@ -133,7 +136,10 @@ const BookingRestrictionDate = () => {
       }
 
       if (_id) {
-        await updateBookingRestriction({ id: _id, updatedData: payload }).unwrap();
+        await updateBookingRestriction({
+          id: _id,
+          updatedData: payload,
+        }).unwrap();
         toast.success("Booking Restriction Updated!");
       } else {
         await createBookingRestriction(payload).unwrap();
@@ -167,23 +173,26 @@ const BookingRestrictionDate = () => {
     to: formatDateForTable(item.to),
     actions: (
       <div className="flex gap-2">
-        <Icons.Pencil
-          title="Edit"
-          onClick={() => handleEdit(item)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-        />
-        <Icons.Trash
-          title="Delete"
-          onClick={() => {
-            setItemToDelete(item);
-            setShowDeleteModal(true);
-          }}
-          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-        />
+        <div className="icon-box icon-box-warning">
+          <Icons.Pencil
+            title="Edit"
+            onClick={() => handleEdit(item)}
+            className="size-4"
+          />
+        </div>
+        <div className="icon-box icon-box-danger">
+          <Icons.Trash
+            title="Delete"
+            onClick={() => {
+              setItemToDelete(item);
+              setShowDeleteModal(true);
+            }}
+            className="size-4"
+          />
+        </div>
       </div>
     ),
   }));
-
 
   if (!companyId) {
     return (
@@ -219,7 +228,7 @@ const BookingRestrictionDate = () => {
         </div>
 
         <CustomTable
-        filename="Booking-Restrictions-list"
+          filename="Booking-Restrictions-list"
           tableHeaders={tableHeaders}
           tableData={tableData}
           showPagination={true}
@@ -231,7 +240,9 @@ const BookingRestrictionDate = () => {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         heading={
-          selectedItem && selectedItem._id ? "Edit" : "Add New Booking Restriction"
+          selectedItem && selectedItem._id
+            ? "Edit"
+            : "Add New Booking Restriction"
         }
       >
         <div className="mx-auto w-96 p-4 font-sans space-y-4">

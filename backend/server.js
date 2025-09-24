@@ -124,39 +124,22 @@ io.on("connection", (socket) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`[BOOT] Using system timezone for CRON: ${systemTZ}`);
   getPaypalClient();
   createSuperAdmin();
-  try {
-    scheduleDriverStatements();
-    console.log("[CRON] Driver statements scheduler started");
-  } catch (e) {
-    console.error("Failed to start driver statements:", e);
-  }
-  try {
-    scheduleAutoAllocation();
-    console.log("[CRON] Auto-allocation scheduler started");
-  } catch (e) {
-    console.error("Failed to start auto-allocation:", e);
-  }
-  try {
-    await scheduleDriverDocsJobs(); 
-    console.log("[CRON] driverDocumentsExpiration jobs scheduled");
-  } catch (e) {
-    console.error("Failed to schedule driver docs jobs:", e);
-  }
+  scheduleDriverStatements();
+  scheduleAutoAllocation();
+  await scheduleDriverDocsJobs(); 
 });
 process.on("SIGTERM", () => {
-  console.log("SIGTERM received, shutting down gracefully...");
+ 
   server.close(() => {
-    console.log("HTTP server closed.");
+    
     process.exit(0);
   });
 });
 process.on("SIGINT", () => {
-  console.log("SIGINT received, shutting down gracefully...");
+ 
   server.close(() => {
-    console.log("HTTP server closed.");
     process.exit(0);
   });
 });

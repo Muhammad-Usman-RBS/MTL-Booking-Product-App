@@ -125,7 +125,7 @@ const ViewNotifications = () => {
 
       <main>
         { notifications.length === 0 ? (
-          <div className="bg-cream rounded-xl shadow-sm border border-medium-grey p-12 text-center">
+          <div className="  p-12 text-center">
             <Icons.Bell className="w-16 h-16 mx-auto mb-4 text-[var(--medium-grey)]" />
             <h2 className="text-xl font-semibold mb-2 text-[var(--dark-black)]">
               No Notifications
@@ -139,11 +139,7 @@ const ViewNotifications = () => {
             {notifications.map((notification) => (
               <li
                 key={notification._id}
-                className={`bg-white border-l-4 ${
-                  !notification.isRead
-                    ? "border-l-[var(--main-color)]"
-                    : "border-l-[var(--light-gray)]"
-                } rounded-xl shadow-md hover:shadow-lg transition-all duration-300`}
+                className={`bg-white  hover:shadow-lg transition-all duration-300`}
               >
                 <article className="flex items-start gap-4 p-6">
                   <div className="flex-shrink-0">

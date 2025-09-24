@@ -46,13 +46,13 @@ const BookingsFilters = ({
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full">
           <div className="flex gap-2">
             <Link to="/dashboard/bookings/new">
-              <button className="btn btn-reset">
+              <button title="additional filters" className="icon-box icon-box-primary">
                 <Icons.Plus size={20} />
               </button>
             </Link>
             <button
               onClick={() => setShowDiv(!showDiv)}
-              className="btn btn-outline"
+              className="icon-box icon-box-outline"
               title="Filters"
             >
               <Icons.Filter size={16} />

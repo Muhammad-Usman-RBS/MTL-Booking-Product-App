@@ -6,7 +6,6 @@ export const createCorporateCustomer = async (req, res) => {
     let profileUrl = "";
     if (req.files?.profile?.[0]) {
       profileUrl = req.files.profile[0].path;
-      console.log("Profile image uploaded to Cloudinary:", profileUrl);
     } else {
       console.warn("⚠️ No profile image uploaded.");
     }
@@ -67,8 +66,6 @@ export const createCorporateCustomer = async (req, res) => {
     });
 
     await newCustomer.save();
-
-    console.log("Corporate customer created:", newCustomer._id);
     res.status(201).json({
       message: "Corporate customer profile created successfully",
       customer: newCustomer,
@@ -111,9 +108,6 @@ export const updateCorporateCustomer = async (req, res) => {
   try {
     const { id } = req.params;
     const updatedData = req.body;
-
-    console.log("🔄 Updating corporate customer:", id);
-
     const existingCustomer = await CorporateCustomer.findById(id);
     if (!existingCustomer) {
       return res.status(404).json({ message: "Corporate customer not found" });
@@ -121,7 +115,6 @@ export const updateCorporateCustomer = async (req, res) => {
 
     if (req.files?.profile?.[0]) {
       updatedData.profile = req.files.profile[0].path;
-      console.log("New profile image uploaded:", updatedData.profile);
     } else {
       updatedData.profile = existingCustomer.profile;
     }

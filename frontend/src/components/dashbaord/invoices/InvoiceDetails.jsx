@@ -186,7 +186,7 @@ const InvoiceDetails = ({ item }) => {
                 className={`p-2.5 text-white rounded-md transition ${
                   status === selectedStatus
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-emerald-500 hover:bg-emerald-600"
+                    : "bg-emerald-500 hover:bg-emerald-600 cursor-pointer"
                 }`}
               >
                 <Icons.Check size={16} />
