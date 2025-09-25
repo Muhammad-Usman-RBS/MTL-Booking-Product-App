@@ -4,6 +4,7 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { useGetAllPassengersQuery } from "../../../../redux/api/bookingApi";
 import { useGetCorporateCustomersQuery } from "../../../../redux/api/corporateCustomerApi";
+import { useFetchAllCompaniesQuery } from "../../../../redux/api/companyApi";
 
 const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
   const [selectedPassenger, setSelectedPassenger] = useState("");
@@ -14,8 +15,15 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
 
   const user = useSelector((state) => state.auth.user);
   const role = user?.role;
+  const companyId = user?.companyId
+  const { data: companiesData } = useFetchAllCompaniesQuery();
+  const companies = companiesData || [];
 
-  const { data: passengerData, isLoading, isError } = useGetAllPassengersQuery();
+  const {
+    data: passengerData,
+    isLoading,
+    isError,
+  } = useGetAllPassengersQuery();
   const passengers = passengerData?.passengers || [];
 
   const { data: customerData } = useGetCorporateCustomersQuery();
@@ -53,7 +61,7 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
       setPassengerDetails((prev) => ({
         name: selected.name || selected.fullName || "",
         email: isEmailLocked ? prev.email : selected.email || "",
-        phone:  "",
+        phone: prev.phone || "",
       }));
     } else {
       setPassengerDetails((prev) => ({
@@ -67,20 +75,38 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
 
   useEffect(() => {
     if (!selectedPassengerObj) return;
-
-    const normalize = (val) => (val || "").toLowerCase().trim();
-
   }, [passengerDetails, selectedPassengerObj]);
-
+  useEffect(() => {
+    if (
+      role?.toLowerCase() === "clientadmin" &&
+      selectedPassengerObj &&
+      companies?.length > 0
+    ) {
+      const matchedCompany = companies.find((c) => c._id === companyId);
+      if (matchedCompany?.contact) {
+        setPassengerDetails((prev) => ({
+          ...prev,
+          phone: prev.phone || matchedCompany.contact, // only prefill if empty
+        }));
+      }
+    }
+  }, [role, selectedPassengerObj, companies, companyId, setPassengerDetails]);
   useEffect(() => {
     if (role === "customer") {
       const me =
         customers.find(
           (c) =>
             (c.userId && user?._id && c.userId === user._id) ||
-            (c.email && user?.email && c.email.toLowerCase() === user.email.toLowerCase())
+            (c.email &&
+              user?.email &&
+              c.email.toLowerCase() === user.email.toLowerCase())
         ) ||
-        customers.find((c) => c.email && user?.email && c.email.toLowerCase() === user.email.toLowerCase());
+        customers.find(
+          (c) =>
+            c.email &&
+            user?.email &&
+            c.email.toLowerCase() === user.email.toLowerCase()
+        );
 
       const hasVat = me && (me.vatnumber || me.vatNumber);
       if (hasVat) {
@@ -105,7 +131,9 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
             className="custom_input cursor-pointer flex justify-between items-center"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
-            <span className={selectedPassenger ? "text-black" : "text-gray-400"}>
+            <span
+              className={selectedPassenger ? "text-black" : "text-gray-400"}
+            >
               {selectedPassenger || "Select Passenger"}
             </span>
           </div>
@@ -189,9 +217,13 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
               })
             }
             placeholder="name@example.com"
-            className={`custom_input ${isEmailLocked ? "bg-gray-100 cursor-not-allowed" : ""}`}
+            className={`custom_input ${
+              isEmailLocked ? "bg-gray-100 cursor-not-allowed" : ""
+            }`}
             disabled={isEmailLocked}
-            title={isEmailLocked ? "Email is locked for VAT-verified customers" : ""}
+            title={
+              isEmailLocked ? "Email is locked for VAT-verified customers" : ""
+            }
           />
         </div>
       </div>
@@ -217,4 +249,3 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
 };
 
 export default PassengerDetails;
-
