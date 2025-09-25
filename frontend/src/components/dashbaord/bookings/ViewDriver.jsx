@@ -43,9 +43,6 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
 
   const [sendBookingEmail] = useSendBookingEmailMutation();
 
-
-
-  
   const { data: drivers = [], isLoading } = useGetAllDriversQuery(companyId, {
     skip: !companyId,
   });
@@ -87,26 +84,25 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   }
   useEffect(() => {
     if (!selectedBooking || !allUsers?.drivers) return;
-  
+
     const getIdStr = (v) =>
       v?._id?.toString?.() || v?.$oid || v?.toString?.() || String(v || "");
-  
+
     // 1) If an Accepted job exists for this booking, preselect ONLY that driver
     const acceptedJob = (jobsData?.jobs || []).find((j) => {
-      const jBookingId =
-        getIdStr(j?.bookingId) || getIdStr(j?.bookingId?._id);
+      const jBookingId = getIdStr(j?.bookingId) || getIdStr(j?.bookingId?._id);
       return (
         j.jobStatus === "Accepted" &&
         jBookingId === getIdStr(selectedBooking?._id)
       );
     });
-  
+
     if (acceptedJob) {
       const acceptedUserId = getIdStr(acceptedJob.driverId);
       const acceptedUser = (allUsers?.drivers || []).find(
         (u) => getIdStr(u._id) === acceptedUserId
       );
-  
+
       if (acceptedUser) {
         // match to the "drivers" collection by email
         const winner = (drivers?.drivers || []).find(
@@ -114,7 +110,7 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
             d?.DriverData?.email?.toLowerCase().trim() ===
             acceptedUser.email?.toLowerCase().trim()
         );
-  
+
         if (winner) {
           setSelectedDrivers([winner]);
           setPreviouslySelectedDrivers([winner]);
@@ -122,7 +118,7 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
         }
       }
     }
-  
+
     // 2) Fallback (no accepted job): keep existing behavior (preselect all assigned)
     if (selectedBooking?.drivers) {
       const preSelected = (drivers?.drivers || []).filter((driver) => {
@@ -132,20 +128,21 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
             user.email?.toLowerCase().trim() === driverEmail &&
             user.role?.toLowerCase() === "driver"
         );
-  
+
         return (
           matchedUser &&
           selectedBooking.drivers.some(
-            (d) => d.driverId === matchedUser._id || d.userId === matchedUser._id
+            (d) =>
+              d.driverId === matchedUser._id || d.userId === matchedUser._id
           )
         );
       });
-  
+
       setSelectedDrivers(preSelected);
       setPreviouslySelectedDrivers(preSelected);
     }
   }, [selectedBooking, drivers, allUsers, jobsData]);
-  
+
   useEffect(() => {
     const all = (filteredDriver || []).map((d) => String(d._id));
     const chosen = new Set(
@@ -220,11 +217,11 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
 
   const handleSendEmail = async () => {
     if (selectedBooking?.status === "Accepted") {
-  toast.error(
-    "This booking has already been accepted. Please cancel the booking and create a new one to assign it to another driver."
-  );
-  return;
-}
+      toast.error(
+        "This booking has already been accepted. Please cancel the booking and create a new one to assign it to another driver."
+      );
+      return;
+    }
     try {
       const userEmailToIdMap = new Map(
         (allUsers?.drivers || [])
@@ -271,54 +268,56 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
         if (!ok) return; // << early exit fixes the double-toast
       }
       // ✅ Send unassignment notification to removed drivers
-await Promise.all(
-  removedDrivers.map(async (driverUser) => {
-    try {
-      const driver = (drivers?.drivers || []).find(
-        (d) =>
-          d?.DriverData?.email?.toLowerCase().trim() ===
-          driverUser.email?.toLowerCase().trim()
+      await Promise.all(
+        removedDrivers.map(async (driverUser) => {
+          try {
+            const driver = (drivers?.drivers || []).find(
+              (d) =>
+                d?.DriverData?.email?.toLowerCase().trim() ===
+                driverUser.email?.toLowerCase().trim()
+            );
+
+            if (!driver) return;
+
+            const employeeNumber = driver?.DriverData?.employeeNumber;
+            if (!employeeNumber) {
+              toast.warning(
+                `${
+                  driver?.DriverData?.firstName || "Driver"
+                } has no employee number. Skipped unassignment notification.`
+              );
+              return;
+            }
+
+            const notificationPayload = {
+              employeeNumber: employeeNumber,
+              bookingId: selectedBooking?.bookingId,
+              status: "Unassigned", // 👈 FIXED
+              isUnassignment: true,
+              primaryJourney: {
+                pickup:
+                  selectedBooking?.primaryJourney?.pickup ||
+                  selectedBooking?.returnJourney?.pickup,
+                dropoff:
+                  selectedBooking?.primaryJourney?.dropoff ||
+                  selectedBooking?.returnJourney?.dropoff,
+              },
+              bookingSentAt: new Date(),
+              createdBy: user?._id,
+              companyId,
+            };
+
+            await createNotification(notificationPayload).unwrap();
+            toast.success(
+              `Unassignment notification sent to ${driver?.DriverData?.firstName}`
+            );
+          } catch (error) {
+            toast.error(
+              `Failed to send unassignment notification to ${driverUser?.firstName}`
+            );
+          }
+        })
       );
-
-      if (!driver) return;
-
-      const employeeNumber = driver?.DriverData?.employeeNumber;
-      if (!employeeNumber) {
-        toast.warning(
-          `${driver?.DriverData?.firstName || "Driver"} has no employee number. Skipped unassignment notification.`
-        );
-        return;
-      }
-
-      const notificationPayload = {
-        employeeNumber: employeeNumber,
-        bookingId: selectedBooking?.bookingId,
-        status: "Unassigned", // 👈 FIXED
-        isUnassignment: true,
-        primaryJourney: {
-          pickup:
-            selectedBooking?.primaryJourney?.pickup ||
-            selectedBooking?.returnJourney?.pickup,
-          dropoff:
-            selectedBooking?.primaryJourney?.dropoff ||
-            selectedBooking?.returnJourney?.dropoff,
-        },
-        bookingSentAt: new Date(),
-        createdBy: user?._id,
-        companyId,
-      };
-
-      await createNotification(notificationPayload).unwrap();
-      toast.success(
-        `Unassignment notification sent to ${driver?.DriverData?.firstName}`
-      );
-    } catch (error) {
-      toast.error(
-        `Failed to send unassignment notification to ${driverUser?.firstName}`
-      );
-    }
-  })
-);
 
       if (!companyId) {
         toast.error("Company ID is missing. Please log in again.");
@@ -469,14 +468,18 @@ await Promise.all(
         await Promise.all(
           selectedDrivers.map(async (driver) => {
             const { DriverData } = driver;
-      
+
             // Find the corresponding user account for this driver
             const driverEmail = DriverData?.email?.toLowerCase().trim();
             if (!driverEmail) {
-              toast.warning(`${DriverData?.firstName || "Driver"} has no email. Skipped notification.`);
+              toast.warning(
+                `${
+                  DriverData?.firstName || "Driver"
+                } has no email. Skipped notification.`
+              );
               return;
             }
-      
+
             const correspondingUser = (allUsers?.drivers || []).find(
               (user) =>
                 user.email?.toLowerCase().trim() === driverEmail &&
@@ -484,13 +487,16 @@ await Promise.all(
                 user.companyId === companyId
             );
             if (!correspondingUser) {
-              toast.warning(`${DriverData?.firstName || "Driver"} has no user account. Skipped notification.`);
+              toast.warning(
+                `${
+                  DriverData?.firstName || "Driver"
+                } has no user account. Skipped notification.`
+              );
               return;
             }
-      
-      
+
             const notificationPayload = {
-              employeeNumber: DriverData.employeeNumber, 
+              employeeNumber: DriverData.employeeNumber,
               bookingId: booking.bookingId,
               status: "Assigned",
               primaryJourney: {
@@ -507,9 +513,13 @@ await Promise.all(
             };
             try {
               await createNotification(notificationPayload).unwrap();
-              toast.success(`Assignment notification sent to ${DriverData?.firstName}`);
+              toast.success(
+                `Assignment notification sent to ${DriverData?.firstName}`
+              );
             } catch (error) {
-              toast.error(`Failed to send assignment notification to ${DriverData?.firstName}`);
+              toast.error(
+                `Failed to send assignment notification to ${DriverData?.firstName}`
+              );
             }
           })
         );
@@ -625,30 +635,42 @@ await Promise.all(
           </label>
         </div>
 
-       {filteredDriver.length === 0 ? (
-  <div className="flex flex-col items-center justify-center h-48 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-    {(drivers?.drivers || []).length === 0 ? (
-      <>
-        <div className="text-4xl mb-3">👥</div>
-        <p className="text-gray-600 font-medium mb-1">No Driver Accounts Found</p>
-        <p className="text-gray-500 text-sm text-center">Please create driver accounts to assign bookings</p>
-      </>
-    ) : showMatching ? (
-      <>
-        <div className="text-4xl mb-3">🚗</div>
-        <p className="text-gray-600 font-medium mb-1">No Matching Drivers</p>
-        <p className="text-gray-500 text-sm text-center">No drivers available for this vehicle type</p>
-      </>
-    ) : (
-      <>
-        <div className="text-4xl mb-3">🔍</div>
-        <p className="text-gray-600 font-medium mb-1">No Results Found</p>
-        <p className="text-gray-500 text-sm text-center">Try adjusting your search terms</p>
-      </>
-    )}
-  </div>
-) : (
-            <>
+        {filteredDriver.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-48 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+            {(drivers?.drivers || []).length === 0 ? (
+              <>
+                <div className="text-4xl mb-3">👥</div>
+                <p className="text-gray-600 font-medium mb-1">
+                  No Driver Accounts Found
+                </p>
+                <p className="text-gray-500 text-sm text-center">
+                  Please create driver accounts to assign bookings
+                </p>
+              </>
+            ) : showMatching ? (
+              <>
+                <div className="text-4xl mb-3">🚗</div>
+                <p className="text-gray-600 font-medium mb-1">
+                  No Matching Drivers
+                </p>
+                <p className="text-gray-500 text-sm text-center">
+                  No drivers available for this vehicle type
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="text-4xl mb-3">🔍</div>
+                <p className="text-gray-600 font-medium mb-1">
+                  No Results Found
+                </p>
+                <p className="text-gray-500 text-sm text-center">
+                  Try adjusting your search terms
+                </p>
+              </>
+            )}
+          </div>
+        ) : (
+          <>
             <div className="max-h-48 overflow-y-auto pr-1 space-y-3 custom-scroll border border-gray-500 rounded-md">
               {Array.isArray(filteredDriver) &&
                 filteredDriver.map((driver, i) => (
@@ -709,38 +731,35 @@ await Promise.all(
                     />
                   </label>
                 ))}
-        </div>
-            </>
-          )}
+            </div>
+          </>
+        )}
 
-        <div>
-          <label className="block font-semibold text-[var(--dark-gray)] mb-1">
-            Driver Notes:
-            <span className="italic text-red-500 underline">Empty</span>
-          </label>
-        </div>
         <hr />
-        <div>
-          <label className="block font-semibold text-[var(--dark-gray)] mb-2">
-            Alerts
-          </label>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                className="form-checkbox"
-                checked={sendEmailChecked}
-                onChange={(e) => setSendEmailChecked(e.target.checked)}
-              />
-              <span>Email</span>
-            </label>
-          </div>
-        </div>
 
-        <div className="pt-4">
-          <button onClick={handleSendEmail} className="btn btn-edit">
-            Update
-          </button>
+        <div className="flex items-center justify-between">
+          <div>
+            <label className="block font-semibold text-[var(--dark-gray)] mb-2">
+              Alerts
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="form-checkbox"
+                  checked={sendEmailChecked}
+                  onChange={(e) => setSendEmailChecked(e.target.checked)}
+                />
+                <span>Email</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="pt-4">
+            <button onClick={handleSendEmail} className="btn btn-edit">
+              Update
+            </button>
+          </div>
         </div>
       </div>
     </>

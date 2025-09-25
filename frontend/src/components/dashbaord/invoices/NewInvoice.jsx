@@ -203,6 +203,18 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
     { label: "Total Amount", key: "totalAmount" },
   ];
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    return d.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const calculateFare = (booking, invoiceType = "customer") => {
     if (!booking) return 0;
 
@@ -225,7 +237,6 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
 
   const getCorporateCustomerByEmail = (email) => {
     if (!corporateCustomersData?.customers || !email) {
-
       return null;
     }
 
@@ -309,12 +320,15 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
             booking.returnJourney?.internalNotes ||
             booking.primaryJourney?.internalNotes;
           const source = booking?.source;
+          const pickupDate = booking?.returnJourneyToggle
+            ? booking.returnJourney?.date
+            : booking.primaryJourney?.date;
 
           return {
             bookingId: booking.bookingId,
             pickup: booking.primaryJourney?.pickup || "-",
             dropoff: booking.primaryJourney?.dropoff || "-",
-            date: booking.createdAt,
+            date: pickupDate,
             fare,
             tax: taxType,
             totalAmount,
@@ -338,7 +352,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
           const corporateCustomer = getCorporateCustomerByEmail(contact.email);
           if (corporateCustomer && corporateCustomer.vatnumber) {
             payload.customer.vatnumber = corporateCustomer.vatnumber;
-          } 
+          }
         }
 
         await createInvoice(payload).unwrap();
@@ -418,7 +432,9 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
         }}
       />
     ),
-    date: item.createdAt ? new Date(item.createdAt).toLocaleString() : "-",
+    date: item?.returnJourneyToggle
+      ? formatDate(item.returnJourney?.date)
+      : formatDate(item.primaryJourney?.date),
     passenger:
       invoiceType === "driver"
         ? item?.drivers?.[0]?.name || "-"

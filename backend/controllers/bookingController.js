@@ -176,6 +176,8 @@ export const createBooking = async (req, res) => {
         dropoff: primaryJourney.dropoff?.trim() ?? "",
         additionalDropoff1: primaryJourney.additionalDropoff1 ?? null,
         additionalDropoff2: primaryJourney.additionalDropoff2 ?? null,
+        additionalDropoff3: primaryJourney.additionalDropoff3 ?? null,
+        additionalDropoff4: primaryJourney.additionalDropoff4 ?? null,
         pickupDoorNumber: primaryJourney.pickupDoorNumber ?? "",
         terminal: primaryJourney.terminal ?? "",
         arrivefrom: primaryJourney.arrivefrom ?? "",
@@ -208,6 +210,8 @@ export const createBooking = async (req, res) => {
         dropoff: returnJourney.dropoff?.trim() ?? "",
         additionalDropoff1: returnJourney.additionalDropoff1 ?? null,
         additionalDropoff2: returnJourney.additionalDropoff2 ?? null,
+        additionalDropoff3: returnJourney.additionalDropoff3 ?? null,
+        additionalDropoff4: returnJourney.additionalDropoff4 ?? null,
         pickupDoorNumber: returnJourney.pickupDoorNumber ?? "",
         terminal: returnJourney.terminal ?? "",
         arrivefrom: returnJourney.arrivefrom ?? "",
@@ -569,6 +573,16 @@ export const updateBooking = async (req, res) => {
           returnJourney.additionalDropoff2 ??
           prevReturn.additionalDropoff2 ??
           null,
+        additionalDropoff3:
+          returnJourney.additionalDropoff3 ??
+          prevReturn.additionalDropoff3 ??
+          null,
+    
+        additionalDropoff4:
+          returnJourney.additionalDropoff4 ??
+          prevReturn.additionalDropoff4 ??
+          null,
+    
         pickupDoorNumber:
           returnJourney.pickupDoorNumber ?? prevReturn.pickupDoorNumber ?? "",
         terminal: returnJourney.terminal ?? prevReturn.terminal ?? "",
@@ -630,6 +644,9 @@ export const updateBooking = async (req, res) => {
         dropoff: primaryJourney.dropoff?.trim() ?? "",
         additionalDropoff1: primaryJourney.additionalDropoff1 ?? null,
         additionalDropoff2: primaryJourney.additionalDropoff2 ?? null,
+        additionalDropoff3: primaryJourney.additionalDropoff3 ?? null,
+        additionalDropoff4: primaryJourney.additionalDropoff4 ?? null,
+
         pickupDoorNumber: primaryJourney.pickupDoorNumber ?? "",
         terminal: primaryJourney.terminal ?? "",
         arrivefrom: primaryJourney.arrivefrom ?? "",

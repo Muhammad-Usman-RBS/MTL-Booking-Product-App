@@ -37,7 +37,7 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
 
   const buildDisplayValue = (p) => {
     const name = p.name || p.fullName || "Unnamed";
-    return `${name} (${p.email || "No Email"}) +${p.phone || "No Phone"}`;
+    return `${name} (${p.email || "No Email"})`;
   };
 
   const filteredPassengers = combinedList.filter((p) =>
@@ -53,7 +53,7 @@ const PassengerDetails = ({ passengerDetails, setPassengerDetails }) => {
       setPassengerDetails((prev) => ({
         name: selected.name || selected.fullName || "",
         email: isEmailLocked ? prev.email : selected.email || "",
-        phone: selected.phone || "",
+        phone:  "",
       }));
     } else {
       setPassengerDetails((prev) => ({

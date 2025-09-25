@@ -109,8 +109,18 @@
 }
 
 .totals {
-  text-align: right;
   margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.totals p {
+  width: 130px;
+  text-align: left;
+  margin: 2px 0;
+  padding-right: 12px;
 }
 
 .totals .balance {
@@ -131,7 +141,6 @@
   color: #4b5563;
   font-size: 13px;
 }
-
 
 /* Default web style */
 .invoice-status {
@@ -162,7 +171,6 @@
   height: fit-content;
   page-break-inside: avoid;
   margin-bottom: 10px;
-
 }
 
 .invoice-container.pdf-mode .invoice-header {
@@ -244,7 +252,7 @@
 }
 
 .mtl-car-body::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -2px;
   left: 10px;
@@ -281,13 +289,11 @@
   border-radius: 50%;
   border: 3px solid #374151;
   animation: mtl-spin 0.8s linear infinite;
-  box-shadow:
-    inset 0 0 8px rgba(0, 0, 0, 0.5),
-    0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .mtl-wheel::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
@@ -326,7 +332,7 @@
 
 .mtl-loading-message {
   text-align: center;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-weight: 500;
 }
 
@@ -420,7 +426,6 @@
 }
 
 @keyframes mtl-drive {
-
   0%,
   100% {
     transform: translateY(0px);
@@ -456,7 +461,6 @@
 }
 
 @keyframes mtl-dot-pulse {
-
   0%,
   80%,
   100% {

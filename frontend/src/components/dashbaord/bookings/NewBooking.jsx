@@ -287,6 +287,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       journeyData.dropoff || "",
       journeyData.additionalDropoff1 || "",
       journeyData.additionalDropoff2 || "",
+      journeyData.additionalDropoff3 || "",
+      journeyData.additionalDropoff4 || "",
     ].filter(Boolean);
 
     const dynamicDropFields = Object.fromEntries(
@@ -396,6 +398,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
         cloned.returnJourney.dropoff || "",
         cloned.returnJourney.additionalDropoff1 || "",
         cloned.returnJourney.additionalDropoff2 || "",
+        cloned.returnJourney.additionalDropoff3 || "",
+        cloned.returnJourney.additionalDropoff4 || "",
       ].filter(Boolean);
 
       setReturnJourneyData(returnJourneyState);
@@ -708,6 +712,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             dropoff: dropOffs2[0],
             additionalDropoff1: dropOffs2[1] || null,
             additionalDropoff2: dropOffs2[2] || null,
+            additionalDropoff3: dropOffs2[3] || null,
+            additionalDropoff4: dropOffs2[4] || null,
             hourlyOption:
               mode === "Hourly" && selectedHourly?.label
                 ? selectedHourly.label
@@ -723,6 +729,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             dropoff: dropOffs1[0],
             additionalDropoff1: dropOffs1[1] || null,
             additionalDropoff2: dropOffs1[2] || null,
+            additionalDropoff3: dropOffs1[3] || null,
+            additionalDropoff4: dropOffs1[4] || null,
             hourlyOption:
               mode === "Hourly" && selectedHourly?.label
                 ? selectedHourly.label
@@ -762,6 +770,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
             dropoff: dropOffs1[0],
             additionalDropoff1: dropOffs1[1] || null,
             additionalDropoff2: dropOffs1[2] || null,
+            additionalDropoff3: dropOffs1[3] || null,
+            additionalDropoff4: dropOffs1[4] || null,
             distanceText: primaryDistanceText,
             durationText: primaryDurationText,
             hourlyOption:
@@ -791,6 +801,8 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
               dropoff: dropOffs2[0],
               additionalDropoff1: dropOffs2[1] || null,
               additionalDropoff2: dropOffs2[2] || null,
+              additionalDropoff3: dropOffs2[3] || null,
+              additionalDropoff4: dropOffs2[4] || null,
               distanceText: returnDistanceText,
               durationText: returnDurationText,
               hourlyOption:

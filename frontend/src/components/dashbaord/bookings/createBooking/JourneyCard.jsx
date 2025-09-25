@@ -169,8 +169,8 @@ const JourneyCard = ({
 
   // Add a new dropoff
   const addDropOff = () => {
-    if (dropOffs.length >= 3) {
-      toast.warning("Maximum 3 drop-offs allowed.");
+    if (dropOffs.length >= 5) {
+      toast.warning("Maximum 5 drop-offs allowed.");
       return;
     }
     setDropOffs([...dropOffs, ""]);
@@ -512,7 +512,7 @@ const JourneyCard = ({
               </div>
             ))}
 
-            {dropOffs.length < 3 && (
+            {dropOffs.length < 5&& (
               <button
                 type="button"
                 onClick={addDropOff}

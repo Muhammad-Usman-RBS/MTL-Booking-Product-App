@@ -6,16 +6,23 @@ const JourneySchema = new mongoose.Schema(
     dropoff: { type: String, required: true },
     additionalDropoff1: { type: String },
     additionalDropoff2: { type: String },
+    additionalDropoff3: { type: String },
+    additionalDropoff4: { type: String },
 
     pickupDoorNumber: { type: String },
     dropoffDoorNumber0: { type: String },
     dropoffDoorNumber1: { type: String },
     dropoffDoorNumber2: { type: String },
+    dropoffDoorNumber3: { type: String },
+    dropoffDoorNumber4: { type: String },
 
     terminal: { type: String },
     dropoff_terminal_0: { type: String },
     dropoff_terminal_1: { type: String },
     dropoff_terminal_2: { type: String },
+    dropoff_terminal_3: { type: String },
+    dropoff_terminal_4: { type: String },
+
 
     arrivefrom: { type: String },
     pickmeAfter: { type: String },

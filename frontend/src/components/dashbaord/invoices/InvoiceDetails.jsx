@@ -81,13 +81,38 @@ const InvoiceDetails = ({ item }) => {
 
   const handleDownload = () => {
     const element = document.getElementById("invoiceToDownload");
-
     element.classList.add("pdf-mode");
+
+    const driverName =
+      item.invoiceType === "driver" ? item?.driver?.name : item?.customer?.name;
+
+    const dates = (item?.items || [])
+      .map((i) => new Date(i.date))
+      .filter((d) => !isNaN(d));
+
+    let datePart = "";
+    if (dates.length > 0) {
+      const minDate = new Date(Math.min(...dates));
+      const maxDate = new Date(Math.max(...dates));
+
+      const formatDate = (d) =>
+        `${d.getDate().toString().padStart(2, "0")}-${(d.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}-${d.getFullYear()}`;
+
+      if (minDate.getTime() === maxDate.getTime()) {
+        datePart = formatDate(minDate);
+      } else {
+        datePart = `${formatDate(minDate)}_to_${formatDate(maxDate)}`;
+      }
+    }
+
+    // Build filename
+    const fileName = `INV-${driverName}${datePart ? "/" + datePart : ""}.pdf`;
 
     setTimeout(() => {
       void element.offsetHeight;
-
-      downloadPDF("invoiceToDownload", `Invoice-${item?.invoiceNumber}.pdf`);
+      downloadPDF("invoiceToDownload", fileName);
 
       setTimeout(() => {
         element.classList.remove("pdf-mode");
@@ -161,10 +186,7 @@ const InvoiceDetails = ({ item }) => {
 
           {/* Mail Button - Only show for clientadmin */}
           {userRole === "clientadmin" && (
-            <button
-              onClick={openModal}
-              className="icon-box icon-box-primary"
-            >
+            <button onClick={openModal} className="icon-box icon-box-primary">
               <Icons.Mail size={16} />
             </button>
           )}
@@ -305,7 +327,7 @@ const InvoiceDetails = ({ item }) => {
                       {ride.bookingId}
                       <br />
                       <small>
-                        Pickup: {ride.pickup}, Dropoff: {ride.dropoff}
+                        Pickup: {ride.pickup},<br /> Dropoff: {ride.dropoff}
                       </small>
                     </td>
                     <td className="nowrap">
