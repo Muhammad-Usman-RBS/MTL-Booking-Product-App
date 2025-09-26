@@ -3,12 +3,10 @@ import OutletHeading from "../../../constants/constantscomponents/OutletHeading"
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 
 const GoogleCalendar = () => {
-  const [calendarEnabled, setCalendarEnabled] = useState("No");
   const [calendarId, setCalendarId] = useState("");
   const [calendarJSON, setCalendarJSON] = useState("");
 
   const handleUpdate = () => {
-    console.log("Google Calendar settings updated");
   };
 
   return (

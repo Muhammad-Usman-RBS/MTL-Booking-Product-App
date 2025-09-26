@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 import EmptyTableMessage from "../../../../constants/constantscomponents/EmptyTableMessage";
 
 export const useBookingTableLogic = ({
@@ -23,8 +23,7 @@ export const useBookingTableLogic = ({
   const isDriver = user?.role === "driver";
   const refetch = isDriver ? refetchJobs : refetchBookings;
 
-  const getErrMsg = (e) =>
-    e?.data?.message || "Failed to update status";
+  const getErrMsg = (e) => e?.data?.message || "Failed to update status";
 
   const getIdStr = (v) =>
     v?._id?.toString?.() || v?.$oid || v?.toString?.() || String(v || "");
@@ -67,8 +66,7 @@ export const useBookingTableLogic = ({
   } else if (user?.role === "customer") {
     tableHeaders = allHeaders.filter(
       (header) =>
-        header.key !== "driverFare" &&
-        header.key !== "returnDriverFare"
+        header.key !== "driverFare" && header.key !== "returnDriverFare"
     );
   }
 
@@ -80,8 +78,14 @@ export const useBookingTableLogic = ({
   const isWithinCancelWindow = (booking, cancelWindow) => {
     if (!booking || !cancelWindow) return false;
 
-    const journey = booking.returnJourneyToggle ? booking.returnJourney : booking.primaryJourney;
-    if (!journey?.date || journey.hour === undefined || journey.minute === undefined) {
+    const journey = booking.returnJourneyToggle
+      ? booking.returnJourney
+      : booking.primaryJourney;
+    if (
+      !journey?.date ||
+      journey.hour === undefined ||
+      journey.minute === undefined
+    ) {
       return false;
     }
 
@@ -128,7 +132,12 @@ export const useBookingTableLogic = ({
     const entry = item.statusAudit
       .slice()
       .reverse()
-      .find((a) => String(a?.status || "").trim().toLowerCase() === "cancelled");
+      .find(
+        (a) =>
+          String(a?.status || "")
+            .trim()
+            .toLowerCase() === "cancelled"
+      );
 
     if (!entry) return false;
 
@@ -194,7 +203,9 @@ export const useBookingTableLogic = ({
   // Replace the driverMatch logic in your useBookingTableLogic hook with this:
   const filteredBookings = useMemo(() => {
     let filtered = processedBookings.filter((b) => {
-      const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
+      const journey = b.returnJourneyToggle
+        ? b.returnJourney
+        : b.primaryJourney;
       if (!journey?.date) return false;
 
       const bookingDateStr = new Date(journey.date).toISOString().split("T")[0];
@@ -210,23 +221,25 @@ export const useBookingTableLogic = ({
           ? true
           : bookingDateStr >= startStr && bookingDateStr <= endStr;
 
-          const statusMatch = (() => {
-            if (selectedStatus.includes("All") || selectedStatus.length === 0) {
+      const statusMatch = (() => {
+        if (selectedStatus.includes("All") || selectedStatus.length === 0) {
+          return true;
+        }
+        if (selectedStatus.includes("Scheduled")) {
+          const journey = b.returnJourneyToggle
+            ? b.returnJourney
+            : b.primaryJourney;
+          if (journey?.date) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const bookingDate = new Date(journey.date);
+            if (bookingDate >= today) {
               return true;
             }
-            if (selectedStatus.includes("Scheduled")) {
-              const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
-              if (journey?.date) {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const bookingDate = new Date(journey.date);
-                if (bookingDate >= today) {
-                  return true; 
-                }
-              }
-            }
-            return selectedStatus.includes(b.status);
-          })();
+          }
+        }
+        return selectedStatus.includes(b.status);
+      })();
 
       const passengerMatch =
         selectedPassengers.length === 0
@@ -245,9 +258,10 @@ export const useBookingTableLogic = ({
 
         // 1. Check assignedDriverId from job data
         if (b.assignedDriverId) {
-          const driverId = typeof b.assignedDriverId === 'object'
-            ? b.assignedDriverId._id || b.assignedDriverId
-            : b.assignedDriverId;
+          const driverId =
+            typeof b.assignedDriverId === "object"
+              ? b.assignedDriverId._id || b.assignedDriverId
+              : b.assignedDriverId;
           driverIds.push(driverId.toString());
         }
 
@@ -261,9 +275,10 @@ export const useBookingTableLogic = ({
               }
               // Driver object with driverId
               if (driver.driverId) {
-                const id = typeof driver.driverId === 'object'
-                  ? driver.driverId._id || driver.driverId
-                  : driver.driverId;
+                const id =
+                  typeof driver.driverId === "object"
+                    ? driver.driverId._id || driver.driverId
+                    : driver.driverId;
                 driverIds.push(id.toString());
               }
             } else {
@@ -275,9 +290,8 @@ export const useBookingTableLogic = ({
 
         // 3. Check direct driver field (if exists)
         if (b.driver) {
-          const id = typeof b.driver === 'object'
-            ? b.driver._id || b.driver
-            : b.driver;
+          const id =
+            typeof b.driver === "object" ? b.driver._id || b.driver : b.driver;
           driverIds.push(id.toString());
         }
 
@@ -285,9 +299,9 @@ export const useBookingTableLogic = ({
         const uniqueDriverIds = [...new Set(driverIds)];
 
         // Check if any of the booking's driver IDs match selected drivers
-        return uniqueDriverIds.some(driverId =>
-          selectedDrivers.some(selectedId =>
-            selectedId.toString() === driverId
+        return uniqueDriverIds.some((driverId) =>
+          selectedDrivers.some(
+            (selectedId) => selectedId.toString() === driverId
           )
         );
       })();
@@ -297,14 +311,18 @@ export const useBookingTableLogic = ({
           ? true
           : selectedVehicleTypes.includes(b.vehicle?.vehicleName);
 
-      return statusMatch && passengerMatch && driverMatch && vehicleMatch && dateTime;
+      return (
+        statusMatch && passengerMatch && driverMatch && vehicleMatch && dateTime
+      );
     });
     if (selectedStatus.includes("Scheduled")) {
       const today = new Date();
       today.setHours(0, 0, 0, 0); // normalize to midnight
-    
+
       filtered = filtered.filter((b) => {
-        const journey = b.returnJourneyToggle ? b.returnJourney : b.primaryJourney;
+        const journey = b.returnJourneyToggle
+          ? b.returnJourney
+          : b.primaryJourney;
         if (!journey?.date) return false;
         const bookingDate = new Date(journey.date);
         return bookingDate >= today;
@@ -345,9 +363,7 @@ export const useBookingTableLogic = ({
 
   // Check if any booking has flight number
   const hasFlightNumber = filteredBookings.some(
-    (b) =>
-      b?.primaryJourney?.flightNumber ||
-      b?.returnJourney?.flightNumber
+    (b) => b?.primaryJourney?.flightNumber || b?.returnJourney?.flightNumber
   );
 
   // Filter table headers
@@ -359,7 +375,10 @@ export const useBookingTableLogic = ({
 
       if (!hasPrimary && (key === "journeyFare" || key === "driverFare"))
         return false;
-      if (!hasReturn && (key === "returnJourneyFare" || key === "returnDriverFare"))
+      if (
+        !hasReturn &&
+        (key === "returnJourneyFare" || key === "returnDriverFare")
+      )
         return false;
 
       // 👇 flight fields hide if no flightNumber
@@ -374,7 +393,7 @@ export const useBookingTableLogic = ({
 
       return true;
     });
-  }, [tableHeaders,  selectedColumns, hasPrimary, hasReturn, hasFlightNumber]);
+  }, [tableHeaders, selectedColumns, hasPrimary, hasReturn, hasFlightNumber]);
 
   // Export table data
   const exportTableData = useMemo(() => {
@@ -386,8 +405,9 @@ export const useBookingTableLogic = ({
     const formatVehicle = (v) =>
       !v || typeof v !== "object"
         ? "-"
-        : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${v.handLuggage || 0
-        } | ${v.checkinLuggage || 0}`;
+        : `${v.vehicleName || "N/A"} | ${v.passenger || 0} | ${
+            v.handLuggage || 0
+          } | ${v.checkinLuggage || 0}`;
 
     return filteredBookings.map((item) => {
       const base = {
@@ -395,76 +415,86 @@ export const useBookingTableLogic = ({
         bookingType: item?.returnJourney ? "Return" : "Primary",
         passenger: formatPassenger(item.passenger),
         date: item.createdAt ? new Date(item.createdAt).toLocaleString() : "-",
-        pickUp: item.primaryJourney?.pickup || "-",
-        dropOff: item.primaryJourney?.dropoff || "-",
+        pickUp: item?.returnJourneyToggle
+          ? item?.returnJourney?.pickup
+          : item.primaryJourney?.pickup || "-",
+        dropOff: item?.returnJourneyToggle
+          ? item?.returnJourney?.dropoff
+          : item.primaryJourney?.dropoff || "-",
         vehicle: formatVehicle(item.vehicle),
         payment: item.paymentMethod || "-",
         flightNumber:
           item.primaryJourney?.flightNumber ||
           item.returnJourney?.flightNumber ||
           "-",
-        flightArrivalScheduled:
-          item.primaryJourney?.flightArrival?.scheduled
-            ? new Date(item.primaryJourney.flightArrival.scheduled).toLocaleString("en-GB", {
+        flightArrivalScheduled: item.primaryJourney?.flightArrival?.scheduled
+          ? new Date(
+              item.primaryJourney.flightArrival.scheduled
+            ).toLocaleString("en-GB", {
               hour: "2-digit",
               minute: "2-digit",
               day: "2-digit",
               month: "2-digit",
               year: "numeric",
             })
-            : item.returnJourney?.flightArrival?.scheduled
-              ? new Date(item.returnJourney.flightArrival.scheduled).toLocaleString("en-GB", {
+          : item.returnJourney?.flightArrival?.scheduled
+          ? new Date(item.returnJourney.flightArrival.scheduled).toLocaleString(
+              "en-GB",
+              {
                 hour: "2-digit",
                 minute: "2-digit",
                 day: "2-digit",
                 month: "2-digit",
                 year: "numeric",
-              })
-              : "-",
-        flightArrivalEstimated:
-          item.primaryJourney?.flightArrival?.estimated
-            ? new Date(item.primaryJourney.flightArrival.estimated).toLocaleString("en-GB", {
+              }
+            )
+          : "-",
+        flightArrivalEstimated: item.primaryJourney?.flightArrival?.estimated
+          ? new Date(
+              item.primaryJourney.flightArrival.estimated
+            ).toLocaleString("en-GB", {
               hour: "2-digit",
               minute: "2-digit",
               day: "2-digit",
               month: "2-digit",
               year: "numeric",
             })
-            : item.returnJourney?.flightArrival?.estimated
-              ? new Date(item.returnJourney.flightArrival.estimated).toLocaleString("en-GB", {
+          : item.returnJourney?.flightArrival?.estimated
+          ? new Date(item.returnJourney.flightArrival.estimated).toLocaleString(
+              "en-GB",
+              {
                 hour: "2-digit",
                 minute: "2-digit",
                 day: "2-digit",
                 month: "2-digit",
                 year: "numeric",
-              })
-              : "-",
-        driverFare: item.driverFare !== undefined ? item.driverFare : "-",
-        returnDriverFare:
-          item.returnDriverFare !== undefined ? item.returnDriverFare : "-",
-
+              }
+            )
+          : "-",
+        driverFare:  item.driverFare ?item.driverFare  : "-" ,
+            returnDriverFare: item.returnDriverFare ? item.returnDriverFare : "-",
         driver: Array.isArray(item.drivers)
           ? item.drivers
-            .map((driver) => {
-              if (typeof driver === "object") {
-                if (driver.driverInfo?.firstName) {
-                  return driver.driverInfo.firstName;
-                } else if (driver.driverId) {
+              .map((driver) => {
+                if (typeof driver === "object") {
+                  if (driver.driverInfo?.firstName) {
+                    return driver.driverInfo.firstName;
+                  } else if (driver.driverId) {
+                    const matchedDriver = assignedDrivers.find(
+                      (d) => d?._id?.toString() === driver.driverId?.toString()
+                    );
+                    return matchedDriver?.DriverData?.firstName || "Unnamed";
+                  }
+                } else {
+                  const driverId = driver;
                   const matchedDriver = assignedDrivers.find(
-                    (d) => d?._id?.toString() === driver.driverId?.toString()
+                    (d) => d?._id?.toString() === driverId?.toString()
                   );
                   return matchedDriver?.DriverData?.firstName || "Unnamed";
                 }
-              } else {
-                const driverId = driver;
-                const matchedDriver = assignedDrivers.find(
-                  (d) => d?._id?.toString() === driverId?.toString()
-                );
-                return matchedDriver?.DriverData?.firstName || "Unnamed";
-              }
-              return "Unnamed";
-            })
-            .join(", ")
+                return "Unnamed";
+              })
+              .join(", ")
           : "-",
         status: item.statusAudit?.at(-1)?.status || item.status || "-",
       };

@@ -86,15 +86,12 @@ const InvoicePage = () => {
 
       const details =
         invoice.items?.map((item) => {
-          const bookingIdLine = item.bookingId
-            ? `Booking ID: ${item.bookingId}\n`
-            : "";
+          const bookingIdLine = `Booking ID: ${item.bookingId}\n`;
           const pickupLine = `Pickup: ${item.pickup || ""}`;
           const dropoffLine = `Drop off: ${item.dropoff || ""}`;
           return `${bookingIdLine}${pickupLine}\n\n${dropoffLine}`;
         }) || [];
       setItemDetails(details);
-      // Initialize all item-related states
       const initialItemTaxes = {};
       const initialItemNotes = {};
       const initialItemInternalNotes = {};
@@ -136,17 +133,11 @@ const InvoicePage = () => {
           lines.find((line) => line.startsWith("Pickup:")) || "";
         const dropoffLine =
           lines.find((line) => line.startsWith("Drop off:")) || "";
-
-        const bookingId = bookingLine.split(" - ")[0]?.trim() || "";
-        const pickup = pickupLine.replace("Pickup: ", "").trim();
-        const dropoff = dropoffLine.replace("Drop off: ", "").trim();
-
         const original = originalItems[index] || {};
-
         return {
-          bookingId: bookingId || original.bookingId || "",
-          pickup: pickup || original.pickup || "",
-          dropoff: dropoff || original.dropoff || "",
+          bookingId: original.bookingId || "",
+          pickup: original.pickup || "",
+          dropoff: original.dropoff || "",
           totalAmount:
             itemTaxes[index] === "Tax"
               ? (parseFloat(baseAmounts[index]) || 0) * (1 + taxPercent / 100)
@@ -235,7 +226,7 @@ const InvoicePage = () => {
 
       toast.success("Invoice updated successfully!");
     } catch (err) {
-      console.error(err);
+      console.error(err); 
       toast.error("Failed to update invoice");
     }
   };
@@ -559,9 +550,7 @@ const InvoicePage = () => {
           <ul className="grid  grid-cols-1 md:grid-cols-2 gap-6 list-inside">
             {itemDetails.map((_, index) => {
               const bookingId =
-                invoiceData?.invoice?.items?.[index]?.bookingId ||
-                `#${index + 1}`;
-
+                invoiceData?.invoice?.items?.[index]?.bookingId || "N/A";
               return (
                 <li
                   key={index}

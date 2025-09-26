@@ -123,7 +123,6 @@ const DriverRides = () => {
         };
       });
   }, [allBookings, companyId, user?._id, startDate, endDate, statusFilter]);
-  console.log("filtered", filteredRides);
   const daysSelected = useMemo(() => {
     try {
       const s = new Date(startDate);
@@ -140,7 +139,6 @@ const DriverRides = () => {
     }
   }, [startDate, endDate]);
   const totalRides = filteredRides.length;
-  console.log(totalRides);
   const completedRides = filteredRides.filter(
     (r) => (r.statusRaw || "") === "completed"
   ).length;
@@ -163,7 +161,6 @@ const DriverRides = () => {
     { label: "Status", key: "status" },
     { label: "Fare", key: "fare" },
   ];
-  console.log(filteredRides);
 
   const tableData = filteredRides.map((ride) => ({
     id: ride.id,

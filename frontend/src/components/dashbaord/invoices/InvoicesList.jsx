@@ -149,17 +149,16 @@ const InvoicesList = () => {
     const query = search.toLowerCase();
     const invoiceNo = invoice.invoiceNumber?.toLowerCase() || "";
     const customerName = invoice.customer?.name || "-";
+    const driverName = invoice.driver?.name || "-";
     const source = invoice.items?.[0]?.source || "-";
 
     return (
       invoiceNo.includes(query) ||
       customerName.toLowerCase().includes(query) ||
+      driverName.toLowerCase().includes(query) ||
       source.toLowerCase().includes(query)
     );
   });
-
-  const totalPages =
-    perPage === "All" ? 1 : Math.ceil(filteredData.length / perPage);
 
   const tableHeaders = [
     { label: "Invoice", key: "invoiceNo" },
@@ -177,12 +176,11 @@ const InvoicesList = () => {
       ? [{ label: "Actions", key: "actions" }]
       : []),
   ];
-
   const tableData = filteredData.map((invoice) => {
     const invoiceNo = invoice.invoiceNumber || "-";
     const customerOrDriverName =
       invoiceMode === "Driver"
-        ? invoice.driver?.name || invoice.driver?.DriverData?.firstName || "-"
+        ? invoice.driver?.name
         : invoice.customer?.name || "-";
     const source = invoice.items?.[0]?.source || "-";
     const date = new Date(invoice.invoiceDate).toLocaleDateString() || "-";
@@ -270,15 +268,30 @@ const InvoicesList = () => {
   if (isLoading) return <p>Loading invoices...</p>;
   if (isError) return <p>Failed to load invoices.</p>;
 
-  const exportTableData = filteredData.map((item) => ({
-    invoiceNo: item.invoiceNo,
-    customer: item.customer,
-    account: item.account,
-    date: item.date,
-    dueDate: item.dueDate,
-    amount: `${currencySymbol}${item.amount}`,
-    status: item.status,
-  }));
+  const exportTableData = filteredData.map((item) => {
+    const name =
+      invoiceMode === "Driver"
+        ? item?.driver?.name || "-"
+        : item?.customer?.name || "-";
+  
+    const amount =
+      item.items?.reduce((sum, i) => sum + (i.totalAmount || 0), 0) || 0;
+  
+    return {
+      invoiceNo: item.invoiceNumber,
+      [invoiceMode === "Driver" ? "driver" : "customer"]: name, // ✅ dynamic
+      account: item.items?.[0]?.source || "-",
+      date: item.invoiceDate
+        ? new Date(item.invoiceDate).toLocaleDateString("en-GB")
+        : "-",
+      dueDate: item.items?.[0]?.date
+        ? new Date(item.items[0].date).toLocaleDateString("en-GB")
+        : "-",
+      amount: `${currencySymbol}${amount.toFixed(2)}`,
+      status: item.status,
+    };
+  });
+  
 
   const handleDeleteClick = (id) => {
     setDeleteInvoiceId(id);

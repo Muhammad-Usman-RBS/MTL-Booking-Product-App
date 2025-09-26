@@ -248,7 +248,6 @@ useEffect(()=> {
                         <div className="space-y-3">
                           {filteredDrivers.map(
                             (driver, index) => (
-                              console.log(bookings, "Driver Info:", driver),
                               (
                                 <div
                                   key={index}

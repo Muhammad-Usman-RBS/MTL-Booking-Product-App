@@ -112,67 +112,86 @@ const DashboardCustomers = () => {
     { label: "Actions", key: "actions" },
   ];
 
-  const tableData =
-  paginatedData.map((customer, index) => {
-          const customerBookingCount = allBookings.filter(
-            (booking) => booking?.passenger?.email === customer?.email
-          ).length;
+  const tableData = paginatedData.map((customer, index) => {
+    const customerBookingCount = allBookings.filter(
+      (booking) => booking?.passenger?.email === customer?.email
+    ).length;
 
-          return {
-            index:
-              (page - 1) *
-                (perPage === "All" ? filteredData.length : Number(perPage)) +
-              index +
-              1,
-            profile: (
-              <img
-                src={customer?.profile || IMAGES.dummyImg}
-                alt="Profile"
-                className="w-10 h-10 rounded-full object-cover border border-gray-300"
-              />
-            ),
-            vatnumber: customer?.vatnumber || "N/A",
-            name: customer?.name || "N/A",
-            companyname: customer?.companyname || "N/A",
-            email: customer?.email || "N/A",
-            phone: customer?.phone ? `+${customer.phone}` : "N/A",
-            bookings: (
-              <span className="font-medium text-gray-800">
-                {customerBookingCount}
-              </span>
-            ),
-            actions: (
-              <div className="flex gap-2">
-                <div className="icon-box icon-box-info">
-                  <Icons.Eye
-                    className="size-4"
-                    onClick={() => setViewCustomerId(customer._id)}
-                  />
-                </div>
-                <div className="icon-box icon-box-warning">
-                  <Icons.Pencil
-                    className="size-4"
-                    title="Edit"
-                    onClick={() => {
-                      setSelectedCustomer(customer);
-                      setIsModalOpen(true);
-                    }}
-                  />
-                </div>
-                <div className="icon-box icon-box-danger">
-                  <Icons.Trash
-                    title="Delete"
-                    className="size-4"
-                    onClick={() => {
-                      setShowDeleteModal(true);
-                      setCustomerToDelete(customer);
-                    }}
-                  />
-                </div>
-              </div>
-            ),
-          };
-        });
+    return {
+      index:
+        (page - 1) *
+          (perPage === "All" ? filteredData.length : Number(perPage)) +
+        index +
+        1,
+      profile: (
+        <img
+          src={customer?.profile || IMAGES.dummyImg}
+          alt="Profile"
+          className="w-10 h-10 rounded-full object-cover border border-gray-300"
+        />
+      ),
+      vatnumber: customer?.vatnumber || "N/A",
+      name: customer?.name || "N/A",
+      companyname: customer?.companyname || "N/A",
+      email: customer?.email || "N/A",
+      phone: customer?.phone ? `+${customer.phone}` : "N/A",
+      bookings: (
+        <span className="font-medium text-gray-800">
+          {customerBookingCount}
+        </span>
+      ),
+      actions: (
+        <div className="flex gap-2">
+          <div className="icon-box icon-box-info">
+            <Icons.Eye
+              className="size-4"
+              onClick={() => setViewCustomerId(customer._id)}
+            />
+          </div>
+          <div className="icon-box icon-box-warning">
+            <Icons.Pencil
+              className="size-4"
+              title="Edit"
+              onClick={() => {
+                setSelectedCustomer(customer);
+                setIsModalOpen(true);
+              }}
+            />
+          </div>
+          <div className="icon-box icon-box-danger">
+            <Icons.Trash
+              title="Delete"
+              className="size-4"
+              onClick={() => {
+                setShowDeleteModal(true);
+                setCustomerToDelete(customer);
+              }}
+            />
+          </div>
+        </div>
+      ),
+    };
+  });
+
+  const exportTableData = paginatedData.map((customer, index) => {
+    const customerBookingCount = allBookings.filter(
+      (booking) => booking?.passenger?.email === customer?.email
+    ).length;
+
+    return {
+      index:
+        (page - 1) *
+          (perPage === "All" ? filteredData.length : Number(perPage)) +
+        index +
+        1,
+      vatnumber: customer?.vatnumber || "",
+      name: customer?.name || "",
+      companyname: customer?.companyname || "",
+      email: customer?.email || "",
+      phone: customer?.phone ? `+${customer.phone}` : "",
+      bookings: customerBookingCount,
+    };
+  });
 
   return (
     <>
@@ -190,11 +209,12 @@ const DashboardCustomers = () => {
         </div>
 
         <CustomTable
-        filename="Corporate-Customers-list"
-        emptyMessage="No Customers Found"
+          filename="Corporate-Customers-list"
+          emptyMessage="No Customers Found"
           tableHeaders={tableHeaders}
           tableData={tableData}
           showSearch={true}
+          exportTableData={exportTableData}
           searchValue={search}
           setSearchValue={setSearch}
           showPagination={true}

@@ -34,14 +34,11 @@ export const getConfig = (req, res) => {
       mode: process.env.PAYPAL_MODE || 'sandbox',
     };
 
-    console.log("Config being sent to frontend:", config);
 
     if (!config.clientId) {
-      console.log("Client ID missing!");
       return res.status(500).json({ message: 'Paypal client ID not configured' });
     }
 
-    console.log("Config sent successfully");
     res.json(config);
   } catch (error) {
     console.error('[Paypal] Config error:', error);
@@ -94,7 +91,6 @@ export const createOrder = async (req, res) => {
     });
 
     const response = await client.execute(request);
-    console.log('[Paypal] Order created:', response.result.id);
 
     return res.json({
       id: response.result.id,
@@ -126,7 +122,6 @@ export const captureOrder = async (req, res) => {
     const capture = await client.execute(request);
     const result = capture.result;
 
-    console.log('[Paypal] Order captured:', result.id, result.status);
 
     // Save payment to database here
     // const unit = result.purchase_units?.[0];

@@ -26,7 +26,7 @@ const DownloadExcel = ({ tableData = [], tableHeaders = [], filename = "table-da
                 obj[headers[index]] =
                     typeof row[key] === "string" || typeof row[key] === "number"
                         ? row[key]
-                        : "-"; // fallback if JSX sneaks in
+                        : "-"; 
             });
             return obj;
         });

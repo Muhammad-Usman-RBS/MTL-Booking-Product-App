@@ -34,9 +34,7 @@ export function initSocket({ apiBase, employeeNumber, companyId, token }) {
       currentEmpKey = empKey;
       currentCompanyId = coKey;
     
-      socket.on("connect", () =>
-        console.log("[SOCKET] connected", socket.id, "emp:", empKey, "co:", coKey)
-      );
+      socket.on("connect");
       socket.on("connect_error", (e) =>
         console.warn("[SOCKET] connect_error", e?.message)
       );

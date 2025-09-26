@@ -6,12 +6,7 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import DashboardLayout from "./layouts/DashboardLayout";
 import NotFound from "./pages/emptypages/NotFound";
-
-// Import your LoadingProvider
-
 import { LoadingProvider } from "./components/common/LoadingProvider";
-
-// All your existing imports...
 import Dashboard from "./components/dashbaord/home/Dashboard";
 import EditProfile from "./components/dashbaord/profile/EditProfile";
 import Logout from "./components/dashbaord/Logout";

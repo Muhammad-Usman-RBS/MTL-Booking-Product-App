@@ -107,17 +107,17 @@ const DriverList = () => {
     { label: "Actions", key: "actions" },
   ];
 
-  const exportTableData = paginatedData.map((item, index) => ({
+  const exportTableData = paginatedData.map((driver, index) => ({
     index:
       (page - 1) * (perPage === "All" ? filteredData.length : perPage) +
       index +
       1,
-    name: item.name,
-    email: item.email,
-    make: item.make,
-    model: item.model,
-    regNo: item.regNo,
-    documents: item.documents,
+    employeeNumber: driver?.DriverData?.employeeNumber || "",
+    firstName: driver?.DriverData?.firstName || "",
+    email: driver?.DriverData?.email || "",
+    carMake: driver?.VehicleData?.carMake || "",
+    carModal: driver?.VehicleData?.carModal || "",
+    status: driver?.DriverData?.status || "",
   }));
 
   const tableData = filteredData.map((driver, index) => ({

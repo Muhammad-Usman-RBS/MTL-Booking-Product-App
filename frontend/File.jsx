@@ -240,7 +240,6 @@ const CustomTable = ({ searchQuery, filters, nowLoad }) => {
     );
   }
 
-  console.log("summaryTotals", summaryTotals)
   return (
     <>
       <div className=" w-full overflow-x-auto" ref={tableRef}>

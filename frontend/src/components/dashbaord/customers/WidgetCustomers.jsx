@@ -123,12 +123,22 @@ const WidgetCustomers = () => {
           ),
           status: <span>{customer?.status || "N/A"}</span>,
         }));
-
+        const exportTableData = paginatedData.map((customer, index) => ({
+          index:
+            (page - 1) * (perPage === "All" ? filteredData.length : Number(perPage)) +
+            index +
+            1,
+          name: customer?.fullName || "",
+          email: customer?.email || "",
+          bookings: bookingsCountByCustomer[customer?._id] || 0,
+          status: customer?.status || "",
+        }));
   return (
     <CustomTable
       filename="Widget-Customers-list"
       tableHeaders={tableHeaders}
       tableData={tableData}
+      exportTableData={exportTableData} 
       showSearch={true}
       searchValue={search}
       setSearchValue={setSearch}

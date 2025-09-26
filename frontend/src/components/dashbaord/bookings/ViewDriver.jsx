@@ -216,9 +216,9 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   };
 
   const handleSendEmail = async () => {
-    if (selectedBooking?.status === "Accepted") {
+    if (selectedBooking?.status !== "New") {
       toast.error(
-        "This booking has already been accepted. Please cancel the booking and create a new one to assign it to another driver."
+        "Mark this booking to new to assign/unassign a  driver."
       );
       return;
     }

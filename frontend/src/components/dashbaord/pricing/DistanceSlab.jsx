@@ -240,7 +240,26 @@ const {showLoading , hideLoading}  = useLoading()
 
     return row;
   });
+// Create export-friendly data for Excel download
+const exportTableData = data.map((item, idx) => {
+  const slabDistance = (item.to || 0) - (item.from || 0);
+  
+  const exportRow = {
+    distance: `${item.from} - ${item.to} miles (${slabDistance} miles)`,
+    pricePerMile: `${currencySymbol}${item.pricePerMile}`,
+  };
 
+  // Add vehicle columns with their calculated values
+  vehicleList.forEach((v) => {
+    const percent = v.percentageIncrease || 0;
+    const perMile = item.pricePerMile * (1 + percent / 100);
+    const total = perMile * slabDistance;
+    
+    exportRow[`${v.vehicleName}_total`] = `${currencySymbol}${total.toFixed(2)}`;
+  });
+
+  return exportRow;
+});
   return (
     <>
       <OutletHeading name="Mileage Slab" />
@@ -257,6 +276,7 @@ const {showLoading , hideLoading}  = useLoading()
         tableData={tableData}
         showPagination={true}
         showSorting={true}
+        exportTableData={exportTableData} 
       />
 
       <div className="mt-4 text-right">

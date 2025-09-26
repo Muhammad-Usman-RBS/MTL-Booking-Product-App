@@ -15,7 +15,6 @@ const SocialMedia = () => {
 
   const handleUpdate = () => {
     // Handle the update logic here
-    console.log("Social media settings updated");
   };
 
   return (

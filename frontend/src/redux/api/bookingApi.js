@@ -75,7 +75,6 @@ export const bookingApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Bookings"],
     }),
-
   }),
 });
 
