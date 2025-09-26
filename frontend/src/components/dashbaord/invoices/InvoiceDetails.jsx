@@ -254,7 +254,7 @@ const InvoiceDetails = ({ item }) => {
               <a href={`mailto:${company.email}`} className="email-link">
                 {company.email}
               </a>
-              <p>Contact: {company.contactName}</p>
+              <p>Contact: +{company.contact}</p>
             </div>
 
             <div className="invoice-info">
@@ -299,7 +299,7 @@ const InvoiceDetails = ({ item }) => {
                       : item.customer?.email}
                   </a>
                   <span>
-                    {invoiceType === "driver"
+                    +{invoiceType === "driver"
                       ? item.driver?.phone
                       : item.customer?.phone}
                   </span>
