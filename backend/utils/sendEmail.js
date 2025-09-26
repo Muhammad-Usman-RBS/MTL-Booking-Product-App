@@ -2,7 +2,7 @@
 
 // const generateHtmlTable = (title, subtitle, dataObj) => {
 //   const renderRows = (obj, prefix = "" , depth=0) => {
-//     if (depth > 5) return ""; 
+//     if (depth > 5) return "";
 
 //     return Object.entries(obj)
 //       .map(([key, value]) => {
@@ -60,13 +60,6 @@
 // };
 
 // export default sendEmail;
-
-
-
-
-
-
-
 
 // import nodemailer from "nodemailer";
 
@@ -173,15 +166,10 @@
 //   } catch (e) {
 //     throw e;
 //   }
-  
+
 // };
 
 // export default sendEmail;
-
-
-
-
-
 
 import nodemailer from "nodemailer";
 
@@ -189,7 +177,12 @@ import nodemailer from "nodemailer";
 function toPlain(obj) {
   if (!obj) return obj;
   if (typeof obj?.toObject === "function") {
-    return obj.toObject({ depopulate: true, getters: false, virtuals: false, flattenMaps: true });
+    return obj.toObject({
+      depopulate: true,
+      getters: false,
+      virtuals: false,
+      flattenMaps: true,
+    });
   }
   try {
     return JSON.parse(JSON.stringify(obj));
@@ -199,10 +192,10 @@ function toPlain(obj) {
 }
 
 const MAX_DEPTH = 6;
-const MAX_ROWS  = 1000;
+const MAX_ROWS = 1000;
 
 const escapeHtml = (v = "") =>
-  String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 const generateHtmlTable = (title, subtitle, raw) => {
   const dataObj = toPlain(raw);
@@ -211,28 +204,33 @@ const generateHtmlTable = (title, subtitle, raw) => {
   const fmtVal = (value) => {
     if (value == null) return "Not Provided";
     if (value instanceof Date) return value.toISOString();
-    if (typeof value === "number" || typeof value === "boolean") return String(value);
+    if (typeof value === "number" || typeof value === "boolean")
+      return String(value);
     if (typeof value === "string") return value;
     return "";
   };
 
   const renderArray = (arr, keyPath, depth) => {
     if (!Array.isArray(arr)) return "";
-    return arr.map((item, idx) => {
-      if (rowCount > MAX_ROWS) return "";
-      if (item && typeof item === "object" && !Array.isArray(item)) {
+    return arr
+      .map((item, idx) => {
+        if (rowCount > MAX_ROWS) return "";
+        if (item && typeof item === "object" && !Array.isArray(item)) {
+          rowCount++;
+          const header = `<tr><td colspan="2"><strong>${escapeHtml(keyPath)} [${
+            idx + 1
+          }]</strong></td></tr>`;
+          return header + renderRows(item, `${keyPath}[${idx}]`, depth + 1);
+        }
         rowCount++;
-        const header = `<tr><td colspan="2"><strong>${escapeHtml(keyPath)} [${idx+1}]</strong></td></tr>`;
-        return header + renderRows(item, `${keyPath}[${idx}]`, depth + 1);
-      }
-      rowCount++;
-      return `
+        return `
         <tr>
-          <td><strong>${escapeHtml(keyPath)} [${idx+1}]</strong></td>
+          <td><strong>${escapeHtml(keyPath)} [${idx + 1}]</strong></td>
           <td>${escapeHtml(fmtVal(item))}</td>
         </tr>
       `;
-    }).join("");
+      })
+      .join("");
   };
 
   const renderRows = (obj, keyPath = "", depth = 0) => {
@@ -250,33 +248,37 @@ const generateHtmlTable = (title, subtitle, raw) => {
       `;
     }
 
-    return Object.entries(obj).map(([key, value]) => {
-      if (rowCount > MAX_ROWS) return "";
+    return Object.entries(obj)
+      .map(([key, value]) => {
+        if (rowCount > MAX_ROWS) return "";
 
-      const label = key
-        .replace(/([A-Z])/g, " $1")
-        .replace(/^./, (s) => s.toUpperCase());
+        const label = key
+          .replace(/([A-Z])/g, " $1")
+          .replace(/^./, (s) => s.toUpperCase());
 
-      const path = keyPath ? `${keyPath}.${key}` : key;
+        const path = keyPath ? `${keyPath}.${key}` : key;
 
-      if (Array.isArray(value)) {
-        return renderArray(value, label, depth + 1);
-      }
+        if (Array.isArray(value)) {
+          return renderArray(value, label, depth + 1);
+        }
 
-      if (value && typeof value === "object") {
+        if (value && typeof value === "object") {
+          rowCount++;
+          const headerRow = `<tr><td colspan="2"><strong>${escapeHtml(
+            label
+          )} Details</strong></td></tr>`;
+          return headerRow + renderRows(toPlain(value), path, depth + 1);
+        }
+
         rowCount++;
-        const headerRow = `<tr><td colspan="2"><strong>${escapeHtml(label)} Details</strong></td></tr>`;
-        return headerRow + renderRows(toPlain(value), path, depth + 1);
-      }
-
-      rowCount++;
-      return `
+        return `
         <tr>
           <td><strong>${escapeHtml(label)}</strong></td>
           <td>${escapeHtml(fmtVal(value))}</td>
         </tr>
       `;
-    }).join("");
+      })
+      .join("");
   };
 
   const rows = renderRows(dataObj);
@@ -288,7 +290,13 @@ const generateHtmlTable = (title, subtitle, raw) => {
     <head><meta charset="utf-8"></head>
     <body style="font-family:Arial,sans-serif;line-height:1.5;margin:0;padding:16px;background:#ffffff;color:#111">
       <h2 style="margin:0 0 6px">${escapeHtml(safeTitle)}</h2>
-      ${safeSubtitle ? `<p style="margin:0 0 12px;color:#555">${escapeHtml(safeSubtitle)}</p>` : ""}
+      ${
+        safeSubtitle
+          ? `<p style="margin:0 0 12px;color:#555">${escapeHtml(
+              safeSubtitle
+            )}</p>`
+          : ""
+      }
       <table cellpadding="8" border="1" style="border-collapse:collapse;font-size:14px;border-color:#e5e5e5;min-width:320px">
         ${rows || `<tr><td>No details provided.</td></tr>`}
       </table>
@@ -329,11 +337,16 @@ const sendEmail = async (to, subject, payload = {}) => {
     port: 465,
     secure: true, // true for 465, false for other ports
     auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_PASS },
+    tls: {
+      rejectUnauthorized: false, // For production SSL issues
+    },
   });
 
   // Build final HTML content
   const finalHtml = html
-    ? (html.startsWith("<") ? html : `<!doctype html><html><body>${html}</body></html>`)
+    ? html.startsWith("<")
+      ? html
+      : `<!doctype html><html><body>${html}</body></html>`
     : generateHtmlTable(title || subject, subtitle, data);
 
   // Plain-text alternative for email clients that can't render HTML
@@ -349,7 +362,7 @@ const sendEmail = async (to, subject, payload = {}) => {
     });
     console.log(`Email sent to: ${to}, MessageId: ${info.messageId}`);
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error("Error sending email:", error);
   }
 };
 
