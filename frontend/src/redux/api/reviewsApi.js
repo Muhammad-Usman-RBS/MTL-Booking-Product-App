@@ -2,7 +2,6 @@ import { apiSlice } from "../slices/apiSlice";
 
 export const reviewsApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
-        // ✅ Load current review settings for a company
         getReviewSettings: builder.query({
             query: (companyId) => ({
                 url: `/reviews/settings`,

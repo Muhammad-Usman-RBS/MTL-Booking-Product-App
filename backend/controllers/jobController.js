@@ -3,7 +3,6 @@ import Booking from "../models/Booking.js";
 import driver from "../models/Driver.js";
 import mongoose from "mongoose";
 
-// ✅ POST: Create a new job
 export const createJob = async (req, res) => {
   try {
     const { bookingId, driverId, assignedBy, companyId } = req.body;
