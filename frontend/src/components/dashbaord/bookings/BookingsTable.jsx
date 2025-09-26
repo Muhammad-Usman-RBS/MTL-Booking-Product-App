@@ -148,7 +148,8 @@ const BookingsTable = ({
       if (String(selectedBooking.status).toLowerCase() === "cancelled") {
         if (
           (event.shiftKey && actionKeys.includes(key)) ||
-          (event.ctrlKey && ["c", "d"].includes(key))) {
+          (event.ctrlKey && ["c", "d"].includes(key))
+        ) {
           toast.error(
             "This booking is already cancelled. Status update not allowed."
           );
@@ -189,72 +190,61 @@ const BookingsTable = ({
           );
 
           const jobsArray = jobData?.jobs || [];
-          console.log("Debug - Job lookup data:", {
-            selectedBookingId: getIdStr(selectedBooking?._id),
-            singleDriverId,
-            totalJobs: jobsArray.length,
-            bookingJobs: jobsArray.filter(j => getIdStr(j?.bookingId) === getIdStr(selectedBooking?._id)),
-            environment: window.location.hostname
-          });
-          
+
           // More robust job lookup
           let jobForDriver = jobsArray.find((j) => {
-            const jobBookingMatch = getIdStr(j?.bookingId) === getIdStr(selectedBooking?._id);
+            const jobBookingMatch =
+              getIdStr(j?.bookingId) === getIdStr(selectedBooking?._id);
             const jobDriverMatch = getIdStr(j?.driverId) === singleDriverId;
-            
-            if (jobBookingMatch) {
-              console.log("Found job for booking:", {
-                jobId: getIdStr(j?._id),
-                jobDriverId: getIdStr(j?.driverId),
-                targetDriverId: singleDriverId,
-                driverMatch: jobDriverMatch,
-                jobStatus: j?.jobStatus
-              });
-            }
-            
             return jobBookingMatch && jobDriverMatch;
           });
-          
+
           // Fallback: If no exact match, try to find any job for this booking
           if (!jobForDriver) {
             const bookingJobs = jobsArray.filter(
               (j) => getIdStr(j?.bookingId) === getIdStr(selectedBooking?._id)
             );
-            
+
             if (bookingJobs.length === 1) {
               console.warn("Using fallback job - found single job for booking");
               jobForDriver = bookingJobs[0];
             } else if (bookingJobs.length > 1) {
               // Try to find a job with matching status or most recent one
-              const activeJob = bookingJobs.find(j => 
-                !["Cancelled", "Rejected", "Already Assigned"].includes(j?.jobStatus)
-              ) || bookingJobs[0];
-              
-              console.warn("Using fallback job - found multiple jobs, using active/first one");
+              const activeJob =
+                bookingJobs.find(
+                  (j) =>
+                    !["Cancelled", "Rejected", "Already Assigned"].includes(
+                      j?.jobStatus
+                    )
+                ) || bookingJobs[0];
+
+              console.warn(
+                "Using fallback job - found multiple jobs, using active/first one"
+              );
               jobForDriver = activeJob;
             }
           }
-          
+
           if (!jobForDriver?._id) {
             const bookingJobs = jobsArray.filter(
               (j) => getIdStr(j?.bookingId) === getIdStr(selectedBooking?._id)
             );
-            
+
             console.error("No job found - Details:", {
               bookingId: getIdStr(selectedBooking?._id),
               targetDriverId: singleDriverId,
-              availableJobs: bookingJobs.map(j => ({
+              availableJobs: bookingJobs.map((j) => ({
                 jobId: getIdStr(j?._id),
                 driverId: getIdStr(j?.driverId),
-                status: j?.jobStatus
+                status: j?.jobStatus,
               })),
-              allDriverIds: assignedDrivers.map(d => getIdStr(d?._id))
+              allDriverIds: assignedDrivers.map((d) => getIdStr(d?._id)),
             });
-            
+
             toast.error(
               `No job found. Found ${bookingJobs.length} jobs for this booking. Check console for details.`
             );
-            
+
             // Force refetch and return
             refetch();
             return;
@@ -268,24 +258,17 @@ const BookingsTable = ({
           }
 
           try {
-            console.log("Updating job status:", {
-              jobId: jobForDriver._id,
-              newStatus: "Accepted"
-            });
-            
             await updateJobStatus({
               jobId: jobForDriver._id,
               jobStatus: "Accepted",
             }).unwrap();
-          
+
             const siblingJobs = jobsArray.filter(
               (j) =>
                 getIdStr(j?.bookingId) === getIdStr(selectedBooking?._id) &&
                 getIdStr(j?._id) !== getIdStr(jobForDriver._id)
             );
-            
-            console.log("Updating sibling jobs:", siblingJobs.length);
-            
+
             if (siblingJobs.length > 0) {
               await Promise.all(
                 siblingJobs.map((j) =>
@@ -296,15 +279,13 @@ const BookingsTable = ({
                 )
               );
             }
-          
-            console.log("Updating booking status to Accepted");
-            
+
             await updateBookingStatus({
               id: selectedBooking._id,
               status: "Accepted",
               updatedBy: `${user.role} | ${user.fullName}`,
             }).unwrap();
-          
+
             toast.success("Status updated to Accepted");
             refetch();
           } catch (err) {
@@ -312,9 +293,9 @@ const BookingsTable = ({
               error: err,
               errorMessage: err?.data?.message || err?.message,
               jobId: jobForDriver?._id,
-              bookingId: selectedBooking?._id
+              bookingId: selectedBooking?._id,
             });
-            
+
             toast.error(`Failed to accept booking: ${getErrMsg(err)}`);
             refetch();
           }
