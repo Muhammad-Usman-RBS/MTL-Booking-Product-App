@@ -143,7 +143,18 @@ const BookingsTable = ({
       if (!selectedBooking) return;
 
       const key = event.key.toLowerCase();
+      const actionKeys = ["a", "c", "r", "o", "n", "l", "d", "e"];
 
+      if (String(selectedBooking.status).toLowerCase() === "cancelled") {
+        if (
+          (event.shiftKey && actionKeys.includes(key)) ||
+          (event.ctrlKey && ["c", "d"].includes(key))) {
+          toast.error(
+            "This booking is already cancelled. Status update not allowed."
+          );
+          return;
+        }
+      }
       if (event.shiftKey) {
         if (key === "a") {
           const wasAlreadyAccepted = (selectedBooking.statusAudit || []).some(
