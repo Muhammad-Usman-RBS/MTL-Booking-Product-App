@@ -139,13 +139,22 @@ const InvoiceDetails = ({ item }) => {
     const toastId = toast.loading("Sending Email...");
 
     try {
+      console.log("Sending email with data:", {
+        recipient,
+        subject,
+        message: message.substring(0, 100) + "...", // truncate for logging
+        invoiceId: item._id,
+        environment: window.location.hostname,
+        userRole,
+        companyId
+      });
+    
       await sendInvoiceEmail({
         recipient,
         subject,
         message,
         invoiceId: item._id,
       }).unwrap();
-
       toast.update(toastId, {
         render: "Email sent successfully!",
         type: "success",
@@ -154,11 +163,22 @@ const InvoiceDetails = ({ item }) => {
       });
       setShowEmailModal(false);
     } catch (error) {
+      console.error("Email sending failed:", {
+        error,
+        errorMessage: error?.data?.message || error?.message,
+        errorStatus: error?.status,
+        errorData: error?.data,
+        recipient,
+        invoiceId: item._id
+      });
+    
+      const errorMsg = error?.data?.message || error?.message || "Failed to send invoice email.";
+      
       toast.update(toastId, {
-        render: "Failed to send invoice email.",
+        render: `Email failed: ${errorMsg}`,
         type: "error",
         isLoading: false,
-        autoClose: 3000,
+        autoClose: 5000,
       });
     }
   };
