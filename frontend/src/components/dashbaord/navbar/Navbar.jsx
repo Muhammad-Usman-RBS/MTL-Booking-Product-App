@@ -406,8 +406,8 @@ function Navbar() {
                                       Document Expired
                                     </h4>
                                     <span className="text-xs font-medium text-gray-600">
-                                      <span>Employee Number:</span>
-                                      #{data.expiryDetails
+                                      <span>Employee Number:</span>#
+                                      {data.expiryDetails
                                         .driverEmployeeNumber ||
                                         "New Notification"}
                                     </span>

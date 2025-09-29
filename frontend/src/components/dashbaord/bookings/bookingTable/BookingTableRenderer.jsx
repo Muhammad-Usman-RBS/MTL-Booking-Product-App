@@ -636,7 +636,18 @@ export const BookingTableRenderer = ({
                     }
 
                     if (String(newStatus).toLowerCase() === "accepted") {
-                   
+                      const wasAlreadyAccepted = (item.statusAudit || []).some(
+                        (audit) =>
+                          String(audit.status || "").toLowerCase() ===
+                          "accepted"
+                      );
+                      if (wasAlreadyAccepted) {
+                        toast.error(
+                          "This booking has already been accepted previously."
+                        );
+                        return;
+                      }
+
                       const driversArr = Array.isArray(item.drivers)
                         ? item.drivers
                         : [];

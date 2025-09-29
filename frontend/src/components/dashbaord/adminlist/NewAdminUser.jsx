@@ -294,6 +294,7 @@ const NewAdminUser = () => {
             navigate("/dashboard/company-accounts/list");
           } else {
             navigate("/dashboard/admin-list");
+            window.location.reload()
           }
         }
       }
