@@ -199,16 +199,7 @@ export const deleteInvoice = async (req, res) => {
 
 export const sendInvoiceEmail = async (req, res) => {
   try {
-    console.log("=== EMAIL DEBUG START ===");
-    console.log("Environment:", process.env.NODE_ENV);
-    console.log("Gmail User:", process.env.GMAIL_USER ? "✓ Set" : "✗ Missing");
-    console.log("Gmail Pass:", process.env.GMAIL_PASS ? "✓ Set" : "✗ Missing");
-    console.log("Frontend URL:", process.env.BASE_URL_FRONTEND);
-    console.log("Request body:", {
-      recipient: req.body.recipient,
-      subject: req.body.subject,
-      invoiceId: req.body.invoiceId,
-    });
+  
     const { recipient, subject, message, invoiceId } = req.body;
     const user = req.user;
 

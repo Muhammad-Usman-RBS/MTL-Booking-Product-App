@@ -299,7 +299,8 @@ const InvoiceDetails = ({ item }) => {
                       : item.customer?.email}
                   </a>
                   <span>
-                    +{invoiceType === "driver"
+                    +
+                    {invoiceType === "driver"
                       ? item.driver?.phone
                       : item.customer?.phone}
                   </span>
