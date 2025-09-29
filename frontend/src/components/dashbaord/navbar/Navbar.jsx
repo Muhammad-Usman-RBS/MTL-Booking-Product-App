@@ -26,7 +26,8 @@ import FontSelector from "../../common/FontSelector";
 
 const STATIC_THEME_KEY = "anonThemeClass";
 const STATIC_BOOKMARKS_KEY = "anonThemeBookmarks";
-const isStaticId = (id) => ["theme-dark-1","theme-dark-2","theme-light-1"].includes(id);
+const isStaticId = (id) =>
+  ["theme-dark-1", "theme-dark-2", "theme-light-1"].includes(id);
 const STATIC_THEMES = ["theme-dark-1", "theme-dark-2", "theme-light-1"];
 
 const applyThemeClass = (className) => {
@@ -35,13 +36,12 @@ const applyThemeClass = (className) => {
   if (className) root.classList.add(className);
 };
 
-
 function Navbar() {
   const TimeRef = useRef(null);
   const usertooltipRef = useRef(null);
   const user = useSelector((state) => state.auth.user);
-  const companyId = user?.companyId
-  const isStaticMode = !user?.companyId;   
+  const companyId = user?.companyId;
+  const isStaticMode = !user?.companyId;
   const themeBtnRef = useRef(null);
   const email = user?.email || "No Email";
   const name = user?.fullName || "Guest";
@@ -57,7 +57,9 @@ function Navbar() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
-  const { data: jobData, refetch } = useGetAllJobsQuery(companyId, {skip: !companyId});
+  const { data: jobData, refetch } = useGetAllJobsQuery(companyId, {
+    skip: !companyId,
+  });
 
   const dispatch = useDispatch();
   const [applyThemeSettings] = useApplyThemeSettingsMutation();
@@ -85,15 +87,11 @@ function Navbar() {
       if (companyId && refetch) {
         refetch();
       }
-  
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, [refetch]);
 
-
-
- 
   const handleNotificationClick = (jobId) => {
     if (user?.role !== "driver") return;
 
@@ -116,14 +114,15 @@ function Navbar() {
     }
   };
 
-  
   const bookmarks = useSelector(selectBookmarkedThemes);
 
   useEffect(() => {
     if (!isStaticMode) return;
     try {
-      const saved = JSON.parse(localStorage.getItem(STATIC_BOOKMARKS_KEY) || "[]");
-  
+      const saved = JSON.parse(
+        localStorage.getItem(STATIC_BOOKMARKS_KEY) || "[]"
+      );
+
       if (saved.length > 0) {
         // Add any missing saved bookmarks into Redux (no duplicates)
         saved.forEach((b) => {
@@ -154,7 +153,6 @@ function Navbar() {
     } catch (e) {
       console.error("Failed to hydrate static bookmarks in navbar:", e);
     }
-
   }, [isStaticMode, dispatch]);
   useEffect(() => {
     setActiveBookmarkId(selectedThemeId || null);
@@ -174,13 +172,13 @@ function Navbar() {
   useEffect(() => {
     if (!isStaticMode) return;
     if (!bookmarks || bookmarks.length === 0) return;
-  
+
     const staticOnly = bookmarks.filter((b) =>
       ["theme-dark-1", "theme-dark-2", "theme-light-1"].includes(b._id)
     );
     localStorage.setItem(STATIC_BOOKMARKS_KEY, JSON.stringify(staticOnly));
   }, [isStaticMode, bookmarks]);
-  
+
   useEffect(() => {
     if (!isStaticMode) return;
     const cls = localStorage.getItem(STATIC_THEME_KEY);
@@ -193,17 +191,19 @@ function Navbar() {
 
   useEffect(() => {
     if (!isStaticMode) return;
-  
-    const saved = JSON.parse(localStorage.getItem(STATIC_BOOKMARKS_KEY) || "[]");
+
+    const saved = JSON.parse(
+      localStorage.getItem(STATIC_BOOKMARKS_KEY) || "[]"
+    );
     const hasAny = (bookmarks?.length ?? 0) > 0 || saved.length > 0;
     if (hasAny) return;
-  
+
     const seed = (STATIC_THEME_DATA || []).map((t) => ({
       _id: t.id,
       themeSettings: t.colors,
       label: t.name,
     }));
-  
+
     localStorage.setItem(STATIC_BOOKMARKS_KEY, JSON.stringify(seed));
     seed.forEach((b) => dispatch(toggleBookmarkTheme(b)));
   }, [isStaticMode, bookmarks?.length, dispatch]);
@@ -214,11 +214,11 @@ function Navbar() {
         if (!user?.companyId || isStaticId(b._id)) {
           applyThemeClass(b._id);
           localStorage.setItem(STATIC_THEME_KEY, b._id);
-  
+
           setActiveBookmarkId(b._id);
-  
+
           dispatch(setSelectedThemeId(null));
-  
+
           setIsModalOpen(false);
           return;
         }
@@ -255,9 +255,10 @@ function Navbar() {
   // continues to use ids returned from the list, and for markAllAsRead
   // pass the SAME empArg:
 
-  
-  const displayName = (name || "").split(" ").map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-  .join(" ");
+  const displayName = (name || "")
+    .split(" ")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
   const handleMouseLeave = () => {
     TimeRef.current = setTimeout(() => {
       setShowTooltip(false);
@@ -307,7 +308,6 @@ function Navbar() {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-
   return (
     <>
       <nav className="bg-theme text-theme z-20 relative p-[17.2px] flex  justify-between items-start gap-2 sm:gap-4">
@@ -316,25 +316,21 @@ function Navbar() {
             <Icons.Menu className="size-6 text-theme" />
           </button>
           <h1 className="text-xl hidden lg:block font-bold uppercase">
-            {[
-              "clientadmin",
-              "superadmin",
-              "demo",
-            ].includes(user?.role)
+            {["clientadmin", "superadmin", "demo"].includes(user?.role)
               ? "Admin Panel"
               : user?.role === "driver"
-                ? "Driver Portal"
-                : user?.role === "customer"
-                  ? "Customer Portal"
-                : user?.role === "staffmember"
-                  ? "Manager Portal"
-                : user?.role === "associateadmin"
-                  ? "associate admin"
-                  : "Portal"}
+              ? "Driver Portal"
+              : user?.role === "customer"
+              ? "Customer Portal"
+              : user?.role === "staffmember"
+              ? "Manager Portal"
+              : user?.role === "associateadmin"
+              ? "associate admin"
+              : "Portal"}
           </h1>
         </div>
         <div className="flex items-center  justify-end gap-2 sm:gap-4 flex-wrap">
-        <FontSelector/>
+          <FontSelector />
           <div
             className="cursor-pointer  relative border border-theme bg-theme p-2 rounded-lg "
             onClick={() => setShowTooltip(true)}
@@ -353,7 +349,8 @@ function Navbar() {
               <div
                 onMouseEnter={handleMouseEnterTooltip}
                 onMouseLeave={handleMouseLeave}
-                className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 lg:right-0 -right-24    text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden">
+                className="bg-white absolute border-[var(--light-gray)] border-[1.5px] top-12 lg:right-0 -right-24    text-black z-[999] lg:w-96 w-72 max-h-96 overflow-hidden"
+              >
                 <div className="border-b px-4 py-3 text-theme bg-theme">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -375,75 +372,115 @@ function Navbar() {
                 </div>
                 {(!Array.isArray(notifications) ||
                   notifications.length === 0) && (
-                    <div className="px-4 py-3 text-gray-500 text-sm">
-                      No new notifications
-                    </div>
-                  )}
+                  <div className="px-4 py-3 text-gray-500 text-sm">
+                    No new notifications
+                  </div>
+                )}
                 {/* Notifications List */}
                 <div className="max-h-64 overflow-y-auto">
                   {Array.isArray(notifications) &&
-                    notifications.map((data) => (
-                      <div
-                        key={data._id}
-                        onClick={() => {
-                          handleNotificationClick(data.jobId);
-                          setShowTooltip(false);
-                        }}
-                        className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
+                    notifications.map((data) => {
+                      const isDocExpiry = data.status === "Document Expired";
+
+                      return (
+                        <div
+                          key={data._id}
+                          onClick={() => {
+                            if (!isDocExpiry) {
+                              handleNotificationClick(data.jobId);
+                            }
+                            setShowTooltip(false);
+                          }}
+                          className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${
+                            data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
+                          } ${
+                            isDocExpiry ? "cursor-default" : "cursor-pointer"
                           }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`flex-1 `}>
-                            <div className="flex items-start justify-between">
-                              <h4 className={`text-sm text-gray-700`}>
-                                {data.status || "New Notification"}
-                              </h4>
-                              <div>
-                                <span className="text-xs text-gray-700">
-                                  #{data.bookingId || "—"}
-                                </span>
-                              </div>
-                            </div>
-                            <p className="text-xs text-[var(--dark-gray)] mt-1 line-clamp-1 ">
-                              {data?.primaryJourney?.pickup ||
-                                data?.returnJourney?.pickup}
-                            </p>
-                            <div className="flex items-center mt-2 justify-between">
-                              <div className="flex items-center space-x-1">
-                                <Icons.Clock className="w-3 h-3 text-gray-400" />
-                                <span className="text-xs text-gray-500">
-                                  {getTimeAgo(data.bookingSentAt)}
-                                </span>
-                              </div>
-                              <div>
-                                {!data.isRead && (
-                                  <button
-                                    onClick={async (e) => {
-                                      e.stopPropagation();
-                                      try {
-                                        await markAsRead(data._id).unwrap();
-                                        refetchNotifications();
-                                        setReadNotifications(
-                                          (prev) => new Set([...prev, data._id])
-                                        );
-                                      } catch (err) {
-                                        console.error(
-                                          "Error marking notification as read:",
-                                          err
-                                        );
-                                      }
-                                    }}
-                                    className="text-xs px-2 py-1 text-black cursor-pointer"
-                                  >
-                                    Mark as read
-                                  </button>
-                                )}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1">
+                              {isDocExpiry ? (
+                                <>
+                                  <div className="flex items-start justify-between">
+                                    <h4 className="text-xs text-gray-700 font-medium">
+                                      Document Expired
+                                    </h4>
+                                    <span className="text-xs font-medium text-gray-600">
+                                      <span>Employee Number:</span>
+                                      #{data.expiryDetails
+                                        .driverEmployeeNumber ||
+                                        "New Notification"}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-[var(--dark-gray)] mt-1">
+                                    Driver:
+                                    <span className="font-medium">
+                                      {data.expiryDetails?.driverName}
+                                    </span>
+                                  </p>
+                                  <p className="text-xs text-red-600 mt-1">
+                                    Expired:
+                                    {data.expiryDetails?.expiredDocuments?.join(
+                                      ", "
+                                    )}
+                                  </p>
+                                </>
+                              ) : (
+                                /* Booking Notification */
+                                <>
+                                  <div className="flex items-start justify-between">
+                                    <h4 className="text-sm text-gray-700">
+                                      {data.status || "New Notification"}
+                                    </h4>
+                                    <div>
+                                      <span className="text-xs text-gray-700">
+                                        #{data?.bookingId || "_"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-[var(--dark-gray)] mt-1 line-clamp-1">
+                                    {data?.primaryJourney?.pickup ||
+                                      data?.returnJourney?.pickup}
+                                  </p>
+                                </>
+                              )}
+
+                              {/* Common footer for both types */}
+                              <div className="flex items-center mt-2 justify-between">
+                                <div className="flex items-center space-x-1">
+                                  <Icons.Clock className="w-3 h-3 text-gray-400" />
+                                  <span className="text-xs text-gray-500">
+                                    {getTimeAgo(
+                                      data.bookingSentAt || data.createdAt
+                                    )}
+                                  </span>
+                                </div>
+                                <div>
+                                  {!data.isRead && (
+                                    <button
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        try {
+                                          await markAsRead(data._id).unwrap();
+                                        } catch (err) {
+                                          console.error(
+                                            "Error marking notification as read:",
+                                            err
+                                          );
+                                        }
+                                      }}
+                                      className="text-xs px-2 py-1 text-black cursor-pointer"
+                                    >
+                                      Mark as read
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
 
                 {/* Footer */}
@@ -460,71 +497,90 @@ function Navbar() {
               </div>
             )}
           </div>
-         
+
           {/* Theme selector - only for admins */}
-          {(isStaticMode || user?.role === "clientadmin" || user?.role === "superadmin") && (
-  <div className="relative" ref={themeBtnRef}>
-   
-      <button
-        onClick={() => setIsModalOpen((v) => !v)}
-        className="p-2 rounded-lg cursor-pointer border border-theme bg-theme text-black shadow-md hover:bg-gray-100"
-        title="Select Theme"
-      >
-        <Icons.Palette className=" w-4 h-4 text-theme" />
-      </button>
+          {(isStaticMode ||
+            user?.role === "clientadmin" ||
+            user?.role === "superadmin") && (
+            <div className="relative" ref={themeBtnRef}>
+              <button
+                onClick={() => setIsModalOpen((v) => !v)}
+                className="p-2 rounded-lg cursor-pointer border border-theme bg-theme text-black shadow-md hover:bg-gray-100"
+                title="Select Theme"
+              >
+                <Icons.Palette className=" w-4 h-4 text-theme" />
+              </button>
 
-    {/* Modal / Popup */}
-    {isModalOpen && (
-  <div
-    role="dialog"
-    onClick={(e) => e.stopPropagation()}
-    className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 p-3"
-  >
-    {bookmarks && bookmarks.length > 0 ? (
-      <>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold hidden lg:block text-gray-700">Choose&nbsp;Theme</h3>
-         
-        </div>
-        <div className="space-y-2">
-          {bookmarks.map((b) => (
-            <button
-              key={b._id}
-              type="button"
-              onClick={() => {
-                handleApplyBookmarkedTheme(b);
-                setIsModalOpen(false);
-              }}
-              className={`w-full p-2 rounded-lg cursor-pointer border transition hover:scale-[1.02] hover:shadow 
-                ${activeBookmarkId === b._id ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"}`}
-            >
-              <div className="flex space-x-3  justify-center">
-                <div className="w-4 h-4  rounded-sm border" style={{ backgroundColor: b?.themeSettings?.bg }} />
-                <div className="w-4 h-4  rounded-sm border" style={{ backgroundColor: b?.themeSettings?.text }} />
-                <div className="w-4 h-4  rounded-sm border" style={{ backgroundColor: b?.themeSettings?.primary }} />
-              </div>
-            </button>
-          ))}
-        </div>
-      </>
-    ) : (
-      <div className="text-center">
-        <span className="text-2xl">🎨</span>
-        <Link
-          to="/dashboard/settings/general"
-          onClick={() => setIsModalOpen(false)}
-          className="block mt-2 text-sm text-blue-600"
-        >
-          Add Themes
-        </Link>
-      </div>
-    )}
-  </div>
-)}
-
-  </div>
-)}
-
+              {/* Modal / Popup */}
+              {isModalOpen && (
+                <div
+                  role="dialog"
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 p-3"
+                >
+                  {bookmarks && bookmarks.length > 0 ? (
+                    <>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold hidden lg:block text-gray-700">
+                          Choose&nbsp;Theme
+                        </h3>
+                      </div>
+                      <div className="space-y-2">
+                        {bookmarks.map((b) => (
+                          <button
+                            key={b._id}
+                            type="button"
+                            onClick={() => {
+                              handleApplyBookmarkedTheme(b);
+                              setIsModalOpen(false);
+                            }}
+                            className={`w-full p-2 rounded-lg cursor-pointer border transition hover:scale-[1.02] hover:shadow 
+                ${
+                  activeBookmarkId === b._id
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                }`}
+                          >
+                            <div className="flex space-x-3  justify-center">
+                              <div
+                                className="w-4 h-4  rounded-sm border"
+                                style={{
+                                  backgroundColor: b?.themeSettings?.bg,
+                                }}
+                              />
+                              <div
+                                className="w-4 h-4  rounded-sm border"
+                                style={{
+                                  backgroundColor: b?.themeSettings?.text,
+                                }}
+                              />
+                              <div
+                                className="w-4 h-4  rounded-sm border"
+                                style={{
+                                  backgroundColor: b?.themeSettings?.primary,
+                                }}
+                              />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center">
+                      <span className="text-2xl">🎨</span>
+                      <Link
+                        to="/dashboard/settings/general"
+                        onClick={() => setIsModalOpen(false)}
+                        className="block mt-2 text-sm text-blue-600"
+                      >
+                        Add Themes
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex lg:flex-row md:flex-row sm:flex-row xs flex-row-reverse">
             <div className="relative">
@@ -545,8 +601,8 @@ function Navbar() {
                   <div className="border-b">
                     <div className="ps-4 pt-4 flex items-center space-x-3">
                       {profileImg &&
-                        profileImg !== "" &&
-                        profileImg !== "default" ? (
+                      profileImg !== "" &&
+                      profileImg !== "default" ? (
                         <img
                           src={profileImg}
                           alt="Profile"
@@ -560,8 +616,15 @@ function Navbar() {
                         />
                       )}
                       <div className="min-w-0 w-24">
-                        <p className="font-semibold truncate whitespace-nowrap">{displayName}</p>
-                        <p className="font-light text-sm">{user?.role === 'clientadmin'  ? "Admin" : user?.role.charAt(0).toUpperCase() + user?.role.slice(1)}</p>
+                        <p className="font-semibold truncate whitespace-nowrap">
+                          {displayName}
+                        </p>
+                        <p className="font-light text-sm">
+                          {user?.role === "clientadmin"
+                            ? "Admin"
+                            : user?.role.charAt(0).toUpperCase() +
+                              user?.role.slice(1)}
+                        </p>
                       </div>
                     </div>
 
@@ -595,7 +658,6 @@ function Navbar() {
             </div>
           </div>
           <GoogleTranslateButton />
-
         </div>
       </nav>
       <div className="">

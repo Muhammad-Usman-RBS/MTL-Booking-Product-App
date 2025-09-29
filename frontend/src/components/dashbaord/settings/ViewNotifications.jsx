@@ -13,13 +13,18 @@ import { useLoading } from "../../common/LoadingProvider";
 const ViewNotifications = () => {
   const {showLoading, hideLoading} = useLoading()
   const user = useSelector((state) => state?.auth?.user);
-  const {
-    data: notifications = [],
-    refetch: refetchNotifications,
-    isLoading,
-  } = useGetUserNotificationsQuery(user?.employeeNumber, {
-    skip: !user?.employeeNumber,
-  });
+  const empArg =
+  user?.role === "driver"
+    ? String(user?.employeeNumber || "")
+    : String(user?._id || "");
+
+const {
+  data: notifications = [],
+  refetch: refetchNotifications,
+  isLoading,
+} = useGetUserNotificationsQuery(empArg, {
+  skip: !empArg,
+});
 
   
   const [markAsRead] = useMarkAsReadMutation();
@@ -90,7 +95,7 @@ const ViewNotifications = () => {
 
   const handleMarkAllAsRead = async () => {
     try {
-      await markAllAsRead(user.employeeNumber);
+      await markAllAsRead(empArg);
       refetchNotifications();
     } catch (error) {
       console.error("Error marking all notifications as read:", error);

@@ -1,19 +1,17 @@
-import express from "express";
 import mongoose from "mongoose";
 import Driver from "../../models/Driver.js";
 import sendEmail from "../../utils/sendEmail.js";
 import CronJob from "../../models/settings/CronJob.js";
 import { updateCompanyCronJob } from "../../utils/settings/cronjobs/driverDocumentsExpiration.js";
-import Invoice from "../../models/Invoice.js";
-import cron from "node-cron";
-import { DriverStatementEmail } from "../../utils/DriverStatementEmail.js";
-import Company from "../../models/Company.js";
+import User from "../../models/User.js";
+import Notification from "../../models/Notification.js";
+import { io } from "../../server.js";
 
-
-const SYSTEM_TZ =
-  process.env.CRON_TIMEZONE ||
-  Intl.DateTimeFormat().resolvedOptions().timeZone ||
-  "UTC";
+const emitToEmployee = (employeeNumber, event, payload = {}) => {
+  if (!io) return;
+  const emp = String(employeeNumber || "");
+  io.to(`emp:${emp}`).emit(event, payload);
+};
 // Check if date is expired
 const isExpired = (dateValue) => {
   const d = dateValue ? new Date(dateValue) : null;
@@ -24,26 +22,37 @@ const isExpired = (dateValue) => {
   return d <= today;
 };
 
-// Get expired documents for a driver
 const getExpiredDocs = (driver) => {
   const expired = {};
 
   if (isExpired(driver?.DriverData?.driverLicenseExpiry)) {
-    expired["Driver License"] = driver.DriverData.driverLicenseExpiry;
+    expired["Driver License"] = new Date(driver.DriverData.driverLicenseExpiry)
+      .toISOString()
+      .split("T")[0];
   }
   if (isExpired(driver?.DriverData?.driverPrivateHireLicenseExpiry)) {
-    expired["Private Hire License"] =
-      driver.DriverData.driverPrivateHireLicenseExpiry;
+    expired["Private Hire License"] = new Date(
+      driver.DriverData.driverPrivateHireLicenseExpiry
+    )
+      .toISOString()
+      .split("T")[0];
   }
   if (isExpired(driver?.VehicleData?.carPrivateHireLicenseExpiry)) {
-    expired["Car Private Hire License"] =
-      driver.VehicleData.carPrivateHireLicenseExpiry;
+    expired["Car Private Hire License"] = new Date(
+      driver.VehicleData.carPrivateHireLicenseExpiry
+    )
+      .toISOString()
+      .split("T")[0];
   }
   if (isExpired(driver?.VehicleData?.carInsuranceExpiry)) {
-    expired["Car Insurance"] = driver.VehicleData.carInsuranceExpiry;
+    expired["Car Insurance"] = new Date(driver.VehicleData.carInsuranceExpiry)
+      .toISOString()
+      .split("T")[0];
   }
   if (isExpired(driver?.VehicleData?.motExpiryDate)) {
-    expired["MOT Certificate"] = driver.VehicleData.motExpiryDate;
+    expired["MOT Certificate"] = new Date(driver.VehicleData.motExpiryDate)
+      .toISOString()
+      .split("T")[0];
   }
 
   return expired;
@@ -686,20 +695,26 @@ export const runNow = async (req, res) => {
         .json({ error: "Driver document expiration feature is not enabled" });
     }
 
-    // Check if within time window
     if (!isWithinTimeWindow(timeWindow)) {
       return res.status(400).json({
         error: `Outside allowed time window (${
           timeWindow || "Not configured"
         })`,
-        currentTime: new Date().toLocaleTimeString(),
+        currentTime: new Date().toISOString().split("T")[1].split(".")[0],
         timeWindow,
       });
     }
 
     const drivers = await Driver.find({ companyId });
 
+    // Find all client admins for this company
+    const clientAdmins = await User.find({
+      companyId,
+      role: "clientadmin",
+    });
+
     let emailsSent = 0;
+    let notificationsSent = 0;
     const results = [];
 
     for (const driver of drivers) {
@@ -715,6 +730,7 @@ export const runNow = async (req, res) => {
         continue;
       }
 
+      // EMAIL TO DRIVER
       if (!canSendEmail(driver, expiredDocs)) {
         results.push({
           email: driverEmail,
@@ -722,10 +738,7 @@ export const runNow = async (req, res) => {
           status: "skipped_throttle",
           expiredDocs: Object.keys(expiredDocs),
         });
-        continue;
-      }
-
-      if (sendEmails) {
+      } else if (sendEmails) {
         try {
           await sendEmail(driverEmail, "Document Expiry Alert", {
             title: "Your documents have expired",
@@ -745,7 +758,6 @@ export const runNow = async (req, res) => {
             expiredDocs: Object.keys(expiredDocs),
           });
         } catch (emailError) {
-          console.error(`Failed to send email to ${driverEmail}:`, emailError);
           results.push({
             email: driverEmail,
             name: driverName,
@@ -762,13 +774,60 @@ export const runNow = async (req, res) => {
           expiredDocs: Object.keys(expiredDocs),
         });
       }
+
+      // NOTIFICATIONS TO CLIENT ADMINS
+      for (const admin of clientAdmins) {
+        try {
+          // Check if notification already sent in last 24 hours
+          const existingNotification = await Notification.findOne({
+            employeeNumber: String(admin.employeeNumber || admin._id),
+            notificationType: "document_expiry",
+            "expiryDetails.driverEmployeeNumber":
+              driver.DriverData.employeeNumber,
+            createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+          });
+
+          if (existingNotification) {
+            continue; // Skip if already notified in last 24 hours
+          }
+
+          const notification = new Notification({
+            employeeNumber: String(admin.employeeNumber || admin._id),
+            status: "Document Expired",
+            notificationType: "document_expiry",
+            expiryDetails: {
+              driverName,
+              driverEmployeeNumber: driver.DriverData.employeeNumber,
+              expiredDocuments: Object.keys(expiredDocs),
+            },
+            companyId,
+          });
+
+          await notification.save();
+          notificationsSent++;
+
+          // Emit real-time notification
+          emitToEmployee(
+            admin.employeeNumber || admin._id,
+            "notification:new",
+            notification
+          );
+        } catch (notifError) {
+          console.error(
+            `Failed to send notification to admin ${admin.employeeNumber}:`,
+            notifError
+          );
+        }
+      }
     }
 
     res.json({
       success: true,
       timeWindow,
       emailsSent,
+      notificationsSent,
       totalCandidates: results.length,
+      clientAdminsNotified: clientAdmins.length,
       results,
     });
   } catch (error) {
@@ -776,346 +835,3 @@ export const runNow = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-// const dayToCron = {
-//   Sunday: 0,
-//   Monday: 1,
-//   Tuesday: 2,
-//   Wednesday: 3,
-//   Thursday: 4,
-//   Friday: 5,
-//   Saturday: 6,
-// };
-
-// function parseTimeRange(str) {
-//   if (!str) return { hour: 9, minute: 0 };
-//   const [h, m] = str.split(":").map((n) => parseInt(n.trim(), 10));
-//   return {
-//     hour: Number.isFinite(h) ? h : 9,
-//     minute: Number.isFinite(m) ? m : 0,
-//   };
-// }
-
-// const sentToday = new Set();
-// function makeOncePerDayKey(invoiceId, ymd) {
-//   return `${invoiceId}:${ymd}`;
-// }
-// function todayYMD(tz = "UTC") {
-//   const d = new Date();
-//   const iso = new Intl.DateTimeFormat("en-CA", {
-//     timeZone: tz,
-//     year: "numeric",
-//     month: "2-digit",
-//     day: "2-digit",
-//   }).format(d); // "YYYY-MM-DD"
-//   return iso;
-// }
-
-// export async function scheduleDriverStatementsForCompany(
-//   companyIdRaw,
-//   { timezone = "UTC" } = {}
-// ) {
-//   const companyId =
-//     companyIdRaw instanceof mongoose.Types.ObjectId
-//       ? companyIdRaw
-//       : new mongoose.Types.ObjectId(companyIdRaw);
-
-//   const cronDoc = await CronJob.findOne({ companyId });
-//   if (!cronDoc?.driverStatement?.enabled) {
-//     return;
-//   }
-//   if (!cronDoc.driverStatement.notifications?.email) {
-//     return;
-//   }
-//   const tz = SYSTEM_TZ;
-//   const { frequency, day, time } = cronDoc.driverStatement.timing || {};
-//   if (frequency !== "Weekly") {
-//     return;
-//   }
-
-//   const dow = dayToCron[day];
-//   if (dow == null) {
-//     return;
-//   }
-
-//   const [startStr, endStr] = (time || "09:00 - 10:00")
-//     .split("-")
-//     .map((s) => s.trim());
-//   const { hour: sh, minute: sm } = parseTimeRange(startStr);
-//   const { hour: eh, minute: em } = parseTimeRange(endStr);
-
-//   const expression = `* * * * ${dow}`;
-
-//   cron.schedule(
-//     expression,
-//     async () => {
-//       try {
-//         const now = new Date();
-//         const fmt = new Intl.DateTimeFormat("en-GB", {
-//           timeZone: tz,
-//           hour: "2-digit",
-//           minute: "2-digit",
-//           hour12: false,
-//         }).format(now);
-//         const [nh, nm] = fmt.split(":").map((n) => parseInt(n, 10));
-
-//         const nowMin = nh * 60 + nm;
-//         const startMin = sh * 60 + sm;
-//         const endMin = eh * 60 + em;
-
-//         if (nowMin < startMin || nowMin >= endMin) return;
-//         const companyData = await Company.findById(companyId).lean();
-//         if (!companyData) {
-//           return;
-//         }
-//         const invoices = await Invoice.find({
-//           companyId,
-//           invoiceType: "driver",
-//           status: "Unpaid",
-//         });
-
-//         const ymd = todayYMD(tz);
-//         for (const inv of invoices) {
-//           const to = inv?.driver?.email;
-//           if (!to) continue;
-
-//           const key = makeOncePerDayKey(inv._id.toString(), ymd);
-//           if (sentToday.has(key)) continue;
-//           sentToday.add(key);
-
-//           await DriverStatementEmail(
-//             to,
-//             `Your Driver Statement — ${inv.invoiceNumber || ""}`,
-//             {
-//               company: companyData,
-//               invoice: inv,
-//             }
-//           );
-//         }
-//       } catch (err) {
-//         console.error("[DriverStatements] Job run error:", err);
-//       }
-//     },
-//     { timezone: tz }
-//   );
-// }
-
-// const scheduledCompanies = new Set();
-
-// export const startDriverStatementsSchedule = async (req, res) => {
-//   try {
-//     const fromAuth = req.user?.companyId;
-//     const companyIdStr = req.query.companyId || req.body.companyId || fromAuth;
-
-//     if (!companyIdStr) {
-//       return res
-//         .status(400)
-//         .json({ success: false, message: "companyId is required" });
-//     }
-
-//     let companyId;
-//     let companyData;
-//     try {
-//       companyId = new mongoose.Types.ObjectId(companyIdStr);
-//       companyData = await Company.findById(companyId).lean();
-//       if (!companyData) {
-//         return res
-//           .status(404)
-//           .json({ success: false, message: "Company not found" });
-//       }
-//     } catch {
-//       return res
-//         .status(400)
-//         .json({ success: false, message: "Invalid companyId" });
-//     }
-
-//     const key = companyId.toString();
-//     if (scheduledCompanies.has(key)) {
-//       return res.status(200).json({
-//         success: true,
-//         message: "Driver statements already scheduled for this company.",
-//       });
-//     }
-
-//     await scheduleDriverStatementsForCompany(companyId);
-//     scheduledCompanies.add(key);
-//     return res
-//       .status(200)
-//       .json({ success: true, message: "Driver statements schedule set." });
-//   } catch (e) {
-//     console.error("startDriverStatementsSchedule error:", e);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Failed to schedule driver statements.",
-//     });
-//   }
-// };
-// export async function scheduleDriverStatementsOnBoot() {
-//   try {
-//     const docs = await CronJob.find({
-//       "driverStatement.enabled": true,
-//       "driverStatement.notifications.email": true,
-//     }).lean();
-
-//     for (const doc of docs) {
-//       await scheduleDriverStatementsForCompany(doc.companyId, {
-//         timezone: process.env.CRON_TIMEZONE || "UTC",
-//       });
-//     }
-//   } catch (e) {
-//     console.error("scheduleDriverStatementsOnBoot error:", e);
-//   }
-// }
-
-// export const autoAllocateDrivers = async (req, res) => {
-//   const { companyId } = req?.user || req?.query;
-
-//   try {
-//     const cronJob = await CronJob.findOne({ companyId });
-//     if (!cronJob) {
-//       return res
-//         .status(404)
-//         .json({ message: "No cron job found for this company" });
-//     }
-
-//     const drivers = await Driver.find({ companyId });
-//     if (!drivers || drivers.length === 0) {
-//       return res.status(404).json({ message: "No drivers found" });
-//     }
-
-//     const users = await User.find({});
-//     const usersByEmpNumber = new Map(
-//       users.map((user) => [user.employeeNumber, user])
-//     );
-
-//     const bookings = await Booking.find({ companyId });
-//     if (!bookings || bookings.length === 0) {
-//       return res.status(404).json({ message: "No bookings found" });
-//     }
-
-//     for (const booking of bookings) {
-//       const bookingVehicleType = booking?.vehicle?.vehicleName
-//         .toLowerCase()
-//         .trim();
-
-//       let matchedDrivers = [];
-//       if (booking.drivers && booking.drivers.length > 0) {
-//         continue;
-//       }
-//       if (!cronJob?.autoAllocation?.enabled) {
-//         continue;
-//       }
-//       const journey = booking?.returnJourneyToggle
-//         ? booking.returnJourney
-//         : booking.primaryJourney;
-
-//       const bookingTime = new Date(journey.date);
-//       bookingTime.setHours(journey.hour, journey.minute, 0, 0);
-
-//       const allocationHours = parseInt(
-//         cronJob.autoAllocation?.timing?.hours || "0"
-//       );
-
-//       const allocationTriggerTime = new Date(
-//         bookingTime.getTime() - allocationHours * 60 * 60 * 1000
-//       );
-
-//       const currentTime = new Date();
-
-//       if (currentTime < allocationTriggerTime || currentTime >= bookingTime) {
-//         console.log(
-//           `Skipping allocation for booking ${
-//             booking.bookingId
-//           }. Current: ${currentTime.toISOString()}, Trigger: ${allocationTriggerTime.toISOString()}, Pickup: ${bookingTime.toISOString()}`
-//         );
-//         continue;
-//       }
-//       for (const driver of drivers) {
-//         const empNumber = driver?.DriverData?.employeeNumber;
-//         const rawvehicleTypes = driver?.VehicleData?.vehicleTypes || [];
-//         const vehicleTypes = rawvehicleTypes.map((t) => t.toLowerCase().trim());
-//         if (!usersByEmpNumber.has(empNumber)) {
-//           console.log(
-//             `User not found for driver with employeeNumber: ${empNumber}`
-//           );
-//           continue;
-//         }
-
-//         if (vehicleTypes.includes(bookingVehicleType)) {
-//           matchedDrivers.push(driver);
-//         }
-//       }
-
-//       if (matchedDrivers.length > 0) {
-//         const driverAssignments = [];
-//         const jobPromises = [];
-
-//         for (const driver of matchedDrivers) {
-//           const driverUser = usersByEmpNumber.get(
-//             driver.DriverData.employeeNumber
-//           );
-
-//           if (!driverUser) continue;
-
-//           driverAssignments.push({
-//             _id: String(driverUser._id),
-//             userId: String(driverUser._id),
-//             driverId: String(driver._id),
-//             name: driverUser.fullName || "",
-//             email: driverUser.email || "",
-//             employeeNumber: String(driver.DriverData.employeeNumber),
-//             contact: String(driver.DriverData.contact),
-
-//           });
-
-//           const existingJob = await Job.findOne({
-//             bookingId: booking._id,
-//             driverId: driverUser._id,
-//           });
-
-//           if (!existingJob) {
-//             jobPromises.push(
-//               Job.create({
-//                 bookingId: booking._id,
-//                 driverId: driverUser._id,
-//                 assignedBy: new mongoose.Types.ObjectId(
-//                   "68873c2f7c912eaef3da9fe8"
-//                 ),
-//                 companyId: booking.companyId,
-//                 jobStatus: "New",
-//                 driverRejectionNote: null,
-//                 history: [
-//                   {
-//                     status: "New",
-//                     date: new Date(),
-//                     updatedBy: req?.user?._id || null,
-//                     reason: "Auto allocated by system",
-//                   },
-//                 ],
-//               })
-//             );
-//           }
-//         }
-
-//         if (driverAssignments.length > 0) {
-//           await Booking.findOneAndUpdate(
-//             { _id: booking._id },
-//             { $set: { drivers: driverAssignments } },
-//             { new: true }
-//           );
-
-//           await Promise.all(jobPromises);
-//         }
-//       } else {
-//         console.log(
-//           `No matching drivers found for booking ${booking.bookingId}`
-//         );
-//       }
-//     }
-
-//     return res.status(200).json({ message: "Auto allocation completed" });
-//   } catch (error) {
-//     console.error("Auto Allocation Error:", error);
-//     return res.status(500).json({ message: "Internal server error" });
-//   }
-// };

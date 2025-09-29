@@ -276,8 +276,8 @@ const CronJob = () => {
         } catch (err) {
           toast.update(toastId, {
             render:
-              "Auto run failed: " +
-              (err?.data?.message || err?.message || "Unknown"),
+            "Auto run failed: " +
+            (err?.data?.message || err?.data?.error || err?.error || err?.message || "Unknown"),
             type: "error",
             isLoading: false,
             autoClose: 5000,

@@ -17,7 +17,7 @@ const CustomTable = ({
   setSelectedRow,
   onRowDoubleClick,
   filename,
-  emptyMessage = "No Data Found",
+  emptyMessage = "No Data Found..",
 }) => {
   const [search, setSearch] = useState("");
   const [perPage, setPerPage] = useState(() => {

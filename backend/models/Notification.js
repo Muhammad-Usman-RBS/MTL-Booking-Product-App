@@ -7,21 +7,25 @@ const notificationSchema = new mongoose.Schema(
       required: true,
     },
     bookingId: {
-        type: String,
-      required: true,
+      type: String,
+      required: false,
     },
     status: {
       type: String,
-      required: true,
+      required: false,
     },
     jobId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Job"
+      ref: "Job",
     },
-    
+    expiryDetails: {
+      driverName: String,
+      driverEmployeeNumber: String,
+      expiredDocuments: [String], 
+    },
     primaryJourney: {
-      pickup: { type: String, required: true },
-      dropoff: { type: String, required: true },
+      pickup: { type: String, required: false },
+      dropoff: { type: String, required: false },
     },
     bookingSentAt: {
       type: Date,
