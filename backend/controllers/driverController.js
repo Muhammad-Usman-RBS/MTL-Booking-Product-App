@@ -138,19 +138,6 @@ export const createDriver = async (req, res) => {
   }
 };
 
-// export const getAllDrivers = async (req, res) => {
-//     try {
-//         const companyId = req?.user?.companyId
-//         if (!companyId) {
-//             return res.status(401).json({ success: false, message: "Unauthorized or missing company" });
-//           }
-//         const drivers = await Driver.find({companyId});
-//         res.status(200).json({ success: true, drivers });
-//     } catch (error) {
-//         console.error("Error fetching drivers:", error);
-//         res.status(500).json({ success: false, message: "Server error" });
-//     }
-// };
 export const getAllDrivers = async (req, res) => {
   try {
     const companyId = req?.user?.companyId;
@@ -233,7 +220,6 @@ export const updateDriverById = async (req, res) => {
     let parsedAvailability = [];
 
     try {
-   
       const arr =
         typeof availability === "string"
           ? JSON.parse(availability)
@@ -263,17 +249,19 @@ export const updateDriverById = async (req, res) => {
     const oldEmail = driver?.DriverData?.email;
     const companyId = driver?.companyId;
     if (email && email !== oldEmail) {
-        const exists = await Driver.findOne({
-          companyId,
-          "DriverData.email": email,
-          _id: { $ne: id },
-        });
-      
-        if (exists) {
-          return res.status(400).json({ message: "A driver already exists with this email" });
-        }
+      const exists = await Driver.findOne({
+        companyId,
+        "DriverData.email": email,
+        _id: { $ne: id },
+      });
+
+      if (exists) {
+        return res
+          .status(400)
+          .json({ message: "A driver already exists with this email" });
       }
-      
+    }
+
     driver.DriverData = {
       employeeNumber,
       status,

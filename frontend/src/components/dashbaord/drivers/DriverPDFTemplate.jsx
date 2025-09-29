@@ -2,7 +2,7 @@ import React from "react";
 import IMAGES from "../../../assets/images";
 import html2pdf from "html2pdf.js";
 
-const DriverPDFTemplate = ({ driver, vehicle, uploads, formatDate }) => {
+const DriverPDFTemplate = ({ driver, vehicle, uploads, formatDate,formatDateWithStatus }) => {
   const handleDownloadPDF = async () => {
     const element = document.getElementById("driver-details-pdf");
     if (!element) return;
@@ -172,8 +172,8 @@ const DriverPDFTemplate = ({ driver, vehicle, uploads, formatDate }) => {
                 <p><strong>Model:</strong> {vehicle.carModal || "N/A"}</p>
                 <p><strong>Color:</strong> {vehicle.carColor || "N/A"}</p>
                 <p><strong>Reg. No.:</strong> {vehicle.carRegistration || "N/A"}</p>
-                <p><strong>Insurance Expiry:</strong> {formatDate(vehicle.carInsuranceExpiry)}</p>
-                <p><strong>MOT Expiry:</strong> {formatDate(vehicle.motExpiryDate)}</p>
+                <p><strong>Insurance Expiry:</strong> {formatDateWithStatus(vehicle.carInsuranceExpiry)}</p>
+                <p><strong>MOT Expiry:</strong> {formatDateWithStatus(vehicle.carInsuranceExpiry)}</p>
                 <div style={{ gridColumn: "span 2" }}>
                   <strong>Vehicle Types:</strong>&nbsp;
                   {vehicle.vehicleTypes?.length > 0 ? vehicle.vehicleTypes.join(", ") : "N/A"}
@@ -216,9 +216,9 @@ const DriverPDFTemplate = ({ driver, vehicle, uploads, formatDate }) => {
               }}
             >
               <p><strong>Driver License:</strong> {driver.driverLicense || "N/A"}</p>
-              <p><strong>License Expiry:</strong> {formatDate(driver.driverLicenseExpiry)}</p>
-              <p><strong>Private Hire License Expiry:</strong> {formatDate(driver.driverPrivateHireLicenseExpiry)}</p>
-              <p><strong>Vehicle Hire License Expiry:</strong> {formatDate(vehicle.carPrivateHireLicenseExpiry)}</p>
+              <p><strong>License Expiry:</strong> {formatDateWithStatus(driver.driverLicenseExpiry)}</p>
+              <p><strong>Private Hire License Expiry:</strong>{formatDateWithStatus(driver.driverPrivateHireLicenseExpiry)}</p>
+              <p><strong>Vehicle Hire License Expiry:</strong> {formatDateWithStatus(vehicle.carPrivateHireLicenseExpiry)}</p>
               <p><strong>National Insurance:</strong> {driver.NationalInsurance || "N/A"}</p>
               <p><strong>Private Hire Card No.:</strong> {driver.privateHireCardNo || "N/A"}</p>
               <p><strong>Vehicle Hire License:</strong> {vehicle.carPrivateHireLicense || "N/A"}</p>

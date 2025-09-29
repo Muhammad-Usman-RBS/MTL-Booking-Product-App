@@ -11,7 +11,37 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
 
   const formatDate = (dateString) =>
     dateString ? dateString.split("T")[0] : "N/A";
+  const isExpired = (dateString) => {
+    if (!dateString) return false;
+    const expiryDate = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return expiryDate < today;
+  };
 
+  const formatDateWithStatus = (dateString) => {
+    const formattedDate = formatDate(dateString);
+    if (formattedDate === "N/A") return formattedDate;
+
+    if (isExpired(dateString)) {
+      return (
+        <>
+          {formattedDate}
+          <span
+            style={{
+              color: "red",
+              fontSize: "12px",
+              fontWeight: "bold",
+              marginLeft: "8px",
+            }}
+          >
+            (EXPIRED)
+          </span>
+        </>
+      );
+    }
+    return formattedDate;
+  };
   return (
     <>
       <OutletBtnHeading
@@ -25,6 +55,7 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
       <DriverPDFTemplate
         driver={driver}
         vehicle={vehicle}
+        formatDateWithStatus={formatDateWithStatus}
         uploads={uploads}
         formatDate={formatDate}
       />
@@ -46,36 +77,68 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
             <div className="flex-1 w-full">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-6 gap-y-2 text-sm">
                 <div className="flex flex-col sm:flex-row">
-                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">Status:</span>
-                  <span className="text-gray-600 break-words">{driver.status || "N/A"}</span>
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">
+                    Status:
+                  </span>
+                  <span className="text-gray-600 break-words">
+                    {driver.status || "N/A"}
+                  </span>
                 </div>
                 <div className="flex flex-col sm:flex-row">
-                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">Driver No.:</span>
-                  <span className="text-gray-600 break-words">{driver.employeeNumber || "N/A"}</span>
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">
+                    Driver No.:
+                  </span>
+                  <span className="text-gray-600 break-words">
+                    {driver.employeeNumber || "N/A"}
+                  </span>
                 </div>
                 <div className="flex flex-col sm:flex-row">
-                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">First Name:</span>
-                  <span className="text-gray-600 break-words">{driver.firstName || "N/A"}</span>
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">
+                    First Name:
+                  </span>
+                  <span className="text-gray-600 break-words">
+                    {driver.firstName || "N/A"}
+                  </span>
                 </div>
                 <div className="flex flex-col sm:flex-row">
-                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">Sur Name:</span>
-                  <span className="text-gray-600 break-words">{driver.surName || "N/A"}</span>
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">
+                    Sur Name:
+                  </span>
+                  <span className="text-gray-600 break-words">
+                    {driver.surName || "N/A"}
+                  </span>
                 </div>
                 <div className="flex flex-col sm:flex-row">
-                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">Email:</span>
-                  <span className="text-gray-600 break-words">{driver.email || "N/A"}</span>
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">
+                    Email:
+                  </span>
+                  <span className="text-gray-600 break-words">
+                    {driver.email || "N/A"}
+                  </span>
                 </div>
                 <div className="flex flex-col sm:flex-row">
-                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">Contact:</span>
-                  <span className="text-gray-600 break-words">{driver.contact || "N/A"}</span>
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">
+                    Contact:
+                  </span>
+                  <span className="text-gray-600 break-words">
+                    {driver.contact || "N/A"}
+                  </span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:col-span-2">
-                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">Address:</span>
-                  <span className="text-gray-600 break-words">{driver.address || "N/A"}</span>
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">
+                    Address:
+                  </span>
+                  <span className="text-gray-600 break-words">
+                    {driver.address || "N/A"}
+                  </span>
                 </div>
                 <div className="flex flex-col sm:flex-row">
-                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">D.O.B.:</span>
-                  <span className="text-gray-600">{formatDate(driver.dateOfBirth)}</span>
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">
+                    D.O.B.:
+                  </span>
+                  <span className="text-gray-600">
+                    {formatDate(driver.dateOfBirth)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -97,33 +160,61 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
             <div className="flex-1 w-full">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-6 gap-y-2 text-sm">
                 <div className="flex flex-col sm:flex-row">
-                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[80px]">Make:</span>
-                  <span className="text-gray-600 break-words">{vehicle.carMake || "N/A"}</span>
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[80px]">
+                    Make:
+                  </span>
+                  <span className="text-gray-600 break-words">
+                    {vehicle.carMake || "N/A"}
+                  </span>
                 </div>
                 <div className="flex flex-col sm:flex-row">
-                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[80px]">Model:</span>
-                  <span className="text-gray-600 break-words">{vehicle.carModal || "N/A"}</span>
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[80px]">
+                    Model:
+                  </span>
+                  <span className="text-gray-600 break-words">
+                    {vehicle.carModal || "N/A"}
+                  </span>
                 </div>
                 <div className="flex flex-col sm:flex-row">
-                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[80px]">Color:</span>
-                  <span className="text-gray-600 break-words">{vehicle.carColor || "N/A"}</span>
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[80px]">
+                    Color:
+                  </span>
+                  <span className="text-gray-600 break-words">
+                    {vehicle.carColor || "N/A"}
+                  </span>
                 </div>
                 <div className="flex flex-col sm:flex-row">
-                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[80px]">Reg. No.:</span>
-                  <span className="text-gray-600 break-words">{vehicle.carRegistration || "N/A"}</span>
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[80px]">
+                    Reg. No.:
+                  </span>
+                  <span className="text-gray-600 break-words">
+                    {vehicle.carRegistration || "N/A"}
+                  </span>
                 </div>
                 <div className="flex flex-col sm:flex-row">
-                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[120px]">Insurance Expiry:</span>
-                  <span className="text-gray-600">{formatDate(vehicle.carInsuranceExpiry)}</span>
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[120px]">
+                    Insurance Expiry:
+                  </span>
+                  <span className="text-gray-600">
+                    {formatDateWithStatus(vehicle.carInsuranceExpiry)}
+                  </span>
                 </div>
                 <div className="flex flex-col sm:flex-row">
-                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">MOT Expiry:</span>
-                  <span className="text-gray-600">{formatDate(vehicle.motExpiryDate)}</span>
+                  <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[100px]">
+                    MOT Expiry:
+                  </span>
+                  <span className="text-gray-600">
+                    {formatDateWithStatus(vehicle.motExpiryDate)}
+                  </span>
                 </div>
                 <div className="col-span-1 sm:col-span-2 mt-2">
-                  <span className="font-semibold text-gray-700">Vehicle Types: </span>
+                  <span className="font-semibold text-gray-700">
+                    Vehicle Types:{" "}
+                  </span>
                   <span className="text-gray-600">
-                    {vehicle.vehicleTypes?.length > 0 ? vehicle.vehicleTypes.join(", ") : "N/A"}
+                    {vehicle.vehicleTypes?.length > 0
+                      ? vehicle.vehicleTypes.join(", ")
+                      : "N/A"}
                   </span>
                 </div>
               </div>
@@ -139,32 +230,61 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-6 gap-y-3 text-sm">
             <div className="flex flex-col sm:flex-row">
-              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[140px]">Driver License:</span>
-              <span className="text-gray-600 break-words">{driver.driverLicense || "N/A"}</span>
+              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[140px]">
+                Driver License:
+              </span>
+              <span className="text-gray-600 break-words">
+                {driver.driverLicense || "N/A"}
+              </span>
             </div>
             <div className="flex flex-col sm:flex-row">
-              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[120px]">License Expiry:</span>
-              <span className="text-gray-600">{formatDate(driver.driverLicenseExpiry)}</span>
+              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[120px]">
+                License Expiry:
+              </span>
+
+              <span className="text-gray-600">
+                {formatDateWithStatus(driver.driverLicenseExpiry)}
+              </span>
             </div>
             <div className="flex flex-col sm:flex-row">
-              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[180px]">Private Hire License Expiry:</span>
-              <span className="text-gray-600">{formatDate(driver.driverPrivateHireLicenseExpiry)}</span>
+              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[180px]">
+                Private Hire License Expiry:
+              </span>
+              <span className="text-gray-600">
+                {formatDateWithStatus(driver.driverPrivateHireLicenseExpiry)}
+              </span>
             </div>
             <div className="flex flex-col sm:flex-row">
-              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[180px]">Vehicle Hire License Expiry:</span>
-              <span className="text-gray-600">{formatDate(vehicle.carPrivateHireLicenseExpiry)}</span>
+              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[180px]">
+                Vehicle Hire License Expiry:
+              </span>
+              <span className="text-gray-600">
+                {formatDateWithStatus(vehicle.carPrivateHireLicenseExpiry)}
+              </span>
             </div>
             <div className="flex flex-col sm:flex-row">
-              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[140px]">National Insurance:</span>
-              <span className="text-gray-600 break-words">{driver.NationalInsurance || "N/A"}</span>
+              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[140px]">
+                National Insurance:
+              </span>
+              <span className="text-gray-600 break-words">
+                {driver.NationalInsurance || "N/A"}
+              </span>
             </div>
             <div className="flex flex-col sm:flex-row">
-              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[160px]">Private Hire Card No.:</span>
-              <span className="text-gray-600 break-words">{driver.privateHireCardNo || "N/A"}</span>
+              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[160px]">
+                Private Hire Card No.:
+              </span>
+              <span className="text-gray-600 break-words">
+                {driver.privateHireCardNo || "N/A"}
+              </span>
             </div>
             <div className="flex flex-col sm:flex-row sm:col-span-2">
-              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[160px]">Vehicle Hire License:</span>
-              <span className="text-gray-600 break-words">{vehicle.carPrivateHireLicense || "N/A"}</span>
+              <span className="font-semibold text-gray-700 min-w-0 sm:min-w-[160px]">
+                Vehicle Hire License:
+              </span>
+              <span className="text-gray-600 break-words">
+                {vehicle.carPrivateHireLicense || "N/A"}
+              </span>
             </div>
           </div>
         </div>
@@ -190,4 +310,3 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
 };
 
 export default ViewDriver;
-

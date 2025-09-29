@@ -8,7 +8,6 @@ import ViewDriver from "./ViewDriver";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
-import EmptyTableMessage from "../../../constants/constantscomponents/EmptyTableMessage";
 
 import {
   useDeleteDriverByIdMutation,

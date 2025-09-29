@@ -10,12 +10,15 @@ import {
 import { toast } from "react-toastify";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { validateDriver, validateVehicle } from "../../../utils/validation/validators";
+import {
+  validateDriver,
+  validateVehicle,
+} from "../../../utils/validation/validators";
 import IMAGES from "../../../assets/images";
 import { useLoading } from "../../common/LoadingProvider";
 
 const NewDriver = () => {
-  const {showLoading, hideLoading}= useLoading()
+  const { showLoading, hideLoading } = useLoading();
   const user = useSelector((state) => state?.auth?.user);
   const companyId = user?.companyId;
   const { id } = useParams();
@@ -24,7 +27,9 @@ const NewDriver = () => {
   const [filePreviews, setFilePreviews] = useState({});
   const [createDriver] = useCreateDriverMutation();
 
-  const { data: driverData, isLoading } = useGetDriverByIdQuery(id, { skip: !isEdit });
+  const { data: driverData, isLoading } = useGetDriverByIdQuery(id, {
+    skip: !isEdit,
+  });
   const [updateDriver] = useUpdateDriverByIdMutation();
   const [formData, setFormData] = useState({
     motExpiryDate: "",
@@ -60,61 +65,24 @@ const NewDriver = () => {
     driverLicenseExpiry: "",
     availability: [{ from: "", to: "" }],
   });
-  
-   useEffect(()=> {
-      if(isLoading) {
-        showLoading()
-      } else {
-        hideLoading()
-      }
-    },[isLoading])
-    
-    const validateExpiryDates = (formData) => {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const expiryFields = [
-        { field: 'driverLicenseExpiry', label: 'Driving License Expiry' },
-        { field: 'driverPrivateHireLicenseExpiry', label: 'Driver Private Hire License Expiry' },
-        { field: 'carInsuranceExpiry', label: 'Vehicle Insurance Expiry' },
-        { field: 'carPrivateHireLicenseExpiry', label: 'Vehicle Private Hire License Expiry' },
-        { field: 'motExpiryDate', label: 'MOT Expiry' }
-      ];
-      
-      const invalidFields = [];
-      
-      expiryFields.forEach(({ field, label }) => {
-        if (formData[field]) {
-          const expiryDate = new Date(formData[field]);
-          if (expiryDate < today) {
-            invalidFields.push(label);
-          }
-        }
-      });
-      
-      return invalidFields;
-    };
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  // Run all validations
-  const { errors: driverErrors, isValid: isDriverValid } = validateDriver(formData, { isEdit });
-  const { errors: vehicleErrors, isValid: isVehicleValid } = validateVehicle(formData);
-  const invalidExpiryFields = validateExpiryDates(formData);
-
-  const allErrors = { ...driverErrors, ...vehicleErrors };
-
-  if (!isDriverValid || !isVehicleValid || invalidExpiryFields.length > 0) {
-    Object.values(allErrors).forEach((msg) => toast.error(msg));
-    
-    if (invalidExpiryFields.length > 0) {
-      const fieldsText = invalidExpiryFields.join(', ');
-      toast.error(`The following expiry dates cannot be in the past: ${fieldsText}`);
-    }
-    
-    return;
-  }
-
+    // Run all validations
+    const { errors: driverErrors, isValid: isDriverValid } = validateDriver(
+      formData,
+      { isEdit }
+    );
+    const { errors: vehicleErrors, isValid: isVehicleValid } =
+      validateVehicle(formData);
 
     try {
       const form = new FormData();
@@ -140,10 +108,9 @@ const NewDriver = () => {
         await createDriver(form).unwrap();
         toast.success("Driver created successfully!");
       }
-      if(isEdit) {
-
+      if (isEdit) {
         navigate("/dashboard/drivers/list");
-      } else{
+      } else {
         navigate("/dashboard/admin-list/add-user");
       }
     } catch (error) {
@@ -253,11 +220,11 @@ const NewDriver = () => {
         ),
         driverPrivateHireLicenseExpiry: formatDateForInput(
           DriverData.driverPrivateHireLicenseExpiry ||
-          rest.driverPrivateHireLicenseExpiry
+            rest.driverPrivateHireLicenseExpiry
         ),
         carPrivateHireLicenseExpiry: formatDateForInput(
           VehicleData.carPrivateHireLicenseExpiry ||
-          rest.carPrivateHireLicenseExpiry
+            rest.carPrivateHireLicenseExpiry
         ),
         motExpiryDate: formatDateForInput(
           VehicleData.motExpiryDate || rest.motExpiryDate
@@ -288,8 +255,9 @@ const NewDriver = () => {
   return (
     <div>
       <div
-        className={`${isEdit ? "border-[var(--light-gray)] border-b" : ""
-          } flex items-center justify-between `}
+        className={`${
+          isEdit ? "border-[var(--light-gray)] border-b" : ""
+        } flex items-center justify-between `}
       >
         <OutletHeading name={isEdit ? "Edit Driver" : "Add Driver"} />
 
@@ -337,7 +305,7 @@ const NewDriver = () => {
         />
 
         <VehicleData
-        companyId={companyId}
+          companyId={companyId}
           handleCheckboxChange={handleCheckboxChange}
           handleInputChange={handleInputChange}
           formData={formData}
