@@ -4,7 +4,10 @@ import BookingSetting from "../../models/settings/BookingSetting.js";
 export const getBookingSetting = async (req, res) => {
   try {
     const companyId = req.user?.companyId;
-    if (!companyId) return res.status(401).json({ message: "Company ID missing or unauthorized" });
+    if (!companyId)
+      return res
+        .status(401)
+        .json({ message: "Company ID missing or unauthorized" });
 
     // upsert a default doc if not found so UI always has data
     let setting = await BookingSetting.findOne({ companyId });
@@ -33,23 +36,28 @@ export const createOrUpdateBookingSetting = async (req, res) => {
       timezone,
       currency, // array of {label,value,symbol}
       googleApiKeys, // {browser, server, android, ios}
-      avoidRoutes,   // {highways, tolls, ferries}
-      distanceUnit,  // "Miles" | "KMs"
+      avoidRoutes, // {highways, tolls, ferries}
+      distanceUnit, // "Miles" | "KMs"
       hourlyPackage, // boolean
-      advanceBookingMin,  // {value, unit}
-      cancelBookingWindow,// {value, unit}
+      advanceBookingMin, // {value, unit}
+      cancelBookingWindow, // {value, unit}
       cancelBookingTerms, // string
     } = req.body;
 
     // currency validation
     if (!Array.isArray(currency) || currency.length === 0) {
-      return res.status(400).json({ message: "Currency should be a non-empty array of currency objects" });
+      return res.status(400).json({
+        message: "Currency should be a non-empty array of currency objects",
+      });
     }
     const isValidCurrency = currency.every(
-      (c) => c?.label && c?.value && c?.symbol &&
-             typeof c.label === "string" &&
-             typeof c.value === "string" &&
-             typeof c.symbol === "string"
+      (c) =>
+        c?.label &&
+        c?.value &&
+        c?.symbol &&
+        typeof c.label === "string" &&
+        typeof c.value === "string" &&
+        typeof c.symbol === "string"
     );
     if (!isValidCurrency) {
       return res.status(400).json({ message: "Invalid currency format" });
@@ -89,7 +97,9 @@ export const createOrUpdateBookingSetting = async (req, res) => {
       { new: true, upsert: true }
     );
 
-    res.status(200).json({ success: true, message: "Booking setting updated", setting });
+    res
+      .status(200)
+      .json({ success: true, message: "Booking setting updated", setting });
   } catch (error) {
     console.error("Error updating booking setting:", error);
     res.status(500).json({ success: false, message: "Server error" });
