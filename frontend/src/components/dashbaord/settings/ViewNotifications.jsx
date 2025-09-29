@@ -11,34 +11,33 @@ import {
 import { useLoading } from "../../common/LoadingProvider";
 
 const ViewNotifications = () => {
-  const {showLoading, hideLoading} = useLoading()
+  const { showLoading, hideLoading } = useLoading();
   const user = useSelector((state) => state?.auth?.user);
   const empArg =
-  user?.role === "driver"
-    ? String(user?.employeeNumber || "")
-    : String(user?._id || "");
+    user?.role === "driver"
+      ? String(user?.employeeNumber || "")
+      : String(user?._id || "");
 
-const {
-  data: notifications = [],
-  refetch: refetchNotifications,
-  isLoading,
-} = useGetUserNotificationsQuery(empArg, {
-  skip: !empArg,
-});
+  const {
+    data: notifications = [],
+    refetch: refetchNotifications,
+    isLoading,
+  } = useGetUserNotificationsQuery(empArg, {
+    skip: !empArg,
+  });
 
-  
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
-  
+
   const [deleteNotificationMutation] = useDeleteNotificationMutation();
-  
-  useEffect(()=> {
-       if(isLoading) {
-         showLoading()
-       } else {
-         hideLoading()
-       }
-     },[isLoading])
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading]);
 
   const deleteNotification = async (id) => {
     try {
@@ -129,7 +128,7 @@ const {
       <hr className="mb-6 border-[var(--light-gray)]" />
 
       <main>
-        { notifications.length === 0 ? (
+        {notifications.length === 0 ? (
           <div className="  p-12 text-center">
             <Icons.Bell className="w-16 h-16 mx-auto mb-4 text-[var(--medium-grey)]" />
             <h2 className="text-xl font-semibold mb-2 text-[var(--dark-black)]">
@@ -141,71 +140,99 @@ const {
           </div>
         ) : (
           <ul className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-          {notifications.map((notification) => {
-            const isDocExpiry = notification.status === "Document Expired";
-        
-            return (
-              <li
-                key={notification._id}
-                className="bg-white hover:shadow-lg transition-all duration-300"
-              >
-                <article className="flex items-start gap-4 p-6">
-                  <div className="flex-shrink-0">
-                    <Icons.Bell className="w-5 h-5 text-[var(--main-color)]" />
-                  </div>
-        
-                  <div className="flex-1 min-w-0">
-                    {/* 🔹 if it's document expiry */}
-                    {isDocExpiry ? (
-                      <>
-                        <div className="flex items-start justify-between">
-                          <h3 className="font-semibold text-red-600 text-base">
-                            Document Expired
-                          </h3>
-                          <span className="text-xs font-medium text-gray-600">
-                            Employee #: {notification.expiryDetails?.driverEmployeeNumber}
-                          </span>
-                        </div>
-                        <p className="text-sm mt-1 text-[var(--dark-grey)]">
-                          Driver: <span className="font-medium">{notification.expiryDetails?.driverName}</span>
-                        </p>
-                        <p className="text-sm mt-1 text-red-600">
-                          Expired: {notification.expiryDetails?.expiredDocuments?.join(", ")}
-                        </p>
-                      </>
-                    ) : (
-                      /* 🔹 default booking notification */
-                      <>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-[var(--navy-blue)] text-base truncate">
-                            {notification.status || "New Notification"}
-                          </h3>
-                          {!notification.isRead && (
-                            <span className="w-2 h-2 bg-[var(--main-color)] rounded-full animate-pulse" />
-                          )}
-                        </div>
-                        <p className="text-sm mb-1 text-[var(--dark-grey)] leading-snug">
-                          Booking #{notification.bookingId || "—"}
-                        </p>
-                        <p className="text-sm mb-1 text-[var(--dark-grey)] leading-snug">
-                          {notification?.primaryJourney?.pickup ||
-                            notification?.returnJourney?.pickup ||
-                            "No pickup location"}
-                        </p>
-                      </>
-                    )}
-        
-                    {/* Common footer */}
-                    <time className="text-xs text-[var(--dark-grey)] italic">
-                      {getTimeAgo(notification.bookingSentAt || notification.createdAt)}
-                    </time>
-                  </div>
-                </article>
-              </li>
-            );
-          })}
-        </ul>
-        
+            {notifications.map((notification) => {
+              const isDocExpiry = notification.status === "Document Expired";
+
+              return (
+                <li
+                  key={notification._id}
+                  className="bg-white hover:shadow-lg transition-all duration-300"
+                >
+                  <article className="flex items-start gap-4 p-6">
+                    <div className="flex-shrink-0">
+                      <Icons.Bell className="w-5 h-5 text-[var(--main-color)]" />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      {/* 🔹 if it's document expiry */}
+                      {isDocExpiry ? (
+                        <>
+                          <div className="flex items-start justify-between">
+                            <h3 className="font-semibold text-red-600 text-base">
+                              Document Expired
+                            </h3>
+                            <span className="text-xs font-medium text-gray-600">
+                              Employee #:{" "}
+                              {notification.expiryDetails?.driverEmployeeNumber}
+                            </span>
+                          </div>
+                          <p className="text-sm mt-1 text-[var(--dark-grey)]">
+                            Driver:{" "}
+                            <span className="font-medium">
+                              {notification.expiryDetails?.driverName}
+                            </span>
+                          </p>
+                          <p className="text-sm mt-1 text-red-600">
+                            Expired:{" "}
+                            {notification.expiryDetails?.expiredDocuments?.join(
+                              ", "
+                            )}
+                          </p>
+                        </>
+                      ) : (
+                        /* 🔹 default booking notification */
+                        <>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-[var(--navy-blue)] text-base truncate">
+                              {notification.status || "New Notification"}
+                            </h3>
+                            {!notification.isRead && (
+                              <span className="w-2 h-2 bg-[var(--main-color)] rounded-full animate-pulse" />
+                            )}
+                          </div>
+                          <p className="text-sm mb-1 text-[var(--dark-grey)] leading-snug">
+                            Booking #{notification.bookingId || "—"}
+                          </p>
+                          <p className="text-sm mb-1 text-[var(--dark-grey)] leading-snug">
+                            {notification?.primaryJourney?.pickup ||
+                              notification?.returnJourney?.pickup ||
+                              "No pickup location"}
+                          </p>
+                        </>
+                      )}
+
+                      {/* Common footer */}
+                      <time className="text-xs text-[var(--dark-grey)] italic">
+                        {getTimeAgo(
+                          notification.bookingSentAt || notification.createdAt
+                        )}
+                      </time>
+                    </div>
+                    <div className="flex flex-col items-center gap-2 ml-4">
+                      {!notification.isRead && (
+                        <button
+                          onClick={() => handleMarkAsRead(notification._id)}
+                          className="p-2 rounded-lg hover:bg-[var(--light-blue)] text-[var(--main-color)] transition-colors"
+                          title="Mark as Read"
+                        >
+                          <Icons.CheckCircle className="w-5 h-5" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() =>
+                          handleDeleteNotification(notification._id)
+                        }
+                        className="p-2 rounded-lg hover:bg-red-100 text-[var(--alert-red)] transition-colors"
+                        title="Delete Notification"
+                      >
+                        <Icons.X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </article>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </main>
     </section>
