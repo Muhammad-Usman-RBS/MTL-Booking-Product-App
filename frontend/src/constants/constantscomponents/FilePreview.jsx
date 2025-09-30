@@ -98,7 +98,7 @@ const FilePreview = ({
                         className="custom_input hidden"
                         onChange={onChange}
                     />
-                    <label htmlFor={name} className="btn btn-primary cursor-pointer mt-1">
+                    <label htmlFor={name} className="btn btn-back cursor-pointer mt-1">
                         Choose file
                     </label>
                 </div>

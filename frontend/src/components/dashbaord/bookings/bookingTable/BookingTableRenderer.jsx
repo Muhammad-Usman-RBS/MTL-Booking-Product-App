@@ -39,6 +39,35 @@ export const BookingTableRenderer = ({
   moment,
   timezone,
 }) => {
+  const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
+  const currencySymbol = currencySetting?.symbol || "£";
+  const currencyApplication =
+    bookingSettingData?.setting?.currencyApplication || "New Bookings Only";
+
+  const formatCurrency = (value, booking) => {
+    if (value === undefined || value === null || value === "-") return "-";
+
+    const currencyApplication = bookingSettingData?.setting?.currencyApplication;
+    const currentCurrency = bookingSettingData?.setting?.currency?.[0] || {
+      symbol: "£",
+      label: "British Pound",
+      value: "GBP",
+    };
+
+    // ✅ All Bookings → hamesha latest setting wali currency
+    if (currencyApplication === "All Bookings") {
+      return `${currentCurrency.symbol} ${Number(value).toFixed(2)}`;
+    }
+
+    // ✅ New Bookings Only → booking snapshot use karo
+    if (booking?.currency?.symbol) {
+      return `${booking.currency.symbol} ${Number(value).toFixed(2)}`;
+    }
+
+    // fallback
+    return `${currentCurrency.symbol} ${Number(value).toFixed(2)}`;
+  };
+
   const [restoreOrDeleteBooking] = useRestoreOrDeleteBookingMutation();
   const getIdStr = (v) =>
     v?._id?.toString?.() || v?.$oid || v?.toString?.() || String(v || "");
@@ -383,22 +412,17 @@ export const BookingTableRenderer = ({
             row[key] = item.paymentMethod || "-";
             break;
           case "journeyFare":
-            row[key] = item.journeyFare !== undefined ? item.journeyFare : "-";
+            row[key] = formatCurrency(item.journeyFare, item);
             break;
           case "driverFare":
-            row[key] = item.driverFare !== undefined ? item.driverFare : "-";
+            row[key] = formatCurrency(item.driverFare, item);
             break;
           case "returnJourneyFare":
-            row[key] =
-              item.returnJourneyFare !== undefined
-                ? item.returnJourneyFare
-                : "-";
+            row[key] = formatCurrency(item.returnJourneyFare, item);
             break;
           case "returnDriverFare":
-            row[key] =
-              item.returnDriverFare !== undefined ? item.returnDriverFare : "-";
+            row[key] = formatCurrency(item.returnDriverFare, item);
             break;
-
           case "flightNumber": {
             const journey = item.returnJourneyToggle
               ? item.returnJourney
@@ -424,15 +448,15 @@ export const BookingTableRenderer = ({
               : item.primaryJourney;
             row[key] = journey?.flightArrival?.scheduled
               ? new Date(journey.flightArrival.scheduled).toLocaleString(
-                  "en-GB",
-                  {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  }
-                )
+                "en-GB",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                }
+              )
               : "-";
             break;
           }
@@ -443,15 +467,15 @@ export const BookingTableRenderer = ({
               : item.primaryJourney;
             row[key] = journey?.flightArrival?.estimated
               ? new Date(journey.flightArrival.estimated).toLocaleString(
-                  "en-GB",
-                  {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  }
-                )
+                "en-GB",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                }
+              )
               : "-";
             break;
           }
@@ -459,8 +483,8 @@ export const BookingTableRenderer = ({
           case "createdAt":
             row[key] = item.createdAt
               ? moment(item.createdAt)
-                  .tz(timezone)
-                  .format("DD/MM/YYYY HH:mm:ss")
+                .tz(timezone)
+                .format("DD/MM/YYYY HH:mm:ss")
               : "-";
             break;
           case "driver": {
@@ -781,7 +805,7 @@ export const BookingTableRenderer = ({
                                   if (
                                     user?.role === "customer" &&
                                     bookingSetting?.companyId ===
-                                      user?.companyId
+                                    user?.companyId
                                   ) {
                                     const cancelWindow =
                                       bookingSetting?.cancelBookingWindow;
@@ -789,9 +813,8 @@ export const BookingTableRenderer = ({
                                       cancelWindow &&
                                       isWithinCancelWindow(item, cancelWindow)
                                     ) {
-                                      const windowText = `${
-                                        cancelWindow.value
-                                      } ${cancelWindow.unit.toLowerCase()}`;
+                                      const windowText = `${cancelWindow.value
+                                        } ${cancelWindow.unit.toLowerCase()}`;
                                       toast.error(
                                         `Cannot edit booking. Pickup time is within the ${windowText} cancellation window.`
                                       );

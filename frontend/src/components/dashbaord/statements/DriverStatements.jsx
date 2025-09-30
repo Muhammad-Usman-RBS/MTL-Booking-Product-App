@@ -110,7 +110,7 @@ const DriverStatements = () => {
       <div className="flex flex-col justify-between sm:flex-row gap-4 mb-4">
         <div className="flex gap-2 items-center">
           <button
-            className="btn btn-reset"
+            className="btn btn-edit"
             onClick={() => setShowGeneration(true)}
           >
             Create

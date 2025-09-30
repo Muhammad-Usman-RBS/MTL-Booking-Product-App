@@ -308,7 +308,7 @@ const NewCorporateCustomer = ({ isOpen, onClose, customerData, onSave }) => {
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="submit"
-              className="btn btn-reset"
+              className="btn btn-edit"
               disabled={isCreating || isUpdating || !formData.name || !formData.email || !formData.phone}
             >
               {customerData

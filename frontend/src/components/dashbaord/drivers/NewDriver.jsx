@@ -262,7 +262,7 @@ const NewDriver = () => {
         <OutletHeading name={isEdit ? "Edit Driver" : "Add Driver"} />
 
         <Link to="/dashboard/drivers/list" className="mb-4">
-          <button className="btn btn-primary ">← Back to Driver List</button>
+          <button className="btn btn-back ">← Back to Driver List</button>
         </Link>
       </div>
       <hr className="mb-6 border-[var(--light-gray)]" />
@@ -278,7 +278,7 @@ const NewDriver = () => {
 
             <label
               htmlFor="driverPicture"
-              className="btn btn-reset mt-3 cursor-pointer text-sm"
+              className="btn btn-edit mt-3 cursor-pointer text-sm"
             >
               Upload Driver Image
             </label>
@@ -313,7 +313,7 @@ const NewDriver = () => {
         />
 
         <div className="text-center mt-6">
-          <button type="submit" className="btn btn-reset">
+          <button type="submit" className="btn btn-edit">
             {isEdit ? "Update" : "Submit"}
           </button>
         </div>

@@ -78,7 +78,7 @@ const PermissionsSettings = () => {
     <div>
       <div className="flex justify-between items-center">
         <OutletHeading name="Permissions" />
-        <button onClick={toggleAll} className="btn btn-edit mb-2">
+        <button onClick={toggleAll} className="btn btn-back mb-2">
           {selectedPermissions.length === ALL_PERMISSIONS.length
             ? "Unselect All"
             : "Select All"}
@@ -107,7 +107,7 @@ const PermissionsSettings = () => {
       <div className="flex justify-end">
         <button
           disabled={!hasChanges || isLoading}
-          className={`btn btn-reset`}
+          className={`btn btn-edit`}
           onClick={handleUpdateClick}
         >
           {isLoading ? "Updating..." : "Update Permissions"}

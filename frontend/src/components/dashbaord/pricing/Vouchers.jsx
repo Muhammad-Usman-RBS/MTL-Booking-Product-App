@@ -190,7 +190,7 @@ const Vouchers = () => {
       <div>
         <OutletHeading name="Voucher/Coupon" />
         <div className="flex justify-between items-center mb-4">
-          <button className="btn btn-edit" onClick={handleAddNew}>
+          <button className="btn btn-back" onClick={handleAddNew}>
             Add New
           </button>
           <SelectOption
@@ -314,7 +314,7 @@ const Vouchers = () => {
             >
               Cancel
             </button>
-            <button onClick={handleUpdateOrCreate} className="btn btn-reset">
+            <button onClick={handleUpdateOrCreate} className="btn btn-edit">
               {selectedItem?._id ? "Update" : "Create"}
             </button>
           </div>

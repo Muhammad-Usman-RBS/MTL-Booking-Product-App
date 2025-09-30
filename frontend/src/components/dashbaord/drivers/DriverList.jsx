@@ -163,7 +163,7 @@ const DriverList = () => {
           <>
             <div className="flex flex-col sm:flex-row justify-between gap-4 px-4 sm:px-0 mb-4">
               <Link to="/dashboard/drivers/new" className="w-full sm:w-auto">
-                <button className="btn btn-reset flex items-center gap-2 w-full sm:w-auto justify-center">
+                <button className="btn btn-edit flex items-center gap-2 w-full sm:w-auto justify-center">
                   Create New Driver
                 </button>
               </Link>

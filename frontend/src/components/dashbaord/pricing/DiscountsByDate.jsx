@@ -187,7 +187,7 @@ const DiscountsByDate = () => {
         <OutletHeading name="Discount / Surcharge Pricing" />
 
         <div className="flex justify-between items-center mb-4">
-          <button className="btn btn-edit" onClick={handleAddNew}>
+          <button className="btn btn-back" onClick={handleAddNew}>
             Add New
           </button>
           <SelectOption
@@ -359,7 +359,7 @@ const DiscountsByDate = () => {
             >
               Cancel
             </button>
-            <button onClick={handleSave} className="btn btn-reset">
+            <button onClick={handleSave} className="btn btn-edit">
               {selectedItem?._id ? "Update" : "Create"}
             </button>
           </div>

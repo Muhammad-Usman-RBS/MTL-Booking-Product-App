@@ -98,7 +98,7 @@ const DriverGeneration = ({ setShowGeneration }) => {
           <div className="mb-3 md:mb-0">
             <button
               onClick={() => setShowGeneration(false)}
-              className="btn btn-primary mb-2"
+              className="btn btn-back mb-2"
             >
               ← Back to Driver List
             </button>
@@ -172,7 +172,7 @@ const DriverGeneration = ({ setShowGeneration }) => {
         </div>
 
         <div className="text-center mt-4">
-          <button onClick={handlePreview} className="btn btn-reset">
+          <button onClick={handlePreview} className="btn btn-edit">
             Preview
           </button>
         </div>

@@ -198,7 +198,7 @@ useEffect(() => {
   return (
     <div>
       <OutletHeading name="Hourly Package" />
-      <button onClick={handleOpenModal} className="mb-6 btn btn-edit">
+      <button onClick={handleOpenModal} className="mb-6 btn btn-back">
         Add New
       </button>
 
@@ -260,7 +260,7 @@ useEffect(() => {
           <div className="flex justify-end space-x-3 pt-2">
             <button
               type="submit"
-              className="btn btn-reset"
+              className="btn btn-edit"
               disabled={adding || updating}
             >
               {editingId ? "Update" : "Create"}

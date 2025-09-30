@@ -122,7 +122,7 @@ const AddDriverPayment = ({ setShowGeneration }) => {
         </div>
 
         <div className="mt-4">
-          <button onClick={handleUpdate} className="btn btn-primary">
+          <button onClick={handleUpdate} className="btn btn-back">
             Update
           </button>
         </div>

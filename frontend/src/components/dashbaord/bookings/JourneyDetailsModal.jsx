@@ -385,7 +385,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
         </div>
 
         <div className="text-center">
-          <div className="btn btn-primary text-sm px-5 py-1.5">
+          <div className="btn btn-back text-sm px-5 py-1.5">
             Fare:&nbsp;
             <span className="text-base">
               {/* {loggedInUser.role === "driver" ? (

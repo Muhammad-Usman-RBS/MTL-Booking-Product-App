@@ -220,10 +220,10 @@ const Zones = () => {
                 onChange={(e) => setNewZoneName(e.target.value)}
                 placeholder="Enter zone name"
               />
-              <button className="btn btn-edit" onClick={handleAddZoneToMap} disabled={creating}>
+              <button className="btn btn-back" onClick={handleAddZoneToMap} disabled={creating}>
                 {creating ? "Saving..." : "Save"}
               </button>
-              <button className="btn btn-primary" onClick={() => setShowForm(false)}>
+              <button className="btn btn-back" onClick={() => setShowForm(false)}>
                 Zone List
               </button>
             </div>
@@ -285,7 +285,7 @@ const Zones = () => {
         ) : (
           <>
             <div className="flex items-center gap-2 mb-4">
-              <button className="btn btn-edit" onClick={() => setShowForm(true)}>
+              <button className="btn btn-back" onClick={() => setShowForm(true)}>
                 Add New
               </button>
               {/* Sync All button removed */}
@@ -355,7 +355,7 @@ const Zones = () => {
           {/* Only one action now: Update + Sync */}
           <div className="flex justify-end gap-2 pt-2">
             <button
-              className="btn btn-edit"
+              className="btn btn-back"
               onClick={() => handleUpdate({ withSync: true })}
               disabled={updating || syncingOne}
               title="Update zone and sync dependents"

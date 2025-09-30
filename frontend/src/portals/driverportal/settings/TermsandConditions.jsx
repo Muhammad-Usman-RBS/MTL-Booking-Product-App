@@ -120,7 +120,7 @@ const TermsandConditions = () => {
               <OutletBtnHeading
                 name="Terms & Conditions"
                 buttonLabel="+ Add New Terms"
-                buttonBg="btn btn-reset"
+                buttonBg="btn btn-edit"
                 onButtonClick={() => setIsCreating(true)}
               />
               <p className="text-sm text-gray-600">
@@ -136,7 +136,7 @@ const TermsandConditions = () => {
             <OutletBtnHeading
               name="Terms & Conditions"
               buttonLabel="← Back to Terms List"
-              buttonBg="btn btn-edit"
+              buttonBg="btn btn-back"
               onButtonClick={resetForm}
             />
             <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">

@@ -201,7 +201,7 @@ const AdminList = () => {
           name="Admins List"
           buttonLabel="+ Add New"
           buttonLink="/dashboard/admin-list/add-user"
-          buttonBg="btn btn-reset"
+          buttonBg="btn btn-edit"
         />
 
         <div className="w-full overflow-x-auto mb-4 mt-4">

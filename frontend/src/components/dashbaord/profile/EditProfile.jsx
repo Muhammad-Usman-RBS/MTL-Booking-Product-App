@@ -144,7 +144,7 @@ const EditProfile = () => {
           />
           <label
             htmlFor="profile-upload"
-            className="btn btn-reset mt-3 cursor-pointer text-sm"
+            className="btn btn-edit mt-3 cursor-pointer text-sm"
           >
             Upload Profile Image
           </label>

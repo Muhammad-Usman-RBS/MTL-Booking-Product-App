@@ -6,6 +6,7 @@ import sendEmail from "../utils/sendEmail.js";
 import driverModel from "../models/Driver.js";
 import Voucher from "../models/pricings/Voucher.js";
 import Notification from "../models/Notification.js";
+import BookingSetting from "../models/settings/BookingSetting.js";
 import fetchFlightTimes from "../utils/bookings/fetchFlightTimes.js";
 import { deleteEventFromGoogleCalendar } from "../utils/calendarService.js";
 import { autoSendReviewEmail } from "../utils/bookings/autoSendReviewEmail.js";
@@ -142,6 +143,20 @@ export const createBooking = async (req, res) => {
       returnJourney &&
       requiredFields.every((f) => returnJourney[f]);
 
+      // 🔹 Currency snapshot logic
+const bookingSetting = await BookingSetting.findOne({ companyId });
+
+let bookingCurrency = { label: "British Pound", value: "GBP", symbol: "£" };
+
+if (bookingSetting) {
+  if (bookingSetting.currencyApplication === "All Bookings") {
+    bookingCurrency = bookingSetting.currency[0];
+  } else if (bookingSetting.currencyApplication === "New Bookings Only") {
+    // sirf naye bookings ke liye setting wali currency save hogi
+    bookingCurrency = bookingSetting.currency[0];
+  }
+}
+
     const bookingPayload = {
       bookingId,
       mode,
@@ -152,6 +167,9 @@ export const createBooking = async (req, res) => {
       status: "New",
       vehicle: baseVehicleInfo,
       passenger: basePassengerInfo,
+
+       // ✅ currency snapshot
+  currency: bookingCurrency,
 
       // New fields
       paymentMethod,

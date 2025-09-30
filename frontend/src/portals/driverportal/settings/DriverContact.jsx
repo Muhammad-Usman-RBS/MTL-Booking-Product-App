@@ -119,7 +119,7 @@ const DriverContact = () => {
 
               <button
                 type="submit"
-                className="btn btn-reset flex items-center justify-center"
+                className="btn btn-edit flex items-center justify-center"
               >
                 Send Message
               </button>

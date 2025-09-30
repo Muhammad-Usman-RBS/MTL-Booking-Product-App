@@ -260,10 +260,10 @@ const LocationCategory = () => {
           </div>
 
           <div className="flex gap-4 mt-8">
-            <button type="button" className="btn btn-primary" onClick={handleAddPickupField}>
+            <button type="button" className="btn btn-back" onClick={handleAddPickupField}>
               Add Pickup Field
             </button>
-            <button type="button" className="btn btn-edit" onClick={handleAddDropoffField}>
+            <button type="button" className="btn btn-back" onClick={handleAddDropoffField}>
               Add Dropoff Field
             </button>
           </div>
@@ -272,14 +272,14 @@ const LocationCategory = () => {
           {renderFields(dropoffFields, setDropoffFields, "Dropoff")}
 
           <div className="flex justify-center">
-            <button type="button" className="btn btn-reset mt-4" onClick={handleSubmit}>
+            <button type="button" className="btn btn-edit mt-4" onClick={handleSubmit}>
               {editId ? "Update" : "Submit"}
             </button>
           </div>
         </div>
       ) : (
         <>
-          <button type="button" className="btn btn-edit mb-4" onClick={handleAddNew}>
+          <button type="button" className="btn btn-back mb-4" onClick={handleAddNew}>
             Add New
           </button>
           <CustomTable

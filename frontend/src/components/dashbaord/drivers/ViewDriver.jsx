@@ -47,7 +47,7 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
       <OutletBtnHeading
         name="View Driver"
         buttonLabel="← Back to Drivers"
-        buttonBg="btn btn-primary"
+        buttonBg="btn btn-back"
         onButtonClick={() => setSelectedDriver(null)}
       />
 

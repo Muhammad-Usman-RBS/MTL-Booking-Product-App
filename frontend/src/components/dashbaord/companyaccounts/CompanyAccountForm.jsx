@@ -41,7 +41,7 @@ const CompanyAccountForm = ({
                 />
                 <label
                     htmlFor="profile-upload"
-                    className="btn btn-reset"
+                    className="btn btn-edit"
                 >
                     Upload Company Logo
                 </label>

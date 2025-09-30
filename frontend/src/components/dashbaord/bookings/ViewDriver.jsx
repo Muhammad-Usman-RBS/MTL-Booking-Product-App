@@ -594,13 +594,13 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
         <div className="flex space-x-2">
           <button
             onClick={() => setShowMatching(false)}
-            className="btn btn-primary"
+            className="btn btn-back"
           >
             All Drivers
           </button>
           <button
             onClick={() => setShowMatching(true)}
-            className="btn btn-reset"
+            className="btn btn-edit"
           >
             Matching Drivers
           </button>
@@ -756,7 +756,7 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
           </div>
 
           <div className="pt-4">
-            <button onClick={handleSendEmail} className="btn btn-edit">
+            <button onClick={handleSendEmail} className="btn btn-back">
               Update
             </button>
           </div>

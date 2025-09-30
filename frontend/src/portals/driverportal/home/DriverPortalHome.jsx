@@ -460,7 +460,7 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
                     setEndDate(new Date().toISOString().split("T")[0]);
                     setSortBy("date-desc");
                   }}
-                  className="btn btn-outline "
+                  className="btn btn-primary "
                 >
                   Clear Filters
                 </button>

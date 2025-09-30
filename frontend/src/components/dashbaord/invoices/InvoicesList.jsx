@@ -378,7 +378,7 @@ const InvoicesList = () => {
 
       {canShowCreate && (
         <div className="mt-5 flex justify-end">
-          <Link to={createBtn.to} className="btn btn-reset">
+          <Link to={createBtn.to} className="btn btn-edit">
             {createBtn.label}
           </Link>
         </div>

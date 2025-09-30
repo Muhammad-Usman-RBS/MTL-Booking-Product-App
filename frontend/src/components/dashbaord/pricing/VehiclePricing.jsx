@@ -192,7 +192,7 @@ const VehiclePricing = () => {
   return (
     <>
       <OutletHeading name="Vehicle Pricing" />
-      <button className="btn btn-edit mb-4" onClick={() => handleEditModal({})}>
+      <button className="btn btn-back mb-4" onClick={() => handleEditModal({})}>
         Add New
       </button>
 
@@ -353,7 +353,7 @@ const VehiclePricing = () => {
 
           {/* Footer Buttons */}
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={handleSubmit} className="btn btn-reset">
+            <button onClick={handleSubmit} className="btn btn-edit">
               {selectedAccount?._id ? "Update" : "Create"}
             </button>
             <button

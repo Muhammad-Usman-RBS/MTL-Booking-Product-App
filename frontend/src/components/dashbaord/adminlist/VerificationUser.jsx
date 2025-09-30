@@ -125,7 +125,7 @@ const VerificationUser = () => {
           </button>
 
           <button
-            className={`btn btn-primary w-full ${
+            className={`btn btn-back w-full ${
               !canResend ? "opacity-60 cursor-not-allowed" : ""
             }`}
             disabled={!canResend}

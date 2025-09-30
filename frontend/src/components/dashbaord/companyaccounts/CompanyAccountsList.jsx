@@ -144,7 +144,7 @@ const CompanyAccountsList = () => {
             name="Company Accounts"
             buttonLabel="+ Add New"
             buttonLink="/dashboard/company-accounts/new"
-            buttonBg="btn btn-reset"
+            buttonBg="btn btn-edit"
           />
 
           <CustomTable
@@ -163,7 +163,7 @@ const CompanyAccountsList = () => {
           <OutletBtnHeading
             name="Company Account Details"
             buttonLabel="Send Email"
-            buttonBg="btn btn-primary"
+            buttonBg="btn btn-back"
             onButtonClick={handleConfirmSendEmail}
           />
           <div
@@ -339,7 +339,7 @@ const CompanyAccountsList = () => {
                     `Company-${selectedAccount.companyName || "Account"}.pdf`
                   )
                 }
-                className="btn btn-reset"
+                className="btn btn-edit"
               >
                 Download PDF
               </button>

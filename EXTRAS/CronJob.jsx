@@ -176,7 +176,7 @@
 
 //         <button
 //           onClick={() => alert("Cron job settings updated")}
-//           className="btn btn-reset"
+//           className="btn btn-edit"
 //         >
 //           UPDATE
 //         </button>
