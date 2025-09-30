@@ -1,7 +1,5 @@
-
 import nodemailer from "nodemailer";
 
-/** Make a Mongoose doc / subdoc safe for rendering */
 function toPlain(obj) {
   if (!obj) return obj;
   if (typeof obj?.toObject === "function") {
@@ -145,16 +143,9 @@ const renderTextFallback = (subject, title, subtitle, data = {}) => {
   return [subject, "", ...lines].join("\n");
 };
 
-/**
- * Flexible sender:
- * - Prefer payload.html when provided
- * - Else build HTML from (title, subtitle, data)
- * - Always include a text fallback
- */
 const sendEmail = async (to, subject, payload = {}) => {
   const { html, title, subtitle = "", data = {} } = payload || {};
 
-  // Validate email format
   if (!to || !to.includes("@")) {
     console.error("Invalid email address:", to);
     return;
@@ -163,21 +154,19 @@ const sendEmail = async (to, subject, payload = {}) => {
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
-    secure: true, // true for 465, false for other ports
+    secure: true,
     auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_PASS },
     tls: {
-      rejectUnauthorized: false, // For production SSL issues
+      rejectUnauthorized: false,
     },
   });
 
-  // Build final HTML content
   const finalHtml = html
     ? html.startsWith("<")
       ? html
       : `<!doctype html><html><body>${html}</body></html>`
     : generateHtmlTable(title || subject, subtitle, data);
 
-  // Plain-text alternative for email clients that can't render HTML
   const textAlt = renderTextFallback(subject, title || subject, subtitle, data);
 
   try {
