@@ -34,7 +34,7 @@ const InvoiceDetails = ({ item }) => {
     if (user?.role === "clientadmin" || user?.roles?.includes("clientadmin")) {
       return "clientadmin";
     }
-    return "clientadmin"; // default fallback
+    return "clientadmin";
   };
 
   const userRole = getUserRole();
@@ -50,11 +50,9 @@ const InvoiceDetails = ({ item }) => {
   });
   const company = companyData || {};
 
-  // currency from booking settings (same pattern as NewBooking)
   const { data: bookingSettingData } = useGetBookingSettingQuery();
   const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
   const currencySymbol = currencySetting?.symbol || "£";
-  const currencyCode = currencySetting?.value || "GBP";
 
   const handleStatusUpdate = async () => {
     try {
@@ -72,11 +70,9 @@ const InvoiceDetails = ({ item }) => {
   const statusOption = ["Paid", "Unpaid"];
 
   if (!item) return null;
-
   const baseUrl = import.meta.env.DEV
     ? import.meta.env.VITE_API_BASE_URL
     : import.meta.env.VITE_PROD_BASE_URL;
-
   const invoiceUrl = `${baseUrl}/dashboard/invoices/edit/${item?._id}`;
 
   const handleDownload = () => {
@@ -107,7 +103,6 @@ const InvoiceDetails = ({ item }) => {
       }
     }
 
-    // Build filename
     const fileName = `INV-${driverName}${datePart ? "/" + datePart : ""}.pdf`;
 
     setTimeout(() => {
@@ -122,7 +117,7 @@ const InvoiceDetails = ({ item }) => {
 
   const openModal = () => {
     const msg = `Dear ${
-      item?.customer?.name || "Customer"
+      item?.customer?.name || "Customer" 
     },\n\nWe have prepared invoice <b>${
       item?.invoiceNumber
     }</b>.\n\nStatus: ${status}.\n\nView it here: <a href='${invoiceUrl}' target='_blank'>${invoiceUrl}</a>\n\nKind regards,\n${
@@ -168,7 +163,6 @@ const InvoiceDetails = ({ item }) => {
     0
   );
 
-  // Calculate tax display - show actual tax amount without percentage
   const effectiveTaxPercent =
     totalFare > 0 ? ((totalTax / totalFare) * 100).toFixed(2) : "0";
   const taxDisplay = totalTax > 0 ? `${effectiveTaxPercent}% Tax: ` : `Tax: `;
@@ -176,22 +170,17 @@ const InvoiceDetails = ({ item }) => {
     <>
       <div>
         <div className="flex flex-wrap gap-2 sm:gap-3 mb-3 mt-8">
-          {/* Download Button */}
           <button
             onClick={handleDownload}
             className="icon-box icon-box-outline"
           >
             <Icons.Download size={16} />
           </button>
-
-          {/* Mail Button - Only show for clientadmin */}
           {userRole === "clientadmin" && (
             <button onClick={openModal} className="icon-box icon-box-primary">
               <Icons.Mail size={16} />
             </button>
           )}
-
-          {/* Status Select + Tick - Only show for clientadmin */}
           {userRole === "clientadmin" ? (
             <div className="flex gap-2 items-center w-full sm:w-auto mt-2 sm:mt-0">
               <div className="w-full sm:w-40">
@@ -215,7 +204,6 @@ const InvoiceDetails = ({ item }) => {
               </button>
             </div>
           ) : (
-            // Show status as text badge for customer and driver
             <div className="flex items-center mt-2 sm:mt-0">
               <span
                 className={`px-3 py-2 rounded-md text-sm font-medium ${
@@ -230,7 +218,6 @@ const InvoiceDetails = ({ item }) => {
           )}
         </div>
 
-        {/* Invoice Display */}
         <div id="invoiceToDownload" className="invoice-container">
           <div className="invoice-header">
             <div className="company-info">
@@ -339,7 +326,6 @@ const InvoiceDetails = ({ item }) => {
                         return `${taxPercent.toFixed(0)}%`;
                       })()}
                     </td>
-                    {/* <td>£{ride.totalAmount.toFixed(2)}</td> */}
                     <td>
                       {currencySymbol}
                       {ride.totalAmount.toFixed(2)}
@@ -352,8 +338,6 @@ const InvoiceDetails = ({ item }) => {
 
           <div className="totals">
             <p>
-              {/* Sub Total: £
-              {item.items.reduce((acc, i) => acc + i.fare, 0).toFixed(2)} */}
               Sub Total: {currencySymbol}
               {item.items.reduce((acc, i) => acc + i.fare, 0).toFixed(2)}
             </p>
@@ -363,8 +347,6 @@ const InvoiceDetails = ({ item }) => {
               {totalTax.toFixed(2)}
             </p>
             <p className="balance">
-              {/* Grand Total: £
-              {item.items.reduce((acc, i) => acc + i.totalAmount, 0).toFixed(2)} */}
               Grand Total: {currencySymbol}
               {item.items.reduce((acc, i) => acc + i.totalAmount, 0).toFixed(2)}
             </p>
@@ -377,7 +359,6 @@ const InvoiceDetails = ({ item }) => {
         </div>
       </div>
 
-      {/* Only show email modal for clientadmin */}
       {userRole === "clientadmin" && (
         <CustomModal
           isOpen={showEmailModal}

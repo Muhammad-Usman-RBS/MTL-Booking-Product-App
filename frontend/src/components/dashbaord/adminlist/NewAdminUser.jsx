@@ -9,7 +9,12 @@ import { validateUserAccount } from "../../../utils/validation/validators";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 import { useSendGoogleAuthLinkMutation } from "../../../redux/api/googleApi";
 import { useGetCorporateCustomersQuery } from "../../../redux/api/corporateCustomerApi";
-import { useCreateClientAdminMutation, useFetchClientAdminsQuery, useUpdateClientAdminMutation, useInitiateUserVerificationMutation } from "../../../redux/api/adminApi";
+import {
+  useCreateClientAdminMutation,
+  useFetchClientAdminsQuery,
+  useUpdateClientAdminMutation,
+  useInitiateUserVerificationMutation,
+} from "../../../redux/api/adminApi";
 
 import UserCoreFields from "./UserCoreFields";
 import PermissionsPanel from "./PermissionsPanel";
@@ -21,16 +26,18 @@ const NewAdminUser = () => {
   const actualAdminId = id;
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
-  const { showLoading, hideLoading } = useLoading()
+  const { showLoading, hideLoading } = useLoading();
   const [sendGoogleAuthLink] = useSendGoogleAuthLinkMutation();
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [sendCalendarInvite, setSendCalendarInvite] = useState(false);
 
   const { data: adminsListData = [] } = useFetchClientAdminsQuery();
-  const { data: driversList = [], isLoading } = useGetAllDriversQuery(user?.companyId, {
-    skip: !user?.companyId,
-  });
-
+  const { data: driversList = [], isLoading } = useGetAllDriversQuery(
+    user?.companyId,
+    {
+      skip: !user?.companyId,
+    }
+  );
 
   const [selectedAccount, setSelectedAccount] = useState({
     fullName: "",
@@ -52,11 +59,11 @@ const NewAdminUser = () => {
 
   useEffect(() => {
     if (isLoading) {
-      showLoading()
+      showLoading();
     } else {
-      hideLoading()
+      hideLoading();
     }
-  })
+  });
   // --- Handle Google callback & prefill when returning from OAuth ---
   useEffect(() => {
     if (isEdit) return;
@@ -78,15 +85,17 @@ const NewAdminUser = () => {
       );
 
       const cached = localStorage.getItem("pendingClientAdmin");
-      let parsedAccount = cached ? JSON.parse(cached) : {
-        fullName: "",
-        email: emailFromGoogle,
-        role: "clientadmin",
-        status: "",
-        password: "",
-        permissions: [],
-        associateAdminLimit: "",
-      };
+      let parsedAccount = cached
+        ? JSON.parse(cached)
+        : {
+            fullName: "",
+            email: emailFromGoogle,
+            role: "clientadmin",
+            status: "",
+            password: "",
+            permissions: [],
+            associateAdminLimit: "",
+          };
 
       parsedAccount.email = emailFromGoogle;
 
@@ -101,11 +110,24 @@ const NewAdminUser = () => {
     }
   }, [isEdit]);
 
-  // --- Prefill in edit mode ---
   useEffect(() => {
-    if (isEdit && actualAdminId && adminsListData.length > 0) {
+    if (
+      isEdit &&
+      actualAdminId &&
+      adminsListData.length > 0 &&
+      driversList?.drivers?.length
+    ) {
       const adminToEdit = adminsListData.find((a) => a._id === actualAdminId);
+
       if (adminToEdit) {
+        let matchedDriverId = adminToEdit.driverId;
+        if (!matchedDriverId && adminToEdit.role === "driver") {
+          const matchedDriver = driversList.drivers.find(
+            (d) => d.DriverData?.email === adminToEdit.email
+          );
+          if (matchedDriver) matchedDriverId = matchedDriver._id;
+        }
+
         setSelectedAccount({
           fullName: adminToEdit.fullName || "",
           email: adminToEdit.email || "",
@@ -114,14 +136,14 @@ const NewAdminUser = () => {
           password: "",
           permissions: adminToEdit.permissions || [],
           associateAdminLimit: adminToEdit.associateAdminLimit ?? "",
-          driverId: adminToEdit.driverId || "",
+          driverId: matchedDriverId || "",
           employeeNumber: adminToEdit.employeeNumber || "",
           vatnumber: adminToEdit.vatnumber || "",
           emailPreference: adminToEdit.emailPreference,
         });
       }
     }
-  }, [isEdit, actualAdminId, adminsListData]);
+  }, [isEdit, actualAdminId, adminsListData, driversList]);
 
   // --- Role options based on current user role ---
   let roleOptions = [];
@@ -147,7 +169,13 @@ const NewAdminUser = () => {
   // --- Permissions matrix (same logic, shared with child through prop) ---
   const getAvailablePermissions = (role) => {
     if (["driver"].includes(role)) {
-      return ["Company Accounts", "Drivers", "Settings", "Invoices", "Bookings"];
+      return [
+        "Company Accounts",
+        "Drivers",
+        "Settings",
+        "Invoices",
+        "Bookings",
+      ];
     } else if (["customer"].includes(role)) {
       return ["Bookings", "Invoices", "Company Accounts", "Settings"];
     } else if (["clientadmin"].includes(role)) {
@@ -188,8 +216,9 @@ const NewAdminUser = () => {
     }
   };
 
-  // --- Auto-select driver data when role becomes "driver" (same behavior) ---
   useEffect(() => {
+    if (isEdit) return;
+
     if (selectedAccount?.role === "driver") {
       if (!driversList?.drivers?.length) {
         if (roleOptions[0] && selectedAccount.role !== roleOptions[0]) {
@@ -198,8 +227,6 @@ const NewAdminUser = () => {
         }
         return;
       }
-
-      // only auto-assign if no driver is selected yet
       if (!selectedAccount.driverId) {
         const firstDriver = driversList.drivers[0];
         const driverData = firstDriver?.DriverData || {};
@@ -207,18 +234,23 @@ const NewAdminUser = () => {
         setSelectedAccount((prev) => ({
           ...prev,
           driverId: firstDriver._id,
-          fullName: `${driverData.firstName || ""} ${driverData.surName || ""}`.trim(),
+          fullName: `${driverData.firstName || ""} ${
+            driverData.surName || ""
+          }`.trim(),
           employeeNumber: driverData.employeeNumber || "",
           email: driverData.email || "",
         }));
+      } else {
       }
     }
-  }, [selectedAccount?.role, driversList, roleOptions]);
+  }, [selectedAccount?.role, driversList?.drivers, isEdit]);
 
   // --- Save / Update (unchanged logic) ---
   const handleSave = async () => {
     // run form validation
-    const { errors: vErrors, isValid } = validateUserAccount(selectedAccount, { isEdit });
+    const { errors: vErrors, isValid } = validateUserAccount(selectedAccount, {
+      isEdit,
+    });
     setErrors(vErrors);
     if (!isValid) {
       toast.error("Validation failed. Kindly check the required fields.");
@@ -268,7 +300,9 @@ const NewAdminUser = () => {
         };
 
         if (googleConnected) {
-          const calendar = JSON.parse(localStorage.getItem("googleCalendarTokens") || "{}");
+          const calendar = JSON.parse(
+            localStorage.getItem("googleCalendarTokens") || "{}"
+          );
           if (calendar?.access_token && calendar?.refresh_token) {
             payload.googleCalendar = calendar;
           }
@@ -285,16 +319,21 @@ const NewAdminUser = () => {
           const res = await initiateUserVerification(payload).unwrap();
           toast.success("OTP sent. Please verify.");
           navigate(
-            `/dashboard/admin-list/verify-user?tid=${res.transactionId}&email=${encodeURIComponent(email)}`
+            `/dashboard/admin-list/verify-user?tid=${
+              res.transactionId
+            }&email=${encodeURIComponent(email)}`
           );
         } else {
           const res = await createAdmin(payload).unwrap();
           toast.success("User created successfully");
-          if (payload.role === "clientadmin" || payload.role === "associateadmin") {
+          if (
+            payload.role === "clientadmin" ||
+            payload.role === "associateadmin"
+          ) {
             navigate("/dashboard/company-accounts/list");
           } else {
             navigate("/dashboard/admin-list");
-            window.location.reload()
+            window.location.reload();
           }
         }
       }
@@ -309,9 +348,12 @@ const NewAdminUser = () => {
 
   // Customers list (same condition)
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const { data: corporateCustomersData } = useGetCorporateCustomersQuery(undefined, {
-    skip: selectedAccount?.role?.toLowerCase() !== "customer",
-  });
+  const { data: corporateCustomersData } = useGetCorporateCustomersQuery(
+    undefined,
+    {
+      skip: selectedAccount?.role?.toLowerCase() !== "customer",
+    }
+  );
 
   return (
     <div className="w-full">
@@ -358,7 +400,9 @@ const NewAdminUser = () => {
       {/* Footer button (always last, responsive) */}
       <div className="flex flex-col sm:flex-row justify-end sm:justify-start gap-3 pt-5 border-t border-gray-200 mt-6">
         <button
-          className={`btn btn-success w-full sm:w-auto ${isSendingEmail ? "opacity-50 cursor-not-allowed" : ""}`}
+          className={`btn btn-success w-full sm:w-auto ${
+            isSendingEmail ? "opacity-50 cursor-not-allowed" : ""
+          }`}
           disabled={isSendingEmail}
           onClick={async () => {
             if (isSendingEmail) return;
@@ -371,25 +415,21 @@ const NewAdminUser = () => {
           }}
         >
           {isEdit
-            ? (isSendingEmail ? "Updating..." : "Update User")
-            : (
-              isSendingEmail
-                ? (
-                  (selectedAccount.role === "clientadmin" || selectedAccount.role === "associateadmin")
-                    ? "Sending OTP..."
-                    : "Creating..."
-                )
-                : (
-                  (selectedAccount.role === "clientadmin" || selectedAccount.role === "associateadmin")
-                    ? "Create User & Send OTP"
-                    : "Create User"
-                )
-            )}
+            ? isSendingEmail
+              ? "Updating..."
+              : "Update User"
+            : isSendingEmail
+            ? selectedAccount.role === "clientadmin" ||
+              selectedAccount.role === "associateadmin"
+              ? "Sending OTP..."
+              : "Creating..."
+            : selectedAccount.role === "clientadmin" ||
+              selectedAccount.role === "associateadmin"
+            ? "Create User & Send OTP"
+            : "Create User"}
         </button>
       </div>
-
     </div>
-
   );
 };
 
