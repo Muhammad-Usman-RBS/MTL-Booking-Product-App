@@ -98,7 +98,7 @@ export const createOrUpdateBookingSetting = async (req, res) => {
       update,
       { new: true, upsert: true }
     );
-
+// hello
     res
       .status(200)
       .json({ success: true, message: "Booking setting updated", setting });

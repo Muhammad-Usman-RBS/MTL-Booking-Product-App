@@ -310,7 +310,7 @@ const NewAdminUser = () => {
 
         if (payload.role !== "clientadmin") delete payload.associateAdminLimit;
 
-        // OTP only if superadmin is creating clientadmin/associateadmin
+        // OTP ONLY if superadmin is creating clientadmin/associateadmin
         const otpRequired =
           (user?.role === "superadmin" && payload.role === "clientadmin") ||
           (user?.role === "clientadmin" && payload.role === "associateadmin");
