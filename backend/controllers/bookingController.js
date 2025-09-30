@@ -264,7 +264,6 @@ export const createBooking = async (req, res) => {
 
     const savedBooking = await Booking.create(bookingPayload);
 
-    // Fetch Client Admin (account manager) for this company
     const clientAdminUser = await User.findOne({
       companyId,
       role: "clientadmin",
@@ -273,7 +272,6 @@ export const createBooking = async (req, res) => {
       .lean()
       .catch(() => null);
 
-    // Also fetch the Company document for brand info
     const companyDoc = await Company.findById(companyId)
       .select(
         "companyName tradingName email contact profileImage address website"

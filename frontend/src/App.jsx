@@ -74,7 +74,7 @@ import { useGetBookingSettingQuery } from "./redux/api/bookingSettingsApi";
 import { setTimezone } from "./redux/slices/timezoneSlice";
 import { setCurrency } from "./redux/slices/currencySlice";
 
-// Socket IO
+// Socket Io
 import useNotificationsRealtime from "./utils/useNotificationsRealtime";
 
 function App() {
