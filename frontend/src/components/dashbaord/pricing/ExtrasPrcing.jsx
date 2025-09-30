@@ -119,7 +119,7 @@ const ExtrasPricing = () => {
     <>
       <div>
         <OutletHeading name="Extras Pricing" />
-        <button className="btn btn-edit mb-3" onClick={handleAddNew}>
+        <button className="btn btn-back mb-3" onClick={handleAddNew}>
           Add New
         </button>
 
@@ -202,7 +202,7 @@ const ExtrasPricing = () => {
             >
               Cancel
             </button>
-            <button onClick={handleSave} className="btn btn-reset">
+            <button onClick={handleSave} className="btn btn-edit">
               {isNew ? "Add" : "Update"}
             </button>
           </div>

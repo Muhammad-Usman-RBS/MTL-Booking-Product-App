@@ -117,7 +117,7 @@ const ViewCorporateCustomer = ({ customerId, onClose }) => {
 
             {/* Booking Count */}
             <div className="flex justify-center">
-              <div className="btn btn-reset">Total Bookings: {totalBookings}</div>
+              <div className="btn btn-edit">Total Bookings: {totalBookings}</div>
             </div>
           </>
         )}

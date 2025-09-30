@@ -189,7 +189,7 @@ const PaymentOptions = () => {
           <button
             onClick={handleUpdateSettings}
             disabled={isUpdating}
-            className={`btn btn-edit ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`btn btn-back ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isUpdating ? "Updating..." : "Update Settings"}
           </button>

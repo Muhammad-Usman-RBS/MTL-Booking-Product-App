@@ -196,7 +196,7 @@
 //         </div>
 
 //         <div className="md:col-span-2">
-//           <button className="btn btn-reset">Update</button>
+//           <button className="btn btn-edit">Update</button>
 //         </div>
 //       </div>
 //     </div>

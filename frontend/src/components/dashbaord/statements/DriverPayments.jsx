@@ -98,7 +98,7 @@ const DriverPayments = () => {
       {/* Controls */}
       <div className="flex flex-col mt-4 justify-between sm:flex-row gap-4 mb-4">
         <div className="flex gap-2 items-center">
-          <button onClick={handlePaymentClick} className="btn btn-edit">
+          <button onClick={handlePaymentClick} className="btn btn-back">
             Add New
           </button>
         </div>

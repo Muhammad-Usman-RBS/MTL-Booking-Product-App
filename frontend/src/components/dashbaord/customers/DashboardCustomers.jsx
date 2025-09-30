@@ -202,7 +202,7 @@ const DashboardCustomers = () => {
               setSelectedCustomer(null);
               setIsModalOpen(true);
             }}
-            className="btn btn-reset flex items-center gap-2 w-full sm:w-auto justify-center"
+            className="btn btn-edit flex items-center gap-2 w-full sm:w-auto justify-center"
           >
             Create New Customer
           </button>

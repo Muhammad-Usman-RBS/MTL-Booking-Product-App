@@ -46,16 +46,16 @@ const BookingsFilters = ({
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full">
           <div className="flex gap-2">
             <Link to="/dashboard/bookings/new">
-              <button title="additional filters" className="icon-box icon-box-primary">
-                <Icons.Plus size={20} />
+              <button title="Add New Booking" className="icon-box icon-box-primary">
+                <Icons.Plus size={17} />
               </button>
             </Link>
             <button
+              className="icon-box icon-box-info"
               onClick={() => setShowDiv(!showDiv)}
-              className="icon-box icon-box-outline"
-              title="Filters"
+              title="Additional Filters"
             >
-              <Icons.Filter size={16} />
+              <Icons.Filter size={17} />
             </button>
           </div>
           <div className="w-full sm:w-64">
@@ -68,7 +68,7 @@ const BookingsFilters = ({
           </div>
           <div className="w-full sm:w-72">
             <SelectDateRange
-            futureCount={futureCount}
+              futureCount={futureCount}
               startDate={startDate}
               placeholder="Select Driver"
               endDate={endDate}
@@ -79,13 +79,15 @@ const BookingsFilters = ({
           <div className="flex gap-2">
             <button
               onClick={() => setShowColumnModal(true)}
-              className="btn btn-reset"
+              className="icon-box icon-box-info"
+              title="Column's Visibility"
             >
-              <Icons.Columns3 size={20} />
+              <Icons.Columns3 size={17} />
             </button>
             <button
               onClick={() => setShowKeyboardModal(true)}
-              className="btn btn-outline"
+              className="icon-box icon-box-primary"
+              title="Keyboard Shortcuts"
             >
               <Icons.Keyboard size={16} />
             </button>

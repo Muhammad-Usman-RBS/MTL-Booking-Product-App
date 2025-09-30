@@ -107,7 +107,7 @@ const ReviewSettings = () => {
         </div>
 
         <button
-          className="btn btn-edit mt-4"
+          className="btn btn-back mt-4"
           onClick={handleUpdate}
           disabled={isLoading || isSaving}
         >

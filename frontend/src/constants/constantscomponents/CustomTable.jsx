@@ -214,21 +214,23 @@ const CustomTable = ({
       <div className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between w-full">
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full">
           {showSearch && (
-            <input
-              type="text"
-              placeholder="Search"
-              className="border rounded border-[var(--light-gray)] px-3 py-1 w-full sm:w-60"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <div>
+              <input
+                type="text"
+                placeholder="Search"
+                className="custom_input"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
           )}
           {showRefresh && (
             <button
-              className="icon-box icon-box-outline"
+              className="icon-box icon-box-primary"
               onClick={() => window.location.reload()}
               title="Reload"
             >
-              <Icons.RefreshCcw size={16} />
+              <Icons.RefreshCcw size={17} />
             </button>
           )}
         </div>
@@ -237,11 +239,12 @@ const CustomTable = ({
           {showPagination && (
             <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full sm:w-auto ">
               <button
-                className="btn btn-reset"
+                className="icon-box icon-box-info"
                 disabled={page === 1}
                 onClick={() => setPage(page - 1)}
+                title="Back Page"
               >
-                <Icons.SkipBack size={16} />
+                <Icons.SkipBack size={17} />
               </button>
 
               <input
@@ -251,22 +254,23 @@ const CustomTable = ({
                   const newPage = Number(e.target.value);
                   if (newPage >= 1 && newPage <= totalPages) setPage(newPage);
                 }}
-                className="border w-16 text-center py-1 px-2 rounded border-[var(--light-gray)]"
+                className="border w-16 text-center py-[2.5px] px-2 rounded border-[var(--light-gray)]"
               />
               <span className="text-[var(--dark-gray)] whitespace-nowrap">
                 of {totalPages}
               </span>
 
               <button
-                className="btn btn-reset"
+                className="icon-box icon-box-info"
                 disabled={page === totalPages}
                 onClick={() => setPage(page + 1)}
+                title="Next Page"
               >
-                <Icons.SkipForward size={16} />
+                <Icons.SkipForward size={17} />
               </button>
 
               <select
-                className="border py-1 px-3 rounded border-[var(--light-gray)]"
+                className="border py-[5px] px-3 rounded border-[var(--light-gray)]"
                 value={perPage.toString()}
                 onChange={(e) => {
                   const value =
@@ -289,11 +293,15 @@ const CustomTable = ({
       {/* Table */}
       <div
         ref={tableRef}
-        className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+        // className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+        className={`w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 ${paginatedData.length > 5 ? 'overflow-y-auto max-h-[400px]' : ''
+          }`}
+        style={{ position: 'relative' }}
       >
         <table className="w-full min-w-[700px] border border-gray-200 text-xs sm:text-sm">
           <thead>
-            <tr className="bg-[#e7eff0]">
+            {/* <tr className="bg-[#e7eff0]"> */}
+            <tr className="bg-[#e7eff0] sticky top-0 z-10">
               {combinedOrder
                 .map(headerByKey)
                 .filter(Boolean)
@@ -337,7 +345,7 @@ const CustomTable = ({
                       ? "cursor-pointer text-dark transition"
                       : "cursor-default"
                       }`}
-                      title={col.label}
+                    title={col.label}
 
                   >
                     <div className="flex items-center gap-1 whitespace-nowrap">
@@ -353,7 +361,7 @@ const CustomTable = ({
             </tr>
           </thead>
           <tbody>
-            {paginatedData.length === 0  ? (
+            {paginatedData.length === 0 ? (
               <EmptyTableMessage message={emptyMessage} colSpan={combinedOrder.length} />
             ) : (
               paginatedData.map((item, rowIdx) => (
@@ -405,7 +413,8 @@ const CustomTable = ({
             />
           </div>
         )}
-        <div className="btn btn-outline text-center">
+        <div className="border rounded-full py-2 px-5 cursor-pointer border-[var(--light-gray)] bg-white hover:bg-gray-100 text-sm flex items-center gap-2"
+        >
           Total Records: {filteredData.filter(item => !item.customRow).length}
         </div>
       </div>

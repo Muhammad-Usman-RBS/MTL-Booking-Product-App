@@ -136,6 +136,14 @@ const BookingSchema = new mongoose.Schema(
       ref: "Company",
       required: true,
     },
+
+      // ✅ Currency snapshot field
+    currency: {
+      label: { type: String, default: "British Pound" },
+      value: { type: String, default: "GBP" },
+      symbol: { type: String, default: "£" },
+    },
+    
     status: { type: String, default: "New" },
     statusAudit: {
       type: [StatusAuditSchema],

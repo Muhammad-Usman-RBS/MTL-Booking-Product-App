@@ -295,7 +295,7 @@ const InvoicePage = () => {
             Invoice #{invoiceData?.invoice?.invoiceNumber || "Loading..."}
           </h1>
           <Link to="/dashboard/invoices/list">
-            <button className="btn btn-reset">Back to Invoices</button>
+            <button className="btn btn-edit">Back to Invoices</button>
           </Link>
         </div>
 

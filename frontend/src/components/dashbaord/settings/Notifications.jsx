@@ -57,7 +57,7 @@ const Notifications = () => {
         </div>
       </div>
 
-      <button onClick={handleSubmit} className="btn btn-reset">
+      <button onClick={handleSubmit} className="btn btn-edit">
         UPDATE
       </button>
     </div>

@@ -109,7 +109,7 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
   return (
     <div ref={dropdownRef} className="relative inline-block w-full">
       <div
-        className="flex items-center gap-2 border border-[var(--light-gray)] px-2 py-1.5 bg-white rounded cursor-pointer min-w-0"
+        className="flex items-center gap-2 border border-[var(--light-gray)] px-2 py-[5.5px] bg-white rounded-sm cursor-pointer min-w-0"
         onClick={() => setDropdownOpen(!dropdownOpen)}
       >
         <Icons.CalendarDays className="w-4 h-4 text-black" />

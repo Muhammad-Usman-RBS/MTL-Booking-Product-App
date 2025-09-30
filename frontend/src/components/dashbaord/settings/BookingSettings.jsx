@@ -16,10 +16,10 @@ import { useLoading } from "../../common/LoadingProvider";
 
 const YES_NO = ["Yes", "No"];
 const DISTANCE_UNITS = ["Miles", "KMs"];
+const CURRENCY_APPLICATION = ["All Bookings", "New Bookings Only"];
 
-// Exact unit sets per field (as in your images)
-const TIME_UNITS_MIN = ["Hours"];        // advance min
-const TIME_UNITS_CANCEL = ["Hours", "Days"];        // cancel window
+const TIME_UNITS_MIN = ["Hours"];
+const TIME_UNITS_CANCEL = ["Hours", "Days"];
 
 const BookingSettings = () => {
   const {showLoading, hideLoading}= useLoading()
@@ -31,6 +31,7 @@ const BookingSettings = () => {
   const [country, setCountry] = useState("United Kingdom");
   const [timezone, setTimezoneState] = useState("Europe/London");
   const [currency, setCurrencyState] = useState("GBP");
+  const [currencyApplication, setCurrencyApplication] = useState("New Bookings Only");
 
   const [googleApiKeys, setGoogleApiKeys] = useState({
     browser: "",
@@ -46,7 +47,7 @@ const BookingSettings = () => {
   });
 
   const [distanceUnit, setDistanceUnit] = useState("Miles");
-  const [hourlyPackage, setHourlyPackage] = useState("No"); // "Yes"/"No" for UI
+  const [hourlyPackage, setHourlyPackage] = useState("No");
 
   const [advanceBookingMin, setAdvanceBookingMin] = useState({
     value: 12,
@@ -66,6 +67,7 @@ const BookingSettings = () => {
           hideLoading()
         }
       },[isLoading])
+
   // hydrate from API
   useEffect(() => {
     const setting = data?.setting;
@@ -80,6 +82,10 @@ const BookingSettings = () => {
     if (Array.isArray(setting.currency) && setting.currency[0]?.value) {
       setCurrencyState(setting.currency[0].value);
       dispatch(setCurrency(setting.currency[0].value));
+    }
+
+    if (setting.currencyApplication) {
+      setCurrencyApplication(setting.currencyApplication);
     }
 
     setGoogleApiKeys({
@@ -123,13 +129,13 @@ const BookingSettings = () => {
             symbol: selectedCurrency.symbol,
           },
         ],
+        currencyApplication: currencyApplication || "New Bookings Only",
 
         googleApiKeys,
         avoidRoutes,
         distanceUnit,
         hourlyPackage: hourlyPackage === "Yes",
 
-        // enforce sensible defaults matching the allowed unit sets
         advanceBookingMin: {
           value: Number(advanceBookingMin.value ?? 12),
           unit: TIME_UNITS_MIN.includes(advanceBookingMin.unit)
@@ -159,7 +165,6 @@ const BookingSettings = () => {
   const handleCurrencyChange = (e) => setCurrencyState(e.target.value);
   const handleTimezoneChange = (e) => setTimezoneState(e.target.value);
 
-
   return (
     <div>
       <OutletHeading name="Booking Settings" />
@@ -183,9 +188,17 @@ const BookingSettings = () => {
         {/* Currency */}
         <SelectOption
           label="Currency"
-          options={currencyOptions} // expects [{label,value,symbol},...]
+          options={currencyOptions}
           value={currency}
           onChange={handleCurrencyChange}
+        />
+
+        {/* Currency Application */}
+        <SelectOption
+          label="Apply Currency To"
+          options={CURRENCY_APPLICATION}
+          value={currencyApplication}
+          onChange={(e) => setCurrencyApplication(e.target.value)}
         />
 
         {/* Google API Keys */}
@@ -346,23 +359,10 @@ const BookingSettings = () => {
           </div>
         </div>
 
-        {/* Terms */}
-        {/* <div className="md:col-span-3">
-          <label className="block text-sm font-medium mb-1">
-            Cancel Booking Terms
-          </label>
-          <textarea
-            className="w-full border border-[var(--light-gray)] rounded px-3 py-2"
-            rows={4}
-            value={cancelBookingTerms}
-            onChange={(e) => setCancelBookingTerms(e.target.value)}
-          />
-        </div> */}
-
         {/* Save */}
         <div className="md:col-span-3">
           <button
-            className="btn btn-reset mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="btn btn-edit mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             onClick={handleUpdate}
           >
             Update Settings

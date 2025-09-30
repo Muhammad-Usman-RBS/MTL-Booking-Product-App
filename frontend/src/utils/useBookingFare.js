@@ -1054,7 +1054,7 @@ export const useBookingFare = ({
 
       if (!pickupCoord || !dropoffCoord || !distRes) {
         if (!hasErrorShown.current) {
-          toast.error("Unable to get location data. Please check your addresses.");
+          // toast.error("Unable to get location data. Please check your addresses.");
           hasErrorShown.current = true;
         }
         return;

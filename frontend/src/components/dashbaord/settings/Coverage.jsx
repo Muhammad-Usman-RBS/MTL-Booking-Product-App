@@ -196,7 +196,7 @@ const Coverage = () => {
     <>
       <div>
         <OutletHeading name="Coverage Settings" />
-        <button onClick={handleAddNew} className="btn btn-edit mb-4">
+        <button onClick={handleAddNew} className="btn btn-back mb-4">
           Add New
         </button>
         <CustomTable
@@ -367,7 +367,7 @@ const Coverage = () => {
             >
               Cancel
             </button>
-            <button onClick={handleUpdate} className="btn btn-reset">
+            <button onClick={handleUpdate} className="btn btn-edit">
               {isEditMode ? "Update" : "Create"}
             </button>
           </div>

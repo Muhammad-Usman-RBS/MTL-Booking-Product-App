@@ -53,7 +53,7 @@ const DriverPDFTemplate = ({ driver, vehicle, uploads, formatDate,formatDateWith
   return (
     <>
       <div className="flex justify-end mb-6">
-        <button className="btn btn-reset mb-2" onClick={handleDownloadPDF}>
+        <button className="btn btn-edit mb-2" onClick={handleDownloadPDF}>
           Download Driver Details
         </button>
       </div>

@@ -221,7 +221,7 @@ const BookingRestrictionDate = () => {
             options={["Any Status", "Active", "Inactive"]}
           />
           <div>
-            <button onClick={handleAddNew} className="btn btn-edit">
+            <button onClick={handleAddNew} className="btn btn-back">
               Add New
             </button>
           </div>
@@ -312,7 +312,7 @@ const BookingRestrictionDate = () => {
             >
               Cancel
             </button>
-            <button onClick={handleUpdate} className="btn btn-reset">
+            <button onClick={handleUpdate} className="btn btn-edit">
               {isEditMode ? "Update" : "Add"}
             </button>
           </div>

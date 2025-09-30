@@ -333,7 +333,7 @@ const SettingsGeneral = () => {
           </div>
           <div className="text-center mt-8 space-x-3">
             <button
-              className="btn btn-primary px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
+              className="btn btn-back px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
               onClick={() => handleSaveThemeSettings()}
               disabled={isSaving || limitReached || isStaticMode}
             >

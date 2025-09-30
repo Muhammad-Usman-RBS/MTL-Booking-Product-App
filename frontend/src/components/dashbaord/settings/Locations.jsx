@@ -103,7 +103,7 @@ const Locations = () => {
     <>
       <div>
         <OutletHeading name="Locations" />
-        <button onClick={handleAddNew} className="btn btn-edit mb-4">
+        <button onClick={handleAddNew} className="btn btn-back mb-4">
           Add New
         </button>
         <CustomTable
@@ -176,7 +176,7 @@ const Locations = () => {
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={handleUpdate}
-                className="btn btn-reset"
+                className="btn btn-edit"
                 disabled={isCreating}
               >
                 {isEditMode ? "Update" : "Add"}

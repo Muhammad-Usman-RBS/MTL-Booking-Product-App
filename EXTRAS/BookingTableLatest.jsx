@@ -775,7 +775,7 @@
 //                       toast.error("Failed to restore booking");
 //                     }
 //                   }}
-//                   className="btn btn-reset"
+//                   className="btn btn-edit"
 //                 >
 //                   Restore
 //                 </button>
@@ -2209,7 +2209,7 @@
 //                       console.error(err);
 //                     }
 //                   }}
-//                   className="btn btn-reset"
+//                   className="btn btn-edit"
 //                 >
 //                   Restore
 //                 </button>

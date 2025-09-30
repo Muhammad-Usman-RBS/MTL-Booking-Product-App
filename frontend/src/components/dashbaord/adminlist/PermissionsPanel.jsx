@@ -14,7 +14,7 @@ const PermissionsPanel = ({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <h3 className="text-lg font-medium text-gray-700">Permissions</h3>
                 <button
-                    className="btn btn-edit w-full sm:w-auto"
+                    className="btn btn-back w-full sm:w-auto"
                     onClick={() => setSelectedPermissions(allSelected ? [] : allPerms)}
                 >
                     {allSelected ? "Unselect All" : "Select All"}

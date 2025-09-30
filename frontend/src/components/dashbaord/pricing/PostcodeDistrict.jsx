@@ -192,10 +192,10 @@ const PostcodeDistrict = () => {
           <label className="block mb-1 text-sm font-medium text-gray-700">Increase / Decrease All Prices</label>
           <div className="flex gap-2">
          <input type="number" className="custom_input w-32" placeholder={currencyCode} value={priceChange} onChange={(e) => setPriceChange(e.target.value)} />
-            <button className="btn btn-reset" onClick={handleBulkUpdate}>Update</button>
+            <button className="btn btn-edit" onClick={handleBulkUpdate}>Update</button>
           </div>
         </div>
-        <button className="btn btn-edit" onClick={handleAddNew}>Add New</button>
+        <button className="btn btn-back" onClick={handleAddNew}>Add New</button>
       </div>
 
       <CustomTable filename='Postcode-District-list' tableHeaders={tableHeaders} tableData={tableData} showPagination={true} showSorting={true} />
@@ -260,7 +260,7 @@ const PostcodeDistrict = () => {
           {/* Footer Buttons */}
           <div className="flex justify-end pt-2 gap-3">
             <button onClick={() => setShowModal(false)} className="btn btn-cancel">Cancel</button>
-            <button onClick={handleSave} className="btn btn-reset">{isNew ? "Add" : "Update"}</button>
+            <button onClick={handleSave} className="btn btn-edit">{isNew ? "Add" : "Update"}</button>
           </div>
         </div>
       </CustomModal>

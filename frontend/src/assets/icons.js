@@ -101,10 +101,12 @@ import {
   RotateCcw,
   Trash2,
   FileSignature,
+  AlertTriangle,
 } from "lucide-react";
 
 const Icons = {
   RotateCcw,
+  AlertTriangle,
   FileSignature,
   Trash2,
   CheckCheck,

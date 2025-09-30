@@ -373,10 +373,10 @@ const ReceiptSettings = () => {
         </div>
       </div>
       <div className="flex justify-between mt-3">
-        <button className="btn btn-primary" onClick={handleDownload}>
+        <button className="btn btn-back" onClick={handleDownload}>
           Donwload
         </button>
-        <button onClick={handleEditToggle} className="btn btn-edit">
+        <button onClick={handleEditToggle} className="btn btn-back">
           {isEditing ? "Save" : "Edit"}
         </button>
       </div>

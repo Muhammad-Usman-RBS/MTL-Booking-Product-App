@@ -201,7 +201,7 @@ const AddCompanyAccount = () => {
         name={isEdit ? "Edit Company Account" : "Add Company Account"}
         buttonLabel="← Back to Users List"
         buttonLink="/dashboard/company-accounts/list"
-        buttonBg="btn btn-primary"
+        buttonBg="btn btn-back"
       />
 
       <CompanyAccountForm

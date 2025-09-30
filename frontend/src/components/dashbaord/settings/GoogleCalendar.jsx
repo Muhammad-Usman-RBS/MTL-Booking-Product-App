@@ -46,7 +46,7 @@ const GoogleCalendar = () => {
         />
       </div>
 
-      <button onClick={handleUpdate} className="btn btn-reset">
+      <button onClick={handleUpdate} className="btn btn-edit">
         UPDATE
       </button>
     </div>

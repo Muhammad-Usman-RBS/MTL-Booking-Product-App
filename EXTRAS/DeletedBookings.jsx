@@ -107,7 +107,7 @@
 //                 toast.error("Failed to restore booking");
 //               }
 //             }}
-//             className="btn btn-reset"
+//             className="btn btn-edit"
 //             title="Restore Booking"
 //           >
 //             <Icons.RotateCcw size={16} />
@@ -124,7 +124,7 @@
 
 //           {/* View Button */}
 //           <button
-//             className="btn btn-edit !text-white"
+//             className="btn btn-back !text-white"
 //             title="View Booking Details"
 //             onClick={() => openViewModal(b)}
 //           >

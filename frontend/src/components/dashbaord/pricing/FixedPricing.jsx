@@ -234,12 +234,12 @@ const FixedPricing = () => {
                 value={priceChange}
                 onChange={(e) => setPriceChange(e.target.value)}
               />
-              <button className="btn btn-reset" onClick={handleBulkUpdate} disabled={updating}>
+              <button className="btn btn-edit" onClick={handleBulkUpdate} disabled={updating}>
                 Update
               </button>
             </div>
           </div>
-          <button className="btn btn-edit" onClick={handleAddNew}>
+          <button className="btn btn-back" onClick={handleAddNew}>
             Add New
           </button>
         </div>
@@ -347,7 +347,7 @@ const FixedPricing = () => {
             <button onClick={() => setShowModal(false)} className="btn btn-cancel">
               Cancel
             </button>
-            <button onClick={handleSave} className="btn btn-reset" disabled={creating || updating}>
+            <button onClick={handleSave} className="btn btn-edit" disabled={creating || updating}>
               {isNew ? (creating ? "Adding..." : "Add") : updating ? "Updating..." : "Update"}
             </button>
           </div>

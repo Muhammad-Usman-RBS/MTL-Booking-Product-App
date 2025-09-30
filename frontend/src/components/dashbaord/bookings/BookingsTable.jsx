@@ -59,8 +59,12 @@ const BookingsTable = ({
   const [deleteBooking] = useDeleteBookingMutation();
   const [updateBookingStatus] = useUpdateBookingStatusMutation();
 
+  // const { data: bookingSettingData } = useGetBookingSettingQuery(companyId, {
+  //   skip: user?.role !== "customer",
+  // });
+
   const { data: bookingSettingData } = useGetBookingSettingQuery(companyId, {
-    skip: user?.role !== "customer",
+    skip: !companyId,
   });
 
   const {
@@ -440,9 +444,8 @@ const BookingsTable = ({
               cancelWindow &&
               isWithinCancelWindow(selectedBooking, cancelWindow)
             ) {
-              const windowText = `${
-                cancelWindow.value
-              } ${cancelWindow.unit.toLowerCase()}`;
+              const windowText = `${cancelWindow.value
+                } ${cancelWindow.unit.toLowerCase()}`;
               toast.error(
                 `Cannot edit booking. Pickup time is within the ${windowText} cancellation window.`
               );

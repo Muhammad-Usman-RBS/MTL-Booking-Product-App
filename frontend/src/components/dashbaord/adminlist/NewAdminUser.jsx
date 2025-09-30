@@ -321,7 +321,7 @@ const NewAdminUser = () => {
           name={isEdit ? "Edit User Account" : "Add User Account"}
           buttonLabel="← Back to Users List"
           buttonLink="/dashboard/admin-list"
-          buttonBg="btn btn-primary"
+          buttonBg="btn btn-back"
         />
       </div>
 

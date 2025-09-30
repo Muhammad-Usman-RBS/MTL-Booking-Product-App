@@ -81,7 +81,7 @@ const CarCard = ({
                       e.stopPropagation();
                       onSelect(_id, 'oneWay');
                     }}
-                    className="btn btn-primary"
+                    className="btn btn-back"
                   >
                     {/* ONE WAY: £{parseFloat(price).toFixed(2)} */}
                     ONE WAY: {currencySymbol}{Number(price).toFixed(2)}
@@ -96,7 +96,7 @@ const CarCard = ({
                       onSelect(_id, 'return');
                       triggerReturnJourney?.();
                     }}
-                    className="btn btn-reset"
+                    className="btn btn-edit"
                   >
                     {/* RETURN: £{parseFloat(returnPrice).toFixed(2)} */}
                     RETURN: {currencySymbol}{Number(returnPrice).toFixed(2)}

@@ -42,7 +42,7 @@ const SelectedSearch = ({
     <div ref={dropdownRef} className="relative inline-block text-left w-full">
       <button
         onClick={() => setDropdownOpen(!dropdownOpen)}
-        className="border px-3 py-1 rounded bg-white cursor-pointer border-[var(--light-gray)] w-full text-left"
+        className="border px-3 py-[5px] text-sm rounded-sm bg-white cursor-pointer border-[var(--light-gray)] w-full text-left"
       >
         {selected.length === 0
           ? placeholder || "Select"

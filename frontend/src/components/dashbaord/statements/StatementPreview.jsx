@@ -3,7 +3,7 @@ import React from "react";
 const StatementPreview = ({ data, onBack }) => {
   return (
     <div className="p-4">
-      <button className="btn btn-primary" onClick={onBack}>
+      <button className="btn btn-back" onClick={onBack}>
         ← Back
       </button>
 

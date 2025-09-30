@@ -86,7 +86,7 @@ const DriverRegistrationConfig = () => {
         </div>
 
         <div className="text-center mt-6">
-          <button className="btn btn-reset">UPDATE</button>
+          <button className="btn btn-edit">UPDATE</button>
         </div>
       </div>
     </div>

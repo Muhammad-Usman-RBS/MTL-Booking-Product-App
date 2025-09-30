@@ -9,12 +9,12 @@ export const getBookingSetting = async (req, res) => {
         .status(401)
         .json({ message: "Company ID missing or unauthorized" });
 
-    // upsert a default doc if not found so UI always has data
     let setting = await BookingSetting.findOne({ companyId });
     if (!setting) {
       setting = await BookingSetting.create({
         companyId,
         currency: [{ label: "British Pound", value: "GBP", symbol: "£" }],
+        currencyApplication: "New Bookings Only",
       });
     }
 
@@ -34,14 +34,15 @@ export const createOrUpdateBookingSetting = async (req, res) => {
     const {
       operatingCountry,
       timezone,
-      currency, // array of {label,value,symbol}
-      googleApiKeys, // {browser, server, android, ios}
-      avoidRoutes, // {highways, tolls, ferries}
-      distanceUnit, // "Miles" | "KMs"
-      hourlyPackage, // boolean
-      advanceBookingMin, // {value, unit}
-      cancelBookingWindow, // {value, unit}
-      cancelBookingTerms, // string
+      currency,
+      currencyApplication,
+      googleApiKeys,
+      avoidRoutes,
+      distanceUnit,
+      hourlyPackage,
+      advanceBookingMin,
+      cancelBookingWindow,
+      cancelBookingTerms,
     } = req.body;
 
     // currency validation
@@ -67,6 +68,7 @@ export const createOrUpdateBookingSetting = async (req, res) => {
       operatingCountry,
       timezone,
       currency,
+      currencyApplication: currencyApplication || "New Bookings Only",
       googleApiKeys: {
         browser: googleApiKeys?.browser ?? "",
         server: googleApiKeys?.server ?? "",

@@ -689,7 +689,7 @@ const CronJob = () => {
         <div className="flex gap-4 justify-end">
           <button
             onClick={handleSubmit}
-            className="btn btn-reset px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            className="btn btn-edit px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
             disabled={isUpdating || isToggling}
           >
             {isUpdating ? "UPDATING..." : "UPDATE"}

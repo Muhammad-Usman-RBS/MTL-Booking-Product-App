@@ -24,7 +24,7 @@ const ConfirmModal = ({ isOpen, onConfirm, onCancel }) => {
 
           <button
             onClick={onCancel}
-            className="btn btn-reset"
+            className="btn btn-edit"
           >
             Cancel
           </button>

@@ -265,7 +265,7 @@ const exportTableData = data.map((item, idx) => {
       <OutletHeading name="Mileage Slab" />
 
       <div className="mb-6">
-        <button className="btn btn-edit" onClick={handleAddSlab}>
+        <button className="btn btn-back" onClick={handleAddSlab}>
           Add Distance Slab
         </button>
       </div>
@@ -280,7 +280,7 @@ const exportTableData = data.map((item, idx) => {
       />
 
       <div className="mt-4 text-right">
-        <button className="btn btn-primary" onClick={handleSaveAll}>
+        <button className="btn btn-back" onClick={handleSaveAll}>
           Update Pricing
         </button>
       </div>

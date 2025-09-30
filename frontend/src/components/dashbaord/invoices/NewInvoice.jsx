@@ -525,7 +525,7 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
           <button
             onClick={handleCreateInvoice}
             disabled={isCreating}
-            className="btn btn-primary"
+            className="btn btn-back"
           >
             {isCreating ? "Creating..." : `Create Invoice `}
           </button>
