@@ -169,7 +169,7 @@ const InvoiceDetails = ({ item }) => {
         <div className="flex flex-wrap gap-2 sm:gap-3 mb-3 mt-8">
           <button
             onClick={handleDownload}
-            className="icon-box icon-box-outline"
+            className="icon-box icon-box-info"
           >
             <Icons.Download size={16} />
           </button>
@@ -541,7 +541,6 @@ ${company?.zip || ""}`}
                         padding: "12px",
                         border: "1px solid #e5e7eb",
                         textAlign: "right",
-                        fontWeight: "bold",
                         color: "#111827",
                       }}
                     >
@@ -578,10 +577,10 @@ ${company?.zip || ""}`}
                 }}
               >
                 <span style={{ fontSize: "14px", color: "#374151" }}>Sub Total</span>
-                <b style={{ fontSize: "14px", color: "#111827" }}>
+                <p style={{ fontSize: "14px", color: "#111827" }}>
                   {currencySymbol}
                   {totalFare.toFixed(2)}
-                </b>
+                </p>
               </div>
 
               {/* Tax */}

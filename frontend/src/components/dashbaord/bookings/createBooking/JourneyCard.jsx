@@ -379,16 +379,16 @@ const JourneyCard = ({
             {pickupType?.toLowerCase().includes("airport") && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                 <input
-                  name="arrivefrom"
-                  placeholder="Arriving From"
-                  value={journeyData.arrivefrom || ""}
+                  name="flightNumber"
+                  placeholder="Flight No."
+                  value={journeyData.flightNumber || ""}
                   onChange={handleChange}
                   className="custom_input"
                 />
                 <input
-                  name="flightNumber"
-                  placeholder="Flight No."
-                  value={journeyData.flightNumber || ""}
+                  name="arrivefrom"
+                  placeholder="Arriving From"
+                  value={journeyData.arrivefrom || ""}
                   onChange={handleChange}
                   className="custom_input"
                 />
