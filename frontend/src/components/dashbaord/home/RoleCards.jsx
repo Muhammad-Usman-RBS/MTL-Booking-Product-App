@@ -76,15 +76,15 @@ const RoleCards = () => {
   // All cards
   const cardData = useMemo(
     () => [
-      { title: "Total Bookings", value: AllBookings?.length || 0, gradient: "linear-gradient(135deg, #ff9a9e, #fad0c4)", icon: "📑" },
-      { title: "Total Customers", value: customerRoles?.length || 0, gradient: "linear-gradient(135deg, #6a11cb, #2575fc)", icon: "👥" },
-      { title: "Total Drivers", value: filteredDriver?.length || 0, gradient: "linear-gradient(135deg, #11998e, #38ef7d)", icon: "🚖" },
-      { title: "Total Staff Members", value: filteredStaffMembers?.length || 0, gradient: "linear-gradient(135deg, #36d1dc, #5b86e5)", icon: "🛠️" },
-      { title: "Total Associate Admins", value: filteredAssociateAdmin?.length || 0, gradient: "linear-gradient(135deg, #ff9966, #ff5e62)", icon: "📊" },
-      { title: "Total Client Admins", value: filteredClientAdmin?.length || 0, gradient: "linear-gradient(135deg, #00b09b, #96c93d)", icon: "🏢" },
-      { title: "Total Demos", value: demoRoles?.length || 0, gradient: "linear-gradient(135deg, #fc6076, #ff9a44)", icon: "🧪" },
-      { title: "Total Earnings", value: totalDriverEarnings, gradient: "linear-gradient(135deg, #f7971e, #ffd200)", icon: "💰" },
-      { title: "Total Rides", value: totalDriverRides, gradient: "linear-gradient(135deg, #00c6ff, #0072ff)", icon: "🛣️" },
+      { title: "Total Bookings", value: AllBookings?.length || 0, icon: "📑" },
+      { title: "Total Customers", value: customerRoles?.length || 0, icon: "👥" },
+      { title: "Total Drivers", value: filteredDriver?.length || 0, icon: "🚖" },
+      { title: "Total Staff Members", value: filteredStaffMembers?.length || 0, icon: "🛠️" },
+      { title: "Total Associate Admins", value: filteredAssociateAdmin?.length || 0, icon: "📊" },
+      { title: "Total Client Admins", value: filteredClientAdmin?.length || 0, icon: "🏢" },
+      { title: "Total Demos", value: demoRoles?.length || 0, icon: "🧪" },
+      { title: "Total Earnings", value: totalDriverEarnings, icon: "💰" },
+      { title: "Total Rides", value: totalDriverRides, icon: "🛣️" },
     ],
     [
       AllBookings?.length,
@@ -151,12 +151,12 @@ const RoleCards = () => {
             card.skeleton ? (
               <div
                 key={`s-${index}`}
-                className="h-32 animate-pulse rounded-2xl bg-slate-200/70"
+                className="h-32 animate-pulse rounded-2xl bg-theme"
               />
             ) : (
               <article
                 key={index}
-                className="relative overflow-hidden rounded-xl p-4 sm:p-5 md:p-6 text-white shadow-lg focus-within:ring-2 focus-within:ring-white/40"
+                className="relative overflow-hidden rounded-xl p-4 sm:p-5 md:p-6 bg-theme text-theme shadow-lg focus-within:ring-2 focus-within:ring-theme/40"
                 style={{ background: card.gradient }}
                 role="region"
                 aria-label={card.title}
@@ -179,8 +179,8 @@ const RoleCards = () => {
 
         {/* Earnings Graph for Drivers */}
         {user?.role?.toLowerCase()?.includes("driver") && (
-          <div className="mt-10 rounded-xl bg-white p-5 shadow-lg">
-            <h2 className="mb-4 text-lg font-bold text-gray-800">
+          <div className="mt-10 rounded-xl bg-theme p-5 shadow-lg">
+            <h2 className="mb-4 text-lg font-bold text-theme">
               Monthly Earnings
             </h2>
 
@@ -195,7 +195,7 @@ const RoleCards = () => {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-gray-500 text-center py-10">
+              <p className="text-theme text-center py-10">
                 No completed bookings found to show earnings.
               </p>
             )}
