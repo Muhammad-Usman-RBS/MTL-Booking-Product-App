@@ -242,57 +242,68 @@ const JourneyCard = ({
                     style={{ pointerEvents: "none" }}
                   />
                 </label>
-                <div className="flex gap-2 w-full sm:w-1/2">
-                  <select
-                    name="hour"
-                    className="custom_input w-full"
-                    value={
-                      journeyData.hour === "" || journeyData.hour === undefined
-                        ? ""
-                        : journeyData.hour.toString().padStart(2, "0")
-                    }
-                    onChange={(e) =>
-                      handleChange({
-                        target: {
-                          name: "hour",
-                          value: e.target.value.padStart(2, "0"),
-                        },
-                      })
-                    }
-                  >
-                    <option value="">HH</option>
-                    {[...Array(24).keys()].map((h) => (
-                      <option key={h} value={h.toString().padStart(2, "0")}>
-                        {h.toString().padStart(2, "0")}
-                      </option>
-                    ))}
-                  </select>
+                <div className="flex gap-2 ">
+                  <div>
+                    <label className=" text-xs  font-medium text-[var(--dark-gray)] mb-1">
+                      Hour
+                    </label>
+                    <select
+                      name="hour"
+                      className="custom_input w-full"
+                      value={
+                        journeyData.hour === "" ||
+                        journeyData.hour === undefined
+                          ? ""
+                          : journeyData.hour.toString().padStart(2, "0")
+                      }
+                      onChange={(e) =>
+                        handleChange({
+                          target: {
+                            name: "hour",
+                            value: e.target.value.padStart(2, "0"),
+                          },
+                        })
+                      }
+                    >
+                      <option value="">HH</option>
+                      {[...Array(24).keys()].map((h) => (
+                        <option key={h} value={h.toString().padStart(2, "0")}>
+                          {h.toString().padStart(2, "0")}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className=" text-xs font-medium text-[var(--dark-gray)] mb-1">
+                      Minute
+                    </label>
 
-                  <select
-                    name="minute"
-                    className="custom_input w-full"
-                    value={
-                      journeyData.minute === "" ||
-                      journeyData.minute === undefined
-                        ? ""
-                        : journeyData.minute.toString().padStart(2, "0")
-                    }
-                    onChange={(e) =>
-                      handleChange({
-                        target: {
-                          name: "minute",
-                          value: e.target.value.padStart(2, "0"),
-                        },
-                      })
-                    }
-                  >
-                    <option value="">MM</option>
-                    {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => (
-                      <option key={m} value={m.toString().padStart(2, "0")}>
-                        {m.toString().padStart(2, "0")}
-                      </option>
-                    ))}
-                  </select>
+                    <select
+                      name="minute"
+                      className="custom_input w-full"
+                      value={
+                        journeyData.minute === "" ||
+                        journeyData.minute === undefined
+                          ? ""
+                          : journeyData.minute.toString().padStart(2, "0")
+                      }
+                      onChange={(e) =>
+                        handleChange({
+                          target: {
+                            name: "minute",
+                            value: e.target.value.padStart(2, "0"),
+                          },
+                        })
+                      }
+                    >
+                      <option value="">MM</option>
+                      {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => (
+                        <option key={m} value={m.toString().padStart(2, "0")}>
+                          {m.toString().padStart(2, "0")}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -512,7 +523,7 @@ const JourneyCard = ({
               </div>
             ))}
 
-            {dropOffs.length < 5&& (
+            {dropOffs.length < 5 && (
               <button
                 type="button"
                 onClick={addDropOff}

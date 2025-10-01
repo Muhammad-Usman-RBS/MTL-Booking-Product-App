@@ -12,8 +12,9 @@ import {
   useUpdateInvoiceMutation,
 } from "../../../redux/api/invoiceApi";
 import InvoiceEmailModal from "./InvoiceEmailModal";
+import { Link } from "react-router-dom";
 
-const InvoiceDetails = ({ item }) => {
+const InvoiceDetails = ({ item,createBtn }) => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -116,10 +117,13 @@ const InvoiceDetails = ({ item }) => {
   };
 
   const openModal = () => {
-    const msg = `Dear ${item?.customer?.name || "Customer"
-      },\n\nWe have prepared invoice <b>${item?.invoiceNumber
-      }</b>.\n\nStatus: ${status}.\n\nView it here: <a href='${invoiceUrl}' target='_blank'>${invoiceUrl}</a>\n\nKind regards,\n${company?.companyName || "MTL Team"
-      }`;
+    const msg = `Dear ${
+      item?.customer?.name || "Customer"
+    },\n\nWe have prepared invoice <b>${
+      item?.invoiceNumber
+    }</b>.\n\nStatus: ${status}.\n\nView it here: <a href='${invoiceUrl}' target='_blank'>${invoiceUrl}</a>\n\nKind regards,\n${
+      company?.companyName || "MTL Team"
+    }`;
 
     setRecipient(item?.email);
     setSubject(`Invoice ${item?.invoiceNumber} created`);
@@ -159,18 +163,11 @@ const InvoiceDetails = ({ item }) => {
     (acc, i) => acc + (i.totalAmount - i.fare),
     0
   );
-
-  const effectiveTaxPercent =
-    totalFare > 0 ? ((totalTax / totalFare) * 100).toFixed(2) : "0";
-  const taxDisplay = totalTax > 0 ? `${effectiveTaxPercent}% Tax: ` : `Tax: `;
   return (
     <>
       <div>
         <div className="flex flex-wrap gap-2 sm:gap-3 mb-3 mt-8">
-          <button
-            onClick={handleDownload}
-            className="icon-box icon-box-info"
-          >
+          <button onClick={handleDownload} className="icon-box icon-box-info">
             <Icons.Download size={16} />
           </button>
           {userRole === "clientadmin" && (
@@ -179,33 +176,43 @@ const InvoiceDetails = ({ item }) => {
             </button>
           )}
           {userRole === "clientadmin" ? (
-            <div className="flex gap-2 items-center w-full sm:w-auto mt-2 sm:mt-0">
-              <div className="w-full sm:w-40">
-                <SelectOption
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  options={statusOption}
-                  width="full"
-                />
-              </div>
-              <button
-                onClick={handleStatusUpdate}
-                disabled={status === selectedStatus}
-                className={`p-2.5 text-white rounded-md transition ${status === selectedStatus
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-emerald-500 hover:bg-emerald-600 cursor-pointer"
+            <>
+              <div className="flex gap-2 items-center w-full sm:w-auto mt-2 sm:mt-0">
+                <div className="w-full sm:w-40">
+                  <SelectOption
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    options={statusOption}
+                    width="full"
+                  />
+                </div>
+                <button
+                  onClick={handleStatusUpdate}
+                  disabled={status === selectedStatus}
+                  className={`p-2.5 text-white rounded-md transition ${
+                    status === selectedStatus
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-emerald-500 hover:bg-emerald-600 cursor-pointer"
                   }`}
-              >
-                <Icons.Check size={16} />
-              </button>
-            </div>
+                >
+                  <Icons.Check size={16} />
+                </button>
+              </div>
+
+          <div className=" flex justify-end">
+            <Link to={createBtn.to} className="btn btn-edit">
+              {createBtn.label}
+            </Link>
+          </div>
+            </>
           ) : (
             <div className="flex items-center mt-2 sm:mt-0">
               <span
-                className={`px-3 py-2 rounded-md text-sm font-medium ${status?.toLowerCase() === "paid"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-                  }`}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  status?.toLowerCase() === "paid"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
               >
                 Status: {status}
               </span>
@@ -227,7 +234,13 @@ const InvoiceDetails = ({ item }) => {
           }}
         >
           {/* Header */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             {company?.profileImage && (
               <img
                 src={company.profileImage}
@@ -235,7 +248,14 @@ const InvoiceDetails = ({ item }) => {
                 style={{ height: "60px", marginBottom: "12px" }}
               />
             )}
-            <h2 style={{ margin: "0 0 6px 0", fontWeight: "bold", fontSize: "22px", color: "#222" }}>
+            <h2
+              style={{
+                margin: "0 0 6px 0",
+                fontWeight: "bold",
+                fontSize: "22px",
+                color: "#222",
+              }}
+            >
               INVOICE
             </h2>
           </div>
@@ -278,7 +298,9 @@ const InvoiceDetails = ({ item }) => {
                   {company?.companyName}
                 </p>
                 {item?.customer?.vatnumber && (
-                  <p style={{ margin: "4px 0", fontSize: "13px", color: "#444" }}>
+                  <p
+                    style={{ margin: "4px 0", fontSize: "13px", color: "#444" }}
+                  >
                     <b>VAT Number:</b> {item.customer.vatnumber}
                   </p>
                 )}
@@ -334,18 +356,20 @@ ${company?.zip || ""}`}
                   {company?.email}
                 </a>
 
-              <div style={{display: "flex", gap: "5px", alignItems: "center"}}>
-                  <p
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    color: "#333",
-                  }}
+                <div
+                  style={{ display: "flex", gap: "5px", alignItems: "center" }}
                 >
-                  Contact: 
-                </p>
-                <span style={{fontSize: "12px"}}>+{company?.contact}</span>
-              </div>
+                  <p
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: "14px",
+                      color: "#333",
+                    }}
+                  >
+                    Contact:
+                  </p>
+                  <span style={{ fontSize: "12px" }}>+{company?.contact}</span>
+                </div>
               </div>
             </div>
 
@@ -399,12 +423,23 @@ ${company?.zip || ""}`}
                 >
                   Bill To
                 </p>
-                <p style={{ margin: "0 0 4px 0", fontSize: "13px", color: "#444" }}>
-                  {invoiceType === "driver" ? item?.driver?.name : item?.customer?.name}
+                <p
+                  style={{
+                    margin: "0 0 4px 0",
+                    fontSize: "13px",
+                    color: "#444",
+                  }}
+                >
+                  {invoiceType === "driver"
+                    ? item?.driver?.name
+                    : item?.customer?.name}
                 </p>
                 <a
-                  href={`mailto:${invoiceType === "driver" ? item?.driver?.email : item?.customer?.email
-                    }`}
+                  href={`mailto:${
+                    invoiceType === "driver"
+                      ? item?.driver?.email
+                      : item?.customer?.email
+                  }`}
                   style={{
                     color: "#1976d2",
                     textDecoration: "none",
@@ -489,10 +524,12 @@ ${company?.zip || ""}`}
                       background: index % 2 === 0 ? "#f9fafb" : "#fff",
                       transition: "background 0.3s",
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "#f3f4f6")
+                    }
                     onMouseLeave={(e) =>
-                    (e.currentTarget.style.background =
-                      index % 2 === 0 ? "#f9fafb" : "#fff")
+                      (e.currentTarget.style.background =
+                        index % 2 === 0 ? "#f9fafb" : "#fff")
                     }
                   >
                     <td
@@ -513,13 +550,25 @@ ${company?.zip || ""}`}
                         color: "#374151",
                       }}
                     >
-                      <b style={{ fontSize: "14px", color: "#111827" }}>{ride.bookingId}</b>
+                      <b style={{ fontSize: "14px", color: "#111827" }}>
+                        {ride.bookingId}
+                      </b>
                       <br />
-                      <b style={{ fontSize: "12px", color: "#1e3a8a" }}>Pickup:</b>&nbsp;
-                      <small style={{ color: "#555", fontSize: "12px" }}>{ride.pickup}</small>
+                      <b style={{ fontSize: "12px", color: "#1e3a8a" }}>
+                        Pickup:
+                      </b>
+                      &nbsp;
+                      <small style={{ color: "#555", fontSize: "12px" }}>
+                        {ride.pickup}
+                      </small>
                       <br />
-                      <b style={{ fontSize: "12px", color: "#1e3a8a" }}>Dropoff:</b>&nbsp;
-                      <small style={{ color: "#555", fontSize: "12px" }}>{ride.dropoff}</small>
+                      <b style={{ fontSize: "12px", color: "#1e3a8a" }}>
+                        Dropoff:
+                      </b>
+                      &nbsp;
+                      <small style={{ color: "#555", fontSize: "12px" }}>
+                        {ride.dropoff}
+                      </small>
                     </td>
                     <td
                       style={{
@@ -530,12 +579,17 @@ ${company?.zip || ""}`}
                       }}
                     >
                       {(() => {
+                        if (!ride.fare) return "No Tax";
                         const taxAmount = ride.totalAmount - ride.fare;
+                        if (taxAmount <= 0) return "No Tax";
+
                         const taxPercent = (taxAmount / ride.fare) * 100;
-                        if (!ride.fare || taxAmount <= 0) return "No Tax";
-                        return `${taxPercent.toFixed(0)}%`;
+                        return `${currencySymbol}${taxAmount.toFixed(
+                          2
+                        )} (${taxPercent.toFixed(0)}%)`;
                       })()}
                     </td>
+
                     <td
                       style={{
                         padding: "12px",
@@ -545,7 +599,7 @@ ${company?.zip || ""}`}
                       }}
                     >
                       {currencySymbol}
-                      {ride.totalAmount.toFixed(2)}
+                      {ride.fare}
                     </td>
                   </tr>
                 ))}
@@ -554,7 +608,13 @@ ${company?.zip || ""}`}
           </div>
 
           {/* Totals */}
-          <div style={{ marginTop: "30px", display: "flex", justifyContent: "flex-end" }}>
+          <div
+            style={{
+              marginTop: "30px",
+              display: "flex",
+              justifyContent: "flex-end",
+            }}
+          >
             <div
               style={{
                 width: "100%",
@@ -576,7 +636,9 @@ ${company?.zip || ""}`}
                   borderBottom: "1px solid #e5e7eb",
                 }}
               >
-                <span style={{ fontSize: "14px", color: "#374151" }}>Sub Total</span>
+                <span style={{ fontSize: "14px", color: "#374151" }}>
+                  Sub Total
+                </span>
                 <p style={{ fontSize: "14px", color: "#111827" }}>
                   {currencySymbol}
                   {totalFare.toFixed(2)}
@@ -615,12 +677,13 @@ ${company?.zip || ""}`}
                 <span>Grand Total</span>
                 <span>
                   {currencySymbol}
-                  {item.items.reduce((acc, i) => acc + i.totalAmount, 0).toFixed(2)}
+                  {item.items
+                    .reduce((acc, i) => acc + i.totalAmount, 0)
+                    .toFixed(2)}
                 </span>
               </div>
             </div>
           </div>
-
 
           {/* Notes */}
           <div
@@ -637,7 +700,6 @@ ${company?.zip || ""}`}
             </p>
           </div>
         </div>
-
       </div>
 
       {userRole === "clientadmin" && (

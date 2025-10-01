@@ -1,9 +1,9 @@
-import axios from 'axios';
-import dotenv from 'dotenv';
-import bcrypt from 'bcryptjs';
-import User from '../models/User.js';
+import axios from "axios";
+import dotenv from "dotenv";
+import bcrypt from "bcryptjs";
+import User from "../models/User.js";
 import sendEmail from "../utils/sendEmail.js";
-import generateToken from '../utils/generateToken.js';
+import generateToken from "../utils/generateToken.js";
 
 dotenv.config();
 
@@ -15,33 +15,42 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    } if (user.role === "clientadmin" && !user.companyId) {
-      return res.status(403).json({ message: "Client Admin must have a company assigned. Please contact the administrator." });
-
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+    if (user.role === "clientadmin" && !user.companyId) {
+      return res
+        .status(403)
+        .json({
+          message:
+            "Client Admin must have a company assigned. Please contact the administrator.",
+        });
     }
 
     // Check account statusvi
     if (user.status !== "Active") {
-      return res.status(403).json({ message: `Your account is ${user.status}. Please contact the administrator.` });
+      return res
+        .status(403)
+        .json({
+          message: `Your account is ${user.status}. Please contact the administrator.`,
+        });
     }
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     // Get IP Address
-    const forwarded = req.headers['x-forwarded-for'];
-    const rawIp = forwarded || req.socket.remoteAddress || '';
+    const forwarded = req.headers["x-forwarded-for"];
+    const rawIp = forwarded || req.socket.remoteAddress || "";
     const ip = rawIp.includes("::ffff:") ? rawIp.split("::ffff:")[1] : rawIp;
 
     // Geo IP Lookup
     let location = "Unknown, Unknown";
     try {
       const { data: geo } = await axios.get(`http://ip-api.com/json/${ip}`);
-      if (geo?.status === 'success') {
-        location = `${geo.city || 'Unknown'}, ${geo.country || 'Unknown'}`;
+      if (geo?.status === "success") {
+        location = `${geo.city || "Unknown"}, ${geo.country || "Unknown"}`;
       }
     } catch (err) {
       console.warn("Geo IP lookup failed:", err.message);
@@ -51,7 +60,7 @@ export const login = async (req, res) => {
     user.loginHistory.push({
       loginAt: new Date(),
       systemIpAddress: ip,
-      location
+      location,
     });
 
     await user.save();
@@ -68,6 +77,7 @@ export const login = async (req, res) => {
       companyId: user.companyId || null,
       employeeNumber: user.employeeNumber,
       vatnumber: user.vatnumber || null,
+    
 
       // 🔹 Superadmin fields
       superadminCompanyName: user.superadminCompanyName || "",
@@ -76,7 +86,6 @@ export const login = async (req, res) => {
       superadminCompanyEmail: user.superadminCompanyEmail || "",
       superadminCompanyWebsite: user.superadminCompanyWebsite || "",
     });
-
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Server error during login" });
@@ -105,12 +114,15 @@ export const getSuperadminInfo = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("+password");
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     // Verify current password
-    const isMatch = await bcrypt.compare(req.body.currentPassword, user.password);
+    const isMatch = await bcrypt.compare(
+      req.body.currentPassword,
+      user.password
+    );
     if (!isMatch) {
-      return res.status(400).json({ message: 'Current password is incorrect' });
+      return res.status(400).json({ message: "Current password is incorrect" });
     }
 
     // Update basic fields
@@ -127,10 +139,15 @@ export const updateProfile = async (req, res) => {
 
     // 🔹 Update superadmin fields if role is superadmin
     if (user.role === "superadmin") {
-      user.superadminCompanyName = req.body.superadminCompanyName || user.superadminCompanyName;
-      user.superadminCompanyAddress = req.body.superadminCompanyAddress || user.superadminCompanyAddress;
-      user.superadminCompanyPhoneNumber = req.body.superadminCompanyPhoneNumber || user.superadminCompanyPhoneNumber;
-      user.superadminCompanyEmail = req.body.superadminCompanyEmail || user.superadminCompanyEmail;
+      user.superadminCompanyName =
+        req.body.superadminCompanyName || user.superadminCompanyName;
+      user.superadminCompanyAddress =
+        req.body.superadminCompanyAddress || user.superadminCompanyAddress;
+      user.superadminCompanyPhoneNumber =
+        req.body.superadminCompanyPhoneNumber ||
+        user.superadminCompanyPhoneNumber;
+      user.superadminCompanyEmail =
+        req.body.superadminCompanyEmail || user.superadminCompanyEmail;
     }
 
     await user.save();
@@ -152,7 +169,7 @@ export const updateProfile = async (req, res) => {
     });
   } catch (err) {
     console.error("Update Profile Error:", err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 

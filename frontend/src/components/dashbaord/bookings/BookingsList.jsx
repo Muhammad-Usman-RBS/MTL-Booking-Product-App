@@ -18,6 +18,10 @@ import ViewDriver from "./ViewDriver";
 import NewBooking from "./NewBooking";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 import { useLoading } from "../../common/LoadingProvider";
+import {
+  useGetBookingPreferencesQuery,
+  useUpdateBookingPreferencesMutation,
+} from "../../../redux/api/adminApi";
 
 const BookingsList = () => {
   const user = useSelector((state) => state.auth.user);
@@ -74,7 +78,8 @@ const BookingsList = () => {
 
   const [selectedRow, setSelectedRow] = useState(null);
   const [assignedDrivers, setAssignedDrivers] = useState([]);
-
+  const { data: preferencesData } = useGetBookingPreferencesQuery();
+  const [updatePreferences] = useUpdateBookingPreferencesMutation();
   const [selectedStatus, setSelectedStatus] = useState(["All"]);
   const [selectedActionRow, setSelectedActionRow] = useState(null);
   const [showAuditModal, setShowAuditModal] = useState(false);
@@ -101,6 +106,24 @@ const BookingsList = () => {
   const { data: driversData, isLoading: isDriversLoading } =
     useGetAllDriversQuery(user?.companyId);
 
+  useEffect(() => {
+    if (preferencesData?.bookingFilterPreferences?.selectedStatus?.length > 0) {
+      setSelectedStatus(
+        preferencesData.bookingFilterPreferences.selectedStatus
+      );
+    }
+  }, [preferencesData]);
+  useEffect(() => {
+    if (preferencesData?.bookingFilterPreferences?.selectedColumns) {
+      const savedCols = preferencesData.bookingFilterPreferences.selectedColumns;
+      // Merge DB preferences with defaults
+      const merged = { ...defaultColumns };
+      Object.keys(merged).forEach((key) => {
+        merged[key] = savedCols.includes(key); // true if saved
+      });
+      setSelectedColumns(merged);
+    }
+  }, [preferencesData]);
   // 🔹 Manage global loading spinner
   useEffect(() => {
     if (isCompanyLoading || isBookingsLoading || isDriversLoading) {
@@ -136,7 +159,7 @@ const BookingsList = () => {
     acc[status] = 0;
     return acc;
   }, {});
-  
+
   allBookings.forEach((b) => {
     if (b?.status && statusCountMap.hasOwnProperty(b.status)) {
       statusCountMap[b.status] += 1;
@@ -235,11 +258,6 @@ const BookingsList = () => {
     return merged;
   });
 
-  const handleColumnChange = (key, value) => {
-    const updated = { ...selectedColumns, [key]: value };
-    setSelectedColumns(updated);
-    localStorage.setItem("selectedColumns", JSON.stringify(updated));
-  };
   const isAnyModalOpen =
     showAuditModal ||
     showViewModal ||
@@ -248,10 +266,23 @@ const BookingsList = () => {
     showColumnModal ||
     showEditModal;
 
+  const handleStatusChange = (newStatus) => {
+    setSelectedStatus(newStatus);
+    updatePreferences({ selectedStatus: newStatus });
+  };
+  const handleColumnChange = (key, value) => {
+    const updated = { ...selectedColumns, [key]: value };
+    setSelectedColumns(updated);
+    updatePreferences({
+      selectedColumns: updated,
+      selectedStatus, 
+    });
+  };
   return (
     <>
       <OutletHeading name="Bookings List" />
       <BookingsFilters
+      handleStatusChange={handleStatusChange}
         futureCount={futureBookingsCount}
         assignedDrivers={assignedDrivers}
         selectedStatus={selectedStatus}

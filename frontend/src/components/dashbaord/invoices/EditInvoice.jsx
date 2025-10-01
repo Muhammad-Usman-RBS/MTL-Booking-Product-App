@@ -155,6 +155,7 @@ const InvoicePage = () => {
             itemInternalNotes[index]?.trim() === ""
               ? null
               : itemInternalNotes[index] || original.internalNotes || null,
+          source: original.source || null,
         };
       });
 
@@ -226,7 +227,7 @@ const InvoicePage = () => {
 
       toast.success("Invoice updated successfully!");
     } catch (err) {
-      console.error(err); 
+      console.error(err);
       toast.error("Failed to update invoice");
     }
   };

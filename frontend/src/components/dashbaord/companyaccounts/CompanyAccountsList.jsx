@@ -95,7 +95,7 @@ const CompanyAccountsList = () => {
     const canDelete = !(
       user?.role === "clientadmin" &&
       String(item?.clientAdminId?._id || item?.clientAdminId) ===
-      String(user._id)
+        String(user._id)
     );
 
     return {
@@ -109,18 +109,20 @@ const CompanyAccountsList = () => {
 
       actions: (
         <div className="flex gap-2">
-          <Icons.Eye
-            title="View"
+          <div
             onClick={() => setSelectedAccount(item)}
-            className="w-8 h-8 p-2 rounded-md hover:bg-blue-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-          />
-          <Icons.Pencil
-            title="Edit"
+            className="icon-box icon-box-info"
+          >
+            <Icons.Eye title="View" className="size-4" />
+          </div>
+          <div
             onClick={() =>
               navigate(`/dashboard/company-accounts/edit/${item._id}`)
             }
-            className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-          />
+            className="icon-box icon-box-warning"
+          >
+            <Icons.Pencil title="Edit" className="size-4" />
+          </div>
           {canDelete && (
             <Icons.Trash
               title="Delete"
@@ -214,9 +216,10 @@ const CompanyAccountsList = () => {
                     selectedAccount.profileImage?.startsWith("http")
                       ? selectedAccount.profileImage
                       : selectedAccount.profileImage
-                        ? `${import.meta.env.VITE_API_BASE_URL}/${selectedAccount.profileImage
+                      ? `${import.meta.env.VITE_API_BASE_URL}/${
+                          selectedAccount.profileImage
                         }`
-                        : IMAGES.dummyImg
+                      : IMAGES.dummyImg
                   }
                   alt="Profile"
                   style={{
@@ -291,13 +294,24 @@ const CompanyAccountsList = () => {
                     ? selectedAccount.contact
                     : `+${selectedAccount.contact}`,
                 },
-                { label: "License Number", value: selectedAccount.licenseNumber },
-                { label: "License Referrer Link", value: selectedAccount.referrerLink },
-                { label: "Cookie Consent", value: selectedAccount.cookieConsent },
+                {
+                  label: "License Number",
+                  value: selectedAccount.licenseNumber,
+                },
+                {
+                  label: "License Referrer Link",
+                  value: selectedAccount.referrerLink,
+                },
+                {
+                  label: "Cookie Consent",
+                  value: selectedAccount.cookieConsent,
+                },
                 {
                   label: "Created At",
                   value: selectedAccount?.createdAt
-                    ? moment(selectedAccount.createdAt).tz(timezone).format("DD/MM/YYYY HH:mm:ss")
+                    ? moment(selectedAccount.createdAt)
+                        .tz(timezone)
+                        .format("DD/MM/YYYY HH:mm:ss")
                     : "N/A",
                 },
                 { label: "Company Address", value: selectedAccount.address },
@@ -331,7 +345,8 @@ const CompanyAccountsList = () => {
                       fontWeight: "500",
                       color: "#111827",
                       wordBreak: "break-word",
-                      whiteSpace: label === "Company Address" ? "pre-line" : "normal",
+                      whiteSpace:
+                        label === "Company Address" ? "pre-line" : "normal",
                     }}
                   >
                     {value || "N/A"}

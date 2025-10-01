@@ -73,6 +73,21 @@ export const adminApi = apiSlice.injectEndpoints({
       query: (payload) => ({ url: "/create-customer", method: "POST", body: payload }),
       invalidatesTags: ["Customers", "Users"],
     }),
+
+    updateBookingPreferences: builder.mutation({
+      query: (preferences) => ({
+        url: "/preferences",
+        method: "PATCH",
+        body: preferences,
+      }),
+    }),
+    getBookingPreferences: builder.query({
+      query: () => ({
+        url: "/preferences",
+        method: "GET",
+      }),
+      providesTags: ["User"],
+    }),
   }),
 });
 
@@ -101,4 +116,6 @@ export const {
   // Customers
   useGetAllCustomersQuery,
   useCreateCustomerViaWidgetMutation,
+  useUpdateBookingPreferencesMutation,
+  useGetBookingPreferencesQuery,
 } = adminApi;

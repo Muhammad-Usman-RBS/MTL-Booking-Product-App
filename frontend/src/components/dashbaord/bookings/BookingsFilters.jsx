@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import SelectedSearch from "../../../constants/constantscomponents/SelectedSearch";
 import SelectDateRange from "../../../constants/constantscomponents/SelectDateRange";
@@ -6,10 +6,11 @@ import Icons from "../../../assets/icons";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
 import { useSelector } from "react-redux";
 
+
 const BookingsFilters = ({
+  handleStatusChange,
   futureCount,
   selectedStatus,
-  setSelectedStatus,
   selectedDrivers,
   setSelectedDrivers,
   selectedPassengers,
@@ -34,7 +35,7 @@ const BookingsFilters = ({
   const { data: driverData } = useGetAllDriversQuery(companyId, {
     skip: !companyId,
   });
-
+ 
   const driverListForFilter =
     driverData?.drivers?.map((driver) => ({
       label: driver?.DriverData?.firstName || "Unnamed",
@@ -46,7 +47,10 @@ const BookingsFilters = ({
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full">
           <div className="flex gap-2">
             <Link to="/dashboard/bookings/new">
-              <button title="Add New Booking" className="icon-box icon-box-primary">
+              <button
+                title="Add New Booking"
+                className="icon-box icon-box-primary"
+              >
                 <Icons.Plus size={17} />
               </button>
             </Link>
@@ -61,7 +65,7 @@ const BookingsFilters = ({
           <div className="w-full sm:w-64">
             <SelectedSearch
               selected={selectedStatus}
-              setSelected={setSelectedStatus}
+              setSelected={handleStatusChange}
               statusList={statusList}
               showCount={true}
             />

@@ -273,11 +273,12 @@ const InvoicesList = () => {
       invoiceMode === "Driver"
         ? item?.driver?.name || "-"
         : item?.customer?.name || "-";
+
     const amount =
       item.items?.reduce((sum, i) => sum + (i.totalAmount || 0), 0) || 0;
     return {
       invoiceNo: item.invoiceNumber,
-      [invoiceMode === "Driver" ? "driver" : "customer"]: name, // ✅ dynamic
+      [invoiceMode === "Driver" ? "driver" : "customer"]: name,
       account: item.items?.[0]?.source || "-",
       date: item.invoiceDate
         ? new Date(item.invoiceDate).toLocaleDateString("en-GB")
@@ -325,7 +326,6 @@ const InvoicesList = () => {
         }
       : { label: "New Driver Invoice", to: "/dashboard/invoices/driver/new" };
 
-  const canShowCreate = userRole === "clientadmin";
 
   return (
     <>
@@ -365,21 +365,14 @@ const InvoicesList = () => {
           search={search}
           setSearch={setSearch}
         />
-
+   
         {expandedInvoice && (
           <InvoiceDetails
+          createBtn={createBtn}
             item={invoices.find((i) => i.invoiceNumber === expandedInvoice)}
           />
         )}
       </div>
-
-      {canShowCreate && (
-        <div className="mt-5 flex justify-end">
-          <Link to={createBtn.to} className="btn btn-edit">
-            {createBtn.label}
-          </Link>
-        </div>
-      )}
 
       <DeleteModal
         isOpen={deleteModalOpen}

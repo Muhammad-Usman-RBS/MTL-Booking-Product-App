@@ -910,3 +910,51 @@ export const createCustomerViaWidget = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const updateBookingFilterPreferences = async (req, res) => {
+  try {
+    const { selectedStatus, selectedColumns } = req.body;
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (Array.isArray(selectedStatus) && selectedStatus.length > 0) {
+      user.bookingFilterPreferences.selectedStatus = selectedStatus;
+    } else {
+      user.bookingFilterPreferences.selectedStatus = ["All"];
+    }
+    if (selectedColumns && typeof selectedColumns === "object") {
+      user.bookingFilterPreferences.selectedColumns = Object.keys(selectedColumns)
+        .filter((key) => selectedColumns[key]); 
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Booking filter preferences updated",
+      bookingFilterPreferences: user.bookingFilterPreferences,
+    });
+  } catch (error) {
+    console.error("updateBookingFilterPreferences error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getBookingFilterPreferences = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId).select("bookingFilterPreferences");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({
+      bookingFilterPreferences: user.bookingFilterPreferences || {
+        selectedStatus: ["All"],
+        selectedColumns: [],
+      },
+    });
+  } catch (error) {
+    console.error("getBookingFilterPreferences error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};

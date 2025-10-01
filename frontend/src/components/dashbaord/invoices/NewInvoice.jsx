@@ -326,8 +326,8 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
 
           return {
             bookingId: booking.bookingId,
-            pickup: booking.primaryJourney?.pickup || "-",
-            dropoff: booking.primaryJourney?.dropoff || "-",
+            pickup: booking?.returnJourneyToggle ? booking?.returnJourney.pickup : booking.primaryJourney?.pickup || "-",
+            dropoff: booking?.returnJourneyToggle ? booking?.returnJourney.dropoff :  booking.primaryJourney?.dropoff || "-",
             date: pickupDate,
             fare,
             tax: taxType,
