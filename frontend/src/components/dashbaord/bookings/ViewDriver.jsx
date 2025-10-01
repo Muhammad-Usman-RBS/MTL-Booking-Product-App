@@ -218,7 +218,7 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   const handleSendEmail = async () => {
     if (selectedBooking?.status !== "New") {
       toast.error(
-        "Mark this booking to new to assign/unassign a  driver."
+        "Mark this booking to new to assign/unassign a driver."
       );
       return;
     }

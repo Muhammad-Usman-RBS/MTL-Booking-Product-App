@@ -21,7 +21,7 @@ const RoleCards = () => {
     skip: !user?.companyId,
   });
 
-  const AllBookings = AllBookingsResponse?.data ?? [];
+  const AllBookings = AllBookingsResponse?.bookings ?? [];
 
   const { data: AllUsers, refetch, isFetching } = useGetAllUsersQuery();
 

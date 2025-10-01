@@ -8,18 +8,18 @@ import { useLoading } from "../../common/LoadingProvider";
 const ViewCompany = () => {
     const user = useSelector((state) => state.auth.user);
     const companyId = user?.companyId;
-  const {showLoading , hideLoading } = useLoading()
+    const { showLoading, hideLoading } = useLoading()
 
     const { data: company, isLoading, error } = useGetCompanyByIdQuery(companyId, {
         skip: !companyId,
     });
- useEffect(()=> {
-    if(isLoading) {
-        showLoading()
-    } else {
-      hideLoading()
-    }
-  } , [isLoading , hideLoading , showLoading])
+    useEffect(() => {
+        if (isLoading) {
+            showLoading()
+        } else {
+            hideLoading()
+        }
+    }, [isLoading, hideLoading, showLoading])
     if (error) return <p className="p-4 text-red-500">Failed to load company info</p>;
     if (!company) return <p className="p-4 text-gray-400">No company data found.</p>;
 
@@ -28,10 +28,10 @@ const ViewCompany = () => {
         { label: "Full Name", value: company.fullName },
         { label: "Trading Name", value: company.tradingName },
         { label: "Phone", value: company.contact ? `+${company.contact}` : null },
-        { label: "Address", value: company.address },
         { label: "Licensed By", value: company.licensedBy },
         { label: "License Number", value: company.licenseNumber },
         { label: "Referrer Link", value: company.referrerLink },
+        { label: "Address", value: company.address },
         { label: "Cookie Consent", value: company.cookieConsent },
     ];
 
@@ -54,7 +54,7 @@ const ViewCompany = () => {
                             <img
                                 src={company.profileImage}
                                 alt="Company Logo"
-                                className="w-full h-full object-cover rounded-md"
+                                className="w-full h-full object-contain rounded-md"
                                 onError={(e) => {
                                     e.target.onerror = null;
                                     e.target.src = "";
@@ -71,13 +71,18 @@ const ViewCompany = () => {
                 <hr className="mb-6 border-[var(--light-gray)]" />
 
                 {/* Info grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm text-gray-700">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm text-gray-700">
                     {fields.map(
                         (field, idx) =>
                             field.value && (
-                                <p key={idx}>
-                                    <strong>{field.label}:</strong> {field.value}
-                                </p>
+                                <div key={idx} className="flex items-start gap-1">
+                                    <strong className="min-w-[130px]">{field.label}:</strong>
+                                    {field.label === "Address" ? (
+                                        <span style={{ whiteSpace: "pre-line" }}>{field.value}</span>
+                                    ) : (
+                                        <span>{field.value}</span>
+                                    )}
+                                </div>
                             )
                     )}
                 </div>

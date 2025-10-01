@@ -50,7 +50,7 @@ const SelectedSearch = ({
       </button>
 
       {dropdownOpen && (
-        <div className="absolute z-10 mt-2 bg-white border rounded border-[var(--light-gray)] shadow-md max-h-72 overflow-y-auto w-full">
+        <div className="absolute z-50 mt-2 bg-white border rounded border-[var(--light-gray)] shadow-md max-h-72 overflow-y-auto w-full">
           <div className="p-2 border-b border-[var(--light-gray)]">
             <input
               type="text"

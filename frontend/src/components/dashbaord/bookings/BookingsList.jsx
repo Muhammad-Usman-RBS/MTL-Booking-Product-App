@@ -31,7 +31,7 @@ const BookingsList = () => {
     pickUp: true,
     dropOff: true,
 
-    // ✈️ Flight Details
+    // Flight Details
     flightNumber: true,
     flightOrigin: true,
     flightDestination: true,

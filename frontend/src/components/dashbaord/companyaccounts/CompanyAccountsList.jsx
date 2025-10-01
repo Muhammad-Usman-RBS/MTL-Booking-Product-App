@@ -95,7 +95,7 @@ const CompanyAccountsList = () => {
     const canDelete = !(
       user?.role === "clientadmin" &&
       String(item?.clientAdminId?._id || item?.clientAdminId) ===
-        String(user._id)
+      String(user._id)
     );
 
     return {
@@ -148,7 +148,7 @@ const CompanyAccountsList = () => {
           />
 
           <CustomTable
-          filename="Company-Accounts-list"
+            filename="Company-Accounts-list"
             tableHeaders={tableHeaders}
             tableData={tableData}
             showPagination={true}
@@ -166,6 +166,28 @@ const CompanyAccountsList = () => {
             buttonBg="btn btn-back"
             onButtonClick={handleConfirmSendEmail}
           />
+          <div className="flex justify-end items-center mb-6 mt-6">
+            <div className="flex gap-2">
+              <button
+                onClick={() =>
+                  downloadPDF(
+                    "invoiceToDownload",
+                    `Company-${selectedAccount.companyName || "Account"}.pdf`
+                  )
+                }
+                className="btn btn-edit"
+              >
+                Download PDF
+              </button>
+              <button
+                onClick={() => setSelectedAccount(null)}
+                className="btn btn-cancel"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+
           <div
             id="invoiceToDownload"
             style={{
@@ -192,10 +214,9 @@ const CompanyAccountsList = () => {
                     selectedAccount.profileImage?.startsWith("http")
                       ? selectedAccount.profileImage
                       : selectedAccount.profileImage
-                      ? `${import.meta.env.VITE_API_BASE_URL}/${
-                          selectedAccount.profileImage
+                        ? `${import.meta.env.VITE_API_BASE_URL}/${selectedAccount.profileImage
                         }`
-                      : IMAGES.dummyImg
+                        : IMAGES.dummyImg
                   }
                   alt="Profile"
                   style={{
@@ -203,7 +224,7 @@ const CompanyAccountsList = () => {
                     height: "100%",
                     borderRadius: "50%",
                     border: "4px solid #38bdf8",
-                    objectFit: "cover",
+                    objectFit: "contain",
                     boxShadow: "0 6px 18px rgba(56,189,248,0.4)",
                   }}
                 />
@@ -270,24 +291,13 @@ const CompanyAccountsList = () => {
                     ? selectedAccount.contact
                     : `+${selectedAccount.contact}`,
                 },
-                {
-                  label: "License Number",
-                  value: selectedAccount.licenseNumber,
-                },
-                {
-                  label: "License Referrer Link",
-                  value: selectedAccount.referrerLink,
-                },
-                {
-                  label: "Cookie Consent",
-                  value: selectedAccount.cookieConsent,
-                },
+                { label: "License Number", value: selectedAccount.licenseNumber },
+                { label: "License Referrer Link", value: selectedAccount.referrerLink },
+                { label: "Cookie Consent", value: selectedAccount.cookieConsent },
                 {
                   label: "Created At",
                   value: selectedAccount?.createdAt
-                    ? moment(selectedAccount.createdAt)
-                        .tz(timezone)
-                        .format("DD/MM/YYYY HH:mm:ss")
+                    ? moment(selectedAccount.createdAt).tz(timezone).format("DD/MM/YYYY HH:mm:ss")
                     : "N/A",
                 },
                 { label: "Company Address", value: selectedAccount.address },
@@ -321,34 +331,13 @@ const CompanyAccountsList = () => {
                       fontWeight: "500",
                       color: "#111827",
                       wordBreak: "break-word",
+                      whiteSpace: label === "Company Address" ? "pre-line" : "normal",
                     }}
                   >
                     {value || "N/A"}
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-
-          <div className="flex justify-end items-center mb-6 mt-6">
-            <div className="flex gap-2">
-              <button
-                onClick={() =>
-                  downloadPDF(
-                    "invoiceToDownload",
-                    `Company-${selectedAccount.companyName || "Account"}.pdf`
-                  )
-                }
-                className="btn btn-edit"
-              >
-                Download PDF
-              </button>
-              <button
-                onClick={() => setSelectedAccount(null)}
-                className="btn btn-cancel"
-              >
-                Close
-              </button>
             </div>
           </div>
         </>

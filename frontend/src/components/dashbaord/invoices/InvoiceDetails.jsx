@@ -116,13 +116,10 @@ const InvoiceDetails = ({ item }) => {
   };
 
   const openModal = () => {
-    const msg = `Dear ${
-      item?.customer?.name || "Customer" 
-    },\n\nWe have prepared invoice <b>${
-      item?.invoiceNumber
-    }</b>.\n\nStatus: ${status}.\n\nView it here: <a href='${invoiceUrl}' target='_blank'>${invoiceUrl}</a>\n\nKind regards,\n${
-      company?.companyName || "MTL Team"
-    }`;
+    const msg = `Dear ${item?.customer?.name || "Customer"
+      },\n\nWe have prepared invoice <b>${item?.invoiceNumber
+      }</b>.\n\nStatus: ${status}.\n\nView it here: <a href='${invoiceUrl}' target='_blank'>${invoiceUrl}</a>\n\nKind regards,\n${company?.companyName || "MTL Team"
+      }`;
 
     setRecipient(item?.email);
     setSubject(`Invoice ${item?.invoiceNumber} created`);
@@ -194,11 +191,10 @@ const InvoiceDetails = ({ item }) => {
               <button
                 onClick={handleStatusUpdate}
                 disabled={status === selectedStatus}
-                className={`p-2.5 text-white rounded-md transition ${
-                  status === selectedStatus
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-emerald-500 hover:bg-emerald-600 cursor-pointer"
-                }`}
+                className={`p-2.5 text-white rounded-md transition ${status === selectedStatus
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-emerald-500 hover:bg-emerald-600 cursor-pointer"
+                  }`}
               >
                 <Icons.Check size={16} />
               </button>
@@ -206,11 +202,10 @@ const InvoiceDetails = ({ item }) => {
           ) : (
             <div className="flex items-center mt-2 sm:mt-0">
               <span
-                className={`px-3 py-2 rounded-md text-sm font-medium ${
-                  status?.toLowerCase() === "paid"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                }`}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${status?.toLowerCase() === "paid"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+                  }`}
               >
                 Status: {status}
               </span>
@@ -218,107 +213,322 @@ const InvoiceDetails = ({ item }) => {
           )}
         </div>
 
-        <div id="invoiceToDownload" className="invoice-container">
-          <div className="invoice-header">
-            <div className="company-info">
-              {company.profileImage && (
-                <img
-                  src={company.profileImage}
-                  alt="Logo"
-                  className="company-logo"
-                />
-              )}
-              <p className="company-name">{company.companyName}</p>
-              {item?.customer?.vatnumber && (
-                <p>VAT Number - {item?.customer?.vatnumber}</p>
-              )}
-              <p>
-                {[company.address, company.city, company.state, company.zip]
-                  .filter(Boolean)
-                  .join(", ")}
-              </p>
-              <p>Website: {company.website}</p>
-              <a href={`mailto:${company.email}`} className="email-link">
-                {company.email}
-              </a>
-              <p>Contact: +{company.contact}</p>
+        <div
+          id="invoiceToDownload"
+          style={{
+            fontFamily: "Arial, sans-serif",
+            maxWidth: "900px",
+            margin: "20px auto",
+            border: "1px solid #ccc",
+            borderRadius: "8px",
+            padding: "20px",
+            background: "#f9fafb",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          }}
+        >
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            {company?.profileImage && (
+              <img
+                src={company.profileImage}
+                alt="Logo"
+                style={{ height: "60px", marginBottom: "12px" }}
+              />
+            )}
+            <h2 style={{ margin: "0 0 6px 0", fontWeight: "bold", fontSize: "22px", color: "#222" }}>
+              INVOICE
+            </h2>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "stretch", // stretch so both sides equal height
+              gap: "40px",
+              flexWrap: "wrap",
+              borderBottom: "2px solid #333",
+              paddingTop: "10px",
+              paddingBottom: "10px",
+              marginBottom: "20px",
+              background: "#fafafa",
+              borderRadius: "6px",
+              minHeight: "200px", // enforce equal height
+            }}
+          >
+            {/* Left Side - Company Info */}
+            <div
+              style={{
+                flex: "1",
+                minWidth: "250px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between", // distribute top/bottom
+              }}
+            >
+              {/* TOP PART */}
+              <div>
+                <p
+                  style={{
+                    fontWeight: "bold",
+                    margin: "0 0 6px 0",
+                    fontSize: "18px",
+                    color: "#333",
+                  }}
+                >
+                  {company?.companyName}
+                </p>
+                {item?.customer?.vatnumber && (
+                  <p style={{ margin: "4px 0", fontSize: "13px", color: "#444" }}>
+                    <b>VAT Number:</b> {item.customer.vatnumber}
+                  </p>
+                )}
+
+                <div
+                  style={{
+                    margin: "8px 0",
+                    fontSize: "13px",
+                    color: "#444",
+                    whiteSpace: "pre-line",
+                    lineHeight: "1.5",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontWeight: "bold",
+                      margin: "0 0 6px 0",
+                      fontSize: "14px",
+                      color: "#333",
+                    }}
+                  >
+                    Address:
+                  </p>
+                  {`${company?.address || ""} 
+${company?.city || ""} 
+${company?.state || ""} 
+${company?.zip || ""}`}
+                </div>
+              </div>
+
+              {/* BOTTOM PART */}
+              <div>
+                <p
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                    color: "#333",
+                  }}
+                >
+                  Website: {company?.website}
+                </p>
+
+                <a
+                  href={`mailto:${company?.email}`}
+                  style={{
+                    color: "#1976d2",
+                    textDecoration: "none",
+                    fontSize: "13px",
+                    display: "block",
+                    margin: "4px 0",
+                  }}
+                >
+                  {company?.email}
+                </a>
+
+              <div style={{display: "flex", gap: "5px", alignItems: "center"}}>
+                  <p
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                    color: "#333",
+                  }}
+                >
+                  Contact: 
+                </p>
+                <span style={{fontSize: "12px"}}>+{company?.contact}</span>
+              </div>
+              </div>
             </div>
 
-            <div className="invoice-info">
-              <h2 className="invoice-title">INVOICE</h2>
-              <p
-                className={`invoice-status ${
-                  status.toLowerCase() === "paid" ? "paid" : "unpaid"
-                }`}
-              >
-                {status}
-              </p>
-              <p className="invoice-no">#{item?.invoiceNumber}</p>
-              <div className="invoice-dates">
-                <p>
+            {/* Right Side - Invoice Info */}
+            <div
+              style={{
+                flex: "1",
+                minWidth: "220px",
+                textAlign: "right",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between", // distribute top/bottom
+              }}
+            >
+              {/* TOP PART */}
+              <div>
+                <p
+                  style={{
+                    margin: "0 0 6px 0",
+                    color: status?.toLowerCase() === "paid" ? "green" : "red",
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                  }}
+                >
+                  {status}
+                </p>
+
+                <p style={{ margin: "4px 0", fontSize: "13px", color: "#444" }}>
+                  #{item?.invoiceNumber}
+                </p>
+                <p style={{ margin: "4px 0", fontSize: "13px", color: "#444" }}>
                   Invoice Date: {new Date(item?.createdAt).toLocaleDateString()}
                 </p>
-                <p>
+                <p style={{ margin: "4px 0", fontSize: "13px", color: "#444" }}>
                   Due Date:{" "}
                   {item?.items?.[0]?.date
                     ? new Date(item.items[0].date).toLocaleDateString()
                     : "-"}
                 </p>
               </div>
-              <div className="bill-to div">
-                <p className="bill-to">Bill To</p>
-                <div>
-                  <span>
-                    {invoiceType === "driver"
-                      ? item.driver?.name
-                      : item.customer?.name}
-                  </span>
-                  <a
-                    href={`mailto:${
-                      invoiceType === "driver"
-                        ? item.driver?.email
-                        : item.customer?.email
+
+              {/* BOTTOM PART (Bill To) */}
+              <div>
+                <p
+                  style={{
+                    fontWeight: "bold",
+                    margin: "12px 0 4px 0",
+                    fontSize: "14px",
+                    color: "#333",
+                  }}
+                >
+                  Bill To
+                </p>
+                <p style={{ margin: "0 0 4px 0", fontSize: "13px", color: "#444" }}>
+                  {invoiceType === "driver" ? item?.driver?.name : item?.customer?.name}
+                </p>
+                <a
+                  href={`mailto:${invoiceType === "driver" ? item?.driver?.email : item?.customer?.email
                     }`}
-                    className="email-link"
-                  >
-                    {invoiceType === "driver"
-                      ? item.driver?.email
-                      : item.customer?.email}
-                  </a>
-                  <span>
-                    +
-                    {invoiceType === "driver"
-                      ? item.driver?.phone
-                      : item.customer?.phone}
-                  </span>
-                </div>
+                  style={{
+                    color: "#1976d2",
+                    textDecoration: "none",
+                    fontSize: "13px",
+                    display: "block",
+                    margin: "4px 0",
+                  }}
+                >
+                  {invoiceType === "driver"
+                    ? item?.driver?.email
+                    : item?.customer?.email}
+                </a>
+                <p style={{ margin: "4px 0", fontSize: "13px", color: "#444" }}>
+                  {invoiceType === "driver"
+                    ? item?.driver?.phone
+                    : item?.customer?.phone}
+                </p>
               </div>
-              <p>{item?.phone}</p>
             </div>
           </div>
 
-          <div className="table-wrapper">
-            <table className="invoice-table">
+          {/* Table */}
+          <div style={{ overflowX: "auto", marginTop: "20px" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                background: "#fff",
+                borderRadius: "8px",
+                overflow: "hidden",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+              }}
+            >
               <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Item</th>
-                  <th>Tax</th>
-                  <th>Amount</th>
+                <tr style={{ background: "#e0e7ff", color: "#1e3a8a" }}>
+                  <th
+                    style={{
+                      padding: "12px",
+                      border: "1px solid #cbd5e1",
+                      textAlign: "center",
+                      width: "50px",
+                    }}
+                  >
+                    #
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px",
+                      border: "1px solid #cbd5e1",
+                      textAlign: "left",
+                    }}
+                  >
+                    Item
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px",
+                      border: "1px solid #cbd5e1",
+                      textAlign: "center",
+                      width: "120px",
+                    }}
+                  >
+                    Tax
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px",
+                      border: "1px solid #cbd5e1",
+                      textAlign: "right",
+                      width: "150px",
+                    }}
+                  >
+                    Amount
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {item.items.map((ride, index) => (
-                  <tr key={ride.bookingId || index}>
-                    <td>{index + 1}</td>
-                    <td>
-                      {ride.bookingId}
-                      <br />
-                      <small>
-                        Pickup: {ride.pickup},<br /> Dropoff: {ride.dropoff}
-                      </small>
+                {item?.items?.map((ride, index) => (
+                  <tr
+                    key={ride.bookingId || index}
+                    style={{
+                      background: index % 2 === 0 ? "#f9fafb" : "#fff",
+                      transition: "background 0.3s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
+                    onMouseLeave={(e) =>
+                    (e.currentTarget.style.background =
+                      index % 2 === 0 ? "#f9fafb" : "#fff")
+                    }
+                  >
+                    <td
+                      style={{
+                        padding: "12px",
+                        border: "1px solid #e5e7eb",
+                        textAlign: "center",
+                        color: "#374151",
+                      }}
+                    >
+                      {index + 1}
                     </td>
-                    <td className="nowrap">
+                    <td
+                      style={{
+                        padding: "12px",
+                        border: "1px solid #e5e7eb",
+                        textAlign: "left",
+                        color: "#374151",
+                      }}
+                    >
+                      <b style={{ fontSize: "14px", color: "#111827" }}>{ride.bookingId}</b>
+                      <br />
+                      <b style={{ fontSize: "12px", color: "#1e3a8a" }}>Pickup:</b>&nbsp;
+                      <small style={{ color: "#555", fontSize: "12px" }}>{ride.pickup}</small>
+                      <br />
+                      <b style={{ fontSize: "12px", color: "#1e3a8a" }}>Dropoff:</b>&nbsp;
+                      <small style={{ color: "#555", fontSize: "12px" }}>{ride.dropoff}</small>
+                    </td>
+                    <td
+                      style={{
+                        padding: "12px",
+                        border: "1px solid #e5e7eb",
+                        textAlign: "center",
+                        color: "#374151",
+                      }}
+                    >
                       {(() => {
                         const taxAmount = ride.totalAmount - ride.fare;
                         const taxPercent = (taxAmount / ride.fare) * 100;
@@ -326,7 +536,15 @@ const InvoiceDetails = ({ item }) => {
                         return `${taxPercent.toFixed(0)}%`;
                       })()}
                     </td>
-                    <td>
+                    <td
+                      style={{
+                        padding: "12px",
+                        border: "1px solid #e5e7eb",
+                        textAlign: "right",
+                        fontWeight: "bold",
+                        color: "#111827",
+                      }}
+                    >
                       {currencySymbol}
                       {ride.totalAmount.toFixed(2)}
                     </td>
@@ -336,27 +554,91 @@ const InvoiceDetails = ({ item }) => {
             </table>
           </div>
 
-          <div className="totals">
-            <p>
-              Sub Total: {currencySymbol}
-              {item.items.reduce((acc, i) => acc + i.fare, 0).toFixed(2)}
-            </p>
-            <p>
-              <strong>{taxDisplay}</strong>
-              {currencySymbol}
-              {totalTax.toFixed(2)}
-            </p>
-            <p className="balance">
-              Grand Total: {currencySymbol}
-              {item.items.reduce((acc, i) => acc + i.totalAmount, 0).toFixed(2)}
-            </p>
+          {/* Totals */}
+          <div style={{ marginTop: "30px", display: "flex", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                width: "100%",
+                maxWidth: "350px",
+                border: "1px solid #e0e0e0",
+                borderRadius: "8px",
+                background: "#f9fafb",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+                overflow: "hidden",
+              }}
+            >
+              {/* Sub Total */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "10px 16px",
+                  background: "#f3f4f6",
+                  borderBottom: "1px solid #e5e7eb",
+                }}
+              >
+                <span style={{ fontSize: "14px", color: "#374151" }}>Sub Total</span>
+                <b style={{ fontSize: "14px", color: "#111827" }}>
+                  {currencySymbol}
+                  {totalFare.toFixed(2)}
+                </b>
+              </div>
+
+              {/* Tax */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "10px 16px",
+                  background: "#f3f4f6",
+                  borderBottom: "1px solid #e5e7eb",
+                }}
+              >
+                <span style={{ fontSize: "14px", color: "#374151" }}>Tax</span>
+                <span style={{ fontSize: "14px", color: "#111827" }}>
+                  {currencySymbol}
+                  {totalTax.toFixed(2)}
+                </span>
+              </div>
+
+              {/* Grand Total */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "14px 16px",
+                  background: "#e0e7ff",
+                  color: "#1e3a8a",
+                  fontWeight: "bold",
+                  fontSize: "16px",
+                }}
+              >
+                <span>Grand Total</span>
+                <span>
+                  {currencySymbol}
+                  {item.items.reduce((acc, i) => acc + i.totalAmount, 0).toFixed(2)}
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="invoice-notes">
-            <p className="notes-title">Notes</p>
-            <p className="notes-text">T&Cs apply. Please call for detail.</p>
+
+          {/* Notes */}
+          <div
+            style={{
+              marginTop: "30px",
+              borderTop: "1px solid #ddd",
+              paddingTop: "10px",
+              fontSize: "13px",
+            }}
+          >
+            <p style={{ fontWeight: "bold", margin: 0 }}>Notes</p>
+            <p style={{ margin: "5px 0", color: "#666" }}>
+              T&Cs apply. Please call for detail.
+            </p>
           </div>
         </div>
+
       </div>
 
       {userRole === "clientadmin" && (

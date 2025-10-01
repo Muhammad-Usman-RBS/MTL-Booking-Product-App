@@ -9,8 +9,12 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
   const vehicle = selectedDriver?.driver.VehicleData || {};
   const uploads = selectedDriver?.driver.UploadedData || {};
 
-  const formatDate = (dateString) =>
-    dateString ? dateString.split("T")[0] : "N/A";
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB"); // outputs DD/MM/YYYY
+  };
+
   const isExpired = (dateString) => {
     if (!dateString) return false;
     const expiryDate = new Date(dateString);
@@ -290,7 +294,7 @@ const ViewDriver = ({ selectedDriver, setSelectedDriver }) => {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-8">
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-8 mt-5">
         <h3
           style={{
             fontSize: "1.25rem",

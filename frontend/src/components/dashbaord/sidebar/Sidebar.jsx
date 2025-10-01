@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import useUIStore from "../../../store/useUIStore";
 import IMAGES from "../../../assets/images";
+import { useGetCompanyByIdQuery } from "../../../redux/api/companyApi";
 
 const Sidebar = () => {
   const location = useLocation();
@@ -13,6 +14,14 @@ const Sidebar = () => {
   const user = useSelector((state) => state?.auth?.user);
   const permissions = user?.permissions || [];
   const userRole = user?.role;
+
+  // Fetch company info
+  const { data: companyData } = useGetCompanyByIdQuery(user?.companyId || user?.clientAdminId, {
+    skip: !user?.companyId && !user?.clientAdminId, // skip if not available
+  });
+
+  const companyLogo = companyData?.profileImage;
+
   // Filter sidebarItems based on top-level permission and also filter subTabs based on sub-level permission
   const sidebarTabs = sidebarItems
     .map((item) => {
@@ -61,9 +70,9 @@ const Sidebar = () => {
     >
       <div className="p-4 flex justify-center">
         <img
-          src={isOpen ? IMAGES.dashboardLargeLogo : IMAGES.dashboardSmallLogo}
-          alt="Logo"
-          className={isOpen ? "h-12" : "w-full"}
+          src={companyLogo || (isOpen ? IMAGES.dashboardLargeLogo : IMAGES.dashboardSmallLogo)}
+          alt="Company Logo"
+          className={isOpen ? "h-12 w-auto" : "w-10 h-10 rounded-full"}
         />
       </div>
 
@@ -73,7 +82,7 @@ const Sidebar = () => {
             Welcome!
           </p>
           <p className="font-semibold text-[#1f2937] truncate">
-            {user?.fullName.split(" ").map((part)=> part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(" ") || "Guest"}
+            {user?.fullName.split(" ").map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(" ") || "Guest"}
           </p>
         </div>
       )}
@@ -124,8 +133,8 @@ const Sidebar = () => {
                           <Link
                             to={sub.route}
                             className={`flex items-center p-2 gap-3 hover-theme ${sub.route === location.pathname
-                                ? "active-theme"
-                                : ""
+                              ? "active-theme"
+                              : ""
                               }`}
                           >
                             <sub.icon className="w-4 h-4" />

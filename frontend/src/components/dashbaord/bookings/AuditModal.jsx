@@ -21,7 +21,7 @@ const AuditModal = ({ auditData = [] }) => {
                   className="hover:bg-gray-50 transition duration-200"
                 >
                   <td className="px-4 py-3 text-gray-500">{i + 1}</td>
-                  <td className="px-4 py-3 font-medium text-gray-800">
+                  {/* <td className="px-4 py-3 font-medium text-gray-800">
                     {entry.updatedBy
                       ? entry.updatedBy
                           .split(" ")
@@ -36,6 +36,27 @@ const AuditModal = ({ auditData = [] }) => {
                               .join(" | ")
                           )
                           .join(" ")
+                      : "Unknown"}
+                  </td> */}
+                  <td className="px-4 py-3 font-medium text-gray-800">
+                    {entry.updatedBy
+                      ? entry.updatedBy
+                        .split(" ")
+                        .map((word) =>
+                          word
+                            .split("|")
+                            .map((part) => {
+                              let clean = part.trim();
+                              if (clean.toLowerCase() === "clientadmin") {
+                                return "Admin";
+                              }
+                              return (
+                                clean.charAt(0).toUpperCase() + clean.slice(1)
+                              );
+                            })
+                            .join(" | ")
+                        )
+                        .join(" ")
                       : "Unknown"}
                   </td>
                   <td className="px-4 py-3 text-gray-700">

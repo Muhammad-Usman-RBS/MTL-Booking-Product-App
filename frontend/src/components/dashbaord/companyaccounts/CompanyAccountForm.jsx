@@ -206,7 +206,7 @@ const CompanyAccountForm = ({
                     name="address"
                     placeholder="Company Address"
                     className={`custom_input w-full ${errorClass("address")}`}
-                    rows={3}
+                    rows={5}
                     value={formData.address}
                     onChange={(e) => onChange("address", e.target.value)}
                     onBlur={() => onBlur("address")}

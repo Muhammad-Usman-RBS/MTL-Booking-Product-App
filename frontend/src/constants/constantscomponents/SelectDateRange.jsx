@@ -119,14 +119,13 @@ const SelectDateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
             : "Select Date Range"}
         </span>
         <Icons.ChevronDown
-          className={`w-4 h-4 text-black transition-transform duration-200 ${
-            dropdownOpen ? "rotate-180" : ""
-          }`}
+          className={`w-4 h-4 text-black transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""
+            }`}
         />
       </div>
 
       {dropdownOpen && (
-        <div className="absolute mt-1 w-full bg-white border border-[var(--light-gray)] shadow-md z-10 space-y-1">
+        <div className="absolute mt-1 w-full bg-white border border-[var(--light-gray)] shadow-md z-50 space-y-1">
           {ranges.map((r) => (
             <div
               key={r.label}
