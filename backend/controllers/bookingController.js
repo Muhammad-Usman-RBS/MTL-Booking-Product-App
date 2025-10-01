@@ -143,19 +143,19 @@ export const createBooking = async (req, res) => {
       returnJourney &&
       requiredFields.every((f) => returnJourney[f]);
 
-      // 🔹 Currency snapshot logic
-const bookingSetting = await BookingSetting.findOne({ companyId });
+    // 🔹 Currency snapshot logic
+    const bookingSetting = await BookingSetting.findOne({ companyId });
 
-let bookingCurrency = { label: "British Pound", value: "GBP", symbol: "£" };
+    let bookingCurrency = { label: "British Pound", value: "GBP", symbol: "£" };
 
-if (bookingSetting) {
-  if (bookingSetting.currencyApplication === "All Bookings") {
-    bookingCurrency = bookingSetting.currency[0];
-  } else if (bookingSetting.currencyApplication === "New Bookings Only") {
-    // sirf naye bookings ke liye setting wali currency save hogi
-    bookingCurrency = bookingSetting.currency[0];
-  }
-}
+    if (bookingSetting) {
+      if (bookingSetting.currencyApplication === "All Bookings") {
+        bookingCurrency = bookingSetting.currency[0];
+      } else if (bookingSetting.currencyApplication === "New Bookings Only") {
+        // sirf naye bookings ke liye setting wali currency save hogi
+        bookingCurrency = bookingSetting.currency[0];
+      }
+    }
 
     const bookingPayload = {
       bookingId,
@@ -168,8 +168,8 @@ if (bookingSetting) {
       vehicle: baseVehicleInfo,
       passenger: basePassengerInfo,
 
-       // ✅ currency snapshot
-  currency: bookingCurrency,
+      // ✅ currency snapshot
+      currency: bookingCurrency,
 
       // New fields
       paymentMethod,
@@ -593,12 +593,12 @@ export const updateBooking = async (req, res) => {
           returnJourney.additionalDropoff3 ??
           prevReturn.additionalDropoff3 ??
           null,
-    
+
         additionalDropoff4:
           returnJourney.additionalDropoff4 ??
           prevReturn.additionalDropoff4 ??
           null,
-    
+
         pickupDoorNumber:
           returnJourney.pickupDoorNumber ?? prevReturn.pickupDoorNumber ?? "",
         terminal: returnJourney.terminal ?? prevReturn.terminal ?? "",
@@ -1244,6 +1244,15 @@ export const updateBookingStatus = async (req, res) => {
 
     if (currentUser?.role === "clientadmin") {
       const s = (status || "").trim().toLowerCase();
+      const operationalStatuses = [
+        "completed",
+        "at location",
+        "ride started",
+        "no show",
+        "on route",
+        "late cancel",
+      ];
+
       if (s === "new" || s === "accepted") {
         const driverAcceptedEver = (booking.statusAudit || []).some((e) => {
           const updatedBy = (e?.updatedBy || "").toLowerCase();
@@ -1260,6 +1269,17 @@ export const updateBookingStatus = async (req, res) => {
           });
         }
       }
+      if (operationalStatuses.includes(s)) {
+        const wasAccepted = (booking.statusAudit || []).some((e) => {
+          return (e?.status || "").toLowerCase() === "accepted";
+        });
+
+        if (!wasAccepted) {
+          return res.status(403).json({
+            message: "Booking must be set accepted before updating the status.",
+          });
+        }
+      }
       const current = String(booking?.status || "")
         .trim()
         .toLowerCase();
@@ -1270,10 +1290,8 @@ export const updateBookingStatus = async (req, res) => {
       }
     }
 
-    // Apply status update
     booking.status = status === "Late Cancel" ? "Late Cancel" : status;
 
-    // Update driver information if any
     if (Array.isArray(driverIds)) {
       const fullDriverDocs = await driverModel
         .find({ _id: { $in: driverIds } })
@@ -1281,7 +1299,6 @@ export const updateBookingStatus = async (req, res) => {
       booking.drivers = fullDriverDocs;
     }
 
-    // Update status audit with current user information
     const fullName =
       currentUser?.fullName || currentUser?.name || "Unknown User";
     const updater = `${currentUser?.role || "user"} | ${fullName}`;
@@ -1290,10 +1307,8 @@ export const updateBookingStatus = async (req, res) => {
       { updatedBy: updater, status, date: new Date() },
     ];
 
-    // Save the updated booking
     const updatedBooking = await booking.save();
 
-    // ===== Send Driver Status Emails for "On Route" and "At Location" =====
     const normalizedStatus = (status || "").trim();
     const shouldSendDriverEmail = ["On Route", "At Location"].includes(
       normalizedStatus
@@ -1301,7 +1316,6 @@ export const updateBookingStatus = async (req, res) => {
 
     if (shouldSendDriverEmail && booking?.passenger?.email) {
       try {
-        // Resolve assigned driver & vehicle info
         const firstDriver = booking.drivers?.[0];
         let driverInfo = null;
         let vehicleInfo = null;
@@ -1716,7 +1730,15 @@ export const restoreOrDeleteBooking = async (req, res) => {
     }
 
     if (action === "restore") {
-      booking.status = "New"; // or your default active status
+      const lastNonDeletedEntry = (booking?.statusAudit || [])
+        .slice()
+        .reverse()
+        .find((e) => {
+          const status = (e?.status || "").trim().toLowerCase();
+          return status !== "deleted";
+        });
+
+      booking.status = lastNonDeletedEntry?.status || "New";
     } else if (action === "delete") {
       await Booking.findByIdAndDelete(id);
       return res.status(200).json({ message: "Booking permanently deleted" });

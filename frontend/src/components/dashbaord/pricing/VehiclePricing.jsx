@@ -172,19 +172,19 @@ const VehiclePricing = () => {
     ...item,
     actions: (
       <div className="flex gap-2">
+        <div onClick={() => handleEditModal(item)} className="icon-box icon-box-warning">
+
         <Icons.Pencil
           title="Edit"
-          onClick={() => handleEditModal(item)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-        />
+          className="size-4"
+          />
+          </div>
+          <div onClick={() => { setDeleteId(item._id); setShowDeleteModal(true)}} className="icon-box icon-box-danger">
         <Icons.Trash
           title="Delete"
-          onClick={() => {
-            setDeleteId(item._id);
-            setShowDeleteModal(true);
-          }}
-          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-        />
+          className="size-4"
+          />
+          </div>
       </div>
     ),
   }));

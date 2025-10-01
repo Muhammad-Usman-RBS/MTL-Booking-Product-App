@@ -19,7 +19,9 @@ import { useLoading } from "../../../components/common/LoadingProvider";
 
 const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
   const user = useSelector((state) => state.auth.user);
-  const {showLoading, hideLoading} = useLoading()
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const { showLoading, hideLoading } = useLoading();
   const companyId = user?.companyId;
   const driverId = user?._id;
   const navigate = useNavigate();
@@ -45,13 +47,13 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
   const [pendingJobId, setPendingJobId] = useState(null);
   const modalMode = !!(propJob && propJob.length > 0);
 
-  useEffect(()=> {
-    if(isLoading) {
-      showLoading()
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
     } else {
-      hideLoading()
+      hideLoading();
     }
-  },[showLoading, hideLoading, isLoading])
+  }, [showLoading, hideLoading, isLoading]);
   useEffect(() => {
     const onFocus = async () => {
       if (!modalMode) {
@@ -142,66 +144,66 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
     return map[id] || jobStatus; // Use local state only as a fallback
   };
 
-  const filteredAndSortedJobs = useMemo(() => {
-    if (modalMode) {
-      return jobs;
-    }
+  // const filteredAndSortedJobs = useMemo(() => {
+  //   if (modalMode) {
+  //     return jobs;
+  //   }
 
-    let filtered = jobs;
+  //   let filtered = jobs;
 
-    // Filter by status
-    if (statusFilter.length > 0) {
-      filtered = filtered.filter((job) => {
-        const currentStatus = getCurrentStatus(job, statusMap);
-        return statusFilter.includes(currentStatus);
-      });
-    }
+  //   // Filter by status
+  //   if (statusFilter.length > 0) {
+  //     filtered = filtered.filter((job) => {
+  //       const currentStatus = getCurrentStatus(job, statusMap);
+  //       return statusFilter.includes(currentStatus);
+  //     });
+  //   }
 
-    // Filter by date range
-    // ✅ Only filter by date if user explicitly sets both start & end
-    if (startDate && endDate) {
-      filtered = filtered.filter((job) => {
-        const booking = job.booking || {};
-        const journey = booking?.returnJourneyToggle
-          ? booking?.returnJourney || {}
-          : booking?.primaryJourney || {};
+  //   // Filter by date range
+  //   // ✅ Only filter by date if user explicitly sets both start & end
+  //   if (startDate && endDate) {
+  //     filtered = filtered.filter((job) => {
+  //       const booking = job.booking || {};
+  //       const journey = booking?.returnJourneyToggle
+  //         ? booking?.returnJourney || {}
+  //         : booking?.primaryJourney || {};
 
-        if (!journey.date) return false;
+  //       if (!journey.date) return false;
 
-        const jobDate = new Date(journey.date).toISOString().split("T")[0];
-        return jobDate >= startDate && jobDate <= endDate;
-      });
-    }
+  //       const jobDate = new Date(journey.date).toISOString().split("T")[0];
+  //       return jobDate >= startDate && jobDate <= endDate;
+  //     });
+  //   }
 
-    filtered.sort((a, b) => {
-      if (sortBy === "date-asc") {
-        return (
-          new Date(a?.journeyDetails?.journeyDate) -
-          new Date(b?.journeyDetails?.journeyDate)
-        );
-      } else if (sortBy === "date-desc") {
-        return (
-          new Date(b?.journeyDetails?.journeyDate) -
-          new Date(a?.journeyDetails?.journeyDate)
-        );
-      } else if (sortBy === "status-asc") {
-        return getCurrentStatus(a, statusMap).localeCompare(
-          getCurrentStatus(b, statusMap)
-        );
-      } else if (sortBy === "status-desc") {
-        return getCurrentStatus(b, statusMap).localeCompare(
-          getCurrentStatus(a, statusMap)
-        );
-      } else if (sortBy === "bookingid-asc") {
-        return Number(a.bookingId) - Number(b.bookingId);
-      } else if (sortBy === "bookingid-desc") {
-        return Number(b.bookingId) - Number(a.bookingId);
-      }
-      return 0;
-    });
+  //   filtered.sort((a, b) => {
+  //     if (sortBy === "date-asc") {
+  //       return (
+  //         new Date(a?.journeyDetails?.journeyDate) -
+  //         new Date(b?.journeyDetails?.journeyDate)
+  //       );
+  //     } else if (sortBy === "date-desc") {
+  //       return (
+  //         new Date(b?.journeyDetails?.journeyDate) -
+  //         new Date(a?.journeyDetails?.journeyDate)
+  //       );
+  //     } else if (sortBy === "status-asc") {
+  //       return getCurrentStatus(a, statusMap).localeCompare(
+  //         getCurrentStatus(b, statusMap)
+  //       );
+  //     } else if (sortBy === "status-desc") {
+  //       return getCurrentStatus(b, statusMap).localeCompare(
+  //         getCurrentStatus(a, statusMap)
+  //       );
+  //     } else if (sortBy === "bookingid-asc") {
+  //       return Number(a.bookingId) - Number(b.bookingId);
+  //     } else if (sortBy === "bookingid-desc") {
+  //       return Number(b.bookingId) - Number(a.bookingId);
+  //     }
+  //     return 0;
+  //   });
 
-    return filtered;
-  }, [modalMode, jobs, statusFilter, startDate, endDate, sortBy, statusMap]);
+  //   return filtered;
+  // }, [modalMode, jobs, statusFilter, startDate, endDate, sortBy, statusMap]);
 
   const statusOptions = useMemo(() => {
     return SCHEDULED_SET.map((status) => ({
@@ -400,7 +402,94 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
     }
   };
 
-  
+  const filteredAndSortedJobs = useMemo(() => {
+    if (modalMode) return jobs;
+
+    let filtered = jobs;
+
+    // Status filter
+    if (statusFilter.length > 0) {
+      filtered = filtered.filter((job) => {
+        const currentStatus = getCurrentStatus(job, statusMap);
+        return statusFilter.includes(currentStatus);
+      });
+    }
+
+    // Date filter
+    if (startDate && endDate) {
+      filtered = filtered.filter((job) => {
+        const booking = job.booking || {};
+        const journey = booking?.returnJourneyToggle
+          ? booking?.returnJourney || {}
+          : booking?.primaryJourney || {};
+        if (!journey.date) return false;
+        const jobDate = new Date(journey.date).toISOString().split("T")[0];
+        return jobDate >= startDate && jobDate <= endDate;
+      });
+    }
+    // 🔎 Search filter
+    if (searchTerm.trim() !== "") {
+      const lowerSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter((job) => {
+        const bookingId = job?.booking?.bookingId || "";
+        const pickup = (
+          job.booking?.primaryJourney?.pickup ||
+          job.booking?.returnJourney?.pickup ||
+          ""
+        ).toLowerCase();
+        const dropoff = (
+          job.booking?.primaryJourney?.dropoff ||
+          job.booking?.returnJourney?.dropoff ||
+          ""
+        ).toLowerCase();
+
+        return (
+          bookingId.includes(lowerSearch) ||
+          pickup.includes(lowerSearch) ||
+          dropoff.includes(lowerSearch)
+        );
+      });
+    }
+
+    // Sorting
+    filtered.sort((a, b) => {
+      if (sortBy === "date-asc") {
+        return (
+          new Date(a?.journeyDetails?.journeyDate) -
+          new Date(b?.journeyDetails?.journeyDate)
+        );
+      } else if (sortBy === "date-desc") {
+        return (
+          new Date(b?.journeyDetails?.journeyDate) -
+          new Date(a?.journeyDetails?.journeyDate)
+        );
+      } else if (sortBy === "status-asc") {
+        return getCurrentStatus(a, statusMap).localeCompare(
+          getCurrentStatus(b, statusMap)
+        );
+      } else if (sortBy === "status-desc") {
+        return getCurrentStatus(b, statusMap).localeCompare(
+          getCurrentStatus(a, statusMap)
+        );
+      } else if (sortBy === "bookingid-asc") {
+        return Number(a.bookingId) - Number(b.bookingId);
+      } else if (sortBy === "bookingid-desc") {
+        return Number(b.bookingId) - Number(a.bookingId);
+      }
+      return 0;
+    });
+
+    return filtered;
+  }, [
+    modalMode,
+    jobs,
+    statusFilter,
+    startDate,
+    endDate,
+    sortBy,
+    statusMap,
+    searchTerm,
+  ]);
 
   if (error) {
     return (
@@ -418,7 +507,16 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
       {!propJob && (
         <>
           <div className="bg-gray-100 rounded-lg p-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search Job..."
+                  className="custom_input"
+                />
+              </div>
               <div>
                 <SelectDateRange
                   startDate={startDate}

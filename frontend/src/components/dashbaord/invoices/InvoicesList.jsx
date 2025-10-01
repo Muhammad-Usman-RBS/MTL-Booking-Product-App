@@ -273,10 +273,8 @@ const InvoicesList = () => {
       invoiceMode === "Driver"
         ? item?.driver?.name || "-"
         : item?.customer?.name || "-";
-  
     const amount =
       item.items?.reduce((sum, i) => sum + (i.totalAmount || 0), 0) || 0;
-  
     return {
       invoiceNo: item.invoiceNumber,
       [invoiceMode === "Driver" ? "driver" : "customer"]: name, // ✅ dynamic
@@ -291,7 +289,6 @@ const InvoicesList = () => {
       status: item.status,
     };
   });
-  
 
   const handleDeleteClick = (id) => {
     setDeleteInvoiceId(id);

@@ -17,7 +17,7 @@ import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi
 import { useLoading } from "../../common/LoadingProvider";
 
 const HourlyPackages = () => {
-  const {showLoading , hideLoading} = useLoading()
+  const { showLoading, hideLoading } = useLoading();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formError, setFormError] = useState("");
@@ -28,7 +28,8 @@ const HourlyPackages = () => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
 
-  const { data: bookingSettingData , isLoading: isLoadingBookingsSettings } = useGetBookingSettingQuery();
+  const { data: bookingSettingData, isLoading: isLoadingBookingsSettings } =
+    useGetBookingSettingQuery();
   const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
   const currencySymbol = currencySetting?.symbol || "£";
   const currencyCode = currencySetting?.value || "GBP";
@@ -48,16 +49,23 @@ const HourlyPackages = () => {
     skip: !companyId,
   });
 
-  const { data: vehicles = [], isLoading: isLoadingAllVehicles } = useGetAllVehiclesQuery(companyId, {
-    skip: !companyId,
-  });
-useEffect(() => {
-  if(loading || isLoadingAllVehicles ||  isLoadingBookingsSettings) {
-    showLoading()
-  } else {
-    hideLoading()
-  }
-}, [showLoading , hideLoading , loading , isLoadingAllVehicles, isLoadingBookingsSettings])
+  const { data: vehicles = [], isLoading: isLoadingAllVehicles } =
+    useGetAllVehiclesQuery(companyId, {
+      skip: !companyId,
+    });
+  useEffect(() => {
+    if (loading || isLoadingAllVehicles || isLoadingBookingsSettings) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [
+    showLoading,
+    hideLoading,
+    loading,
+    isLoadingAllVehicles,
+    isLoadingBookingsSettings,
+  ]);
   const tableHeaders = [
     { key: "distance", label: "Distance (Miles)" },
     { key: "hours", label: "Hours" },
@@ -74,23 +82,27 @@ useEffect(() => {
     vehicles.forEach((v) => {
       row[v.vehicleName] =
         item.vehicleRates?.[v.vehicleName] !== undefined
-          // ? `£${item.vehicleRates[v.vehicleName]}`
-          ? `${currencySymbol}${Number(item.vehicleRates[v.vehicleName]).toFixed(2)}`
+          ? 
+            `${currencySymbol}${Number(
+              item.vehicleRates[v.vehicleName]
+            ).toFixed(2)}`
           : "-";
     });
 
     row.actions = (
       <div className="flex gap-2">
-        <Icons.Pencil
-          title="Edit"
+        <div
           onClick={() => handleEdit(item)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-green-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-        />
-        <Icons.Trash
-          title="Delete"
+          className="icon-box icon-box-warning"
+        >
+          <Icons.Pencil title="Edit" className="size-4" />
+        </div>
+        <div
           onClick={() => openDeleteModal(item._id)}
-          className="w-8 h-8 p-2 rounded-md hover:bg-red-600 hover:text-white text-[var(--dark-gray)] border border-[var(--light-gray)] cursor-pointer"
-        />
+          className="icon-box icon-box-danger"
+        >
+          <Icons.Trash title="Delete" className="size-4" />
+        </div>
       </div>
     );
 
@@ -215,7 +227,7 @@ useEffect(() => {
         </div>
       ) : (
         <CustomTable
-        filename="Hourly-Package-list"
+          filename="Hourly-Package-list"
           tableHeaders={tableHeaders}
           tableData={formattedData}
           showPagination={true}
@@ -242,7 +254,8 @@ useEffect(() => {
               <label className="block text-sm font-medium text-gray-700">
                 {/* {label}
                 {idx >= 2 ? " (£)" : ""} */}
-                {label}{idx >= 2 ? ` (${currencySymbol})` : ""}
+                {label}
+                {idx >= 2 ? ` (${currencySymbol})` : ""}
               </label>
               <input
                 type="number"
