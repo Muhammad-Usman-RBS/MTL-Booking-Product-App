@@ -54,15 +54,20 @@ const DriverList = () => {
   const roleFilteredDrivers =
     user?.role === "driver"
       ? driversArray.filter(
-          (driver) =>
-            driver?.DriverData?.employeeNumber?.toString() ===
-            user?.employeeNumber?.toString()
-        )
+        (driver) =>
+          driver?.DriverData?.employeeNumber?.toString() ===
+          user?.employeeNumber?.toString()
+      )
       : driversArray;
 
   const filteredTabData = roleFilteredDrivers.filter(
     (driver) => driver?.DriverData?.status === activeTab
   );
+
+  const capitalizeFirstLetter = (string) => {
+    if (!string) return "";
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+  };
 
   const filteredData = filteredTabData.filter((driver) => {
     const query = search.toLowerCase();
@@ -112,20 +117,20 @@ const DriverList = () => {
       index +
       1,
     employeeNumber: driver?.DriverData?.employeeNumber || "",
-    firstName: driver?.DriverData?.firstName || "",
+    firstName: capitalizeFirstLetter(driver?.DriverData?.firstName) || "",
     email: driver?.DriverData?.email || "",
-    carMake: driver?.VehicleData?.carMake || "",
-    carModal: driver?.VehicleData?.carModal || "",
+    carMake: capitalizeFirstLetter(driver?.VehicleData?.carMake) || "",
+    carModal: capitalizeFirstLetter(driver?.VehicleData?.carModal) || "",
     status: driver?.DriverData?.status || "",
   }));
 
   const tableData = filteredData.map((driver, index) => ({
     index: index + 1,
     employeeNumber: driver?.DriverData?.employeeNumber,
-    firstName: driver?.DriverData?.firstName,
+    firstName: capitalizeFirstLetter(driver?.DriverData?.firstName),
     email: driver?.DriverData?.email,
-    carMake: driver?.VehicleData?.carMake,
-    carModal: driver?.VehicleData?.carModal,
+    carMake: capitalizeFirstLetter(driver?.VehicleData?.carMake),
+    carModal: capitalizeFirstLetter(driver?.VehicleData?.carModal),
     status: driver?.DriverData?.status,
     actions: (
       <div className="flex gap-2">
@@ -175,11 +180,10 @@ const DriverList = () => {
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`pb-2 whitespace-nowrap transition-all duration-200 ${
-                      activeTab === tab
-                        ? "border-b-2 border-blue-600 text-blue-600"
-                        : "text-[var(--dark-gray)] hover:text-blue-500"
-                    }`}
+                    className={`pb-2 whitespace-nowrap transition-all duration-200 ${activeTab === tab
+                      ? "border-b-2 border-blue-600 text-blue-600"
+                      : "text-[var(--dark-gray)] hover:text-blue-500"
+                      }`}
                   >
                     {tab} (
                     {
@@ -196,7 +200,7 @@ const DriverList = () => {
         )}
 
         <CustomTable
-        filename="Drivers-list"
+          filename="Drivers-list"
           emptyMessage="No Drivers Found"
           tableHeaders={tableHeaders}
           tableData={tableData}
