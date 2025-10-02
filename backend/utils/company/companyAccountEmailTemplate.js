@@ -59,7 +59,7 @@ export default function companyAccountEmailTemplate({ company = {}, options = {}
         { label: "Phone", value: fmtPhone(company.contact) },
         { label: "Licensed By", value: company.licensedBy || "Not Provided" },
         { label: "License Number", value: company.licenseNumber ?? "N/A" },
-        { label: "License Referrer Link", value: company.referrerLink, isLink: true },
+        { label: "Website", value: company.website, isLink: true },
         { label: "Cookie Consent", value: company.cookieConsent ?? "N/A" },
         { label: "Created At", value: fmtDate(company.createdAt) },
         { label: "Company Address", value: company.address },

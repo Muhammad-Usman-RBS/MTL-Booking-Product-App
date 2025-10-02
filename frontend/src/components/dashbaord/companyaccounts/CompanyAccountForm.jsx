@@ -170,17 +170,17 @@ const CompanyAccountForm = ({
 
                 <div>
                     <label className="block mb-1 font-medium">
-                        License Referrer Link{!isEdit && <Req />}
+                        License Website Link{!isEdit && <Req />}
                     </label>
                     <input
-                        name="referrerLink"
+                        name="website"
                         placeholder="https://example.com/license"
-                        className={`custom_input ${errorClass("referrerLink")}`}
-                        value={formData.referrerLink}
-                        onChange={(e) => onChange("referrerLink", e.target.value)}
-                        onBlur={() => onBlur("referrerLink")}
+                        className={`custom_input ${errorClass("website")}`}
+                        value={formData.website}
+                        onChange={(e) => onChange("website", e.target.value)}
+                        onBlur={() => onBlur("website")}
                     />
-                    <ErrorText field="referrerLink" />
+                    <ErrorText field="website" />
                 </div>
 
                 <div>

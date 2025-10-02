@@ -80,6 +80,7 @@ export const adminApi = apiSlice.injectEndpoints({
         method: "PATCH",
         body: preferences,
       }),
+      invalidatesTags: ["User"],
     }),
     getBookingPreferences: builder.query({
       query: () => ({

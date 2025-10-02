@@ -258,24 +258,26 @@ const BookingCalendar = () => {
                             <div className="flex justify-between items-center mb-6">
                                 <button
                                     onClick={() => navigateMonth(-1)}
-                                    className="icon-box  icon-box-primary"
                                 >
-                                    <Icons.ChevronLeft />
+                                       <div className="icon-box icon-box-info">
+                                                   <Icons.ChevronLeft size={17} />
+                                                 </div>
                                 </button>
                                 <h2 className="text-xl">
                                     {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
                                 </h2>
                                 <button
                                     onClick={() => navigateMonth(1)}
-                                    className="icon-box  icon-box-primary"
                                 >
-                                    <Icons.ChevronRight />
+                                     <div className="icon-box icon-box-info">
+                                                   <Icons.ChevronRight size={17} />
+                                                 </div>
                                 </button>
                             </div>
                             {/* Weekdays */}
                             <div className="grid grid-cols-7 gap-1 mb-2 text-xs sm:text-sm">
                                 {dayNames.map((day) => (
-                                    <div key={day} className="text-center text-white py-1 rounded-lg bg-[var(--main-color)]">
+                                    <div key={day} className="text-center text-theme py-1 rounded-sm bg-theme">
                                         {day}
                                     </div>
                                 ))}

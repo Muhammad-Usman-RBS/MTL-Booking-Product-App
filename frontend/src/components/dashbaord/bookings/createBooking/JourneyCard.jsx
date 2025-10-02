@@ -224,14 +224,11 @@ const JourneyCard = ({
 
           <div className="px-4 sm:px-6 pb-6 pt-2">
             <div className="mb-4">
-              <label className="block text-xs mt-4 font-medium text-[var(--dark-gray)] mb-1">
-                Pick Up Date & Time
-              </label>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <label
-                  onClick={handleClick}
-                  style={{ display: "block", width: "100%", cursor: "pointer" }}
-                >
+              <div className="flex flex-col mt-4 sm:flex-row gap-x-3 items-end">
+                <div className="flex flex-col w-full">
+                  <label className="text-xs font-medium text-[var(--dark-gray)] mb-1">
+                    Pick Up Date & Time
+                  </label>
                   <input
                     type="date"
                     name="date"
@@ -239,12 +236,12 @@ const JourneyCard = ({
                     className="custom_input w-full"
                     value={journeyData.date?.slice(0, 10) || ""}
                     onChange={handleChange}
-                    style={{ pointerEvents: "none" }}
+                    onClick={handleClick}
                   />
-                </label>
-                <div className="flex gap-2 ">
-                  <div>
-                    <label className=" text-xs  font-medium text-[var(--dark-gray)] mb-1">
+                </div>
+                <div className="flex gap-2 w-full lg:mt-0 mt-3 sm:w-1/2">
+                  <div className="flex flex-col w-36 ">
+                    <label className=" text-xs  font-medium  text-[var(--dark-gray)]">
                       Hour
                     </label>
                     <select
@@ -273,11 +270,10 @@ const JourneyCard = ({
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className=" text-xs font-medium text-[var(--dark-gray)] mb-1">
+                  <div className="flex flex-col w-36">
+                    <label className="text-xs font-medium text-[var(--dark-gray)]">
                       Minute
                     </label>
-
                     <select
                       name="minute"
                       className="custom_input w-full"
@@ -306,135 +302,29 @@ const JourneyCard = ({
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="relative mb-4">
-              <input
-                type="text"
-                name="pickup"
-                placeholder="Pickup Location"
-                value={journeyData.pickup}
-                onChange={handlePickupChange}
-                onBlur={() =>
-                  journeyData.pickup &&
-                  checkCoverage(journeyData.pickup, "pickup", pickupCoords)
-                }
-                className="custom_input w-full"
-              />
-
-              {pickupSuggestions.length > 0 && (
-                <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full">
-                  <li
-                    onClick={async () => {
-                      const val = (journeyData.pickup || "").trim();
-                      if (!val) return;
-
-                      let coords = null;
-                      try {
-                        const g = await triggerGeocode(val).unwrap();
-                        if (
-                          g?.location &&
-                          Number.isFinite(g.location.lat) &&
-                          Number.isFinite(g.location.lng)
-                        ) {
-                          coords = {
-                            lat: Number(g.location.lat),
-                            lng: Number(g.location.lng),
-                          };
-                        }
-                      } catch (err) {
-                        console.warn(
-                          "Geocode failed, falling back to text-only coverage check",
-                          err
-                        );
-                      }
-
-                      if (!checkCoverage(val, "pickup", coords)) return;
-
-                      setJourneyData((prev) => ({ ...prev, pickup: val }));
-                      if (val.toLowerCase().includes("airport")) {
-                        setPickupType("airport");
-                      } else {
-                        setPickupType("location");
-                      }
-                      setPickupCoords(coords);
-                      setPickupSuggestions([]);
-                    }}
-                    className="p-2 text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 cursor-pointer border-b"
-                  >
-                    ➕ Use: "{journeyData.pickup}"
-                  </li>
-
-                  {pickupSuggestions.map((sug, idx) => (
-                    <li
-                      key={idx}
-                      onClick={() => handlePickupSelect(sug)}
-                      className="p-2 text-xs sm:text-sm hover:bg-gray-100 cursor-pointer"
-                    >
-                      {sug.name} - {sug.formatted_address}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {pickupType?.toLowerCase()?.includes("location") && (
-              <input
-                name="pickupDoorNumber"
-                placeholder="Pickup Door No."
-                className="custom_input mb-4 w-full"
-                value={journeyData.pickupDoorNumber || ""}
-                onChange={handleChange}
-              />
-            )}
-            {pickupType?.toLowerCase().includes("airport") && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                <input
-                  name="flightNumber"
-                  placeholder="Flight No."
-                  value={journeyData.flightNumber || ""}
-                  onChange={handleChange}
-                  className="custom_input"
-                />
-                <input
-                  name="arrivefrom"
-                  placeholder="Arriving From"
-                  value={journeyData.arrivefrom || ""}
-                  onChange={handleChange}
-                  className="custom_input"
-                />
-                <input
-                  name="pickmeAfter"
-                  placeholder="Pick Me After"
-                  value={journeyData.pickmeAfter || ""}
-                  onChange={handleChange}
-                  className="custom_input"
-                />
-              </div>
-            )}
-
-            {dropOffs.map((val, idx) => (
-              <div
-                key={idx}
-                className="relative flex flex-col sm:flex-row sm:items-center gap-2 mb-4"
-              >
+              <div className="relative mb-4">
+                <label className="block text-xs mt-4 font-medium text-[var(--dark-gray)] mb-1">
+                  Pick Up
+                </label>
                 <input
                   type="text"
-                  value={val}
-                  placeholder={`Drop Off ${idx + 1}`}
-                  onChange={(e) => handleDropOffChange(idx, e.target.value)}
-                  onBlur={() => {
-                    const coords = dropoffCoords[idx] || null;
-                    dropOffs[idx] &&
-                      checkCoverage(dropOffs[idx], "dropoff", coords);
-                  }}
+                  name="pickup"
+                  placeholder="Pickup Location"
+                  value={journeyData.pickup}
+                  onChange={handlePickupChange}
+                  onBlur={() =>
+                    journeyData.pickup &&
+                    checkCoverage(journeyData.pickup, "pickup", pickupCoords)
+                  }
                   className="custom_input w-full"
                 />
-                {dropOffSuggestions.length > 0 && activeDropIndex === idx && (
-                  <ul className="absolute z-30 bg-white border rounded shadow max-h-40 overflow-y-auto w-full top-full left-0 mt-1">
+
+                {pickupSuggestions.length > 0 && (
+                  <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full">
                     <li
                       onClick={async () => {
-                        const val = (dropOffs[idx] || "").trim();
+                        const val = (journeyData.pickup || "").trim();
                         if (!val) return;
 
                         let coords = null;
@@ -452,103 +342,645 @@ const JourneyCard = ({
                           }
                         } catch (err) {
                           console.warn(
-                            "Dropoff geocode failed, fallback to text-only check",
+                            "Geocode failed, falling back to text-only coverage check",
                             err
                           );
                         }
 
-                        if (!checkCoverage(val, "dropoff", coords)) return;
+                        if (!checkCoverage(val, "pickup", coords)) return;
 
-                        const updated = [...dropOffs];
-                        updated[idx] = val;
-                        setDropOffs(updated);
-
-                        setDropOffTypes((prev) => ({
-                          ...prev,
-                          [idx]: "location",
-                        }));
-
-                        setDropoffCoords((prev) => ({
-                          ...prev,
-                          [idx]: coords,
-                        }));
-
-                        setDropOffSuggestions([]);
+                        setJourneyData((prev) => ({ ...prev, pickup: val }));
+                        if (val.toLowerCase().includes("airport")) {
+                          setPickupType("airport");
+                        } else {
+                          setPickupType("location");
+                        }
+                        setPickupCoords(coords);
+                        setPickupSuggestions([]);
                       }}
-                      className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
+                      className="p-2 text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 cursor-pointer border-b"
                     >
-                      ➕ Use: "{dropOffs[idx]}"
+                      ➕ Use: "{journeyData.pickup}"
                     </li>
 
-                    {dropOffSuggestions.map((sug, i) => (
+                    {pickupSuggestions.map((sug, idx) => (
                       <li
-                        key={i}
-                        onClick={() => handleDropOffSelect(idx, sug)}
-                        className="p-2 text-xs hover:bg-gray-100 cursor-pointer"
+                        key={idx}
+                        onClick={() => handlePickupSelect(sug)}
+                        className="p-2 text-xs sm:text-sm hover:bg-gray-100 cursor-pointer"
                       >
                         {sug.name} - {sug.formatted_address}
                       </li>
                     ))}
                   </ul>
                 )}
+              </div>
 
-                {dropOffTypes[idx]?.toLowerCase()?.includes("airport") && (
+              {pickupType?.toLowerCase()?.includes("location") && (
+                <input
+                  name="pickupDoorNumber"
+                  placeholder="Pickup Door No."
+                  className="custom_input mb-4 w-full"
+                  value={journeyData.pickupDoorNumber || ""}
+                  onChange={handleChange}
+                />
+              )}
+              {pickupType?.toLowerCase().includes("airport") && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                   <input
-                    name={`dropoff_terminal_${idx}`}
-                    value={journeyData[`dropoff_terminal_${idx}`] || ""}
-                    placeholder="Terminal No."
-                    className="custom_input w-full"
+                    name="flightNumber"
+                    placeholder="Flight No."
+                    value={journeyData.flightNumber || ""}
                     onChange={handleChange}
+                    className="custom_input"
                   />
-                )}
-                {dropOffTypes[idx]?.toLowerCase()?.includes("location") && (
                   <input
-                    name={`dropoffDoorNumber${idx}`}
-                    value={journeyData[`dropoffDoorNumber${idx}`] || ""}
-                    placeholder="Drop Off Door No."
-                    className="custom_input w-full"
+                    name="arrivefrom"
+                    placeholder="Arriving From"
+                    value={journeyData.arrivefrom || ""}
                     onChange={handleChange}
+                    className="custom_input"
                   />
+                  <input
+                    name="pickmeAfter"
+                    placeholder="Pick Me After"
+                    value={journeyData.pickmeAfter || ""}
+                    onChange={handleChange}
+                    className="custom_input"
+                  />
+                </div>
+              )}
+              <div className="space-y-4">
+                {/* Drop Off 1 - Always full width */}
+                {dropOffs.length >= 1 && (
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--dark-gray)] mb-1">
+                      Drop Off 1
+                    </label>
+                    <div className="relative flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
+                      <input
+                        type="text"
+                        value={dropOffs[0]}
+                        placeholder="Drop Off 1"
+                        onChange={(e) => handleDropOffChange(0, e.target.value)}
+                        onBlur={() => {
+                          const coords = dropoffCoords[0] || null;
+                          dropOffs[0] &&
+                            checkCoverage(dropOffs[0], "dropoff", coords);
+                        }}
+                        className="custom_input w-full"
+                      />
+                      {dropOffSuggestions.length > 0 &&
+                        activeDropIndex === 0 && (
+                          <ul className="absolute z-30 bg-white border rounded shadow max-h-40 overflow-y-auto w-full top-full left-0 mt-1">
+                            <li
+                              onClick={async () => {
+                                const val = (dropOffs[0] || "").trim();
+                                if (!val) return;
+
+                                let coords = null;
+                                try {
+                                  const g = await triggerGeocode(val).unwrap();
+                                  if (
+                                    g?.location &&
+                                    Number.isFinite(g.location.lat) &&
+                                    Number.isFinite(g.location.lng)
+                                  ) {
+                                    coords = {
+                                      lat: Number(g.location.lat),
+                                      lng: Number(g.location.lng),
+                                    };
+                                  }
+                                } catch (err) {
+                                  console.warn(
+                                    "Dropoff geocode failed, fallback to text-only check",
+                                    err
+                                  );
+                                }
+
+                                if (!checkCoverage(val, "dropoff", coords))
+                                  return;
+
+                                const updated = [...dropOffs];
+                                updated[0] = val;
+                                setDropOffs(updated);
+
+                                setDropOffTypes((prev) => ({
+                                  ...prev,
+                                  [0]: "location",
+                                }));
+
+                                setDropoffCoords((prev) => ({
+                                  ...prev,
+                                  [0]: coords,
+                                }));
+
+                                setDropOffSuggestions([]);
+                              }}
+                              className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
+                            >
+                              ➕ Use: "{dropOffs[0]}"
+                            </li>
+
+                            {dropOffSuggestions.map((sug, i) => (
+                              <li
+                                key={i}
+                                onClick={() => handleDropOffSelect(0, sug)}
+                                className="p-2 text-xs hover:bg-gray-100 cursor-pointer"
+                              >
+                                {sug.name} - {sug.formatted_address}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+
+                      {dropOffTypes[0]?.toLowerCase()?.includes("airport") && (
+                        <input
+                          name="dropoff_terminal_0"
+                          value={journeyData["dropoff_terminal_0"] || ""}
+                          placeholder="Terminal No."
+                          className="custom_input w-full"
+                          onChange={handleChange}
+                        />
+                      )}
+                      {dropOffTypes[0]?.toLowerCase()?.includes("location") && (
+                        <input
+                          name="dropoffDoorNumber0"
+                          value={journeyData["dropoffDoorNumber0"] || ""}
+                          placeholder="Drop Off Door No."
+                          className="custom_input w-full"
+                          onChange={handleChange}
+                        />
+                      )}
+                    </div>
+                  </div>
                 )}
 
-                {idx > 0 && (
+                {dropOffs.length >= 2 && (
+                  <div className="flex items-start gap-2 flex-wrap">
+                    {dropOffs.length < 5 ? (
+                      <div className="w-[140px] flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={addDropOff}
+                          className="btn btn-back w-full mt-6"
+                        >
+                          + Add Drop Off
+                        </button>
+                      </div>
+                    ) : null}
+
+                    {/* Drop Off 2 */}
+                    {dropOffs.slice(1, 2).map((val, arrayIdx) => {
+                      const idx = arrayIdx + 1;
+                      return (
+                        <div key={idx} className="flex-1 min-w-[200px]">
+                          <label className="block text-xs font-medium text-[var(--dark-gray)] mb-1">
+                            Drop Off 2
+                          </label>
+                          <div
+                            className={`relative flex flex-col sm:flex-row sm:items-center gap-2 ${
+                              dropOffs.length < 4 ? "mb-4" : ""
+                            }`}
+                          >
+                            <input
+                              type="text"
+                              value={val}
+                              placeholder="Drop Off 2"
+                              onChange={(e) =>
+                                handleDropOffChange(idx, e.target.value)
+                              }
+                              onBlur={() => {
+                                const coords = dropoffCoords[idx] || null;
+                                dropOffs[idx] &&
+                                  checkCoverage(
+                                    dropOffs[idx],
+                                    "dropoff",
+                                    coords
+                                  );
+                              }}
+                              className="custom_input w-full"
+                            />
+                            {dropOffSuggestions.length > 0 &&
+                              activeDropIndex === idx && (
+                                <ul className="absolute z-30 bg-white border rounded shadow max-h-40 overflow-y-auto w-full top-full left-0 mt-1">
+                                  <li
+                                    onClick={async () => {
+                                      const val = (dropOffs[idx] || "").trim();
+                                      if (!val) return;
+
+                                      let coords = null;
+                                      try {
+                                        const g = await triggerGeocode(
+                                          val
+                                        ).unwrap();
+                                        if (
+                                          g?.location &&
+                                          Number.isFinite(g.location.lat) &&
+                                          Number.isFinite(g.location.lng)
+                                        ) {
+                                          coords = {
+                                            lat: Number(g.location.lat),
+                                            lng: Number(g.location.lng),
+                                          };
+                                        }
+                                      } catch (err) {
+                                        console.warn(
+                                          "Dropoff geocode failed, fallback to text-only check",
+                                          err
+                                        );
+                                      }
+
+                                      if (
+                                        !checkCoverage(val, "dropoff", coords)
+                                      )
+                                        return;
+
+                                      const updated = [...dropOffs];
+                                      updated[idx] = val;
+                                      setDropOffs(updated);
+
+                                      setDropOffTypes((prev) => ({
+                                        ...prev,
+                                        [idx]: "location",
+                                      }));
+
+                                      setDropoffCoords((prev) => ({
+                                        ...prev,
+                                        [idx]: coords,
+                                      }));
+
+                                      setDropOffSuggestions([]);
+                                    }}
+                                    className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
+                                  >
+                                    ➕ Use: "{dropOffs[idx]}"
+                                  </li>
+
+                                  {dropOffSuggestions.map((sug, i) => (
+                                    <li
+                                      key={i}
+                                      onClick={() =>
+                                        handleDropOffSelect(idx, sug)
+                                      }
+                                      className="p-2 text-xs hover:bg-gray-100 cursor-pointer"
+                                    >
+                                      {sug.name} - {sug.formatted_address}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+
+                            {dropOffTypes[idx]
+                              ?.toLowerCase()
+                              ?.includes("airport") && (
+                              <input
+                                name={`dropoff_terminal_${idx}`}
+                                value={
+                                  journeyData[`dropoff_terminal_${idx}`] || ""
+                                }
+                                placeholder="Terminal No."
+                                className="custom_input w-full"
+                                onChange={handleChange}
+                              />
+                            )}
+                            {dropOffTypes[idx]
+                              ?.toLowerCase()
+                              ?.includes("location") && (
+                              <input
+                                name={`dropoffDoorNumber${idx}`}
+                                value={
+                                  journeyData[`dropoffDoorNumber${idx}`] || ""
+                                }
+                                placeholder="Drop Off Door No."
+                                className="custom_input w-full"
+                                onChange={handleChange}
+                              />
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => removeDropOff(idx)}
+                              className="btn btn-cancel text-sm px-3 py-1 w-fit sm:w-auto"
+                            >
+                              &minus;
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Drop Off 3 */}
+                    {dropOffs.slice(2, 3).map((val, arrayIdx) => {
+                      const idx = arrayIdx + 2;
+                      return (
+                        <div key={idx} className="flex-1 min-w-[200px]">
+                          <label className="block text-xs font-medium text-[var(--dark-gray)] mb-1">
+                            Drop Off 3
+                          </label>
+                          <div
+                            className={`relative flex flex-col sm:flex-row sm:items-center gap-2 ${
+                              dropOffs.length < 4 ? "mb-4" : ""
+                            }`}
+                          >
+                            <input
+                              type="text"
+                              value={val}
+                              placeholder="Drop Off 3"
+                              onChange={(e) =>
+                                handleDropOffChange(idx, e.target.value)
+                              }
+                              onBlur={() => {
+                                const coords = dropoffCoords[idx] || null;
+                                dropOffs[idx] &&
+                                  checkCoverage(
+                                    dropOffs[idx],
+                                    "dropoff",
+                                    coords
+                                  );
+                              }}
+                              className="custom_input w-full"
+                            />
+                            {dropOffSuggestions.length > 0 &&
+                              activeDropIndex === idx && (
+                                <ul className="absolute z-30 bg-white border rounded shadow max-h-40 overflow-y-auto w-full top-full left-0 mt-1">
+                                  <li
+                                    onClick={async () => {
+                                      const val = (dropOffs[idx] || "").trim();
+                                      if (!val) return;
+
+                                      let coords = null;
+                                      try {
+                                        const g = await triggerGeocode(
+                                          val
+                                        ).unwrap();
+                                        if (
+                                          g?.location &&
+                                          Number.isFinite(g.location.lat) &&
+                                          Number.isFinite(g.location.lng)
+                                        ) {
+                                          coords = {
+                                            lat: Number(g.location.lat),
+                                            lng: Number(g.location.lng),
+                                          };
+                                        }
+                                      } catch (err) {
+                                        console.warn(
+                                          "Dropoff geocode failed, fallback to text-only check",
+                                          err
+                                        );
+                                      }
+
+                                      if (
+                                        !checkCoverage(val, "dropoff", coords)
+                                      )
+                                        return;
+
+                                      const updated = [...dropOffs];
+                                      updated[idx] = val;
+                                      setDropOffs(updated);
+
+                                      setDropOffTypes((prev) => ({
+                                        ...prev,
+                                        [idx]: "location",
+                                      }));
+
+                                      setDropoffCoords((prev) => ({
+                                        ...prev,
+                                        [idx]: coords,
+                                      }));
+
+                                      setDropOffSuggestions([]);
+                                    }}
+                                    className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
+                                  >
+                                    ➕ Use: "{dropOffs[idx]}"
+                                  </li>
+
+                                  {dropOffSuggestions.map((sug, i) => (
+                                    <li
+                                      key={i}
+                                      onClick={() =>
+                                        handleDropOffSelect(idx, sug)
+                                      }
+                                      className="p-2 text-xs hover:bg-gray-100 cursor-pointer"
+                                    >
+                                      {sug.name} - {sug.formatted_address}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+
+                            {dropOffTypes[idx]
+                              ?.toLowerCase()
+                              ?.includes("airport") && (
+                              <input
+                                name={`dropoff_terminal_${idx}`}
+                                value={
+                                  journeyData[`dropoff_terminal_${idx}`] || ""
+                                }
+                                placeholder="Terminal No."
+                                className="custom_input w-full"
+                                onChange={handleChange}
+                              />
+                            )}
+                            {dropOffTypes[idx]
+                              ?.toLowerCase()
+                              ?.includes("location") && (
+                              <input
+                                name={`dropoffDoorNumber${idx}`}
+                                value={
+                                  journeyData[`dropoffDoorNumber${idx}`] || ""
+                                }
+                                placeholder="Drop Off Door No."
+                                className="custom_input w-full"
+                                onChange={handleChange}
+                              />
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => removeDropOff(idx)}
+                              className="btn btn-cancel text-sm px-3 py-1 w-fit sm:w-auto"
+                            >
+                              &minus;
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {dropOffs.length >= 4 && (
+                  <div className="flex items-start gap-2 flex-wrap">
+                    {dropOffs.slice(3, 5).map((val, arrayIdx) => {
+                      const idx = arrayIdx + 3;
+                      return (
+                        <div key={idx} className="flex-1 min-w-[250px]">
+                          <label className="block text-xs font-medium text-[var(--dark-gray)] mb-1">
+                            {`Drop Off ${idx + 1}`}
+                          </label>
+                          <div className="relative flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
+                            <input
+                              type="text"
+                              value={val}
+                              placeholder={`Drop Off ${idx + 1}`}
+                              onChange={(e) =>
+                                handleDropOffChange(idx, e.target.value)
+                              }
+                              onBlur={() => {
+                                const coords = dropoffCoords[idx] || null;
+                                dropOffs[idx] &&
+                                  checkCoverage(
+                                    dropOffs[idx],
+                                    "dropoff",
+                                    coords
+                                  );
+                              }}
+                              className="custom_input w-full"
+                            />
+                            {dropOffSuggestions.length > 0 &&
+                              activeDropIndex === idx && (
+                                <ul className="absolute z-30 bg-white border rounded shadow max-h-40 overflow-y-auto w-full top-full left-0 mt-1">
+                                  <li
+                                    onClick={async () => {
+                                      const val = (dropOffs[idx] || "").trim();
+                                      if (!val) return;
+
+                                      let coords = null;
+                                      try {
+                                        const g = await triggerGeocode(
+                                          val
+                                        ).unwrap();
+                                        if (
+                                          g?.location &&
+                                          Number.isFinite(g.location.lat) &&
+                                          Number.isFinite(g.location.lng)
+                                        ) {
+                                          coords = {
+                                            lat: Number(g.location.lat),
+                                            lng: Number(g.location.lng),
+                                          };
+                                        }
+                                      } catch (err) {
+                                        console.warn(
+                                          "Dropoff geocode failed, fallback to text-only check",
+                                          err
+                                        );
+                                      }
+
+                                      if (
+                                        !checkCoverage(val, "dropoff", coords)
+                                      )
+                                        return;
+
+                                      const updated = [...dropOffs];
+                                      updated[idx] = val;
+                                      setDropOffs(updated);
+
+                                      setDropOffTypes((prev) => ({
+                                        ...prev,
+                                        [idx]: "location",
+                                      }));
+
+                                      setDropoffCoords((prev) => ({
+                                        ...prev,
+                                        [idx]: coords,
+                                      }));
+
+                                      setDropOffSuggestions([]);
+                                    }}
+                                    className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
+                                  >
+                                    ➕ Use: "{dropOffs[idx]}"
+                                  </li>
+
+                                  {dropOffSuggestions.map((sug, i) => (
+                                    <li
+                                      key={i}
+                                      onClick={() =>
+                                        handleDropOffSelect(idx, sug)
+                                      }
+                                      className="p-2 text-xs hover:bg-gray-100 cursor-pointer"
+                                    >
+                                      {sug.name} - {sug.formatted_address}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+
+                            {dropOffTypes[idx]
+                              ?.toLowerCase()
+                              ?.includes("airport") && (
+                              <input
+                                name={`dropoff_terminal_${idx}`}
+                                value={
+                                  journeyData[`dropoff_terminal_${idx}`] || ""
+                                }
+                                placeholder="Terminal No."
+                                className="custom_input w-full"
+                                onChange={handleChange}
+                              />
+                            )}
+                            {dropOffTypes[idx]
+                              ?.toLowerCase()
+                              ?.includes("location") && (
+                              <input
+                                name={`dropoffDoorNumber${idx}`}
+                                value={
+                                  journeyData[`dropoffDoorNumber${idx}`] || ""
+                                }
+                                placeholder="Drop Off Door No."
+                                className="custom_input w-full"
+                                onChange={handleChange}
+                              />
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => removeDropOff(idx)}
+                              className="btn btn-cancel text-sm px-3 py-1 w-fit sm:w-auto"
+                            >
+                              &minus;
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Show Add button only when 1 dropoff exists */}
+                {dropOffs.length === 1 && (
                   <button
                     type="button"
-                    onClick={() => removeDropOff(idx)}
-                    className="btn btn-cancel text-sm px-3 py-1 w-fit sm:w-auto"
+                    onClick={addDropOff}
+                    className="btn btn-back mb-5"
                   >
-                    &minus;
+                    + Add Drop Off
                   </button>
                 )}
               </div>
-            ))}
-
-            {dropOffs.length < 5 && (
-              <button
-                type="button"
-                onClick={addDropOff}
-                className="btn btn-back w-full sm:w-auto text-sm px-4 py-2 mb-4"
-              >
-                + Add Drop Off
-              </button>
-            )}
-
-            <textarea
-              name="notes"
-              placeholder="Notes"
-              rows="2"
-              className="custom_input mb-2 w-full"
-              value={journeyData.notes}
-              onChange={handleChange}
-            />
-            <textarea
-              name="internalNotes"
-              placeholder="Internal Notes"
-              rows="2"
-              className="custom_input w-full"
-              value={journeyData.internalNotes}
-              onChange={handleChange}
-            />
+              <div className="flex items-center space-x-2">
+                <textarea
+                  name="notes"
+                  placeholder="Notes"
+                  rows="2"
+                  className="custom_input my-2 w-full"
+                  value={journeyData.notes}
+                  onChange={handleChange}
+                />
+                <textarea
+                  name="internalNotes"
+                  placeholder="Internal Notes"
+                  rows="2"
+                  className="custom_input w-full"
+                  value={journeyData.internalNotes}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

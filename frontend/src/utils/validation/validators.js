@@ -88,10 +88,10 @@ export function validateCompanyAccount(data) {
     else if (Number.isNaN(Number(data.licenseNumber)) || Number(data.licenseNumber) <= 0)
         errors.licenseNumber = "License Number must be a positive number.";
 
-    if (isEmpty(data.referrerLink))
-        errors.referrerLink = "License Referrer Link is required.";
-    else if (!isValidUrl(data.referrerLink))
-        errors.referrerLink = "Enter a valid URL (http/https).";
+    if (isEmpty(data.website))
+        errors.website = "License Website Link is required.";
+    else if (!isValidUrl(data.website))
+        errors.website = "Enter a valid URL (http/https).";
 
     if (isEmpty(data.clientAdminId))
         errors.clientAdminId = "Please select an admin.";

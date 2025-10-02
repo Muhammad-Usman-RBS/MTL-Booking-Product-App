@@ -299,8 +299,8 @@ const CompanyAccountsList = () => {
                   value: selectedAccount.licenseNumber,
                 },
                 {
-                  label: "License Referrer Link",
-                  value: selectedAccount.referrerLink,
+                  label: "License Website Link",
+                  value: selectedAccount.website,
                 },
                 {
                   label: "Cookie Consent",

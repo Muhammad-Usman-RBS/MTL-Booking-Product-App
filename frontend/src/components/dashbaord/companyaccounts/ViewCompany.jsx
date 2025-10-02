@@ -30,7 +30,7 @@ const ViewCompany = () => {
         { label: "Phone", value: company.contact ? `+${company.contact}` : null },
         { label: "Licensed By", value: company.licensedBy },
         { label: "License Number", value: company.licenseNumber },
-        { label: "Referrer Link", value: company.referrerLink },
+        { label: "Website", value: company.website },
         { label: "Address", value: company.address },
         { label: "Cookie Consent", value: company.cookieConsent },
     ];

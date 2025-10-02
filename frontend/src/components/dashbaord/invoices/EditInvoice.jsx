@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import SelectOption from "../../../constants/constantscomponents/SelectOption";
 import {
@@ -12,6 +12,7 @@ import { useSelector } from "react-redux";
 import { useGetBookingSettingQuery } from "../../../redux/api/bookingSettingsApi";
 
 const InvoicePage = () => {
+  const navigate = useNavigate();
   const { id } = useParams();
   const user = useSelector((state) => state?.auth?.user);
   const companyId = user?.companyId;
@@ -123,7 +124,7 @@ const InvoicePage = () => {
   const handleSave = async () => {
     try {
       if (!invoiceData?.invoice) return toast.error("No invoice data found.");
-
+      const invoiceType = invoiceData.invoice.invoiceType;
       const originalItems = invoiceData.invoice.items || [];
       const items = itemDetails.map((text, index) => {
         const lines = text.split("\n").filter(Boolean);
@@ -226,8 +227,12 @@ const InvoicePage = () => {
       await updateInvoice({ id, invoiceData: updatePayload }).unwrap();
 
       toast.success("Invoice updated successfully!");
+      if (invoiceType === "driver") {
+        navigate("/dashboard/invoices/list?mode=driver");
+      } else {
+        navigate("/dashboard/invoices/list?mode=customer");
+      }
     } catch (err) {
-      console.error(err);
       toast.error("Failed to update invoice");
     }
   };

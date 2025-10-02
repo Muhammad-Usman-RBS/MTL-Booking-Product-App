@@ -1109,7 +1109,7 @@ const NewBooking = ({ editBookingData = null, onClose }) => {
       <div className="flex justify-center mt-12">
         <button
           onClick={handleSubmit}
-          className="btn btn-success font-semibold px-6 py-2 rounded-md shadow transition"
+          className="btn btn-success"
           disabled={isLoading}
         >
           {isLoading

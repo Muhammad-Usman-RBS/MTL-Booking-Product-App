@@ -48,7 +48,9 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
   });
 
   const { data: bookingData, refetch: refetchBookings } =
-    useGetAllBookingsQuery(companyId);
+  useGetAllBookingsQuery(companyId, {
+    skip: !companyId,
+  });
 
   const { data: allUsers = [] } = useAdminGetAllDriversQuery();
   const allBookings = bookingData?.bookings || [];
@@ -345,7 +347,11 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
         }).unwrap();
 
         if (typeof refetchBookings === "function") {
-          refetchBookings();
+          try {
+            await refetchBookings();
+          } catch (err) {
+            console.warn("Refetch bookings failed:", err);
+          }
         }
         toast.success("All drivers removed from this booking.");
         setPreviouslySelectedDrivers(selectedDrivers);
@@ -530,6 +536,7 @@ const ViewDriver = ({ selectedRow, setShowDriverModal, onDriversUpdate }) => {
         onDriversUpdate(selectedRow, selectedDrivers);
       }
     } catch (error) {
+      console.log("Error in handleSendEmail:", error);
       toast.error("Something went wrong while assigning drivers.");
     }
   };

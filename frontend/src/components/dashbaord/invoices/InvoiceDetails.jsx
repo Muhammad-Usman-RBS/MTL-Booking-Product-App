@@ -14,7 +14,7 @@ import {
 import InvoiceEmailModal from "./InvoiceEmailModal";
 import { Link } from "react-router-dom";
 
-const InvoiceDetails = ({ item,createBtn }) => {
+const InvoiceDetails = ({ item, createBtn }) => {
   const user = useSelector((state) => state.auth.user);
   const companyId = user?.companyId;
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -175,36 +175,36 @@ const InvoiceDetails = ({ item,createBtn }) => {
               <Icons.Mail size={16} />
             </button>
           )}
-          {userRole === "clientadmin" ? (
-            <>
-              <div className="flex gap-2 items-center w-full sm:w-auto mt-2 sm:mt-0">
-                <div className="w-full sm:w-40">
-                  <SelectOption
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                    options={statusOption}
-                    width="full"
-                  />
-                </div>
-                <button
-                  onClick={handleStatusUpdate}
-                  disabled={status === selectedStatus}
-                  className={`p-2.5 text-white rounded-md transition ${
-                    status === selectedStatus
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-emerald-500 hover:bg-emerald-600 cursor-pointer"
-                  }`}
-                >
-                  <Icons.Check size={16} />
-                </button>
-              </div>
+{userRole === "clientadmin" ? (
+  <>
+    <div className="flex gap-2 items-center w-full sm:w-auto mt-2 sm:mt-0">
+      <div className="w-full sm:w-40">
+        <SelectOption
+          value={selectedStatus}
+          onChange={(e) => setSelectedStatus(e.target.value)}
+          options={statusOption}
+          width="full"
+        />
+      </div>
+      <button
+        onClick={handleStatusUpdate}
+        disabled={status === selectedStatus}
+        className={`p-2.5 text-white rounded-md transition ${
+          status === selectedStatus
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-emerald-500 hover:bg-emerald-600 cursor-pointer"
+        }`}
+      >
+        <Icons.Check size={16} />
+      </button>
+    </div>
 
-          <div className=" flex justify-end">
-            <Link to={createBtn.to} className="btn btn-edit">
-              {createBtn.label}
-            </Link>
-          </div>
-            </>
+    <div className="ml-auto">
+      <Link to={createBtn.to} className="btn btn-edit">
+        {createBtn.label}
+      </Link>
+    </div>
+  </>
           ) : (
             <div className="flex items-center mt-2 sm:mt-0">
               <span
@@ -340,21 +340,31 @@ ${company?.zip || ""}`}
                     color: "#333",
                   }}
                 >
-                  Website: {company?.website}
+                  Website:
+                  <span style={{ fontSize: "12px" }}>{company?.website} </span>
                 </p>
 
-                <a
-                  href={`mailto:${company?.email}`}
+                <p
                   style={{
-                    color: "#1976d2",
-                    textDecoration: "none",
-                    fontSize: "13px",
-                    display: "block",
-                    margin: "4px 0",
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                    color: "#333",
                   }}
                 >
-                  {company?.email}
-                </a>
+                  Email:
+                  <a
+                    style={{
+                      color: "#1976d2",
+                      textDecoration: "none",
+                      fontSize: "12px",
+                      display: "inline",
+                      marginLeft: "4px",
+                    }}
+                    href={`mailto:${company?.email}`}
+                  >
+                    {company?.email}
+                  </a>
+                </p>
 
                 <div
                   style={{ display: "flex", gap: "5px", alignItems: "center" }}
@@ -404,7 +414,7 @@ ${company?.zip || ""}`}
                   Invoice Date: {new Date(item?.createdAt).toLocaleDateString()}
                 </p>
                 <p style={{ margin: "4px 0", fontSize: "13px", color: "#444" }}>
-                  Due Date:{" "}
+                  Due Date:
                   {item?.items?.[0]?.date
                     ? new Date(item.items[0].date).toLocaleDateString()
                     : "-"}
@@ -453,6 +463,7 @@ ${company?.zip || ""}`}
                     : item?.customer?.email}
                 </a>
                 <p style={{ margin: "4px 0", fontSize: "13px", color: "#444" }}>
+                  +
                   {invoiceType === "driver"
                     ? item?.driver?.phone
                     : item?.customer?.phone}

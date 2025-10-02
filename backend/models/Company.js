@@ -8,7 +8,7 @@ const companySchema = new mongoose.Schema(
     contact: String,
     licensedBy: String,
     licenseNumber: Number,
-    referrerLink: String,
+    website: String,
     cookieConsent: {
       type: String,
       enum: ["Yes", "No"],
