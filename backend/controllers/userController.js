@@ -926,7 +926,7 @@ export const updateBookingFilterPreferences = async (req, res) => {
     }
     if (selectedColumns && typeof selectedColumns === "object") {
       user.bookingFilterPreferences.selectedColumns = Object.keys(selectedColumns)
-        .filter((key) => selectedColumns[key]); 
+        .filter((key) => selectedColumns[key]);
     }
 
     await user.save();

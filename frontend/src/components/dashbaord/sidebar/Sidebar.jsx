@@ -68,12 +68,36 @@ const Sidebar = () => {
         } min-w-[64px] bg-theme text-theme h-screen flex flex-col duration-300 overflow-y-auto`}
       style={{ transition: "0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)" }}
     >
-      <div className="p-4 flex justify-center">
-        <img
-          src={companyLogo || (isOpen ? IMAGES.dashboardLargeLogo : IMAGES.dashboardSmallLogo)}
-          alt="Company Logo"
-          className={isOpen ? "h-12 w-auto" : "w-10 h-10 rounded-full"}
-        />
+      <div
+        className={`p-1 flex items-center gap-3 transition-all duration-300 group cursor-pointer 
+    ${isOpen ? "pt-4 pb-4" : "pt-2 pb-2"}`}
+      >
+        <div className="grid place-items-center">
+          {/* Animated gradient background */}
+          <div className="col-start-1 row-start-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl opacity-75 blur-xl group-hover:opacity-100 transition duration-500 animate-pulse scale-125"></div>
+
+          {/* Logo container */}
+          <div className={`col-start-1 row-start-1 z-10 ${isOpen ? "ps-2" : "ps-0"}`}>
+            <img
+              src={companyLogo}
+              alt="Company Logo"
+              className="h-18 w-18 object-contain drop-shadow-2xl"
+            />
+          </div>
+        </div>
+
+        {isOpen && (
+          <div className="flex flex-col gap-1 animate-slideIn">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 font-black text-sm leading-tight tracking-widest line-clamp-2 drop-shadow-[0_0_10px_rgba(147,51,234,0.5)]">
+              {(companyData?.companyName || "Your Company").toUpperCase()}
+            </span>
+
+            {/* Animated underline */}
+            <div className="h-1 w-16 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full overflow-hidden">
+              <div className="h-full w-full bg-gradient-to-r from-transparent via-white to-transparent animate-shimmer -translate-x-full"></div>
+            </div>
+          </div>
+        )}
       </div>
 
       {isOpen && (

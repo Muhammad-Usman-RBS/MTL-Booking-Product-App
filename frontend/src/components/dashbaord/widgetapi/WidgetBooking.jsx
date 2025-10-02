@@ -168,8 +168,8 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
     };
 
     const addDropOff = () => {
-        if (dropOffs.length >= 3) {
-            toast.warning('Maximum 3 drop-offs allowed.');
+        if (dropOffs.length >= 5) {
+            toast.warning('Maximum 5 drop-offs allowed.');
             return;
         }
         setDropOffs([...dropOffs, '']);

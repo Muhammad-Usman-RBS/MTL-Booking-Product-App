@@ -1,23 +1,31 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+import { clearUser } from "../../redux/slices/authSlice";
+import { useLogoutUserMutation } from "../../redux/api/userApi";
 
 const Logout = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [logoutUser, { isLoading }] = useLogoutUserMutation();
 
-  const handleLogout = () => {
-    // Remove user and related data
-    localStorage.removeItem("user");
-    localStorage.removeItem("companyId");
-    localStorage.removeItem("token");
-    localStorage.removeItem("theme:persist");
+  const handleLogout = async () => {
+    try {
+      // 🔹 Call backend logout API (cookie clear)
+      await logoutUser().unwrap();
 
-    toast.success("Successfully logged out.");
+      // 🔹 Redux state clear karo
+      dispatch(clearUser());
 
-    setTimeout(() => {
-      navigate("/login", { replace: true });
-      window.location.reload();
-    }, 1000);
+      toast.success("Successfully logged out.");
+
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 800);
+    } catch (error) {
+      toast.error("Logout failed. Try again.");
+    }
   };
 
   const handleCancel = () => {
@@ -34,9 +42,10 @@ const Logout = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             onClick={handleLogout}
-            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition"
+            disabled={isLoading}
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition disabled:opacity-50"
           >
-            Yes, Logout
+            {isLoading ? "Logging out..." : "Yes, Logout"}
           </button>
 
           <button

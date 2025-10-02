@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import http from "http";
 import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
 import { Server as IOServer } from "socket.io";
 
 import connectDB from "./config/db.js";
@@ -42,17 +43,27 @@ app.post(
   "/api/stripe/webhook",
   bodyParser.raw({ type: "application/json" }),
   (req, _res, next) => {
-    req.rawBody = req.body; 
+    req.rawBody = req.body;
     next();
   },
   handleStripeWebhook
 );
 app.use(express.json({ limit: "5mb" }));
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 const allowedOrigins = process.env.BASE_URL_FRONTEND
   ? process.env.BASE_URL_FRONTEND.split(",").map((s) => s.trim())
   : ["http://localhost:5173", "http://localhost:3000"];
 
+// app.use(
+//   cors({
+//     origin: (origin, cb) => {
+//       if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+//       return cb(new Error(`CORS blocked for origin: ${origin}`));
+//     },
+//     credentials: true,
+//   })
+// );
 app.use(
   cors({
     origin: (origin, cb) => {
@@ -128,17 +139,17 @@ server.listen(PORT, async () => {
   createSuperAdmin();
   scheduleDriverStatements();
   scheduleAutoAllocation();
-  await scheduleDriverDocsJobs(); 
+  await scheduleDriverDocsJobs();
 });
 process.on("SIGTERM", () => {
- 
+
   server.close(() => {
-    
+
     process.exit(0);
   });
 });
 process.on("SIGINT", () => {
- 
+
   server.close(() => {
     process.exit(0);
   });

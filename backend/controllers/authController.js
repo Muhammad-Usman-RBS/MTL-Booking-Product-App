@@ -65,6 +65,14 @@ export const login = async (req, res) => {
 
     await user.save();
 
+    // set JWT in HttpOnly cookie
+    res.cookie("access_token", generateToken(user._id, user.role, user.companyId), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production" ? true : false,
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+      maxAge: 15 * 60 * 1000, // 15 min
+    });
+
     // Include companyId in the token
     res.json({
       _id: user._id,
@@ -72,12 +80,12 @@ export const login = async (req, res) => {
       fullName: user.fullName,
       role: user.role,
       permissions: user.permissions,
-      token: generateToken(user._id, user.role, user.companyId),
+      // token: generateToken(user._id, user.role, user.companyId),
       profileImage: user.profileImage || null,
       companyId: user.companyId || null,
       employeeNumber: user.employeeNumber,
       vatnumber: user.vatnumber || null,
-    
+
 
       // 🔹 Superadmin fields
       superadminCompanyName: user.superadminCompanyName || "",
@@ -165,7 +173,7 @@ export const updateProfile = async (req, res) => {
       superadminCompanyAddress: user.superadminCompanyAddress || "",
       superadminCompanyPhoneNumber: user.superadminCompanyPhoneNumber || "",
       superadminCompanyEmail: user.superadminCompanyEmail || "",
-      token: generateToken(user._id, user.role),
+      // token: generateToken(user._id, user.role),
     });
   } catch (err) {
     console.error("Update Profile Error:", err);

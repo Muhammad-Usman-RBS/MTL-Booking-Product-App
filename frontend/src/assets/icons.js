@@ -102,10 +102,12 @@ import {
   Trash2,
   FileSignature,
   AlertTriangle,
+  Minus,
 } from "lucide-react";
 
 const Icons = {
   RotateCcw,
+  Minus,
   AlertTriangle,
   FileSignature,
   Trash2,

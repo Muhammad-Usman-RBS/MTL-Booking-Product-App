@@ -13,11 +13,13 @@ const Login = () => {
     visible: passwordVisible,
     toggleVisibility: togglePasswordVisibility,
   } = UsePasswordToggle();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [loginUser] = useLoginUserMutation();
+  const [loginUser, { isLoading }] = useLoginUserMutation();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -28,47 +30,39 @@ const Login = () => {
     }
 
     try {
+      // 🔹 Call API (cookie auto-set ho jayegi kyunki credentials: "include" laga hai apiSlice me)
       const data = await loginUser({ email, password }).unwrap();
 
-      // Save full user data
-      localStorage.setItem('user', JSON.stringify(data));
-
-      // Save token if you use one (optional)
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-      }
-
-      // Save companyId separately if assigned
-      if (data.companyId) {
-        localStorage.setItem('companyId', data.companyId);
-      }
-
+      // 🔹 Set user in Redux (no localStorage now)
       dispatch(setUser(data));
 
       toast.success("Login successful!");
 
+      // 🔹 Redirect based on role
       setTimeout(() => {
         switch (data.role) {
-          case 'superadmin':
-          case 'clientadmin':
-          case 'demo':
-            navigate('/dashboard/home');
+          case "superadmin":
+          case "clientadmin":
+          case "demo":
+            navigate("/dashboard/home");
             break;
           default:
-            navigate('/dashboard/home');
+            navigate("/dashboard/home");
         }
-      }, 1000);
+      }, 800);
     } catch (err) {
       const msg = err?.data?.message || "Login failed. Check your credentials.";
       toast.error(msg);
     }
   };
 
-
   return (
     <form onSubmit={handleLogin} className="space-y-5">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Email Address
         </label>
         <input
@@ -81,7 +75,10 @@ const Login = () => {
         />
       </div>
       <div className="relative">
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="password"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Password
         </label>
         <input
@@ -96,23 +93,32 @@ const Login = () => {
           className="absolute top-1/2 right-3 transform translate-y-1/4 cursor-pointer text-gray-500"
           onClick={togglePasswordVisibility}
         >
-          {passwordVisible ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
+          {passwordVisible ? (
+            <Icons.EyeOff size={18} />
+          ) : (
+            <Icons.Eye size={18} />
+          )}
         </span>
       </div>
 
       <div className="text-center">
         <button
           type="submit"
-          className="w-full cursor-pointer text-white px-4 py-2 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all duration-200"
+          disabled={isLoading}
+          className="w-full cursor-pointer text-white px-4 py-2 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all duration-200 disabled:opacity-50"
           style={{
-            background: "linear-gradient(90deg, rgba(37,37,157,1) 0%, rgba(0,212,255,1) 100%)",
+            background:
+              "linear-gradient(90deg, rgba(37,37,157,1) 0%, rgba(0,212,255,1) 100%)",
           }}
         >
-          Log In
+          {isLoading ? "Logging in..." : "Log In"}
         </button>
       </div>
       <div className="text-center mt-3">
-        <Link to="/forgot-password" className="text-blue-600 text-sm font-semibold underline cursor-pointer">
+        <Link
+          to="/forgot-password"
+          className="text-blue-600 text-sm font-semibold underline cursor-pointer"
+        >
           Forgot your password?
         </Link>
       </div>

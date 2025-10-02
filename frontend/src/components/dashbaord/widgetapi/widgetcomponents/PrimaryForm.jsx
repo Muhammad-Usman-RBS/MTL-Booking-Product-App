@@ -7,6 +7,7 @@ import { useGetAllCoveragesQuery } from "../../../../redux/api/coverageApi"
 import { useLazyGeocodeQuery, useLazySearchGooglePlacesQuery } from '../../../../redux/api/googleApi';
 import { useGetAllBookingRestrictionsQuery } from "../../../../redux/api/bookingRestrictionDateApi";
 import { useBookingRestrictionWatcher } from "../../../../utils/bookingRestrictionUtils";
+import Icons from '../../../../assets/icons';
 
 const PrimaryForm = ({
   formData,
@@ -259,50 +260,86 @@ const PrimaryForm = ({
         </div>
       )}
 
-      {/* Pickup Location */}
-      <div className="relative mb-4">
-        {/* <input
-                type="text"
-                name="pickup"
-                placeholder="Pickup Location"
-                value={formData.pickup}
-                onChange={handlePickupChange}
-                className="custom_input w-full"
-              /> */}
-        <input
-          type="text"
-          name="pickup"
-          placeholder="Pickup Location"
-          value={formData.pickup}
-          onChange={handlePickupChange}
-          onBlur={() => formData.pickup && checkCoverage(formData.pickup, "pickup", pickupCoords)}
-          className="custom_input w-full"
-        />
+
+      <div className="grid grid-cols-4 gap-3">
+        {/* Date (Bada Column) */}
+        <div className="flex flex-col col-span-2">
+          <label className="block text-xs mt-1 text-[var(--dark-gray)]">
+            Pick Up Date
+          </label>
+          <input
+            type="date"
+            name="date"
+            value={formData.date}
+            onChange={handleChangeWithValidation}
+            className="custom_input"
+          />
+        </div>
+
+        {/* Hour */}
+        <div className="flex flex-col col-span-1">
+          <label className="block text-xs mt-1 text-[var(--dark-gray)]">
+            Hour
+          </label>
+          <select
+            name="hour"
+            value={formData.hour}
+            onChange={handleChangeWithValidation}
+            className="custom_input"
+          >
+            <option value="">HH</option>
+            {[...Array(24).keys()].map((h) => (
+              <option key={h} value={h}>
+                {h.toString().padStart(2, "0")}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Minute */}
+        <div className="flex flex-col col-span-1">
+          <label className="block text-xs mt-1 text-[var(--dark-gray)]">
+            Minute
+          </label>
+          <select
+            name="minute"
+            value={formData.minute}
+            onChange={handleChangeWithValidation}
+            className="custom_input"
+          >
+            <option value="">MM</option>
+            {[...Array(60).keys()].map((m) => (
+              <option key={m} value={m}>
+                {m.toString().padStart(2, "0")}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="relative mb-6">
+        <div className="relative">
+          <input
+            type="text"
+            name="pickup"
+            placeholder="Enter pickup location"
+            value={formData.pickup}
+            onChange={handlePickupChange}
+            onBlur={() => formData.pickup && checkCoverage(formData.pickup, "pickup", pickupCoords)}
+            className="custom_input"
+          />
+        </div>
 
         {pickupSuggestions.length > 0 && (
-          <ul className="absolute z-20 bg-white border rounded shadow max-h-40 overflow-y-auto w-full">
-            {/* <li
-                    onClick={() => {
-                      setformData({
-                        ...formData,
-                        pickup: formData.pickup,
-                      });
-                      setPickupType("location");
-                      setPickupSuggestions([]);
-                    }}
-                    className="p-2 text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 cursor-pointer border-b"
-                  >
-                    ➕ Use: "{formData.pickup}"
-                  </li> */}
+          <ul className="absolute z-20 bg-white border-2 border-gray-200 rounded-lg shadow-lg mt-2 max-h-60 overflow-y-auto w-full animate-fadeIn">
             <li
               onClick={async () => {
                 const val = (formData.pickup || "").trim();
                 if (!val) return;
 
-                // 1) Geocode typed text to get {lat,lng}
                 let coords = null;
                 try {
-                  const g = await triggerGeocode(val).unwrap(); // from useLazyGeocodeQuery
+                  const g = await triggerGeocode(val).unwrap();
                   if (g?.location && Number.isFinite(g.location.lat) && Number.isFinite(g.location.lng)) {
                     coords = { lat: Number(g.location.lat), lng: Number(g.location.lng) };
                   }
@@ -310,244 +347,148 @@ const PrimaryForm = ({
                   console.warn("Geocode failed, falling back to text-only coverage check", err);
                 }
 
-                // 2) Coverage check (uses polygon when coords exist)
                 if (!checkCoverage(val, "pickup", coords)) return;
 
-                // 3) Apply selection
                 setFormData((prev) => ({ ...prev, pickup: val }));
                 setPickupType("location");
                 setPickupCoords(coords);
                 setPickupSuggestions([]);
               }}
-              className="p-2 text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 cursor-pointer border-b"
+              className="p-3 text-sm bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 cursor-pointer border-b border-gray-200 transition-all duration-200 flex items-center gap-2"
             >
-              ➕ Use: "{formData.pickup}"
+              <span className="text-blue-600">➕</span>
+              <span className="font-medium">Use: "{formData.pickup}"</span>
             </li>
-
 
             {pickupSuggestions.map((sug, idx) => (
               <li
                 key={idx}
                 onClick={() => handlePickupSelect(sug)}
-                className="p-2 text-xs sm:text-sm hover:bg-gray-100 cursor-pointer"
+                className="p-3 text-sm hover:bg-gray-50 cursor-pointer transition-all duration-150 border-b border-gray-100 last:border-0"
               >
-                {sug.name} - {sug.formatted_address}
+                <div className="font-medium text-gray-800">{sug.name}</div>
+                <div className="text-xs text-gray-500 mt-1">{sug.formatted_address}</div>
               </li>
             ))}
           </ul>
         )}
       </div>
 
+      {/* Pickup Door Number */}
       {pickupType === "location" && !formData.pickup?.toLowerCase().includes("airport") && (
-        <input
-          name="pickupDoorNumber"
-          placeholder="Pickup Door No."
-          className="custom_input"
-          value={formData.pickupDoorNumber}
-          onChange={handleChange}
-        />
+        <div className="mb-6 animate-slideDown">
+          <label className="block text-sm font-medium mb-2 text-gray-700">
+            Door Number / Building Details
+          </label>
+          <input
+            name="pickupDoorNumber"
+            placeholder="e.g., Building A, Floor 3, Apt 205"
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 outline-none"
+            value={formData.pickupDoorNumber}
+            onChange={handleChange}
+          />
+        </div>
       )}
 
+      {/* Airport Details */}
       {(pickupType === "airport" || formData.pickup?.toLowerCase().includes("airport")) && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <input
-            name="arrivefrom"
-            placeholder="Arriving From"
-            value={formData.arrivefrom}
-            onChange={handleChange}
-            className="custom_input"
-          />
-          <input
-            name="pickmeAfter"
-            placeholder="Pick Me After"
-            value={formData.pickmeAfter}
-            onChange={handleChange}
-            className="custom_input"
-          />
-          <input
-            name="flightNumber"
-            placeholder="Flight No."
-            value={formData.flightNumber}
-            onChange={handleChange}
-            className="custom_input"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 animate-slideDown">
+          {/* Arriving From */}
+          <div className="flex flex-col">
+            <label className="block text-sm font-medium mb-2 text-gray-700">
+              Arriving From
+            </label>
+            <input
+              name="arrivefrom"
+              placeholder="City/Country"
+              value={formData.arrivefrom}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 outline-none"
+            />
+          </div>
+
+          {/* Pick Me After */}
+          <div className="flex flex-col">
+            <label className="block text-sm font-medium mb-2 text-gray-700">
+              Pick Me After
+            </label>
+            <input
+              name="pickmeAfter"
+              placeholder="Time (e.g., 2:30 PM)"
+              value={formData.pickmeAfter}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 outline-none"
+            />
+          </div>
+
+          {/* Flight Number */}
+          <div className="flex flex-col">
+            <label className="block text-sm font-medium mb-2 text-gray-700">
+              Flight Number
+            </label>
+            <input
+              name="flightNumber"
+              placeholder="e.g., AA123"
+              value={formData.flightNumber}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 outline-none"
+            />
+          </div>
         </div>
       )}
 
-      {dropOffs.map((val, idx) => (
-        <div
-          key={idx}
-          className="relative flex flex-col sm:flex-row sm:items-center gap-2 mb-4"
-        >
-          {/* <input
-                  type="text"
-                  value={val}
-                  placeholder={`Drop Off ${idx + 1}`}
-                  onChange={(e) => handleDropOffChange(idx, e.target.value)}
-                  className="custom_input w-full"
-                /> */}
-          <input
-            type="text"
-            value={val}
-            placeholder={`Drop Off ${idx + 1}`}
-            onChange={(e) => handleDropOffChange(idx, e.target.value)}
-            onBlur={() => {
-              const coords = dropoffCoords[idx] || null;
-              dropOffs[idx] && checkCoverage(dropOffs[idx], "dropoff", coords);
-            }}
-            className="custom_input w-full"
-          />
-          {/* Suggestions */}
-          {dropOffSuggestions.length > 0 && activeDropIndex === idx && (
-            <ul className="absolute z-30 bg-white border rounded shadow max-h-40 overflow-y-auto w-full top-full left-0 mt-1">
-              {/* <li
-                      onClick={() => {
-                        const updated = [...dropOffs];
-                        updated[idx] = dropOffs[idx];
-                        setDropOffs(updated);
-                        setDropOffTypes((prev) => ({
-                          ...prev,
-                          [idx]: "location",
-                        }));
-                        setDropOffSuggestions([]);
-                      }}
-                      className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
-                    >
-                      ➕ Use: "{dropOffs[idx]}"
-                    </li> */}
-              <li
-                onClick={async () => {
-                  const val = (dropOffs[idx] || "").trim();
-                  if (!val) return;
-
-                  // 1) Geocode typed text → lat/lng
-                  let coords = null;
-                  try {
-                    const g = await triggerGeocode(val).unwrap(); // from useLazyGeocodeQuery
-                    if (g?.location && Number.isFinite(g.location.lat) && Number.isFinite(g.location.lng)) {
-                      coords = { lat: Number(g.location.lat), lng: Number(g.location.lng) };
-                    }
-                  } catch (err) {
-                    console.warn("Dropoff geocode failed, fallback to text-only check", err);
-                  }
-
-                  // 2) Coverage check
-                  if (!checkCoverage(val, "dropoff", coords)) return;
-
-                  // 3) Update state
-                  const updated = [...dropOffs];
-                  updated[idx] = val;
-                  setDropOffs(updated);
-
-                  setDropOffTypes((prev) => ({ ...prev, [idx]: "location" }));
-
-                  setDropoffCoords((prev) => ({
-                    ...prev,
-                    [idx]: coords,
-                  }));
-
-                  setDropOffSuggestions([]);
+      {/* Drop-off Locations */}
+      <div className="space-y-3">
+        {dropOffs.map((val, idx) => (
+          <div
+            key={idx}
+            className="relative flex items-center gap-2 animate-slideDown"
+          >
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={val}
+                placeholder={idx === dropOffs.length - 1 ? "Drop-off Location" : `Via Stop ${idx + 1}`}
+                onChange={(e) => handleDropOffChange(idx, e.target.value)}
+                onBlur={() => {
+                  const coords = dropoffCoords[idx] || null;
+                  dropOffs[idx] && checkCoverage(dropOffs[idx], "dropoff", coords);
                 }}
-                className="p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer border-b text-xs"
+                className="custom_input"
+              />
+            </div>
+
+            {/* Add / Remove Button */}
+            {idx === dropOffs.length - 1 && dropOffs.length < 5 ? (
+              <button
+                type="button"
+                onClick={addDropOff}
+                className="btn btn-edit"
               >
-                ➕ Use: "{dropOffs[idx]}"
-              </li>
-
-              {dropOffSuggestions.map((sug, i) => (
-                <li
-                  key={i}
-                  onClick={() => handleDropOffSelect(idx, sug)}
-                  className="p-2 text-xs hover:bg-gray-100 cursor-pointer"
-                >
-                  {sug.name} - {sug.formatted_address}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {/* Extra Fields */}
-          {dropOffTypes[idx]?.toLowerCase()?.includes("airport") && (
-            <input
-              name={`dropoff_terminal_${idx}`}
-              value={formData[`dropoff_terminal_${idx}`] || ""}
-              placeholder="Terminal No."
-              className="custom_input w-full"
-              onChange={handleChange}
-            />
-          )}
-          {dropOffTypes[idx]?.toLowerCase()?.includes("location") && (
-            <input
-              name={`dropoffDoorNumber${idx}`}
-              value={formData[`dropoffDoorNumber${idx}`] || ""}
-              placeholder="Drop Off Door No."
-              className="custom_input w-full"
-              onChange={handleChange}
-            />
-          )}
-
-          {/* Remove Button */}
-          {idx > 0 && (
-            <button
-              type="button"
-              onClick={() => removeDropOff(idx)}
-              className="btn btn-cancel text-sm px-3 py-1 w-fit sm:w-auto"
-            >
-              &minus;
-            </button>
-          )}
-        </div>
-      ))}
-
-      {dropOffs.length < 3 && (
-        <button
-          type="button"
-          onClick={addDropOff}
-          className="btn btn-back text-sm px-4 py-2 w-full sm:w-auto"
-        >
-          + Add Drop Off
-        </button>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <input
-          type="date"
-          name="date"
-          value={formData.date}
-          onChange={handleChangeWithValidation}
-          className="custom_input"
-        />
-        <select
-          name="hour"
-          value={formData.hour}
-          onChange={handleChangeWithValidation}
-          className="custom_input"
-        >
-          <option value="">HH</option>
-          {[...Array(24).keys()].map((h) => (
-            <option key={h} value={h}>
-              {h.toString().padStart(2, "0")}
-            </option>
-          ))}
-        </select>
-        <select
-          name="minute"
-          value={formData.minute}
-          onChange={handleChangeWithValidation}
-          className="custom_input"
-        >
-          <option value="">MM</option>
-          {[...Array(60).keys()].map((m) => (
-            <option key={m} value={m}>
-              {m.toString().padStart(2, "0")}
-            </option>
-          ))}
-        </select>
+                + Add Dropdoff
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => removeDropOff(idx)}
+              >
+                <div className="icon-box icon-box-danger">
+                  <Icons.Minus size={17} />
+                </div>
+              </button>
+            )}
+          </div>
+        ))}
       </div>
 
+
+      <label className="block text-xs p-0 m-0 text-[var(--dark-gray)]">
+        Special Notes
+      </label>
       <textarea
         name="notes"
-        placeholder="Notes"
-        className="custom_input"
+        placeholder="Special Notes"
+        className="custom_input mt-1"
         value={formData.notes}
         onChange={handleChange}
         rows={2}

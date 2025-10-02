@@ -50,6 +50,27 @@ export const userApi = apiSlice.injectEndpoints({
         method: 'GET',
       }),
     }),
+
+    // Current User (/auth/me)
+    getCurrentUser: builder.query({
+      query: () => ({
+        url: "/auth/me",
+        method: "GET",
+        credentials: "include", // cookie bhejega
+      }),
+      providesTags: ["User"],
+    }),
+
+    // Logout
+    logoutUser: builder.mutation({
+      query: () => ({
+        url: "/auth/logout",
+        method: "POST",
+        credentials: "include", // cookie clear karne ke liye
+      }),
+      invalidatesTags: ["User"],
+    }),
+
   }),
 });
 
@@ -59,4 +80,6 @@ export const {
   useResetPasswordMutation,
   useUpdateUserProfileMutation,
   useGetSuperadminInfoQuery,
+  useGetCurrentUserQuery,
+  useLogoutUserMutation,
 } = userApi;
