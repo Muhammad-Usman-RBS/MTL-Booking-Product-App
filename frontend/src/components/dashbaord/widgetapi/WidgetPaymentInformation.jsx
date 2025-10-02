@@ -655,10 +655,14 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
         <>
             <div className="mx-auto max-w-5xl mt-6">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white shadow-lg rounded-xl p-6 sm:p-8">
-                    {/* Passenger Details */}
-                    <div className="col-span-6">
-                        <div className="bg-white border border-gray-200 rounded-xl shadow p-6 space-y-6 mb-6">
+
+                    {/* Left Section: Passenger Details and Vehicle Info */}
+                    <div className="col-span-6 flex flex-col space-y-6">
+
+                        {/* Passenger Details */}
+                        <div className="bg-white border border-gray-200 rounded-xl shadow p-6 space-y-7">
                             <OutletHeading name="Passenger Details:-" />
+
                             <div>
                                 <label className="block text-sm font-medium mb-1">Full Name</label>
                                 <input
@@ -691,8 +695,28 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                             </div>
                         </div>
 
+                        {/* Vehicle Info */}
+                        <div className="bg-white border border-gray-200 rounded-xl shadow p-6">
+                            <OutletHeading name="Vehicle Detail:-" />
+                            {vehicle?.vehicleName && (
+                                <div className="text-sm text-[var(--dark-gray)] font-medium">
+                                    Selected Vehicle:&nbsp;
+                                    <span className="text-blue-700 font-semibold">{vehicle.vehicleName}</span>
+                                </div>
+                            )}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                                <SelectOption label="Passenger" value={formData.passenger} options={generateOptions(parseIntSafe(vehicle?.passenger))} onChange={handleSelectChange('passenger')} />
+                                <SelectOption label="Child Seats" value={formData.childSeat} options={generateOptions(parseIntSafe(vehicle?.childSeat))} onChange={handleSelectChange('childSeat')} />
+                                <SelectOption label="Hand Luggage" value={formData.handLuggage} options={generateOptions(parseIntSafe(vehicle?.handLuggage))} onChange={handleSelectChange('handLuggage')} />
+                                <SelectOption label="Check-in Luggage" value={formData.checkinLuggage} options={generateOptions(parseIntSafe(vehicle?.checkinLuggage))} onChange={handleSelectChange('checkinLuggage')} />
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div className="col-span-6 flex flex-col space-y-6">
                         {/* Payment Section */}
-                        <div className="bg-white border border-[var(--light-gray)] rounded-xl p-6 shadow-sm mt-6">
+                        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                             <OutletHeading name="Payment:-" />
                             <div className="text-center mb-4">
                                 {booking?.date && (
@@ -721,12 +745,12 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                             </span>
                                         </>
                                     ) : (
-                                        <>FARE: {currencySymbol}{Number(finalFare).toFixed(2)}</>
+                                        <><p className='text-sm'>FARE: {currencySymbol}{Number(finalFare).toFixed(2)}</p></>
                                     )}
                                 </div>
 
                                 <SelectOption
-                                    label="Payment Method"
+                                    label="Choose your payment method"
                                     value={formData.paymentMethod}
                                     onChange={(e) =>
                                         setFormData((prev) => ({ ...prev, paymentMethod: e.target.value }))
@@ -736,14 +760,14 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                             </div>
 
                             {/* Voucher */}
-                            <div className="bg-blue-100 rounded-md p-4 mb-4">
+                            <div className="bg-[#fafafa] rounded-md ps-4 pe-4 p-2.5 shadow-lg">
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="text"
                                         value={voucher}
                                         onChange={(e) => setVoucher(e.target.value)}
                                         placeholder="Voucher Code"
-                                        className="flex-grow px-3 py-2 rounded border text-sm"
+                                        className="custom_input"
                                     />
                                     <button onClick={handleVoucherApply} className="btn btn-cancel">
                                         Apply
@@ -816,27 +840,8 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                 )}
                             </div>
                         </div>
-                    </div>
 
-                    {/* Vehicle Info */}
-                    <div className="col-span-6">
-                        <div className="bg-white border border-gray-200 rounded-xl shadow p-6 mb-6">
-                            <OutletHeading name="Vehicle Detail:-" />
-                            {vehicle?.vehicleName && (
-                                <div className="text-sm text-[var(--dark-gray)] font-medium">
-                                    Selected Vehicle:&nbsp;
-                                    <span className="text-blue-700 font-semibold">{vehicle.vehicleName}</span>
-                                </div>
-                            )}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-                                <SelectOption label="Passenger" value={formData.passenger} options={generateOptions(parseIntSafe(vehicle?.passenger))} onChange={handleSelectChange('passenger')} />
-                                <SelectOption label="Child Seats" value={formData.childSeat} options={generateOptions(parseIntSafe(vehicle?.childSeat))} onChange={handleSelectChange('childSeat')} />
-                                <SelectOption label="Hand Luggage" value={formData.handLuggage} options={generateOptions(parseIntSafe(vehicle?.handLuggage))} onChange={handleSelectChange('handLuggage')} />
-                                <SelectOption label="Check-in Luggage" value={formData.checkinLuggage} options={generateOptions(parseIntSafe(vehicle?.checkinLuggage))} onChange={handleSelectChange('checkinLuggage')} />
-                            </div>
-                        </div>
-
-                        <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-6 shadow-sm">
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 shadow-sm">
                             <h4 className="text-sm font-semibold text-yellow-800 mb-3 flex items-center gap-2">
                                 <Icons.AlertCircle className="w-5 h-5 text-yellow-600" />
                                 Important Notice
@@ -845,13 +850,13 @@ const WidgetPaymentInformation = ({ companyId, fare, onBookNow, vehicle = {}, bo
                                 For your child's safety, please remember to add a child seat when booking.
                             </p>
                             <div className="bg-yellow-100 border border-yellow-200 rounded-md p-3 text-center mb-3">
-                                <p className="text-xs text-gray-700">
+                                <p className="text-xs text-gray-700 pt-1 pb-1">
                                     By clicking <strong>‘BOOK NOW’</strong>, you agree to our{' '}
                                     <a href="#" className="text-blue-600 underline hover:text-blue-800">Terms and Conditions</a> and{' '}
                                     <a href="#" className="text-blue-600 underline hover:text-blue-800">Privacy Policy</a>.
                                 </p>
                             </div>
-                            <p className="text-xs text-[var(--dark-gray)] text-center italic">
+                            <p className="text-xs pt-1 text-[var(--dark-gray)] text-center italic">
                                 Note: Additional charges may apply for waiting time, address changes, or extended routes.
                             </p>
                         </div>

@@ -21,7 +21,7 @@ const WidgetMain = () => {
     const [createBooking] = useCreateBookingMutation();
 
     // Stripe Payment Method
-    // ⬇️ Replace your Stripe useEffect with this one
+    // Replace your Stripe useEffect with this one
     useEffect(() => {
         const sp = new URLSearchParams(window.location.search);
         const sid = sp.get("session_id");

@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import sendEmail from "../utils/sendEmail.js";
-import generateToken from "../utils/generateToken.js";
+import { generateAccessToken, generateRefreshToken } from "../utils/generateToken.js";
 
 dotenv.config();
 
@@ -66,11 +66,19 @@ export const login = async (req, res) => {
     await user.save();
 
     // set JWT in HttpOnly cookie
-    res.cookie("access_token", generateToken(user._id, user.role, user.companyId), {
+    res.cookie('access_token', generateAccessToken(user._id, user.role, user.companyId), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" ? true : false,
+      secure: process.env.NODE_ENV === "production" ? true : false, // Set to false in dev
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    // Refresh Token bhi cookie me store karein
+    res.cookie("refresh_token", generateRefreshToken(user._id), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-      maxAge: 15 * 60 * 1000, // 15 min
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     // Include companyId in the token
@@ -222,3 +230,27 @@ export const resetPasswordWithOtp = async (req, res) => {
 
   res.json({ message: "Password reset successfully" });
 };
+
+export const refreshToken = async (req, res) => {
+  const token = req.cookies?.refresh_token;
+  if (!token) return res.status(401).json({ message: "No refresh token" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(401).json({ message: "User not found" });
+
+    // Naya access token issue karo
+    res.cookie('access_token', generateAccessToken(user._id, user.role, user.companyId), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production" ? true : false, // Set to false in dev
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    return res.json({ message: "Access token refreshed" });
+  } catch (err) {
+    return res.status(403).json({ message: "Invalid refresh token" });
+  }
+};
+

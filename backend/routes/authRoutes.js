@@ -1,5 +1,5 @@
 import express from 'express';
-import { login, updateProfile, sendOtpToEmail, resetPasswordWithOtp, getSuperadminInfo } from '../controllers/authController.js';
+import { login, updateProfile, sendOtpToEmail, resetPasswordWithOtp, getSuperadminInfo, refreshToken } from '../controllers/authController.js';
 
 import { protect } from '../middleware/authMiddleware.js';
 import { getUploader } from '../middleware/cloudinaryUpload.js';
@@ -14,13 +14,18 @@ router.put('/profile', protect, userUploader.single('profileImage'), updateProfi
 router.post('/forgot-password', sendOtpToEmail);
 router.post('/new-password', resetPasswordWithOtp);
 
-// New route to get current user from cookie
+// Refresh Token Route
+router.post("/refresh", refreshToken);
+
+// Get Current User
 router.get("/me", protect, (req, res) => {
-    res.json(req.user); // jo protect middleware ne attach kiya
+    res.json(req.user);
 });
 
+// Logout
 router.post("/logout", (req, res) => {
     res.clearCookie("access_token");
+    res.clearCookie("refresh_token"); // refresh bhi clear karna hoga
     res.json({ message: "Logged out successfully" });
 });
 
