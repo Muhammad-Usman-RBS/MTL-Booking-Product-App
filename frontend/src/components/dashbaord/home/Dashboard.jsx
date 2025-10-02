@@ -35,7 +35,7 @@ const Dashboard = () => {
               <button className="btn btn-primary">Primary</button>
             </div>
 
-               {/* Icons */}
+            {/* Icons */}
             <div style={{ display: "flex", gap: "12px" }}>
               <div className="icon-box icon-box-primary">
                 <Icons.Download size={17} />
