@@ -73,7 +73,7 @@ const Sidebar = () => {
             }`}
           >
             <img
-              src={companyLogo}
+              src={companyLogo || IMAGES.dashboardSmallLogo}
               alt="Company Logo"
               className="h-18 w-18 object-contain drop-shadow-2xl"
             />
