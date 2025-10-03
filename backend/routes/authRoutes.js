@@ -23,8 +23,16 @@ router.get("/me", protect, (req, res) => {
 
 // Logout
 router.post("/logout", (req, res) => {
-    res.clearCookie("access_token");
-    res.clearCookie("refresh_token"); // refresh bhi clear karna hoga
+   res.clearCookie("access_token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+    });
+    res.clearCookie("refresh_token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+    });
     res.json({ message: "Logged out successfully" });
 });
 
