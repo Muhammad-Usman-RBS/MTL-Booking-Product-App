@@ -9,6 +9,7 @@ import UsePasswordToggle from "../../../hooks/UsePasswordToggle";
 import { useUpdateUserProfileMutation } from "../../../redux/api/userApi";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 
+
 const EditProfile = () => {
   // Password toggle hooks
   const {
@@ -25,13 +26,14 @@ const EditProfile = () => {
 
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
-
+  const [companyLogoPreview, setCompanyLogoPreview] = useState(null);
   const [form, setForm] = useState({
     email: "",
     name: "",
     newPassword: "",
     currentPassword: "",
     // 🔹 Superadmin fields
+    superadminCompanyLogo: "",
     superadminCompanyName: "",
     superadminCompanyAddress: "",
     superadminCompanyPhoneNumber: "",
@@ -40,6 +42,7 @@ const EditProfile = () => {
 
   const [profileImg, setProfileImg] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [superadminLogoFile, setSuperadminLogoFile] = useState(null);
 
   const [updateProfile] = useUpdateUserProfileMutation();
 
@@ -50,14 +53,17 @@ const EditProfile = () => {
         name: user.fullName || "",
         newPassword: "",
         currentPassword: "",
-        // 🔹 load superadmin fields only if available
         superadminCompanyName: user.superadminCompanyName || "",
+        superadminCompanyLogo: user.superadminCompanyLogo || "",
         superadminCompanyAddress: user.superadminCompanyAddress || "",
         superadminCompanyPhoneNumber: user.superadminCompanyPhoneNumber || "",
         superadminCompanyEmail: user.superadminCompanyEmail || "",
       });
       if (user.profileImage) {
         setPreview(user.profileImage);
+      }
+      if (user.superadminCompanyLogo) {
+        setCompanyLogoPreview(user.superadminCompanyLogo);
       }
     }
   }, [user]);
@@ -92,6 +98,9 @@ const EditProfile = () => {
       // 🔹 add superadmin fields if user is superadmin
       if (user.role === "superadmin") {
         formData.append("superadminCompanyName", form.superadminCompanyName);
+        if (superadminLogoFile) {
+          formData.append("superadminCompanyLogo", superadminLogoFile); 
+        }
         formData.append(
           "superadminCompanyAddress",
           form.superadminCompanyAddress
@@ -106,14 +115,28 @@ const EditProfile = () => {
       const updatedUser = await updateProfile(formData).unwrap();
       dispatch(setUser({ ...user, ...updatedUser }));
       setPreview(updatedUser.profileImage);
-
+      
+      if (updatedUser.superadminCompanyLogo) {
+        setCompanyLogoPreview(updatedUser.superadminCompanyLogo);
+      }
+      
       toast.success("Profile updated successfully!");
     } catch (error) {
       console.error("Profile update error:", error);
       toast.error(error?.data?.message || "Something went wrong.");
     }
   };
-
+  const handleSuperadminLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSuperadminLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCompanyLogoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   const handleReset = () => {
     if (user) {
       setForm({
@@ -122,42 +145,73 @@ const EditProfile = () => {
         newPassword: "",
         currentPassword: "",
         superadminCompanyName: user.superadminCompanyName || "",
+        superadminCompanyLogo: user.superadminCompanyLogo || "",
         superadminCompanyAddress: user.superadminCompanyAddress || "",
         superadminCompanyPhoneNumber: user.superadminCompanyPhoneNumber || "",
         superadminCompanyEmail: user.superadminCompanyEmail || "",
       });
       setProfileImg(null);
+      setSuperadminLogoFile(null);
       setPreview(user.profileImage || null);
+      setCompanyLogoPreview(user.superadminCompanyLogo || null);
     }
   };
 
   return (
     <>
-      <OutletHeading name="Profile Update" />
+<OutletHeading name="Profile Update" />
 
-      <div className="inline-flex items-center gap-4 p-4 bg-sky-50 border-2 border-dashed border-sky-300 rounded-xl shadow-sm">
-        <div className="flex flex-col items-center">
-          <img
-            src={preview || IMAGES.dummyImg}
-            alt="Profile-Preview"
-            className="w-24 h-24 rounded-full object-cover border border-sky-200 shadow-md"
-          />
-          <label
-            htmlFor="profile-upload"
-            className="btn btn-edit mt-3 cursor-pointer text-sm"
-          >
-            Upload Profile Image
-          </label>
+<div className="flex flex-wrap justify-between gap-4 mb-6">
+  <div className="inline-flex items-center gap-4 p-4 bg-sky-50 border-2 border-dashed border-sky-300 rounded-xl shadow-sm">
+    <div className="flex flex-col items-center">
+      <img
+        src={preview || IMAGES.dummyImg}
+        alt="Profile-Preview"
+        className="w-24 h-24 rounded-full object-cover border border-sky-200 shadow-md"
+      />
+      <label
+        htmlFor="profile-upload"
+        className="btn btn-edit mt-3 cursor-pointer text-sm"
+      >
+        Upload Profile Image
+      </label>
 
-          <input
-            id="profile-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="hidden"
-          />
-        </div>
-      </div>
+      <input
+        id="profile-upload"
+        type="file"
+        accept="image/*"
+        onChange={handleImageChange}
+        className="hidden"
+      />
+    </div>
+  </div>
+
+  {user.role === "superadmin" && (
+  <div className="inline-flex items-center gap-4 p-4 bg-emerald-50 border-2 border-dashed border-emerald-300 rounded-xl shadow-sm">
+    <div className="flex flex-col items-center">
+      <img
+        src={companyLogoPreview || IMAGES.dummyImg}
+        alt="Company-Logo-Preview"
+        className="w-24 h-24 rounded-full object-cover border border-emerald-200 shadow-md"
+      />
+      <label
+        htmlFor="company-logo-upload"
+        className="btn btn-edit mt-3 cursor-pointer text-sm"
+      >
+        Upload Company Logo
+      </label>
+
+      <input
+        id="company-logo-upload"
+        type="file"
+        accept="image/*"
+        onChange={handleSuperadminLogoChange}
+        className="hidden"
+      />
+    </div>
+  </div>
+)}
+</div>
 
       <form
         onSubmit={handleSubmit}
@@ -204,6 +258,7 @@ const EditProfile = () => {
         {/* 🔹 Superadmin Extra Fields */}
         {user.role === "superadmin" && (
           <>
+           
             <div>
               <label className="block text-sm font-medium mb-1">
                 Company Name

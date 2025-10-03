@@ -24,11 +24,11 @@ const createSuperAdmin = async () => {
       role: 'superadmin',
       status: "Active",
       permissions: allowedPermissions,
-      superadminCompanyName: process.env.SUPERADMIN_COMPANY_NAME || "Default Company Name",
-      superadminCompanyAddress: process.env.SUPERADMIN_COMPANY_ADDRESS || "Default Company Address",
-      superadminCompanyPhoneNumber: process.env.SUPERADMIN_COMPANY_PHONE || "000-000-0000",
-      superadminCompanyEmail: process.env.SUPERADMIN_COMPANY_EMAIL || "admin@company.com",
-      superadminCompanyWebsite: process.env.SUPERADMIN_COMPANY_WEBSITE || "https://www.company.com",
+      superadminCompanyName: process.env.SUPERADMIN_COMPANY_NAME || "Mega Transfers ",
+      superadminCompanyAddress: process.env.SUPERADMIN_COMPANY_ADDRESS || " 1st Floor, 29 Minerva Road, London, England, NW10 6HJ VAT Number - 442612419",
+      superadminCompanyPhoneNumber: process.env.SUPERADMIN_COMPANY_PHONE || "",
+      superadminCompanyEmail: process.env.SUPERADMIN_COMPANY_EMAIL || "",
+      superadminCompanyWebsite: process.env.SUPERADMIN_COMPANY_WEBSITE || "",
     });
     console.log('Super Admin Created');
   }

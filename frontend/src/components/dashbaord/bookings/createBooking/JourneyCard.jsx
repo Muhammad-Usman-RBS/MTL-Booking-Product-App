@@ -204,17 +204,21 @@ const JourneyCard = ({
     <>
       <div className="w-full flex justify-center">
         <div className="w-full max-w-4xl bg-white shadow-lg rounded-2xl border border-gray-200 overflow-hidden">
-          <div className="flex flex-col sm:flex-row flex-wrap justify-between items-start sm:items-center gap-2 px-4 py-3 bg-[#101828] rounded-t-xl border-b border-gray-200">
-            <h2 className="text-xl font-bold text-[#f5f5f5]">{title}:-</h2>
-            <div className="text-left sm:text-right w-full sm:w-auto">
+          <div className="flex justify-between items-center gap-2 px-4 py-3 bg-[#101828] rounded-t-xl border-b border-gray-200">
+            <h2 className="text-xl font-bold text-[#f5f5f5] whitespace-nowrap">
+              {title}:-
+            </h2>
+
+            <div className="flex flex-col items-end">
               <span className="inline-block px-4 py-1.5 text-base font-semibold text-white border border-white rounded-md bg-transparent">
                 Fare: {symbol}
                 {fare?.toFixed(2) || "0.00"}
               </span>
+
               {pricingMode === "postcode" &&
                 matchedPostcodePrice?.price &&
                 selectedVehicle?.percentageRate > 0 && (
-                  <p className="text-xs mt-1 text-gray-400">
+                  <p className="text-xs mt-1 text-gray-400 text-right">
                     Base: £{matchedPostcodePrice.price.toFixed(2)} +&nbsp;
                     {selectedVehicle.percentageRate}% = £{fare?.toFixed(2)}
                   </p>
@@ -951,7 +955,6 @@ const JourneyCard = ({
                   </div>
                 )}
 
-                {/* Show Add button only when 1 dropoff exists */}
                 {dropOffs.length === 1 && (
                   <button
                     type="button"

@@ -38,8 +38,8 @@ const ViewCompany = () => {
     return (
         <>
             <OutletHeading name="Company Details" />
-            <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-8">
-                {/* Header with name + email + logo */}
+            <div className="max-w-4xl w-full overflow-hidden mx-auto bg-white shadow-lg rounded-xl p-4 sm:p-8">
+            {/* Header with name + email + logo */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
                     <div>
                         <h2 className="text-2xl font-semibold uppercase text-gray-800 mb-1">
@@ -80,7 +80,7 @@ const ViewCompany = () => {
                                     {field.label === "Address" ? (
                                         <span style={{ whiteSpace: "pre-line" }}>{field.value}</span>
                                     ) : (
-                                        <span>{field.value}</span>
+                                        <span className="break-all">{field.value}</span>
                                     )}
                                 </div>
                             )

@@ -255,27 +255,103 @@ const BookingCalendar = () => {
                     ) : (
                         <div className="p-4 sm:p-6">
                             {/* Calendar Header */}
-                            <div className="flex justify-between items-center mb-6">
-                                <button
-                                    onClick={() => navigateMonth(-1)}
-                                >
-                                       <div className="icon-box icon-box-info">
-                                                   <Icons.ChevronLeft size={17} />
-                                                 </div>
-                                </button>
-                                <h2 className="text-xl">
-                                    {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-                                </h2>
-                                <button
-                                    onClick={() => navigateMonth(1)}
-                                >
-                                     <div className="icon-box icon-box-info">
-                                                   <Icons.ChevronRight size={17} />
-                                                 </div>
-                                </button>
-                            </div>
-                            {/* Weekdays */}
-                            <div className="grid grid-cols-7 gap-1 mb-2 text-xs sm:text-sm">
+                      {/* Calendar Header */}
+<div className="flex justify-between items-center mb-6">
+  <button onClick={() => navigateMonth(-1)}>
+    <div className="icon-box icon-box-info">
+      <Icons.ChevronLeft size={17} />
+    </div>
+  </button>
+  <h2 className="text-xl">
+    {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+  </h2>
+  <button onClick={() => navigateMonth(1)}>
+    <div className="icon-box icon-box-info">
+      <Icons.ChevronRight size={17} />
+    </div>
+  </button>
+</div>
+
+{/* Weekdays + Dates Grid with horizontal scroll on mobile */}
+<div className="w-full overflow-x-auto sm:overflow-visible">
+  <div className="min-w-[700px]">
+    {/* Weekdays */}
+    <div className="grid grid-cols-7 gap-1 mb-2 text-xs sm:text-sm">
+      {dayNames.map((day) => (
+        <div key={day} className="text-center text-theme py-1 rounded-sm bg-theme">
+          {day}
+        </div>
+      ))}
+    </div>
+
+    {/* Dates Grid */}
+    <div className="grid grid-cols-7 gap-1">
+      {getDaysInMonth(currentDate).map((day, index) => {
+        const dayBookings = getBookingsForDate(day);
+        const displayedBookings =
+          selectedStatus === "All"
+            ? dayBookings
+            : dayBookings.filter((b) => b.status === selectedStatus);
+
+        return (
+          <div
+            key={index}
+            className={`min-h-32 p-2 border rounded-lg ${
+              day ? "bg-white hover:bg-gray-50 cursor-pointer" : "bg-gray-50"
+            } ${
+              displayedBookings.length > 0
+                ? "bg-gradient-to-br from-yellow-50 to-orange-50 border-orange-200"
+                : ""
+            }`}
+            onClick={() => day && setHoveredEvent(null)}
+          >
+            {day && (
+              <>
+                <div className="text-xs sm:text-sm font-semibold text-gray-700 mb-2">{day}</div>
+                <div className="space-y-1">
+                  {displayedBookings.slice(0, 3).map((booking) => (
+                    <div
+                      key={booking.id}
+                      className="text-xs p-2 rounded-md shadow-sm cursor-pointer hover:scale-105 transition truncate"
+                      style={{
+                        background: statusColors[booking.status]?.bg,
+                        color: statusColors[booking.status]?.text,
+                      }}
+                      onMouseEnter={(e) => {
+                        setHoveredEvent(booking);
+                        handleMouseMove(e);
+                      }}
+                      onMouseLeave={() => setHoveredEvent(null)}
+                    >
+                      <div className="flex items-center space-x-1 mb-1 truncate">
+                        <Icons.Clock className="h-4 w-4" />
+                        <span className="text-sm">{booking.time}</span>
+                        <span className="text-sm bg-red-300 text-black px-1 rounded">
+                          {booking.journeyType}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-1 truncate">
+                        <Icons.MapPin className="h-4 w-4" />
+                        <span className="truncate">{booking.pickup}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {displayedBookings.length > 3 && (
+                    <div className="text-xs text-center text-gray-500">
+                      +{displayedBookings.length - 3} more
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</div>
+
+                            {/* <div className="grid grid-cols-7 gap-1 mb-2 text-xs sm:text-sm">
                                 {dayNames.map((day) => (
                                     <div key={day} className="text-center text-theme py-1 rounded-sm bg-theme">
                                         {day}
@@ -283,7 +359,6 @@ const BookingCalendar = () => {
                                 ))}
                             </div>
 
-                            {/* Dates Grid */}
                             <div className="grid grid-cols-7 gap-1">
                                 {getDaysInMonth(currentDate).map((day, index) => {
                                     const dayBookings = getBookingsForDate(day);
@@ -344,7 +419,7 @@ const BookingCalendar = () => {
                                         </div>
                                     );
                                 })}
-                            </div>
+                            </div> */}
                         </div>
                     )}
                 </section>

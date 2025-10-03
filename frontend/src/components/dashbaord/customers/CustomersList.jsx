@@ -18,7 +18,7 @@ const CustomersListTabs = () => {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-6 py-2 font-semibold text-sm border cursor-pointer
+              className={`px-6 py-2 font-semibold lg:text-sm text-xs border cursor-pointer
                 ${activeTab === tab.key
                   ? "bg-white text-[var(--main-color)] border-2 border-[var(--main-color)]"
                   : "bg-[#f9fafb] text-gray-700 border border-gray-300 hover:bg-gray-100"}

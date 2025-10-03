@@ -119,6 +119,7 @@ const userSchema = new mongoose.Schema(
     verifiedAt: { type: Date },
 
     // SuperAdmin company details
+    superadminCompanyLogo :{ type: String, default: "" },
     superadminCompanyName: { type: String, default: "" },
     superadminCompanyAddress: { type: String, default: "" },
     superadminCompanyPhoneNumber: { type: String, default: "" },

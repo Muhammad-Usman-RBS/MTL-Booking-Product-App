@@ -10,8 +10,7 @@ const userUploader = getUploader('user');
 // AUTH ROUTES
 router.post('/login', login);
 router.get('/superadmin-info', getSuperadminInfo);
-router.put('/profile', protect, userUploader.single('profileImage'), updateProfile);
-router.post('/forgot-password', sendOtpToEmail);
+router.put('/profile', protect, userUploader.fields([{name: 'profileImage', maxCount: 1}, {name: 'superadminCompanyLogo', maxCount: 1}]), updateProfile);router.post('/forgot-password', sendOtpToEmail);
 router.post('/new-password', resetPasswordWithOtp);
 
 // Refresh Token Route
