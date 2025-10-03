@@ -10,23 +10,16 @@ const Logout = () => {
   const dispatch = useDispatch();
   const [logoutUser, { isLoading }] = useLogoutUserMutation();
 
-  const handleLogout = async () => {
-    try {
-      // 🔹 Call backend logout API (cookie clear)
-      await logoutUser().unwrap();
-
-      // 🔹 Redux state clear karo
-      dispatch(clearUser());
-
-      toast.success("Successfully logged out.");
-
-      setTimeout(() => {
-        navigate("/login", { replace: true });
-      }, 800);
-    } catch (error) {
-      toast.error("Logout failed. Try again.");
-    }
-  };
+const handleLogout = async () => {
+  try {
+    dispatch(clearUser()); // 👈 pehle Redux empty karo
+    await logoutUser().unwrap();
+    toast.success("Successfully logged out.");
+    navigate("/login", { replace: true });
+  } catch (error) {
+    toast.error("Logout failed. Try again.");
+  }
+};
 
   const handleCancel = () => {
     navigate(-1);

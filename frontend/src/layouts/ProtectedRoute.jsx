@@ -40,8 +40,6 @@
 
 // export default ProtectedRoute;
 
-
-
 import React, { useEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import sidebarItems from "../constants/constantscomponents/sidebarItems";
@@ -54,22 +52,30 @@ const ProtectedRoute = () => {
   const location = useLocation();
   const currentPath = location.pathname;
 
+  // Redux state
   const user = useSelector((state) => state.auth.user);
-  const { data: currentUser, isLoading } = useGetCurrentUserQuery();
 
-  // ✅ Redux me user set kar do jab API se mile
+  // Skip API call if no user in Redux (prevents 401 after logout)
+  const { data: currentUser, isLoading } = useGetCurrentUserQuery(undefined, {
+    skip: !user,
+  });
+
+  // Update Redux user when API returns fresh data
   useEffect(() => {
     if (currentUser) {
       dispatch(setUser(currentUser));
     }
   }, [currentUser, dispatch]);
 
+  // Loading state while checking user
   if (isLoading) return <div>Loading...</div>;
 
+  // No user → go to login
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
+  // Permissions check
   const userPermissions = user?.permissions || [];
   const authorizedSidebarItems = sidebarItems.filter((item) =>
     userPermissions.includes(item.title)

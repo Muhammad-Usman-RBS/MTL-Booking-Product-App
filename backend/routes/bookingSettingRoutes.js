@@ -4,7 +4,7 @@ import { getBookingSetting, createOrUpdateBookingSetting } from "../controllers/
 
 const router = express.Router();
 
-router.get("/get-booking-setting", protect, authorize("superadmin", "clientadmin" , "customer"), getBookingSetting);
+router.get("/get-booking-setting", protect, authorize("clientadmin" , "customer"), getBookingSetting);
 router.post("/update-booking-setting", protect, authorize("superadmin", "clientadmin"), createOrUpdateBookingSetting);
 
 export default router;

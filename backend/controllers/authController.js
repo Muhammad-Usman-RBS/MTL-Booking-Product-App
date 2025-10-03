@@ -1,6 +1,7 @@
 import axios from "axios";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken"; // ⭐ ADD THIS IMPORT
 import User from "../models/User.js";
 import sendEmail from "../utils/sendEmail.js";
 import { generateAccessToken, generateRefreshToken } from "../utils/generateToken.js";
@@ -26,7 +27,7 @@ export const login = async (req, res) => {
         });
     }
 
-    // Check account statusvi
+    // Check account status
     if (user.status !== "Active") {
       return res
         .status(403)
@@ -68,12 +69,12 @@ export const login = async (req, res) => {
     // set JWT in HttpOnly cookie
     res.cookie('access_token', generateAccessToken(user._id, user.role, user.companyId), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" ? true : false, // Set to false in dev
-      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
-    // Refresh Token bhi cookie me store karein
+    // Refresh Token cookie me store karein
     res.cookie("refresh_token", generateRefreshToken(user._id), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -88,14 +89,13 @@ export const login = async (req, res) => {
       fullName: user.fullName,
       role: user.role,
       permissions: user.permissions,
-      // token: generateToken(user._id, user.role, user.companyId),
       profileImage: user.profileImage || null,
       companyId: user.companyId || null,
       employeeNumber: user.employeeNumber,
       vatnumber: user.vatnumber || null,
 
-
-      // 🔹 Superadmin fields
+      // Superadmin fields
+      superadminCompanyLogo: user.superadminCompanyLogo || "",
       superadminCompanyName: user.superadminCompanyName || "",
       superadminCompanyAddress: user.superadminCompanyAddress || "",
       superadminCompanyPhoneNumber: user.superadminCompanyPhoneNumber || "",
@@ -112,7 +112,7 @@ export const login = async (req, res) => {
 export const getSuperadminInfo = async (req, res) => {
   try {
     const superadmin = await User.findOne({ role: "superadmin" }).select(
-      "superadminCompanyName superadminCompanyAddress superadminCompanyPhoneNumber superadminCompanyEmail superadminCompanyWebsite"
+      "superadminCompanyLogo superadminCompanyName superadminCompanyAddress superadminCompanyPhoneNumber superadminCompanyEmail superadminCompanyWebsite"
     );
 
     if (!superadmin) {
@@ -149,11 +149,15 @@ export const updateProfile = async (req, res) => {
       user.password = await bcrypt.hash(req.body.newPassword, 10);
     }
 
-    if (req.file?.path) {
-      user.profileImage = req.file.path;
+    if (req.files?.profileImage?.[0]?.path) {
+      user.profileImage = req.files.profileImage[0].path;
+    }
+    
+    if (req.files?.superadminCompanyLogo?.[0]?.path) {
+      user.superadminCompanyLogo = req.files.superadminCompanyLogo[0].path;
     }
 
-    // 🔹 Update superadmin fields if role is superadmin
+    // Update superadmin fields if role is superadmin
     if (user.role === "superadmin") {
       user.superadminCompanyName =
         req.body.superadminCompanyName || user.superadminCompanyName;
@@ -176,12 +180,12 @@ export const updateProfile = async (req, res) => {
       permissions: user.permissions,
       profileImage: user.profileImage,
       vatnumber: user.vatnumber || null,
-      // 🔹 return superadmin fields
+      // return superadmin fields
+      superadminCompanyLogo: user.superadminCompanyLogo || "",
       superadminCompanyName: user.superadminCompanyName || "",
       superadminCompanyAddress: user.superadminCompanyAddress || "",
       superadminCompanyPhoneNumber: user.superadminCompanyPhoneNumber || "",
       superadminCompanyEmail: user.superadminCompanyEmail || "",
-      // token: generateToken(user._id, user.role),
     });
   } catch (err) {
     console.error("Update Profile Error:", err);
@@ -197,7 +201,7 @@ export const sendOtpToEmail = async (req, res) => {
   if (!user) return res.status(404).json({ message: "User not found" });
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const expires = new Date(Date.now() + 2 * 60 * 1000); // 10 mins
+  const expires = new Date(Date.now() + 2 * 60 * 1000); // 2 mins
 
   user.otpCode = otp;
   user.otpExpiresAt = expires;
@@ -231,6 +235,7 @@ export const resetPasswordWithOtp = async (req, res) => {
   res.json({ message: "Password reset successfully" });
 };
 
+// Refresh Token Controller
 export const refreshToken = async (req, res) => {
   const token = req.cookies?.refresh_token;
   if (!token) return res.status(401).json({ message: "No refresh token" });
@@ -243,8 +248,8 @@ export const refreshToken = async (req, res) => {
     // Naya access token issue karo
     res.cookie('access_token', generateAccessToken(user._id, user.role, user.companyId), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" ? true : false, // Set to false in dev
-      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
@@ -253,4 +258,3 @@ export const refreshToken = async (req, res) => {
     return res.status(403).json({ message: "Invalid refresh token" });
   }
 };
-

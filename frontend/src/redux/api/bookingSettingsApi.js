@@ -4,13 +4,13 @@ export const bookingSettingsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
 
     // Get Booking Settings
-    getBookingSetting: builder.query({
-      query: () => ({
-        url: `/booking-settings/get-booking-setting`,
-        method: "GET",
-      }),
-      providesTags: ['BookingSetting'],
-    }),
+   getBookingSetting: builder.query({
+  query: () => ({
+    url: `/booking-settings/get-booking-setting`,
+    method: "GET",
+  }),
+  providesTags: ['BookingSetting'],
+}),
 
     // Update Booking Settings
     updateBookingSetting: builder.mutation({
