@@ -9,7 +9,7 @@ import LoadingEffect from "../../common/LoadingEffect";
 const Dashboard = () => {
   const user = useSelector((state) => state.auth.user);
 
-  // ⏳ Handle case where user hasn't loaded yet
+  // Handle case where user hasn't loaded yet
   if (!user) {
     return <LoadingEffect />; // or null, or a spinner
   }

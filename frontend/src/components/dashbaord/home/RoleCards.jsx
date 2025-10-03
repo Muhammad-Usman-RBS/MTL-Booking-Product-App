@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { useGetAllUsersQuery } from "../../../redux/api/adminApi";
 import {
   useGetAllBookingsQuery,
-  useGetAllBookingsForSuperadminQuery, // 🟣 Import added
+  useGetAllBookingsForSuperadminQuery, 
 } from "../../../redux/api/bookingApi";
 
 import {
@@ -21,12 +21,12 @@ const nf = new Intl.NumberFormat();
 const RoleCards = () => {
   const user = useSelector((state) => state?.auth?.user);
 
-  // 🟡 Normal users (company based)
+  // Normal users (company based)
   const { data: AllBookingsResponse } = useGetAllBookingsQuery(user?.companyId, {
     skip: !user?.companyId || user?.role?.toLowerCase() === "superadmin",
   });
 
-  // 🟣 Superadmin - fetch ALL company bookings
+  // Superadmin - fetch ALL company bookings
   const { data: SuperadminBookingsResponse } = useGetAllBookingsForSuperadminQuery(
     { page: 1, limit: 1000, search: "" },
     { skip: user?.role?.toLowerCase() !== "superadmin" }
@@ -159,9 +159,9 @@ const RoleCards = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 md:gap-5">
           {(isFetching
             ? Array.from({ length: 5 }).map((_, i) => ({
-                skeleton: true,
-                id: i,
-              }))
+              skeleton: true,
+              id: i,
+            }))
             : visibleCards
           ).map((card, index) =>
             card.skeleton ? (

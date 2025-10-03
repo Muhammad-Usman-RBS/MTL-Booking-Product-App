@@ -435,19 +435,19 @@ export const createBooking = async (req, res) => {
       // expose who will manage this customer (useful for UI)
       clientAdmin: clientAdminUser
         ? {
-            name: clientAdminUser.name || "",
-            email: clientAdminUser.email || "",
-            phone: clientAdminUser.contact || clientAdminUser.phone || "",
-          }
+          name: clientAdminUser.name || "",
+          email: clientAdminUser.email || "",
+          phone: clientAdminUser.contact || clientAdminUser.phone || "",
+        }
         : null,
       company: companyDoc
         ? {
-            name: companyDoc.companyName || companyDoc.tradingName || "",
-            email: companyDoc.email || "",
-            phone: companyDoc.contact || "",
-            address: companyDoc.address || "",
-            website: companyDoc.website || "",
-          }
+          name: companyDoc.companyName || companyDoc.tradingName || "",
+          email: companyDoc.email || "",
+          phone: companyDoc.contact || "",
+          address: companyDoc.address || "",
+          website: companyDoc.website || "",
+        }
         : null,
     });
   } catch (error) {
@@ -833,9 +833,8 @@ export const updateBooking = async (req, res) => {
               type: "assigned",
               driverId,
               email: driverEmail,
-              driverName: `${driverDoc.DriverData?.firstName || ""} ${
-                driverDoc.DriverData?.surName || ""
-              }`.trim(),
+              driverName: `${driverDoc.DriverData?.firstName || ""} ${driverDoc.DriverData?.surName || ""
+                }`.trim(),
               status: "sent",
             });
           } catch (emailError) {
@@ -1493,10 +1492,10 @@ export const updateBookingStatus = async (req, res) => {
         const paxEmail = (booking?.passenger?.email || "").trim().toLowerCase();
         const customerUser = paxEmail
           ? await User.findOne({
-              companyId: booking.companyId,
-              role: "customer",
-              email: paxEmail,
-            }).lean()
+            companyId: booking.companyId,
+            role: "customer",
+            email: paxEmail,
+          }).lean()
           : null;
 
         const custKey = String(customerUser?._id || "");
@@ -1649,9 +1648,8 @@ export const sendBookingEmail = async (req, res) => {
     let subject, html;
 
     if (type === "cancellation") {
-      subject = `Booking Cancellation #${booking.bookingId} - ${
-        company?.companyName || "Our Company"
-      }`;
+      subject = `Booking Cancellation #${booking.bookingId} - ${company?.companyName || "Our Company"
+        }`;
       html = customerCancellationEmailTemplate({
         booking,
         company,
@@ -1665,9 +1663,8 @@ export const sendBookingEmail = async (req, res) => {
         },
       });
     } else {
-      subject = `Booking Confirmation #${booking.bookingId} - ${
-        company?.companyName || "Our Company"
-      }`;
+      subject = `Booking Confirmation #${booking.bookingId} - ${company?.companyName || "Our Company"
+        }`;
       html = `
         <h2>Booking Confirmation</h2>
         <p>Dear ${booking.passenger?.name || "Customer"},</p>
@@ -1679,8 +1676,7 @@ export const sendBookingEmail = async (req, res) => {
           <li><b>Drop Off:</b> ${booking.primaryJourney?.dropoff || "-"}</li>
           <li><b>Date:</b> ${booking.primaryJourney?.date || "-"}</li>
         </ul>
-        <p>Thank you for booking with ${
-          company?.companyName || "our company"
+        <p>Thank you for booking with ${company?.companyName || "our company"
         }.</p>
       `;
     }
@@ -1784,17 +1780,17 @@ export const getAllBookingsForSuperadmin = async (req, res) => {
     // Search logic (optional)
     const searchFilter = search
       ? {
-          $or: [
-            { "passenger.name": { $regex: search, $options: "i" } },
-            { "passenger.email": { $regex: search, $options: "i" } },
-            { bookingId: { $regex: search, $options: "i" } },
-            { "primaryJourney.pickup": { $regex: search, $options: "i" } },
-            { "primaryJourney.dropoff": { $regex: search, $options: "i" } },
-          ],
-        }
+        $or: [
+          { "passenger.name": { $regex: search, $options: "i" } },
+          { "passenger.email": { $regex: search, $options: "i" } },
+          { bookingId: { $regex: search, $options: "i" } },
+          { "primaryJourney.pickup": { $regex: search, $options: "i" } },
+          { "primaryJourney.dropoff": { $regex: search, $options: "i" } },
+        ],
+      }
       : {};
 
-    // ✅ Get all bookings (no company filter)
+    // Get all bookings (no company filter)
     const [bookings, total] = await Promise.all([
       Booking.find(searchFilter)
         .populate("companyId", "companyName tradingName email")

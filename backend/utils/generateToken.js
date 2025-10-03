@@ -1,13 +1,3 @@
-// import jwt from 'jsonwebtoken';
-
-// const generateToken = (id, role, companyId) => {
-//   return jwt.sign({ id, role, companyId }, process.env.JWT_SECRET, {
-//     expiresIn: "7d",
-//   });
-// };
-
-// export default generateToken;
-
 import jwt from "jsonwebtoken";
 
 // Access Token (short-lived, 10-15 minutes max)
