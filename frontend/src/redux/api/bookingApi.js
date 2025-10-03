@@ -75,6 +75,19 @@ export const bookingApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Bookings"],
     }),
+
+    // Fetch All Bookings (Superadmin Only)
+    getAllBookingsForSuperadmin: builder.query({
+      query: ({ page = 1, limit = 50, search = "" }) => {
+        const params = new URLSearchParams({ page, limit, search });
+        return {
+          url: `/booking/superadmin/all?${params.toString()}`,
+          method: "GET",
+        };
+      },
+      providesTags: ["Bookings"],
+    }),
+
   }),
 });
 
@@ -87,4 +100,5 @@ export const {
   useGetAllPassengersQuery,
   useSendBookingEmailMutation,
   useRestoreOrDeleteBookingMutation,
+  useGetAllBookingsForSuperadminQuery,
 } = bookingApi;

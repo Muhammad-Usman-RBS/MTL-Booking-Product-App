@@ -12,11 +12,33 @@ const Sidebar = () => {
   const [activeMain, setActiveMain] = useState(null);
 
   const user = useSelector((state) => state?.auth?.user);
+  const companyId = user?.companyId;
   const permissions = user?.permissions || [];
-  const userRole = user?.role;
   const { data: superadminData } = useGetSuperadminInfoQuery();
-  const { data: companyData } = useGetCompanyByIdQuery();
-  const companyLogo = superadminData?.superadminCompanyLogo;
+  // company API ko sahi ID pass karo
+  const { data: companyData } = useGetCompanyByIdQuery(companyId, {
+    skip: !companyId, // agar companyId na ho to API mat chalao
+  });
+
+  const userRole = user?.role;
+
+  // 👑 Superadmin ka logo
+  const superadminLogo = superadminData?.superadminCompanyLogo || user?.superadminCompanyLogo;
+
+  // 🧑‍💼 Client company ka logo
+  const clientCompanyLogo = companyData?.profileImage;  // ✅ Compass me yehi field hai
+
+  // ✅ Final company name selection
+  const companyName =
+    userRole === "superadmin"
+      ? superadminData?.superadminCompanyName
+      : companyData?.companyName;
+
+  // ✅ Final logo selection
+  const companyLogo =
+    userRole === "superadmin"
+      ? superadminLogo || IMAGES.dashboardSmallLogo
+      : clientCompanyLogo || IMAGES.dashboardSmallLogo;
 
   const sidebarTabs = sidebarItems
     .map((item) => {
@@ -56,9 +78,8 @@ const Sidebar = () => {
 
   return (
     <div
-      className={`${
-        isOpen ? "w-64" : "w-16"
-      } min-w-[64px] bg-theme text-theme h-screen flex flex-col duration-300 overflow-y-auto`}
+      className={`${isOpen ? "w-64" : "w-16"
+        } min-w-[64px] bg-theme text-theme h-screen flex flex-col duration-300 overflow-y-auto`}
       style={{ transition: "0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)" }}
     >
       <div
@@ -68,12 +89,11 @@ const Sidebar = () => {
         <div className="grid place-items-center">
           <div className="col-start-1 row-start-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl opacity-75 blur-xl group-hover:opacity-100 transition duration-500 animate-pulse scale-125"></div>
           <div
-            className={`col-start-1 row-start-1 z-10 ${
-              isOpen ? "ps-2" : "ps-0"
-            }`}
+            className={`col-start-1 row-start-1 z-10 ${isOpen ? "ps-2" : "ps-0"
+              }`}
           >
             <img
-              src={companyLogo || IMAGES.dashboardSmallLogo}
+              src={companyLogo}
               alt="Company Logo"
               className="h-18 w-18 object-contain drop-shadow-2xl"
             />
@@ -83,7 +103,7 @@ const Sidebar = () => {
         {isOpen && (
           <div className="flex flex-col gap-1 animate-slideIn">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 font-black text-sm leading-tight tracking-widest line-clamp-2 drop-shadow-[0_0_10px_rgba(147,51,234,0.5)]">
-              {(superadminData?.superadminCompanyName || "Your Company").toUpperCase()}
+              {(companyName || "Your Company").toUpperCase()}
             </span>
             <div className="h-1 w-16 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full overflow-hidden">
               <div className="h-full w-full bg-gradient-to-r from-transparent via-white to-transparent animate-shimmer -translate-x-full"></div>
@@ -121,9 +141,8 @@ const Sidebar = () => {
                 <>
                   <li
                     onClick={() => handleToggle(index)}
-                    className={`p-4 hover-theme flex items-center justify-between cursor-pointer ${
-                      isMainActive ? "active-theme" : ""
-                    } ${isOpen ? "pl-4 pr-3" : "justify-center"}`}
+                    className={`p-4 hover-theme flex items-center justify-between cursor-pointer ${isMainActive ? "active-theme" : ""
+                      } ${isOpen ? "pl-4 pr-3" : "justify-center"}`}
                   >
                     <div className="flex items-center gap-3">
                       <item.icon className="w-4 h-4" />
@@ -133,9 +152,8 @@ const Sidebar = () => {
                     </div>
                     {isOpen && (
                       <svg
-                        className={`w-4 h-4 transition-transform ${
-                          activeMain === index ? "rotate-180" : ""
-                        }`}
+                        className={`w-4 h-4 transition-transform ${activeMain === index ? "rotate-180" : ""
+                          }`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -156,11 +174,10 @@ const Sidebar = () => {
                         <li key={subIndex}>
                           <Link
                             to={sub.route}
-                            className={`flex items-center p-2 gap-3 hover-theme ${
-                              sub.route === location.pathname
-                                ? "active-theme"
-                                : ""
-                            }`}
+                            className={`flex items-center p-2 gap-3 hover-theme ${sub.route === location.pathname
+                              ? "active-theme"
+                              : ""
+                              }`}
                           >
                             <sub.icon className="w-4 h-4" />
                             <span className="text-[15px]">{sub.title}</span>
@@ -173,9 +190,8 @@ const Sidebar = () => {
               ) : (
                 <Link
                   to={item.route}
-                  className={`p-4 hover-theme flex items-center cursor-pointer ${
-                    isOpen ? "justify-start pl-4" : "justify-center"
-                  } ${location.pathname === item.route ? "active-theme" : ""}`}
+                  className={`p-4 hover-theme flex items-center cursor-pointer ${isOpen ? "justify-start pl-4" : "justify-center"
+                    } ${location.pathname === item.route ? "active-theme" : ""}`}
                 >
                   <item.icon className="w-4 h-4" />
                   {isOpen && (

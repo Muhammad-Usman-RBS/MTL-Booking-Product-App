@@ -1769,3 +1769,54 @@ export const restoreOrDeleteBooking = async (req, res) => {
     });
   }
 };
+
+// Get ALL Bookings (Superadmin only)
+export const getAllBookingsForSuperadmin = async (req, res) => {
+  try {
+    // Role check
+    if (req.user?.role !== "superadmin") {
+      return res.status(403).json({ message: "Access denied: Superadmin only" });
+    }
+
+    const { page = 1, limit = 50, search = "" } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // Search logic (optional)
+    const searchFilter = search
+      ? {
+          $or: [
+            { "passenger.name": { $regex: search, $options: "i" } },
+            { "passenger.email": { $regex: search, $options: "i" } },
+            { bookingId: { $regex: search, $options: "i" } },
+            { "primaryJourney.pickup": { $regex: search, $options: "i" } },
+            { "primaryJourney.dropoff": { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
+
+    // ✅ Get all bookings (no company filter)
+    const [bookings, total] = await Promise.all([
+      Booking.find(searchFilter)
+        .populate("companyId", "companyName tradingName email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      Booking.countDocuments(searchFilter),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      total,
+      currentPage: Number(page),
+      totalPages: Math.ceil(total / Number(limit)),
+      bookings,
+    });
+  } catch (error) {
+    console.error("getAllBookingsForSuperadmin error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch all bookings for superadmin",
+      error: error.message,
+    });
+  }
+};

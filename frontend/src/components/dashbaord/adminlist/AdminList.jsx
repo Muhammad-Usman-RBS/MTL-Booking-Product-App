@@ -175,7 +175,7 @@ const AdminList = () => {
             ))}
           </div>
           <Link to={`/dashboard/admin-list/edit/${item._id}`}>
-            <div className="icon-box icon-box-outline">
+            <div className="icon-box icon-box-info">
               <Icons.Pencil title="Edit" className="size-4" />
             </div>
           </Link>
@@ -187,7 +187,6 @@ const AdminList = () => {
               className="size-4"
             />
             </div>
-
           )}
         </div>
       ),

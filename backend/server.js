@@ -294,7 +294,7 @@ io.on("connection", (socket) => {
   if (co) socket.join(`co:${co}`);
   socket.emit("socket:ready", { ok: true, emp, co });
 
-  socket.on("disconnect", (reason) => {});
+  socket.on("disconnect", (reason) => { });
 });
 
 const PORT = process.env.PORT || 5000;

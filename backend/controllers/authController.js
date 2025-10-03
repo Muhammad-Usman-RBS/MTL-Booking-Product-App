@@ -71,10 +71,9 @@ export const login = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      maxAge: 15 * 60 * 1000, // 15 mins
     });
 
-    // Refresh Token cookie me store karein
     res.cookie("refresh_token", generateRefreshToken(user._id), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -152,7 +151,7 @@ export const updateProfile = async (req, res) => {
     if (req.files?.profileImage?.[0]?.path) {
       user.profileImage = req.files.profileImage[0].path;
     }
-    
+
     if (req.files?.superadminCompanyLogo?.[0]?.path) {
       user.superadminCompanyLogo = req.files.superadminCompanyLogo[0].path;
     }

@@ -15,13 +15,13 @@
 // });
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { baseQueryWithLogout } from "../api/baseQueryWithLogout";
+import { baseQueryWithReauth } from "../api/baseQueryWithLogout";
 
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_BASE_URL,
-    baseQuery: baseQueryWithLogout,
+    baseQuery: baseQueryWithReauth ,
     credentials: "include", // Cookies ko automatically bhejne aur receive karne ke liye
   }),
   tagTypes: ["User"],

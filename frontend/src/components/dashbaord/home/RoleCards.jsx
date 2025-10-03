@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useGetAllUsersQuery } from "../../../redux/api/adminApi";
-import { useGetAllBookingsQuery } from "../../../redux/api/bookingApi";
+import {
+  useGetAllBookingsQuery,
+  useGetAllBookingsForSuperadminQuery, // 🟣 Import added
+} from "../../../redux/api/bookingApi";
+
 import {
   ResponsiveContainer,
   BarChart,
@@ -17,25 +21,42 @@ const nf = new Intl.NumberFormat();
 const RoleCards = () => {
   const user = useSelector((state) => state?.auth?.user);
 
+  // 🟡 Normal users (company based)
   const { data: AllBookingsResponse } = useGetAllBookingsQuery(user?.companyId, {
-    skip: !user?.companyId,
+    skip: !user?.companyId || user?.role?.toLowerCase() === "superadmin",
   });
 
-  const AllBookings = AllBookingsResponse?.bookings ?? [];
+  // 🟣 Superadmin - fetch ALL company bookings
+  const { data: SuperadminBookingsResponse } = useGetAllBookingsForSuperadminQuery(
+    { page: 1, limit: 1000, search: "" },
+    { skip: user?.role?.toLowerCase() !== "superadmin" }
+  );
+
+  // Pick data depending on role
+  const AllBookings =
+    user?.role?.toLowerCase() === "superadmin"
+      ? SuperadminBookingsResponse?.bookings ?? []
+      : AllBookingsResponse?.bookings ?? [];
 
   const { data: AllUsers, refetch, isFetching } = useGetAllUsersQuery();
 
   // Role filters
-  const filteredClientAdmin = AllUsers?.filter((u) => u?.role === "clientadmin") ?? [];
-  const associateAdminRoles = AllUsers?.filter((u) => u?.role === "associateadmin") ?? [];
+  const filteredClientAdmin =
+    AllUsers?.filter((u) => u?.role === "clientadmin") ?? [];
+  const associateAdminRoles =
+    AllUsers?.filter((u) => u?.role === "associateadmin") ?? [];
   const demoRoles = AllUsers?.filter((u) => u?.role === "demo") ?? [];
   const customerRoles = AllUsers?.filter((u) => u?.role === "customer") ?? [];
   const driverRoles = AllUsers?.filter((u) => u?.role === "driver") ?? [];
-  const staffMemberRoles = AllUsers?.filter((u) => u?.role === "staffmember") ?? [];
+  const staffMemberRoles =
+    AllUsers?.filter((u) => u?.role === "staffmember") ?? [];
 
-  const filteredDriver = driverRoles?.filter((u) => u?.companyId === user?.companyId) ?? [];
-  const filteredAssociateAdmin = associateAdminRoles?.filter((u) => u?.companyId === user?.companyId) ?? [];
-  const filteredStaffMembers = staffMemberRoles?.filter((u) => u?.companyId === user?.companyId) ?? [];
+  const filteredDriver =
+    driverRoles?.filter((u) => u?.companyId === user?.companyId) ?? [];
+  const filteredAssociateAdmin =
+    associateAdminRoles?.filter((u) => u?.companyId === user?.companyId) ?? [];
+  const filteredStaffMembers =
+    staffMemberRoles?.filter((u) => u?.companyId === user?.companyId) ?? [];
 
   // Driver-specific metrics
   const driverBookings = AllBookings.filter(
@@ -64,16 +85,11 @@ const RoleCards = () => {
     earnings: total,
   }));
 
-  // Sort earningsData by date order (Jan -> Dec)
   earningsData = earningsData.sort(
     (a, b) => new Date(a.month) - new Date(b.month)
   );
 
-  // Debugging logs
-  useEffect(() => {
-  }, [driverBookings, earningsData]);
-
-  // All cards
+  // Card Data
   const cardData = useMemo(
     () => [
       { title: "Total Bookings", value: AllBookings?.length || 0, icon: "📑" },
@@ -143,9 +159,9 @@ const RoleCards = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 md:gap-5">
           {(isFetching
             ? Array.from({ length: 5 }).map((_, i) => ({
-              skeleton: true,
-              id: i,
-            }))
+                skeleton: true,
+                id: i,
+              }))
             : visibleCards
           ).map((card, index) =>
             card.skeleton ? (
@@ -157,7 +173,6 @@ const RoleCards = () => {
               <article
                 key={index}
                 className="relative overflow-hidden rounded-xl p-4 sm:p-5 md:p-6 bg-theme text-theme shadow-lg focus-within:ring-2 focus-within:ring-theme/40"
-                style={{ background: card.gradient }}
                 role="region"
                 aria-label={card.title}
                 tabIndex={0}
@@ -180,10 +195,7 @@ const RoleCards = () => {
         {/* Earnings Graph for Drivers */}
         {user?.role?.toLowerCase()?.includes("driver") && (
           <div className="mt-10 rounded-xl bg-theme p-5 shadow-lg">
-            <h2 className="mb-4 text-lg font-bold text-theme">
-              Monthly Earnings
-            </h2>
-
+            <h2 className="mb-4 text-lg font-bold text-theme">Monthly Earnings</h2>
             {earningsData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={earningsData}>

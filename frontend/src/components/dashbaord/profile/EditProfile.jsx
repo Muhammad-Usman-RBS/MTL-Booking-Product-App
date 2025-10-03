@@ -96,7 +96,7 @@ const EditProfile = () => {
       if (profileImg) formData.append("profileImage", profileImg);
 
       // 🔹 add superadmin fields if user is superadmin
-      if (user.role === "superadmin") {
+      if (user?.role === "superadmin") {
         formData.append("superadminCompanyName", form.superadminCompanyName);
         if (superadminLogoFile) {
           formData.append("superadminCompanyLogo", superadminLogoFile); 
@@ -186,7 +186,7 @@ const EditProfile = () => {
     </div>
   </div>
 
-  {user.role === "superadmin" && (
+  {user?.role === "superadmin" && (
   <div className="inline-flex items-center gap-4 p-4 bg-emerald-50 border-2 border-dashed border-emerald-300 rounded-xl shadow-sm">
     <div className="flex flex-col items-center">
       <img
@@ -228,14 +228,14 @@ const EditProfile = () => {
             value={form.email}
             onChange={handleChange}
             required
-            disabled={user.role !== "superadmin"}
+            disabled={user?.role !== "superadmin"}
             className={`custom_input ${
-              user.role !== "superadmin"
+              user?.role !== "superadmin"
                 ? "bg-gray-100 text-gray-500 cursor-not-allowed"
                 : ""
             }`}
           />
-          {user.role !== "superadmin" && (
+          {user?.role !== "superadmin" && (
             <p className="text-red-500 text-sm mt-1">
               Only admin can change the email.
             </p>
@@ -256,7 +256,7 @@ const EditProfile = () => {
         </div>
 
         {/* 🔹 Superadmin Extra Fields */}
-        {user.role === "superadmin" && (
+        {user?.role === "superadmin" && (
           <>
            
             <div>

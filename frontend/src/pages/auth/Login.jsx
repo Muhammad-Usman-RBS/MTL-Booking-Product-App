@@ -30,15 +30,15 @@ const Login = () => {
     }
 
     try {
-      // 🔹 Call API (cookie auto-set ho jayegi kyunki credentials: "include" laga hai apiSlice me)
+      // 🧠 Call API → Cookie automatically set hogi (credentials: "include")
       const data = await loginUser({ email, password }).unwrap();
 
-      // 🔹 Set user in Redux (no localStorage now)
+      // 🧠 Redux me user set karo (authSlice khud companyId ko localStorage me save karega)
       dispatch(setUser(data));
 
       toast.success("Login successful!");
 
-      // 🔹 Redirect based on role
+      // 🔀 Role-based redirection
       setTimeout(() => {
         switch (data.role) {
           case "superadmin":
@@ -74,6 +74,7 @@ const Login = () => {
           className="w-full px-4 py-2 bg-gray-50 border border-[var(--light-gray)] rounded-lg placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
         />
       </div>
+
       <div className="relative">
         <label
           htmlFor="password"
@@ -114,6 +115,7 @@ const Login = () => {
           {isLoading ? "Logging in..." : "Log In"}
         </button>
       </div>
+
       <div className="text-center mt-3">
         <Link
           to="/forgot-password"

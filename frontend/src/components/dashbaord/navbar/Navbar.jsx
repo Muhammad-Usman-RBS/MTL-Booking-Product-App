@@ -319,14 +319,14 @@ function Navbar() {
             {["clientadmin", "superadmin", "demo"].includes(user?.role)
               ? "Admin Panel"
               : user?.role === "driver"
-              ? "Driver Portal"
-              : user?.role === "customer"
-              ? "Customer Portal"
-              : user?.role === "staffmember"
-              ? "Manager Portal"
-              : user?.role === "associateadmin"
-              ? "associate admin"
-              : "Portal"}
+                ? "Driver Portal"
+                : user?.role === "customer"
+                  ? "Customer Portal"
+                  : user?.role === "staffmember"
+                    ? "Manager Portal"
+                    : user?.role === "associateadmin"
+                      ? "associate admin"
+                      : "Portal"}
           </h1>
         </div>
         <div className="flex items-center  justify-end gap-2 sm:gap-4 flex-wrap">
@@ -372,10 +372,10 @@ function Navbar() {
                 </div>
                 {(!Array.isArray(notifications) ||
                   notifications.length === 0) && (
-                  <div className="px-4 py-3 text-gray-500 text-sm">
-                    No new notifications
-                  </div>
-                )}
+                    <div className="px-4 py-3 text-gray-500 text-sm">
+                      No new notifications
+                    </div>
+                  )}
                 {/* Notifications List */}
                 <div className="max-h-64 overflow-y-auto">
                   {Array.isArray(notifications) &&
@@ -391,11 +391,9 @@ function Navbar() {
                             }
                             setShowTooltip(false);
                           }}
-                          className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${
-                            data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
-                          } ${
-                            isDocExpiry ? "cursor-default" : "cursor-pointer"
-                          }`}
+                          className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${data.isRead ? "bg-gray-50 opacity-60" : "bg-white"
+                            } ${isDocExpiry ? "cursor-default" : "cursor-pointer"
+                            }`}
                         >
                           <div className="flex items-start gap-3">
                             <div className="flex-1">
@@ -502,85 +500,84 @@ function Navbar() {
           {(isStaticMode ||
             user?.role === "clientadmin" ||
             user?.role === "superadmin") && (
-            <div className="relative" ref={themeBtnRef}>
-              <button
-                onClick={() => setIsModalOpen((v) => !v)}
-                className="p-2 rounded-lg cursor-pointer border border-theme bg-theme text-black shadow-md hover:bg-gray-100"
-                title="Select Theme"
-              >
-                <Icons.Palette className=" w-4 h-4 text-theme" />
-              </button>
-
-              {/* Modal / Popup */}
-              {isModalOpen && (
-                <div
-                  role="dialog"
-                  onClick={(e) => e.stopPropagation()}
-                  className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 p-3"
+              <div className="relative" ref={themeBtnRef}>
+                <button
+                  onClick={() => setIsModalOpen((v) => !v)}
+                  className="p-2 rounded-lg cursor-pointer border border-theme bg-theme text-black shadow-md hover:bg-gray-100"
+                  title="Select Theme"
                 >
-                  {bookmarks && bookmarks.length > 0 ? (
-                    <>
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-semibold hidden lg:block text-gray-700">
-                          Choose&nbsp;Theme
-                        </h3>
+                  <Icons.Palette className=" w-4 h-4 text-theme" />
+                </button>
+
+                {/* Modal / Popup */}
+                {isModalOpen && (
+                  <div
+                    role="dialog"
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 p-3"
+                  >
+                    {bookmarks && bookmarks.length > 0 ? (
+                      <>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-semibold hidden lg:block text-gray-700">
+                            Choose&nbsp;Theme
+                          </h3>
+                        </div>
+                        <div className="space-y-2">
+                          {bookmarks.map((b) => (
+                            <button
+                              key={b._id}
+                              type="button"
+                              onClick={() => {
+                                handleApplyBookmarkedTheme(b);
+                                setIsModalOpen(false);
+                              }}
+                              className={`w-full p-2 rounded-lg cursor-pointer border transition hover:scale-[1.02] hover:shadow 
+                ${activeBookmarkId === b._id
+                                  ? "border-blue-500 bg-blue-50"
+                                  : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                                }`}
+                            >
+                              <div className="flex space-x-3  justify-center">
+                                <div
+                                  className="w-4 h-4  rounded-sm border"
+                                  style={{
+                                    backgroundColor: b?.themeSettings?.bg,
+                                  }}
+                                />
+                                <div
+                                  className="w-4 h-4  rounded-sm border"
+                                  style={{
+                                    backgroundColor: b?.themeSettings?.text,
+                                  }}
+                                />
+                                <div
+                                  className="w-4 h-4  rounded-sm border"
+                                  style={{
+                                    backgroundColor: b?.themeSettings?.primary,
+                                  }}
+                                />
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center">
+                        <span className="text-2xl">🎨</span>
+                        <Link
+                          to="/dashboard/settings/general"
+                          onClick={() => setIsModalOpen(false)}
+                          className="block mt-2 text-sm text-blue-600"
+                        >
+                          Add Themes
+                        </Link>
                       </div>
-                      <div className="space-y-2">
-                        {bookmarks.map((b) => (
-                          <button
-                            key={b._id}
-                            type="button"
-                            onClick={() => {
-                              handleApplyBookmarkedTheme(b);
-                              setIsModalOpen(false);
-                            }}
-                            className={`w-full p-2 rounded-lg cursor-pointer border transition hover:scale-[1.02] hover:shadow 
-                ${
-                  activeBookmarkId === b._id
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-                }`}
-                          >
-                            <div className="flex space-x-3  justify-center">
-                              <div
-                                className="w-4 h-4  rounded-sm border"
-                                style={{
-                                  backgroundColor: b?.themeSettings?.bg,
-                                }}
-                              />
-                              <div
-                                className="w-4 h-4  rounded-sm border"
-                                style={{
-                                  backgroundColor: b?.themeSettings?.text,
-                                }}
-                              />
-                              <div
-                                className="w-4 h-4  rounded-sm border"
-                                style={{
-                                  backgroundColor: b?.themeSettings?.primary,
-                                }}
-                              />
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-center">
-                      <span className="text-2xl">🎨</span>
-                      <Link
-                        to="/dashboard/settings/general"
-                        onClick={() => setIsModalOpen(false)}
-                        className="block mt-2 text-sm text-blue-600"
-                      >
-                        Add Themes
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
           <div className="flex lg:flex-row md:flex-row sm:flex-row xs flex-row-reverse">
             <div className="relative">
@@ -601,8 +598,8 @@ function Navbar() {
                   <div className="border-b">
                     <div className="ps-4 pt-4 flex items-center space-x-3">
                       {profileImg &&
-                      profileImg !== "" &&
-                      profileImg !== "default" ? (
+                        profileImg !== "" &&
+                        profileImg !== "default" ? (
                         <img
                           src={profileImg}
                           alt="Profile"
@@ -623,7 +620,7 @@ function Navbar() {
                           {user?.role === "clientadmin"
                             ? "Admin"
                             : user?.role.charAt(0).toUpperCase() +
-                              user?.role.slice(1)}
+                            user?.role.slice(1)}
                         </p>
                       </div>
                     </div>

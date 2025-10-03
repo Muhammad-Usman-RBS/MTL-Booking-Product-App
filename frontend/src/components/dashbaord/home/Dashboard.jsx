@@ -5,22 +5,25 @@ import CustomerCard from "./CustomerCard";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import DriverPortalHome from "../../../portals/driverportal/home/DriverPortalHome";
 import LoadingEffect from "../../common/LoadingEffect";
-import Icons from "../../../assets/icons";
 
 const Dashboard = () => {
   const user = useSelector((state) => state.auth.user);
 
+  // ⏳ Handle case where user hasn't loaded yet
+  if (!user) {
+    return <LoadingEffect />; // or null, or a spinner
+  }
+
   return (
     <>
       <OutletHeading
-        name={user?.role === "driver" ? "Assigned Bookings" : "Stats"}
+        name={user.role === "driver" ? "Assigned Bookings" : "Stats"}
       />
+
       {user.role === "driver" ? (
         <DriverPortalHome />
       ) : user.role === "customer" ? (
-        <>
-          <CustomerCard />
-        </>
+        <CustomerCard />
       ) : (
         <div className="space-y-6 max-w-full">
           <RoleCards />

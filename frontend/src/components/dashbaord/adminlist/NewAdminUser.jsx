@@ -88,14 +88,14 @@ const NewAdminUser = () => {
       let parsedAccount = cached
         ? JSON.parse(cached)
         : {
-            fullName: "",
-            email: emailFromGoogle,
-            role: "clientadmin",
-            status: "",
-            password: "",
-            permissions: [],
-            associateAdminLimit: "",
-          };
+          fullName: "",
+          email: emailFromGoogle,
+          role: "clientadmin",
+          status: "",
+          password: "",
+          permissions: [],
+          associateAdminLimit: "",
+        };
 
       parsedAccount.email = emailFromGoogle;
 
@@ -111,39 +111,40 @@ const NewAdminUser = () => {
   }, [isEdit]);
 
   useEffect(() => {
-    if (
-      isEdit &&
-      actualAdminId &&
-      adminsListData.length > 0 &&
-      driversList?.drivers?.length
-    ) {
-      const adminToEdit = adminsListData.find((a) => a._id === actualAdminId);
+    if (!isEdit || !actualAdminId || adminsListData.length === 0) return;
 
-      if (adminToEdit) {
-        let matchedDriverId = adminToEdit.driverId;
-        if (!matchedDriverId && adminToEdit.role === "driver") {
-          const matchedDriver = driversList.drivers.find(
-            (d) => d.DriverData?.email === adminToEdit.email
-          );
-          if (matchedDriver) matchedDriverId = matchedDriver._id;
-        }
+    const adminToEdit = adminsListData.find((a) => a._id === actualAdminId);
+    if (!adminToEdit) return;
 
-        setSelectedAccount({
-          fullName: adminToEdit.fullName || "",
-          email: adminToEdit.email || "",
-          role: adminToEdit.role || "",
-          status: adminToEdit.status || "Active",
-          password: "",
-          permissions: adminToEdit.permissions || [],
-          associateAdminLimit: adminToEdit.associateAdminLimit ?? "",
-          driverId: matchedDriverId || "",
-          employeeNumber: adminToEdit.employeeNumber || "",
-          vatnumber: adminToEdit.vatnumber || "",
-          emailPreference: adminToEdit.emailPreference,
-        });
+    setSelectedAccount((prev) => {
+      // Avoid unnecessary re-set to break loop
+      if (prev.email === adminToEdit.email && prev.fullName === adminToEdit.fullName) {
+        return prev;
       }
-    }
-  }, [isEdit, actualAdminId, adminsListData, driversList]);
+
+      let matchedDriverId = adminToEdit.driverId;
+      if (adminToEdit.role === "driver" && !matchedDriverId && driversList?.drivers?.length) {
+        const matchedDriver = driversList.drivers.find(
+          (d) => d.DriverData?.email === adminToEdit.email
+        );
+        if (matchedDriver) matchedDriverId = matchedDriver._id;
+      }
+
+      return {
+        fullName: adminToEdit.fullName || "",
+        email: adminToEdit.email || "",
+        role: adminToEdit.role || "",
+        status: adminToEdit.status || "Active",
+        password: "",
+        permissions: adminToEdit.permissions || [],
+        associateAdminLimit: adminToEdit.associateAdminLimit ?? "",
+        driverId: matchedDriverId || "",
+        employeeNumber: adminToEdit.employeeNumber || "",
+        vatnumber: adminToEdit.vatnumber || "",
+        emailPreference: adminToEdit.emailPreference,
+      };
+    });
+  }, [isEdit, actualAdminId, adminsListData, driversList?.drivers?.length]);
 
   // --- Role options based on current user role ---
   let roleOptions = [];
@@ -234,9 +235,8 @@ const NewAdminUser = () => {
         setSelectedAccount((prev) => ({
           ...prev,
           driverId: firstDriver._id,
-          fullName: `${driverData.firstName || ""} ${
-            driverData.surName || ""
-          }`.trim(),
+          fullName: `${driverData.firstName || ""} ${driverData.surName || ""
+            }`.trim(),
           employeeNumber: driverData.employeeNumber || "",
           email: driverData.email || "",
         }));
@@ -319,8 +319,7 @@ const NewAdminUser = () => {
           const res = await initiateUserVerification(payload).unwrap();
           toast.success("OTP sent. Please verify.");
           navigate(
-            `/dashboard/admin-list/verify-user?tid=${
-              res.transactionId
+            `/dashboard/admin-list/verify-user?tid=${res.transactionId
             }&email=${encodeURIComponent(email)}`
           );
         } else {
@@ -400,9 +399,8 @@ const NewAdminUser = () => {
       {/* Footer button (always last, responsive) */}
       <div className="flex flex-col sm:flex-row justify-end sm:justify-start gap-3 pt-5 border-t border-gray-200 mt-6">
         <button
-          className={`btn btn-success w-full sm:w-auto ${
-            isSendingEmail ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          className={`btn btn-success w-full sm:w-auto ${isSendingEmail ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           disabled={isSendingEmail}
           onClick={async () => {
             if (isSendingEmail) return;
@@ -419,14 +417,14 @@ const NewAdminUser = () => {
               ? "Updating..."
               : "Update User"
             : isSendingEmail
-            ? selectedAccount.role === "clientadmin" ||
-              selectedAccount.role === "associateadmin"
-              ? "Sending OTP..."
-              : "Creating..."
-            : selectedAccount.role === "clientadmin" ||
-              selectedAccount.role === "associateadmin"
-            ? "Create User & Send OTP"
-            : "Create User"}
+              ? selectedAccount.role === "clientadmin" ||
+                selectedAccount.role === "associateadmin"
+                ? "Sending OTP..."
+                : "Creating..."
+              : selectedAccount.role === "clientadmin" ||
+                selectedAccount.role === "associateadmin"
+                ? "Create User & Send OTP"
+                : "Create User"}
         </button>
       </div>
     </div>

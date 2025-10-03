@@ -31,16 +31,11 @@
 
 
 
-
-
-
-
-
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  // ✅ refresh hone ke baad bhi user save rahe
-  user: JSON.parse(localStorage.getItem("user")) || null,
+  user: null, // ✅ full user Redux state me hi rahega
+  companyId: localStorage.getItem("companyId") || null, // ✅ sirf companyId persist karein
 };
 
 const authSlice = createSlice({
@@ -48,20 +43,37 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setUser(state, action) {
-      state.user = action.payload;
-      // ✅ localStorage me save karo taake refresh pe na gire
-      localStorage.setItem("user", JSON.stringify(action.payload));
+      const userData = action.payload;
+      state.user = userData;
+
+      // ✅ Sirf companyId ko localStorage me rakho
+      if (userData?.companyId) {
+        localStorage.setItem("companyId", userData.companyId);
+        state.companyId = userData.companyId;
+      } else {
+        localStorage.removeItem("companyId");
+        state.companyId = null;
+      }
+
+      // 🧹 Purani user/token keys hata do agar pehle use hui thi
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
     },
+
     clearUser(state) {
       state.user = null;
+      state.companyId = null;
+
+      // 🧹 LocalStorage clean
+      localStorage.removeItem("companyId");
       localStorage.removeItem("user");
-      localStorage.removeItem("token"); // ✅ agar token save karte ho to bhi remove
-      localStorage.removeItem("companyId"); // ✅ extra clean-up
+      localStorage.removeItem("token");
     },
+
     updateUserPermissions(state, action) {
       if (state.user) {
         state.user.permissions = action.payload.permissions;
-        localStorage.setItem("user", JSON.stringify(state.user));
+        // ❌ localStorage me permissions save nahi karni — sirf Redux me update
       }
     },
   },
