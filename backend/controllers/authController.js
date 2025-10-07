@@ -67,18 +67,32 @@ export const login = async (req, res) => {
     await user.save();
 
     // set JWT in HttpOnly cookie
+    // res.cookie('access_token', generateAccessToken(user._id, user.role, user.companyId), {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    //   sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+    //   maxAge: 15 * 60 * 1000, // 15 mins
+    // });
+
+    // res.cookie("refresh_token", generateRefreshToken(user._id), {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    //   sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+    //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    // });
+    // ✅ CORRECT:
     res.cookie('access_token', generateAccessToken(user._id, user.role, user.companyId), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-      maxAge: 15 * 60 * 1000, // 15 mins
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ⭐ Change "strict" to "none"
+      maxAge: 15 * 60 * 1000,
     });
 
     res.cookie("refresh_token", generateRefreshToken(user._id), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ⭐ Change "strict" to "none"
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     // Include companyId in the token

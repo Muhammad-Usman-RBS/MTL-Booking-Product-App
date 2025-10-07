@@ -42,17 +42,29 @@ router.get("/me", protect, authorize("superadmin", "clientadmin", "customer", "d
 
 // Logout
 router.post("/logout", (req, res) => {
-    res.clearCookie("access_token", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-    });
-    res.clearCookie("refresh_token", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-    });
-    res.json({ message: "Logged out successfully" });
+  // res.clearCookie("access_token", {
+  //     httpOnly: true,
+  //     secure: process.env.NODE_ENV === "production",
+  //     sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+  // });
+  // res.clearCookie("refresh_token", {
+  //     httpOnly: true,
+  //     secure: process.env.NODE_ENV === "production",
+  //     sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+  // });
+  // ✅ CORRECT:
+  res.clearCookie("access_token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ⭐ Change to "none"
+  });
+
+  res.clearCookie("refresh_token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ⭐ Change to "none"
+  });
+  res.json({ message: "Logged out successfully" });
 });
 
 export default router;
