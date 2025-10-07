@@ -150,15 +150,17 @@ const sendEmail = async (to, subject, payload = {}) => {
   }
 
   const transporter = nodemailer.createTransport({
+    service: 'gmail',
     host: "smtp.gmail.com",
-    port: 587, 
-    secure: false, 
+    port: 587,
+    secure: false,
     auth: {
       user: process.env.GMAIL_USER,
       pass: process.env.GMAIL_PASS
     },
     tls: {
       rejectUnauthorized: false,
+      ciphers: 'SSLv3'
     },
     connectionTimeout: 10000,
     greetingTimeout: 10000,
@@ -183,7 +185,13 @@ const sendEmail = async (to, subject, payload = {}) => {
     });
     console.log(`Email sent to: ${to}, MessageId: ${info.messageId}`);
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("Error sending email:", error.message);
+    console.error("Full error:", error); // Complete error log
+
+    // Optional: Notify admin
+    if (process.env.ADMIN_EMAIL) {
+      console.log(`Failed to send email to ${to}`);
+    }
   }
 };
 
