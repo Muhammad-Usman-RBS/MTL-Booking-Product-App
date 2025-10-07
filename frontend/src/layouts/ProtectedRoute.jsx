@@ -4,21 +4,29 @@ import { useDispatch } from "react-redux";
 import { useGetCurrentUserQuery } from "../redux/api/userApi";
 import { setUser } from "../redux/slices/authSlice";
 import sidebarItems from "../constants/constantscomponents/sidebarItems";
+import { useLoading } from "../components/common/LoadingProvider";
 
 const ProtectedRoute = () => {
   const dispatch = useDispatch();
+  const { showLoading, hideLoading } = useLoading();
+
   const location = useLocation();
   const currentPath = location.pathname;
 
   const { data: currentUser, isLoading, isError } = useGetCurrentUserQuery();
-
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
   useEffect(() => {
     if (currentUser) {
       dispatch(setUser(currentUser));
     }
   }, [currentUser, dispatch]);
 
-  if (isLoading) return <div>Loading...</div>;
   if (isError || !currentUser) return <Navigate to="/login" replace />;
 
   const userPermissions = currentUser.permissions || [];

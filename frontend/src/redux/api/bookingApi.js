@@ -31,14 +31,14 @@ export const bookingApi = apiSlice.injectEndpoints({
       invalidatesTags: ["Bookings"],
     }),
 
-    // Delete Booking by ID
-    deleteBooking: builder.mutation({
-      query: (id) => ({
-        url: `/booking/delete-booking/${id}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: ["Bookings"],
-    }),
+    // // Delete Booking by ID
+    // deleteBooking: builder.mutation({
+    //   query: (id) => ({
+    //     url: `/booking/delete-booking/${id}`,
+    //     method: "DELETE",
+    //   }),
+    //   invalidatesTags: ["Bookings"],
+    // }),
 
     // Update Booking Status
     updateBookingStatus: builder.mutation({

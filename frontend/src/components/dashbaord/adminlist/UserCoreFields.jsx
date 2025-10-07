@@ -279,6 +279,9 @@ const UserCoreFields = ({
                             { label: "False", value: "false" },
                         ]}
                     />
+                    {errors?.emailPreference && (
+      <p className="text-red-600 text-sm mt-1">{errors.emailPreference}</p>
+    )}
                 </div>
             )}
 

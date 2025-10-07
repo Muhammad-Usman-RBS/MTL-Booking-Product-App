@@ -1,5 +1,5 @@
 import express from "express";
-import { createBooking, deleteBooking, getAllBookings, updateBooking, updateBookingStatus, getAllPassengers, sendBookingEmail, restoreOrDeleteBooking, getAllBookingsForSuperadmin } from "../controllers/bookingController.js";
+import { createBooking,  getAllBookings, updateBooking, updateBookingStatus, getAllPassengers, sendBookingEmail, restoreOrDeleteBooking, getAllBookingsForSuperadmin } from "../controllers/bookingController.js";
 import { authorize, protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -14,7 +14,7 @@ router.get("/get-booking", getAllBookings);
 router.put("/update-booking/:id", protect, updateBooking);
 
 // Delete a booking by ID
-router.delete("/delete-booking/:id", deleteBooking);
+// router.delete("/delete-booking/:id", deleteBooking);
 
 // Update booking status (e.g., confirmed, cancelled)
 router.patch("/:id", protect, updateBookingStatus);

@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import CustomTable from "../../../../constants/constantscomponents/CustomTable";
 import { useRestoreOrDeleteBookingMutation } from "../../../../redux/api/bookingApi";
+import DeleteModal from "../../../../constants/constantscomponents/DeleteModal";
 
 export const BookingTableRenderer = ({
   emptyMessage,
@@ -23,14 +24,10 @@ export const BookingTableRenderer = ({
   setEditBookingData,
   setShowEditModal,
   actionMenuItems,
-  setSelectedDeleteId,
-  setShowDeleteModal,
   toast,
-  tooltip,
   setTooltip,
   driversData,
   jobData,
-  assignedDrivers,
   bookingSettingData,
   isDriver,
   Icons,
@@ -39,32 +36,27 @@ export const BookingTableRenderer = ({
   moment,
   timezone,
 }) => {
-  const currencySetting = bookingSettingData?.setting?.currency?.[0] || {};
-  const currencySymbol = currencySetting?.symbol || "£";
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedDeleteId, setSelectedDeleteId] = useState(null);
   const currencyApplication =
     bookingSettingData?.setting?.currencyApplication || "New Bookings Only";
 
   const formatCurrency = (value, booking) => {
     if (value === undefined || value === null || value === "-") return "-";
 
-    const currencyApplication = bookingSettingData?.setting?.currencyApplication;
+    const currencyApplication =
+      bookingSettingData?.setting?.currencyApplication;
     const currentCurrency = bookingSettingData?.setting?.currency?.[0] || {
       symbol: "£",
       label: "British Pound",
       value: "GBP",
     };
-
-    // ✅ All Bookings → hamesha latest setting wali currency
     if (currencyApplication === "All Bookings") {
       return `${currentCurrency.symbol} ${Number(value).toFixed(2)}`;
     }
-
-    // ✅ New Bookings Only → booking snapshot use karo
     if (booking?.currency?.symbol) {
       return `${booking.currency.symbol} ${Number(value).toFixed(2)}`;
     }
-
-    // fallback
     return `${currentCurrency.symbol} ${Number(value).toFixed(2)}`;
   };
 
@@ -300,7 +292,6 @@ export const BookingTableRenderer = ({
     return acceptedDrivers;
   };
 
-  // Generate table data
   let tableData = [];
   if (!filteredBookings || filteredBookings.length === 0) {
     tableData = [];
@@ -373,8 +364,6 @@ export const BookingTableRenderer = ({
                 {pickupLocation}
               </div>
             );
-
-            // Add a plain text field just for searching
             row[`${key}_searchText`] = pickupLocation;
             break;
           case "dropOff":
@@ -401,8 +390,6 @@ export const BookingTableRenderer = ({
                 {dropoffLocation}
               </div>
             );
-
-            // Add a plain text field just for searching
             row[`${key}_searchText`] = dropoffLocation;
             break;
           case "vehicle":
@@ -448,15 +435,15 @@ export const BookingTableRenderer = ({
               : item.primaryJourney;
             row[key] = journey?.flightArrival?.scheduled
               ? new Date(journey.flightArrival.scheduled).toLocaleString(
-                "en-GB",
-                {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                }
-              )
+                  "en-GB",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  }
+                )
               : "-";
             break;
           }
@@ -467,15 +454,15 @@ export const BookingTableRenderer = ({
               : item.primaryJourney;
             row[key] = journey?.flightArrival?.estimated
               ? new Date(journey.flightArrival.estimated).toLocaleString(
-                "en-GB",
-                {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                }
-              )
+                  "en-GB",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  }
+                )
               : "-";
             break;
           }
@@ -483,8 +470,8 @@ export const BookingTableRenderer = ({
           case "createdAt":
             row[key] = item.createdAt
               ? moment(item.createdAt)
-                .tz(timezone)
-                .format("DD/MM/YYYY HH:mm:ss")
+                  .tz(timezone)
+                  .format("DD/MM/YYYY HH:mm:ss")
               : "-";
             break;
           case "driver": {
@@ -519,7 +506,7 @@ export const BookingTableRenderer = ({
                   {content}
                 </div>
               );
-              row[`${key}_searchText`] = driverPlainText; // ✅ searchable string
+              row[`${key}_searchText`] = driverPlainText;
               break;
             }
 
@@ -540,7 +527,7 @@ export const BookingTableRenderer = ({
                 </div>
               );
 
-            row[`${key}_searchText`] = driverPlainText; // ✅ searchable string
+            row[`${key}_searchText`] = driverPlainText;
             break;
           }
           case "status": {
@@ -585,20 +572,11 @@ export const BookingTableRenderer = ({
                     className="text-[#b91c1c] bg-[#fee2e2] p-1 text-xs border border-[#fca5a5] rounded-md italic cursor-pointer hover:bg-[#fecaca] transition"
                     title="Click to permanently delete"
                     onClick={async () => {
-                      try {
-                        await restoreOrDeleteBooking({
-                          id: item._id,
-                          action: "delete",
-                          updatedBy: `${user.role} | ${user.fullName}`,
-                        }).unwrap();
-                        toast.success("Booking permanently removed");
-                        refetch();
-                      } catch (error) {
-                        toast.error("Failed to permanently delete booking");
-                      }
+                      setSelectedDeleteId(item._id);
+                      setShowDeleteModal(true);
                     }}
                   >
-                    Booking Deleted
+                    Delete Booking
                   </p>
 
                   <button
@@ -743,14 +721,12 @@ export const BookingTableRenderer = ({
           }
 
           case "actions":
-            // Internal Notes check (primaryJourney / returnJourney)
             const journeyNotes =
               item?.primaryJourney?.internalNotes ||
               item?.returnJourney?.internalNotes;
 
             row[key] = (
               <div className="flex items-start  gap-2">
-                {/* Action Button + Dropdown */}
                 <div className="text-center">
                   <button
                     onClick={() =>
@@ -805,7 +781,7 @@ export const BookingTableRenderer = ({
                                   if (
                                     user?.role === "customer" &&
                                     bookingSetting?.companyId ===
-                                    user?.companyId
+                                      user?.companyId
                                   ) {
                                     const cancelWindow =
                                       bookingSetting?.cancelBookingWindow;
@@ -813,8 +789,9 @@ export const BookingTableRenderer = ({
                                       cancelWindow &&
                                       isWithinCancelWindow(item, cancelWindow)
                                     ) {
-                                      const windowText = `${cancelWindow.value
-                                        } ${cancelWindow.unit.toLowerCase()}`;
+                                      const windowText = `${
+                                        cancelWindow.value
+                                      } ${cancelWindow.unit.toLowerCase()}`;
                                       toast.error(
                                         `Cannot edit booking. Pickup time is within the ${windowText} cancellation window.`
                                       );
@@ -1011,7 +988,6 @@ export const BookingTableRenderer = ({
                     </div>
                   )}
                 </div>
-                {/* Enhanced Internal Notes Icon */}
                 {journeyNotes && journeyNotes.trim() !== "" && (
                   <button
                     onClick={() => toast.info(journeyNotes)}
@@ -1023,7 +999,6 @@ export const BookingTableRenderer = ({
                       className="text-blue-600 hover:text-blue-700"
                     />
 
-                    {/* Red dot */}
                     <span
                       className="absolute bg-red-500 rounded-full border-2 border-white"
                       style={{
@@ -1048,25 +1023,54 @@ export const BookingTableRenderer = ({
   }
 
   return (
-    <CustomTable
-      filename="Bookings-list"
-      tableHeaders={filteredTableHeaders}
-      tableData={tableData}
-      exportTableData={exportTableData}
-      showSearch
-      showRefresh
-      showDownload
-      emptyMessage={emptyMessage}
-      showPagination
-      showSorting
-      selectedRow={selectedRow}
-      setSelectedRow={setSelectedRow}
-      onRowDoubleClick={(row) => {
-        const selectedBooking = filteredBookings.find((b) => b._id === row._id);
-        if (selectedBooking) {
-          openViewModal(selectedBooking);
-        }
-      }}
-    />
+    <>
+      <CustomTable
+        filename="Bookings-list"
+        tableHeaders={filteredTableHeaders}
+        tableData={tableData}
+        exportTableData={exportTableData}
+        showSearch
+        showRefresh
+        showDownload
+        emptyMessage={emptyMessage}
+        showPagination
+        showSorting
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
+        onRowDoubleClick={(row) => {
+          const selectedBooking = filteredBookings.find(
+            (b) => b._id === row._id
+          );
+          if (selectedBooking) {
+            openViewModal(selectedBooking);
+          }
+        }}
+      />
+
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onConfirm={async () => {
+          try {
+            await restoreOrDeleteBooking({
+              id: selectedDeleteId,
+              action: "delete",
+              updatedBy: `${user.role} | ${user.fullName}`,
+            }).unwrap();
+            toast.success("Booking permanently deleted");
+            refetch();
+          } catch (err) {
+            toast.error("Failed to permanently delete booking");
+            console.error(err);
+          } finally {
+            setShowDeleteModal(false);
+            setSelectedDeleteId(null);
+          }
+        }}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setSelectedDeleteId(null);
+        }}
+      />
+    </>
   );
 };

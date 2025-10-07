@@ -18,29 +18,31 @@ const DateRange = ({ startDate, endDate, setStartDate, setEndDate }) => {
   };
 
   return (
-    <div className="flex gap-x-2 items-center -mt-2">
-       <div className="flex space-x-2 items-center justify-center">
-       <label className="text-xs text-gray-600 mb-1">From:</label>
-        <input
-          type="date"
-          value={formatDateForInput(startDate) || ""}
-          onChange={handleStartDateChange}
-          placeholder="From"
-          className="border border-[var(--light-gray)] px-3 py-1.5 rounded text-sm focus:outline-none text-gray-500"
-        />
-      </div>
-
-      <div className="flex space-x-2 items-center justify-center">
-      <label className="text-xs text-gray-600 mb-1">To:</label>
-        <input
-          type="date"
-          value={formatDateForInput(endDate) || ""}
-          onChange={handleEndDateChange}
-          placeholder="To"
-          className="border border-[var(--light-gray)] px-3 py-1.5 rounded text-sm focus:outline-none text-gray-500"
-        />
-      </div>
+    <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-2">
+    {/* From Date */}
+    <div className="flex items-center space-x-2 w-full">
+      <label className="text-xs text-gray-600 whitespace-nowrap">From:</label>
+      <input
+        type="date"
+        value={formatDateForInput(startDate) || ""}
+        onChange={handleStartDateChange}
+        placeholder="From"
+        className="w-full border border-[var(--light-gray)] px-3 py-1.5 rounded text-sm focus:outline-none text-gray-500"
+      />
     </div>
+
+    {/* To Date */}
+    <div className="flex items-center space-x-2 w-full">
+      <label className="text-xs text-gray-600 whitespace-nowrap">To:</label>
+      <input
+        type="date"
+        value={formatDateForInput(endDate) || ""}
+        onChange={handleEndDateChange}
+        placeholder="To"
+        className="w-full border border-[var(--light-gray)] px-3 py-1.5 rounded text-sm focus:outline-none text-gray-500"
+      />
+    </div>
+  </div>
   );
 };
 

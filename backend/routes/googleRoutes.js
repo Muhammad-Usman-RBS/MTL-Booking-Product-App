@@ -701,7 +701,6 @@ router.get("/distance", async (req, res) => {
     const distanceValue = element.distance?.value || null;
     const durationText = element.duration?.text || null;
 
-    console.log('Processed result:', { distanceText, distanceValue, durationText });
 
     // Check both origin and destination for route warnings
     const originCheck = checkLocationForAvoidedRoutes(origin, avoidRoutes);

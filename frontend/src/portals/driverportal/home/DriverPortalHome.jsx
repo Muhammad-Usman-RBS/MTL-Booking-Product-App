@@ -74,7 +74,6 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
         return apiExact._id;
       }
 
-      // 2) Try bookingId match in API jobs (notif carries bookingId)
       const apiByBookingId = (data?.jobs || []).find(
         (j) => String(j.bookingId) === asStr
       );
@@ -116,7 +115,6 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
             job?.status ||
             apiMatch?.jobStatus ||
             "New",
-          // prefer API booking (has full journey), then job.booking, then job itself
           booking: apiMatch?.booking || job?.booking || job,
           driverId: job?.driverId || apiMatch?.driverId,
         };
@@ -136,74 +134,12 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
     const jobStatus = job?.jobStatus ?? "New";
     const bookingStatus = job?.booking?.status?.trim();
 
-    // Prioritize server data over local state
     if (bookingStatus === "deleted") return "Deleted";
     if (jobStatus === "Accepted" && bookingStatus) {
       return bookingStatus;
     }
-    return map[id] || jobStatus; // Use local state only as a fallback
+    return map[id] || jobStatus;
   };
-
-  // const filteredAndSortedJobs = useMemo(() => {
-  //   if (modalMode) {
-  //     return jobs;
-  //   }
-
-  //   let filtered = jobs;
-
-  //   // Filter by status
-  //   if (statusFilter.length > 0) {
-  //     filtered = filtered.filter((job) => {
-  //       const currentStatus = getCurrentStatus(job, statusMap);
-  //       return statusFilter.includes(currentStatus);
-  //     });
-  //   }
-
-  //   // Filter by date range
-  //   // ✅ Only filter by date if user explicitly sets both start & end
-  //   if (startDate && endDate) {
-  //     filtered = filtered.filter((job) => {
-  //       const booking = job.booking || {};
-  //       const journey = booking?.returnJourneyToggle
-  //         ? booking?.returnJourney || {}
-  //         : booking?.primaryJourney || {};
-
-  //       if (!journey.date) return false;
-
-  //       const jobDate = new Date(journey.date).toISOString().split("T")[0];
-  //       return jobDate >= startDate && jobDate <= endDate;
-  //     });
-  //   }
-
-  //   filtered.sort((a, b) => {
-  //     if (sortBy === "date-asc") {
-  //       return (
-  //         new Date(a?.journeyDetails?.journeyDate) -
-  //         new Date(b?.journeyDetails?.journeyDate)
-  //       );
-  //     } else if (sortBy === "date-desc") {
-  //       return (
-  //         new Date(b?.journeyDetails?.journeyDate) -
-  //         new Date(a?.journeyDetails?.journeyDate)
-  //       );
-  //     } else if (sortBy === "status-asc") {
-  //       return getCurrentStatus(a, statusMap).localeCompare(
-  //         getCurrentStatus(b, statusMap)
-  //       );
-  //     } else if (sortBy === "status-desc") {
-  //       return getCurrentStatus(b, statusMap).localeCompare(
-  //         getCurrentStatus(a, statusMap)
-  //       );
-  //     } else if (sortBy === "bookingid-asc") {
-  //       return Number(a.bookingId) - Number(b.bookingId);
-  //     } else if (sortBy === "bookingid-desc") {
-  //       return Number(b.bookingId) - Number(a.bookingId);
-  //     }
-  //     return 0;
-  //   });
-
-  //   return filtered;
-  // }, [modalMode, jobs, statusFilter, startDate, endDate, sortBy, statusMap]);
 
   const statusOptions = useMemo(() => {
     return SCHEDULED_SET.map((status) => ({
@@ -352,11 +288,10 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
       const job = jobs.find((j) => String(j._id) === String(jobId));
       if (!job) throw new Error("Job not found");
 
-      // ✅ If user selects Completed, show modal but don’t update yet
       if (newStatus === "Completed") {
         setPendingJobId(jobId);
         setShowConfirmModal(true);
-        return; // Stop here, modal will trigger finalizeCompletion
+        return;
       }
 
       const bookingId = job?.booking?._id;
@@ -375,7 +310,6 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
         return;
       }
 
-      // Update booking status for Accepted / Rejected / other statuses
       const bookingResult = await updateBookingStatus({
         id: bookingId,
         status: newStatus,
@@ -401,13 +335,36 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
       setLoadingJobId(null);
     }
   };
+  const getJourneyDateTime = (job) => {
+    const booking = job.booking || {};
+    const primary = booking?.primaryJourney || {};
+    const ret = booking?.returnJourney || {};
+
+    // Choose journey: if returnJourneyToggle is true and return has a date, use return
+    const journey = booking?.returnJourneyToggle && ret?.date ? ret : primary;
+
+    if (!journey?.date) return null;
+
+    const baseDate = new Date(journey.date);
+    if (isNaN(baseDate)) return null;
+
+    // ✅ Extract hour/minute from the correct journey
+    const hour = typeof journey.hour === "number" ? journey.hour : 0;
+    const minute = typeof journey.minute === "number" ? journey.minute : 0;
+
+    baseDate.setHours(hour);
+    baseDate.setMinutes(minute);
+    baseDate.setSeconds(0);
+    baseDate.setMilliseconds(0);
+
+    return baseDate;
+  };
 
   const filteredAndSortedJobs = useMemo(() => {
     if (modalMode) return jobs;
 
     let filtered = jobs;
 
-    // Status filter
     if (statusFilter.length > 0) {
       filtered = filtered.filter((job) => {
         const currentStatus = getCurrentStatus(job, statusMap);
@@ -415,19 +372,17 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
       });
     }
 
-    // Date filter
     if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
       filtered = filtered.filter((job) => {
-        const booking = job.booking || {};
-        const journey = booking?.returnJourneyToggle
-          ? booking?.returnJourney || {}
-          : booking?.primaryJourney || {};
-        if (!journey.date) return false;
-        const jobDate = new Date(journey.date).toISOString().split("T")[0];
-        return jobDate >= startDate && jobDate <= endDate;
+        const journeyDateTime = getJourneyDateTime(job);
+        if (!journeyDateTime) return false;
+        return journeyDateTime >= start && journeyDateTime <= end;
       });
     }
-    // 🔎 Search filter
     if (searchTerm.trim() !== "") {
       const lowerSearch = searchTerm.toLowerCase();
       filtered = filtered.filter((job) => {
@@ -437,6 +392,13 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
           job.booking?.returnJourney?.pickup ||
           ""
         ).toLowerCase();
+        const flightNumber = (
+          job?.booking?.returnJourneyToggle
+            ? job?.booking?.returnJourney?.flightNumber
+            : job?.booking?.primaryJourney?.flightNumber
+        )
+          ?.trim()
+          ?.toLowerCase();
         const dropoff = (
           job.booking?.primaryJourney?.dropoff ||
           job.booking?.returnJourney?.dropoff ||
@@ -446,23 +408,21 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
         return (
           bookingId.includes(lowerSearch) ||
           pickup.includes(lowerSearch) ||
+          flightNumber.includes(lowerSearch) ||
           dropoff.includes(lowerSearch)
         );
       });
     }
-
-    // Sorting
     filtered.sort((a, b) => {
-      if (sortBy === "date-asc") {
-        return (
-          new Date(a?.journeyDetails?.journeyDate) -
-          new Date(b?.journeyDetails?.journeyDate)
-        );
-      } else if (sortBy === "date-desc") {
-        return (
-          new Date(b?.journeyDetails?.journeyDate) -
-          new Date(a?.journeyDetails?.journeyDate)
-        );
+      if (sortBy === "date-asc" || sortBy === "date-desc") {
+        const dateA = getJourneyDateTime(a);
+        const dateB = getJourneyDateTime(b);
+
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+
+        return sortBy === "date-asc" ? dateA - dateB : dateB - dateA;
       } else if (sortBy === "status-asc") {
         return getCurrentStatus(a, statusMap).localeCompare(
           getCurrentStatus(b, statusMap)
@@ -554,9 +514,10 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
                 <button
                   onClick={() => {
                     setStatusFilter([]);
-                    setStartDate(new Date().toISOString().split("T")[0]);
-                    setEndDate(new Date().toISOString().split("T")[0]);
+                    setStartDate(null);
+                    setEndDate(null);
                     setSortBy("date-desc");
+                    setSearchTerm("");
                   }}
                   className="btn btn-primary "
                 >
@@ -615,7 +576,6 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
 
                 <hr className="mb-3 border-gray-300" />
 
-                {/* JOURNEY DETAILS */}
                 <div className="space-y-4 text-sm text-gray-700">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -697,18 +657,12 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
                               </div>
                             )
                         )}
-                        {/* {booking?.notes && (
-                          <div className="md:col-span-2">
-                            <strong>Notes:</strong> {booking.notes}
-                          </div>
-                        )} */}
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                  {/* Booking Details */}
                   <div>
                     <strong className="block mb-3 text-lg font-bold text-[var(--dark-gray)]">
                       Booking Details:&nbsp;
@@ -741,50 +695,55 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
                           ? booking.returnDriverFare
                           : booking.driverFare || "—"}
                       </div>
-                      <div>
-                        <strong className="text-[var(--dark-gray)]">
-                          Notes:&nbsp;
-                        </strong>
-                        {booking?.returnJourneyToggle
-                          ? booking?.returnJourney?.notes
-                          : booking?.primaryJourney?.notes || "—"}
-                      </div>
+                      {(booking?.returnJourney?.notes ||
+                        booking?.primaryJourney?.notes) && (
+                        <div>
+                          <strong className="text-[var(--dark-gray)]">
+                            Notes:&nbsp;
+                          </strong>
+                          {booking?.returnJourneyToggle
+                            ? booking?.returnJourney?.notes
+                            : booking?.primaryJourney?.notes || "—"}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div>
-                    <strong className="block mb-3 text-lg font-bold text-[var(--dark-gray)]">
-                      Passenger Details:
-                    </strong>
-                    {booking?.status !== "Cancelled" &&
-                    currentStatus !== "Rejected" &&
-                    driverIdStr === userIdStr &&
-                    booking?.passenger ? (
-                      <div className="text-sm space-y-2">
-                        <div>
-                          <strong className="text-[var(--dark-gray)]">
-                            Name:&nbsp;
-                          </strong>
-                          {booking.passenger.name}
+                  {booking?.status !== "New" &&
+                  booking?.status !== "Cancelled" &&
+                  currentStatus !== "Rejected" ? (
+                    <div>
+                      <strong className="block mb-3 text-lg font-bold text-[var(--dark-gray)]">
+                        Passenger Details:
+                      </strong>
+                      {
+                        <div className="text-sm space-y-2">
+                          <div>
+                            <strong className="text-[var(--dark-gray)]">
+                              Name:&nbsp;
+                            </strong>
+                            {booking?.passenger?.name}
+                          </div>
+                          <div>
+                            <strong className="text-[var(--dark-gray)]">
+                              Contact:&nbsp;
+                            </strong>
+                            +{booking?.passenger?.phone || "N/A"}
+                          </div>
+                          <div>
+                            <strong className="text-[var(--dark-gray)]">
+                              Email:&nbsp;
+                            </strong>
+                            {booking?.passenger?.email || "N/A"}
+                          </div>
                         </div>
-                        <div>
-                          <strong className="text-[var(--dark-gray)]">
-                            Contact:&nbsp;
-                          </strong>
-                          +{booking.passenger.phone || "N/A"}
-                        </div>
-                        <div>
-                          <strong className="text-[var(--dark-gray)]">
-                            Email:&nbsp;
-                          </strong>
-                          {booking.passenger.email || "N/A"}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-sm">
-                        Passenger details will be shown after accepting job
-                      </div>
-                    )}
-                  </div>
+                      }
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-md bg-yellow-50 border border-yellow-300 p-4 text-center text-yellow-800 text-sm font-medium">
+                      Passenger details are hidden. They&apos;ll appear once the
+                      job is <span className="font-semibold">accepted</span>.
+                    </div>
+                  )}
                 </div>
 
                 {/* ACTIONS */}

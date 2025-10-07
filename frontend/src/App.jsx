@@ -55,7 +55,6 @@ import WidgetMain from "./components/dashbaord/widgetapi/WidgetMain";
 import WidgetAPI from "./components/dashbaord/widgetapi/WidgetAPI";
 import DriverEarnings from "./portals/driverportal/earnings/DriverEarnings";
 import DriverRides from "./portals/driverportal/rides/DriverRides";
-import DriverJobDetails from "./portals/driverportal/home/DriverJobDetails";
 import TermsCondition from "./portals/driverportal/settings/TermsandConditions";
 import DriverContact from "./portals/driverportal/settings/DriverContact";
 import ViewNotifications from "./components/dashbaord/settings/ViewNotifications";
@@ -151,7 +150,6 @@ function App() {
               <Route path="drivers/edit/:id" element={<NewDriver />} />
               <Route path="drivers/earnings" element={<DriverEarnings />} />
               <Route path="drivers/all-rides" element={<DriverRides />} />
-              <Route path="drivers/jobs/:id" element={<DriverJobDetails />} />
 
               {/* Customers */}
               <Route path="customers/list" element={<CustomersList />} />

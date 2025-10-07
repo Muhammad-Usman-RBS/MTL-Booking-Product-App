@@ -468,69 +468,61 @@ const NewInvoice = ({ invoiceType = "customer" }) => {
         }
       />
 
-      <div className="flex gap-4">
-        {/* Filter Section */}
-        <div className="flex flex-col  sm:flex-row flex-wrap gap-x-2 w-full">
-          <DateRange
-            startDate={startDate}
-            endDate={endDate}
-            setStartDate={setStartDate}
-            setEndDate={setEndDate}
-          />
-          {invoiceType === "customer" && (
-            <div className="w-full sm:w-64">
-              <SelectedSearch
-                selected={selectedCustomers}
-                setSelected={handleCustomerSelection}
-                statusList={customerList}
-                placeholder="Select Customer"
-                showCount={false}
-              />
-            </div>
-          )}
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-8 gap-4 items-end mb-4 w-full">
 
-          {invoiceType === "driver" && (
-            <div className="w-full sm:w-64">
-              <SelectedSearch
-                selected={selectedDrivers}
-                setSelected={handleDriverSelection}
-                statusList={driverList}
-                placeholder="Select Driver"
-                showCount={false}
-              />
-            </div>
-          )}
-          <div className="flex mb-1">
-            <div className="w-full sm:w-64">
-              <SelectOption
-                options={["No Tax", "Tax"]}
-                value={globalTaxSelection}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setGlobalTaxSelection(value);
-                  const updatedTaxes = {};
-                  selectedRows.forEach((id) => {
-                    updatedTaxes[id] = value;
-                  });
-                  setBookingTaxes((prev) => ({ ...prev, ...updatedTaxes }));
-                  if (selectedRows.length > 0) {
-                    toast.success(`Applied "${value}" to selected bookings`);
-                  }
-                }}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="whitespace-nowrap">
-          <button
-            onClick={handleCreateInvoice}
-            disabled={isCreating}
-            className="btn btn-back"
-          >
-            {isCreating ? "Creating..." : `Create Invoice `}
-          </button>
-        </div>
-      </div>
+  <div className="col-span-2 lg:col-span-3 xl:col-span-3 w-full">
+    <DateRange
+      startDate={startDate}
+      endDate={endDate}
+      setStartDate={setStartDate}
+      setEndDate={setEndDate}
+    />
+  </div>
+
+  <div className="col-span-1 w-full">
+    <SelectedSearch
+      selected={invoiceType === "driver" ? selectedDrivers : selectedCustomers}
+      setSelected={invoiceType === "driver" ? handleDriverSelection : handleCustomerSelection}
+      statusList={invoiceType === "driver" ? driverList : customerList}
+      placeholder={invoiceType === "driver" ? "Select Driver" : "Select Customer"}
+      showCount={false}
+    />
+  </div>
+
+  {/* 🔵 Tax Selector */}
+  <div className="col-span-1 w-full">
+    <SelectOption
+      options={["No Tax", "Tax"]}
+      value={globalTaxSelection}
+      onChange={(e) => {
+        const value = e.target.value;
+        setGlobalTaxSelection(value);
+        const updatedTaxes = {};
+        selectedRows.forEach((id) => {
+          updatedTaxes[id] = value;
+        });
+        setBookingTaxes((prev) => ({ ...prev, ...updatedTaxes }));
+        if (selectedRows.length > 0) {
+          toast.success(`Applied "${value}" to selected bookings`);
+        }
+      }}
+    />
+  </div>
+
+  {/* 🔴 Create Invoice Button */}
+  <div className="col-span-1 flex justify-end lg:justify-start w-full">
+    <button
+      onClick={handleCreateInvoice}
+      disabled={isCreating}
+      className="btn btn-back w-full lg:w-auto"
+    >
+      {isCreating ? "Creating..." : "Create Invoice"}
+    </button>
+  </div>
+
+</div>
+
+
       <div className="mt-8">
         <CustomTable
           emptyMessage="No Invoices Found"

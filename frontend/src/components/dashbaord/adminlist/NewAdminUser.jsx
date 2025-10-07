@@ -248,15 +248,22 @@ const NewAdminUser = () => {
   // --- Save / Update (unchanged logic) ---
   const handleSave = async () => {
     // run form validation
-    const { errors: vErrors, isValid } = validateUserAccount(selectedAccount, {
-      isEdit,
-    });
+    const { errors: vErrors, isValid } = validateUserAccount(selectedAccount, { isEdit });
+
+    if (selectedAccount?.role === "customer" && selectedAccount?.emailPreference === "") {
+      vErrors.emailPreference = "Please select an email preference.";
+    }
+    
     setErrors(vErrors);
-    if (!isValid) {
-      toast.error("Validation failed. Kindly check the required fields.");
+    
+    if (Object.keys(vErrors).length > 0) {
+      if (vErrors.emailPreference) {
+        toast.error(vErrors.emailPreference);
+      } else {
+        toast.error("Validation failed. Kindly check the required fields.");
+      }
       return;
     }
-
     if (user?.role === "demo") {
       toast.error("Demo accounts are not allowed to create users.");
       return;
@@ -314,15 +321,18 @@ const NewAdminUser = () => {
         const otpRequired =
           (user?.role === "superadmin" && payload.role === "clientadmin") ||
           (user?.role === "clientadmin" && payload.role === "associateadmin");
-
-        if (otpRequired) {
-          const res = await initiateUserVerification(payload).unwrap();
-          toast.success("OTP sent. Please verify.");
-          navigate(
-            `/dashboard/admin-list/verify-user?tid=${res.transactionId
-            }&email=${encodeURIComponent(email)}`
-          );
-        } else {
+          if (otpRequired) {
+            const res = await initiateUserVerification(payload).unwrap();
+            toast.success("OTP sent. Please verify.");
+            
+            // Pass flag to send Google invite after verification
+            let verifyUrl = `/dashboard/admin-list/verify-user?tid=${res.transactionId}&email=${encodeURIComponent(email)}`;
+            if (sendCalendarInvite && payload.role === "clientadmin") {
+              verifyUrl += "&sendGoogleInvite=true";
+            }
+            
+            navigate(verifyUrl);
+          }else {
           const res = await createAdmin(payload).unwrap();
           toast.success("User created successfully");
           if (

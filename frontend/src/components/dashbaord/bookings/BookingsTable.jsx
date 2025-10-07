@@ -4,10 +4,8 @@ import { toast } from "react-toastify";
 import { GripHorizontal } from "lucide-react";
 import SelectStatus from "./SelectStatus";
 import CustomTable from "../../../constants/constantscomponents/CustomTable";
-import DeleteModal from "../../../constants/constantscomponents/DeleteModal";
 import {
   useGetAllBookingsQuery,
-  useDeleteBookingMutation,
   useSendBookingEmailMutation,
   useUpdateBookingStatusMutation,
 } from "../../../redux/api/bookingApi";
@@ -50,19 +48,10 @@ const BookingsTable = ({
   const timezone = useSelector((state) => state.timezone?.timezone) || "UTC";
   const companyId = user?.companyId;
   const [tooltip, setTooltip] = useState({ show: false, text: "", x: 0, y: 0 });
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedDeleteId, setSelectedDeleteId] = useState(null);
-
-  // API hooks
+  const emptyMessage = "No bookings found...";
   const [updateJobStatus] = useUpdateJobStatusMutation();
   const [sendBookingEmail] = useSendBookingEmailMutation();
-  const [deleteBooking] = useDeleteBookingMutation();
   const [updateBookingStatus] = useUpdateBookingStatusMutation();
-
-  // const { data: bookingSettingData } = useGetBookingSettingQuery(companyId, {
-  //   skip: user?.role !== "customer",
-  // });
-
   const { data: bookingSettingData } = useGetBookingSettingQuery(companyId, {
     skip: !companyId,
   });
@@ -70,7 +59,6 @@ const BookingsTable = ({
   const {
     data: bookingData = {},
     isLoading: isBookingsLoading,
-    error: bookingsError,
     refetch: refetchBookings,
   } = useGetAllBookingsQuery(companyId, {
     skip: !companyId || user?.role === "driver",
@@ -85,8 +73,6 @@ const BookingsTable = ({
   const { data: driversData = {} } = useGetAllDriversQuery(companyId, {
     skip: !companyId,
   });
-
-  // Custom hook for business logic
   const {
     filteredBookings,
     filteredTableHeaders,
@@ -95,7 +81,6 @@ const BookingsTable = ({
     isDriver,
     refetch,
     getErrMsg,
-    allHeaders,
     tableHeaders,
   } = useBookingTableLogic({
     user,
@@ -124,7 +109,6 @@ const BookingsTable = ({
         setShowViewModal(false);
         setShowDriverModal(false);
         setShowEditModal(false);
-        setShowDeleteModal(false);
         setSelectedActionRow(null);
       }
 
@@ -152,7 +136,7 @@ const BookingsTable = ({
       if (String(selectedBooking.status).toLowerCase() === "cancelled") {
         if (
           (event.shiftKey && actionKeys.includes(key)) ||
-          (event.ctrlKey && ["c", "d"].includes(key))
+          ((event.ctrlKey || event.metaKey) && ["c", "d"].includes(key))
         ) {
           toast.error(
             "This booking is already cancelled. Status update not allowed."
@@ -194,16 +178,12 @@ const BookingsTable = ({
           );
 
           const jobsArray = jobData?.jobs || [];
-
-          // More robust job lookup
           let jobForDriver = jobsArray.find((j) => {
             const jobBookingMatch =
               getIdStr(j?.bookingId) === getIdStr(selectedBooking?._id);
             const jobDriverMatch = getIdStr(j?.driverId) === singleDriverId;
             return jobBookingMatch && jobDriverMatch;
           });
-
-          // Fallback: If no exact match, try to find any job for this booking
           if (!jobForDriver) {
             const bookingJobs = jobsArray.filter(
               (j) => getIdStr(j?.bookingId) === getIdStr(selectedBooking?._id)
@@ -213,7 +193,6 @@ const BookingsTable = ({
               console.warn("Using fallback job - found single job for booking");
               jobForDriver = bookingJobs[0];
             } else if (bookingJobs.length > 1) {
-              // Try to find a job with matching status or most recent one
               const activeJob =
                 bookingJobs.find(
                   (j) =>
@@ -244,12 +223,9 @@ const BookingsTable = ({
               })),
               allDriverIds: assignedDrivers.map((d) => getIdStr(d?._id)),
             });
-
             toast.error(
               `No job found. Found ${bookingJobs.length} jobs for this booking. Check console for details.`
             );
-
-            // Force refetch and return
             refetch();
             return;
           }
@@ -260,7 +236,6 @@ const BookingsTable = ({
             );
             return;
           }
-
           try {
             await updateJobStatus({
               jobId: jobForDriver._id,
@@ -314,8 +289,6 @@ const BookingsTable = ({
             }).unwrap();
 
             toast.success("Booking status set to Cancelled");
-
-            // 📧 Send email to passenger
             if (selectedBooking?.passenger?.email) {
               try {
                 await sendBookingEmail({
@@ -333,8 +306,6 @@ const BookingsTable = ({
                 "No passenger email found to send cancellation notice"
               );
             }
-
-            // 📧 Send email to all assigned drivers
             if (
               Array.isArray(selectedBooking?.drivers) &&
               selectedBooking.drivers.length > 0
@@ -444,8 +415,9 @@ const BookingsTable = ({
               cancelWindow &&
               isWithinCancelWindow(selectedBooking, cancelWindow)
             ) {
-              const windowText = `${cancelWindow.value
-                } ${cancelWindow.unit.toLowerCase()}`;
+              const windowText = `${
+                cancelWindow.value
+              } ${cancelWindow.unit.toLowerCase()}`;
               toast.error(
                 `Cannot edit booking. Pickup time is within the ${windowText} cancellation window.`
               );
@@ -464,14 +436,14 @@ const BookingsTable = ({
       if (key === "enter") {
         openViewModal(selectedBooking);
       }
-      if (event.ctrlKey && key === "c") {
+      if ((event.ctrlKey || event.metaKey) && key === "c") {
         const newStatus = "Completed";
         await updateStatus(selectedBooking._id, newStatus);
         toast.success(`Status updated to "${newStatus}"`);
         refetch();
         return;
       }
-      if (event.ctrlKey && key === "d") {
+      if ((event.ctrlKey || event.metaKey) && key === "d") {
         if (selectedBooking?.status === "Deleted") {
           toast.error("Booking already deleted – Driver assignment disabled");
           return;
@@ -507,10 +479,7 @@ const BookingsTable = ({
     refetch,
     isAnyModalOpen,
     assignedDrivers,
-    selectedDeleteId,
   ]);
-
-  // Window focus effect
   useEffect(() => {
     function handleFocus() {
       if (isDriver) {
@@ -526,8 +495,6 @@ const BookingsTable = ({
       window.removeEventListener("focus", handleFocus);
     };
   }, [refetchBookings, refetchJobs, isDriver]);
-
-  // Document click effect
   useEffect(() => {
     function handleDocClick(e) {
       if (selectedActionRow == null) return;
@@ -542,8 +509,6 @@ const BookingsTable = ({
     document.addEventListener("mousedown", handleDocClick);
     return () => document.removeEventListener("mousedown", handleDocClick);
   }, [selectedActionRow, setSelectedActionRow]);
-
-  // Loading states
   if (!companyId) {
     return (
       <CustomTable
@@ -597,10 +562,6 @@ const BookingsTable = ({
         setEditBookingData={setEditBookingData}
         setShowEditModal={setShowEditModal}
         actionMenuItems={actionMenuItems}
-        setSelectedDeleteId={setSelectedDeleteId}
-        setShowDeleteModal={setShowDeleteModal}
-        showDeleteModal={showDeleteModal}
-        selectedDeleteId={selectedDeleteId}
         toast={toast}
         tooltip={tooltip}
         setTooltip={setTooltip}
@@ -615,29 +576,6 @@ const BookingsTable = ({
         moment={moment}
         timezone={timezone}
         emptyMessage="No bookings found..."
-      />
-
-      <DeleteModal
-        isOpen={showDeleteModal}
-        onConfirm={async () => {
-          try {
-            await updateBookingStatus({
-              id: selectedDeleteId,
-              status: "Deleted",
-              updatedBy: `${user.role} | ${user.fullName}`,
-            }).unwrap();
-            toast.success("Booking marked as Deleted");
-            setShowDeleteModal(false);
-            setSelectedDeleteId(null);
-            refetch();
-          } catch {
-            toast.error("Deletion failed");
-          }
-        }}
-        onCancel={() => {
-          setShowDeleteModal(false);
-          setSelectedDeleteId(null);
-        }}
       />
 
       {tooltip.show && (

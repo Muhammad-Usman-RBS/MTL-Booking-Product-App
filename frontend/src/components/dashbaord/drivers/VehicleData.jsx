@@ -184,7 +184,6 @@ const VehicleData = ({
         </div>
       </div>
 
-      {/* Vehicle Types */}
       <div className="mt-6">
         <label className="block font-semibold mb-2">
           Vehicle Types <span className="text-red-500">*</span>

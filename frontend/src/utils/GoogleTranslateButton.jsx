@@ -2,6 +2,10 @@ import React, { useEffect } from "react";
 
 const GoogleTranslateButton = () => {
   useEffect(() => {
+    const existingScript = document.querySelector(
+      'script[src*="translate.google.com"]'
+    );
+    if (existingScript) return;
     const addGoogleTranslateScript = () => {
       const script = document.createElement("script");
       script.src =

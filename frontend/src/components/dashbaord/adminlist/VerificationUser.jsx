@@ -58,6 +58,25 @@ const VerificationUser = () => {
       const res = await verifyUserOtp({ transactionId, otp }).unwrap();
       toast.success("User has been verified successfully.");
       const role = res?.user?.role;
+      console.log("user", res?.user)
+      const userEmail = res?.user?.email;
+  
+      const sendGoogleInvite = params.get("sendGoogleInvite") === "true";
+      
+      if (sendGoogleInvite && role === "clientadmin" && userEmail) {
+        try {
+          await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/google/send-google-auth-link`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: userEmail, role })
+          });
+          toast.success("Google Calendar invitation sent!");
+        } catch (err) {
+          console.error("Failed to send Google auth link:", err);
+          toast.warn("User created, but Google Calendar link failed to send.");
+        }
+      }
+  
       if (role === "clientadmin" || role === "associateadmin") {
         navigate("/dashboard/company-accounts/list");
       } else {

@@ -76,7 +76,6 @@ const NewDriver = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Run all validations
     const { errors: driverErrors, isValid: isDriverValid } = validateDriver(
       formData,
       { isEdit }
@@ -294,7 +293,6 @@ const NewDriver = () => {
           </div>
         </div>
 
-        {/* DRIVER SECTION */}
         <DriverData
           user={user}
           handleAddAvailability={handleAddAvailability}
