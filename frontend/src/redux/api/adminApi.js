@@ -61,7 +61,22 @@ export const adminApi = apiSlice.injectEndpoints({
       query: () => ({ url: "/get-all-drivers", method: "GET" }),
       providesTags: ["Drivers"],
     }),
-
+    // ===== Staff Members =====
+    adminGetAllStaffmembers: builder.query({
+      query: () => ({ url: "/get-all-staffmembers", method: "GET" }),
+      providesTags: ["Staffmembers"],
+    }),
+ // ===== Associate Admins =====
+    adminGetAllAssociateAdmins: builder.query({
+      query: () => ({ url: "/get-all-associateadmins", method: "GET" }),
+      providesTags: ["Staffmembers"],
+    }),
+     // ===== Demos =====
+    adminGetAllDemos: builder.query({
+      query: () => ({ url: "/get-all-demos", method: "GET" }),
+      providesTags: ["Staffmembers"],
+    }),
+    
     // ===== CUSTOMERS =====
     getAllCustomers: builder.query({
       query: () => ({ url: "/get-all-customers", method: "GET" }),
@@ -113,6 +128,12 @@ export const {
 
   // Drivers
   useAdminGetAllDriversQuery,
+  // Staff Members
+  useAdminGetAllStaffmembersQuery,
+  // Associate Admins
+  useAdminGetAllAssociateAdminsQuery,
+  // Demos
+  useAdminGetAllDemosQuery,
 
   // Customers
   useGetAllCustomersQuery,

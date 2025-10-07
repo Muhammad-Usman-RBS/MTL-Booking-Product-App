@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
-import { useGetAllUsersQuery } from "../../../redux/api/adminApi";
+import { useGetAllCustomersQuery, useAdminGetAllDriversQuery, useAdminGetAllStaffmembersQuery, useGetAllUsersQuery, useAdminGetAllAssociateAdminsQuery, useAdminGetAllDemosQuery } from "../../../redux/api/adminApi";
 import {
   useGetAllBookingsQuery,
   useGetAllBookingsForSuperadminQuery, 
@@ -25,8 +25,22 @@ const RoleCards = () => {
   const { data: AllBookingsResponse } = useGetAllBookingsQuery(user?.companyId, {
     skip: !user?.companyId || user?.role?.toLowerCase() === "superadmin",
   });
+  const { data: AllDriversData } = useAdminGetAllDriversQuery({
+    skip: user?.role?.toLowerCase() !== "superadmin",
+  });
+  const { data: AllAssociateAdminsData } = useAdminGetAllAssociateAdminsQuery({
+    skip: user?.role?.toLowerCase() !== "superadmin",
+  });
+  const { data: AllDemosData } = useAdminGetAllDemosQuery({
+    skip: user?.role?.toLowerCase() !== "superadmin",
+  });
+  const { data: AllStaffmembersData } = useAdminGetAllStaffmembersQuery({
+    skip: user?.role?.toLowerCase() !== "superadmin",
+  });
+  const { data: AllCustomersData } = useGetAllCustomersQuery({
+    skip: user?.role?.toLowerCase() !== "superadmin",
+  });
 
-  // Superadmin - fetch ALL company bookings
   const { data: SuperadminBookingsResponse } = useGetAllBookingsForSuperadminQuery(
     { page: 1, limit: 1000, search: "" },
     { skip: user?.role?.toLowerCase() !== "superadmin" }
@@ -53,6 +67,8 @@ const RoleCards = () => {
 
   const filteredDriver =
     driverRoles?.filter((u) => u?.companyId === user?.companyId) ?? [];
+  const filteredCustomers =
+    customerRoles?.filter((u) => u?.companyId === user?.companyId) ?? [];
   const filteredAssociateAdmin =
     associateAdminRoles?.filter((u) => u?.companyId === user?.companyId) ?? [];
   const filteredStaffMembers =
@@ -93,12 +109,12 @@ const RoleCards = () => {
   const cardData = useMemo(
     () => [
       { title: "Total Bookings", value: AllBookings?.length || 0, icon: "📑" },
-      { title: "Total Customers", value: customerRoles?.length || 0, icon: "👥" },
-      { title: "Total Drivers", value: filteredDriver?.length || 0, icon: "🚖" },
-      { title: "Total Staff Members", value: filteredStaffMembers?.length || 0, icon: "🛠️" },
-      { title: "Total Associate Admins", value: filteredAssociateAdmin?.length || 0, icon: "📊" },
+      { title: "Total Customers", value: user?.role === "superadmin" ? AllCustomersData?.count :  filteredCustomers?.length || 0, icon: "👥" },
+      { title: "Total Drivers", value: user?.role === "superadmin" ? AllDriversData?.count : filteredDriver?.length || 0, icon: "🚖" },
+      { title: "Total Staff Members", value: user?.role === "superadmin" ? AllStaffmembersData?.count : filteredStaffMembers?.length || 0, icon: "🛠️" },
+      { title: "Total Associate Admins", value: user?.role === "superadmin" ? AllAssociateAdminsData?.count : filteredAssociateAdmin?.length || 0, icon: "📊" },
       { title: "Total Client Admins", value: filteredClientAdmin?.length || 0, icon: "🏢" },
-      { title: "Total Demos", value: demoRoles?.length || 0, icon: "🧪" },
+      { title: "Total Demos", value: user?.role === "superadmin" ? AllDemosData?.count : demoRoles?.length || 0, icon: "🧪" },
       { title: "Total Earnings", value: totalDriverEarnings, icon: "💰" },
       { title: "Total Rides", value: totalDriverRides, icon: "🛣️" },
     ],
@@ -154,8 +170,7 @@ const RoleCards = () => {
 
   return (
     <section className="w-full">
-      <div className="mx-auto max-w-screen-2xl">
-        {/* Cards */}
+      <div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 md:gap-5">
           {(isFetching
             ? Array.from({ length: 5 }).map((_, i) => ({
@@ -192,7 +207,6 @@ const RoleCards = () => {
           )}
         </div>
 
-        {/* Earnings Graph for Drivers */}
         {user?.role?.toLowerCase()?.includes("driver") && (
           <div className="mt-10 rounded-xl bg-theme p-5 shadow-lg">
             <h2 className="mb-4 text-lg font-bold text-theme">Monthly Earnings</h2>

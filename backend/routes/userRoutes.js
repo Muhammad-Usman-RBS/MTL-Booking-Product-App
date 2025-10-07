@@ -1,5 +1,5 @@
 import express from "express";
-import { createUserBySuperAdmin, getClientAdmins, updateUserBySuperAdmin, deleteUserBySuperAdmin, getAllUsers, getAllDrivers, getAllCustomers, createCustomerViaWidget, getAssociateAdmins, initiateUserVerification, verifyUserOtpAndCreate, resendUserOtp, updateBookingFilterPreferences, getBookingFilterPreferences } from "../controllers/userController.js";
+import { createUserBySuperAdmin, getClientAdmins, updateUserBySuperAdmin, deleteUserBySuperAdmin, getAllUsers, getAllDrivers, getAllCustomers, createCustomerViaWidget, getAssociateAdmins, initiateUserVerification, verifyUserOtpAndCreate, resendUserOtp, updateBookingFilterPreferences, getBookingFilterPreferences, getAllStaffmembers, getAllAssociateAdmins, getAllDemos } from "../controllers/userController.js";
 import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -34,6 +34,23 @@ router.delete("/create-clientadmin/:id", protect, authorize("superadmin", "clien
 // Get all drivers (role=driver, not Deleted) — roles: superadmin|clientadmin|associateadmin
 router.get("/get-all-drivers", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllDrivers);
 
+// Get all Staffmembers (role=staffmember, not Deleted) — roles: superadmin|clientadmin|associateadmin
+router.get("/get-all-staffmembers", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllStaffmembers);
+
+// Fetch all associateadmins
+router.get("/get-all-associateadmins", 
+    protect, 
+    authorize("superadmin", "clientadmin", "associateadmin"), 
+    getAllAssociateAdmins
+  );
+  
+  // Fetch all demo users
+  router.get("/get-all-demos", 
+    protect, 
+    authorize("superadmin", "clientadmin", "associateadmin"), 
+    getAllDemos
+  );
+  
 // Get all customers (role=customer, not Deleted) — roles: superadmin|clientadmin|associateadmin
 router.get("/get-all-customers", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllCustomers);
 
