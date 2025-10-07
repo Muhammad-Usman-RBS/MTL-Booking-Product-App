@@ -52,6 +52,7 @@ router.post("/logout", (req, res) => {
   //     secure: process.env.NODE_ENV === "production",
   //     sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
   // });
+  
   // CORRECT:
   res.clearCookie("access_token", {
     httpOnly: true,
