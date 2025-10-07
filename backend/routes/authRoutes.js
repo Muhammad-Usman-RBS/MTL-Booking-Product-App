@@ -52,17 +52,17 @@ router.post("/logout", (req, res) => {
   //     secure: process.env.NODE_ENV === "production",
   //     sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
   // });
-  // ✅ CORRECT:
+  // CORRECT:
   res.clearCookie("access_token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ⭐ Change to "none"
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   });
 
   res.clearCookie("refresh_token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ⭐ Change to "none"
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   });
   res.json({ message: "Logged out successfully" });
 });

@@ -43,9 +43,8 @@ const generateHtmlTable = (title, subtitle, raw) => {
         if (rowCount > MAX_ROWS) return "";
         if (item && typeof item === "object" && !Array.isArray(item)) {
           rowCount++;
-          const header = `<tr><td colspan="2"><strong>${escapeHtml(keyPath)} [${
-            idx + 1
-          }]</strong></td></tr>`;
+          const header = `<tr><td colspan="2"><strong>${escapeHtml(keyPath)} [${idx + 1
+            }]</strong></td></tr>`;
           return header + renderRows(item, `${keyPath}[${idx}]`, depth + 1);
         }
         rowCount++;
@@ -116,13 +115,12 @@ const generateHtmlTable = (title, subtitle, raw) => {
     <head><meta charset="utf-8"></head>
     <body style="font-family:Arial,sans-serif;line-height:1.5;margin:0;padding:16px;background:#ffffff;color:#111">
       <h2 style="margin:0 0 6px">${escapeHtml(safeTitle)}</h2>
-      ${
+      ${safeSubtitle
+      ? `<p style="margin:0 0 12px;color:#555">${escapeHtml(
         safeSubtitle
-          ? `<p style="margin:0 0 12px;color:#555">${escapeHtml(
-              safeSubtitle
-            )}</p>`
-          : ""
-      }
+      )}</p>`
+      : ""
+    }
       <table cellpadding="8" border="1" style="border-collapse:collapse;font-size:14px;border-color:#e5e5e5;min-width:320px">
         ${rows || `<tr><td>No details provided.</td></tr>`}
       </table>
@@ -153,12 +151,18 @@ const sendEmail = async (to, subject, payload = {}) => {
 
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_PASS },
+    port: 587, 
+    secure: false, 
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_PASS
+    },
     tls: {
       rejectUnauthorized: false,
     },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
   });
 
   const finalHtml = html
