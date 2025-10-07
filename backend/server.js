@@ -39,7 +39,7 @@ await connectDB();
 // allowedOrigins must be declared BEFORE CORS
 const allowedOrigins = process.env.BASE_URL_FRONTEND
   ? process.env.BASE_URL_FRONTEND.split(",").map((s) => s.trim())
-  : ["http://localhost:5173", "http://localhost:3000"];
+  : ["http://localhost:5173", "http://localhost:3000", "https://mtl-booking-product-app.netlify.app"];
 
 const systemTZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 process.env.CRON_TIMEZONE = systemTZ;
