@@ -1,7 +1,7 @@
 import express from 'express';
 import { login, updateProfile, sendOtpToEmail, resetPasswordWithOtp, getSuperadminInfo, refreshToken } from '../controllers/authController.js';
 
-import { protect } from '../middleware/authMiddleware.js';
+import { authorize, protect } from '../middleware/authMiddleware.js';
 import { getUploader } from '../middleware/cloudinaryUpload.js';
 
 const router = express.Router();
@@ -17,7 +17,7 @@ router.post('/new-password', resetPasswordWithOtp);
 router.post("/refresh", refreshToken);
 
 // Get Current User
-router.get("/me", protect, (req, res) => {
+router.get("/me", protect, authorize("superadmin", "clientadmin", "customer", "driver"), (req, res) => {
   const u = req.user;
   if (!u) {
     return res.status(401).json({ message: "Not authorized" });
