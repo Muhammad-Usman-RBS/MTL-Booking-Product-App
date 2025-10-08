@@ -14,8 +14,6 @@ const initiateOtpFlow = async (user) => {
   const otp = genOtp(); // generate OTP
   const otpHash = await bcrypt.hash(otp, 10);
   const otpExpiresAt = new Date(Date.now() + 2 * 60 * 1000); // OTP valid for 2 minutes
-
-  // Update the user with OTP details
   await User.findByIdAndUpdate(user._id, {
     $set: {
       "verification.otpHash": otpHash,
@@ -36,7 +34,6 @@ export const genOtp = () => {
   return otp.toString();
 };
 // Verify OTP
-// Verify OTP
 export const verifyOtp = async (req, res) => {
   const { userId, otp } = req.body;
   try {
@@ -50,11 +47,9 @@ export const verifyOtp = async (req, res) => {
     }
 
     if (user.verification.attempts >= 5) {
-      return res
-        .status(429)
-        .json({
-          message: "Too many incorrect attempts. Please try again later.",
-        });
+      return res.status(429).json({
+        message: "Too many incorrect attempts. Please try again later.",
+      });
     }
 
     if (new Date() > user.verification.otpExpiresAt) {
@@ -122,8 +117,8 @@ export const verifyOtp = async (req, res) => {
     });
 
     // ✅ Return complete user data
-    return res.status(200).json({ 
-      message: "Logged in successfully!", 
+    return res.status(200).json({
+      message: "Logged in successfully!",
       user: {
         _id: user._id,
         email: user.email,
@@ -134,7 +129,7 @@ export const verifyOtp = async (req, res) => {
         companyId: user.companyId || null,
         employeeNumber: user.employeeNumber,
         vatnumber: user.vatnumber || null,
-      }
+      },
     });
   } catch (error) {
     console.error("verifyOtp error:", error);
@@ -143,7 +138,71 @@ export const verifyOtp = async (req, res) => {
       .json({ message: "Server error during OTP verification" });
   }
 };
+// Resend OTP
+export const resendLoginOtp = async (req, res) => {
+  const { userId } = req.body;
 
+  try {
+    // Find the user
+    const user = await User.findById(userId).select("+password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Check if user is already active (no OTP needed)
+    if (user.status === "Active" && !user.verification) {
+      return res.status(400).json({
+        message: "User is already verified. No OTP needed.",
+      });
+    }
+
+    // Check if too many resend attempts (optional rate limiting)
+    if (user.verification && user.verification.attempts >= 5) {
+      return res.status(429).json({
+        message: "Too many attempts. Please try again later.",
+      });
+    }
+
+    // Generate new OTP
+    const otp = genOtp();
+    const otpHash = await bcrypt.hash(otp, 10);
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Update verification data
+    user.verification = {
+      otpHash,
+      otpExpiresAt,
+      attempts: 0, // Reset attempts on resend
+    };
+
+    await user.save();
+
+    // Send OTP email
+    try {
+      await sendEmail(user.email, "Your OTP Code", {
+        title: "Verify Your Account",
+        subtitle: "Use this OTP to verify your login:",
+        data: { "One-Time Password": otp, "Expires In": "2 minutes" },
+      });
+    } catch (emailError) {
+      console.error("Failed to send OTP email:", emailError);
+      return res.status(500).json({
+        message: "Failed to send OTP email. Please try again later.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "OTP has been resent to your email.",
+      userId: user._id,
+    });
+  } catch (error) {
+    console.error("resendOtp error:", error);
+    return res.status(500).json({
+      message: "Server error while resending OTP.",
+    });
+  }
+};
 // Login Controller
 export const login = async (req, res) => {
   const { email, password } = req.body;
@@ -176,12 +235,12 @@ export const login = async (req, res) => {
     // ✅ If NOT superadmin, require OTP verification
     if (user?.role !== "superadmin") {
       await initiateOtpFlow(user);
-      
+
       // ✅ Return early with OTP requirement flag
       return res.status(200).json({
         requiresOtp: true,
         userId: user._id,
-        message: "OTP sent to your email. Please verify to continue."
+        message: "OTP sent to your email. Please verify to continue.",
       });
     }
 

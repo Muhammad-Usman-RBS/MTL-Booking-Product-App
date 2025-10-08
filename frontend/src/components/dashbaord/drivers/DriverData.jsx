@@ -1,6 +1,7 @@
 import React from "react";
 import FilePreview from "../../../constants/constantscomponents/FilePreview";
 import Icons from "../../../assets/icons";
+import PhoneInput from "react-phone-input-2";
 
 const DriverData = ({
   user,
@@ -24,10 +25,11 @@ const DriverData = ({
               value={formData.employeeNumber}
               onChange={handleInputChange}
               readOnly={user?.role === "driver"}
-              className={`custom_input ${user?.role === "driver"
+              className={`custom_input ${
+                user?.role === "driver"
                   ? "bg-gray-100 cursor-not-allowed opacity-70"
                   : ""
-                }`}
+              }`}
             />
           </div>
 
@@ -63,23 +65,28 @@ const DriverData = ({
               value={formData.email}
               onChange={handleInputChange}
               readOnly={user?.role === "driver"}
-              className={`custom_input ${user?.role === "driver"
+              className={`custom_input ${
+                user?.role === "driver"
                   ? "bg-gray-100 cursor-not-allowed opacity-70"
                   : ""
-                }`}
+              }`}
             />
           </div>
 
-          <div>
-            <label className="block mb-1 text-sm font-medium">
+          <div className="w-full">
+            <label className="mb-1 block text-sm font-medium">
               Contact <span className="text-red-500">*</span>
             </label>
-            <input
-              type="tel"
-              className="custom_input"
-              name="contact"
+            <PhoneInput
+              country={"us"}
               value={formData.contact}
-              onChange={handleInputChange}
+              onChange={(value) =>
+                handleInputChange({ target: { name: "contact", value } })
+              }
+              containerClass="w-full"
+              inputClass="!w-full"
+              buttonClass="!border-gray-300"
+              disableDropdown={false}
             />
           </div>
 
@@ -91,10 +98,11 @@ const DriverData = ({
               id="status"
               name="status"
               disabled={user?.role === "driver"}
-              className={`custom_input ${user?.role === "driver"
+              className={`custom_input ${
+                user?.role === "driver"
                   ? "bg-gray-100 cursor-not-allowed opacity-70"
                   : ""
-                }`}
+              }`}
               value={formData.status}
               onChange={handleInputChange}
             >
@@ -142,7 +150,9 @@ const DriverData = ({
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm font-medium">Driver Private Hire Card No.</label>
+            <label className="block mb-1 text-sm font-medium">
+              Driver Private Hire Card No.
+            </label>
             <input
               className="custom_input"
               name="privateHireCardNo"
@@ -151,7 +161,9 @@ const DriverData = ({
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm font-medium">Driver Private Hire License Expiry</label>
+            <label className="block mb-1 text-sm font-medium">
+              Driver Private Hire License Expiry
+            </label>
             <input
               type="date"
               className="custom_input"

@@ -1,5 +1,5 @@
 import express from 'express';
-import { login, updateProfile, sendOtpToEmail, resetPasswordWithOtp, getSuperadminInfo, refreshToken, verifyOtp } from '../controllers/authController.js';
+import { login, updateProfile, sendOtpToEmail, resetPasswordWithOtp, getSuperadminInfo, refreshToken, verifyOtp, resendLoginOtp } from '../controllers/authController.js';
 
 import { authorize, protect } from '../middleware/authMiddleware.js';
 import { getUploader } from '../middleware/cloudinaryUpload.js';
@@ -10,6 +10,7 @@ const userUploader = getUploader('user');
 // AUTH ROUTES
 router.post('/login', login);
 router.post('/verify-otp', verifyOtp);
+router.post('/resend-otp', resendLoginOtp);
 
 
 router.get('/superadmin-info', getSuperadminInfo);

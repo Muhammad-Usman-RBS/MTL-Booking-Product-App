@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { useGetCompanyByIdQuery } from "../../../redux/api/companyApi";
 import OutletHeading from "../../../constants/constantscomponents/OutletHeading";
 import { useLoading } from "../../common/LoadingProvider";
+import { formatPhoneNumber } from "../../../utils/formatPhoneNumber";
 
 const ViewCompany = () => {
     const user = useSelector((state) => state.auth.user);
@@ -27,7 +28,7 @@ const ViewCompany = () => {
     const fields = [
         { label: "Full Name", value: company.fullName },
         { label: "Trading Name", value: company.tradingName },
-        { label: "Phone", value: company.contact ? `+${company.contact}` : null },
+        { label: "Phone", value: company.contact ? `${formatPhoneNumber(company.contact)}` : null },
         { label: "Licensed By", value: company.licensedBy },
         { label: "License Number", value: company.licenseNumber },
         { label: "Website", value: company.website },

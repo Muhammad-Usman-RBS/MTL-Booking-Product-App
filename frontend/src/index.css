@@ -404,6 +404,7 @@ select:disabled {
 
 .custom_input::placeholder {
   font-size: 15px;
+  color: rgb(194, 192, 192);
 }
 
 /* FOR GOOGLE TRANSLATE */

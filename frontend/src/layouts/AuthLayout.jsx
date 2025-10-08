@@ -17,6 +17,7 @@ const AuthLayout = () => {
 
   let title = "Welcome";
   if (location.pathname === "/login") title = "Dashboard Login";
+  if (location.pathname === "/verify-otp") title = "Verify OTP";
   else if (location.pathname === "/forgot-password") title = "Forgot Password";
   else if (location.pathname === "/new-password") title = "Reset Password";
 

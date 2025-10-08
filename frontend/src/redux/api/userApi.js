@@ -21,6 +21,13 @@ export const userApi = apiSlice.injectEndpoints({
         body: { userId, otp }, 
       }),
     }),
+    resendLoginOtp: builder.mutation({
+      query: ({ userId }) => ({
+        url: "/auth/resend-otp",
+        method: "POST",
+        body: { userId }, 
+      }),
+    }),
     // 📧 Forgot Password (OTP Send)
     sendForgotPasswordOtp: builder.mutation({
       query: (email) => ({
@@ -90,4 +97,5 @@ export const {
   useGetCurrentUserQuery,
   useLogoutUserMutation,
   useVerifyLoginOtpMutation,
+  useResendLoginOtpMutation,
 } = userApi;

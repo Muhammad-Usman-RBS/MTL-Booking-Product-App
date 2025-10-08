@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import AuthLayout from "./layouts/AuthLayout";
 import Login from "./pages/auth/Login";
+import VerificationLogin from "./pages/auth/VerificationLogin";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -75,7 +76,6 @@ import { setCurrency } from "./redux/slices/currencySlice";
 
 // Socket Io
 import useNotificationsRealtime from "./utils/useNotificationsRealtime";
-import VerifyLogin from "./components/dashbaord/adminlist/VerifyLogin";
 
 function App() {
   // Hook call, socket events attach honge
@@ -103,7 +103,7 @@ function App() {
         {/* Auth Pages */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
-          <Route path="/verify-otp" element={<VerifyLogin />} />
+          <Route path="/verify-otp" element={<VerificationLogin />} />
 
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/new-password" element={<ResetPassword />} />

@@ -16,6 +16,7 @@ import SelectedSearch from "../../../constants/constantscomponents/SelectedSearc
 import { useNavigate } from "react-router-dom";
 import ConfirmModal from "../../../constants/constantscomponents/ConfirmModal";
 import { useLoading } from "../../../components/common/LoadingProvider";
+import { formatPhoneNumber } from "../../../utils/formatPhoneNumber";
 
 const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
   const user = useSelector((state) => state.auth.user);
@@ -727,7 +728,8 @@ const DriverPortalHome = ({ propJob, setIsBookingModalOpen }) => {
                             <strong className="text-[var(--dark-gray)]">
                               Contact:&nbsp;
                             </strong>
-                            +{booking?.passenger?.phone || "N/A"}
+                            {formatPhoneNumber(booking?.passenger?.phone) ||
+                              "N/A"}
                           </div>
                           <div>
                             <strong className="text-[var(--dark-gray)]">

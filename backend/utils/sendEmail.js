@@ -149,33 +149,24 @@ const sendEmail = async (to, subject, payload = {}) => {
     return;
   }
 
-  // const transporter = nodemailer.createTransport({
-  //   service: 'gmail',
-  //   host: "smtp.gmail.com",
-  //   port: 587,
-  //   secure: false,
-  //   auth: {
-  //     user: process.env.GMAIL_USER,
-  //     pass: process.env.GMAIL_PASS
-  //   },
-  //   tls: {
-  //     rejectUnauthorized: false,
-  //     ciphers: 'SSLv3'
-  //   },
-  //   connectionTimeout: 10000,
-  //   greetingTimeout: 10000,
-  //   socketTimeout: 10000,
-  // });
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_PASS
+    },
+    tls: {
+      rejectUnauthorized: false,
+      ciphers: 'SSLv3'
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
+  });
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
-  port: 465,
-  secure: true, // Use SSL
-  auth: { 
-    user: process.env.BREVO_SENDER_EMAIL,
-    pass: process.env.BREVO_API_KEY,
-  },
-});
   const finalHtml = html
     ? html.startsWith("<")
       ? html

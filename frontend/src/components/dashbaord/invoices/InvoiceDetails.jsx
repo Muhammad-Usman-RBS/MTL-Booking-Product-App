@@ -13,6 +13,7 @@ import {
 } from "../../../redux/api/invoiceApi";
 import InvoiceEmailModal from "./InvoiceEmailModal";
 import { Link } from "react-router-dom";
+import { formatPhoneNumber } from "../../../utils/formatPhoneNumber";
 
 const InvoiceDetails = ({ item, createBtn }) => {
   const user = useSelector((state) => state.auth.user);
@@ -378,7 +379,7 @@ ${company?.zip || ""}`}
                   >
                     Contact:
                   </p>
-                  <span style={{ fontSize: "12px" }}>+{company?.contact}</span>
+                  <span style={{ fontSize: "12px" }}>{formatPhoneNumber(company?.contact)}</span>
                 </div>
               </div>
             </div>
@@ -463,7 +464,7 @@ ${company?.zip || ""}`}
                     : item?.customer?.email}
                 </a>
                 <p style={{ margin: "4px 0", fontSize: "13px", color: "#444" }}>
-                  +
+                  
                   {invoiceType === "driver"
                     ? item?.driver?.phone
                     : item?.customer?.phone}
