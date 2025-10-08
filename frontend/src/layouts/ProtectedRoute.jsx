@@ -21,12 +21,14 @@ const ProtectedRoute = () => {
       hideLoading();
     }
   }, [isLoading, showLoading, hideLoading]);
+
   useEffect(() => {
     if (currentUser) {
       dispatch(setUser(currentUser));
     }
   }, [currentUser, dispatch]);
-
+  if (isLoading) return null;
+  
   if (isError || !currentUser) return <Navigate to="/login" replace />;
 
   const userPermissions = currentUser.permissions || [];

@@ -43,8 +43,9 @@ const generateHtmlTable = (title, subtitle, raw) => {
         if (rowCount > MAX_ROWS) return "";
         if (item && typeof item === "object" && !Array.isArray(item)) {
           rowCount++;
-          const header = `<tr><td colspan="2"><strong>${escapeHtml(keyPath)} [${idx + 1
-            }]</strong></td></tr>`;
+          const header = `<tr><td colspan="2"><strong>${escapeHtml(keyPath)} [${
+            idx + 1
+          }]</strong></td></tr>`;
           return header + renderRows(item, `${keyPath}[${idx}]`, depth + 1);
         }
         rowCount++;
@@ -115,12 +116,13 @@ const generateHtmlTable = (title, subtitle, raw) => {
     <head><meta charset="utf-8"></head>
     <body style="font-family:Arial,sans-serif;line-height:1.5;margin:0;padding:16px;background:#ffffff;color:#111">
       <h2 style="margin:0 0 6px">${escapeHtml(safeTitle)}</h2>
-      ${safeSubtitle
-      ? `<p style="margin:0 0 12px;color:#555">${escapeHtml(
+      ${
         safeSubtitle
-      )}</p>`
-      : ""
-    }
+          ? `<p style="margin:0 0 12px;color:#555">${escapeHtml(
+              safeSubtitle
+            )}</p>`
+          : ""
+      }
       <table cellpadding="8" border="1" style="border-collapse:collapse;font-size:14px;border-color:#e5e5e5;min-width:320px">
         ${rows || `<tr><td>No details provided.</td></tr>`}
       </table>
@@ -150,17 +152,17 @@ const sendEmail = async (to, subject, payload = {}) => {
   }
 
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    service: "gmail",
     host: "smtp.gmail.com",
     port: 587,
     secure: false,
     auth: {
       user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_PASS
+      pass: process.env.GMAIL_PASS,
     },
     tls: {
       rejectUnauthorized: false,
-      ciphers: 'SSLv3'
+      ciphers: "SSLv3",
     },
     connectionTimeout: 10000,
     greetingTimeout: 10000,
@@ -176,13 +178,33 @@ const sendEmail = async (to, subject, payload = {}) => {
   const textAlt = renderTextFallback(subject, title || subject, subtitle, data);
 
   try {
-    const info = await transporter.sendMail({
-      from: `"MTL Booking" <${process.env.GMAIL_USER}>`,
-      to,
-      subject,
-      html: finalHtml,
-      text: textAlt,
+    //    const info = await transporter.sendMail({
+    //   from: `"MTL Booking" <${process.env.GMAIL_USER}>`,
+    //   to,
+    //   subject,
+    //   html: finalHtml,
+    //   text: textAlt,
+    // });
+    // console.log(`Email sent to: ${to}, MessageId: ${info.messageId}`);
+    const info = await new Promise((resolve, reject) => {
+      transporter.sendMail(
+        {
+          from: `"MTL Booking" <${process.env.GMAIL_USER}>`,
+          to,
+          subject,
+          html: finalHtml,
+          text: textAlt,
+        },
+        (err, info) => {
+          if (err) {
+            console.error("Error inside sendMail callback:", err);
+            return reject(err);
+          }
+          resolve(info);
+        }
+      );
     });
+
     console.log(`Email sent to: ${to}, MessageId: ${info.messageId}`);
   } catch (error) {
     console.error("Error sending email:", error.message);
