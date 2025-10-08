@@ -23,22 +23,29 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
+  
     if (!email || !password) {
       toast.error("Please enter both email and password.");
       return;
     }
-
+  
     try {
-      // 🧠 Call API → Cookie automatically set hogi (credentials: "include")
       const data = await loginUser({ email, password }).unwrap();
+      console.log("OTP navigation state:", { userId: data.userId, email });
 
-      // 🧠 Redux me user set karo (authSlice khud companyId ko localStorage me save karega)
+      // ✅ If OTP is required → stop further execution
+      if (data.requiresOtp) {
+        toast.info("OTP sent to your email. Please verify.");
+        navigate("/verify-otp", {
+          state: { userId: data.userId, email },
+        });
+        return; // ✅ Add this line
+      }
+  
+      // 🔐 OTP not required, log in directly
       dispatch(setUser(data));
-
       toast.success("Login successful!");
-
-      // 🔀 Role-based redirection
+  
       setTimeout(() => {
         switch (data.role) {
           case "superadmin":
@@ -55,6 +62,7 @@ const Login = () => {
       toast.error(msg);
     }
   };
+  
 
   return (
     <form onSubmit={handleLogin} className="space-y-5">

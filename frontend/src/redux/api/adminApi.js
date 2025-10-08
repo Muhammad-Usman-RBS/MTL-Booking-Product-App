@@ -110,9 +110,7 @@ export const adminApi = apiSlice.injectEndpoints({
 export const {
   // OTP
   useInitiateUserVerificationMutation,
-  useVerifyUserOtpMutation,
   useResendUserOtpMutation,
-
   // Client Admins
   useFetchClientAdminsQuery,
   useCreateClientAdminMutation,
@@ -136,6 +134,7 @@ export const {
   useAdminGetAllDemosQuery,
 
   // Customers
+  useVerifyUserOtpMutation,
   useGetAllCustomersQuery,
   useCreateCustomerViaWidgetMutation,
   useUpdateBookingPreferencesMutation,

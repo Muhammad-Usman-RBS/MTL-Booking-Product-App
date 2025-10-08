@@ -4,9 +4,145 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken"; // ⭐ ADD THIS IMPORT
 import User from "../models/User.js";
 import sendEmail from "../utils/sendEmail.js";
-import { generateAccessToken, generateRefreshToken } from "../utils/generateToken.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../utils/generateToken.js";
 
 dotenv.config();
+const initiateOtpFlow = async (user) => {
+  const otp = genOtp(); // generate OTP
+  const otpHash = await bcrypt.hash(otp, 10);
+  const otpExpiresAt = new Date(Date.now() + 2 * 60 * 1000); // OTP valid for 2 minutes
+
+  // Update the user with OTP details
+  await User.findByIdAndUpdate(user._id, {
+    $set: {
+      "verification.otpHash": otpHash,
+      "verification.otpExpiresAt": otpExpiresAt,
+      "verification.attempts": 0,
+    },
+  });
+
+  // Send OTP to user's email
+  await sendEmail(user.email, "Your OTP Code", {
+    title: "Verify Your Account",
+    subtitle: "Use this OTP to verify your login:",
+    data: { "One-Time Password": otp, "Expires In": "2 minutes" },
+  });
+};
+export const genOtp = () => {
+  const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+  return otp.toString();
+};
+// Verify OTP
+// Verify OTP
+export const verifyOtp = async (req, res) => {
+  const { userId, otp } = req.body;
+  try {
+    // Find the user
+    const user = await User.findById(userId).select("+password");
+
+    if (!user || !user.verification) {
+      return res
+        .status(400)
+        .json({ message: "No pending OTP verification for this user." });
+    }
+
+    if (user.verification.attempts >= 5) {
+      return res
+        .status(429)
+        .json({
+          message: "Too many incorrect attempts. Please try again later.",
+        });
+    }
+
+    if (new Date() > user.verification.otpExpiresAt) {
+      return res
+        .status(400)
+        .json({ message: "OTP expired. Please request a new OTP." });
+    }
+
+    const isOtpValid = await bcrypt.compare(otp, user.verification.otpHash);
+    if (!isOtpValid) {
+      user.verification.attempts += 1;
+      await user.save();
+      return res
+        .status(400)
+        .json({ message: "Invalid OTP. Please try again." });
+    }
+
+    // OTP valid: Complete login and clear OTP data
+    user.verification = undefined;
+    user.status = "Active";
+
+    // ✅ Add login history here (moved from login controller)
+    const forwarded = req.headers["x-forwarded-for"];
+    const rawIp = forwarded || req.socket.remoteAddress || "";
+    const ip = rawIp.includes("::ffff:") ? rawIp.split("::ffff:")[1] : rawIp;
+
+    // Geo IP Lookup
+    let location = "Unknown, Unknown";
+    try {
+      const { data: geo } = await axios.get(`http://ip-api.com/json/${ip}`);
+      if (geo?.status === "success") {
+        location = `${geo.city || "Unknown"}, ${geo.country || "Unknown"}`;
+      }
+    } catch (err) {
+      console.warn("Geo IP lookup failed:", err.message);
+    }
+
+    // Save login history
+    user.loginHistory.push({
+      loginAt: new Date(),
+      systemIpAddress: ip,
+      location,
+    });
+
+    await user.save();
+
+    // Send JWT token
+    const accessToken = generateAccessToken(
+      user._id,
+      user.role,
+      user.companyId
+    );
+    res.cookie("access_token", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    res.cookie("refresh_token", generateRefreshToken(user._id), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // ✅ Return complete user data
+    return res.status(200).json({ 
+      message: "Logged in successfully!", 
+      user: {
+        _id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+        permissions: user.permissions,
+        profileImage: user.profileImage || null,
+        companyId: user.companyId || null,
+        employeeNumber: user.employeeNumber,
+        vatnumber: user.vatnumber || null,
+      }
+    });
+  } catch (error) {
+    console.error("verifyOtp error:", error);
+    return res
+      .status(500)
+      .json({ message: "Server error during OTP verification" });
+  }
+};
 
 // Login Controller
 export const login = async (req, res) => {
@@ -19,21 +155,17 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
     if (user.role === "clientadmin" && !user.companyId) {
-      return res
-        .status(403)
-        .json({
-          message:
-            "Client Admin must have a company assigned. Please contact the administrator.",
-        });
+      return res.status(403).json({
+        message:
+          "Client Admin must have a company assigned. Please contact the administrator.",
+      });
     }
 
     // Check account status
     if (user.status !== "Active") {
-      return res
-        .status(403)
-        .json({
-          message: `Your account is ${user.status}. Please contact the administrator.`,
-        });
+      return res.status(403).json({
+        message: `Your account is ${user.status}. Please contact the administrator.`,
+      });
     }
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);
@@ -41,6 +173,19 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    // ✅ If NOT superadmin, require OTP verification
+    if (user?.role !== "superadmin") {
+      await initiateOtpFlow(user);
+      
+      // ✅ Return early with OTP requirement flag
+      return res.status(200).json({
+        requiresOtp: true,
+        userId: user._id,
+        message: "OTP sent to your email. Please verify to continue."
+      });
+    }
+
+    // ✅ Only for superadmin: proceed with full login flow
     // Get IP Address
     const forwarded = req.headers["x-forwarded-for"];
     const rawIp = forwarded || req.socket.remoteAddress || "";
@@ -66,36 +211,26 @@ export const login = async (req, res) => {
 
     await user.save();
 
-    // set JWT in HttpOnly cookie
-    // res.cookie('access_token', generateAccessToken(user._id, user.role, user.companyId), {
-    //   httpOnly: true,
-    //   secure: process.env.NODE_ENV === "production",
-    //   sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-    //   maxAge: 15 * 60 * 1000, // 15 mins
-    // });
-
-    // res.cookie("refresh_token", generateRefreshToken(user._id), {
-    //   httpOnly: true,
-    //   secure: process.env.NODE_ENV === "production",
-    //   sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-    //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    // });
-    // ✅ CORRECT:
-    res.cookie('access_token', generateAccessToken(user._id, user.role, user.companyId), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ⭐ Change "strict" to "none"
-      maxAge: 15 * 60 * 1000,
-    });
+    // Set JWT in HttpOnly cookie (only for superadmin)
+    res.cookie(
+      "access_token",
+      generateAccessToken(user._id, user.role, user.companyId),
+      {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        maxAge: 15 * 60 * 1000,
+      }
+    );
 
     res.cookie("refresh_token", generateRefreshToken(user._id), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ⭐ Change "strict" to "none"
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // Include companyId in the token
+    // Return user data (only for superadmin)
     res.json({
       _id: user._id,
       email: user.email,
@@ -259,12 +394,16 @@ export const refreshToken = async (req, res) => {
     if (!user) return res.status(401).json({ message: "User not found" });
 
     // Naya access token issue karo
-    res.cookie('access_token', generateAccessToken(user._id, user.role, user.companyId), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-      maxAge: 15 * 60 * 1000, // 15 minutes
-    });
+    res.cookie(
+      "access_token",
+      generateAccessToken(user._id, user.role, user.companyId),
+      {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+        maxAge: 15 * 60 * 1000, // 15 minutes
+      }
+    );
 
     return res.json({ message: "Access token refreshed" });
   } catch (err) {

@@ -75,6 +75,7 @@ import { setCurrency } from "./redux/slices/currencySlice";
 
 // Socket Io
 import useNotificationsRealtime from "./utils/useNotificationsRealtime";
+import VerifyLogin from "./components/dashbaord/adminlist/VerifyLogin";
 
 function App() {
   // Hook call, socket events attach honge
@@ -102,6 +103,8 @@ function App() {
         {/* Auth Pages */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
+          <Route path="/verify-otp" element={<VerifyLogin />} />
+
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/new-password" element={<ResetPassword />} />
         </Route>

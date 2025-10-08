@@ -13,7 +13,14 @@ export const userApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["User"],
     }),
-
+    // NEW: Verify login OTP for 2FA
+    verifyLoginOtp: builder.mutation({
+      query: ({ userId, otp }) => ({
+        url: "/auth/verify-otp",
+        method: "POST",
+        body: { userId, otp }, 
+      }),
+    }),
     // 📧 Forgot Password (OTP Send)
     sendForgotPasswordOtp: builder.mutation({
       query: (email) => ({
@@ -82,4 +89,5 @@ export const {
   useGetSuperadminInfoQuery,
   useGetCurrentUserQuery,
   useLogoutUserMutation,
+  useVerifyLoginOtpMutation,
 } = userApi;

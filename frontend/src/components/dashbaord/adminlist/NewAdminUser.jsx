@@ -7,7 +7,6 @@ import OutletBtnHeading from "../../../constants/constantscomponents/OutletBtnHe
 
 import { validateUserAccount } from "../../../utils/validation/validators";
 import { useGetAllDriversQuery } from "../../../redux/api/driverApi";
-import { useSendGoogleAuthLinkMutation } from "../../../redux/api/googleApi";
 import { useGetCorporateCustomersQuery } from "../../../redux/api/corporateCustomerApi";
 import {
   useCreateClientAdminMutation,
@@ -27,7 +26,6 @@ const NewAdminUser = () => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const { showLoading, hideLoading } = useLoading();
-  const [sendGoogleAuthLink] = useSendGoogleAuthLinkMutation();
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [sendCalendarInvite, setSendCalendarInvite] = useState(false);
 
