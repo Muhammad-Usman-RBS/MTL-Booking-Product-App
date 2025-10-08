@@ -162,7 +162,7 @@ const sendEmail = async (to, subject, payload = {}) => {
     },
     tls: {
       rejectUnauthorized: false,
-      ciphers: "SSLv3",
+      // ciphers: "SSLv3",
     },
     connectionTimeout: 10000,
     greetingTimeout: 10000,
