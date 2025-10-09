@@ -339,38 +339,63 @@ const PrimaryForm = ({
       </div>
 
       {pickupType === "location" && !formData.pickup?.toLowerCase().includes("airport") && (
-        <input
-          name="pickupDoorNumber"
-          placeholder="Pickup Door No."
-          className="custom_input"
-          value={formData.pickupDoorNumber}
-          onChange={handleChange}
-        />
+        <div className="mb-6 animate-slideDown">
+          <label className="block text-sm font-medium mb-2 text-gray-700">
+            Door Number / Building Details
+          </label>
+          <input
+            name="pickupDoorNumber"
+            placeholder="e.g., Building A, Floor 3, Apt 205"
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 outline-none"
+            value={formData.pickupDoorNumber}
+            onChange={handleChange}
+          />
+        </div>
       )}
 
       {(pickupType === "airport" || formData.pickup?.toLowerCase().includes("airport")) && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <input
-            name="arrivefrom"
-            placeholder="Arriving From"
-            value={formData.arrivefrom}
-            onChange={handleChange}
-            className="custom_input"
-          />
-          <input
-            name="pickmeAfter"
-            placeholder="Pick Me After"
-            value={formData.pickmeAfter}
-            onChange={handleChange}
-            className="custom_input"
-          />
-          <input
-            name="flightNumber"
-            placeholder="Flight No."
-            value={formData.flightNumber}
-            onChange={handleChange}
-            className="custom_input"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 animate-slideDown">
+          {/* Arriving From */}
+          <div className="flex flex-col">
+            <label className="block text-sm font-medium mb-2 text-gray-700">
+              Arriving From
+            </label>
+            <input
+              name="arrivefrom"
+              placeholder="City/Country"
+              value={formData.arrivefrom}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 outline-none"
+            />
+          </div>
+
+          {/* Pick Me After */}
+          <div className="flex flex-col">
+            <label className="block text-sm font-medium mb-2 text-gray-700">
+              Pick Me After
+            </label>
+            <input
+              name="pickmeAfter"
+              placeholder="Time (e.g., 2:30 PM)"
+              value={formData.pickmeAfter}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 outline-none"
+            />
+          </div>
+
+          {/* Flight Number */}
+          <div className="flex flex-col">
+            <label className="block text-sm font-medium mb-2 text-gray-700">
+              Flight Number
+            </label>
+            <input
+              name="flightNumber"
+              placeholder="e.g., AA123"
+              value={formData.flightNumber}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 outline-none"
+            />
+          </div>
         </div>
       )}
 

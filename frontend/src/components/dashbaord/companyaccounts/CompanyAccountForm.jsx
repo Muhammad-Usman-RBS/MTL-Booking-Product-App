@@ -103,7 +103,7 @@ const CompanyAccountForm = ({
 
                 <div>
                     <label className="block mb-1 font-medium">
-                        {isClientAdmin ? "Assign to Associate Admin" : "Assign to Client Admin"}
+                        {isClientAdmin ? "Assign to Associate Admin" : "Assign to  Admin"}
                         {!isEdit && <Req />}
                     </label>
                     <SelectOption

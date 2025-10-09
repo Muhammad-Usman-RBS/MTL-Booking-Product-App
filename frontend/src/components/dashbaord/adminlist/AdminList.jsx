@@ -159,7 +159,7 @@ const AdminList = () => {
       status: item.status || "N/A",
       actions: isOwnAssociateAdmin ? (
         <span className="text-gray-500 italic">
-          Only Client Admin can change actions
+          Only  Admin can change actions
         </span>
       ) : (
         <div className="flex gap-2">

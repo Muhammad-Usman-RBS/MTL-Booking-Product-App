@@ -21,7 +21,7 @@ router.post('/new-password', resetPasswordWithOtp);
 router.post("/refresh", refreshToken);
 
 // Get Current User
-router.get("/me", protect, authorize("superadmin", "clientadmin", "customer", "driver"), (req, res) => {
+router.get("/me", protect, authorize("superadmin", "clientadmin","staffmember", "customer", "driver","associateadmin"), (req, res) => {
   const u = req.user;
   if (!u) {
     return res.status(401).json({ message: "Not authorized" });

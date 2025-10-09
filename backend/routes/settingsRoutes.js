@@ -47,11 +47,11 @@ router.get("/enabled-options", getEnabledPaymentOptions);
 
 
 // THEME CRUD
-router.post("/save-theme", protect, authorize("superadmin", "clientadmin"), saveTheme);
-router.get("/get-theme/:companyId", protect, authorize("superadmin", "clientadmin"), getTheme);
-router.delete("/delete-theme/:id", protect, authorize("superadmin", "clientadmin"), deleteTheme);
-router.get("/theme-history/:companyId", protect, authorize("superadmin", "clientadmin"), getThemeHistory);
-router.get("/current-theme/:companyId", protect, authorize("clientadmin", "driver", "customer"), getCurrentTheme);
-router.post("/apply-them/:companyId/:themeId", protect, authorize("clientadmin"), applyTheme);
+router.post("/save-theme", protect, authorize("superadmin", "clientadmin", "associateadmin", "staffmember"), saveTheme);
+router.get("/get-theme/:companyId", protect, authorize("superadmin", "clientadmin", "associateadmin", "staffmember"), getTheme);
+router.delete("/delete-theme/:id", protect, authorize("superadmin", "clientadmin", "associateadmin", "staffmember"), deleteTheme);
+router.get("/theme-history/:companyId", protect, authorize("superadmin", "clientadmin", "associateadmin", "staffmember"), getThemeHistory);
+router.get("/current-theme/:companyId", protect, authorize("clientadmin", "driver", "customer", "associateadmin", "staffmember"), getCurrentTheme);
+router.post("/apply-them/:companyId/:themeId", protect, authorize("clientadmin", "associateadmin", "staffmember"), applyTheme);
 
 export default router;

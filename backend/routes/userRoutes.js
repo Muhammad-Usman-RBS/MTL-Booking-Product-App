@@ -23,7 +23,7 @@ router.get("/create-clientadmin", protect, authorize("superadmin", "clientadmin"
 router.get("/admins/associates", protect, authorize("superadmin", "clientadmin"), getAssociateAdmins);
 
 // Get all users (excl. superadmin, not Deleted) — roles: superadmin|clientadmin|associateadmin
-router.get("/get-All-Users", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllUsers);
+router.get("/get-All-Users", protect, authorize("superadmin", "clientadmin", "associateadmin", "staffmember"), getAllUsers);
 
 // Update a user by id — roles: superadmin|clientadmin|associateadmin
 router.put("/create-clientadmin/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateUserBySuperAdmin);

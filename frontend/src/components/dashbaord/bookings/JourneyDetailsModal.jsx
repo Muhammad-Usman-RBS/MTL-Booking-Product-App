@@ -43,7 +43,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
   useEffect(() => {
     if (selectedType === "Send Customer") {
       setEmail(viewData?.passenger?.email || "");
-    } else if (selectedType === "Send Client Admin") {
+    } else if (selectedType === "Send  Admin") {
       setEmail(loggedInUser?.email || "");
     }
   }, [selectedType, viewData, loggedInUser]);
@@ -164,7 +164,7 @@ const JourneyDetailsModal = ({ viewData = {} }) => {
           } flex-col md:flex-row md:items-center gap-3 md:gap-4`}
         >
           <SelectOption
-            options={["Send Customer", "Send Client Admin"]}
+            options={["Send Customer", "Send  Admin"]}
             value={selectedType}
             onChange={(val) => {
               const selected =
