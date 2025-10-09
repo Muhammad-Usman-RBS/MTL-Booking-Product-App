@@ -390,12 +390,10 @@ export const getCurrentTheme = async (req, res) => {
       return res.status(400).json({ message: "companyId is required" });
     }
 
-    // For drivers and customers, always get the theme applied by their clientAdmin
     const userRole = req.user?.role;
     let theme;
 
     if (userRole === "driver" || userRole === "customer") {
-      // Get the theme that the clientAdmin applied for this company
       theme =
         (await Theme.findOne({ companyId, lastApplied: true })) ||
         (await Theme.findOne({ companyId, isDefault: true }).sort({
@@ -403,7 +401,6 @@ export const getCurrentTheme = async (req, res) => {
         })) ||
         (await Theme.findOne({ companyId }).sort({ updatedAt: -1 }));
     } else {
-      // For clientAdmin, get their personally applied theme
       theme =
         (await Theme.findOne({ companyId, lastApplied: true })) ||
         (await Theme.findOne({ companyId, isActive: true }).sort({

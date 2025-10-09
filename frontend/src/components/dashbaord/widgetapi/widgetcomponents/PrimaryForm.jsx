@@ -383,7 +383,7 @@ const PrimaryForm = ({
           <input
             name="pickupDoorNumber"
             placeholder="e.g., Building A, Floor 3, Apt 205"
-            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 outline-none"
+            className="custom_input"
             value={formData.pickupDoorNumber}
             onChange={handleChange}
           />
@@ -403,7 +403,7 @@ const PrimaryForm = ({
               placeholder="City/Country"
               value={formData.arrivefrom}
               onChange={handleChange}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 outline-none"
+            className="custom_input"
             />
           </div>
 
@@ -417,7 +417,7 @@ const PrimaryForm = ({
               placeholder="Time (e.g., 2:30 PM)"
               value={formData.pickmeAfter}
               onChange={handleChange}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 outline-none"
+            className="custom_input"
             />
           </div>
 
@@ -431,7 +431,7 @@ const PrimaryForm = ({
               placeholder="e.g., AA123"
               value={formData.flightNumber}
               onChange={handleChange}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 outline-none"
+            className="custom_input"
             />
           </div>
         </div>

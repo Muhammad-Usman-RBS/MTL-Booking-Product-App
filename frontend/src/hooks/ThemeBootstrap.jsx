@@ -26,8 +26,7 @@ const ThemeBootstrap = () => {
   const dispatch = useDispatch();
 
   const shouldFetchTheme =
-    companyId && ["clientadmin", "driver", "customer"].includes(userRole);
-
+  companyId && ["clientadmin", "driver", "customer", "associateadmin", "staffmember"].includes(userRole);
   const { data: currentThemeRes } = useFetchCurrentThemeQuery(
     shouldFetchTheme ? companyId : skipToken
   );

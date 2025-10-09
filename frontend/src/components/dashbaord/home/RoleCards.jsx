@@ -20,7 +20,7 @@ const nf = new Intl.NumberFormat();
 
 const RoleCards = () => {
   const user = useSelector((state) => state?.auth?.user);
-
+  console.log(user)
   // Normal users (company based)
   const { data: AllBookingsResponse } = useGetAllBookingsQuery(user?.companyId, {
     skip: !user?.companyId || user?.role?.toLowerCase() === "superadmin",
@@ -67,6 +67,7 @@ const RoleCards = () => {
 
   const filteredDriver =
     driverRoles?.filter((u) => u?.companyId === user?.companyId) ?? [];
+    console.log(filteredDriver)
   const filteredCustomers =
     customerRoles?.filter((u) => u?.companyId === user?.companyId) ?? [];
   const filteredAssociateAdmin =
@@ -113,7 +114,7 @@ const RoleCards = () => {
       { title: "Total Drivers", value: user?.role === "superadmin" ? AllDriversData?.count : filteredDriver?.length || 0, icon: "🚖" },
       { title: "Total Staff Members", value: user?.role === "superadmin" ? AllStaffmembersData?.count : filteredStaffMembers?.length || 0, icon: "🛠️" },
       { title: "Total Associate Admins", value: user?.role === "superadmin" ? AllAssociateAdminsData?.count : filteredAssociateAdmin?.length || 0, icon: "📊" },
-      { title: "Total Client Admins", value: filteredClientAdmin?.length || 0, icon: "🏢" },
+      { title: "Total Admins", value: filteredClientAdmin?.length || 0, icon: "🏢" },
       { title: "Total Demos", value: user?.role === "superadmin" ? AllDemosData?.count : demoRoles?.length || 0, icon: "🧪" },
       { title: "Total Earnings", value: totalDriverEarnings, icon: "💰" },
       { title: "Total Rides", value: totalDriverRides, icon: "🛣️" },
@@ -137,7 +138,7 @@ const RoleCards = () => {
       "Total Bookings",
       "Total Customers",
       "Total Drivers",
-      "Total Client Admins",
+      "Total Admins",
       "Total Associate Admins",
       "Total Demos",
       "Total Staff Members",
@@ -155,6 +156,12 @@ const RoleCards = () => {
       "Total Drivers",
       "Total Staff Members",
     ],
+    staffmember: [
+      "Total Bookings",
+      "Total Customers",
+      "Total Drivers",
+
+    ],
     driver: ["Total Bookings", "Total Earnings", "Total Rides"],
     customer: ["Total Bookings"],
     corporatecustomer: ["Total Bookings"],
@@ -164,6 +171,10 @@ const RoleCards = () => {
     roleVisibility[user?.role?.toLowerCase()]?.includes(card.title)
   );
 
+  console.log("AllUsers:", AllUsers);
+console.log("driverRoles:", driverRoles);
+console.log("filteredDriver:", filteredDriver);
+console.log("user.companyId:", user?.companyId);
   useEffect(() => {
     refetch();
   }, [refetch, user?.companyId]);

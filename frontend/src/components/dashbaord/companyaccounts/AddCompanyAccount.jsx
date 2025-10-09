@@ -162,14 +162,14 @@ const AddCompanyAccount = () => {
     }
 
     if (!formData.clientAdminId) {
-      toast.error(`Please select a ${isClientAdmin ? "Associate Admin" : "Client Admin"}.`);
+      toast.error(`Please select a ${isClientAdmin ? "Associate Admin" : " Admin"}.`);
       return;
     }
 
     try {
       const data = new FormData();
       for (const key in formData) {
-        if (key === "profileImage") continue; // optional
+        if (key === "profileImage") continue; 
         const value =
           key === "licenseNumber" ? parseInt(formData[key] || "0", 10) : formData[key];
         data.append(key, value);

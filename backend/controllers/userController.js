@@ -534,9 +534,9 @@ export const createUserBySuperAdmin = async (req, res) => {
         role: "staffmember",
         companyId: creator.companyId,
       });
-      if (count >= 2) {
+      if (count >= 5) {
         return res.status(400).json({
-          message: "Only 2 staffmembers allowed per company",
+          message: "Only 5 staffmembers allowed per company",
         });
       }
     }

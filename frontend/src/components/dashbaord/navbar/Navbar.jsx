@@ -499,6 +499,8 @@ function Navbar() {
           {/* Theme selector - only for admins */}
           {(isStaticMode ||
             user?.role === "clientadmin" ||
+            user?.role === "staffmember" ||
+            user?.role === "associateadmin" ||
             user?.role === "superadmin") && (
               <div className="relative" ref={themeBtnRef}>
                 <button
