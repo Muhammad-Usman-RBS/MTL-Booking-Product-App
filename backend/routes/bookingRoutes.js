@@ -5,7 +5,7 @@ import { authorize, protect } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // Create a new booking (public access)
-router.post("/create-booking", protect, createBooking);
+router.post("/create-booking", protect, authorize('clientadmin', 'associateadmin', 'staffmember', "customer"), createBooking);
 
 // Get all bookings (admin access)
 router.get("/get-booking", getAllBookings);

@@ -81,7 +81,6 @@ export const deleteZone = async (req, res) => {
   }
 };
 
-
 const companyFilter = (user) => {
   const ids = [];
   if (user?.companyId && mongoose.Types.ObjectId.isValid(user.companyId)) ids.push(new mongoose.Types.ObjectId(user.companyId));
@@ -96,42 +95,26 @@ export const syncZoneToDependents = async (req, res) => {
     const zone = await Zone.findOne({ _id: req.params.id, companyId: cf }).lean();
     if (!zone) return res.status(404).json({ message: "Zone not found." });
 
-    // sanitize coords (replace whole array)
-    const coord = (zone.coordinates || []).map(({ lat, lng }) => ({
+    // Sanitize coordinates before syncing to ensure they are properly formatted
+    const coord = zone.coordinates.map(({ lat, lng }) => ({
       lat: Number(lat),
       lng: Number(lng),
     }));
 
-    const results = {};
-
-    // match by IDs (if you later add pickupZone/dropoffZone)
-    results.byPickupId = await FixedPrice.updateMany(
+    // Sync pricing with the zone coordinates
+    await FixedPrice.updateMany(
       { companyId: cf, pickupZone: zone._id },
       { $set: { pickupCoordinates: coord, updatedAt: new Date() } }
     );
-    results.byDropId = await FixedPrice.updateMany(
+    await FixedPrice.updateMany(
       { companyId: cf, dropoffZone: zone._id },
       { $set: { dropoffCoordinates: coord, updatedAt: new Date() } }
     );
 
-    // legacy fallback: match by NAMES only when zone refs don't exist
-    results.byPickupName = await FixedPrice.updateMany(
-      { companyId: cf, pickup: zone.name, $or: [{ pickupZone: { $exists: false } }, { pickupZone: null }] },
-      { $set: { pickupCoordinates: coord, updatedAt: new Date() } }
-    );
-    results.byDropName = await FixedPrice.updateMany(
-      { companyId: cf, dropoff: zone.name, $or: [{ dropoffZone: { $exists: false } }, { dropoffZone: null }] },
-      { $set: { dropoffCoordinates: coord, updatedAt: new Date() } }
-    );
-
-    // helpful summary so you can see matches on the client
-    const summary = Object.fromEntries(
-      Object.entries(results).map(([k, v]) => [k, v?.modifiedCount ?? 0])
-    );
-
-    return res.status(200).json({ message: "Zone sync complete", summary });
+    // Return a summary of the sync process
+    return res.status(200).json({ message: "Zone sync complete" });
   } catch (e) {
-    console.error("syncZoneToDependents err:", e);
+    console.error("syncZoneToDependents error:", e);
     return res.status(500).json({ message: "Failed to sync zone.", error: e.message });
   }
 };

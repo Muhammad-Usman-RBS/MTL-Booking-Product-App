@@ -20,7 +20,7 @@ import { useLoading } from "../../common/LoadingProvider";
 const LIBRARIES = ["drawing", "places"];
 
 const Zones = () => {
-  const {showLoading, hideLoading}= useLoading()
+  const { showLoading, hideLoading } = useLoading()
   const user = useSelector((state) => state.auth.user);
 
   const [selectedZone, setSelectedZone] = useState(null);
@@ -43,13 +43,13 @@ const Zones = () => {
 
   const [syncZone, { isLoading: syncingOne }] = useSyncZoneMutation(); // used only for Update+Sync
 
- useEffect(()=> {
-    if(creating  || zonesLoading) {
+  useEffect(() => {
+    if (creating || zonesLoading) {
       showLoading()
     } else {
       hideLoading()
     }
-  },[creating,  zonesLoading])
+  }, [creating, zonesLoading])
 
 
   const [triggerSearchGooglePlaces] = useLazySearchGooglePlacesQuery();
@@ -101,12 +101,17 @@ const Zones = () => {
     }
 
     try {
-      await createZone({ name: newZoneName, coordinates: path }).unwrap();
+      // Create the zone
+      const newZone = await createZone({ name: newZoneName, coordinates: path }).unwrap();
+
+      // After creating, sync the zone to update pricing
+      await syncZone(newZone._id).unwrap();
+
       tempPolygon.setMap(null);
       setTempPolygon(null);
       setNewZoneName("");
       await refetch();
-      toast.success("Zone created successfully!");
+      toast.success("Zone created and synced successfully!");
     } catch (e) {
       toast.error(e?.data?.message || "Failed to create zone");
     }
@@ -292,7 +297,7 @@ const Zones = () => {
             </div>
 
             <CustomTable
-            filename='Zones-list'
+              filename='Zones-list'
               tableHeaders={tableHeaders}
               tableData={tableData}
               showPagination={true}
@@ -330,7 +335,7 @@ const Zones = () => {
                       fillColor: "#00f",
                       fillOpacity: 0.2,
                       strokeWeight: 2,
-                      editable: true,
+                      editable: true,  // Keep only editable vertices
                       zIndex: 2,
                     }}
                     onLoad={(polygonInstance) => {
@@ -342,6 +347,8 @@ const Zones = () => {
                         }));
                         setSelectedZone((prev) => ({ ...prev, coordinates: newCoords }));
                       };
+
+                      // Track vertex changes
                       window.google.maps.event.addListener(path, "set_at", updateCoords);
                       window.google.maps.event.addListener(path, "insert_at", updateCoords);
                       window.google.maps.event.addListener(path, "remove_at", updateCoords);
