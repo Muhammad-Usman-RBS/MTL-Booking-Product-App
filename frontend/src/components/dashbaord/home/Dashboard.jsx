@@ -8,6 +8,7 @@ import LoadingEffect from "../../common/LoadingEffect";
 
 const Dashboard = () => {
   const user = useSelector((state) => state.auth.user);
+  console.log(user)
   // Handle case where user hasn't loaded yet
   if (!user) {
     return <LoadingEffect />; // or null, or a spinner
@@ -26,7 +27,6 @@ const Dashboard = () => {
       ) : (
         <div className="space-y-6 max-w-full">
           <RoleCards />
-          <LoadingEffect />
         </div>
       )}
     </>

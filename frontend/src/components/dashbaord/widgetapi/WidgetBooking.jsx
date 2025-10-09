@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { useGetAllHourlyRatesQuery } from "../../../redux/api/hourlyPricingApi";
 import { useCreateBookingMutation } from '../../../redux/api/bookingApi';
 import { useLazySearchGooglePlacesQuery, useLazyGetDistanceQuery } from '../../../redux/api/googleApi';
@@ -220,6 +220,8 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
                     dropoff: dropOffs[0],
                     additionalDropoff1: dropOffs[1] || null,
                     additionalDropoff2: dropOffs[2] || null,
+                    additionalDropoff3: dropOffs[3] || null,
+                    additionalDropoff4: dropOffs[4] || null,
                 },
             };
 
@@ -263,6 +265,8 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
         dropOffs.forEach((_, idx) => {
             dynamicFields[`dropoffDoorNumber${idx}`] = formData[`dropoffDoorNumber${idx}`] || '';
             dynamicFields[`dropoff_terminal_${idx}`] = formData[`dropoff_terminal_${idx}`] || '';
+            dynamicFields[`dropoff_terminal_${idx}`] = formData[`dropoff_terminal_${idx}`] || '';
+            dynamicFields[`dropoff_terminal_${idx}`] = formData[`dropoff_terminal_${idx}`] || '';
         });
 
         const pickupPostcode = extractPostcode(formData.pickup);
@@ -274,6 +278,8 @@ const WidgetBooking = ({ onSubmitSuccess, companyId: parentCompanyId, isReturnFo
             direction: formData.direction || "One Way",
             additionalDropoff1: dropOffs[1] || null,
             additionalDropoff2: dropOffs[2] || null,
+            additionalDropoff3: dropOffs[3] || null,
+            additionalDropoff4: dropOffs[4] || null,
             mode,
             returnJourney: false,
             companyId,

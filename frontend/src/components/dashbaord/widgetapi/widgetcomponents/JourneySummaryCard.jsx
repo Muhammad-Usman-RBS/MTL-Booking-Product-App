@@ -66,7 +66,9 @@ const JourneySummaryCard = ({
                 dropList={[
                     formData?.dropoff,
                     formData?.additionalDropoff1,
-                    formData?.additionalDropoff2
+                    formData?.additionalDropoff2,
+                    formData?.additionalDropoff3,
+                    formData?.additionalDropoff4
                 ]}
                 arrivefrom={formData?.arrivefrom}
             />
@@ -80,7 +82,9 @@ const JourneySummaryCard = ({
                     dropList={[
                         returnFormData?.dropoff,
                         returnFormData?.additionalDropoff1,
-                        returnFormData?.additionalDropoff2
+                        returnFormData?.additionalDropoff2,
+                        returnFormData?.additionalDropoff3,
+                        returnFormData?.additionalDropoff4
                     ]}
                     arrivefrom={returnFormData?.arrivefrom}
                 />
@@ -138,7 +142,7 @@ const JourneyRow = ({
 
         {/* Dropoff section */}
         <div className="flex flex-col items-end gap-3 w-full md:w-auto min-w-[220px] justify-end text-right">
-            {dropList.filter(Boolean).map((loc, idx, arr) => (
+{dropList.filter(loc => loc).map((loc, idx, arr) => (
                 <div key={idx} className="flex items-center justify-end gap-3">
                     <div>
                         <p className="font-semibold text-sm text-green-800">{loc}</p>
