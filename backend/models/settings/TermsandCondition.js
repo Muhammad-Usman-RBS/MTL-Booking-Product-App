@@ -17,12 +17,19 @@ const termsSchema = new mongoose.Schema(
     },
     createdByRole: {
       type: String,
-      enum: ["superadmin", "clientadmin", "driver", "customer", "associateadmin"],
+      enum: [
+        "superadmin",
+        "clientadmin",
+        "driver",
+        "customer",
+        "associateadmin",
+      ],
     },
     targetAudience: {
       type: [String],
       default: [],
     },
+
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
@@ -30,5 +37,4 @@ const termsSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
 export default mongoose.model("TermsAndConditions", termsSchema);

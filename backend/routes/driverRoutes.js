@@ -4,9 +4,8 @@ import { getDriverById, createDriver, getAllDrivers, deleteDriverById, updateDri
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
-const driverUploader = getUploader('driver'); // 📂 MTL-BOOKING-APP/driver
+const driverUploader = getUploader('driver');
 
-// Fields allowed for upload (max 1 per field)
 const driverUploadFields = driverUploader.fields([
   { name: "driverPicture", maxCount: 1 },
   { name: "privateHireCard", maxCount: 1 },
@@ -19,21 +18,10 @@ const driverUploadFields = driverUploader.fields([
   { name: "V5", maxCount: 1 },
 ]);
 
-/* ---------------- DRIVER ROUTES ---------------- */
-
-// Create Driver (with multiple documents)
 router.post("/create-driver", driverUploadFields, createDriver);
-
-// Get All Drivers
 router.get("/get-all-drivers",protect ,getAllDrivers);
-
-// Get Single Driver
 router.get("/getDriverById/:id", getDriverById);
-
-// Delete Driver
 router.delete("/delete-driver/:id", deleteDriverById);
-
-// Update Driver (with multiple optional document updates)
 router.put("/update-driver/:id", driverUploadFields, updateDriverById);
 
 export default router;

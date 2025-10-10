@@ -34,5 +34,4 @@ const LocationCategorySchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
 export default mongoose.model("LocationCategory", LocationCategorySchema);

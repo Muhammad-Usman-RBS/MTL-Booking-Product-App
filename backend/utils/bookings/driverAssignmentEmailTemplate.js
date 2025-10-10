@@ -4,9 +4,8 @@ export const driverAssignmentEmailTemplate = ({
   vehicle,
   company = {},
   options = {},
-  assignmentType = "assigned", // "assigned" or "unassigned"
+  assignmentType = "assigned", 
 }) => {
-  // Brand colors
   const brand = {
     primary: options.primaryColor || "#0F172A",
     accent: options.accentColor || "#2563EB",
@@ -17,8 +16,6 @@ export const driverAssignmentEmailTemplate = ({
     success: options.successColor || "#16A34A",
     warning: options.warningColor || "#F59E0B",
   };
-
-  // Company info
   const org = {
     name: company?.companyName || company?.tradingName || options.companyName || "Our Company",
     logoUrl: options.logoUrl || company?.profileImage || company?.logoUrl || "",
@@ -26,14 +23,11 @@ export const driverAssignmentEmailTemplate = ({
     phone: options.supportPhone || company?.contact || "",
     address: options.address || company?.address || "",
   };
-
   const safe = (v) =>
     String(v ?? "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
-
-  // Driver and vehicle info with fallbacks
   const driverInfo = {
     firstName: driver?.DriverData?.firstName || driver?.firstName || "Driver",
     surName: driver?.DriverData?.surName || driver?.surName || "",
@@ -44,18 +38,13 @@ export const driverAssignmentEmailTemplate = ({
       ? `${(driver?.DriverData?.firstName || driver?.firstName || "")} ${(driver?.DriverData?.surName || driver?.surName || "")}`.trim() || "Driver"
       : "Driver",
   };
-
   const vehicleInfo = {
     registration: vehicle?.carRegistration || driver?.VehicleData?.carRegistration || "TBD",
     make: vehicle?.carMake || driver?.VehicleData?.carMake || "TBD",
     model: vehicle?.carModal || driver?.VehicleData?.carModal || "TBD",
     color: vehicle?.carColor || driver?.VehicleData?.carColor || "TBD",
   };
-
-  // Journey info
   const journey = booking?.primaryJourney || booking?.returnJourney || {};
-
-  // Format date and time
   const formatDateTime = (j) => {
     if (!j?.date) return "-";
     const date = new Date(j.date);
@@ -70,8 +59,6 @@ export const driverAssignmentEmailTemplate = ({
     const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
     return `${dateStr} at ${timeStr}`;
   };
-
-  // Assignment-specific styling and messaging
   const assignmentConfig = {
     assigned: {
       color: brand.success,
@@ -88,30 +75,20 @@ export const driverAssignmentEmailTemplate = ({
       actionColor: brand.warning,
     },
   };
-
   const config = assignmentConfig[assignmentType] || assignmentConfig.assigned;
-
-
   const formatEmail = (email) => {
     return email.replace('@', '&#8203;@&#8203;').replace(/\./g, '&#8203;.&#8203;');
   };
-
   const locationLine = (addr) => {
     if (!addr) return "";
-
     const safeAddr = safe(String(addr).trim());
     const words = safeAddr.split(/\s+/);
-
-    // Split into lines with 4 words per line
     const lines = [];
     for (let i = 0; i < words.length; i += 10) {
       lines.push(words.slice(i, i + 10).join(" "));
     }
-
-    // Return HTML with "Location:" on the first line
     const [firstLine, ...restLines] = lines;
     const restHtml = restLines.length ? `<br/>${restLines.join("<br/>")}` : "";
-
     return `<strong>Location:</strong> ${firstLine}${restHtml}<br/>`;
   };
   return `<!doctype html>
@@ -135,7 +112,6 @@ export const driverAssignmentEmailTemplate = ({
     <tr>
       <td align="center" style="padding:28px 16px">
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px;max-width:600px;background:${brand.card};border:1px solid ${brand.border};border-radius:16px;overflow:hidden">
-
           <!-- Header -->
           <tr>
             <td style="padding:0;background:linear-gradient(90deg, ${config.bg}, #ffffff);border-bottom:1px solid ${brand.border}">
@@ -158,13 +134,11 @@ export const driverAssignmentEmailTemplate = ({
   ${org.email ? `<div><strong>Email:</strong> ${formatEmail(safe(org.email))}</div>` : ""}
   ${org.phone ? `<div><strong>Phone:</strong> +${safe(org.phone)}</div>` : ""}
 </div>
-
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
-
           <!-- Main Message -->
           <tr>
             <td class="px-22" style="padding:24px 22px 18px;text-align:start">
@@ -177,11 +151,8 @@ export const driverAssignmentEmailTemplate = ({
       : "this booking assignment has been removed from your schedule."
   }
 </div>
-
-
             </td>
           </tr>
-
           <!-- Journey Details -->
           <tr>
             <td class="px-22" style="padding:0 22px 18px">
@@ -228,8 +199,6 @@ export const driverAssignmentEmailTemplate = ({
               </table>
             </td>
           </tr>
-
-        
           ${assignmentType === "assigned" ? `
           <!-- Assigned Vehicle Info -->
           <tr>
@@ -254,11 +223,8 @@ export const driverAssignmentEmailTemplate = ({
             <td style="padding:20px 24px;border-top:1px solid ${brand.border};background:#FAFAFA">
               <div style="font:700 16px/1.4 Arial,sans-serif;color:${brand.primary};margin-bottom:8px">${safe(org.name)}</div>
                <div style="font:500 12px/1.4 Arial,sans-serif;color:${brand.muted};margin-bottom:8px">📍${org.address ? locationLine(org.address) : ""} </div>
-
-            
             </td>
           </tr>
-
         </table>
       </td>
     </tr>

@@ -14,40 +14,34 @@ import { getAllZones, createZone, updateZone, deleteZone, syncZoneToDependents, 
 const router = express.Router();
 const vehicleUploader = getUploader("vehicle");
 
-// VEHICLE PRICING
 router.post("/vehicles", protect, authorize("superadmin", "clientadmin", "associateadmin"), vehicleUploader.single("image"), createVehicle);
 router.get("/vehicles", protect, getAllVehicles);
 router.put("/vehicles/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), vehicleUploader.single("image"), updateVehicle);
 router.delete("/vehicles/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), deleteVehicle);
 router.get("/vehicles/public", getVehiclesByCompanyId);
 
-// GENERAL
 router.get("/general", protect, authorize("superadmin", "clientadmin", "associateadmin"), getGeneralPricing);
-router.get("/general/widget", protect, getGeneralPricingWidget);        // For Widget
+router.get("/general/widget", protect, getGeneralPricingWidget);
 router.post("/general", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateGeneralPricing);
 
-// HOURLY PACKAGES
 router.post("/addHourlyPackage", protect, authorize("superadmin", "clientadmin", "associateadmin"), createHourlyPackage);
 router.get("/getAllHourlyRates", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllHourlyPackages);
 router.get("/getHourlyRateById/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), getHourlyPackageById);
 router.put("/updateHourlyPackage/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateHourlyPackage);
 router.delete("/delHourlyPackage/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), deleteHourlyPackage);
 
-// FIXED PRICING
 router.get("/fixed-prices", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllFixedPrices);
-router.get("/fixed-widget", getFixedPricesByCompanyId);                   // For Widget
+router.get("/fixed-widget", getFixedPricesByCompanyId);
 router.post("/fixed-prices", protect, authorize("superadmin", "clientadmin", "associateadmin"), createFixedPrice);
 router.put("/fixed-prices/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateFixedPrice);
 router.delete("/fixed-prices/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), deleteFixedPrice);
 
-// POSTCODE PRICING
 router.get("/postcode-prices", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllPostcodePrices);
-router.get("/widget/postcode-prices", getAllPostcodePricesWidget);    // For Widget
+router.get("/widget/postcode-prices", getAllPostcodePricesWidget);
 router.post("/postcode-prices", protect,  authorize("superadmin", "clientadmin", "associateadmin"), createPostcodePrice);
 router.put("/postcode-prices/:id", protect,  authorize("superadmin", "clientadmin", "associateadmin"), updatePostcodePrice);
 router.delete("/postcode-prices/:id", protect,  authorize("superadmin", "clientadmin", "associateadmin"), deletePostcodePrice);
 
-// ZONES CRUD
 router.get("/zones", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllZones);
 router.post("/zones", protect, authorize("superadmin", "clientadmin", "associateadmin"), createZone);
 router.put("/zones/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateZone);
@@ -55,23 +49,20 @@ router.delete("/zones/:id", protect, authorize("superadmin", "clientadmin", "ass
 router.post("/zones/:id/sync", protect, authorize("superadmin", "clientadmin", "associateadmin"), syncZoneToDependents);
 router.post("/zones/sync-all", protect, authorize("superadmin", "clientadmin", "associateadmin"), syncAllZones);
 
-// EXTRAS PRICING
 router.get("/extras", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllExtras);
-router.get("/extras-widget", getExtrasByCompanyId);                  // For Widget
+router.get("/extras-widget", getExtrasByCompanyId);
 router.post("/extras", protect, authorize("superadmin", "clientadmin", "associateadmin"), createExtra);
 router.put("/extras/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateExtra);
 router.delete("/extras/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), deleteExtra);
 
-// DISCOUNT PRICING
 router.get("/discount", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllDiscounts);
-router.get("/discount/widget", getDiscountsByCompanyId);    // For Widget
+router.get("/discount/widget", getDiscountsByCompanyId);
 router.post("/discount", protect, authorize("superadmin", "clientadmin", "associateadmin"), createDiscount);
 router.put("/discount/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateDiscount);
 router.delete("/discount/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), deleteDiscount);
 
-// VOUCHERS PRICING
 router.get("/vouchers", protect, authorize("superadmin", "clientadmin", "associateadmin"), getAllVouchers);
-router.get("/vouchers/widget", getVoucherByCode);    // For Widget
+router.get("/vouchers/widget", getVoucherByCode);
 router.post("/vouchers", protect, authorize("superadmin", "clientadmin", "associateadmin"), createVoucher);
 router.put("/vouchers/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), updateVoucher);
 router.delete("/vouchers/:id", protect, authorize("superadmin", "clientadmin", "associateadmin"), deleteVoucher);

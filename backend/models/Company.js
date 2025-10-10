@@ -15,7 +15,7 @@ const companySchema = new mongoose.Schema(
     },
 
     address: String,
-    
+
     profileImage: String,
     clientAdminId: {
       type: mongoose.Schema.Types.ObjectId,

@@ -1,4 +1,3 @@
-// routes/paypalRoutes.js
 import express from 'express';
 import { getConfig, createOrder, captureOrder } from '../controllers/settings/paypalController.js';
 

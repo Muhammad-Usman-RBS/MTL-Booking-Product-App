@@ -35,48 +35,38 @@ const DEFAULT_THEMES = [
     isDefault: true,
   },
 ];
+
 export const initializeDefaultThemes = async (companyId) => {
   try {
-    // Check if default themes already exist for this company
     const existingDefaultThemes = await Theme.find({
       companyId,
       isDefault: true,
     });
-
     if (existingDefaultThemes.length === 0) {
-      // No default themes found, insert them
       const defaultThemesWithCompany = DEFAULT_THEMES.map((theme) => ({
         ...theme,
         companyId,
       }));
       await Theme.insertMany(defaultThemesWithCompany);
-      console.log(`Default themes initialized for company: ${companyId}`);
     }
-
-    // Check if any theme is already applied for this company
     const appliedTheme = await Theme.findOne({
       companyId,
       $or: [{ lastApplied: true }, { isActive: true }],
     });
-
-    // If no theme is applied, apply Dark Theme 9 by default
     if (!appliedTheme) {
       const darkTheme9 = await Theme.findOne({
         companyId,
         name: "Dark Theme 9",
         isDefault: true,
       });
-
       if (darkTheme9) {
         await Theme.updateOne(
           { _id: darkTheme9._id },
           { $set: { lastApplied: true, isActive: true } }
         );
-        console.log(`Dark Theme 9 auto-applied for company: ${companyId}`);
       }
     }
   } catch (error) {
-    console.error("Error initializing user default theme:", error);
   }
 };
 
@@ -86,16 +76,13 @@ const isValidHexColor = (color) => {
 
 const validateThemeSettings = (themeSettings) => {
   const requiredKeys = ["bg", "text", "primary", "hover", "active"];
-
   if (!themeSettings || typeof themeSettings !== "object") {
     return { isValid: false, message: "Theme settings must be an object" };
   }
-
   for (const key of requiredKeys) {
     if (!themeSettings[key]) {
       return { isValid: false, message: `Missing required color: ${key}` };
     }
-
     if (!isValidHexColor(themeSettings[key])) {
       return {
         isValid: false,
@@ -103,15 +90,12 @@ const validateThemeSettings = (themeSettings) => {
       };
     }
   }
-
   return { isValid: true };
 };
 
 export const saveTheme = async (req, res) => {
   try {
     const { companyId, themeSettings } = req.body;
-
-    // Validate input
     if (!companyId) {
       return res.status(400).json({
         success: false,
@@ -124,8 +108,6 @@ export const saveTheme = async (req, res) => {
         message: "Theme settings are required",
       });
     }
-
-    // Validate theme settings structure + hex colors
     const validation = validateThemeSettings(themeSettings);
     if (!validation.isValid) {
       return res.status(400).json({
@@ -133,16 +115,11 @@ export const saveTheme = async (req, res) => {
         message: validation.message,
       });
     }
-
-    // Initialize default themes if they don't exist
     await initializeDefaultThemes(companyId);
-
-    // Count only custom themes (non-default)
     const customThemeCount = await Theme.countDocuments({
       companyId,
       isDefault: { $ne: true },
     });
-
     if (customThemeCount >= 2) {
       return res.status(400).json({
         success: false,
@@ -151,7 +128,6 @@ export const saveTheme = async (req, res) => {
       });
     }
     const { themeId } = req.body;
-
     if (themeId) {
       const existing = await Theme.findOne({ _id: themeId, companyId });
       if (!existing) {
@@ -160,7 +136,6 @@ export const saveTheme = async (req, res) => {
           .json({ success: false, message: "Theme not found" });
       }
       if (existing.isDefault) {
-        // saving changes while a default is selected → create a new custom
         const customThemeCount = await Theme.countDocuments({
           companyId,
           isDefault: { $ne: true },
@@ -196,14 +171,11 @@ export const saveTheme = async (req, res) => {
         });
       }
     }
-
-    // Otherwise create a new one (limit 2)
     const created = await Theme.create({
       companyId,
       themeSettings,
       isDefault: false,
     });
-
     return res.status(201).json({
       success: true,
       message: "Custom theme saved successfully",
@@ -211,8 +183,6 @@ export const saveTheme = async (req, res) => {
       id: created._id,
     });
   } catch (error) {
-    console.error("Error saving theme settings:", error);
-
     if (error.name === "ValidationError") {
       return res.status(400).json({
         success: false,
@@ -220,7 +190,6 @@ export const saveTheme = async (req, res) => {
         errors: Object.values(error.errors).map((err) => err.message),
       });
     }
-
     return res.status(500).json({
       success: false,
       message: "Server error while saving theme settings",
@@ -230,15 +199,12 @@ export const saveTheme = async (req, res) => {
 export const getTheme = async (req, res) => {
   try {
     const { companyId } = req.params;
-
     if (!companyId) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
-
-    // Find theme settings
     const theme = await Theme.findOne({ companyId });
     if (theme) {
       return res.status(200).json({
@@ -247,7 +213,6 @@ export const getTheme = async (req, res) => {
         data: theme.themeSettings,
       });
     } else {
-      // Return default theme if no custom theme exists
       return res.status(200).json({
         success: true,
         message: "No custom theme found, returning default theme",
@@ -255,7 +220,6 @@ export const getTheme = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Error fetching theme settings:", error);
     return res.status(500).json({
       success: false,
       message: "Server error while fetching theme settings",
@@ -282,7 +246,6 @@ export const getThemeHistory = async (req, res) => {
       data: history,
     });
   } catch (error) {
-    console.error("Error fetching theme history:", error);
     return res.status(500).json({
       success: false,
       message: "Server error while fetching theme history",
@@ -293,16 +256,13 @@ export const getThemeHistory = async (req, res) => {
 export const deleteTheme = async (req, res) => {
   try {
     const companyId = req.user?.companyId;
-    const { id } = req.params; // Assuming theme ID is passed as URL parameter
-
+    const { id } = req.params;
     if (!companyId) {
       return res.status(400).json({
         success: false,
         message: "Company ID is required",
       });
     }
-
-    // Check if theme is a default theme
     const theme = await Theme.findOne({ _id: id, companyId });
     if (!theme) {
       return res.status(404).json({
@@ -310,43 +270,34 @@ export const deleteTheme = async (req, res) => {
         message: "Theme not found",
       });
     }
-
     if (theme.isDefault) {
       return res.status(400).json({
         success: false,
         message: "Cannot delete default themes",
       });
     }
-
     await Theme.deleteOne({ _id: id, companyId });
-
     return res.status(200).json({
       success: true,
       message: "Custom theme deleted successfully",
     });
   } catch (error) {
-    console.error("Error deleting theme:", error);
     return res.status(500).json({
       success: false,
       message: "Server error while deleting theme",
     });
   }
 };
+
 export const applyTheme = async (req, res) => {
   try {
     const { companyId, themeId } = req.params;
-
-    // Check if req.user exists
     if (!req.user) {
       return res.status(401).json({ message: "User not authenticated" });
     }
-
-    // Check if req.user.companyId exists
     if (!req.user.companyId) {
       return res.status(400).json({ message: "User has no company ID" });
     }
-
-    // (optional) authorize company ownership
     if (String(req.user.companyId) !== String(companyId)) {
       return res.status(403).json({
         message: "Forbidden",
@@ -358,13 +309,10 @@ export const applyTheme = async (req, res) => {
         },
       });
     }
-
-    // flip all others off, set this one on + lastApplied
     await Theme.updateMany(
       { companyId },
       { $set: { lastApplied: false, isActive: false } }
     );
-
     const theme = await Theme.findOneAndUpdate(
       { _id: themeId, companyId },
       { $set: { lastApplied: true, isActive: true } },
@@ -374,7 +322,6 @@ export const applyTheme = async (req, res) => {
     if (!theme) return res.status(404).json({ message: "Theme not found" });
     return res.json({ theme });
   } catch (e) {
-    console.error("Apply theme error:", e);
     return res.status(500).json({ message: e.message });
   }
 };
@@ -385,14 +332,11 @@ export const getCurrentTheme = async (req, res) => {
     const cidFromQuery = req.query?.companyId;
     const cidFromUser = req.user?.companyId;
     const companyId = String(cidFromParam || cidFromQuery || cidFromUser || "");
-
     if (!companyId) {
       return res.status(400).json({ message: "companyId is required" });
     }
-
     const userRole = req.user?.role;
     let theme;
-
     if (userRole === "driver" || userRole === "customer") {
       theme =
         (await Theme.findOne({ companyId, lastApplied: true })) ||
@@ -408,7 +352,6 @@ export const getCurrentTheme = async (req, res) => {
         })) ||
         (await Theme.findOne({ companyId }).sort({ updatedAt: -1 }));
     }
-
     if (!theme) return res.status(404).json({ message: "No theme found" });
     res.json({ theme });
   } catch (e) {

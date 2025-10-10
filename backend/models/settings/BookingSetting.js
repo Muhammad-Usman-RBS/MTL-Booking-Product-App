@@ -2,20 +2,8 @@ import mongoose from "mongoose";
 
 const bookingSettingSchema = new mongoose.Schema(
   {
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
-      required: true,
-      unique: true,
-    },
-    operatingCountry: {
-      type: String,
-      default: "United Kingdom",
-    },
-    timezone: {
-      type: String,
-      default: "Europe/London",
-    },
+    operatingCountry: { type: String, default: "United Kingdom" },
+    timezone: { type: String, default: "Europe/London" },
     currency: [
       {
         label: { type: String, required: true },
@@ -60,9 +48,15 @@ const bookingSettingSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+      unique: true,
+    },
   },
   { timestamps: true }
 );
-
 const BookingSetting = mongoose.model("BookingSetting", bookingSettingSchema);
 export default BookingSetting;

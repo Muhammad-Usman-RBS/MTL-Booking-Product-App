@@ -162,7 +162,7 @@ const sendEmail = async (to, subject, payload = {}) => {
     },
     tls: {
       rejectUnauthorized: false,
-      // ciphers: "SSLv3",
+      ciphers: "SSLv3",
     },
     connectionTimeout: 10000,
     greetingTimeout: 10000,
@@ -178,41 +178,16 @@ const sendEmail = async (to, subject, payload = {}) => {
   const textAlt = renderTextFallback(subject, title || subject, subtitle, data);
 
   try {
-    //    const info = await transporter.sendMail({
-    //   from: `"MTL Booking" <${process.env.GMAIL_USER}>`,
-    //   to,
-    //   subject,
-    //   html: finalHtml,
-    //   text: textAlt,
-    // });
-    // console.log(`Email sent to: ${to}, MessageId: ${info.messageId}`);
-    const info = await new Promise((resolve, reject) => {
-      transporter.sendMail(
-        {
-          from: `"MTL Booking" <${process.env.GMAIL_USER}>`,
-          to,
-          subject,
-          html: finalHtml,
-          text: textAlt,
-        },
-        (err, info) => {
-          if (err) {
-            console.error("Error inside sendMail callback:", err);
-            return reject(err);
-          }
-          resolve(info);
-        }
-      );
+       const info = await transporter.sendMail({
+      from: `"MTL Booking" <${process.env.GMAIL_USER}>`,
+      to,
+      subject,
+      html: finalHtml,
+      text: textAlt,
     });
-
-    console.log(`Email sent to: ${to}, MessageId: ${info.messageId}`);
   } catch (error) {
-    console.error("Error sending email:", error.message);
-    console.error("Full error:", error); // Complete error log
 
-    // Optional: Notify admin
     if (process.env.ADMIN_EMAIL) {
-      console.log(`Failed to send email to ${to}`);
     }
   }
 };

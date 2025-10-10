@@ -6,23 +6,19 @@ export const clientadminBookingConfirmation = ({
     if (!booking) {
         throw new Error("clientadminBookingConfirmation: booking is required");
     }
-
     const timeHour =
         booking?.primaryJourney?.hour ??
         booking?.returnJourney?.hour ??
         "--";
-
     const timeMinute = String(
         booking?.primaryJourney?.minute ??
         booking?.returnJourney?.minute ??
         0
     ).padStart(2, "0");
-
     const date =
         booking?.primaryJourney?.date ||
         booking?.returnJourney?.date ||
         "-";
-
     const data = {
         Booking: {
             id: booking.bookingId,
@@ -89,10 +85,8 @@ export const clientadminBookingConfirmation = ({
             internalReturn: booking.returnJourney?.internalNotes || "",
         },
     };
-
     const subject = `New Booking Received #${booking.bookingId}`;
     const title = "New Booking Received";
     const subtitle = `Booking #${booking.bookingId} — ${date} at ${timeHour}:${timeMinute}`;
-
     return { subject, title, subtitle, data };
 };

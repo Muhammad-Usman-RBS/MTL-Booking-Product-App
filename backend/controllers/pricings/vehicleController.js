@@ -1,6 +1,5 @@
 import Vehicle from "../../models/pricings/Vehicle.js";
 
-// CREATE VEHICLE
 export const createVehicle = async (req, res) => {
   try {
     const {
@@ -21,8 +20,6 @@ export const createVehicle = async (req, res) => {
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
-
-    // Parse features
     let parsedFeatures = [];
     if (features) {
       try {
@@ -34,8 +31,6 @@ export const createVehicle = async (req, res) => {
         return res.status(400).json({ message: `Features error: ${err.message}` });
       }
     }
-
-    // Parse slabs
     let parsedSlabs = [];
     if (slabs) {
       try {
@@ -51,9 +46,7 @@ export const createVehicle = async (req, res) => {
         return res.status(400).json({ message: `Slabs error: ${err.message}` });
       }
     }
-
     const image = req.file?.path || imageFromBody || "";
-
     const newVehicle = new Vehicle({
       priority: Number(priority),
       vehicleName,
@@ -68,7 +61,6 @@ export const createVehicle = async (req, res) => {
       features: parsedFeatures,
       slabs: parsedSlabs,
     });
-
     const saved = await newVehicle.save();
     res.status(201).json(saved);
   } catch (err) {
@@ -77,14 +69,12 @@ export const createVehicle = async (req, res) => {
   }
 };
 
-// GET ALL VEHICLES (by logged-in user's company)
 export const getAllVehicles = async (req, res) => {
   try {
     const companyId = req.user.companyId;
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
-
     const vehicles = await Vehicle.find({ companyId }).sort({ priority: 1 });
     res.status(200).json(vehicles);
   } catch (err) {
@@ -92,7 +82,6 @@ export const getAllVehicles = async (req, res) => {
   }
 };
 
-// UPDATE VEHICLE
 export const updateVehicle = async (req, res) => {
   try {
     let {
@@ -108,12 +97,10 @@ export const updateVehicle = async (req, res) => {
       features,
       slabs,
     } = req.body;
-
     const companyId = req.user.companyId;
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
-
     let parsedFeatures = [];
     if (features) {
       try {
@@ -125,7 +112,6 @@ export const updateVehicle = async (req, res) => {
         return res.status(400).json({ message: `Features error: ${err.message}` });
       }
     }
-
     let parsedSlabs = [];
     if (slabs) {
       try {
@@ -141,9 +127,7 @@ export const updateVehicle = async (req, res) => {
         return res.status(400).json({ message: `Slabs error: ${err.message}` });
       }
     }
-
     const image = req.file?.path || imageFromBody || "";
-
     const updates = {
       priority: Number(priority),
       vehicleName,
@@ -158,13 +142,10 @@ export const updateVehicle = async (req, res) => {
       features: parsedFeatures,
       slabs: parsedSlabs,
     };
-
     const updated = await Vehicle.findByIdAndUpdate(req.params.id, updates, { new: true });
-
     if (!updated) {
       return res.status(404).json({ message: "Vehicle not found" });
     }
-
     res.status(200).json(updated);
   } catch (err) {
     console.error("Update Vehicle Error:", err);
@@ -172,7 +153,6 @@ export const updateVehicle = async (req, res) => {
   }
 };
 
-// DELETE VEHICLE
 export const deleteVehicle = async (req, res) => {
   try {
     const deleted = await Vehicle.findByIdAndDelete(req.params.id);
@@ -183,14 +163,12 @@ export const deleteVehicle = async (req, res) => {
   }
 };
 
-// GET VEHICLES BY COMPANY ID (Public access for widget)
 export const getVehiclesByCompanyId = async (req, res) => {
   try {
     const { companyId } = req.query;
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
-
     const vehicles = await Vehicle.find({ companyId }).sort({ priority: 1 });
     res.status(200).json(vehicles);
   } catch (err) {

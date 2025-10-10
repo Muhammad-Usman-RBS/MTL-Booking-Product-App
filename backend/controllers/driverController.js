@@ -30,9 +30,7 @@ export const createDriver = async (req, res) => {
       availability,
       companyId,
     } = req.body;
-
     let parsedAvailability = [];
-
     try {
       const existingDriver = await Driver.findOne({
         companyId,
@@ -41,7 +39,6 @@ export const createDriver = async (req, res) => {
           { "DriverData.email": email },
         ],
       });
-
       if (existingDriver) {
         if (existingDriver.DriverData.employeeNumber === employeeNumber) {
           return res.status(400).json({
@@ -80,7 +77,6 @@ export const createDriver = async (req, res) => {
     } catch (err) {
       parsedAvailability = [];
     }
-
     const buildUploadedField = (fieldName) => {
       const file = req.files[fieldName]?.[0];
       return file ? file.path : null;
@@ -127,13 +123,11 @@ export const createDriver = async (req, res) => {
       companyId,
     });
     await newDriver.save();
-
     res.status(201).json({
       message: "Driver profile created successfully",
       driver: newDriver,
     });
   } catch (err) {
-    console.error("Error creating driver:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
@@ -146,14 +140,11 @@ export const getAllDrivers = async (req, res) => {
         .status(401)
         .json({ success: false, message: "Unauthorized or missing company" });
     }
-
     const includeExpiry = String(req.query.includeExpiry || "false") === "true";
     const drivers = await Driver.find({ companyId });
-
     if (!includeExpiry) {
       return res.status(200).json({ success: true, drivers });
     }
-
     const annotated = drivers.map((d) => {
       const expiredDocs = collectExpiredDocs(d);
       return {
@@ -165,7 +156,6 @@ export const getAllDrivers = async (req, res) => {
 
     return res.status(200).json({ success: true, drivers: annotated });
   } catch (error) {
-    console.error("Error fetching drivers:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -179,7 +169,6 @@ export const getDriverById = async (req, res) => {
     }
     res.status(200).json({ message: "Driver fetched successfully", driver });
   } catch (error) {
-    console.error("Error in getDriverById controller:", error);
     return res.status(500).json({
       message: "Server error while fetching driver",
       error: error.message,
@@ -190,7 +179,6 @@ export const getDriverById = async (req, res) => {
 export const updateDriverById = async (req, res) => {
   try {
     const { id } = req.params;
-
     const {
       motExpiryDate,
       employeeNumber,
@@ -216,9 +204,7 @@ export const updateDriverById = async (req, res) => {
       NationalInsurance,
       availability,
     } = req.body;
-
     let parsedAvailability = [];
-
     try {
       const arr =
         typeof availability === "string"
@@ -236,12 +222,10 @@ export const updateDriverById = async (req, res) => {
     } catch (err) {
       parsedAvailability = [];
     }
-
     const buildUploadedField = (fieldName, existingValue) => {
       const file = req.files?.[fieldName]?.[0];
       return file ? file.path : existingValue || null;
     };
-
     const driver = await Driver.findById(id);
     if (!driver) {
       return res.status(404).json({ error: "Driver not found" });
@@ -254,14 +238,12 @@ export const updateDriverById = async (req, res) => {
         "DriverData.email": email,
         _id: { $ne: id },
       });
-
       if (exists) {
         return res
           .status(400)
           .json({ message: "A driver already exists with this email" });
       }
     }
-
     driver.DriverData = {
       employeeNumber,
       status,
@@ -278,7 +260,6 @@ export const updateDriverById = async (req, res) => {
       NationalInsurance,
       availability: parsedAvailability,
     };
-
     driver.VehicleData = {
       carRegistration,
       carMake,
@@ -290,7 +271,6 @@ export const updateDriverById = async (req, res) => {
       carInsuranceExpiry,
       motExpiryDate,
     };
-
     driver.UploadedData = {
       driverPicture: buildUploadedField(
         "driverPicture",
@@ -323,7 +303,6 @@ export const updateDriverById = async (req, res) => {
       ),
       V5: buildUploadedField("V5", driver.UploadedData?.V5),
     };
-
     await driver.save();
     if (oldEmail && oldEmail !== email) {
       const linkedUser = await User.findOne({
@@ -336,13 +315,11 @@ export const updateDriverById = async (req, res) => {
         await linkedUser.save();
       }
     }
-
     res.status(200).json({
       message: "Driver profile updated successfully",
       driver,
     });
   } catch (err) {
-    console.error("Error updating driver:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
@@ -350,13 +327,10 @@ export const updateDriverById = async (req, res) => {
 export const deleteDriverById = async (req, res) => {
   try {
     const { id } = req.params;
-
     const driver = await Driver.findById(id);
-
     if (!driver) {
       return res.status(404).json({ error: "Driver not found" });
     }
-
     if (driver.DriverData.status === "Deleted") {
       await Driver.findByIdAndDelete(id);
       return res.status(200).json({ message: "Driver permanently deleted" });
@@ -368,7 +342,6 @@ export const deleteDriverById = async (req, res) => {
         .json({ message: "Driver status set to 'Deleted'" });
     }
   } catch (err) {
-    console.error("Error deleting driver:", err);
     return res.status(500).json({ error: "Server error" });
   }
 };

@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Airline name -> ICAO codes mapping
 const airlineMap = {
   "british airways": "BAW",
   emirates: "UAE",
@@ -60,12 +59,9 @@ const airlineMap = {
   "air new zealand": "ANZ",
 };
 
-// Normalize flight number input
 function normalizeFlightNumber(input) {
-  // Remove all spaces and make uppercase
   return input.replace(/\s+/g, "").toUpperCase();
 }
-
 async function fetchFlightTimes(query) {
   try {
     let url = "";
@@ -74,10 +70,8 @@ async function fetchFlightTimes(query) {
     if (/^[A-Z]{2,3}\d+$/i.test(normalizedInput)) {
       url = `${process.env.FLIGHTAWARE_BASE_URL}/${normalizedInput}`;
     } else {
-      // Airline name -> ICAO
       const code = airlineMap[userInput.toLowerCase()];
       if (!code) {
-        console.warn("⚠️ Airline not in mapping table:", userInput);
         return null;
       }
       url = `${process.env.FLIGHTAWARE_BASE_URL}/search?query=-airline ${code}`;
@@ -88,13 +82,10 @@ async function fetchFlightTimes(query) {
         "x-apikey": process.env.FLIGHTAWARE_API_KEY,
       },
     });
-
     const flightData = response.data.flights?.[0];
     if (!flightData) {
-      console.warn("⚠️ No flight data found for:", query);
       return null;
     }
-
     const parsedData = {
       airline: flightData?.airline_name || "N/A",
       flightNumber: flightData?.ident || normalizedInput,
@@ -110,12 +101,7 @@ async function fetchFlightTimes(query) {
     };
     return parsedData;
   } catch (err) {
-    console.error(
-      "❌ Error fetching flight data:",
-      err.response?.data || err.message
-    );
     return null;
   }
 }
-
 export default fetchFlightTimes;

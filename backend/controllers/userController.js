@@ -4,7 +4,6 @@ import Company from "../models/Company.js";
 import sendEmail from "../utils/sendEmail.js";
 import { ensureDeliverableEmailOrThrow } from "../utils/users/emailValidator.js";
 
-// helpers
 const genOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 const EMAIL_MAX = 254;
 const isValidEmail = (e) =>
@@ -29,13 +28,10 @@ const allowedPermissions = [
 ];
 const defaultPermissions = ["Home", "Profile", "Logout"];
 
-// normalize helper
 const normEmail = (e = "") => String(e).trim().toLowerCase();
 
-// password policy (clientadmin only here; adjust if you want for others too)
 const strongPwRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,16}$/;
 
-// Initiate Verification
 export const initiateUserVerification = async (req, res) => {
   try {
     const creator = req.user;
@@ -51,7 +47,6 @@ export const initiateUserVerification = async (req, res) => {
       vatnumber,
       googleCalendar,
     } = req.body;
-
     if (!fullName?.trim())
       return res.status(400).json({ message: "Full Name is required" });
     if (!email || !isValidEmail(email))
@@ -59,8 +54,6 @@ export const initiateUserVerification = async (req, res) => {
     const emailNorm = normEmail(email);
     if (!role) return res.status(400).json({ message: "Role is required" });
     if (!status) return res.status(400).json({ message: "Status is required" });
-
-    // Password policy for clientadmin
     if (role === "clientadmin") {
       if (!password || !strongPwRe.test(password)) {
         return res.status(400).json({
@@ -69,27 +62,19 @@ export const initiateUserVerification = async (req, res) => {
         });
       }
     }
-
     await ensureDeliverableEmailOrThrow(emailNorm);
-
     let existing;
-
     if (role === "clientadmin") {
-      // clientadmins must be globally unique
       existing = await User.findOne({ email: emailNorm, role: "clientadmin" });
     } else {
-      // others only need to be unique inside company
       existing = await User.findOne({
         email: emailNorm,
         companyId: creator.companyId || null,
       });
     }
-
     if (existing && existing.status !== "Pending") {
       return res.status(409).json({ message: "User already exists" });
     }
-
-    // Permission validation
     let userPermissions = [...defaultPermissions];
     if (Array.isArray(permissions)) {
       const invalid = permissions.filter(
@@ -109,8 +94,6 @@ export const initiateUserVerification = async (req, res) => {
         .status(400)
         .json({ message: "Permissions must be an array of strings" });
     }
-
-    // AssociateAdminLimit validation
     let parsedLimit = 0;
     if (role === "clientadmin") {
       if (associateAdminLimit !== undefined && associateAdminLimit !== null) {
@@ -125,18 +108,13 @@ export const initiateUserVerification = async (req, res) => {
         parsedLimit = pl;
       }
     }
-
-    // CONDITION: OTP sirf tab chale jab superadmin → clientadmin/associateadmin
     const otpRequired =
       (creator.role === "superadmin" && role === "clientadmin") ||
       (creator.role === "clientadmin" && role === "associateadmin");
-
     if (!otpRequired) {
-      // Baaki roles ke liye direct create kar dena (no OTP)
       const hashedPassword = password
         ? await bcrypt.hash(password, 10)
         : await bcrypt.hash(Math.random().toString(36), 10);
-
       const newUser = await User.create({
         fullName: fullName.trim(),
         email: emailNorm,
@@ -163,7 +141,6 @@ export const initiateUserVerification = async (req, res) => {
           },
         }),
       });
-
       await sendEmail(newUser.email, "Your Account Has Been Created", {
         title: "Welcome to MTL",
         subtitle:
@@ -176,27 +153,21 @@ export const initiateUserVerification = async (req, res) => {
           Login_Link: `${process.env.BASE_URL_FRONTEND}/login`,
         },
       });
-
       return res.status(201).json({
         message: "User created successfully (no OTP needed).",
         user: newUser,
       });
     }
-
-    // OTP flow (superadmin → clientadmin/associateadmin)
     const otp = genOtp();
     const otpHash = await bcrypt.hash(otp, 10);
     const otpExpiresAt = new Date(Date.now() + 2 * 60 * 1000);
-
     const passwordHash = password
       ? await bcrypt.hash(password, 10)
       : await bcrypt.hash(Math.random().toString(36), 10);
-
     const companyId =
       creator.role === "superadmin" && role === "clientadmin"
         ? null
         : creator.companyId;
-
     const pendingDoc = await User.findOneAndUpdate(
       { email: emailNorm },
       {
@@ -238,27 +209,23 @@ export const initiateUserVerification = async (req, res) => {
       },
       { new: true, upsert: !existing }
     );
-
     await sendEmail(emailNorm, "Verification User - OTP", {
       title: "Verify Your Account",
       subtitle:
         "Please use the following OTP to verify and complete user creation:",
       data: { "One-Time Password": otp, "Expires In": "2 minutes" },
     });
-
     return res.status(200).json({
       message: "OTP sent. Please verify to create user.",
       transactionId: pendingDoc._id.toString(),
     });
   } catch (err) {
-    console.error("initiateUserVerification error:", err);
     if (err?.status)
       return res.status(err.status).json({ message: err.message });
     return res.status(500).json({ message: "Server error" });
   }
 };
 
-// Resend OTP
 export const resendUserOtp = async (req, res) => {
   try {
     const { transactionId } = req.body;
@@ -270,8 +237,6 @@ export const resendUserOtp = async (req, res) => {
         .status(400)
         .json({ message: "No pending verification for this user." });
     }
-
-    // throttle 60s
     const last = user.verification.lastSentAt
       ? user.verification.lastSentAt.getTime()
       : 0;
@@ -282,28 +247,23 @@ export const resendUserOtp = async (req, res) => {
           message: "Please wait a minute before requesting another OTP.",
         });
     }
-
     const otp = genOtp();
     user.verification.otpHash = await bcrypt.hash(otp, 10);
     user.verification.otpExpiresAt = new Date(Date.now() + 2 * 60 * 1000);
     user.verification.lastSentAt = new Date();
     user.verification.attempts = 0;
     await user.save();
-
     await sendEmail(user.email, "Verification User - OTP (Resent)", {
       title: "New OTP",
       subtitle: "Use this OTP to verify your account creation:",
       data: { "One-Time Password": otp, "Expires In": "2 minutes" },
     });
-
     return res.status(200).json({ message: "OTP resent." });
   } catch (err) {
-    console.error("resendUserOtp error:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };
 
-// Verify OTP & Create Actual User
 export const verifyUserOtpAndCreate = async (req, res) => {
   try {
     const { transactionId, otp } = req.body;
@@ -311,7 +271,6 @@ export const verifyUserOtpAndCreate = async (req, res) => {
       return res
         .status(400)
         .json({ message: "transactionId and otp are required" });
-
     const user = await User.findById(transactionId).select("+password");
     if (!user)
       return res.status(404).json({ message: "Pending request not found" });
@@ -320,7 +279,6 @@ export const verifyUserOtpAndCreate = async (req, res) => {
         .status(400)
         .json({ message: "No pending verification for this user." });
     }
-
     if (user.verification.attempts >= 5) {
       await User.findByIdAndDelete(transactionId);
       return res
@@ -336,32 +294,25 @@ export const verifyUserOtpAndCreate = async (req, res) => {
         .status(400)
         .json({ message: "OTP expired. Please start again." });
     }
-
     const ok = await bcrypt.compare(otp, user.verification.otpHash);
     if (!ok) {
       user.verification.attempts += 1;
       await user.save();
       return res.status(400).json({ message: "Invalid OTP" });
     }
-
     await ensureDeliverableEmailOrThrow(user.email);
-
-    // capture temp password BEFORE clearing verification
     const passwordToEmail = user.verification?.tempPassword;
     const plainPassword = user.verification?.tempPassword || null;
-
     user.status = "Active";
     user.verifiedAt = new Date();
-    user.verification = undefined; // wipe OTP + tempPassword
+    user.verification = undefined;
     await user.save();
-
     if (user.role === "clientadmin") {
       await Company.updateMany(
         { clientAdminId: user._id },
         { $set: { status: user.status } }
       );
     }
-
     await sendEmail(user.email, "Your Account Has Been Created", {
       title: "Welcome to MTL",
       subtitle:
@@ -370,19 +321,16 @@ export const verifyUserOtpAndCreate = async (req, res) => {
         Name: user.fullName,
         Email: user.email,
         Role: user.role,
-        ...(passwordToEmail && { Password: passwordToEmail }), // ← include if present
+        ...(passwordToEmail && { Password: passwordToEmail }),
         Login_Link: `${process.env.BASE_URL_FRONTEND}/login`,
       },
     });
-
     return res.status(200).json({ message: "User verified & activated", user });
   } catch (err) {
-    console.error("verifyUserOtpAndCreate error:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };
 
-// SuperAdmin or ClientAdmin Creates User (Direct)
 export const createUserBySuperAdmin = async (req, res) => {
   const {
     fullName,
@@ -396,11 +344,8 @@ export const createUserBySuperAdmin = async (req, res) => {
     googleCalendar,
     vatnumber,
   } = req.body;
-
   try {
-    const creator = req.user; // defined early
-
-    // basic gates
+    const creator = req.user;
     if (!fullName?.trim()) {
       return res.status(400).json({ message: "Full Name is required" });
     }
@@ -408,8 +353,6 @@ export const createUserBySuperAdmin = async (req, res) => {
       return res.status(400).json({ message: "Valid Email is required" });
     }
     const emailNorm = normEmail(email);
-
-    // Deliverability gate
     try {
       await ensureDeliverableEmailOrThrow(emailNorm);
     } catch (e) {
@@ -417,28 +360,21 @@ export const createUserBySuperAdmin = async (req, res) => {
         .status(e?.status || 400)
         .json({ message: e?.message || "Email undeliverable" });
     }
-
-    // Duplicate checks
     let userExists;
     if (role === "clientadmin") {
-      // clientadmins must be globally unique
       userExists = await User.findOne({
         email: emailNorm,
         role: "clientadmin",
       });
     } else {
-      // other roles must be unique per company
       userExists = await User.findOne({
         email: emailNorm,
         companyId: creator.companyId || null,
       });
     }
-
     if (userExists) {
       return res.status(409).json({ message: "User already exists" });
     }
-
-    // Role controls
     if (["driver", "customer"].includes(role)) {
       const allowedCreatorRoles = [
         "superadmin",
@@ -451,19 +387,15 @@ export const createUserBySuperAdmin = async (req, res) => {
         });
       }
     }
-
     if (["clientadmin", "associateadmin"].includes(creator.role)) {
       const allowedRoles = ["staffmember", "driver", "customer"];
       if (creator.role === "clientadmin") allowedRoles.push("associateadmin");
-
       if (!allowedRoles.includes(role)) {
         return res.status(403).json({
           message: `Unauthorized role assignment by ${creator.role}`,
         });
       }
     }
-
-    // clientadmin password policy
     if (role === "clientadmin") {
       if (!password || !strongPwRe.test(password)) {
         return res.status(400).json({
@@ -472,8 +404,6 @@ export const createUserBySuperAdmin = async (req, res) => {
         });
       }
     }
-
-    // associateAdminLimit
     let parsedLimit;
     if (role === "clientadmin") {
       if (associateAdminLimit !== undefined && associateAdminLimit !== null) {
@@ -489,33 +419,26 @@ export const createUserBySuperAdmin = async (req, res) => {
     } else {
       parsedLimit = 0;
     }
-
-    // enforce associateadmin creation limits
     if (creator.role === "clientadmin" && role === "associateadmin") {
       const creatorDoc = await User.findById(creator._id).lean();
       const allowed = creatorDoc?.associateAdminLimit || 0;
-
       const associateAdminCount = await User.countDocuments({
         createdBy: creator._id,
         role: "associateadmin",
         status: { $ne: "Deleted" },
       });
-
       if (allowed === 0) {
         return res.status(400).json({
           message:
             "This clientadmin is not allowed to create associateadmins (limit is 0).",
         });
       }
-
       if (associateAdminCount >= allowed) {
         return res.status(400).json({
           message: `Limit reached: Only ${allowed} associateadmin(s) allowed for this clientadmin.`,
         });
       }
     }
-
-    // demo account limit
     if (role === "demo") {
       const count = await User.countDocuments({
         role: "demo",
@@ -527,8 +450,6 @@ export const createUserBySuperAdmin = async (req, res) => {
         });
       }
     }
-
-    // staffmember account limit
     if (role === "staffmember") {
       const count = await User.countDocuments({
         role: "staffmember",
@@ -540,12 +461,9 @@ export const createUserBySuperAdmin = async (req, res) => {
         });
       }
     }
-
-    // Permission validation
     const allowedPermissionsLocal = [...allowedPermissions];
     const defaultPermissionsLocal = [...defaultPermissions];
     let userPermissions = [...defaultPermissionsLocal];
-
     if (permissions && Array.isArray(permissions)) {
       const invalidPermissions = permissions.filter(
         (p) => !allowedPermissionsLocal.includes(p)
@@ -557,7 +475,6 @@ export const createUserBySuperAdmin = async (req, res) => {
           )}`,
         });
       }
-
       const filteredPermissions = permissions.filter(
         (p) => !defaultPermissionsLocal.includes(p)
       );
@@ -567,10 +484,7 @@ export const createUserBySuperAdmin = async (req, res) => {
         message: "Permissions must be an array of strings",
       });
     }
-
-    // Create user
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const newUser = await User.create({
       employeeNumber: role === "driver" ? employeeNumber : undefined,
       fullName: fullName.trim(),
@@ -596,8 +510,6 @@ export const createUserBySuperAdmin = async (req, res) => {
         },
       }),
     });
-
-    // Send email with credentials
     await sendEmail(newUser.email, "Your Account Has Been Created", {
       title: "Welcome to MTL",
       subtitle:
@@ -610,33 +522,26 @@ export const createUserBySuperAdmin = async (req, res) => {
         Login_Link: `${process.env.BASE_URL_FRONTEND}/login`,
       },
     });
-
     res.status(201).json({
       message: "User created successfully, email sent",
       user: newUser,
     });
   } catch (error) {
-    console.error("Create User Error:", error);
     if (error?.status)
       return res.status(error.status).json({ message: error.message });
     res.status(500).json({ message: "Server error" });
   }
 };
-
-// GET All Users
 export const getClientAdmins = async (req, res) => {
   try {
     const { role, companyId, _id: userId } = req.user;
     let query = {};
-
     if (role === "superadmin") {
-      // Superadmin -> sab clientadmins aur demo accounts
       query.$or = [
         { role: { $in: ["clientadmin", "demo"] } },
         { role: { $in: ["driver", "customer"] }, companyId: null },
       ];
     } else if (role === "clientadmin") {
-      // Clientadmin -> apne associateadmins, staffmembers, drivers aur customers
       query = {
         $or: [
           {
@@ -648,18 +553,16 @@ export const getClientAdmins = async (req, res) => {
           {
             role: "customer",
             companyId: companyId,
-            createdBy: null, // widget-based customers for this company only
+            createdBy: null,
           },
         ],
       };
     } else if (role === "associateadmin") {
-      // Associateadmin -> sirf apne banaye huay users + khud ka record
       query = {
         $or: [{ createdBy: userId }, { _id: userId }],
         role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
       };
     } else if (role === "staffmember") {
-      // Staffmember -> apne clientadmin ka pura company data
       query = {
         companyId: companyId,
         role: { $in: ["associateadmin", "staffmember", "driver", "customer"] },
@@ -667,9 +570,7 @@ export const getClientAdmins = async (req, res) => {
     } else {
       return res.status(403).json({ message: "Unauthorized access" });
     }
-
     const users = await User.find(query);
-
     return res.status(200).json(
       users.map((user) => ({
         _id: user._id,
@@ -686,24 +587,19 @@ export const getClientAdmins = async (req, res) => {
       }))
     );
   } catch (error) {
-    console.error("Error fetching users:", error);
     res.status(500).json({ message: "Failed to fetch users" });
   }
 };
 
-// Get associates of a given clientadmin (optionally scoped by companyId)
 export const getAssociateAdmins = async (req, res) => {
   try {
-    const requester = req.user; // { _id, role, companyId }
+    const requester = req.user; 
     const { createdBy, companyId } = req.query;
-
     if (!createdBy) {
       return res
         .status(400)
         .json({ message: "createdBy (clientAdminId) is required" });
     }
-
-    // Security: clientadmin can only query their own associates
     if (
       requester.role === "clientadmin" &&
       String(requester._id) !== String(createdBy)
@@ -712,30 +608,24 @@ export const getAssociateAdmins = async (req, res) => {
         .status(403)
         .json({ message: "You can only view your own associates." });
     }
-
-    // Build query
     const query = {
       role: "associateadmin",
       status: { $ne: "Deleted" },
-      createdBy, // who created these associates (clientadmin id)
+      createdBy,
     };
-
     if (companyId) {
       query.companyId = companyId;
     }
-
     const associates = await User.find(query)
       .select("_id fullName email role status companyId createdBy")
       .sort({ createdAt: -1 });
 
     return res.status(200).json(associates);
   } catch (error) {
-    console.error("getAssociateAdmins error:", error);
     return res.status(500).json({ message: "Failed to fetch associates" });
   }
 };
 
-// Update User
 export const updateUserBySuperAdmin = async (req, res) => {
   const { id } = req.params;
   const {
@@ -748,7 +638,6 @@ export const updateUserBySuperAdmin = async (req, res) => {
     associateAdminLimit,
     vatnumber,
   } = req.body;
-
   try {
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -762,17 +651,12 @@ export const updateUserBySuperAdmin = async (req, res) => {
           "Cannot set status to Active — user has not completed OTP verification.",
       });
     }
-    // fullName
     if (fullName?.trim()) user.fullName = fullName.trim();
-
-    // email change handling
     if (email && email !== user.email) {
       if (!isValidEmail(email)) {
         return res.status(400).json({ message: "Valid Email is required" });
       }
       const emailNorm = normEmail(email);
-
-      // duplicate?
       let dup;
       if (user.role === "clientadmin") {
         dup = await User.findOne({
@@ -788,8 +672,6 @@ export const updateUserBySuperAdmin = async (req, res) => {
         });
       }
       if (dup) return res.status(409).json({ message: "Email already in use" });
-
-      // deliverability
       try {
         await ensureDeliverableEmailOrThrow(emailNorm);
       } catch (e) {
@@ -797,19 +679,14 @@ export const updateUserBySuperAdmin = async (req, res) => {
           .status(e?.status || 400)
           .json({ message: e?.message || "Email looks undeliverable" });
       }
-
       user.email = emailNorm;
     }
 
     if (role === "customer" && req.body.emailPreference !== undefined) {
       user.emailPreference = req.body.emailPreference;
     }
-
-    // role/status
     if (role) user.role = role;
     if (status) user.status = status;
-
-    // permissions
     const defaultPermissions = ["Home", "Profile", "Logout"];
     if (Array.isArray(permissions)) {
       const finalPermissions = [
@@ -821,8 +698,6 @@ export const updateUserBySuperAdmin = async (req, res) => {
         .status(400)
         .json({ message: "Permissions must be an array of strings" });
     }
-
-    // associateAdminLimit guard for clientadmin
     if (associateAdminLimit !== undefined) {
       const parsed = parseInt(associateAdminLimit);
       if (role === "clientadmin") {
@@ -835,34 +710,27 @@ export const updateUserBySuperAdmin = async (req, res) => {
         }
         user.associateAdminLimit = parsed;
       } else {
-        user.associateAdminLimit = 0; // keep consistent with schema default
+        user.associateAdminLimit = 0; 
       }
     }
-
-    // password
     let plainPassword;
     if (password) {
       user.password = await bcrypt.hash(password, 10);
       plainPassword = password;
     }
-
-    // customer-only VAT
     if (role === "customer") {
       user.vatnumber = vatnumber ?? user.vatnumber;
       if (req.body.emailPreference !== undefined) {
         user.emailPreference = req.body.emailPreference; // ✅ added
       }
     }
-
     await user.save();
-
     if (user.role === "clientadmin") {
       await Company.updateMany(
         { clientAdminId: user._id },
         { $set: { status: user.status } }
       );
     }
-
     await sendEmail(user.email, "Your Account Has Been Updated", {
       title: "Account Updated Successfully",
       subtitle: "Your account details have been updated.",
@@ -877,7 +745,6 @@ export const updateUserBySuperAdmin = async (req, res) => {
         }/login`,
       },
     });
-
     res.status(200).json({
       message: "User updated successfully, email sent",
       user: {
@@ -892,44 +759,36 @@ export const updateUserBySuperAdmin = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Update user error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// Delete User
 export const deleteUserBySuperAdmin = async (req, res) => {
   const { id } = req.params;
-
   try {
     const user = await User.findById(id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
     await User.findByIdAndDelete(id);
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
-    console.error("Delete user error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// Get All Users (REGARDLESS OF ROLE)
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find({
       status: { $ne: "Deleted" },
-      role: { $ne: "superadmin" }, // Exclude superadmin
+      role: { $ne: "superadmin" },
     }).select("-password -__v");
     res.status(200).json(users);
   } catch (error) {
-    console.error("Error fetching all users:", error);
     res.status(500).json({ message: "Failed to fetch users" });
   }
 };
 
-// GET All Users with Role = "driver"
 export const getAllDrivers = async (req, res) => {
   try {
     const drivers = await User.find({
@@ -943,7 +802,6 @@ export const getAllDrivers = async (req, res) => {
       drivers,
     });
   } catch (error) {
-    console.error("Error fetching drivers:", error);
     res.status(500).json({ message: "Failed to fetch drivers" });
   }
 };
@@ -960,7 +818,6 @@ export const getAllStaffmembers = async (req, res) => {
       staffmembers,
     });
   } catch (error) {
-    console.error("Error fetching drivers:", error);
     res.status(500).json({ message: "Failed to fetch drivers" });
   }
 };
@@ -977,7 +834,6 @@ export const getAllDemos = async (req, res) => {
       demos,
     });
   } catch (error) {
-    console.error("Error fetching demo users:", error);
     res.status(500).json({ message: "Failed to fetch demo users" });
   }
 };
@@ -994,12 +850,10 @@ export const getAllAssociateAdmins = async (req, res) => {
       associateAdmins,
     });
   } catch (error) {
-    console.error("Error fetching associate admins:", error);
     res.status(500).json({ message: "Failed to fetch associate admins" });
   }
 };
 
-// GET All Users with Role = "customer"
 export const getAllCustomers = async (req, res) => {
   try {
     const customers = await User.find({
@@ -1013,27 +867,19 @@ export const getAllCustomers = async (req, res) => {
       customers,
     });
   } catch (error) {
-    console.error("Error fetching customers:", error);
     res.status(500).json({ message: "Failed to fetch customers" });
   }
 };
 
-// Widget-based public customer creation
 export const createCustomerViaWidget = async (req, res) => {
   const { fullName, email, password, companyId } = req.body;
-
   if (!fullName || !email || !password || !companyId) {
     return res.status(400).json({ message: "Missing required fields" });
   }
-
-  // basic format check
   if (!isValidEmail(email)) {
     return res.status(400).json({ message: "Valid Email is required" });
   }
-
   const emailNorm = normEmail(email);
-
-  // Deep deliverability (deep-email-validator)
   try {
     await ensureDeliverableEmailOrThrow(emailNorm);
   } catch (e) {
@@ -1041,39 +887,29 @@ export const createCustomerViaWidget = async (req, res) => {
       .status(e?.status || 400)
       .json({ message: e?.message || "Email looks undeliverable" });
   }
-
   try {
-    // duplicate check on normalized email
     const userExists = await User.findOne({ email: emailNorm });
     if (userExists) {
       return res.status(409).json({ message: "Email already registered" });
     }
-
-    // (optional) enforce basic password policy for widget users
     if (password.length < 6) {
       return res
         .status(400)
         .json({ message: "Password must be at least 6 characters" });
     }
-
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const newUser = await User.create({
       fullName: fullName.trim(),
-      email: emailNorm, // store normalized email
+      email: emailNorm, 
       password: hashedPassword,
       role: "customer",
       status: "Active",
       permissions: ["Home", "Profile", "Logout"],
-      createdBy: null, // widget
+      createdBy: null,
       companyId,
       associateAdminLimit: 0,
       emailPreference: emailPreference ?? false,
     });
-
-    // (optional) send welcome email
-    // await sendEmail(newUser.email, "Welcome", { title:"Welcome", data: { Name: newUser.fullName }});
-
     res.status(201).json({
       message: "Customer created successfully",
       user: {
@@ -1087,7 +923,6 @@ export const createCustomerViaWidget = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Widget Customer Creation Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -1096,10 +931,8 @@ export const updateBookingFilterPreferences = async (req, res) => {
   try {
     const { selectedStatus, selectedColumns } = req.body;
     const userId = req.user._id;
-
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
-
     if (Array.isArray(selectedStatus) && selectedStatus.length > 0) {
       user.bookingFilterPreferences.selectedStatus = selectedStatus;
     } else {
@@ -1110,15 +943,12 @@ export const updateBookingFilterPreferences = async (req, res) => {
         selectedColumns
       ).filter((key) => selectedColumns[key]);
     }
-
     await user.save();
-
     res.status(200).json({
       message: "Booking filter preferences updated",
       bookingFilterPreferences: user.bookingFilterPreferences,
     });
   } catch (error) {
-    console.error("updateBookingFilterPreferences error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -1128,7 +958,6 @@ export const getBookingFilterPreferences = async (req, res) => {
     const userId = req.user._id;
     const user = await User.findById(userId).select("bookingFilterPreferences");
     if (!user) return res.status(404).json({ message: "User not found" });
-
     res.status(200).json({
       bookingFilterPreferences: user.bookingFilterPreferences || {
         selectedStatus: ["All"],
@@ -1136,7 +965,6 @@ export const getBookingFilterPreferences = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("getBookingFilterPreferences error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

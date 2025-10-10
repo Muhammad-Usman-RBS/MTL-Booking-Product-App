@@ -10,8 +10,6 @@ cloudinary.config({
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-
-// Reusable function to return Cloudinary storage with dynamic subfolder
 const getCloudinaryStorage = (subfolder) => {
     return new CloudinaryStorage({
         cloudinary,
@@ -22,6 +20,4 @@ const getCloudinaryStorage = (subfolder) => {
         }),
     });
 };
-
-// Proper export
 export const getUploader = (folder) => multer({ storage: getCloudinaryStorage(folder) });

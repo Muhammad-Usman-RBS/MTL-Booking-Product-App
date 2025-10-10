@@ -1,13 +1,9 @@
-
-
 import mongoose from "mongoose";
-
 const themeSchema = new mongoose.Schema({
-  companyId: { type: String, required: true, index: true }, 
-  name: {type: String , default: "Custom Theme"},
+  name: { type: String, default: "Custom Theme" },
   isDefault: {
     type: Boolean,
-    default: false
+    default: false,
   },
   lastApplied: { type: Boolean, default: false },
   themeSettings: {
@@ -36,13 +32,11 @@ const themeSchema = new mongoose.Schema({
       default: "#32cd32",
       match: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
     },
-    
   },
   isActive: { type: Boolean, default: true }, // newest gets active flag
   createdAt: { type: Date, default: Date.now, index: true },
   updatedAt: { type: Date, default: Date.now },
+  companyId: { type: String, required: true, index: true },
 });
-
-
 const Theme = mongoose.model("Theme", themeSchema);
 export default Theme;

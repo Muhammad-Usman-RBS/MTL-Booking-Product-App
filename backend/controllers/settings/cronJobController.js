@@ -12,7 +12,7 @@ const emitToEmployee = (employeeNumber, event, payload = {}) => {
   const emp = String(employeeNumber || "");
   io.to(`emp:${emp}`).emit(event, payload);
 };
-// Check if date is expired
+
 const isExpired = (dateValue) => {
   const d = dateValue ? new Date(dateValue) : null;
   if (!d || isNaN(d)) return false;
@@ -24,7 +24,6 @@ const isExpired = (dateValue) => {
 
 const getExpiredDocs = (driver) => {
   const expired = {};
-
   if (isExpired(driver?.DriverData?.driverLicenseExpiry)) {
     expired["Driver License"] = new Date(driver.DriverData.driverLicenseExpiry)
       .toISOString()
@@ -54,44 +53,32 @@ const getExpiredDocs = (driver) => {
       .toISOString()
       .split("T")[0];
   }
-
   return expired;
 };
 
-// Check if email was sent in last 24 hours
 const canSendEmail = (driver, expiredDocs) => {
   const lastSent = driver?.Notifications?.docExpiry?.lastSentAt;
   if (!lastSent) return true;
-
   const now = new Date();
   const hoursSinceLastSent = (now - new Date(lastSent)) / (1000 * 60 * 60);
-
   return hoursSinceLastSent >= 24;
 };
 
-// Check if current time is within allowed window
 const isWithinTimeWindow = (timeRange) => {
   if (!timeRange) return false;
-
   const [start, end] = timeRange.split(/–|-/).map((t) => t.trim());
   if (!start || !end) return false;
-
   const [startHour, startMin] = start.split(":").map(Number);
   const [endHour, endMin] = end.split(":").map(Number);
-
   if (isNaN(startHour) || isNaN(startMin) || isNaN(endHour) || isNaN(endMin)) {
     return false;
   }
-
   const now = new Date();
-  // Use local server time (Pakistan timezone expected)
   const currentHour = now.getHours();
   const currentMin = now.getMinutes();
   const currentTime = currentHour * 60 + currentMin;
-
   const startTime = startHour * 60 + startMin;
   const endTime = endHour * 60 + endMin;
-
   if (endTime > startTime) {
     return currentTime >= startTime && currentTime < endTime;
   } else {
@@ -99,7 +86,6 @@ const isWithinTimeWindow = (timeRange) => {
   }
 };
 
-// POST: Create a new cron job configuration
 export const createCronJob = async (req, res) => {
   try {
     const {
@@ -110,28 +96,22 @@ export const createCronJob = async (req, res) => {
       driverStatement,
       createdBy,
     } = req.body;
-
     if (!companyId || !createdBy) {
       return res.status(400).json({
         message: "Missing required fields: companyId and createdBy",
       });
     }
-
-    // Validate companyId format
     if (!mongoose.Types.ObjectId.isValid(companyId)) {
       return res.status(400).json({
         message: "Invalid companyId format",
       });
     }
-
-    // Check if cron job already exists for this company
     const existingCronJob = await CronJob.findOne({ companyId });
     if (existingCronJob) {
       return res.status(409).json({
         message: "Cron job configuration already exists for this company",
       });
     }
-
     const newCronJob = new CronJob({
       companyId,
       autoAllocation: autoAllocation || {
@@ -165,7 +145,6 @@ export const createCronJob = async (req, res) => {
         },
       ],
     });
-
     const savedCronJob = await newCronJob.save();
     await savedCronJob.populate(["createdBy", "updatedBy"], "name email");
 
@@ -183,35 +162,28 @@ export const createCronJob = async (req, res) => {
   }
 };
 
-// GET: Get cron job configuration for a company
 export const getCronJob = async (req, res) => {
   try {
     const { companyId } = req.query;
-
     if (!companyId) {
       return res.status(400).json({
         message: "Missing companyId parameter",
       });
     }
-
-    // Validate companyId format
     if (!mongoose.Types.ObjectId.isValid(companyId)) {
       return res.status(400).json({
         message: "Invalid companyId format",
       });
     }
-
     const cronJob = await CronJob.findOne({ companyId })
       .populate("createdBy", "name email")
       .populate("updatedBy", "name email")
       .lean();
-
     if (!cronJob) {
       return res.status(404).json({
         message: "No cron job configuration found for this company",
       });
     }
-
     return res.status(200).json({
       success: true,
       message: "Cron job configuration fetched successfully",
@@ -226,13 +198,11 @@ export const getCronJob = async (req, res) => {
   }
 };
 
-// GET: Get all cron jobs (for admin)
 export const getAllCronJobs = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
-
     const cronJobs = await CronJob.find({})
       .populate("companyId", "name")
       .populate("createdBy", "name email")
@@ -241,9 +211,7 @@ export const getAllCronJobs = async (req, res) => {
       .skip((pageNum - 1) * limitNum)
       .sort({ updatedAt: -1 })
       .lean();
-
     const total = await CronJob.countDocuments();
-
     return res.status(200).json({
       success: true,
       message: "All cron jobs fetched successfully",
@@ -264,7 +232,6 @@ export const getAllCronJobs = async (req, res) => {
   }
 };
 
-// PUT: Update cron job configuration
 export const updateCronJob = async (req, res) => {
   try {
     const { cronJobId } = req.params;
@@ -275,26 +242,19 @@ export const updateCronJob = async (req, res) => {
       driverStatement,
       updatedBy,
     } = req.body;
-
     if (!cronJobId) {
       return res.status(400).json({ message: "Missing cronJobId" });
     }
-
     if (!mongoose.Types.ObjectId.isValid(cronJobId)) {
       return res.status(400).json({ message: "Invalid cronJobId format" });
     }
-
     if (!updatedBy) {
       return res.status(400).json({ message: "updatedBy is required" });
     }
-
-    // Find existing cron job
     const existingCronJob = await CronJob.findById(cronJobId);
     if (!existingCronJob) {
       return res.status(404).json({ message: "Cron job not found" });
     }
-
-    // Track changes for history
     const changes = {};
     if (autoAllocation !== undefined) changes.autoAllocation = autoAllocation;
     if (reviews !== undefined) changes.reviews = reviews;
@@ -302,8 +262,6 @@ export const updateCronJob = async (req, res) => {
       changes.driverDocumentsExpiration = driverDocumentsExpiration;
     if (driverStatement !== undefined)
       changes.driverStatement = driverStatement;
-
-    // Prepare update object
     const updateObj = {
       updatedBy,
       updatedAt: new Date(),
@@ -316,15 +274,12 @@ export const updateCronJob = async (req, res) => {
         },
       },
     };
-
     if (autoAllocation !== undefined) updateObj.autoAllocation = autoAllocation;
     if (reviews !== undefined) updateObj.reviews = reviews;
     if (driverDocumentsExpiration !== undefined)
       updateObj.driverDocumentsExpiration = driverDocumentsExpiration;
     if (driverStatement !== undefined)
       updateObj.driverStatement = driverStatement;
-
-    // Update cron job
     const updatedCronJob = await CronJob.findByIdAndUpdate(
       cronJobId,
       updateObj,
@@ -348,7 +303,6 @@ export const updateCronJob = async (req, res) => {
   }
 };
 
-// PUT: Update cron job by company ID (simpler method for frontend)
 export const updateCronJobByCompany = async (req, res) => {
   try {
     const { companyId } = req.params;
@@ -359,24 +313,17 @@ export const updateCronJobByCompany = async (req, res) => {
       driverStatement,
       updatedBy,
     } = req.body;
-
     if (!companyId) {
       return res.status(400).json({ message: "Missing companyId" });
     }
-
     if (!mongoose.Types.ObjectId.isValid(companyId)) {
       return res.status(400).json({ message: "Invalid companyId format" });
     }
-
     if (!updatedBy) {
       return res.status(400).json({ message: "updatedBy is required" });
     }
-
-    // Find existing cron job by company
     const existingCronJob = await CronJob.findOne({ companyId });
-
     if (!existingCronJob) {
-      // If doesn't exist, create new one
       const newCronJob = new CronJob({
         companyId,
         autoAllocation: autoAllocation || {
@@ -420,8 +367,6 @@ export const updateCronJobByCompany = async (req, res) => {
         cronJob: savedCronJob,
       });
     }
-
-    // Track changes for history
     const changes = {};
     if (autoAllocation !== undefined) changes.autoAllocation = autoAllocation;
     if (reviews !== undefined) changes.reviews = reviews;
@@ -429,8 +374,6 @@ export const updateCronJobByCompany = async (req, res) => {
       changes.driverDocumentsExpiration = driverDocumentsExpiration;
     if (driverStatement !== undefined)
       changes.driverStatement = driverStatement;
-
-    // Prepare update object
     const updateObj = {
       updatedBy,
       updatedAt: new Date(),
@@ -443,15 +386,12 @@ export const updateCronJobByCompany = async (req, res) => {
         },
       },
     };
-
     if (autoAllocation !== undefined) updateObj.autoAllocation = autoAllocation;
     if (reviews !== undefined) updateObj.reviews = reviews;
     if (driverDocumentsExpiration !== undefined)
       updateObj.driverDocumentsExpiration = driverDocumentsExpiration;
     if (driverStatement !== undefined)
       updateObj.driverStatement = driverStatement;
-
-    // Update existing cron job
     const updatedCronJob = await CronJob.findOneAndUpdate(
       { companyId },
       updateObj,
@@ -460,7 +400,6 @@ export const updateCronJobByCompany = async (req, res) => {
         runValidators: true,
       }
     ).populate("createdBy updatedBy", "name email");
-
     return res.status(200).json({
       success: true,
       message: "Cron job configuration updated successfully",
@@ -475,26 +414,20 @@ export const updateCronJobByCompany = async (req, res) => {
   }
 };
 
-// DELETE: Delete cron job configuration
 export const deleteCronJob = async (req, res) => {
   try {
     const { cronJobId } = req.params;
     const { deletedBy } = req.body;
-
     if (!cronJobId) {
       return res.status(400).json({ message: "Missing cronJobId" });
     }
-
     if (!mongoose.Types.ObjectId.isValid(cronJobId)) {
       return res.status(400).json({ message: "Invalid cronJobId format" });
     }
-
     const cronJob = await CronJob.findByIdAndDelete(cronJobId);
-
     if (!cronJob) {
       return res.status(404).json({ message: "Cron job not found" });
     }
-
     return res.status(200).json({
       success: true,
       message: "Cron job configuration deleted successfully",
@@ -508,14 +441,11 @@ export const deleteCronJob = async (req, res) => {
   }
 };
 
-// PUT: Enable/Disable specific cron job features
 export const toggleCronJobFeature = async (req, res) => {
   try {
     const { companyId } = req.params;
     const { feature, enabled } = req.body;
     const updatedBy = req.body.updatedBy || req.user?._id;
-
-    // ---- validations ----
     if (!companyId)
       return res.status(400).json({ message: "Missing companyId" });
     if (!mongoose.Types.ObjectId.isValid(companyId)) {
@@ -529,7 +459,6 @@ export const toggleCronJobFeature = async (req, res) => {
     if (!updatedBy || !mongoose.Types.ObjectId.isValid(updatedBy)) {
       return res.status(400).json({ message: "Invalid updatedBy" });
     }
-
     const validFeatures = [
       "autoAllocation",
       "reviews",
@@ -541,11 +470,7 @@ export const toggleCronJobFeature = async (req, res) => {
         message: "Invalid feature. Valid features: " + validFeatures.join(", "),
       });
     }
-
-    // ---- fetch existing (if any) ----
     let existingCronJob = await CronJob.findOne({ companyId });
-
-    // ---- create default config if none exists ----
     if (!existingCronJob) {
       const defaultConfig = {
         autoAllocation: {
@@ -569,21 +494,15 @@ export const toggleCronJobFeature = async (req, res) => {
           notifications: { sms: false, email: false },
         },
       };
-
-      // apply requested toggle
       defaultConfig[feature].enabled = enabled;
-
-      // if it's the doc-expiry feature, mirror the email flag with enabled
       if (feature === "driverDocumentsExpiration") {
         defaultConfig.driverDocumentsExpiration.notifications.email = enabled;
-        // make sure we have a reasonable default daily time
         if (!defaultConfig.driverDocumentsExpiration.timing?.dailyTime) {
           defaultConfig.driverDocumentsExpiration.timing = {
             dailyTime: "16:00 - 17:00",
           };
         }
       }
-
       const created = await new CronJob({
         companyId,
         ...defaultConfig,
@@ -600,16 +519,12 @@ export const toggleCronJobFeature = async (req, res) => {
           },
         ],
       }).save();
-
       await created.populate(["createdBy", "updatedBy"], "name email");
-
-      // reschedule single company
       try {
         await updateCompanyCronJob(companyId);
       } catch (e) {
         console.error("Reschedule error:", e);
       }
-
       return res.status(201).json({
         success: true,
         message: `Cron job created and ${feature} ${
@@ -618,8 +533,6 @@ export const toggleCronJobFeature = async (req, res) => {
         cronJob: created,
       });
     }
-
-    // ---- update existing config ----
     const setFields = {
       [`${feature}.enabled`]: enabled,
       updatedBy,
@@ -633,11 +546,8 @@ export const toggleCronJobFeature = async (req, res) => {
         },
       },
     };
-
-    // If toggling driverDocumentsExpiration, also mirror notifications.email and ensure timing
     if (feature === "driverDocumentsExpiration") {
       setFields[`${feature}.notifications.email`] = enabled;
-      // only set a default time when enabling and it's missing/empty
       const needsDefaultTime =
         enabled &&
         (!existingCronJob.driverDocumentsExpiration?.timing?.dailyTime ||
@@ -648,20 +558,16 @@ export const toggleCronJobFeature = async (req, res) => {
         setFields[`${feature}.timing.dailyTime`] = "16:00 - 17:00";
       }
     }
-
     const updatedCronJob = await CronJob.findOneAndUpdate(
       { companyId },
       setFields,
       { new: true, runValidators: true }
     ).populate("createdBy updatedBy", "name email");
-
-    // reschedule single company
     try {
       await updateCompanyCronJob(companyId);
     } catch (e) {
       console.error("Reschedule error:", e);
     }
-
     return res.status(200).json({
       success: true,
       message: `${feature} ${enabled ? "enabled" : "disabled"} successfully`,
@@ -679,22 +585,18 @@ export const toggleCronJobFeature = async (req, res) => {
 export const runNow = async (req, res) => {
   try {
     const { companyId, sendEmails = false } = req.body;
-
     if (!companyId) {
       return res.status(400).json({ error: "Company ID required" });
     }
-
     const cronSettings = await CronJob.findOne({ companyId });
     const timeWindow =
       cronSettings?.driverDocumentsExpiration?.timing?.dailyTime;
     const isEnabled = cronSettings?.driverDocumentsExpiration?.enabled;
-
     if (!isEnabled) {
       return res
         .status(400)
         .json({ error: "Driver document expiration feature is not enabled" });
     }
-
     if (!isWithinTimeWindow(timeWindow)) {
       return res.status(400).json({
         error: `Outside allowed time window (${
@@ -704,23 +606,17 @@ export const runNow = async (req, res) => {
         timeWindow,
       });
     }
-
     const drivers = await Driver.find({ companyId });
-
-    // Find all client admins for this company
     const clientAdmins = await User.find({
       companyId,
       role: "clientadmin",
     });
-
     let emailsSent = 0;
     let notificationsSent = 0;
     const results = [];
-
     for (const driver of drivers) {
       const expiredDocs = getExpiredDocs(driver);
       if (Object.keys(expiredDocs).length === 0) continue;
-
       const driverEmail = driver?.DriverData?.email;
       const driverName = `${driver?.DriverData?.firstName || ""} ${
         driver?.DriverData?.surName || ""
@@ -729,8 +625,6 @@ export const runNow = async (req, res) => {
       if (!driverEmail) {
         continue;
       }
-
-      // EMAIL TO DRIVER
       if (!canSendEmail(driver, expiredDocs)) {
         results.push({
           email: driverEmail,
@@ -745,11 +639,9 @@ export const runNow = async (req, res) => {
             subtitle: "Please renew the following documents:",
             data: expiredDocs,
           });
-
           driver.Notifications = driver.Notifications || {};
           driver.Notifications.docExpiry = { lastSentAt: new Date() };
           await driver.save();
-
           emailsSent++;
           results.push({
             email: driverEmail,
@@ -774,11 +666,8 @@ export const runNow = async (req, res) => {
           expiredDocs: Object.keys(expiredDocs),
         });
       }
-
-      // NOTIFICATIONS TO CLIENT ADMINS
       for (const admin of clientAdmins) {
         try {
-          // Check if notification already sent in last 24 hours
           const existingNotification = await Notification.findOne({
             employeeNumber: String(admin.employeeNumber || admin._id),
             notificationType: "document_expiry",
@@ -786,11 +675,9 @@ export const runNow = async (req, res) => {
               driver.DriverData.employeeNumber,
             createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
           });
-
           if (existingNotification) {
-            continue; // Skip if already notified in last 24 hours
+            continue; 
           }
-
           const notification = new Notification({
             employeeNumber: String(admin.employeeNumber || admin._id),
             status: "Document Expired",
@@ -802,11 +689,8 @@ export const runNow = async (req, res) => {
             },
             companyId,
           });
-
           await notification.save();
           notificationsSent++;
-
-          // Emit real-time notification
           emitToEmployee(
             admin.employeeNumber || admin._id,
             "notification:new",
@@ -820,7 +704,6 @@ export const runNow = async (req, res) => {
         }
       }
     }
-
     res.json({
       success: true,
       timeWindow,

@@ -23,18 +23,17 @@ const JourneySchema = new mongoose.Schema(
     dropoff_terminal_3: { type: String },
     dropoff_terminal_4: { type: String },
 
-
     arrivefrom: { type: String },
     pickmeAfter: { type: String },
-    
+
     // ✅ FIXED: Flight Info with proper schema structure
     flightNumber: { type: String },
     flightArrival: {
       scheduled: { type: Date, default: null }, // ✅ Added proper type and default
       estimated: { type: Date, default: null }, // ✅ Added proper type and default
-      actual: { type: Date, default: null },    // ✅ Added proper type and default
+      actual: { type: Date, default: null }, // ✅ Added proper type and default
     },
-    flightOrigin: { type: String, default: null },      // ✅ Added proper type and default
+    flightOrigin: { type: String, default: null }, // ✅ Added proper type and default
     flightDestination: { type: String, default: null }, // ✅ Added proper type and default
 
     notes: { type: String },
@@ -119,7 +118,6 @@ const BookingSchema = new mongoose.Schema(
       type: JourneySchema,
       required: false,
       ref: "Journey",
-
     },
     vehicle: {
       type: VehicleInfoSchema,
@@ -129,21 +127,13 @@ const BookingSchema = new mongoose.Schema(
       type: PassengerSchema,
       required: false,
       ref: "Passenger",
-
     },
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
-      required: true,
-    },
-
-      // ✅ Currency snapshot field
     currency: {
       label: { type: String, default: "British Pound" },
       value: { type: String, default: "GBP" },
       symbol: { type: String, default: "£" },
     },
-    
+
     status: { type: String, default: "New" },
     statusAudit: {
       type: [StatusAuditSchema],
@@ -175,9 +165,14 @@ const BookingSchema = new mongoose.Schema(
     appNotifications: {
       customer: { type: Boolean, default: false },
     },
+
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+    },
   },
   { timestamps: true }
 );
-
 const Booking = mongoose.model("Booking", BookingSchema);
 export default Booking;

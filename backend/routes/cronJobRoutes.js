@@ -12,7 +12,5 @@ router.put("/company/:companyId", protect, authorize("clientadmin"), updateCronJ
 router.put("/company/:companyId/toggle", protect, authorize("clientadmin"), toggleCronJobFeature);
 router.delete("/:cronJobId", protect, authorize("clientadmin"), deleteCronJob);
 router.post("/driver-docs/run-now", protect, authorize("clientadmin"), runNow);
-// router.get("/send-invoice-email",  startDriverStatementsSchedule);
-// router.get("/test",  autoAllocateDrivers);
 
 export default router;

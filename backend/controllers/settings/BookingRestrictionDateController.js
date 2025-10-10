@@ -1,8 +1,6 @@
 import BookingRestriction from "../../models/settings/BookingRestrictionDate.js";
 
-/* ---------------------- Helpers ---------------------- */
 const isBetween = (ts, a, b) => ts >= a.getTime() && ts <= b.getTime();
-
 const isActiveOneOffNow = (fromISO, toISO, now = new Date()) => {
   const from = new Date(fromISO);
   const to = new Date(toISO);
@@ -10,12 +8,9 @@ const isActiveOneOffNow = (fromISO, toISO, now = new Date()) => {
 };
 
 const isActiveYearlyNow = (fromISO, toISO, now = new Date()) => {
-  // Fix: Use local time methods instead of UTC methods
   const f = new Date(fromISO);
   const t = new Date(toISO);
   const y = now.getFullYear();
-
-  // Create dates in local timezone to match the input format
   const fThis = new Date(
     y, f.getMonth(), f.getDate(),
     f.getHours(), f.getMinutes(), 0, 0
@@ -24,16 +19,10 @@ const isActiveYearlyNow = (fromISO, toISO, now = new Date()) => {
     y, t.getMonth(), t.getDate(),
     t.getHours(), t.getMinutes(), 0, 0
   );
-
-
-
   if (tThis >= fThis) {
-    // Normal case: doesn't wrap around year
     const result = isBetween(now.getTime(), fThis, tThis);
     return result;
   }
-  
-  // Edge case: wraps across year-end (Dec to Jan)
   const endOfYear = new Date(y, 11, 31, 23, 59, 59, 999);
   const startOfYear = new Date(y, 0, 1, 0, 0, 0, 0);
   const result = isBetween(now.getTime(), fThis, endOfYear) || isBetween(now.getTime(), startOfYear, tThis);
@@ -42,11 +31,9 @@ const isActiveYearlyNow = (fromISO, toISO, now = new Date()) => {
 
 const computeDesiredStatus = (doc, now = new Date()) => {
   const rec = String(doc.recurring || "").toLowerCase();
-
   const active = rec === "yearly"
     ? isActiveYearlyNow(doc.from, doc.to, now)
     : isActiveOneOffNow(doc.from, doc.to, now);
-    
   const status = active ? "Active" : "Inactive";
   return status;
 };
@@ -60,19 +47,16 @@ const normalizeStatusNow = async (doc) => {
   }
   return doc;
 };
-/* -------------------- End Helpers -------------------- */
 
 export const createBookingRestriction = async (req, res) => {
   try {
     const { caption, recurring, from, to, status, companyId } = req.body;
-
     if (!companyId) {
       return res.status(400).json({ message: "Invalid or missing companyId" });
     }
     if (!caption || !recurring || !from || !to || !status) {
       return res.status(400).json({ message: "All fields required" });
     }
-
     const newRestriction = new BookingRestriction({
       caption,
       recurring,
@@ -81,11 +65,8 @@ export const createBookingRestriction = async (req, res) => {
       status,
       companyId,
     });
-
     let saved = await newRestriction.save();
-    // flip status immediately according to 'now'
     saved = await normalizeStatusNow(saved);
-
     res.status(201).json({
       message: "Booking Restriction created successfully",
       data: saved,
@@ -102,10 +83,7 @@ export const getAllBookingRestrictions = async (req, res) => {
     if (!companyId) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
-
     const docs = await BookingRestriction.find({ companyId });
-
-    // Auto-sync statuses in DB if needed (minimal writes)
     const now = new Date();
     const ops = [];
     const mapped = docs.map((d) => {
@@ -125,7 +103,6 @@ export const getAllBookingRestrictions = async (req, res) => {
     if (ops.length) {
       await BookingRestriction.bulkWrite(ops);
     }
-
     res.status(200).json({
       message: "The data was fetched successfully",
       data: mapped,
@@ -155,17 +132,12 @@ export const updateBookingRestriction = async (req, res) => {
   try {
     const { id } = req.params;
     const { caption, recurring, from, to, status } = req.body;
-
     const updatedData = { caption, recurring, from, to, status };
-
     let doc = await BookingRestriction.findByIdAndUpdate(id, updatedData, { new: true });
     if (!doc) {
       return res.status(404).json({ message: "Booking restriction not found" });
     }
-
-    // normalize right after update
     doc = await normalizeStatusNow(doc);
-
     res.status(200).json({
       message: "Booking restriction updated successfully",
       data: doc,
@@ -180,11 +152,9 @@ export const deleteBookingRestriction = async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await BookingRestriction.findByIdAndDelete(id);
-
     if (!deleted) {
       return res.status(404).json({ message: "Booking restriction not found" });
     }
-
     res.status(200).json({
       message: "Booking restriction deleted successfully",
       data: deleted,

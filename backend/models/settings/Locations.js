@@ -14,14 +14,14 @@ const locationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
+    },
   },
-},
   {
     timestamps: true,
   }
 );
-
 export default mongoose.model("Location", locationSchema);

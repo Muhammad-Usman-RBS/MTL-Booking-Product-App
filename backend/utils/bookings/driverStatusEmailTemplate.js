@@ -1,4 +1,3 @@
-// Time formatting (same as confirmation template)
 const formatDateTime = (j) => {
   if (!j?.date) return "-";
   const date = new Date(j.date);
@@ -25,7 +24,6 @@ export const driverStatusEmailTemplate = ({
   company = {},
   options = {},
 }) => {
-  // Brand colors
   const brand = {
     primary: options.primaryColor || "#0F172A",
     accent: options.accentColor || "#2563EB",
@@ -36,8 +34,6 @@ export const driverStatusEmailTemplate = ({
     success: options.successColor || "#16A34A",
     warning: options.warningColor || "#F59E0B",
   };
-
-  // Company info
   const org = {
     name:
       company?.name ||
@@ -68,8 +64,6 @@ export const driverStatusEmailTemplate = ({
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
-
-  // Enhanced driver/vehicle data with fallbacks
   const driverInfo = {
     firstName: driver?.firstName || "Your",
     surName: driver?.surName || "Driver",
@@ -85,11 +79,9 @@ export const driverStatusEmailTemplate = ({
   const vehicleInfo = {
     registration: vehicle?.carRegistration || "TBD",
     make: vehicle?.carMake || "TBD",
-    model: vehicle?.carModal || "TBD", // Note: carModal not carModel in your schema
+    model: vehicle?.carModal || "TBD", 
     color: vehicle?.carColor || "TBD",
   };
-
-  // Status-specific styling
   const statusConfig = {
     "On Route": {
       color: brand.warning,
@@ -102,7 +94,6 @@ export const driverStatusEmailTemplate = ({
       text: "Your driver has arrived!",
     },
   };
-
   const currentStatus = statusConfig[status] || statusConfig["On Route"];
   const journey = booking?.primaryJourney || booking?.returnJourney || {};
   const formatEmail = (email) => {
@@ -110,27 +101,20 @@ export const driverStatusEmailTemplate = ({
       .replace("@", "&#8203;@&#8203;")
       .replace(/\./g, "&#8203;.&#8203;");
   };
-
   const locationLine = (addr) => {
     if (!addr) return "";
-  
     const safeAddr = safe(String(addr).trim());
     const words = safeAddr.split(/\s+/);
     const lines = [];
     for (let i = 0; i < words.length; i += 6) {
       lines.push(words.slice(i, i + 6).join(" "));
     }
-  
     const [firstLine, ...restLines] = lines;
-  
-    // Add tighter line-height to reduce space
     const restHtml = restLines.length
       ? `<div style="line-height:1.3;margin:0;padding:0;">${restLines.join("<br/>")}</div>`
       : "";
-  
     return `<strong style="color:${brand.primary}">Location:</strong> ${firstLine}${restHtml}`;
   };
-  
   return `<!doctype html>
 <html>
 <head>
@@ -178,7 +162,6 @@ export const driverStatusEmailTemplate = ({
                     }
                   </td>
  <td align="right" style="vertical-align:middle">
- 
                 <div style="margin-bottom:8px; text-align:right;">
   <span style="
     display:inline-block;
@@ -198,17 +181,13 @@ export const driverStatusEmailTemplate = ({
        ? `<strong style="color:${brand.primary}">Email:</strong> ${formatEmail(safe(org.email))}<br/>`
        : ""
    }
-
     ${org.phone ? `<strong style="color:${brand.primary}">Phone:</strong> +${safe(org.phone)}<br/>` : ""}
 ${org.address ? locationLine(org.address) : ""}  </div>
   </td>
- 
                 </tr>
               </table>
             </td>
           </tr>
-
-          <!-- Main Message -->
           <tr>
             <td class="px-22" style="padding:24px 22px 18px;text-align:start">
               <div style="font:500 24px/1.3 Arial,sans-serif;color:${
@@ -221,8 +200,6 @@ ${org.address ? locationLine(org.address) : ""}  </div>
   )}</div>
             </td>
           </tr>
-
-          <!-- Journey Summary -->
           <tr>
             <td class="px-22" style="padding:0 22px 18px">
               <table role="presentation" width="100%" style="background:${
@@ -240,8 +217,6 @@ ${org.address ? locationLine(org.address) : ""}  </div>
         </td>
           </tr>
           <tr>
-                  
-
           <td style="color:${
             brand.muted
           };font:600 13px Arial,sans-serif"><div style="margin-bottom:15px;"> From: </div></td>
@@ -250,7 +225,6 @@ ${org.address ? locationLine(org.address) : ""}  </div>
           };font:400 13px Arial,sans-serif"><div>${safe(
     journey?.pickup || "-"
   )}</div></td>
-
           </tr>
           <tr>
             <td style="padding:4px 8px 4px 0;color:${
@@ -272,7 +246,6 @@ ${org.address ? locationLine(org.address) : ""}  </div>
     formatDateTime(journey)
   )}</div></td>
             </tr>
-
               </table>
             </td>
           </tr>
@@ -282,7 +255,6 @@ ${org.address ? locationLine(org.address) : ""}  </div>
     <table role="presentation" width="100%" style="border:1px solid ${
       brand.border
     }; border-radius:12px; padding:16px; background:${brand.card};">
-      
       <tr>
         <td colspan="2">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
@@ -299,8 +271,6 @@ ${org.address ? locationLine(org.address) : ""}  </div>
                     : ""
                 }
               </td>
-
-              <!-- Driver Details (Column) -->
               <td valign="center">
                 <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                   <tr>
@@ -339,19 +309,14 @@ ${org.address ? locationLine(org.address) : ""}  </div>
           </table>
         </td>
       </tr>
-
     </table>
   </td>
 </tr>
- <!-- Vehicle Info -->
- 
   <tr>
   <td class="px-22" style="padding:0 22px 18px;">
     <table role="presentation" width="100%" style="border:1px solid ${
       brand.border
     }; border-radius:12px; padding:16px; background:${brand.card};">
-      
-      <!-- Vehicle Image + Details in a row -->
       <tr>
         <td colspan="2">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
@@ -368,8 +333,6 @@ ${org.address ? locationLine(org.address) : ""}  </div>
                     : ""
                 }
               </td>
-
-              <!-- Vehicle Details (Vertical Column) -->
               <td valign="center">
                 <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                   <tr>
@@ -422,17 +385,11 @@ ${org.address ? locationLine(org.address) : ""}  </div>
     </table>
   </td>
 </tr>
-
-
-         
-           <!-- Footer with company info -->
  <tr>
   <td style="padding:20px 24px;border-top:1px solid ${brand.border};background:#FAFAFA; text-align:center;">
-    
     <div style="font:700 16px/1.4 Arial,sans-serif;color:${brand.primary};margin-bottom:3px;">
       ${safe(org.name)}
     </div>
-    
     <div style="display:inline-flex;align-items:center;justify-content:center; Arial,sans-serif;color:#9CA3AF;">
       <span style="font:500 16px">Need to contact the company?</span>
       <a href="tel:${safe(driver.contact)}"
@@ -440,12 +397,8 @@ ${org.address ? locationLine(org.address) : ""}  </div>
         +${safe(org.phone)}
       </a>
     </div>
-
   </td>
 </tr>
-
-
-
         </table>
       </td>
     </tr>

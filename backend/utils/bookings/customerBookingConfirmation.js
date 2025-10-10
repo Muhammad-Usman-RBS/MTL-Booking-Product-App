@@ -6,8 +6,6 @@ export const customerBookingConfirmation = ({
 }) => {
   const pj = booking?.primaryJourney || {};
   const rj = booking?.returnJourneyToggle ? booking?.returnJourney || {} : null;
-
-  // Brand colors
   const brand = {
     primary: options.primaryColor || "#0F172A",
     accent: options.accentColor || "#2563EB",
@@ -19,8 +17,6 @@ export const customerBookingConfirmation = ({
     pill: options.pillColor || "#DCFCE7",
     accentLight: options.accentLight || "#DBEAFE",
   };
-
-  // Company  info
   const org = {
     name:
       company?.companyName ||
@@ -33,26 +29,20 @@ export const customerBookingConfirmation = ({
     website: options.website || company?.website || "",
     address: options.address || company?.address || "",
   };
-
-  // ✅ Client Admin (Account Manager)
   const admin = {
     name: clientAdmin?.name || "",
     email: clientAdmin?.email || "",
     phone: clientAdmin?.contact || clientAdmin?.phone || "",
     avatar: clientAdmin?.profileImage || "",
   };
-
   const currency = options.currency || "£";
   const safe = (v) =>
     String(v ?? "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
-
-  // Time formatting
   const formatDateTime = (j) => {
     if (!j?.date) return "-";
-
     const date = new Date(j.date);
     const dateStr = date.toLocaleDateString("en-GB", {
       weekday: "long",
@@ -60,17 +50,14 @@ export const customerBookingConfirmation = ({
       month: "long",
       day: "numeric",
     });
-
     const hour = j?.hour ?? 0;
     const minute = j?.minute ?? 0;
     const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(
       2,
       "0"
     )}`;
-
     return `${dateStr} at ${timeStr}`;
   };
-  // Fare calculation
   const fareLine = () => {
     if (booking?.returnJourneyToggle) {
       return `${currency}${Number(booking?.returnJourneyFare || 0).toFixed(2)}`;
@@ -100,7 +87,6 @@ export const customerBookingConfirmation = ({
                 brand.primary
               };font:400 14px Arial,sans-serif">${safe(j?.pickup || "-")}</td>
             </tr>
-
             <tr>
             ${
               j?.flightNumber || j?.pickmeAfter || j?.arrivefrom
@@ -111,25 +97,43 @@ export const customerBookingConfirmation = ({
                         <tr>
                           ${
                             j?.flightNumber
-                              ? `<td style="width:33.33%;padding:4px 8px 4px 0;font:600 13px Arial,sans-serif;color:${brand.muted}">
+                              ? `<td style="width:33.33%;padding:4px 8px 4px 0;font:600 13px Arial,sans-serif;color:${
+                                  brand.muted
+                                }">
                                   Flight No.: 
-                                  <span style="font-weight:400;color:${brand.primary};margin-left:4px">${safe(j.flightNumber)}</span>
+                                  <span style="font-weight:400;color:${
+                                    brand.primary
+                                  };margin-left:4px">${safe(
+                                  j.flightNumber
+                                )}</span>
                                 </td>`
                               : `<td style="width:33.33%"></td>`
                           }
                           ${
                             j?.pickmeAfter
-                              ? `<td style="width:33.33%;padding:4px 8px;font:600 13px Arial,sans-serif;color:${brand.muted}">
+                              ? `<td style="width:33.33%;padding:4px 8px;font:600 13px Arial,sans-serif;color:${
+                                  brand.muted
+                                }">
                                   Pick Me After: 
-                                  <span style="font-weight:400;color:${brand.primary};margin-left:4px">${safe(j.pickmeAfter)}</span>
+                                  <span style="font-weight:400;color:${
+                                    brand.primary
+                                  };margin-left:4px">${safe(
+                                  j.pickmeAfter
+                                )}</span>
                                 </td>`
                               : `<td style="width:33.33%"></td>`
                           }
                           ${
                             j?.arrivefrom
-                              ? `<td style="width:33.33%;padding:4px 0;font:600 13px Arial,sans-serif;color:${brand.muted}">
+                              ? `<td style="width:33.33%;padding:4px 0;font:600 13px Arial,sans-serif;color:${
+                                  brand.muted
+                                }">
                                   Arrive From: 
-                                  <span style="font-weight:400;color:${brand.primary};margin-left:4px">${safe(j.arrivefrom)}</span>
+                                  <span style="font-weight:400;color:${
+                                    brand.primary
+                                  };margin-left:4px">${safe(
+                                  j.arrivefrom
+                                )}</span>
                                 </td>`
                               : `<td style="width:33.33%"></td>`
                           }
@@ -144,13 +148,16 @@ export const customerBookingConfirmation = ({
     j?.pickupDoorNumber
       ? `
         <tr>
-          <td style="padding:6px 0;color:${brand.muted};width:80px;font:600 13px Arial,sans-serif">Pickup Door No.:</td>
-          <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${safe(j.pickupDoorNumber)}</td>
+          <td style="padding:6px 0;color:${
+            brand.muted
+          };width:80px;font:600 13px Arial,sans-serif">Pickup Door No.:</td>
+          <td style="padding:6px 0;color:${
+            brand.primary
+          };font:400 14px Arial,sans-serif">${safe(j.pickupDoorNumber)}</td>
         </tr>`
       : ``
   }
 </tr>
-
             <tr>
               <td style="padding:6px 0;color:${
                 brand.muted
@@ -171,59 +178,113 @@ export const customerBookingConfirmation = ({
             ${
               isAirportAddress(j?.dropoff)
                 ? `
-                  ${j?.dropoff_terminal_0 ? `
+                  ${
+                    j?.dropoff_terminal_0
+                      ? `
                     <tr>
-                      <td style="padding:6px 0;color:${brand.muted};width:120px;font:600 13px Arial,sans-serif">Dropoff Terminal-0:</td>
-                      <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${safe(j.dropoff_terminal_0)}</td>
-                    </tr>` : ``}
+                      <td style="padding:6px 0;color:${
+                        brand.muted
+                      };width:120px;font:600 13px Arial,sans-serif">Dropoff Terminal-0:</td>
+                      <td style="padding:6px 0;color:${
+                        brand.primary
+                      };font:400 14px Arial,sans-serif">${safe(
+                          j.dropoff_terminal_0
+                        )}</td>
+                    </tr>`
+                      : ``
+                  }
             
-                  ${j?.dropoff_terminal_1 ? `
+                  ${
+                    j?.dropoff_terminal_1
+                      ? `
                     <tr>
-                      <td style="padding:6px 0;color:${brand.muted};width:120px;font:600 13px Arial,sans-serif">Dropoff Terminal-1:</td>
-                      <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${safe(j.dropoff_terminal_1)}</td>
-                    </tr>` : ``}
+                      <td style="padding:6px 0;color:${
+                        brand.muted
+                      };width:120px;font:600 13px Arial,sans-serif">Dropoff Terminal-1:</td>
+                      <td style="padding:6px 0;color:${
+                        brand.primary
+                      };font:400 14px Arial,sans-serif">${safe(
+                          j.dropoff_terminal_1
+                        )}</td>
+                    </tr>`
+                      : ``
+                  }
             
-                  ${j?.dropoff_terminal_2 ? `
+                  ${
+                    j?.dropoff_terminal_2
+                      ? `
                     <tr>
-                      <td style="padding:6px 0;color:${brand.muted};width:120px;font:600 13px Arial,sans-serif">Dropoff Terminal-2:</td>
-                      <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${safe(j.dropoff_terminal_2)}</td>
-                    </tr>` : ``}
+                      <td style="padding:6px 0;color:${
+                        brand.muted
+                      };width:120px;font:600 13px Arial,sans-serif">Dropoff Terminal-2:</td>
+                      <td style="padding:6px 0;color:${
+                        brand.primary
+                      };font:400 14px Arial,sans-serif">${safe(
+                          j.dropoff_terminal_2
+                        )}</td>
+                    </tr>`
+                      : ``
+                  }
                 `
                 : `
-                  ${j?.dropoffDoorNumber0 ? `
+                  ${
+                    j?.dropoffDoorNumber0
+                      ? `
                     <tr>
-                      <td style="padding:6px 0;color:${brand.muted};width:120px;font:600 13px Arial,sans-serif">Dropoff Door No-0:</td>
-                      <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${safe(j.dropoffDoorNumber0)}</td>
-                    </tr>` : ``}
+                      <td style="padding:6px 0;color:${
+                        brand.muted
+                      };width:120px;font:600 13px Arial,sans-serif">Dropoff Door No-0:</td>
+                      <td style="padding:6px 0;color:${
+                        brand.primary
+                      };font:400 14px Arial,sans-serif">${safe(
+                          j.dropoffDoorNumber0
+                        )}</td>
+                    </tr>`
+                      : ``
+                  }
             
-                  ${j?.dropoffDoorNumber1 ? `
+                  ${
+                    j?.dropoffDoorNumber1
+                      ? `
                     <tr>
-                      <td style="padding:6px 0;color:${brand.muted};width:120px;font:600 13px Arial,sans-serif">Dropoff Door No-1:</td>
-                      <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${safe(j.dropoffDoorNumber1)}</td>
-                    </tr>` : ``}
+                      <td style="padding:6px 0;color:${
+                        brand.muted
+                      };width:120px;font:600 13px Arial,sans-serif">Dropoff Door No-1:</td>
+                      <td style="padding:6px 0;color:${
+                        brand.primary
+                      };font:400 14px Arial,sans-serif">${safe(
+                          j.dropoffDoorNumber1
+                        )}</td>
+                    </tr>`
+                      : ``
+                  }
             
-                  ${j?.dropoffDoorNumber2 ? `
+                  ${
+                    j?.dropoffDoorNumber2
+                      ? `
                     <tr>
-                      <td style="padding:6px 0;color:${brand.muted};width:120px;font:600 13px Arial,sans-serif">Dropoff Door No-2:</td>
-                      <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${safe(j.dropoffDoorNumber2)}</td>
-                    </tr>` : ``}
+                      <td style="padding:6px 0;color:${
+                        brand.muted
+                      };width:120px;font:600 13px Arial,sans-serif">Dropoff Door No-2:</td>
+                      <td style="padding:6px 0;color:${
+                        brand.primary
+                      };font:400 14px Arial,sans-serif">${safe(
+                          j.dropoffDoorNumber2
+                        )}</td>
+                    </tr>`
+                      : ``
+                  }
                 `
             }
-            
          ${
-    vehicleInfo?.childSeat && vehicleInfo.childSeat > 0
-      ? `
+           vehicleInfo?.childSeat && vehicleInfo.childSeat > 0
+             ? `
       <tr>
-        <td style="padding:6px 0;color:${
-          brand.muted
-        };width:80px;font:600 13px Arial,sans-serif">Child Seat:</td>
-        <td style="padding:6px 0;color:${
-          brand.primary
-        };font:400 14px Arial,sans-serif">${vehicleInfo.childSeat}</td>
+        <td style="padding:6px 0;color:${brand.muted};width:80px;font:600 13px Arial,sans-serif">Child Seat:</td>
+        <td style="padding:6px 0;color:${brand.primary};font:400 14px Arial,sans-serif">${vehicleInfo.childSeat}</td>
       </tr>`
-      : ``
-  }
-          
+             : ``
+         }
             ${
               j?.notes
                 ? `
@@ -242,7 +303,6 @@ export const customerBookingConfirmation = ({
       </tr>
     </table>
   `;
-
   return `<!doctype html>
 <html>
 <head>
@@ -257,29 +317,42 @@ export const customerBookingConfirmation = ({
     }
   </style>
 </head>
-<body style="margin:0;padding:0;background:${brand.bg};font-family:Arial,sans-serif">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${brand.bg}">
+<body style="margin:0;padding:0;background:${
+    brand.bg
+  };font-family:Arial,sans-serif">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${
+    brand.bg
+  }">
     <tr>
       <td align="center" style="padding:28px 16px">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px;max-width:600px;background:${brand.card};border:1px solid ${brand.border};border-radius:16px;overflow:hidden">
-
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px;max-width:600px;background:${
+          brand.card
+        };border:1px solid ${brand.border};border-radius:16px;overflow:hidden">
           <!-- Header -->
           <tr>
-            <td style="padding:0;background:linear-gradient(90deg, ${brand.accentLight}, #ffffff);border-bottom:1px solid ${brand.border}">
+            <td style="padding:0;background:linear-gradient(90deg, ${
+              brand.accentLight
+            }, #ffffff);border-bottom:1px solid ${brand.border}">
               <table width="100%" role="presentation" style="padding:20px 24px">
                 <tr>
                   <td align="left" style="vertical-align:middle">
-                    ${org.logoUrl
-         ? `<img src="${safe(org.logoUrl)}" width="90" style="display:block;max-width:100px;height:auto" alt="${safe(org.name)}" />`
+                    ${
+                      org.logoUrl
+                        ? `<img src="${safe(
+                            org.logoUrl
+                          )}" width="90" style="display:block;max-width:100px;height:auto" alt="${safe(
+                            org.name
+                          )}" />`
                         : `<div style="font:500 20px/1 Arial,sans-serif;color:${
                             brand.primary
                           }">${safe(org.name)}</div>`
                     }
-                                        
                   </td>
                   <td align="right" style="vertical-align:middle">
                     <div style="margin-bottom:8px">
-  <strong style="display:inline-block;background:${brand.accentLight};font:500 14px/1 Arial,sans-serif;padding:8px 16px;border-radius:999px;border:1px solid ${
+  <strong style="display:inline-block;background:${
+    brand.accentLight
+  };font:500 14px/1 Arial,sans-serif;padding:8px 16px;border-radius:999px;border:1px solid ${
     brand.accentLight
   }1A">Confirmed</strong>
 </div>
@@ -428,7 +501,6 @@ export const customerBookingConfirmation = ({
               </table>
             </td>
           </tr>
-
           <!-- Footer with company info -->
           <tr>
             <td style="padding:20px 24px;border-top:1px solid ${
@@ -445,7 +517,6 @@ export const customerBookingConfirmation = ({
               </div>
             </td>
           </tr>
-
         </table>
       </td>
     </tr>

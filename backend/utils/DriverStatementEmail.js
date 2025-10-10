@@ -234,14 +234,11 @@ marginBottom: 1px
   </body>
 </html>`;
 
-/** helper: GBP string */
 function gbp(n) {
   return Number(n || 0).toFixed(2);
 }
 
-/** Build data for the handlebars template: precompute everything you need */
 function buildTemplateData(company, invoice) {
-  // Ensure we have a plain object (Mongoose docs can hide fields like invoiceNumber)
   const inv =
     invoice && typeof invoice.toObject === "function"
       ? invoice.toObject({ getters: true, virtuals: true })

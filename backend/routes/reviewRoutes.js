@@ -8,7 +8,6 @@ import { DEFAULT_SUBJECT, DEFAULT_TEMPLATE } from "../utils/bookings/reviewDefau
 
 const router = express.Router();
 
-// Small helper
 const isValidObjectId = (id) =>
     typeof id === "string" &&
     id.length === 24 &&
@@ -23,7 +22,6 @@ router.get("/settings", async (req, res) => {
 
         let doc = await ReviewSetting.findOne({ companyId });
         if (!doc) {
-            // seed once with sane defaults
             doc = await ReviewSetting.create({
                 companyId,
                 subject: DEFAULT_SUBJECT,

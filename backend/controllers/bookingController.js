@@ -44,7 +44,6 @@ export const createBooking = async (req, res) => {
       emailNotifications = {},
       appNotifications = {},
     } = req.body;
-
     if (
       !companyId ||
       typeof companyId !== "string" ||
@@ -54,13 +53,11 @@ export const createBooking = async (req, res) => {
     }
     let validVoucher = null;
     let isVoucherApplied = false;
-
     if (voucher && voucherApplied) {
       const v = await Voucher.findOne({
         voucher: voucher.toUpperCase(),
         companyId: new mongoose.Types.ObjectId(companyId),
       });
-
       const today = new Date();
       if (
         v &&
@@ -73,7 +70,6 @@ export const createBooking = async (req, res) => {
         await Voucher.findByIdAndUpdate(v._id, { $inc: { used: 1 } });
       }
     }
-
     const requiredFields = ["pickup", "dropoff", "date", "hour", "minute"];
     if (!returnJourneyToggle) {
       for (const field of requiredFields) {
@@ -92,7 +88,6 @@ export const createBooking = async (req, res) => {
         }
       }
     }
-
     const extractDynamicDropoffFields = (journey) => {
       const fields = {};
       Object.keys(journey || {}).forEach((key) => {
@@ -105,7 +100,6 @@ export const createBooking = async (req, res) => {
       });
       return fields;
     };
-
     const generateNextBookingId = async () => {
       const lastBooking = await Booking.findOne()
         .sort({ bookingId: -1 })
@@ -114,17 +108,14 @@ export const createBooking = async (req, res) => {
         ? (parseInt(lastBooking.bookingId, 10) + 1).toString()
         : "50301";
     };
-
     const bookingId = await generateNextBookingId();
     let source = "widget";
-
     if (
       req.user?.role === "clientadmin" ||
       req.user?.role === "associateadmin"
     ) {
       source = "admin";
     }
-
     const baseVehicleInfo = {
       vehicleName: vehicle.vehicleName ?? null,
       passenger: parseInt(vehicle.passenger) || 0,
@@ -132,22 +123,17 @@ export const createBooking = async (req, res) => {
       handLuggage: parseInt(vehicle.handLuggage) || 0,
       checkinLuggage: parseInt(vehicle.checkinLuggage) || 0,
     };
-
     const basePassengerInfo = {
       name: passenger.name ?? null,
       email: passenger.email ?? null,
       phone: passenger.phone ?? null,
     };
-
     const returnIsValid =
       returnJourneyToggle &&
       returnJourney &&
       requiredFields.every((f) => returnJourney[f]);
-
     const bookingSetting = await BookingSetting.findOne({ companyId });
-
     let bookingCurrency = { label: "British Pound", value: "GBP", symbol: "£" };
-
     if (bookingSetting) {
       if (bookingSetting.currencyApplication === "All Bookings") {
         bookingCurrency = bookingSetting.currency[0];
@@ -181,7 +167,6 @@ export const createBooking = async (req, res) => {
         customer: !!appNotifications.customer,
       },
     };
-
     if (!returnJourneyToggle) {
       bookingPayload.primaryJourney = {
         pickup: primaryJourney.pickup?.trim() ?? "",
@@ -215,7 +200,6 @@ export const createBooking = async (req, res) => {
         ...extractDynamicDropoffFields(primaryJourney),
       };
     }
-
     if (returnIsValid) {
       bookingPayload.returnJourney = {
         pickup: returnJourney.pickup?.trim() ?? "",
@@ -247,7 +231,6 @@ export const createBooking = async (req, res) => {
         ...extractDynamicDropoffFields(returnJourney),
       };
     }
-
     if (primaryJourney.flightNumber) {
       const flightInfo = await fetchFlightTimes(primaryJourney.flightNumber);
       if (flightInfo) {
@@ -273,7 +256,6 @@ export const createBooking = async (req, res) => {
         bookingPayload.returnJourney.flightDestination = flightInfo.destination;
       }
     }
-
     const savedBooking = await Booking.create(bookingPayload);
     const clientAdminUser = await User.findOne({
       companyId,
@@ -281,7 +263,6 @@ export const createBooking = async (req, res) => {
     }).select(
       "+googleCalendar.access_token +googleCalendar.refresh_token +googleCalendar.calendarId"
     );
-
     try {
       if (
         clientAdminUser?.googleCalendar?.access_token &&
@@ -292,14 +273,8 @@ export const createBooking = async (req, res) => {
           clientAdmin: clientAdminUser,
         });
       } else {
-        console.log("⚠️ Google Calendar not connected for this client admin.");
       }
-    } catch (calendarError) {
-      console.error(
-        "❌ Failed to create Google Calendar event:",
-        calendarError.message
-      );
-    }
+    } catch (calendarError) {}
 
     const companyDoc = await Company.findById(companyId)
       .select(
@@ -307,7 +282,6 @@ export const createBooking = async (req, res) => {
       )
       .lean()
       .catch(() => null);
-
     try {
       const confirmationHtml = customerBookingConfirmation({
         booking: savedBooking,
@@ -353,9 +327,7 @@ export const createBooking = async (req, res) => {
           );
         }
       }
-    } catch (e) {
-      console.error("Error sending booking confirmation email:", e.message);
-    }
+    } catch (e) {}
     try {
       const io = req.app.get("io");
       const currentUser = req.user;
@@ -363,7 +335,6 @@ export const createBooking = async (req, res) => {
         const passengerEmail = savedBooking?.passenger?.email
           ?.trim()
           .toLowerCase();
-
         if (passengerEmail) {
           const customerUser = await User.findOne({
             companyId: savedBooking.companyId,
@@ -423,12 +394,7 @@ export const createBooking = async (req, res) => {
           io.to(`emp:${clientAdmin._id}`).emit("notification:new", adminNotif);
         }
       }
-    } catch (notificationError) {
-      console.error(
-        "Failed to send booking creation notifications:",
-        notificationError?.message
-      );
-    }
+    } catch (notificationError) {}
     return res.status(201).json({
       success: true,
       message: returnIsValid
@@ -453,30 +419,26 @@ export const createBooking = async (req, res) => {
         : null,
     });
   } catch (error) {
-    console.error("createBooking error:", error);
     return res.status(500).json({
       message: "Internal Server Error",
       error: error.message,
     });
   }
 };
+
 export const getAllBookings = async (req, res) => {
   try {
     const { companyId } = req.query;
-
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
-
     const bookings = await Booking.find({ companyId });
-
     res.status(200).json({
       success: true,
       message: "Bookings fetched successfully",
       bookings,
     });
   } catch (error) {
-    console.error("Error in getAllBookings:", error);
     res
       .status(500)
       .json({ message: "Internal server error", error: error.message });
@@ -486,7 +448,6 @@ export const updateBooking = async (req, res) => {
   try {
     const { id } = req.params;
     const { bookingData = {} } = req.body;
-
     if (!id || id.length !== 24) {
       return res.status(400).json({ message: "Invalid booking ID" });
     }
@@ -515,11 +476,9 @@ export const updateBooking = async (req, res) => {
       voucher,
       voucherApplied,
     } = bookingData;
-
     if (!companyId || companyId.length !== 24) {
       return res.status(400).json({ message: "Invalid or missing companyId" });
     }
-
     const extractDynamicDropoffFields = (journey = {}) => {
       const fields = {};
       Object.keys(journey).forEach((key) => {
@@ -532,7 +491,6 @@ export const updateBooking = async (req, res) => {
       });
       return fields;
     };
-
     const updatedPayload = {
       mode,
       returnJourneyToggle: !!returnJourneyToggle,
@@ -570,7 +528,6 @@ export const updateBooking = async (req, res) => {
         existingBooking.returnJourney?.toObject?.() ||
         existingBooking.returnJourney ||
         {};
-
       updatedPayload.returnJourney = {
         ...prevReturn,
         pickup: returnJourney.pickup?.trim() ?? prevReturn.pickup ?? "",
@@ -592,7 +549,6 @@ export const updateBooking = async (req, res) => {
           returnJourney.additionalDropoff4 ??
           prevReturn.additionalDropoff4 ??
           null,
-
         pickupDoorNumber:
           returnJourney.pickupDoorNumber ?? prevReturn.pickupDoorNumber ?? "",
         terminal: returnJourney.terminal ?? prevReturn.terminal ?? "",
@@ -642,7 +598,6 @@ export const updateBooking = async (req, res) => {
         }
       }
     }
-
     if (
       !returnJourneyToggle ||
       (primaryJourney?.pickup && primaryJourney?.dropoff)
@@ -654,7 +609,6 @@ export const updateBooking = async (req, res) => {
         additionalDropoff2: primaryJourney.additionalDropoff2 ?? null,
         additionalDropoff3: primaryJourney.additionalDropoff3 ?? null,
         additionalDropoff4: primaryJourney.additionalDropoff4 ?? null,
-
         pickupDoorNumber: primaryJourney.pickupDoorNumber ?? "",
         terminal: primaryJourney.terminal ?? "",
         arrivefrom: primaryJourney.arrivefrom ?? "",
@@ -695,7 +649,6 @@ export const updateBooking = async (req, res) => {
           flightInfo.destination;
       }
     }
-
     if (returnJourneyToggle && updatedPayload.returnJourney?.flightNumber) {
       const flightInfo = await fetchFlightTimes(
         updatedPayload.returnJourney.flightNumber
@@ -723,7 +676,6 @@ export const updateBooking = async (req, res) => {
       }).select(
         "+googleCalendar.access_token +googleCalendar.refresh_token +googleCalendar.calendarId"
       );
-
       if (
         clientAdminUser?.googleCalendar?.access_token &&
         clientAdminUser?.googleCalendar?.refresh_token
@@ -742,12 +694,7 @@ export const updateBooking = async (req, res) => {
           await updatedBooking.save();
         }
       }
-    } catch (calendarError) {
-      console.error(
-        "❌ Failed to update Google Calendar event after booking update:",
-        calendarError.message
-      );
-    }
+    } catch (calendarError) {}
     if (!updatedBooking) {
       return res.status(404).json({ message: "Booking not found" });
     }
@@ -756,30 +703,24 @@ export const updateBooking = async (req, res) => {
       unassigned: [],
       emailsSent: [],
     };
-
     if (bookingData.hasOwnProperty("drivers")) {
       try {
         const company = await Company.findById(companyId).lean();
         const existingDriverIds = (existingBooking.drivers || []).map((d) => {
           return String(d.driverId || d._id || d);
         });
-
         const newDriverIds = (bookingData.drivers || []).map((d) => {
           return String(d.driverId || d._id || d);
         });
-
         const newlyAssigned = newDriverIds.filter(
           (id) => !existingDriverIds.includes(id)
         );
         const unassigned = existingDriverIds.filter(
           (id) => !newDriverIds.includes(id)
         );
-
         driverEmailResults.assigned = newlyAssigned;
         driverEmailResults.unassigned = unassigned;
-
         const findDriverById = async (driverId) => {
-
           if (mongoose.Types.ObjectId.isValid(driverId)) {
             const driverDoc = await driverModel.findById(driverId).lean();
             if (driverDoc) {
@@ -792,13 +733,11 @@ export const updateBooking = async (req, res) => {
               companyId: companyId,
             })
             .lean();
-
           if (driverByEmployeeNumber) {
             return driverByEmployeeNumber;
           }
           return null;
         };
-
         for (const driverId of newlyAssigned) {
           try {
             const driverDoc = await findDriverById(driverId);
@@ -812,7 +751,6 @@ export const updateBooking = async (req, res) => {
               });
               continue;
             }
-
             const driverEmail = driverDoc.DriverData?.email;
             if (!driverEmail) {
               driverEmailResults.emailsSent.push({
@@ -837,13 +775,11 @@ export const updateBooking = async (req, res) => {
                 address: company?.address,
               },
             });
-
             await sendEmail(
               driverEmail,
               `New Job Assignment - Booking #${updatedBooking.bookingId}`,
               { html: assignmentHtml }
             );
-
             driverEmailResults.emailsSent.push({
               type: "assigned",
               driverId,
@@ -854,10 +790,6 @@ export const updateBooking = async (req, res) => {
               status: "sent",
             });
           } catch (emailError) {
-            console.error(
-              `Failed to send assignment email to driver ${driverId}:`,
-              emailError.message
-            );
             driverEmailResults.emailsSent.push({
               type: "assigned",
               driverId,
@@ -870,12 +802,10 @@ export const updateBooking = async (req, res) => {
           try {
             const driverDoc = await findDriverById(driverId);
             if (!driverDoc) continue;
-
             const employeeNumber = driverDoc?.DriverData?.employeeNumber;
             if (!employeeNumber) {
               continue;
             }
-
             const notificationPayload = {
               employeeNumber,
               bookingId: updatedBooking.bookingId,
@@ -892,14 +822,8 @@ export const updateBooking = async (req, res) => {
               createdBy: req.user?._id || null,
               companyId,
             };
-
             await Notification.create(notificationPayload);
-          } catch (err) {
-            console.error(
-              `Failed to send unassignment notification for driver ${driverId}:`,
-              err.message
-            );
-          }
+          } catch (err) {}
         }
         const sentEmails = driverEmailResults.emailsSent.filter(
           (e) => e.status === "sent"
@@ -907,10 +831,7 @@ export const updateBooking = async (req, res) => {
         const failedEmails = driverEmailResults.emailsSent.filter(
           (e) => e.status === "failed"
         );
-      } catch (driverEmailError) {
-        console.error("Driver email process failed:", driverEmailError.message);
-        console.error("Full error:", driverEmailError);
-      }
+      } catch (driverEmailError) {}
     }
     try {
       const [clientAdminUser, companyDoc] = await Promise.all([
@@ -928,7 +849,6 @@ export const updateBooking = async (req, res) => {
           .lean()
           .catch(() => null),
       ]);
-
       const confirmationHtml = customerBookingConfirmation({
         booking: updatedBooking,
         company: companyDoc || {},
@@ -943,7 +863,6 @@ export const updateBooking = async (req, res) => {
           address: companyDoc?.address,
         },
       });
-
       const targetPassengerEmail = updatedBooking?.passenger?.email?.trim();
       if (targetPassengerEmail) {
         const allow = await shouldSendCustomerEmail(
@@ -958,9 +877,7 @@ export const updateBooking = async (req, res) => {
           );
         }
       }
-    } catch (e) {
-      console.error("Error sending updated passenger confirmation:", e.message);
-    }
+    } catch (e) {}
     try {
       const io = req.app.get("io");
       const currentUser = req.user;
@@ -974,7 +891,6 @@ export const updateBooking = async (req, res) => {
             role: "customer",
             email: updatedBooking.passenger.email,
           }).lean();
-
           if (customerUser?._id) {
             const notif = await Notification.create({
               employeeNumber: String(customerUser._id),
@@ -992,7 +908,6 @@ export const updateBooking = async (req, res) => {
               createdBy: currentUser?._id,
               companyId: updatedBooking.companyId,
             });
-
             io.to(`emp:${customerUser._id}`).emit("notification:new", notif);
           }
         }
@@ -1004,13 +919,11 @@ export const updateBooking = async (req, res) => {
             const drvUserId =
               typeof drv === "object" ? drv.userId || drv._id : drv;
             if (!drvUserId) continue;
-
             const driverUser = await User.findOne({
               _id: drvUserId,
               companyId: updatedBooking.companyId,
               role: "driver",
             }).lean();
-
             if (driverUser?._id) {
               if (String(driverUser._id) === String(currentUser._id)) {
               } else {
@@ -1030,7 +943,6 @@ export const updateBooking = async (req, res) => {
                   createdBy: currentUser?._id,
                   companyId: updatedBooking.companyId,
                 });
-
                 io.to(`emp:${driverUser._id}`).emit("notification:new", notif);
               }
             }
@@ -1041,7 +953,6 @@ export const updateBooking = async (req, res) => {
           companyId: updatedBooking.companyId,
           role: "clientadmin",
         }).lean();
-
         if (clientAdmin?._id) {
           const notif = await Notification.create({
             employeeNumber: String(clientAdmin._id),
@@ -1059,7 +970,6 @@ export const updateBooking = async (req, res) => {
             createdBy: currentUser?._id,
             companyId: updatedBooking.companyId,
           });
-
           io.to(`emp:${clientAdmin._id}`).emit("notification:new", notif);
         }
         if (
@@ -1070,13 +980,11 @@ export const updateBooking = async (req, res) => {
             const drvUserId =
               typeof drv === "object" ? drv.userId || drv._id : drv;
             if (!drvUserId) continue;
-
             const driverUser = await User.findOne({
               _id: drvUserId,
               companyId: updatedBooking.companyId,
               role: "driver",
             }).lean();
-
             if (driverUser?._id) {
               if (String(driverUser._id) === String(currentUser._id)) {
               } else {
@@ -1096,7 +1004,6 @@ export const updateBooking = async (req, res) => {
                   createdBy: currentUser?._id,
                   companyId: updatedBooking.companyId,
                 });
-
                 io.to(`emp:${driverUser._id}`).emit("notification:new", notif);
               }
             }
@@ -1109,7 +1016,6 @@ export const updateBooking = async (req, res) => {
             role: "customer",
             email: updatedBooking.passenger.email,
           }).lean();
-
           if (customerUser?._id) {
             if (String(customerUser._id) === String(currentUser._id)) {
             } else {
@@ -1129,7 +1035,6 @@ export const updateBooking = async (req, res) => {
                 createdBy: currentUser?._id,
                 companyId: updatedBooking.companyId,
               });
-
               io.to(`emp:${customerUser._id}`).emit("notification:new", notif);
             }
           }
@@ -1161,12 +1066,7 @@ export const updateBooking = async (req, res) => {
         }
       }
     } catch (notifyErr) {
-      console.error(
-        "Error sending socket notifications on booking update:",
-        notifyErr.message
-      );
     }
-
     return res.status(200).json({
       success: true,
       message: "Booking updated successfully",
@@ -1176,11 +1076,10 @@ export const updateBooking = async (req, res) => {
         unassigned: driverEmailResults.unassigned.length,
         emailsSent: driverEmailResults.emailsSent.filter(
           (e) => e.type === "assigned" || e.type === "unassigned"
-        ), 
+        ),
       },
     });
   } catch (error) {
-    console.error("Error in updateBooking:", error);
     return res.status(500).json({
       message: "Internal server error",
       error: error.message,
@@ -1188,48 +1087,18 @@ export const updateBooking = async (req, res) => {
   }
 };
 
-// export const deleteBooking = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const booking = await Booking.findById(id);
-
-//     if (!booking) {
-//       return res.status(404).json({ message: "Booking not found" });
-//     }
-
-//     await Booking.findByIdAndDelete(id);
-
-//     res.status(200).json({
-//       success: true,
-//       message: "Booking deleted successfully",
-//       booking,
-//     });
-//   } catch (error) {
-//     console.error("Error in deleteBooking:", error);
-//     res
-//       .status(500)
-//       .json({ message: "Internal server error", error: error.message });
-//   }
-// };
-
-// Update Booking Status
 export const updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, updatedBy, driverIds } = req.body;
     const currentUser = req.user;
-
-    // Validate booking ID
     if (!id || id.length !== 24) {
       return res.status(400).json({ message: "Invalid booking ID" });
     }
-
-    // Fetch the booking by ID
     const booking = await Booking.findById(id);
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
-
     if (currentUser?.role === "clientadmin") {
       const s = (status || "").trim().toLowerCase();
       const operationalStatuses = [
@@ -1240,7 +1109,6 @@ export const updateBookingStatus = async (req, res) => {
         "on route",
         "late cancel",
       ];
-
       if (s === "new" || s === "accepted") {
         const driverAcceptedEver = (booking.statusAudit || []).some((e) => {
           const updatedBy = (e?.updatedBy || "").toLowerCase();
@@ -1277,16 +1145,13 @@ export const updateBookingStatus = async (req, res) => {
         });
       }
     }
-
     booking.status = status === "Late Cancel" ? "Late Cancel" : status;
-
     if (Array.isArray(driverIds)) {
       const fullDriverDocs = await driverModel
         .find({ _id: { $in: driverIds } })
         .lean();
       booking.drivers = fullDriverDocs;
     }
-
     const fullName =
       currentUser?.fullName || currentUser?.name || "Unknown User";
     const updater = `${currentUser?.role || "user"} | ${fullName}`;
@@ -1294,20 +1159,16 @@ export const updateBookingStatus = async (req, res) => {
       ...(booking.statusAudit || []),
       { updatedBy: updater, status, date: new Date() },
     ];
-
     const updatedBooking = await booking.save();
-
     const normalizedStatus = (status || "").trim();
     const shouldSendDriverEmail = ["On Route", "At Location"].includes(
       normalizedStatus
     );
-
     if (shouldSendDriverEmail && booking?.passenger?.email) {
       try {
         const firstDriver = booking.drivers?.[0];
         let driverInfo = null;
         let vehicleInfo = null;
-
         let assignedDriver = null;
         if (firstDriver) {
           const driverDocId =
@@ -1326,20 +1187,17 @@ export const updateBookingStatus = async (req, res) => {
               })
               .lean();
           }
-
           if (assignedDriver) {
             driverInfo = {
               ...(assignedDriver.DriverData || {}),
               driverPicture:
                 assignedDriver?.UploadedData?.driverPicture || null,
             };
-
             vehicleInfo = {
               ...(assignedDriver.VehicleData || {}),
               vehiclePicture: assignedDriver?.UploadedData?.carPicture || null,
             };
           } else {
-            // Fallback from inline driver data on booking (if present)
             if (
               firstDriver.name ||
               firstDriver.contact ||
@@ -1356,8 +1214,6 @@ export const updateBookingStatus = async (req, res) => {
             }
           }
         }
-
-        // Safe defaults to avoid template errors
         driverInfo = driverInfo || {
           firstName: "Your",
           surName: "Driver",
@@ -1371,10 +1227,7 @@ export const updateBookingStatus = async (req, res) => {
           carModel: "TBD",
           carColor: "TBD",
         };
-
-        // Get company info
         const company = await Company.findById(booking.companyId).lean();
-
         const html = driverStatusEmailTemplate({
           booking: updatedBooking,
           driver: driverInfo,
@@ -1391,8 +1244,6 @@ export const updateBookingStatus = async (req, res) => {
             ...company,
           },
         });
-
-        // Only send if emailPreference = true
         const allow = await shouldSendCustomerEmail(
           booking.companyId,
           booking.passenger.email
@@ -1405,14 +1256,8 @@ export const updateBookingStatus = async (req, res) => {
           );
         }
       } catch (emailError) {
-        console.error(
-          `Failed to send ${normalizedStatus} email:`,
-          emailError?.message || emailError
-        );
       }
     }
-
-    /** AUTO-SEND REVIEW EMAIL when status becomes Completed **/
     try {
       const normalized = (status || "").trim().toLowerCase();
       if (normalized === "completed" && booking?.passenger?.email) {
@@ -1429,11 +1274,8 @@ export const updateBookingStatus = async (req, res) => {
         }
       }
     } catch (e) {
-      console.error("Review email schedule failed:", e.message);
     }
-
     const io = req.app.get("io");
-
     const audit = booking.statusAudit || [];
     const prevStatus =
       audit.length > 1 ? audit[audit.length - 2]?.status : null;
@@ -1476,7 +1318,6 @@ export const updateBookingStatus = async (req, res) => {
             });
             io.to(`emp:${adminKey}`).emit("notification:new", adminNotif);
           }
-
           const paxEmail = (booking?.passenger?.email || "")
             .trim()
             .toLowerCase();
@@ -1487,7 +1328,6 @@ export const updateBookingStatus = async (req, res) => {
                 email: paxEmail,
               }).lean()
             : null;
-
           const custKey = String(customerUser?._id || "");
           if (custKey) {
             const customerNotif = await Notification.create({
@@ -1516,7 +1356,6 @@ export const updateBookingStatus = async (req, res) => {
                 const drvUserId =
                   typeof drv === "object" ? drv.userId || drv._id : drv;
                 if (!drvUserId) {
-                  console.warn("No drvUserId found, skipping this driver");
                   continue;
                 }
                 const driverUser = await User.findOne({
@@ -1549,25 +1388,18 @@ export const updateBookingStatus = async (req, res) => {
                     driverNotif
                   );
                 } catch (e) {
-                  console.error("Driver notify failed:", e?.message || e);
                 }
               }
             } else {
-              console.warn("booking.drivers is empty or not an array");
             }
           }
         }
       } catch (e) {
-        console.error(
-          "Admin/Customer notify on driver change failed:",
-          e?.message
-        );
       }
     }
 
     return res.status(200).json({ success: true, booking: updatedBooking });
   } catch (err) {
-    console.error("Error updating status:", err);
     return res
       .status(500)
       .json({ message: "Internal server error", error: err.message });
@@ -1577,7 +1409,6 @@ export const updateBookingStatus = async (req, res) => {
 export const getAllPassengers = async (req, res) => {
   try {
     const companyId = req.user?.companyId;
-
     if (!companyId) {
       return res.status(400).json({
         success: false,
@@ -1604,7 +1435,6 @@ export const getAllPassengers = async (req, res) => {
     const passengers = Array.from(passengerMap.values());
     res.status(200).json({ success: true, passengers });
   } catch (error) {
-    console.error("getAllPassengers error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch passengers",
@@ -1615,28 +1445,23 @@ export const getAllPassengers = async (req, res) => {
 
 export const sendBookingEmail = async (req, res) => {
   const { bookingId, email, type = "confirmation" } = req.body;
-
   if (!bookingId || !email) {
     return res
       .status(400)
       .json({ message: "Booking ID and email are required." });
   }
-
   try {
     const booking = await Booking.findById(bookingId)
       .populate("vehicle passenger")
       .lean();
     if (!booking)
       return res.status(404).json({ message: "Booking not found." });
-
     const company = await Company.findById(booking.companyId).lean();
     const clientAdmin = await User.findOne({
       companyId: booking.companyId,
       role: "clientadmin",
     }).lean();
-
     let subject, html;
-
     if (type === "cancellation") {
       subject = `Booking Cancellation #${booking.bookingId} - ${
         company?.companyName || "Our Company"
@@ -1696,7 +1521,6 @@ export const sendBookingEmail = async (req, res) => {
       }
     }
   } catch (err) {
-    console.error("Error sending booking email:", err);
     res.status(500).json({ message: "Failed to send booking email." });
   }
 };
@@ -1704,16 +1528,13 @@ export const restoreOrDeleteBooking = async (req, res) => {
   try {
     const { id } = req.params;
     const { action, updatedBy } = req.body;
-
     if (!id || id.length !== 24) {
       return res.status(400).json({ message: "Invalid booking ID" });
     }
-
     const booking = await Booking.findById(id);
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
-
     if (action === "restore") {
       const lastNonDeletedEntry = (booking?.statusAudit || [])
         .slice()
@@ -1722,7 +1543,6 @@ export const restoreOrDeleteBooking = async (req, res) => {
           const status = (e?.status || "").trim().toLowerCase();
           return status !== "deleted";
         });
-
       booking.status = lastNonDeletedEntry?.status || "New";
     } else if (action === "delete") {
       if (booking.googleCalendarEventId) {
@@ -1733,29 +1553,21 @@ export const restoreOrDeleteBooking = async (req, res) => {
           }).select(
             "+googleCalendar.access_token +googleCalendar.refresh_token +googleCalendar.calendarId"
           );
-
           if (clientAdmin?.googleCalendar?.access_token) {
             await deleteEventFromGoogleCalendar({
               eventId: booking.googleCalendarEventId,
               clientAdmin: clientAdmin,
             });
           } else {
-            console.log("⚠️ No clientAdmin or access token found");
           }
         } catch (calendarError) {
-          console.error(
-            "❌ Error deleting from Google Calendar:",
-            calendarError
-          );
         }
       }
-
       await Booking.findByIdAndDelete(id);
       return res.status(200).json({ message: "Booking permanently deleted" });
     } else {
       return res.status(400).json({ message: "Invalid action" });
     }
-
     booking.statusAudit = [
       ...(booking.statusAudit || []),
       {
@@ -1764,14 +1576,11 @@ export const restoreOrDeleteBooking = async (req, res) => {
         date: new Date(),
       },
     ];
-
     await booking.save();
-
     res
       .status(200)
       .json({ message: `Booking ${action}d successfully`, booking });
   } catch (error) {
-    console.error("restoreOrDeleteBooking error:", error);
     res.status(500).json({
       message: "Internal server error",
       error: error.message,
@@ -1785,10 +1594,8 @@ export const getAllBookingsForSuperadmin = async (req, res) => {
         .status(403)
         .json({ message: "Access denied: Superadmin only" });
     }
-
     const { page = 1, limit = 50, search = "" } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
-
     const searchFilter = search
       ? {
           $or: [
@@ -1800,7 +1607,6 @@ export const getAllBookingsForSuperadmin = async (req, res) => {
           ],
         }
       : {};
-
     const [bookings, total] = await Promise.all([
       Booking.find(searchFilter)
         .populate("companyId", "companyName tradingName email")
@@ -1809,7 +1615,6 @@ export const getAllBookingsForSuperadmin = async (req, res) => {
         .limit(Number(limit)),
       Booking.countDocuments(searchFilter),
     ]);
-
     res.status(200).json({
       success: true,
       total,
@@ -1818,7 +1623,6 @@ export const getAllBookingsForSuperadmin = async (req, res) => {
       bookings,
     });
   } catch (error) {
-    console.error("getAllBookingsForSuperadmin error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch all bookings for superadmin",

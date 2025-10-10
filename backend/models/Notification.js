@@ -21,7 +21,7 @@ const notificationSchema = new mongoose.Schema(
     expiryDetails: {
       driverName: String,
       driverEmployeeNumber: String,
-      expiredDocuments: [String], 
+      expiredDocuments: [String],
     },
     primaryJourney: {
       pickup: { type: String, required: false },
@@ -39,6 +39,7 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
@@ -47,5 +48,4 @@ const notificationSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
 export default mongoose.model("Notification", notificationSchema);

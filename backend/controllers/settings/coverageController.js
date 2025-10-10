@@ -1,22 +1,16 @@
 import Coverage from "../../models/settings/Coverage.js";
 
-// CREATE
 export const createCoverage = async (req, res) => {
   const { type, coverage, category, value, companyId, zoneCoordinates } = req.body;
-  
   if (!companyId) {
     return res.status(400).json({ message: "Invalid or missing companyId" });
   }
-
   if (!type || !coverage || !category || !value) {
     return res.status(400).json({ message: "All fields are required." });
   }
-
-  // Validate zone coordinates if category is Zone
   if (category === "Zone" && (!zoneCoordinates || !Array.isArray(zoneCoordinates) || zoneCoordinates.length === 0)) {
     return res.status(400).json({ message: "Zone coordinates are required when category is Zone." });
   }
-
   try {
     const exists = await Coverage.findOne({
       companyId,
@@ -25,11 +19,9 @@ export const createCoverage = async (req, res) => {
       category,
       value: value.trim().toLowerCase(), 
     });
-    
     if (exists) {
       return res.status(409).json({ message: "Coverage value already exists." });
     }
-
     const coverageData = { 
       type, 
       coverage, 
@@ -37,15 +29,11 @@ export const createCoverage = async (req, res) => {
       value: value.trim(), 
       companyId 
     };
-
-    // Add zone coordinates if category is Zone
     if (category === "Zone" && zoneCoordinates) {
       coverageData.zoneCoordinates = zoneCoordinates;
     }
-
     const newCoverage = new Coverage(coverageData);
     const savedCoverage = await newCoverage.save();
-
     res.status(201).json({
       message: "Coverage created successfully.",
       data: savedCoverage,
@@ -58,17 +46,13 @@ export const createCoverage = async (req, res) => {
   }
 };
 
-// READ ALL
 export const getAllCoverage = async (req, res) => {
   try {
     const { companyId } = req.query;
-    
     if (!companyId) {
       return res.status(400).json({ message: "Valid companyId is required" });
     }
-    
     const coverages = await Coverage.find({ companyId });
-    
     res.status(200).json({
       message: "All coverage entries retrieved.",
       data: coverages,
@@ -81,16 +65,13 @@ export const getAllCoverage = async (req, res) => {
   }
 };
 
-// READ ONE
 export const getCoverageById = async (req, res) => {
   const { id } = req.params;
-
   try {
     const coverage = await Coverage.findById(id);
     if (!coverage) {
       return res.status(404).json({ message: "Coverage entry not found." });
     }
-
     res.status(200).json({
       message: "Coverage entry retrieved.",
       data: coverage,
@@ -103,33 +84,23 @@ export const getCoverageById = async (req, res) => {
   }
 };
 
-// UPDATE
 export const updateCoverage = async (req, res) => {
   const { id } = req.params;
   const { type, coverage, category, value, zoneCoordinates } = req.body;
-
-  // Validate zone coordinates if category is Zone
   if (category === "Zone" && (!zoneCoordinates || !Array.isArray(zoneCoordinates) || zoneCoordinates.length === 0)) {
     return res.status(400).json({ message: "Zone coordinates are required when category is Zone." });
   }
-
   try {
     const updateData = { type, coverage, category, value: value?.trim() };
-    
-    // Add or remove zone coordinates based on category
     if (category === "Zone" && zoneCoordinates) {
       updateData.zoneCoordinates = zoneCoordinates;
     } else if (category === "Postcode") {
-      // Remove zoneCoordinates if category changed from Zone to Postcode
       updateData.$unset = { zoneCoordinates: "" };
     }
-
     const updated = await Coverage.findByIdAndUpdate(id, updateData, { new: true });
-
     if (!updated) {
       return res.status(404).json({ message: "Coverage entry not found." });
     }
-
     res.status(200).json({
       message: "Coverage updated successfully.",
       data: updated,
@@ -142,16 +113,13 @@ export const updateCoverage = async (req, res) => {
   }
 };
 
-// DELETE
 export const deleteCoverage = async (req, res) => {
   const { id } = req.params;
-
   try {
     const deleted = await Coverage.findByIdAndDelete(id);
     if (!deleted) {
       return res.status(404).json({ message: "Coverage entry not found." });
     }
-
     res.status(200).json({
       message: "Coverage deleted successfully.",
       data: deleted,
@@ -164,21 +132,17 @@ export const deleteCoverage = async (req, res) => {
   }
 };
 
-// GET COVERAGE BY ZONE (Additional utility function)
 export const getCoverageByZone = async (req, res) => {
   const { companyId, zoneName } = req.query;
-
   try {
     if (!companyId || !zoneName) {
       return res.status(400).json({ message: "CompanyId and zoneName are required." });
     }
-
     const coverages = await Coverage.find({
       companyId,
       category: "Zone",
       value: { $regex: zoneName, $options: 'i' }
     });
-
     res.status(200).json({
       message: "Zone coverages retrieved.",
       data: coverages,

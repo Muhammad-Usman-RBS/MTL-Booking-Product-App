@@ -1,6 +1,5 @@
 import BookingSetting from "../../models/settings/BookingSetting.js";
 
-// GET - fetch setting
 export const getBookingSetting = async (req, res) => {
   try {
     const companyId = req.user?.companyId;
@@ -8,7 +7,6 @@ export const getBookingSetting = async (req, res) => {
       return res
         .status(401)
         .json({ message: "Company ID missing or unauthorized" });
-
     let setting = await BookingSetting.findOne({ companyId });
     if (!setting) {
       setting = await BookingSetting.create({
@@ -17,7 +15,6 @@ export const getBookingSetting = async (req, res) => {
         currencyApplication: "New Bookings Only",
       });
     }
-
     res.status(200).json({ success: true, setting });
   } catch (error) {
     console.error("Error fetching booking setting:", error);
@@ -25,12 +22,10 @@ export const getBookingSetting = async (req, res) => {
   }
 };
 
-// POST - create/update
 export const createOrUpdateBookingSetting = async (req, res) => {
   try {
     const companyId = req.user?.companyId;
     if (!companyId) return res.status(401).json({ message: "Unauthorized" });
-
     const {
       operatingCountry,
       timezone,
@@ -44,8 +39,6 @@ export const createOrUpdateBookingSetting = async (req, res) => {
       cancelBookingWindow,
       cancelBookingTerms,
     } = req.body;
-
-    // currency validation
     if (!Array.isArray(currency) || currency.length === 0) {
       return res.status(400).json({
         message: "Currency should be a non-empty array of currency objects",
@@ -63,7 +56,6 @@ export const createOrUpdateBookingSetting = async (req, res) => {
     if (!isValidCurrency) {
       return res.status(400).json({ message: "Invalid currency format" });
     }
-
     const update = {
       operatingCountry,
       timezone,
@@ -92,13 +84,11 @@ export const createOrUpdateBookingSetting = async (req, res) => {
       },
       cancelBookingTerms: cancelBookingTerms ?? "",
     };
-
     const setting = await BookingSetting.findOneAndUpdate(
       { companyId },
       update,
       { new: true, upsert: true }
     );
-// hello
     res
       .status(200)
       .json({ success: true, message: "Booking setting updated", setting });

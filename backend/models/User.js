@@ -88,15 +88,8 @@ const userSchema = new mongoose.Schema(
     emailPreference: { type: Boolean, default: false },
 
     profileImage: { type: String, default: "" },
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-
     associateAdminLimit: { type: Number, enum: [0, 3, 5, 10], default: 0 },
-
     googleCalendar: {
       access_token: { type: String, select: false },
       refresh_token: { type: String, select: false },
@@ -119,17 +112,20 @@ const userSchema = new mongoose.Schema(
     verifiedAt: { type: Date },
 
     // SuperAdmin company details
-    superadminCompanyLogo :{ type: String, default: "" },
+    superadminCompanyLogo: { type: String, default: "" },
     superadminCompanyName: { type: String, default: "" },
     superadminCompanyAddress: { type: String, default: "" },
     superadminCompanyPhoneNumber: { type: String, default: "" },
     superadminCompanyEmail: { type: String, default: "" },
     superadminCompanyWebsite: { type: String, default: "" },
+
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
   },
   { timestamps: true }
 );
-
-// ✅ Compound index: email must be unique within the same company
 userSchema.index({ email: 1, companyId: 1 }, { unique: true });
-
 export default mongoose.model("User", userSchema);
