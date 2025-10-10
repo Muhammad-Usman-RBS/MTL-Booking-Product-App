@@ -7,7 +7,6 @@ import { collectExpiredDocs } from "../../../utils/settings/cronjobs/expiry.js";
 
 const activeCronJobs = new Map();
 
-// For scheduler: take only the start time (HH:mm – HH:mm or HH:mm - HH:mm)
 function parseDailyWindow(timeStr) {
   const fallback = { hour: 9, minute: 0 };
   if (!timeStr || typeof timeStr !== "string") return fallback;
@@ -16,38 +15,31 @@ function parseDailyWindow(timeStr) {
   return Number.isInteger(h) && Number.isInteger(m) ? { hour: h, minute: m } : fallback;
 }
 
-// For runtime check: full range parsing "HH:mm – HH:mm" / "HH:mm - HH:mm"
 function parseDailyWindowRange(timeStr) {
   const fallback = { start: { h: 9, m: 0 }, end: { h: 10, m: 0 } };
   if (!timeStr || typeof timeStr !== "string") return fallback;
   const [startRaw, endRaw] = timeStr.split(/–|-/);
   if (!startRaw || !endRaw) return fallback;
-
   const [sh, sm] = startRaw.trim().split(":").map((n) => parseInt(n, 10));
   const [eh, em] = endRaw.trim().split(":").map((n) => parseInt(n, 10));
   const ok = (h, m) => Number.isInteger(h) && Number.isInteger(m) && h >= 0 && h < 24 && m >= 0 && m < 60;
-
   return ok(sh, sm) && ok(eh, em)
     ? { start: { h: sh, m: sm }, end: { h: eh, m: em } }
     : fallback;
 }
-
 function getNowHMInTZ(tz = "UTC") {
   const dt = new Date(new Date().toLocaleString("en-GB", { timeZone: tz }));
   return { h: dt.getHours(), m: dt.getMinutes() };
 }
-
 function isWithinWindow(dailyTimeStr, tz = "UTC") {
   const { start, end } = parseDailyWindowRange(dailyTimeStr);
   const now = getNowHMInTZ(tz);
   const toMin = (x) => x.h * 60 + x.m;
   const n = toMin(now), s = toMin(start), e = toMin(end);
-  if (e === s) return true;           // degenerate: treat as always allowed
-  if (e > s) return n >= s && n < e; // same-day window
-  return n >= s || n < e;             // window crosses midnight
+  if (e === s) return true;
+  if (e > s) return n >= s && n < e;
+  return n >= s || n < e; 
 }
-
-// Expiry fields map (label + path in Driver doc)
 const EXPIRY_FIELD_MAP = {
   driverLicenseExpiry: { label: "Driver License Expiry", path: "DriverData.driverLicenseExpiry" },
   driverPrivateHireLicenseExpiry: { label: "Private Hire License Expiry", path: "DriverData.driverPrivateHireLicenseExpiry" },
@@ -69,7 +61,6 @@ function fmtDateYMD(v) {
   return d ? d.toISOString().slice(0, 10) : String(v);
 }
 
-/** Only expired keys -> flat object { "Label": "YYYY-MM-DD" } */
 function buildExpiredFieldsObject(driver, expiredKeys) {
   const out = {};
   for (const key of expiredKeys) {
@@ -80,7 +71,6 @@ function buildExpiredFieldsObject(driver, expiredKeys) {
   return out;
 }
 
-/* ---------- Email throttle helpers (24h per same-doc-set) ---------- */
 function docsHash(arr) {
   return crypto.createHash("sha1").update(arr.slice().sort().join("|")).digest("hex");
 }
@@ -90,12 +80,10 @@ async function shouldSendAndMark(driverDoc, expiredDocs) {
   const last = driverDoc?.Notifications?.docExpiry;
   const now = new Date();
 
-  // same docs within 24h -> skip
   if (last?.lastDocsHash === hash && last?.lastSentAt && now - last.lastSentAt < 24 * 60 * 60 * 1000) {
     return false;
   }
 
-  // mark
   driverDoc.Notifications = driverDoc.Notifications || {};
   driverDoc.Notifications.docExpiry = { lastSentAt: now, lastDocsHash: hash };
   await driverDoc.save();
@@ -109,12 +97,10 @@ async function markDocExpiryLocal(driverDoc, expiredDocs) {
   await driverDoc.save();
 }
 
-/* -------------------- Core Run -------------------- */
 export async function runOnceForCompany(
   companyId,
   { report = false, dryRun = false, force = false, ignoreWindow = false } = {}
 ) {
-  console.log(`[CRON][docExpiry] 🔄 Running for company=${companyId}`);
   const out = {
     companyId,
     startedAt: new Date().toISOString(),
@@ -125,52 +111,35 @@ export async function runOnceForCompany(
 
   try {
     const cronSettings = await CronJob.findOne({ companyId }).lean();
-
     const emailEnabled =
       !!cronSettings?.driverDocumentsExpiration?.enabled &&
       !!cronSettings?.driverDocumentsExpiration?.notifications?.email;
-
-    // Window enforcement (unless ignoreWindow/report/dryRun)
     const tz = process.env.CRON_TIMEZONE || "UTC";
     const dailyTime = cronSettings?.driverDocumentsExpiration?.timing?.dailyTime;
     const within = isWithinWindow(dailyTime, tz);
-
     if (!ignoreWindow && !within && !report && !dryRun) {
-      console.log(
-        `[CRON][docExpiry] ⛔ Outside window (${dailyTime}) TZ=${tz}; skipping send for company=${companyId}`
-      );
       out.note = "outside_window";
-      return out; // return report-style for visibility
-    }
-
-    // If emails off and not just reporting, stop
-    if (!emailEnabled && !report && !dryRun) {
-      console.log(`[CRON][docExpiry] ⚠️ Email notifications disabled for company=${companyId}`);
       return out;
     }
-
-    // Non-lean to allow save() for throttle mark.
+    if (!emailEnabled && !report && !dryRun) {
+      return out;
+    }
     const drivers = await Driver.find({ companyId });
-
     for (const driver of drivers) {
       try {
         const expiredKeys = collectExpiredDocs(driver);
         if (expiredKeys.length === 0) continue;
-
         out.candidates++;
         let emailSent = null;
-
         if (!dryRun && emailEnabled) {
           const email = driver?.DriverData?.email;
-
           let allowed = true;
           if (!force) {
             allowed = await shouldSendAndMark(driver, expiredKeys);
           }
-
           if (email && allowed) {
             try {
-              const expiredFieldsOnly = buildExpiredFieldsObject(driver, expiredKeys); // { "Label": "YYYY-MM-DD" }
+              const expiredFieldsOnly = buildExpiredFieldsObject(driver, expiredKeys); 
               const expiredPayload = Object.fromEntries(
                 Object.entries(expiredFieldsOnly).map(([k, v]) => [k, { expiresOn: v }])
               );
@@ -180,27 +149,20 @@ export async function runOnceForCompany(
                 expiredDocs: expiredPayload,
                 companyName: "Mega Transfers",
               });
-
               if (force) {
                 try {
                   await markDocExpiryLocal(driver, expiredKeys);
                 } catch (markErr) {
-                  console.warn("[CRON][docExpiry] ⚠️ Force-send mark failed:", markErr?.message || markErr);
                 }
               }
 
               emailSent = true;
               out.emailsSent++;
-              console.log(`[CRON][docExpiry] ✅ Email sent -> ${email} (${expiredKeys.join(", ")})`);
             } catch (e) {
-              console.error(`[CRON][docExpiry] ❌ Email failed -> ${email}`, e?.message || e);
               emailSent = false;
             }
-          } else if (!email) {
-            console.warn("[CRON][docExpiry] ⚠️ Missing driver email; skipping.");
           }
         }
-
         if (report) {
           out.drivers.push({
             employeeNumber: driver?.DriverData?.employeeNumber,
@@ -211,7 +173,6 @@ export async function runOnceForCompany(
           });
         }
       } catch (perDriverErr) {
-        console.error("[CRON][docExpiry] ❌ Error on driver loop item:", perDriverErr);
         if (report) {
           out.drivers.push({
             employeeNumber: driver?.DriverData?.employeeNumber,
@@ -225,40 +186,31 @@ export async function runOnceForCompany(
       }
     }
   } catch (error) {
-    console.error(`[CRON][docExpiry] ❌ Error processing company=${companyId}:`, error);
     if (report) out.error = String(error?.message || error);
   }
-
   out.finishedAt = new Date().toISOString();
   return out;
 }
-
-/* -------------------- Job lifecycle -------------------- */
 function stopCronJob(companyId) {
   const jobKey = `docExpiry_${companyId}`;
   const existingJob = activeCronJobs.get(jobKey);
   if (existingJob) {
     existingJob.destroy();
     activeCronJobs.delete(jobKey);
-    console.log(`[CRON] ⏹️ Stopped existing job for company=${companyId}`);
   }
 }
 
 function scheduleSingleCompany(companyId, dExp) {
   const { hour, minute } = parseDailyWindow(dExp?.timing?.dailyTime);
-  const expr = `${minute} ${hour} * * *`; // daily
+  const expr = `${minute} ${hour} * * *`;
   const jobKey = `docExpiry_${companyId}`;
-
-  // replace if exists
   stopCronJob(companyId);
-
   const task = cron.schedule(
     expr,
     async () => {
       try {
         await runOnceForCompany(companyId);
       } catch (error) {
-        console.error(`[CRON][docExpiry] ❌ Task failed for company=${companyId}`, error);
       }
     },
     {
@@ -268,11 +220,8 @@ function scheduleSingleCompany(companyId, dExp) {
   );
 
   activeCronJobs.set(jobKey, task);
-
 }
-
 export async function scheduleDriverDocsJobs() {
-
   try {
     const companies = await CronJob.find(
       {
@@ -282,23 +231,16 @@ export async function scheduleDriverDocsJobs() {
       },
       { companyId: 1, driverDocumentsExpiration: 1 }
     ).lean();
-
-
-    // reset all
     activeCronJobs.forEach((job, key) => {
       job.destroy();
     });
     activeCronJobs.clear();
-
     companies.forEach(({ companyId, driverDocumentsExpiration }) => {
       scheduleSingleCompany(companyId, driverDocumentsExpiration);
     });
-
   } catch (error) {
-    console.error("[CRON] ❌ Error scheduling driver docs jobs:", error);
   }
 }
-
 export async function rescheduleDriverDocsJobs() {
   await scheduleDriverDocsJobs();
 }
@@ -306,19 +248,14 @@ export async function rescheduleDriverDocsJobs() {
 export async function updateCompanyCronJob(companyId) {
   try {
     const cronSettings = await CronJob.findOne({ companyId }).lean();
-
     const en = !!cronSettings?.driverDocumentsExpiration?.enabled;
     const mail = !!cronSettings?.driverDocumentsExpiration?.notifications?.email;
     const time = cronSettings?.driverDocumentsExpiration?.timing?.dailyTime;
-
     if (!en || !mail || !time) {
-      console.log(`[CRON] ⏹️ Stopping job for company=${companyId} (disabled/no email/no time)`);
       stopCronJob(companyId);
       return;
     }
-
     scheduleSingleCompany(companyId, cronSettings.driverDocumentsExpiration);
   } catch (error) {
-    console.error(`[CRON] ❌ Error updating cron job for company=${companyId}:`, error);
   }
 }
